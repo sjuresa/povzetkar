@@ -1,0 +1,13 @@
+# @handle, channel ID, one per line.
+TheTradingParrot, UCrqilwm_w0Jww188AyxBq7w
+DynamoDeFi, UCEL45QB7k-UnGa05GAx6HZA
+JasonPizzinoOfficial, UCIb34uXDsfTq4PJKW0eztkA
+intothecryptoverse, UCRvqjQPSeaWn-uEx-w0XOIg
+CoinBureauTrading, UCTULWwXF7dj19_ovr7rbgog
+camelfinance, UCr_DLep7UQ0B_IFhvTORu8A
+alessiorastani, UCnJjRjmthxPCoQaAL44tR6g
+CoinBureau, UCqK_GSMbpiV8spgD3ZGloSw
+AnthonyPompliano, UCevXpeL8cNyAnww-NqJ4m2w
+BalkanTechCrypto, UC-0Hk4yjo7pfxrRq9vJke-Q
+#TechnicalRoundup, UCYStZ8mMNGOVTj-Z4AbbSrQ
+BitcoinJack, UCBWoZW80FitJnimvLi8DIxg

@@ -1,0 +1,7 @@
+# One video URL per line. Lines starting with # are ignored.
+https://www.youtube.com/watch?v=nTKGvnkb5sY
+https://www.youtube.com/watch?v=mKJdVkInmTQ
+https://www.youtube.com/watch?v=kS_qTwRVUG8
+https://www.youtube.com/watch?v=DAL3BQqTW1A
+https://www.youtube.com/watch?v=kqItbtiaYzc
+https://www.youtube.com/watch?v=vruWPIijkPY
