@@ -119,7 +119,7 @@ public class VideoSummary {
                 } else {
                     // Either not a rate limit error or we've exhausted retries.
                     // Using string concatenation here to make the logger method signature unambiguous for static analysis tools.
-                    logger.error("API call failed on attempt " + attempt + " and will not be retried.", e);
+logger.error("API call failed on attempt {} and will not be retried.", attempt, e);
                     throw e; // Rethrow the exception
                 }
             }
