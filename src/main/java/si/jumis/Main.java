@@ -23,8 +23,11 @@ public class Main {
 
         // --- Dependency Injection Setup (Composition Root) ---
         Client genAiClient = new Client();
-        String apiKey = System.getenv("YOUTUBE_API_KEY");
-
+String apiKey = System.getenv("YOUTUBE_API_KEY");
+if (apiKey == null || apiKey.isBlank()) {
+    logger.error("YOUTUBE_API_KEY environment variable not set. Exiting.");
+    return;
+}
         VideoSummary videoSummary = new VideoSummary(genAiClient);
         ProcessingStateService stateService = new ProcessingStateService();
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey);
