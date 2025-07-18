@@ -74,7 +74,7 @@ public class VideoSummary {
      * @return The AI-generated summary as a Markdown string.
      */
     public String createSummaryFromTranscript(String transcript, String videoUrl, String videoTitle, String author, String date) {
-        String promptText = Prompts.TRANSCRIPT_SUMMARY_PROMPT.formatted(videoUrl, videoTitle, author, date, transcript);
+        String promptText = Prompts.TRANSCRIPT_SUMMARY_PROMPT.formatted(videoUrl, videoTitle, videoUrl, author, date, transcript);
 
         Content content = Content.fromParts(Part.fromText(promptText));
 
@@ -102,7 +102,7 @@ public class VideoSummary {
                 if (logger.isInfoEnabled()) {
                     long endTime = System.nanoTime();
                     double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-                    logger.info("API call for {} finished in {:.2f} seconds.", callDescription, durationSeconds);
+                    logger.info("API call for {} finished in {} seconds.", callDescription, durationSeconds);
                 }
 
                 return response;

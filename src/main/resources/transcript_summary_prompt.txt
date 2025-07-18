@@ -4,7 +4,7 @@ For each key point, provide a clickable Markdown link to that specific time in t
 Video title is "%s", video url is "%s"
 ---
 ## [Video Title]([video url])
-by [author], [%s]
+by [%s], [%s]
 
 ### Executive Summary
 [Provide a 2-5 sentence overview summarizing the video's core message and conclusion.]

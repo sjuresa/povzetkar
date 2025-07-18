@@ -51,7 +51,7 @@ public class Main {
             if (arg.equalsIgnoreCase("--dry-run")) {
                 dryRun = true;
             } else if (arg.toLowerCase().startsWith("--use-case=")) {
-                useCase = arg.substring(11).trim();
+                useCase = arg.substring("--use-case=".length()).trim();
             }
         }
 

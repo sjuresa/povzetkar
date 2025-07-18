@@ -107,7 +107,7 @@ public class VideoSummarizationService {
     private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate fromDate, String lastVideoId) throws IOException {
         if (lastVideoId == null) {
             logger.info("No previous state found for {} on or before {}. Fetching recent videos to establish initial state.", author.name(), fromDate);
-            return youtubeDataService.findVideosByAuthor(author.channelId(), LocalDate.now(), 50L);
+            return youtubeDataService.findVideosByAuthor(author.channelId(), fromDate, 50L);
         } else {
             logger.info("Found last processed video ID: {}. Fetching all newer videos since then.", lastVideoId);
             return youtubeDataService.findNewVideosSince(author.channelId(), lastVideoId);
@@ -218,8 +218,8 @@ public class VideoSummarizationService {
     }
 
     private List<YouTubeVideo> filterVideosByDate(List<YouTubeVideo> videos, LocalDate fromDate, LocalDate toDate) {
-        Instant startInstant = fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
-        Instant endInstant = toDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant startInstant = fromDate.atStartOfDay(ZoneId.of("UTC")).toInstant();
+        Instant endInstant = toDate.plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant();
         return videos.stream()
                 .filter(v -> !v.publishedAt().isBefore(startInstant) && v.publishedAt().isBefore(endInstant))
                 .toList();
