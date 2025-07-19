@@ -19,7 +19,7 @@ public class Main {
     /**
      * Holds the application's runtime configuration, parsed from command-line arguments.
      */
-    private record RunConfiguration(String useCase, boolean dryRun) {
+    private record RunConfiguration(String useCase) {
     }
 
     public static void main(String[] args) {
@@ -32,7 +32,7 @@ public class Main {
         }
         try (Client genAiClient = new Client()) {
             Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
-            povzetkar.run(config.useCase(), config.dryRun(), LocalDate.of(2025, 7, 19));
+            povzetkar.run(config.useCase(), LocalDate.of(2025, 7, 19));
         }
     }
 
@@ -49,24 +49,21 @@ public class Main {
 
     /**
      * Parses command-line arguments to determine the application's run configuration.
-     * Defaults to useCase="S_B" and dryRun=false if no arguments are provided.
+     * Defaults to useCase="S_B" if no arguments are provided.
      *
      * @param args Command-line arguments. Supports --use-case=[S_B|TR|S_URL] and --dry-run.
      * @return A {@link RunConfiguration} object.
      */
     private static RunConfiguration parseRunConfiguration(String[] args) {
         String useCase = "S_B"; // Default use case
-        boolean dryRun = false;   // Default dry run mode
 
         for (String arg : args) {
-            if (arg.equalsIgnoreCase("--dry-run")) {
-                dryRun = true;
-            } else if (arg.toLowerCase().startsWith("--use-case=")) {
+            if (arg.toLowerCase().startsWith("--use-case=")) {
                 useCase = arg.substring("--use-case=".length()).trim();
             }
         }
 
-        logger.info("Running with configuration: useCase='{}', dryRun={}", useCase, dryRun);
-        return new RunConfiguration(useCase, dryRun);
+        logger.info("Running with configuration: useCase='{}'", useCase);
+        return new RunConfiguration(useCase);
     }
 }

@@ -66,7 +66,7 @@ class VideoSummarizationServiceTest {
             when(videoSummary.createSummary(anyString(), anyString())).thenReturn("Summary 1");
 
             // Act
-            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, false, testOutputPath);
+            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, testOutputPath);
 
             // Assert
             verify(youtubeDataService).findVideosByAuthor(eq("channel1"), any(LocalDate.class), eq(50L));
@@ -97,7 +97,7 @@ class VideoSummarizationServiceTest {
             when(videoSummary.createSummary(anyString(), anyString())).thenReturn("A summary");
 
             // Act
-            summarizationService.summarizeFromAuthors(authorLines, processingDate, processingDate, false, testOutputPath);
+            summarizationService.summarizeFromAuthors(authorLines, processingDate, processingDate, testOutputPath);
 
             // Assert
             InOrder inOrder = Mockito.inOrder(videoSummary, stateService);
@@ -128,7 +128,7 @@ class VideoSummarizationServiceTest {
             when(youtubeDataService.findNewVideosSince("channel1", "lastId")).thenReturn(List.of(video1));
 
             // Act
-            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, false, testOutputPath);
+            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, testOutputPath);
 
             // Assert
             mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(testOutputPath), anyString()), never());
@@ -149,30 +149,11 @@ class VideoSummarizationServiceTest {
         when(youtubeDataService.findNewVideosSince(anyString(), anyString())).thenReturn(Collections.emptyList());
 
         // Act
-        summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, false, testOutputPath);
+        summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, testOutputPath);
 
         // Assert
         verify(videoSummary, never()).createSummary(anyString(), anyString());
         verify(stateService, never()).updateLastProcessedVideoForDate(anyString(), any(YouTubeVideo.class), any(LocalDate.class));
-    }
-
-    @Test
-    @DisplayName("When in dry run mode, it should not summarize or save state")
-    void summarizeFromAuthors_whenDryRun_doesNotSummarizeOrSaveState() throws IOException {
-        try (MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
-            // Arrange
-            when(stateService.findLastProcessedVideoIdBefore(anyString(), any(LocalDate.class))).thenReturn(null);
-            when(youtubeDataService.findVideosByAuthor(anyString(), any(LocalDate.class), anyLong())).thenReturn(List.of(video1));
-
-            // Act
-            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, true, testOutputPath);
-
-            // Assert
-            verify(videoSummary, never()).createSummary(anyString(), anyString());
-            mockedFileUtils.verify(() -> FileUtils.appendToFile(any(Path.class), anyString()), never());
-            verify(stateService, never()).updateLastProcessedVideoForDate(anyString(), any(YouTubeVideo.class), any(LocalDate.class));
-            verify(stateService, never()).saveState(anyString());
-        }
     }
 
     @Test
@@ -190,7 +171,7 @@ class VideoSummarizationServiceTest {
             when(videoSummary.createSummary("url1", date)).thenReturn(summary1);
 
             // Act
-            summarizationService.summarizeFromUrls(urls, date, false, urlSummaryPath);
+            summarizationService.summarizeFromUrls(urls, date, urlSummaryPath);
 
             // Assert
             mockedFileUtils.verify(() -> FileUtils.deleteIfExists(any(Path.class)), never());

@@ -81,7 +81,7 @@ class PovzetkarTest {
             String existingUpdates = "## Update: 2025-07-17 10:00:00\n\nOld stuff.\n\n---\n\n";
 
             when(resourceReader.readLines(Povzetkar.AUTHORS_TO_QUERY_FILENAME, "authors")).thenReturn(authors);
-            when(summarizationService.summarizeFromAuthors(eq(authors), eq(testDate), eq(testDate), eq(false), any(Path.class)))
+            when(summarizationService.summarizeFromAuthors(eq(authors), eq(testDate), eq(testDate), any(Path.class)))
                     .thenReturn(processedVideos);
 
             // Mock file system for reading briefings and updates
@@ -91,7 +91,7 @@ class PovzetkarTest {
             mockedFiles.when(() -> Files.readString(eq(UPDATES_PATH), any())).thenReturn(existingUpdates);
 
             // Act
-            povzetkar.run("S_B", false, testDate);
+            povzetkar.run("S_B", testDate);
 
             // Assert
             mockedFileUtils.verify(() -> FileUtils.saveToFile(any(Path.class), fileContentCaptor.capture()), times(3));
@@ -116,40 +116,19 @@ class PovzetkarTest {
     }
 
     @Test
-    @DisplayName("S_B workflow in dryRun mode should not create briefings or update files")
-    void run_summarizeAndBriefWorkflow_inDryRun_skipsFileUpdates() {
-        try (MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
-            // Arrange
-            when(resourceReader.readLines(anyString(), anyString())).thenReturn(List.of("Author1,channel1"));
-            // In a dry run, the service should return an empty list of processed videos
-            when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), eq(true), any()))
-                    .thenReturn(Collections.emptyList());
-
-            // Act
-            povzetkar.run("S_B", true, testDate);
-
-            // Assert
-            verify(summarizationService).summarizeFromAuthors(anyList(), eq(testDate), eq(testDate), eq(true), any(Path.class));
-            // Verify that file-writing and briefing creation are never called
-            verify(videoSummary, never()).createBriefingFromSummaries(anyString(), anyString());
-            mockedFileUtils.verify(() -> FileUtils.saveToFile(any(Path.class), anyString()), never());
-        }
-    }
-
-    @Test
     @DisplayName("S_B workflow with no briefings and no new videos does not update files")
     void run_summarizeAndBriefWorkflow_withNoData_doesNothing() {
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class);
              MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
             when(resourceReader.readLines(Povzetkar.AUTHORS_TO_QUERY_FILENAME, "authors")).thenReturn(List.of("Author1,channel1"));
-            when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), eq(false), any())).thenReturn(Collections.emptyList());
+            when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), any())).thenReturn(Collections.emptyList());
 
             // No briefings found
             mockedFiles.when(() -> Files.exists(BRIEFINGS_BASE_DIR)).thenReturn(false);
 
             // Act
-            povzetkar.run("S_B", false, testDate);
+            povzetkar.run("S_B", testDate);
 
             // Assert
             // No file should be saved because there's nothing to write
