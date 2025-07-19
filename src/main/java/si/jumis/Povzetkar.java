@@ -1,5 +1,7 @@
 package si.jumis;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
@@ -8,6 +10,7 @@ import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
 import si.jumis.util.ResourceReader;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,8 +39,12 @@ public class Povzetkar {
     private static final DateTimeFormatter YYYY_FORMAT = DateTimeFormatter.ofPattern("yyyy");
     private static final DateTimeFormatter MM_FORMAT = DateTimeFormatter.ofPattern("MM");
 
+    // Define paths relative to the project root for consistency
+    private static final Path TLDRLY_DIR = Paths.get("tldrly");
     private static final Path SUMMARIES_DIR = Paths.get("summaries");
-    private static final Path BRIEFINGS_BASE_DIR = Paths.get("tldrly", "briefings");
+    private static final Path BRIEFINGS_BASE_DIR = TLDRLY_DIR.resolve("briefings");
+    private static final Path README_PATH = TLDRLY_DIR.resolve("README.md");
+    private static final Path UPDATES_PATH = TLDRLY_DIR.resolve("updates.md");
 
     private final VideoSummarizationService summarizationService;
     private final VideoSummary videoSummary;
@@ -56,38 +63,51 @@ public class Povzetkar {
      * Runs the application workflow based on the specified use case.
      *
      * @param useCase The workflow to execute (S_B, TR, S_URL).
-     * @param dryRun  If true, simulates the run without making external calls or writing files.
      * @param date    The date for which the workflow should be run.
      */
-    public void run(String useCase, boolean dryRun, LocalDate date) {
+    public void run(String useCase, LocalDate date) {
         switch (useCase.toUpperCase()) {
-            case "S_B" -> runSummarizeAndBriefWorkflow(date, dryRun);
+            case "S_B" -> runSummarizeAndBriefWorkflow(date);
             case "TR" -> runSummarizeTranscriptWorkflow(date);
-            case "S_URL" -> runSummarizeFromUrlsWorkflow(date, dryRun);
+            case "S_URL" -> runSummarizeFromUrlsWorkflow(date);
             default -> logger.warn("Unknown use case: '{}'. No action will be taken.", useCase);
         }
     }
 
-    void runSummarizeAndBriefWorkflow(LocalDate date, boolean dryRun) {
+    void runSummarizeAndBriefWorkflow(LocalDate date) {
         List<String> authorsToSummarize = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
         String summaryFileName = "summaries_" + date.format(DMY_DATE_FORMAT) + ".md";
         Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
 
-        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authorsToSummarize, date, date, dryRun, summaryFilePath);
+        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authorsToSummarize, date, date, summaryFilePath);
 
-        if (!dryRun) {
-            createBriefingFromFileUseCase(date, summaryFilePath);
-            updateReadme(processedVideos);
+        if (processedVideos.isEmpty()) {
+            logger.info("No new videos were processed. Skipping briefing, documentation, and Git operations.");
+            return;
+        }
+        createBriefingFromFileUseCase(date, summaryFilePath);
+        updateDocsAndCommit(processedVideos);
+    }
+
+    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos) {
+        try {
+            updateDocumentationFiles(processedVideos);
+            String commitMessage = createCommitMessage(processedVideos);
+            commitAndPushChanges(commitMessage);
+        } catch (IOException e) {
+            logger.error("Failed to update documentation files. Git operations will be skipped.", e);
         }
     }
 
-    void runSummarizeFromUrlsWorkflow(LocalDate date, boolean dryRun) {
+    // --- Other Workflows ---
+
+    void runSummarizeFromUrlsWorkflow(LocalDate date) {
         List<String> urlsToSummarize = resourceReader.readLines(URLS_TO_SUMMARIZE_FILENAME, "URLs");
         if (!urlsToSummarize.isEmpty()) {
             String dateString = date.format(DMY_DATE_FORMAT);
             String summaryFileName = "summaries_" + dateString + ".md";
             Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
-            summarizationService.summarizeFromUrls(urlsToSummarize, dateString, dryRun, summaryFilePath);
+            summarizationService.summarizeFromUrls(urlsToSummarize, dateString, summaryFilePath);
         } else {
             logger.warn("URL file '{}' is empty or not found. Skipping URL summarization.", URLS_TO_SUMMARIZE_FILENAME);
         }
@@ -150,18 +170,16 @@ public class Povzetkar {
             String dateString = date.format(DMY_DATE_FORMAT);
             String briefing = videoSummary.createBriefingFromSummaries(content, dateString);
 
-            // Construct the structured path for the briefing
             Path briefingDir = BRIEFINGS_BASE_DIR
                     .resolve(date.format(YYYY_FORMAT))
                     .resolve(date.format(MM_FORMAT));
 
-            Files.createDirectories(briefingDir); // Ensure the directory exists
+            Files.createDirectories(briefingDir);
 
             Path briefingFilePath = briefingDir.resolve("daily_briefing_" + dateString + ".md");
 
             FileUtils.saveToFile(briefingFilePath, briefing);
             logger.info("Successfully saved daily briefing to: {}", briefingFilePath);
-
         } catch (NoSuchFileException e) {
             logger.warn("Summaries file '{}' not found, so no briefing will be created. This is expected if no videos were processed.", summaryFilePath);
         } catch (IOException e) {
@@ -169,41 +187,32 @@ public class Povzetkar {
         }
     }
 
-    private void updateReadme(List<YouTubeVideo> lastBatch) {
-        logger.info("Updating README.md in tldrly directory...");
-        try {
-            List<BriefingInfo> briefings = findAndParseBriefings();
-            if (briefings.isEmpty() && (lastBatch == null || lastBatch.isEmpty())) {
-                logger.warn("No briefings or new videos found. README.md will not be updated.");
-                return;
-            }
-
-            String readmeContent = generateReadmeContent(briefings, lastBatch);
-            Path readmePath = BRIEFINGS_BASE_DIR.getParent().resolve("README.md"); // tldrly/README.md
-            FileUtils.saveToFile(readmePath, readmeContent);
-            logger.info("Successfully updated README.md at {}", readmePath);
-
-            if (lastBatch != null && !lastBatch.isEmpty()) {
-                insertUpdatesToFile(lastBatch);
-            }
-
-        } catch (IOException e) {
-            logger.error("Failed to update README.md and/or updates.md.", e);
+    private void updateDocumentationFiles(List<YouTubeVideo> lastBatch) throws IOException {
+        logger.info("Updating documentation files: README.md and updates.md...");
+        List<BriefingInfo> briefings = findAndParseBriefings();
+        if (briefings.isEmpty() && lastBatch.isEmpty()) {
+            logger.warn("No briefings or new videos found. Documentation files will not be updated.");
+            return;
         }
+
+        String readmeContent = generateReadmeContent(briefings, lastBatch);
+        FileUtils.saveToFile(README_PATH, readmeContent);
+        logger.info("Successfully updated {}", README_PATH);
+
+        insertUpdatesToFile(lastBatch);
     }
 
     private void insertUpdatesToFile(List<YouTubeVideo> lastBatch) throws IOException {
-        Path updatesFilePath = BRIEFINGS_BASE_DIR.getParent().resolve("updates.md");
-        logger.info("Inserting last update into {}", updatesFilePath);
+        logger.info("Inserting last update into {}", UPDATES_PATH);
 
         String newUpdateBlock = createUpdateBlock(lastBatch);
 
         String existingContent = "";
-        if (Files.exists(updatesFilePath)) {
-            existingContent = Files.readString(updatesFilePath, StandardCharsets.UTF_8);
+        if (Files.exists(UPDATES_PATH)) {
+            existingContent = Files.readString(UPDATES_PATH, StandardCharsets.UTF_8);
         }
 
-        FileUtils.saveToFile(updatesFilePath, newUpdateBlock + existingContent);
+        FileUtils.saveToFile(UPDATES_PATH, newUpdateBlock + existingContent);
     }
 
     private String createUpdateBlock(List<YouTubeVideo> lastBatch) {
@@ -216,7 +225,7 @@ public class Povzetkar {
                 .forEach(video -> {
                     String durationStr = formatDuration(video.duration());
                     String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-                    sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)%n",
+                    sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
                             video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
                 });
         sb.append("\n---\n\n");
@@ -245,14 +254,11 @@ public class Povzetkar {
             String content = Files.readString(path, StandardCharsets.UTF_8);
             String fileName = path.getFileName().toString();
 
-            // Extract date from filename: daily_briefing_dd.M.yyyy.md
             String dateString = fileName.replace("daily_briefing_", "").replace(".md", "");
             LocalDate date = LocalDate.parse(dateString, DMY_DATE_FORMAT);
 
-            // Extract title
             String title = content.lines().findFirst().orElse("").replace("## ", "").trim();
 
-            // Extract summary
             final String summaryHeader = "### 1. Overall Executive Summary";
             int summaryStartIndex = content.indexOf(summaryHeader);
             if (summaryStartIndex == -1) {
@@ -266,7 +272,6 @@ public class Povzetkar {
             }
 
             String summary = content.substring(summaryStartIndex, summaryEndIndex).trim();
-            // Add ellipsis if summary is long
             if (summary.length() > 350) {
                 summary = summary.substring(0, 300).trim() + "...";
             }
@@ -283,8 +288,7 @@ public class Povzetkar {
         sb.append("# Intelligence Briefing Dashboard\n");
         sb.append("Your daily Povzetkar analysis of key crypto topics and trends.\n\n");
 
-        // Last update section
-        if (lastBatch != null && !lastBatch.isEmpty()) {
+        if (!lastBatch.isEmpty()) {
             String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
             lastBatch.stream()
@@ -298,29 +302,25 @@ public class Povzetkar {
             sb.append("\n");
         }
 
-        Path tldrlyDir = BRIEFINGS_BASE_DIR.getParent();
-        // Last briefing
         if (!briefings.isEmpty()) {
             BriefingInfo latest = briefings.getFirst();
-            String relativePath = tldrlyDir.relativize(latest.path()).toString().replace('\\', '/');
+            String relativePath = TLDRLY_DIR.relativize(latest.path()).toString().replace('\\', '/');
 
             sb.append("## Last briefing\n");
             sb.append(String.format("[%s by Povzetkar](%s)\n\n", latest.title(), relativePath));
             sb.append(latest.summary()).append("\n");
         }
 
-        // Past briefings
         if (briefings.size() > 1) {
             sb.append("## Past daily briefings\n\n");
             for (int i = 1; i < briefings.size(); i++) {
                 BriefingInfo past = briefings.get(i);
-                String pastRelativePath = tldrlyDir.relativize(past.path()).toString().replace('\\', '/');
+                String pastRelativePath = TLDRLY_DIR.relativize(past.path()).toString().replace('\\', '/');
                 sb.append(String.format("[%s by Povzetkar](%s)\n", past.title(), pastRelativePath));
                 sb.append(past.summary()).append("\n\n");
             }
         }
 
-        // Authors
         sb.append("## Authors\n");
         List<String> authorLines = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
         String authorsMarkdown = authorLines.stream()
@@ -351,6 +351,43 @@ public class Povzetkar {
             return String.format("%d:%02d:%02d", hours, minutes, seconds);
         } else {
             return String.format("%d:%02d", minutes, seconds);
+        }
+    }
+
+    // --- Git Integration ---
+
+    private String createCommitMessage(List<YouTubeVideo> lastBatch) {
+        StringBuilder sb = new StringBuilder();
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss"));
+        sb.append(String.format("Update %s", timestamp));
+
+        lastBatch.stream()
+                .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
+                .forEach(video -> {
+                    String durationStr = formatDuration(video.duration());
+                    String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
+                    sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
+                            video.title(), video.authorName(), publishedAtStr, durationStr));
+                });
+        return sb.toString();
+    }
+
+    private void commitAndPushChanges(String commitMessage) {
+        logger.info("Starting Git operations: add, commit, and push...");
+        String githubToken = System.getenv("GITHUB_PAT");
+        if (githubToken == null || githubToken.isBlank()) {
+            logger.error("GitHub token not found in environment variable GITHUB_PAT.");
+            return;
+        }
+        try (Git git = Git.open(new File(TLDRLY_DIR.toString()))) {
+            git.add().addFilepattern(".").call();
+            logger.info("Staged all changes.");
+            git.commit().setMessage(commitMessage).call();
+            logger.info("Committed with message: {}", commitMessage);
+            git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("", githubToken)).call();
+            logger.info("Push completed.");
+        } catch (Exception e) {
+            logger.error("Commit and push changes failed.", e);
         }
     }
 }
