@@ -267,12 +267,12 @@ public class Povzetkar {
 
             String summary = content.substring(summaryStartIndex, summaryEndIndex).trim();
             // Add ellipsis if summary is long
-            if (summary.length() > 300) {
+            if (summary.length() > 350) {
                 summary = summary.substring(0, 300).trim() + "...";
             }
 
             return Optional.of(new BriefingInfo(path, date, title, summary));
-        } catch (Exception e) {
+        } catch (IOException | java.time.format.DateTimeParseException e) {
             logger.warn("Could not parse briefing file: {}. Skipping.", path, e);
             return Optional.empty();
         }

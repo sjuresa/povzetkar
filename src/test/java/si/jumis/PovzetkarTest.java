@@ -105,12 +105,7 @@ class PovzetkarTest {
                     .contains("## Last update")
                     .contains("[See all updates](updates.md)")
                     .contains("* [Newer Video](https://www.youtube.com/watch?v=vid2) by Test Author (Published:")
-//                    .contains("Duration: 2:03)")
                     .contains("* [Older Video](https://www.youtube.com/watch?v=vid1) by Test Author (Published:");
-//                    .contains("Duration: 7:36)");
-//                    .contains("## Last briefing")
-//                    .contains("[Briefing for 18.7.2025 by Povzetkar](briefings/2025/07/daily_briefing_1.7.2025.md)")
-//                    .contains("Briefing summary...");
 
             // Verify updates.md content (new content is prepended)
             assertThat(updatesContent)
