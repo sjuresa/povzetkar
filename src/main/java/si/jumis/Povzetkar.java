@@ -1,5 +1,7 @@
 package si.jumis;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
@@ -8,9 +10,8 @@ import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
 import si.jumis.util.ResourceReader;
 
-import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -21,7 +22,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -85,19 +85,15 @@ public class Povzetkar {
             logger.info("No new videos were processed. Skipping briefing, documentation, and Git operations.");
             return;
         }
-
-        // The main workflow for a successful run
-        Optional<Path> newBriefingPathOpt = createBriefingFromFileUseCase(date, summaryFilePath);
-
-        newBriefingPathOpt.ifPresent(briefingPath -> updateDocsAndCommit(processedVideos, briefingPath));
+        createBriefingFromFileUseCase(date, summaryFilePath);
+        updateDocsAndCommit(processedVideos);
     }
 
-    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos, Path newBriefingPath) {
+    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos) {
         try {
             updateDocumentationFiles(processedVideos);
             String commitMessage = createCommitMessage(processedVideos);
-            List<Path> filesToCommit = List.of(README_PATH, UPDATES_PATH, newBriefingPath);
-            commitAndPushChanges(commitMessage, filesToCommit);
+            commitAndPushChanges(commitMessage);
         } catch (IOException e) {
             logger.error("Failed to update documentation files. Git operations will be skipped.", e);
         }
@@ -166,7 +162,7 @@ public class Povzetkar {
         return Optional.of(new ParsedTranscript(videoTitle, videoUrl, author, transcriptContent));
     }
 
-    private Optional<Path> createBriefingFromFileUseCase(LocalDate date, Path summaryFilePath) {
+    private void createBriefingFromFileUseCase(LocalDate date, Path summaryFilePath) {
         try {
             String content = Files.readString(summaryFilePath);
             logger.info("Creating daily briefing from the content of '{}'...", summaryFilePath);
@@ -184,14 +180,11 @@ public class Povzetkar {
 
             FileUtils.saveToFile(briefingFilePath, briefing);
             logger.info("Successfully saved daily briefing to: {}", briefingFilePath);
-            return Optional.of(briefingFilePath);
-
         } catch (NoSuchFileException e) {
             logger.warn("Summaries file '{}' not found, so no briefing will be created. This is expected if no videos were processed.", summaryFilePath);
         } catch (IOException e) {
             logger.error("Error processing briefing from {}.", summaryFilePath, e);
         }
-        return Optional.empty();
     }
 
     private void updateDocumentationFiles(List<YouTubeVideo> lastBatch) throws IOException {
@@ -379,60 +372,22 @@ public class Povzetkar {
         return sb.toString();
     }
 
-    private void commitAndPushChanges(String commitMessage, List<Path> filePaths) {
+    private void commitAndPushChanges(String commitMessage) {
         logger.info("Starting Git operations: add, commit, and push...");
-
-        List<String> addCommand = new ArrayList<>();
-        addCommand.add("git");
-        addCommand.add("add");
-        filePaths.forEach(path -> addCommand.add(path.toString().replace('\\', '/')));
-
-        if (!runGitCommand(addCommand.toArray(new String[0]))) {
-            logger.error("Git add command failed. Aborting commit and push.");
+        String githubToken = System.getenv("GITHUB_PAT");
+        if (githubToken == null || githubToken.isBlank()) {
+            logger.error("GitHub token not found in environment variable GITHUB_PAT.");
             return;
         }
-
-        if (!runGitCommand("git", "commit", "-m", commitMessage)) {
-            logger.error("Git commit command failed. Aborting push.");
-            return;
-        }
-
-        if (!runGitCommand("git", "push", "origin", "main")) {
-            logger.error("Git push command failed.");
-        }
-    }
-
-    private boolean runGitCommand(String... command) {
-        logger.info("Executing Git command: {}", String.join(" ", command));
-        try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.redirectErrorStream(true); // Merge stdout and stderr
-            Process process = pb.start();
-
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append(System.lineSeparator());
-                }
-            }
-
-            int exitCode = process.waitFor();
-            logger.debug("Git command output:\n{}", output);
-
-            if (exitCode == 0) {
-                logger.info("Git command executed successfully.");
-                return true;
-            } else {
-                logger.error("Git command failed with exit code {}.", exitCode);
-                return false;
-            }
-        } catch (IOException | InterruptedException e) {
-            logger.error("An exception occurred while running git command: {}", String.join(" ", command), e);
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            return false;
+        try (Git git = Git.open(new File(TLDRLY_DIR.toString()))) {
+            git.add().addFilepattern(".").call();
+            logger.info("Staged all changes.");
+            git.commit().setMessage(commitMessage).call();
+            logger.info("Committed with message: {}", commitMessage);
+            git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("", githubToken)).call();
+            logger.info("Push completed.");
+        } catch (Exception e) {
+            logger.error("Commit and push changes failed.", e);
         }
     }
 }

@@ -211,8 +211,6 @@ public class VideoSummarizationService {
 
             boolean fileInitiallyHadContent = FileUtils.fileExists(outputFilePath) && FileUtils.fileHasContent(outputFilePath);
 
-            // DO NOT delete anything on dry run!!
-
             for (int i = 0; i < videoUrls.size(); i++) {
                 String url = videoUrls.get(i);
                 logger.info("({}/{}) Processing URL: {}", i + 1, videoUrls.size(), url);
