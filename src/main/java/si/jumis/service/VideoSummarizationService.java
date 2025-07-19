@@ -125,28 +125,37 @@ public class VideoSummarizationService {
 
         try {
             prepareOutputDirectory(outputFilePath, dryRun);
-            // Delete the file at the start to ensure a clean slate for the batch
-            if (!dryRun) {
-                FileUtils.deleteIfExists(outputFilePath);
-            }
         } catch (IOException e) {
             logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
             return;
         }
 
-        for (int i = 0; i < sortedVideos.size(); i++) {
-            VideoToProcess videoToProcess = sortedVideos.get(i);
-            YouTubeVideo video = videoToProcess.video();
+        try {
+            boolean fileInitiallyHadContent = !dryRun && FileUtils.fileExists(outputFilePath) && FileUtils.fileHasContent(outputFilePath);
+            String separator;
 
-            logger.info("({}/{}) Summarizing: [{}]({}) by {}, {}", i + 1, sortedVideos.size(), video.title(), video.url(), video.authorName(), video.publishedAt());
+            for (int i = 0; i < sortedVideos.size(); i++) {
+                VideoToProcess videoToProcess = sortedVideos.get(i);
+                YouTubeVideo video = videoToProcess.video();
 
-            if (dryRun) {
-                logger.info("DRY RUN: Skipping summary creation and state update for video: {}", video.title());
-            } else {
-                processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate);
+                logger.info("({}/{}) Summarizing: [{}]({}) by {}, {}", i + 1, sortedVideos.size(), video.title(), video.url(), video.authorName(), video.publishedAt());
+
+                if (dryRun) {
+                    logger.info("DRY RUN: Skipping summary creation and state update for video: {}", video.title());
+                } else {
+                    if (i == 0 && !fileInitiallyHadContent) {
+                        separator = "";
+                    } else {
+                        separator = "\n\n---\n\n";
+                    }
+                    processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator);
+                }
+                pauseBetweenRequests(i, sortedVideos.size(), dryRun);
             }
-            pauseBetweenRequests(i, sortedVideos.size(), dryRun);
+        } catch (IOException e) {
+            logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
         }
+
         logger.info("Author summarization workflow complete.");
     }
 
@@ -154,11 +163,11 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private void processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate) {
+    private void processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
         try {
             String summary = videoSummary.createSummary(video.url(), promptDateString);
-            FileUtils.appendToFile(outputFilePath, "\n\n---\n\n" + summary);
+            FileUtils.appendToFile(outputFilePath, separator + summary);
         } catch (Exception e) {
             handleSummaryFailure(video, e);
         } finally {

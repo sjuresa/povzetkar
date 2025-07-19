@@ -10,6 +10,8 @@ import si.jumis.service.ProcessingStateService;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.ResourceReader;
 
+import java.time.LocalDate;
+
 public class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -30,7 +32,7 @@ public class Main {
         }
         try (Client genAiClient = new Client()) {
             Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
-            povzetkar.run(config.useCase(), config.dryRun());
+            povzetkar.run(config.useCase(), config.dryRun(), LocalDate.of(2025, 7, 19));
         }
     }
 

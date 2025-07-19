@@ -176,7 +176,7 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    @DisplayName("summarizeFromUrls should append with leading separator when append is true and file has content")
+    @DisplayName("summarizeFromUrls should append with leading separator when file has content")
     void summarizeFromUrls_withAppendTrueAndExistingContent_usesSeparator() {
         try (MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange

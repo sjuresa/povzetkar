@@ -65,7 +65,7 @@ class PovzetkarTest {
             when(videoSummary.createBriefingFromSummaries(anyString(), anyString())).thenReturn("Briefing content");
 
             // Act
-            povzetkar.run("S_B", false);
+            povzetkar.run("S_B", false, testDate);
 
             // Assert
             verify(summarizationService).summarizeFromAuthors(List.of("Author1,channel1"), testDate, testDate, false, expectedSummaryPath);
@@ -81,7 +81,7 @@ class PovzetkarTest {
         when(resourceReader.readLines(anyString(), anyString())).thenReturn(List.of("Author1,channel1"));
 
         // Act
-        povzetkar.run("S_B", true);
+        povzetkar.run("S_B", true, testDate);
 
         // Assert
         verify(summarizationService).summarizeFromAuthors(anyList(), eq(testDate), eq(testDate), eq(true), any(Path.class));
@@ -97,7 +97,7 @@ class PovzetkarTest {
                 .thenReturn(List.of("http://test.url"));
 
         // Act
-        povzetkar.run("S_URL", false);
+        povzetkar.run("S_URL", false, testDate);
 
         // Assert
         verify(summarizationService).summarizeFromUrls(List.of("http://test.url"), testDateString, false, expectedSummaryPath);
@@ -119,7 +119,7 @@ class PovzetkarTest {
                     .thenReturn("Transcript summary");
 
             // Act
-            povzetkar.run("TR", false);
+            povzetkar.run("TR", false, testDate);
 
             // Assert
             verify(summarizationService).summarizeFromTranscript("This is the transcript.", "http://url", "Title", "Author", testDateString);
@@ -131,7 +131,7 @@ class PovzetkarTest {
     @DisplayName("Unknown use case should not call any services")
     void run_withUnknownUseCase_doesNothing() {
         // Act
-        povzetkar.run("UNKNOWN_CASE", false);
+        povzetkar.run("UNKNOWN_CASE", false, testDate);
 
         // Assert
         verifyNoInteractions(summarizationService);

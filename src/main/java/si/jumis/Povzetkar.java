@@ -50,10 +50,9 @@ public class Povzetkar {
      *
      * @param useCase The workflow to execute (S_B, TR, S_URL).
      * @param dryRun  If true, simulates the run without making external calls or writing files.
+     * @param date    The date for which the workflow should be run.
      */
-    public void run(String useCase, boolean dryRun) {
-        LocalDate date = LocalDate.of(2025, 7, 19);
-
+    public void run(String useCase, boolean dryRun, LocalDate date) {
         switch (useCase.toUpperCase()) {
             case "S_B" -> runSummarizeAndBriefWorkflow(date, dryRun);
             case "TR" -> runSummarizeTranscriptWorkflow(date);
