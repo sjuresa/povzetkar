@@ -375,6 +375,7 @@ public class Povzetkar {
     private void commitAndPushChanges(String commitMessage) {
         logger.info("Starting Git operations: add, commit, and push...");
         String githubToken = System.getenv("GITHUB_PAT");
+        String githubUsername = System.getenv("GITHUB_USERNAME");
         if (githubToken == null || githubToken.isBlank()) {
             logger.error("GitHub token not found in environment variable GITHUB_PAT.");
             return;
@@ -384,7 +385,10 @@ public class Povzetkar {
             logger.info("Staged all changes.");
             git.commit().setMessage(commitMessage).call();
             logger.info("Committed with message: {}", commitMessage);
-            git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("", githubToken)).call();
+            git.push()
+                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(
+                            githubUsername != null ? githubUsername : "", githubToken))
+                    .call();
             logger.info("Push completed.");
         } catch (Exception e) {
             logger.error("Commit and push changes failed.", e);
