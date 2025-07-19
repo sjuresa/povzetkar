@@ -1,6 +1,7 @@
 package si.jumis;
 
 import com.google.genai.Client;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
@@ -16,27 +17,32 @@ public class Main {
     /**
      * Holds the application's runtime configuration, parsed from command-line arguments.
      */
-    private record RunConfiguration(String useCase, boolean dryRun) {}
+    private record RunConfiguration(String useCase, boolean dryRun) {
+    }
 
     public static void main(String[] args) {
         RunConfiguration config = parseRunConfiguration(args);
 
-        // --- Dependency Injection Setup (Composition Root) ---
-        Client genAiClient = new Client();
-String apiKey = System.getenv("YOUTUBE_API_KEY");
-if (apiKey == null || apiKey.isBlank()) {
-    logger.error("YOUTUBE_API_KEY environment variable not set. Exiting.");
-    return;
-}
+        String apiKey = System.getenv("YOUTUBE_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            logger.error("YOUTUBE_API_KEY environment variable not set. Exiting.");
+            return;
+        }
+        try (Client genAiClient = new Client()) {
+            Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
+            povzetkar.run(config.useCase(), config.dryRun());
+        }
+    }
+
+    @NotNull
+    private static Povzetkar getPovzetkar(Client genAiClient, String apiKey) {
         VideoSummary videoSummary = new VideoSummary(genAiClient);
         ProcessingStateService stateService = new ProcessingStateService();
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey);
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary);
         ResourceReader resourceReader = new ResourceReader();
 
-        // --- Application Runner ---
-        Povzetkar povzetkar = new Povzetkar(summarizationService, videoSummary, resourceReader);
-        povzetkar.run(config.useCase(), config.dryRun());
+        return new Povzetkar(summarizationService, videoSummary, resourceReader);
     }
 
     /**

@@ -9,6 +9,9 @@ import si.jumis.util.FileUtils;
 import si.jumis.util.Sleeper;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -49,7 +52,7 @@ public class VideoSummarizationService {
      * Fetches all new videos from a list of authors, sorts them, then summarizes them.
      * Manages state to avoid re-processing videos.
      */
-    public void summarizeFromAuthors(List<String> authorLines, LocalDate fromDate, LocalDate toDate, boolean dryRun) {
+    public void summarizeFromAuthors(List<String> authorLines, LocalDate fromDate, LocalDate toDate, boolean dryRun, Path outputFilePath) {
         logger.info("Starting new video summary workflow for {} author(s) from {} to {}...", authorLines.size(), fromDate, toDate);
 
         List<Author> authors = parseAuthors(authorLines);
@@ -69,7 +72,7 @@ public class VideoSummarizationService {
         allNewVideos.sort(Comparator.comparing(v -> v.video().publishedAt()));
         logger.info("A total of {} new videos found and sorted. Generating summaries...", allNewVideos.size());
 
-        summarizeVideoBatch(allNewVideos, fromDate, toDate, dryRun);
+        summarizeVideoBatch(allNewVideos, fromDate, toDate, dryRun, outputFilePath);
     }
 
     private List<Author> parseAuthors(List<String> authorLines) {
@@ -117,9 +120,19 @@ public class VideoSummarizationService {
     /**
      * Processes a pre-sorted batch of videos, handling file creation and looping.
      */
-    private void summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate fromDate, LocalDate toDate, boolean dryRun) {
-        String summariesFilename = "summaries_" + formatDateRange(fromDate, toDate, "_to_") + ".md";
-        String promptDateString = formatDateRange(fromDate, toDate, " - ");
+    private void summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate fromDate, LocalDate toDate, boolean dryRun, Path outputFilePath) {
+        String promptDateString = formatDateRange(fromDate, toDate);
+
+        try {
+            prepareOutputDirectory(outputFilePath, dryRun);
+            // Delete the file at the start to ensure a clean slate for the batch
+            if (!dryRun) {
+                FileUtils.deleteIfExists(outputFilePath);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
+            return;
+        }
 
         for (int i = 0; i < sortedVideos.size(); i++) {
             VideoToProcess videoToProcess = sortedVideos.get(i);
@@ -130,9 +143,9 @@ public class VideoSummarizationService {
             if (dryRun) {
                 logger.info("DRY RUN: Skipping summary creation and state update for video: {}", video.title());
             } else {
-                processSingleVideo(videoToProcess, summariesFilename, promptDateString, toDate);
+                processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate);
             }
-            pauseBetweenRequests(i, sortedVideos.size(), dryRun, 60_000);
+            pauseBetweenRequests(i, sortedVideos.size(), dryRun);
         }
         logger.info("Author summarization workflow complete.");
     }
@@ -141,11 +154,11 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private void processSingleVideo(VideoToProcess videoToProcess, String summariesFilename, String promptDateString, LocalDate processingDate) {
+    private void processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate) {
         YouTubeVideo video = videoToProcess.video();
         try {
             String summary = videoSummary.createSummary(video.url(), promptDateString);
-            FileUtils.appendToFile(summariesFilename, "\n\n---\n\n" + summary);
+            FileUtils.appendToFile(outputFilePath, "\n\n---\n\n" + summary);
         } catch (Exception e) {
             handleSummaryFailure(video, e);
         } finally {
@@ -157,7 +170,7 @@ public class VideoSummarizationService {
         logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url(), e);
         try {
             String failureMessage = String.format("Video URL: %s%nError: %s%n---%n", video.url(), e.getMessage());
-            FileUtils.appendToFile("failed_videos.log", failureMessage);
+            FileUtils.appendToFile(Paths.get("failed_videos.log"), failureMessage);
         } catch (IOException logEx) {
             logger.error("Additionally, failed to write to the failure log for video: {}", video.url(), logEx);
         }
@@ -177,16 +190,13 @@ public class VideoSummarizationService {
     /**
      * Creates summaries from a list of video URLs and saves them to a file.
      */
-    public void summarizeFromUrls(List<String> videoUrls, String date, boolean append, boolean dryRun) {
-        String summariesFilename = "summaries_" + date + ".md";
-        logger.info("Preparing to generate {} summaries from URLs and save to {}", videoUrls.size(), summariesFilename);
+    public void summarizeFromUrls(List<String> videoUrls, String date, boolean dryRun, Path outputFilePath) {
+        logger.info("Preparing to generate {} summaries from URLs and save to {}", videoUrls.size(), outputFilePath);
 
         try {
-            boolean fileInitiallyHadContent = append && FileUtils.fileExists(summariesFilename) && FileUtils.fileHasContent(summariesFilename);
+            prepareOutputDirectory(outputFilePath, dryRun);
 
-            if (!append) {
-                FileUtils.deleteIfExists(summariesFilename);
-            }
+            boolean fileInitiallyHadContent = !dryRun && FileUtils.fileExists(outputFilePath) && FileUtils.fileHasContent(outputFilePath);
 
             for (int i = 0; i < videoUrls.size(); i++) {
                 String url = videoUrls.get(i);
@@ -199,13 +209,13 @@ public class VideoSummarizationService {
                     } else {
                         contentToAppend = "\n\n---\n\n" + summary; // Any subsequent item, or first item to a non-empty file.
                     }
-                    FileUtils.appendToFile(summariesFilename, contentToAppend);
+                    FileUtils.appendToFile(outputFilePath, contentToAppend);
                 }
-                pauseBetweenRequests(i, videoUrls.size(), dryRun, 60_000);
+                pauseBetweenRequests(i, videoUrls.size(), dryRun);
             }
             logger.info("URL summarization complete.");
         } catch (IOException e) {
-            logger.error("An error occurred while writing summaries to file: {}", summariesFilename, e);
+            logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
         }
     }
 
@@ -217,6 +227,16 @@ public class VideoSummarizationService {
         return videoSummary.createSummaryFromTranscript(transcript, videoUrl, videoTitle, author, date);
     }
 
+    private void prepareOutputDirectory(Path outputFilePath, boolean dryRun) throws IOException {
+        if (dryRun) {
+            return;
+        }
+        Path parentDir = outputFilePath.getParent();
+        if (parentDir != null) {
+            Files.createDirectories(parentDir);
+        }
+    }
+
     private List<YouTubeVideo> filterVideosByDate(List<YouTubeVideo> videos, LocalDate fromDate, LocalDate toDate) {
         Instant startInstant = fromDate.atStartOfDay(ZoneId.of("UTC")).toInstant();
         Instant endInstant = toDate.plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant();
@@ -225,12 +245,13 @@ public class VideoSummarizationService {
                 .toList();
     }
 
-    private String formatDateRange(LocalDate fromDate, LocalDate toDate, String separator) {
+    private String formatDateRange(LocalDate fromDate, LocalDate toDate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.M.yyyy");
-        return fromDate.equals(toDate) ? fromDate.format(formatter) : String.format("%s%s%s", fromDate.format(formatter), separator, toDate.format(formatter));
+        return fromDate.equals(toDate) ? fromDate.format(formatter) : String.format("%s%s%s", fromDate.format(formatter), " - ", toDate.format(formatter));
     }
 
-    private void pauseBetweenRequests(int currentIndex, int totalSize, boolean dryRun, long sleepMillis) {
+    private void pauseBetweenRequests(int currentIndex, int totalSize, boolean dryRun) {
+        long sleepMillis = 60_000;
         if (currentIndex < totalSize - 1 && !dryRun) {
             logger.info("Waiting for {} seconds before processing the next item...", sleepMillis / 1000);
             try {

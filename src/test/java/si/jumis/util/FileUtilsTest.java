@@ -24,12 +24,12 @@ class FileUtilsTest {
         String newContent = "Goodbye, World!";
 
         // Act & Assert: First save
-        FileUtils.saveToFile(testFile.toString(), initialContent);
+        FileUtils.saveToFile(testFile, initialContent);
         assertTrue(Files.exists(testFile));
         assertEquals(initialContent, Files.readString(testFile));
 
         // Act & Assert: Second save (overwrite)
-        FileUtils.saveToFile(testFile.toString(), newContent);
+        FileUtils.saveToFile(testFile, newContent);
         assertEquals(newContent, Files.readString(testFile));
     }
 
@@ -42,12 +42,12 @@ class FileUtilsTest {
         String secondContent = "Second line.";
 
         // Act & Assert: First append (creates file)
-        FileUtils.appendToFile(testFile.toString(), firstContent);
+        FileUtils.appendToFile(testFile, firstContent);
         assertTrue(Files.exists(testFile));
         assertEquals(firstContent, Files.readString(testFile));
 
         // Act & Assert: Second append
-        FileUtils.appendToFile(testFile.toString(), secondContent);
+        FileUtils.appendToFile(testFile, secondContent);
         assertEquals(firstContent + secondContent, Files.readString(testFile));
     }
 
@@ -61,12 +61,12 @@ class FileUtilsTest {
 
         // Act & Assert: Delete existing file
         assertTrue(Files.exists(existingFile));
-        FileUtils.deleteIfExists(existingFile.toString());
+        FileUtils.deleteIfExists(existingFile);
         assertFalse(Files.exists(existingFile));
 
         // Act & Assert: "Delete" non-existing file (should not throw)
         assertFalse(Files.exists(nonExistingFile));
-        assertDoesNotThrow(() -> FileUtils.deleteIfExists(nonExistingFile.toString()));
+        assertDoesNotThrow(() -> FileUtils.deleteIfExists(nonExistingFile));
     }
 
     @Test
@@ -76,13 +76,13 @@ class FileUtilsTest {
         Path testFile = tempDir.resolve("exists_test.txt");
 
         // Assert: Before creation
-        assertFalse(FileUtils.fileExists(testFile.toString()));
+        assertFalse(FileUtils.fileExists(testFile));
 
         // Act: Create file
         Files.createFile(testFile);
 
         // Assert: After creation
-        assertTrue(FileUtils.fileExists(testFile.toString()));
+        assertTrue(FileUtils.fileExists(testFile));
     }
 
     @Test
@@ -97,8 +97,8 @@ class FileUtilsTest {
         Files.writeString(contentFile, "some content");
 
         // Assert
-        assertFalse(FileUtils.fileHasContent(emptyFile.toString()), "Empty file should not have content");
-        assertTrue(FileUtils.fileHasContent(contentFile.toString()), "File with content should report true");
-        assertFalse(FileUtils.fileHasContent(nonExistentFile.toString()), "Non-existent file should not have content");
+        assertFalse(FileUtils.fileHasContent(emptyFile), "Empty file should not have content");
+        assertTrue(FileUtils.fileHasContent(contentFile), "File with content should report true");
+        assertFalse(FileUtils.fileHasContent(nonExistentFile), "Non-existent file should not have content");
     }
 }
