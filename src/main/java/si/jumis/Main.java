@@ -23,7 +23,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        RunConfiguration config = parseRunConfiguration(args);
+        String useCase = parseRunConfiguration(args);
 
         String apiKey = System.getenv("YOUTUBE_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
@@ -32,7 +32,7 @@ public class Main {
         }
         try (Client genAiClient = new Client()) {
             Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
-            povzetkar.run(config.useCase(), LocalDate.of(2025, 7, 19));
+            povzetkar.run(useCase, LocalDate.of(2025, 7, 20));
         }
     }
 
@@ -54,7 +54,7 @@ public class Main {
      * @param args Command-line arguments. Supports --use-case=[S_B|TR|S_URL].
      * @return A {@link RunConfiguration} object.
      */
-    private static RunConfiguration parseRunConfiguration(String[] args) {
+    private static String parseRunConfiguration(String[] args) {
         String useCase = "S_B"; // Default use case
 
         for (String arg : args) {
@@ -64,6 +64,6 @@ public class Main {
         }
 
         logger.info("Running with configuration: useCase='{}'", useCase);
-        return new RunConfiguration(useCase);
+        return useCase;
     }
 }

@@ -383,7 +383,9 @@ public class Povzetkar {
         try (Git git = Git.open(new File(TLDRLY_DIR.toString()))) {
             git.add().addFilepattern(".").call();
             logger.info("Staged all changes.");
-            git.commit().setMessage(commitMessage).call();
+            git.commit()
+                    .setCommitter("Povzetkar", "sjuresa@gmail.com")
+                    .setMessage(commitMessage).call();
             logger.info("Committed with message: {}", commitMessage);
             git.push()
                     .setCredentialsProvider(new UsernamePasswordCredentialsProvider(

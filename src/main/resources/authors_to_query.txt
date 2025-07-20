@@ -12,3 +12,7 @@ BalkanTechCrypto, UC-0Hk4yjo7pfxrRq9vJke-Q
 #TechnicalRoundup, UCYStZ8mMNGOVTj-Z4AbbSrQ
 BitcoinJack, UCBWoZW80FitJnimvLi8DIxg
 AltcoinDaily, UCbLhGKVY-bJPcawebgtNfbw
+Bitopexofficial, UCmTfBaQ8Q-E0PTM15xq3Y4A
+CryptoBanterGroup, UCN9Nj4tjXbVTLYWN0EKly_Q
+CryptoBanterPlus, UCybasP-2D2b5kTLAb_kvhWQ
+100xclub, UCJuvMjmY4-KFrBJXx-5aRKQ

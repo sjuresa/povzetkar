@@ -144,7 +144,8 @@ public class VideoSummarizationService {
                 VideoToProcess videoToProcess = sortedVideos.get(i);
                 YouTubeVideo video = videoToProcess.video();
 
-                logger.info("({}/{}) Summarizing: [{}]({}) by {}, {}", i + 1, sortedVideos.size(), video.title(), video.url(), video.authorName(), video.publishedAt());
+                logger.info("({}/{}) Summarizing: [{}]({}) by {}, {}, {}", i + 1, sortedVideos.size(), video.title(),
+                        video.url(), video.authorName(), video.publishedAt(), video.duration());
 
                 if (i == 0 && !fileInitiallyHadContent) {
                     separator = "";
@@ -153,7 +154,7 @@ public class VideoSummarizationService {
                 }
                 processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator);
                 processedVideos.add(video);
-                pauseBetweenRequests(i, sortedVideos.size(), 60_000);
+                pauseBetweenRequests(60_000);
             }
         } catch (IOException e) {
             logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
@@ -180,7 +181,7 @@ public class VideoSummarizationService {
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {
-        logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url(), e);
+        logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url());
         try {
             String failureMessage = String.format("Video URL: %s%nError: %s%n---%n", video.url(), e.getMessage());
             FileUtils.appendToFile(Paths.get("failed_videos.log"), failureMessage);
@@ -222,7 +223,9 @@ public class VideoSummarizationService {
                     contentToAppend = "\n\n---\n\n" + summary; // Any subsequent item, or first item to a non-empty file.
                 }
                 FileUtils.appendToFile(outputFilePath, contentToAppend);
-                pauseBetweenRequests(i, videoUrls.size(), 60_000);
+                if (i < videoUrls.size() - 1) {
+                    pauseBetweenRequests(60_000);
+                }
             }
             logger.info("URL summarization complete.");
         } catch (IOException e) {
@@ -258,15 +261,13 @@ public class VideoSummarizationService {
         return fromDate.equals(toDate) ? fromDate.format(formatter) : String.format("%s%s%s", fromDate.format(formatter), separator, toDate.format(formatter));
     }
 
-    private void pauseBetweenRequests(int currentIndex, int totalSize, long sleepMillis) {
-        if (currentIndex < totalSize - 1) {
-            logger.info("Waiting for {} seconds before processing the next item...", sleepMillis / 1000);
-            try {
-                sleeper.sleep(sleepMillis);
-            } catch (InterruptedException e) {
-                logger.warn("Sleep timer was interrupted.", e);
-                Thread.currentThread().interrupt();
-            }
+    private void pauseBetweenRequests(long sleepMillis) {
+        logger.info("Waiting for {} seconds before processing the next item...", sleepMillis / 1000);
+        try {
+            sleeper.sleep(sleepMillis);
+        } catch (InterruptedException e) {
+            logger.warn("Sleep timer was interrupted.", e);
+            Thread.currentThread().interrupt();
         }
     }
 }
