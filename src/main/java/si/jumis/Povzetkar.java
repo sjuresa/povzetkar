@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -220,14 +219,12 @@ public class Povzetkar {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
         sb.append(String.format("### Update %s\n\n", timestamp));
 
-        lastBatch.stream()
-                .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
-                .forEach(video -> {
-                    String durationStr = formatDuration(video.duration());
-                    String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-                    sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                            video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
-                });
+        lastBatch.forEach(video -> {
+            String durationStr = formatDuration(video.duration());
+            String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
+            sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
+                    video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
+        });
         sb.append("\n---\n\n");
         return sb.toString();
     }
@@ -244,7 +241,6 @@ public class Povzetkar {
                     .map(this::parseBriefingFile)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .sorted(Comparator.comparing(BriefingInfo::date).reversed())
                     .toList();
         }
     }
@@ -291,14 +287,12 @@ public class Povzetkar {
         if (!lastBatch.isEmpty()) {
             String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
-            lastBatch.stream()
-                    .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
-                    .forEach(video -> {
-                        String durationStr = formatDuration(video.duration());
-                        String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-                        sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                                video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
-                    });
+            lastBatch.forEach(video -> {
+                String durationStr = formatDuration(video.duration());
+                String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
+                sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
+                        video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
+            });
             sb.append("\n");
         }
 
@@ -361,14 +355,12 @@ public class Povzetkar {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss"));
         sb.append(String.format("Update %s", timestamp));
 
-        lastBatch.stream()
-                .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
-                .forEach(video -> {
-                    String durationStr = formatDuration(video.duration());
-                    String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
-                    sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
-                            video.title(), video.authorName(), publishedAtStr, durationStr));
-                });
+        lastBatch.forEach(video -> {
+            String durationStr = formatDuration(video.duration());
+            String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
+            sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
+                    video.title(), video.authorName(), publishedAtStr, durationStr));
+        });
         return sb.toString();
     }
 
