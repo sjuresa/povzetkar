@@ -193,7 +193,7 @@ public class YouTubeDataService {
         }
         PlaylistItem lastItemInPage = currentPageItems.getLast();
         Instant lastItemPublishedAt = Instant.ofEpochMilli(lastItemInPage.getSnippet().getPublishedAt().getValue());
-        Instant queryStopDate = startDate.minusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant();
+        Instant queryStopDate = startDate.minusDays(1).atStartOfDay(ZoneId.of("UTC+1")).toInstant();
         return lastItemPublishedAt.isBefore(queryStopDate);
     }
 
