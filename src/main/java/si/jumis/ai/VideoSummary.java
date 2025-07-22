@@ -108,8 +108,8 @@ public class VideoSummary {
                 return response;
             } catch (ClientException e) {
                 // Check if it's a rate limit error (HTTP 429) and if we have more attempts left
-                if (e.getMessage() != null && e.getMessage().contains("429") && attempt < MAX_ATTEMPTS) {
-                    logger.warn("API rate limit exceeded on attempt {}. Waiting {}s before retrying...", attempt, RETRY_DELAY_MS / 1000);
+                if (e.getMessage() != null && (e.getMessage().contains("429") || e.getMessage().contains("503")) && attempt < MAX_ATTEMPTS) {
+                    logger.warn("{}} on attempt {}. Waiting {}s before retrying...", e.getMessage(), attempt, RETRY_DELAY_MS / 1000);
                     try {
                         sleeper.sleep(RETRY_DELAY_MS);
                     } catch (InterruptedException ie) {
@@ -119,7 +119,7 @@ public class VideoSummary {
                 } else {
                     // Either not a rate limit error or we've exhausted retries.
                     // Using string concatenation here to make the logger method signature unambiguous for static analysis tools.
-logger.error("API call failed on attempt {} and will not be retried.", attempt, e);
+                    logger.error("API call failed on attempt {} and will not be retried.", attempt, e);
                     throw e; // Rethrow the exception
                 }
             }
