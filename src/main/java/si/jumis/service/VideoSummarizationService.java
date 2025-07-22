@@ -152,8 +152,9 @@ public class VideoSummarizationService {
                 } else {
                     separator = "\n\n---\n\n";
                 }
-                processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator);
-                processedVideos.add(video);
+                if (processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator)) {
+                    processedVideos.add(video);
+                }
                 pauseBetweenRequests(60_000);
             }
         } catch (IOException e) {
@@ -168,16 +169,18 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private void processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate, String separator) {
+    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
         try {
             String summary = videoSummary.createSummary(video.url(), promptDateString);
             FileUtils.appendToFile(outputFilePath, separator + summary);
+            return true;
         } catch (Exception e) {
             handleSummaryFailure(video, e);
         } finally {
             updateProcessingState(videoToProcess, processingDate);
         }
+        return false;
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {
