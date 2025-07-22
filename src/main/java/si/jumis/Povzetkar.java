@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -241,6 +242,7 @@ public class Povzetkar {
                     .map(this::parseBriefingFile)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
+                    .sorted(Comparator.comparing(BriefingInfo::date).reversed())
                     .toList();
         }
     }
