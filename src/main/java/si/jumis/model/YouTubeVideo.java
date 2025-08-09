@@ -22,4 +22,23 @@ public record YouTubeVideo(
         String channelId,
         Instant publishedAt,
         Duration duration
-) {}
+) {
+    /**
+     * Formats the video's duration into a human-readable HH:MM:SS or MM:SS format.
+     *
+     * @return A formatted string representing the duration.
+     */
+    public String formattedDuration() {
+        if (duration == null) {
+            return "N/A";
+        }
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+        if (hours > 0) {
+            return String.format("%d:%02d:%02d", hours, minutes, seconds);
+        } else {
+            return String.format("%d:%02d", minutes, seconds);
+        }
+    }
+}

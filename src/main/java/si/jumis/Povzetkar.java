@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -221,10 +220,9 @@ public class Povzetkar {
         sb.append(String.format("### Update %s\n\n", timestamp));
 
         lastBatch.forEach(video -> {
-            String durationStr = formatDuration(video.duration());
             String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
             sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                    video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
+                    video.title(), video.url(), video.authorName(), publishedAtStr, video.formattedDuration()));
         });
         sb.append("\n---\n\n");
         return sb.toString();
@@ -290,10 +288,9 @@ public class Povzetkar {
             String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
             lastBatch.forEach(video -> {
-                String durationStr = formatDuration(video.duration());
                 String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
                 sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                        video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
+                        video.title(), video.url(), video.authorName(), publishedAtStr, video.formattedDuration()));
             });
             sb.append("\n");
         }
@@ -336,20 +333,6 @@ public class Povzetkar {
         return sb.toString();
     }
 
-    private String formatDuration(Duration duration) {
-        if (duration == null) {
-            return "N/A";
-        }
-        long hours = duration.toHours();
-        long minutes = duration.toMinutesPart();
-        long seconds = duration.toSecondsPart();
-        if (hours > 0) {
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
-        } else {
-            return String.format("%d:%02d", minutes, seconds);
-        }
-    }
-
     // --- Git Integration ---
 
     private String createCommitMessage(List<YouTubeVideo> lastBatch) {
@@ -358,10 +341,9 @@ public class Povzetkar {
         sb.append(String.format("Update %s", timestamp));
 
         lastBatch.forEach(video -> {
-            String durationStr = formatDuration(video.duration());
             String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
             sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
-                    video.title(), video.authorName(), publishedAtStr, durationStr));
+                    video.title(), video.authorName(), publishedAtStr, video.formattedDuration()));
         });
         return sb.toString();
     }

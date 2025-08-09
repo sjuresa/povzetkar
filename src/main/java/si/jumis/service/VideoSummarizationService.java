@@ -144,9 +144,11 @@ public class VideoSummarizationService {
                 VideoToProcess videoToProcess = sortedVideos.get(i);
                 YouTubeVideo video = videoToProcess.video();
 
-                logger.info("({}/{}) Summarizing: [{}]({}) by {}, {}, {}", i + 1, sortedVideos.size(), video.title(),
-                        video.url(), video.authorName(), video.publishedAt(), video.duration());
-
+                if (logger.isInfoEnabled()) {
+                    logger.info("({}/{}) Summarizing: [{}]({})\n  by {}, Published at: {}, duration: {}", i + 1,
+                            sortedVideos.size(), video.title(), video.url(), video.authorName(),
+                            video.publishedAt(), video.formattedDuration());
+                }
                 if (i == 0 && !fileInitiallyHadContent) {
                     separator = "";
                 } else {
@@ -169,7 +171,8 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate, String separator) {
+    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString,
+                                       LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
         try {
             String summary = videoSummary.createSummary(video.url(), promptDateString);
