@@ -173,7 +173,7 @@ class VideoSummarizationServiceTest {
 
             mockedFileUtils.when(() -> FileUtils.fileExists(any(Path.class))).thenReturn(true);
             mockedFileUtils.when(() -> FileUtils.fileHasContent(any(Path.class))).thenReturn(true);
-            when(videoSummary.createSummary("url1", date)).thenReturn(summary1);
+            when(videoSummary.createSummaryForURL("url1", date)).thenReturn(summary1);
 
             // Act
             summarizationService.summarizeFromUrls(urls, date, urlSummaryPath);

@@ -41,10 +41,14 @@ public class VideoSummary {
         this.sleeper = sleeper;
     }
 
-    public String createSummary(String videoUrl, String date) {
+    public String createSummaryForURL(String videoUrl, String date) {
+        return createSummary(videoUrl, Prompts.VIDEO_SUMMARY_PROMPT_URL.formatted(videoUrl, videoUrl, date));
+    }
+
+    public String createSummary(String videoUrl, String prompt) {
         Content content =
                 Content.fromParts(
-                        Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted(videoUrl, videoUrl, date)),
+                        Part.fromText(prompt),
                         Part.fromUri(videoUrl, "video/mp4"));
 
         GenerateContentResponse response = generateContentWithRetry(content, "video summary from URL");
