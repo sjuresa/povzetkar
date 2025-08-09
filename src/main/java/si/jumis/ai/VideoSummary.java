@@ -13,6 +13,8 @@ import si.jumis.util.Sleeper;
 public class VideoSummary {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummary.class);
     private static final String FLASH_MODEL_NAME = "gemini-2.5-flash";
+    private static final int MAX_API_ATTEMPTS = 3;
+    private static final long API_RETRY_DELAY_MS = 60_000;
 
     private final Models models;
     private final Sleeper sleeper;
@@ -92,39 +94,62 @@ public class VideoSummary {
      */
     private GenerateContentResponse generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
-        final int MAX_ATTEMPTS = 3; // 1 initial try + 2 retries
-        final long RETRY_DELAY_MS = 60_000;
 
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
             try {
                 GenerateContentResponse response = models.generateContent(FLASH_MODEL_NAME, content, null);
-
-                if (logger.isInfoEnabled()) {
-                    long endTime = System.nanoTime();
-                    double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-                    logger.info("API call for {} finished in {} seconds.", callDescription, durationSeconds);
-                }
-
+                logApiCallDuration(startTime, callDescription);
                 return response;
             } catch (ClientException e) {
-                // Check if it's a rate limit error (HTTP 429) and if we have more attempts left
-                if (e.getMessage() != null && (e.getMessage().contains("429") || e.getMessage().contains("503")) && attempt < MAX_ATTEMPTS) {
-                    logger.warn("{}} on attempt {}. Waiting {}s before retrying...", e.getMessage(), attempt, RETRY_DELAY_MS / 1000);
-                    try {
-                        sleeper.sleep(RETRY_DELAY_MS);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        throw new ApiRetryInterruptedException("Interrupted while waiting to retry API call", ie);
-                    }
-                } else {
-                    // Either not a rate limit error or we've exhausted retries.
-                    // Using string concatenation here to make the logger method signature unambiguous for static analysis tools.
-                    logger.error("API call failed on attempt {} and will not be retried.", attempt, e);
-                    throw e; // Rethrow the exception
-                }
+                handleApiError(e, attempt);
             }
         }
         // This line should be unreachable due to the exception handling above.
-        throw new IllegalStateException("Failed to generate content after " + MAX_ATTEMPTS + " retries, but no exception was thrown.");
+        throw new IllegalStateException("Failed to generate content after " + MAX_API_ATTEMPTS + " retries, but no exception was thrown.");
+    }
+
+    /**
+     * Handles exceptions from the Gemini API call, deciding whether to retry or rethrow.
+     */
+    private void handleApiError(ClientException e, int attempt) {
+        if (isRetriable(e) && attempt < MAX_API_ATTEMPTS) {
+            logAndSleepForRetry(e, attempt);
+        } else {
+            logger.error("API call failed on attempt {} and will not be retried.", attempt, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Checks if a ClientException is due to a retriable error like rate limiting (429) or server overload (503).
+     */
+    private boolean isRetriable(ClientException e) {
+        String message = e.getMessage();
+        return message != null && (message.contains("429") || message.contains("503"));
+    }
+
+    /**
+     * Logs a warning and pauses execution before the next retry attempt.
+     */
+    private void logAndSleepForRetry(ClientException e, int attempt) {
+        logger.warn("API call failed with retriable error on attempt {}: {}. Waiting {}s before retrying...",
+                attempt, e.getMessage(), API_RETRY_DELAY_MS / 1000);
+        try {
+            sleeper.sleep(API_RETRY_DELAY_MS);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new ApiRetryInterruptedException("Interrupted while waiting to retry API call", ie);
+        }
+    }
+
+    /**
+     * Logs the duration of a successful API call.
+     */
+    private void logApiCallDuration(long startTime, String callDescription) {
+        if (logger.isInfoEnabled()) {
+            long endTime = System.nanoTime();
+            double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+            logger.info(String.format("API call for %s finished in %.2f seconds.", callDescription, durationSeconds));
+        }
     }
 }

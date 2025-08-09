@@ -134,7 +134,7 @@ class VideoSummarizationServiceTest {
             mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(testOutputPath), anyString()), never());
 
             String expectedFailureLogMessage = String.format("Video URL: %s%nError: %s%n---%n", video1.url(), errorMessage);
-            mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(Paths.get("failed_videos.log")), eq(expectedFailureLogMessage)));
+            mockedFileUtils.verify(() -> FileUtils.appendToFile(Paths.get("failed_videos.log"), expectedFailureLogMessage));
 
             verify(stateService).updateLastProcessedVideoForDate("channel1", video1, today);
             verify(stateService).saveState(contains("Updated after processing video ID: " + video1.id()));
@@ -175,7 +175,7 @@ class VideoSummarizationServiceTest {
 
             // Assert
             mockedFileUtils.verify(() -> FileUtils.deleteIfExists(any(Path.class)), never());
-            mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(urlSummaryPath), eq("\n\n---\n\n" + summary1)));
+            mockedFileUtils.verify(() -> FileUtils.appendToFile(urlSummaryPath, "\n\n---\n\n" + summary1));
         }
     }
 

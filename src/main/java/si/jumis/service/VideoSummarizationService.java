@@ -26,6 +26,7 @@ import java.util.List;
  */
 public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
+    private static final long PAUSE_BETWEEN_REQUESTS_MS = 60_000;
 
     private record Author(String name, String channelId) {}
     private record VideoToProcess(YouTubeVideo video, String channelId) {}
@@ -126,7 +127,7 @@ public class VideoSummarizationService {
      * @return A list of the videos that were actually processed (not in dry run).
      */
     private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate fromDate, LocalDate toDate, Path outputFilePath) {
-        String promptDateString = formatDateRange(fromDate, toDate, " - ");
+        String promptDateString = formatDateRange(fromDate, toDate);
         List<YouTubeVideo> processedVideos = new ArrayList<>();
 
         try {
@@ -157,7 +158,9 @@ public class VideoSummarizationService {
                 if (processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator)) {
                     processedVideos.add(video);
                 }
-                pauseBetweenRequests(60_000);
+                if (i < sortedVideos.size() - 1) {
+                    pauseBetweenRequests();
+                }
             }
         } catch (IOException e) {
             logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
@@ -230,7 +233,7 @@ public class VideoSummarizationService {
                 }
                 FileUtils.appendToFile(outputFilePath, contentToAppend);
                 if (i < videoUrls.size() - 1) {
-                    pauseBetweenRequests(60_000);
+                    pauseBetweenRequests();
                 }
             }
             logger.info("URL summarization complete.");
@@ -262,15 +265,16 @@ public class VideoSummarizationService {
                 .toList();
     }
 
-    private String formatDateRange(LocalDate fromDate, LocalDate toDate, String separator) {
+    private String formatDateRange(LocalDate fromDate, LocalDate toDate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.M.yyyy");
+        String separator = " - ";
         return fromDate.equals(toDate) ? fromDate.format(formatter) : String.format("%s%s%s", fromDate.format(formatter), separator, toDate.format(formatter));
     }
 
-    private void pauseBetweenRequests(long sleepMillis) {
-        logger.info("Waiting for {} seconds before processing the next item...", sleepMillis / 1000);
+    private void pauseBetweenRequests() {
+        logger.info("Waiting for {} seconds before processing the next item...", PAUSE_BETWEEN_REQUESTS_MS / 1000);
         try {
-            sleeper.sleep(sleepMillis);
+            sleeper.sleep(PAUSE_BETWEEN_REQUESTS_MS);
         } catch (InterruptedException e) {
             logger.warn("Sleep timer was interrupted.", e);
             Thread.currentThread().interrupt();
