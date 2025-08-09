@@ -112,7 +112,6 @@ public class YouTubeDataService {
 
     /**
      * Fetches all playlist items from a channel's upload playlist, handling pagination.
-     * This method has been refactored to reduce complexity and improve readability.
      */
     private List<PlaylistItem> fetchPlaylistItems(String uploadsPlaylistId, LocalDate startDate, Long maxTotal, String stopAtVideoId) throws IOException {
         List<PlaylistItem> allItems = new ArrayList<>();
@@ -193,7 +192,7 @@ public class YouTubeDataService {
         }
         PlaylistItem lastItemInPage = currentPageItems.getLast();
         Instant lastItemPublishedAt = Instant.ofEpochMilli(lastItemInPage.getSnippet().getPublishedAt().getValue());
-        Instant queryStopDate = startDate.minusDays(1).atStartOfDay(ZoneId.of("UTC+1")).toInstant();
+        Instant queryStopDate = startDate.minusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant();
         return lastItemPublishedAt.isBefore(queryStopDate);
     }
 
