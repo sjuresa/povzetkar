@@ -279,7 +279,7 @@ public class Povzetkar {
     private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch, List<Author> authors) {
         StringBuilder sb = new StringBuilder();
         sb.append("# Intelligence Briefing Dashboard\n");
-        sb.append("Your daily Povzetkar analysis of key crypto topics and trends.\n\n");
+        sb.append("Your daily Povzetkar analysis of key topics and trends.\n\n");
 
         if (!lastBatch.isEmpty()) {
             String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
