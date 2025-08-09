@@ -5,6 +5,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
@@ -32,7 +33,6 @@ import java.util.stream.Collectors;
  */
 public class Povzetkar {
     private static final Logger logger = LoggerFactory.getLogger(Povzetkar.class);
-    public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
     public static final String URLS_TO_SUMMARIZE_FILENAME = "videos_to_summarize.txt";
     public static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.M.yyyy");
     private static final DateTimeFormatter YYYY_FORMAT = DateTimeFormatter.ofPattern("yyyy");
@@ -74,23 +74,23 @@ public class Povzetkar {
     }
 
     void runSummarizeAndBriefWorkflow(LocalDate date) {
-        List<String> authorsToSummarize = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
+        List<Author> authors = summarizationService.getAuthorsWithDetails();
         String summaryFileName = "summaries_" + date.format(DMY_DATE_FORMAT) + ".md";
         Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
 
-        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authorsToSummarize, date, date, summaryFilePath);
+        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authors, date, date, summaryFilePath);
 
         if (processedVideos.isEmpty()) {
             logger.info("No new videos were processed. Skipping briefing, documentation, and Git operations.");
             return;
         }
         createBriefingFromFileUseCase(date, summaryFilePath);
-        updateDocsAndCommit(processedVideos);
+        updateDocsAndCommit(processedVideos, authors);
     }
 
-    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos) {
+    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos, List<Author> authors) {
         try {
-            updateDocumentationFiles(processedVideos);
+            updateDocumentationFiles(processedVideos, authors);
             String commitMessage = createCommitMessage(processedVideos);
             commitAndPushChanges(commitMessage);
         } catch (IOException e) {
@@ -186,7 +186,7 @@ public class Povzetkar {
         }
     }
 
-    private void updateDocumentationFiles(List<YouTubeVideo> lastBatch) throws IOException {
+    private void updateDocumentationFiles(List<YouTubeVideo> lastBatch, List<Author> authors) throws IOException {
         logger.info("Updating documentation files: README.md and updates.md...");
         List<BriefingInfo> briefings = findAndParseBriefings();
         if (briefings.isEmpty() && lastBatch.isEmpty()) {
@@ -194,7 +194,7 @@ public class Povzetkar {
             return;
         }
 
-        String readmeContent = generateReadmeContent(briefings, lastBatch);
+        String readmeContent = generateReadmeContent(briefings, lastBatch, authors);
         FileUtils.saveToFile(README_PATH, readmeContent);
         logger.info("Successfully updated {}", README_PATH);
 
@@ -279,7 +279,7 @@ public class Povzetkar {
         }
     }
 
-    private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch) {
+    private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch, List<Author> authors) {
         StringBuilder sb = new StringBuilder();
         sb.append("# Intelligence Briefing Dashboard\n");
         sb.append("Your daily Povzetkar analysis of key crypto topics and trends.\n\n");
@@ -315,21 +315,18 @@ public class Povzetkar {
         }
 
         sb.append("## Authors\n");
-        List<String> authorLines = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
-        String authorsMarkdown = authorLines.stream()
-                .map(line -> {
-                    String[] parts = line.split(",");
-                    if (parts.length == 2) {
-                        String handle = parts[0].trim();
-                        String channelId = parts[1].trim();
-                        return String.format("[%s](https://www.youtube.com/channel/%s)", handle, channelId);
-                    }
-                    return "";
+        String authorsMarkdown = authors.stream()
+                .sorted(Comparator.comparing(Author::name))
+                .map(author -> {
+                    String subs = author.subscriberCount() > 0 ? String.format(" (%,d subscribers)", author.subscriberCount()) : "";
+                    return String.format("* [%s](https://www.youtube.com/channel/%s)%s",
+                            author.name(), author.channelId(), subs);
                 })
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.joining(", "));
-        sb.append(authorsMarkdown);
+                .collect(Collectors.joining("\n"));
 
+        if (!authorsMarkdown.isEmpty()) {
+            sb.append(authorsMarkdown);
+        }
         return sb.toString();
     }
 
