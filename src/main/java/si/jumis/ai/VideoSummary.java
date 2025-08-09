@@ -42,7 +42,7 @@ public class VideoSummary {
     }
 
     public String createSummaryForURL(String videoUrl, String date) {
-        return createSummary(videoUrl, Prompts.VIDEO_SUMMARY_PROMPT.formatted(videoUrl, videoUrl, date));
+        return createSummary(videoUrl, Prompts.VIDEO_SUMMARY_PROMPT_URL.formatted(videoUrl, videoUrl, date));
     }
 
     public String createSummary(String videoUrl, String prompt) {

@@ -162,7 +162,7 @@ public class VideoSummarizationService {
                 if (logger.isInfoEnabled()) {
                     logger.info("({}/{}) Summarizing: [{}]({})\n  by {}, Published at: {}, duration: {}", i + 1,
                             sortedVideos.size(), video.title(), video.url(), video.authorName(),
-                            video.publishedAt(), video.formattedDuration());
+                            video.formattedPublishedAt(), video.formattedDuration());
                 }
                 if (i == 0 && !fileInitiallyHadContent) {
                     separator = "";
@@ -192,7 +192,7 @@ public class VideoSummarizationService {
         try {
             String summary = videoSummary.createSummary(video.url(),
                     Prompts.VIDEO_SUMMARY_PROMPT.formatted(video.url(), video.title(), video.url(), video.authorName(),
-                            video.publishedAt(), video.formattedDuration()));
+                            video.formattedPublishedAt(), video.formattedDuration()));
             FileUtils.appendToFile(outputFilePath, separator + summary);
             return true;
         } catch (Exception e) {

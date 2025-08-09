@@ -219,11 +219,8 @@ public class Povzetkar {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
         sb.append(String.format("### Update %s\n\n", timestamp));
 
-        lastBatch.forEach(video -> {
-            String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-            sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                    video.title(), video.url(), video.authorName(), publishedAtStr, video.formattedDuration()));
-        });
+        lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
+                video.title(), video.url(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
         sb.append("\n---\n\n");
         return sb.toString();
     }
@@ -287,11 +284,8 @@ public class Povzetkar {
         if (!lastBatch.isEmpty()) {
             String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
-            lastBatch.forEach(video -> {
-                String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-                sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                        video.title(), video.url(), video.authorName(), publishedAtStr, video.formattedDuration()));
-            });
+            lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
+                    video.title(), video.url(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
             sb.append("\n");
         }
 
@@ -337,11 +331,8 @@ public class Povzetkar {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss"));
         sb.append(String.format("Update %s", timestamp));
 
-        lastBatch.forEach(video -> {
-            String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
-            sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
-                    video.title(), video.authorName(), publishedAtStr, video.formattedDuration()));
-        });
+        lastBatch.forEach(video -> sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
+                video.title(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
         return sb.toString();
     }
 
