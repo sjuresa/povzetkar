@@ -2,6 +2,7 @@ package si.jumis.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.jumis.ai.Prompts;
 import si.jumis.ai.VideoSummary;
 import si.jumis.ai.YouTubeDataService;
 import si.jumis.model.Author;
@@ -85,7 +86,7 @@ public class VideoSummarizationService {
         allNewVideos.sort(Comparator.comparing(v -> v.video().publishedAt()));
         logger.info("A total of {} new videos found and sorted. Generating summaries...", allNewVideos.size());
 
-        return summarizeVideoBatch(allNewVideos, fromDate, toDate, outputFilePath);
+        return summarizeVideoBatch(allNewVideos, toDate, outputFilePath);
     }
 
     private List<Author> fetchAuthors(List<String> authorLines) {
@@ -140,8 +141,7 @@ public class VideoSummarizationService {
      *
      * @return A list of the videos that were actually processed (not in dry run).
      */
-    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate fromDate, LocalDate toDate, Path outputFilePath) {
-        String promptDateString = formatDateRange(fromDate, toDate);
+    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate toDate, Path outputFilePath) {
         List<YouTubeVideo> processedVideos = new ArrayList<>();
 
         try {
@@ -169,7 +169,7 @@ public class VideoSummarizationService {
                 } else {
                     separator = "\n\n---\n\n";
                 }
-                if (processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator)) {
+                if (processSingleVideo(videoToProcess, outputFilePath, toDate, separator)) {
                     processedVideos.add(video);
                 }
                 pauseBetweenRequests();
@@ -186,11 +186,13 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString,
+    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath,
                                        LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
         try {
-            String summary = videoSummary.createSummary(video.url(), promptDateString);
+            String summary = videoSummary.createSummary(video.url(),
+                    Prompts.VIDEO_SUMMARY_PROMPT.formatted(video.url(), video.title(), video.url(), video.authorName(),
+                            video.publishedAt(), video.formattedDuration()));
             FileUtils.appendToFile(outputFilePath, separator + summary);
             return true;
         } catch (Exception e) {
@@ -236,7 +238,7 @@ public class VideoSummarizationService {
             for (int i = 0; i < videoUrls.size(); i++) {
                 String url = videoUrls.get(i);
                 logger.info("({}/{}) Processing URL: {}", i + 1, videoUrls.size(), url);
-                String summary = videoSummary.createSummary(url, date);
+                String summary = videoSummary.createSummaryForURL(url, date);
                 String contentToAppend;
                 if (i == 0 && !fileInitiallyHadContent) {
                     contentToAppend = summary; // First item to an empty/new file, no leading separator.
@@ -275,12 +277,6 @@ public class VideoSummarizationService {
         return videos.stream()
                 .filter(v -> !v.publishedAt().isBefore(startInstant) && v.publishedAt().isBefore(endInstant))
                 .toList();
-    }
-
-    private String formatDateRange(LocalDate fromDate, LocalDate toDate) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.M.yyyy");
-        String separator = " - ";
-        return fromDate.equals(toDate) ? fromDate.format(formatter) : String.format("%s%s%s", fromDate.format(formatter), separator, toDate.format(formatter));
     }
 
     private void pauseBetweenRequests() {
