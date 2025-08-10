@@ -3,10 +3,12 @@ package si.jumis.ai;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.PlaylistItemListResponse;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoListResponse;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 
 import java.io.IOException;
@@ -43,16 +45,44 @@ public class YouTubeDataService {
     }
 
     /**
+     * Fetches details for a given YouTube channel.
+     *
+     * @param channelId The ID of the channel to fetch details for.
+     * @return An {@link Author} object with the channel's details.
+     * @throws IOException If an API error occurs or the channel is not found.
+     */
+    public Author getAuthorDetails(String channelId) throws IOException {
+        YouTube.Channels.List request = youtubeService.channels()
+                .list(List.of("snippet", "statistics"))
+                .setKey(apiKey)
+                .setId(List.of(channelId));
+
+        List<Channel> items = request.execute().getItems();
+        if (items == null || items.isEmpty()) {
+            throw new IOException("Channel not found for ID: " + channelId);
+        }
+        Channel channel = items.getFirst();
+        return new Author(
+                channel.getSnippet().getCustomUrl(),
+                channel.getSnippet().getTitle(),
+                channel.getId(),
+                channel.getStatistics().getSubscriberCount().longValue()
+        );
+    }
+
+
+    /**
      * Finds all videos for a given author within a specific date range.
      * This method handles API pagination to retrieve all matching videos.
      *
-     * @param channelId The name of the YouTube author to search for.
+     * @param author     The YouTube author to search for.
      * @param startDate  The start of the date range (inclusive). Can be null.
      * @param maxTotal   The maximum number of videos to fetch in total. Can be null for no limit.
      * @return A list of YouTubeVideo objects.
      * @throws IOException If there's a communication error with the YouTube API.
      */
-    public List<YouTubeVideo> findVideosByAuthor(String channelId, LocalDate startDate, Long maxTotal) throws IOException {
+    public List<YouTubeVideo> findVideosByAuthor(Author author, LocalDate startDate, Long maxTotal) throws IOException {
+        String channelId = author.channelId();
         // 1. Derive the uploads playlist ID
         if (!channelId.startsWith("UC")) {
             throw new IOException("Could not find a valid Channel ID for: " + channelId);
@@ -79,12 +109,13 @@ public class YouTubeDataService {
     /**
      * Finds all new videos for a channel since the last processed video.
      *
-     * @param channelId       The channel ID to search for.
+     * @param author          The author to search for.
      * @param stopAtVideoId   The ID of the last video that was processed. The method will fetch videos newer than this one.
      * @return A list of new YouTubeVideo objects, or an empty list if none are found.
      * @throws IOException If an API error occurs.
      */
-    public List<YouTubeVideo> findNewVideosSince(String channelId, String stopAtVideoId) throws IOException {
+    public List<YouTubeVideo> findNewVideosSince(Author author, String stopAtVideoId) throws IOException {
+        String channelId = author.channelId();
         if (!channelId.startsWith("UC")) {
             throw new IOException("Could not find a valid Channel ID for: " + channelId);
         }
@@ -108,11 +139,11 @@ public class YouTubeDataService {
     /**
      * A record to hold the result of processing a single page of playlist items.
      */
-    private record PageProcessingResult(List<PlaylistItem> itemsToAdd, boolean stopFound) {}
+    private record PageProcessingResult(List<PlaylistItem> itemsToAdd, boolean stopFound) {
+    }
 
     /**
      * Fetches all playlist items from a channel's upload playlist, handling pagination.
-     * This method has been refactored to reduce complexity and improve readability.
      */
     private List<PlaylistItem> fetchPlaylistItems(String uploadsPlaylistId, LocalDate startDate, Long maxTotal, String stopAtVideoId) throws IOException {
         List<PlaylistItem> allItems = new ArrayList<>();
@@ -193,7 +224,7 @@ public class YouTubeDataService {
         }
         PlaylistItem lastItemInPage = currentPageItems.getLast();
         Instant lastItemPublishedAt = Instant.ofEpochMilli(lastItemInPage.getSnippet().getPublishedAt().getValue());
-        Instant queryStopDate = startDate.minusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant();
+        Instant queryStopDate = startDate.minusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant();
         return lastItemPublishedAt.isBefore(queryStopDate);
     }
 

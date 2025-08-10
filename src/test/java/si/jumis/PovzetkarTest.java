@@ -7,10 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import si.jumis.ai.VideoSummary;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
-import si.jumis.util.ResourceReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,14 +37,14 @@ class PovzetkarTest {
     private VideoSummarizationService summarizationService;
     @Mock
     private VideoSummary videoSummary;
-    @Mock
-    private ResourceReader resourceReader;
 
     @InjectMocks
     private Povzetkar povzetkar;
 
     @Captor
     private ArgumentCaptor<String> fileContentCaptor;
+    @Captor
+    private ArgumentCaptor<List<Author>> authorCaptor;
 
     private LocalDate testDate;
 
@@ -68,11 +68,14 @@ class PovzetkarTest {
 
     @Test
     @DisplayName("S_B workflow with new videos updates README and prepends to updates.md")
+    @SuppressWarnings("resource")
     void run_summarizeAndBriefWorkflow_withNewVideos_updatesReadmeAndLog() {
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class);
              MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
-            List<String> authors = List.of("Author1,channel1");
+            List<Author> authors = List.of(
+                    new Author("AuthorHandle", "Author One", "channel1", 12345)
+            );
             List<YouTubeVideo> processedVideos = List.of(
                     createMockVideo("vid2", "Newer Video", Instant.now(), 123),
                     createMockVideo("vid1", "Older Video", Instant.now().minus(Duration.ofHours(1)), 456)
@@ -80,8 +83,8 @@ class PovzetkarTest {
             Path briefingPath = BRIEFINGS_BASE_DIR.resolve("2025/07/daily_briefing_18.7.2025.md");
             String existingUpdates = "## Update: 2025-07-17 10:00:00\n\nOld stuff.\n\n---\n\n";
 
-            when(resourceReader.readLines(Povzetkar.AUTHORS_TO_QUERY_FILENAME, "authors")).thenReturn(authors);
-            when(summarizationService.summarizeFromAuthors(eq(authors), eq(testDate), eq(testDate), any(Path.class)))
+            when(summarizationService.getAuthorsWithDetails()).thenReturn(authors);
+            when(summarizationService.summarizeFromAuthors(any(), any(), any(), any(Path.class)))
                     .thenReturn(processedVideos);
 
             // Mock file system for reading briefings and updates
@@ -94,6 +97,9 @@ class PovzetkarTest {
             povzetkar.run("S_B", testDate);
 
             // Assert
+            verify(summarizationService).summarizeFromAuthors(authorCaptor.capture(), any(), any(), any(Path.class));
+            assertThat(authorCaptor.getValue()).isEqualTo(authors);
+
             mockedFileUtils.verify(() -> FileUtils.saveToFile(any(Path.class), fileContentCaptor.capture()), times(3));
             List<String> allContent = fileContentCaptor.getAllValues();
             String readmeContent = allContent.get(1);
@@ -121,7 +127,6 @@ class PovzetkarTest {
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class);
              MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
-            when(resourceReader.readLines(Povzetkar.AUTHORS_TO_QUERY_FILENAME, "authors")).thenReturn(List.of("Author1,channel1"));
             when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), any())).thenReturn(Collections.emptyList());
 
             // No briefings found
@@ -133,6 +138,41 @@ class PovzetkarTest {
             // Assert
             // No file should be saved because there's nothing to write
             mockedFileUtils.verify(() -> FileUtils.saveToFile(any(Path.class), anyString()), never());
+        }
+    }
+
+    @Test
+    @DisplayName("S_B workflow creates briefing if none exist and videos were processed")
+    void run_createBriefingWorkflow_usesVideoSummary() {
+        try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class);
+             MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
+            // Arrange
+            String summaryContent = "This is the summary content from a file.";
+            String briefingContent = "## Briefing\n\n" + summaryContent;
+            Instant videoPublishedDate = Instant.parse("2025-07-18T10:00:00Z");
+            List<YouTubeVideo> processedVideos = List.of(createMockVideo("vid1", "Test Video", videoPublishedDate, 120));
+
+            // Condition 1: Must have processed videos to trigger the briefing workflow.
+            when(summarizationService.summarizeFromAuthors(any(), any(), any(), any(Path.class)))
+                    .thenReturn(processedVideos);
+
+            // Condition 2: The summary file created by the above service must be readable.
+            mockedFiles.when(() -> Files.readString(argThat(p -> p.toString().contains("summaries_")))).thenReturn(summaryContent);
+
+            // Condition 3: No existing briefings found (for the subsequent documentation update).
+            mockedFiles.when(() -> Files.exists(BRIEFINGS_BASE_DIR)).thenReturn(false);
+
+            when(videoSummary.createBriefingFromSummaries(anyString(), anyString())).thenReturn(briefingContent);
+
+            // Act
+            povzetkar.run("S_B", testDate);
+
+            // Assert
+            // Verify that the briefing was created using the content from the summary file.
+            verify(videoSummary).createBriefingFromSummaries(eq(summaryContent), anyString());
+
+            // Verify that the new briefing file was saved with the correct content.
+            mockedFileUtils.verify(() -> FileUtils.saveToFile(any(Path.class), eq(briefingContent)));
         }
     }
 }

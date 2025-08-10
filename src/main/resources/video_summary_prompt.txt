@@ -2,8 +2,8 @@ Act as an expert content analyst. Your task is to analyze the video provided and
 Your output MUST be in well-structured Markdown format. Follow the structure below exactly.
 For each key point, provide a clickable Markdown link to that specific time in the video. The link should be formatted as [M:SS](%s&t=SECONDSs), where SECONDS is the time in seconds.
 ---
-## [Video Title]([%s])
-by [author], [%s]
+## [%s]([%s])
+by %s, published at %s, duration %s
 
 ### Executive Summary
 [Provide a 2-5 sentence overview summarizing the video's core message and conclusion.]

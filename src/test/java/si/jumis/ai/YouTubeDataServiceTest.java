@@ -9,9 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,9 +29,17 @@ class YouTubeDataServiceTest {
 
     private static final String FAKE_API_KEY = "test-api-key";
     private static final String VALID_CHANNEL_ID = "UC-test-channel-id";
+    private static final String UPLOADS_PLAYLIST_ID = "UU-test-channel-id";
+    private static final String TEST_AUTHOR_TITLE = "Test Author";
+    private static final String TEST_AUTHOR_CUSTOM_URL = "@test";
+    private static final long TEST_AUTHOR_SUBSCRIBERS = 12345L;
 
     @Mock
     private YouTube mockYouTube;
+    @Mock
+    private YouTube.Channels mockChannels;
+    @Mock
+    private YouTube.Channels.List mockChannelsList;
     @Mock
     private YouTube.PlaylistItems mockPlaylistItems;
     @Mock
@@ -40,10 +50,38 @@ class YouTubeDataServiceTest {
     private YouTube.Videos.List mockVideosList;
 
     private YouTubeDataService youtubeDataService;
+    private Author testAuthor;
 
     @BeforeEach
     void setUp() {
         youtubeDataService = new YouTubeDataService(FAKE_API_KEY, mockYouTube);
+        testAuthor = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, TEST_AUTHOR_SUBSCRIBERS);
+    }
+
+    @Test
+    @DisplayName("getAuthorDetails should return author for valid channel ID")
+    void getAuthorDetails_shouldReturnAuthor() throws IOException {
+        // Arrange
+        setupChannelsApiMocks();
+        mockChannelsResponse(List.of(createMockChannel(testAuthor)));
+
+        // Act
+        Author result = youtubeDataService.getAuthorDetails(VALID_CHANNEL_ID);
+
+        // Assert
+        assertEquals(testAuthor, result);
+    }
+
+    @Test
+    @DisplayName("getAuthorDetails should throw IOException for invalid channel ID")
+    void getAuthorDetails_withInvalidId_shouldThrowIOException() throws IOException {
+        // Arrange
+        setupChannelsApiMocks();
+        mockChannelsResponse(Collections.emptyList()); // No channel found
+
+        // Act & Assert
+        IOException exception = assertThrows(IOException.class, () -> youtubeDataService.getAuthorDetails("invalid-id"));
+        assertTrue(exception.getMessage().contains("Channel not found for ID: invalid-id"));
     }
 
     @Test
@@ -62,7 +100,7 @@ class YouTubeDataServiceTest {
         mockVideoDetailsResponse(List.of(regularVideoDetails, shortVideoDetails));
 
         // Act
-        List<YouTubeVideo> result = youtubeDataService.findVideosByAuthor(VALID_CHANNEL_ID, LocalDate.now(), 10L);
+        List<YouTubeVideo> result = youtubeDataService.findVideosByAuthor(testAuthor, LocalDate.now(), 10L);
 
         // Assert
         assertEquals(1, result.size());
@@ -83,19 +121,15 @@ class YouTubeDataServiceTest {
         PlaylistItem stopVideo = createMockPlaylistItem("vid3_stop", "Stop Video", Instant.now().minus(Duration.ofHours(2)));
         mockPlaylistResponse(List.of(newVideo1, newVideo2, stopVideo));
 
-        mockVideoDetailsResponse(List.of(
-                createMockVideo("vid1", "PT5M"),
-                createMockVideo("vid2", "PT5M")
-        ));
+        mockVideoDetailsResponse(List.of(createMockVideo("vid1", "PT5M"), createMockVideo("vid2", "PT5M")));
 
         // Act
-        List<YouTubeVideo> result = youtubeDataService.findNewVideosSince(VALID_CHANNEL_ID, "vid3_stop");
+        List<YouTubeVideo> result = youtubeDataService.findNewVideosSince(testAuthor, "vid3_stop");
 
         // Assert
         assertEquals(2, result.size());
         assertTrue(result.stream().anyMatch(v -> v.id().equals("vid1")));
         assertTrue(result.stream().anyMatch(v -> v.id().equals("vid2")));
-        assertFalse(result.stream().anyMatch(v -> v.id().equals("vid3_stop")));
     }
 
     @Test
@@ -108,15 +142,14 @@ class YouTubeDataServiceTest {
         PlaylistItem newVideoPage1 = createMockPlaylistItem("vid_page1", "Video Page 1", Instant.now());
         PlaylistItem stopVideoPage2 = createMockPlaylistItem("vid_stop", "Stop Video", Instant.now().minus(Duration.ofDays(1)));
 
-        // Mock the sequence of execute calls for pagination
         when(mockPlaylistItemsList.execute())
                 .thenReturn(new PlaylistItemListResponse().setItems(List.of(newVideoPage1)).setNextPageToken("nextPageToken"))
-                .thenReturn(new PlaylistItemListResponse().setItems(List.of(stopVideoPage2))); // Second page
+                .thenReturn(new PlaylistItemListResponse().setItems(List.of(stopVideoPage2)));
 
         mockVideoDetailsResponse(List.of(createMockVideo("vid_page1", "PT10M")));
 
         // Act
-        List<YouTubeVideo> result = youtubeDataService.findNewVideosSince(VALID_CHANNEL_ID, "vid_stop");
+        List<YouTubeVideo> result = youtubeDataService.findNewVideosSince(testAuthor, "vid_stop");
 
         // Assert
         assertEquals(1, result.size());
@@ -132,34 +165,28 @@ class YouTubeDataServiceTest {
         mockPlaylistResponse(Collections.emptyList());
 
         // Act
-        List<YouTubeVideo> result = youtubeDataService.findVideosByAuthor(VALID_CHANNEL_ID, LocalDate.now(), 10L);
+        List<YouTubeVideo> result = youtubeDataService.findVideosByAuthor(testAuthor, LocalDate.now(), 10L);
 
         // Assert
         assertTrue(result.isEmpty());
-        // Verify that the video details API was never called
         verify(mockYouTube, never()).videos();
     }
 
-    @Test
-    @DisplayName("findVideosByAuthor should throw IOException for invalid channel ID")
-    void findVideosByAuthor_withInvalidChannelId_shouldThrowIOException() {
-        // Arrange
-        String invalidChannelId = "NOT_A_VALID_ID";
-
-        // Act & Assert
-        IOException exception = assertThrows(IOException.class, () -> youtubeDataService.findVideosByAuthor(invalidChannelId, LocalDate.now(), 10L));
-        assertTrue(exception.getMessage().contains("Could not find a valid Channel ID"));
-        // Verify no API calls were made
-        verifyNoInteractions(mockYouTube);
-    }
-
     // --- Helper Methods ---
+
+    private void setupChannelsApiMocks() throws IOException {
+        when(mockYouTube.channels()).thenReturn(mockChannels);
+        when(mockChannels.list(any())).thenReturn(mockChannelsList);
+        when(mockChannelsList.setKey(any())).thenReturn(mockChannelsList);
+        when(mockChannelsList.setId(any())).thenReturn(mockChannelsList);
+        when(mockChannelsList.execute()).thenAnswer(invocation -> new ChannelListResponse()); // Default empty response
+    }
 
     private void setupPlaylistApiMocks() throws IOException {
         when(mockYouTube.playlistItems()).thenReturn(mockPlaylistItems);
         when(mockPlaylistItems.list(any())).thenReturn(mockPlaylistItemsList);
         when(mockPlaylistItemsList.setKey(any())).thenReturn(mockPlaylistItemsList);
-        when(mockPlaylistItemsList.setPlaylistId(any())).thenReturn(mockPlaylistItemsList);
+        when(mockPlaylistItemsList.setPlaylistId(UPLOADS_PLAYLIST_ID)).thenReturn(mockPlaylistItemsList);
         when(mockPlaylistItemsList.setMaxResults(anyLong())).thenReturn(mockPlaylistItemsList);
         when(mockPlaylistItemsList.setPageToken(any())).thenReturn(mockPlaylistItemsList);
     }
@@ -171,13 +198,13 @@ class YouTubeDataServiceTest {
         when(mockVideosList.setId(any())).thenReturn(mockVideosList);
     }
 
-    /**
-     * Mocks a playlist response, allowing for a next page token for pagination tests.
-     */
+    private void mockChannelsResponse(List<Channel> channels) throws IOException {
+        ChannelListResponse response = new ChannelListResponse().setItems(channels);
+        when(mockChannelsList.execute()).thenReturn(response);
+    }
+
     private void mockPlaylistResponse(List<PlaylistItem> items) throws IOException {
-        PlaylistItemListResponse response = new PlaylistItemListResponse()
-                .setItems(items)
-                .setNextPageToken(null);
+        PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(items).setNextPageToken(null);
         when(mockPlaylistItemsList.execute()).thenReturn(response);
     }
 
@@ -186,19 +213,24 @@ class YouTubeDataServiceTest {
         when(mockVideosList.execute()).thenReturn(response);
     }
 
+    private Channel createMockChannel(Author author) {
+        return new Channel()
+                .setId(author.channelId())
+                .setSnippet(new ChannelSnippet().setTitle(author.name()).setCustomUrl(author.handle()))
+                .setStatistics(new ChannelStatistics().setSubscriberCount(BigInteger.valueOf(author.subscriberCount())));
+    }
+
     private PlaylistItem createMockPlaylistItem(String videoId, String title, Instant publishedAt) {
         return new PlaylistItem().setSnippet(new PlaylistItemSnippet()
                 .setTitle(title)
                 .setChannelId(VALID_CHANNEL_ID)
-                .setChannelTitle("Test Channel")
+                .setChannelTitle("Test Author")
                 .setPublishedAt(new DateTime(publishedAt.toEpochMilli()))
                 .setResourceId(new ResourceId().setVideoId(videoId))
         );
     }
 
     private Video createMockVideo(String videoId, String duration) {
-        return new Video()
-                .setId(videoId)
-                .setContentDetails(new VideoContentDetails().setDuration(duration));
+        return new Video().setId(videoId).setContentDetails(new VideoContentDetails().setDuration(duration));
     }
 }

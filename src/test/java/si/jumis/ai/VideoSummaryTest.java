@@ -127,9 +127,7 @@ class VideoSummaryTest {
                 .thenThrow(rateLimitException);
 
         // Act & Assert
-        ClientException thrown = assertThrows(ClientException.class, () -> {
-            videoSummary.createSummary("http://video.url", "2025-07-17");
-        });
+        ClientException thrown = assertThrows(ClientException.class, () -> videoSummary.createSummary("http://video.url", "2025-07-17"));
 
         assertEquals(rateLimitException, thrown);
         // Verify it was called 3 times (1 initial try + 2 retries)
@@ -145,9 +143,7 @@ class VideoSummaryTest {
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenThrow(otherException);
 
         // Act & Assert
-        assertThrows(ClientException.class, () -> {
-            videoSummary.createSummary("http://video.url", "2025-07-17");
-        });
+        assertThrows(ClientException.class, () -> videoSummary.createSummary("http://video.url", "2025-07-17"));
 
         // Verify it was only called once
         verify(mockModels, times(1)).generateContent(anyString(), any(Content.class), eq(null));

@@ -2,10 +2,13 @@ package si.jumis.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.jumis.ai.Prompts;
 import si.jumis.ai.VideoSummary;
 import si.jumis.ai.YouTubeDataService;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.FileUtils;
+import si.jumis.util.ResourceReader;
 import si.jumis.util.Sleeper;
 
 import java.io.IOException;
@@ -26,14 +29,17 @@ import java.util.List;
  */
 public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
+    private static final long PAUSE_BETWEEN_REQUESTS_MS = 60_000;
+    public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
 
-    private record Author(String name, String channelId) {}
-    private record VideoToProcess(YouTubeVideo video, String channelId) {}
+    private record VideoToProcess(YouTubeVideo video, Author author) {
+    }
 
     private final YouTubeDataService youtubeDataService;
     private final ProcessingStateService stateService;
     private final VideoSummary videoSummary;
     private final Sleeper sleeper;
+    private final ResourceReader resourceReader;
 
     public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary) {
         this(youtubeDataService, stateService, videoSummary, new Sleeper.DefaultSleeper());
@@ -47,6 +53,12 @@ public class VideoSummarizationService {
         this.stateService = stateService;
         this.videoSummary = videoSummary;
         this.sleeper = sleeper;
+        this.resourceReader = new ResourceReader();
+    }
+
+    public List<Author> getAuthorsWithDetails() {
+        List<String> authorLines = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
+        return fetchAuthors(authorLines);
     }
 
     /**
@@ -55,10 +67,9 @@ public class VideoSummarizationService {
      *
      * @return A list of the videos that were processed.
      */
-    public List<YouTubeVideo> summarizeFromAuthors(List<String> authorLines, LocalDate fromDate, LocalDate toDate, Path outputFilePath) {
-        logger.info("Starting new video summary workflow for {} author(s) from {} to {}...", authorLines.size(), fromDate, toDate);
+    public List<YouTubeVideo> summarizeFromAuthors(List<Author> authors, LocalDate fromDate, LocalDate toDate, Path outputFilePath) {
+        logger.info("Starting new video summary workflow for {} author(s) from {} to {}...", authors.size(), fromDate, toDate);
 
-        List<Author> authors = parseAuthors(authorLines);
         if (authors.isEmpty()) {
             logger.warn("No valid authors found to process.");
             return Collections.emptyList();
@@ -75,15 +86,20 @@ public class VideoSummarizationService {
         allNewVideos.sort(Comparator.comparing(v -> v.video().publishedAt()));
         logger.info("A total of {} new videos found and sorted. Generating summaries...", allNewVideos.size());
 
-        return summarizeVideoBatch(allNewVideos, fromDate, toDate, outputFilePath);
+        return summarizeVideoBatch(allNewVideos, toDate, outputFilePath);
     }
 
-    private List<Author> parseAuthors(List<String> authorLines) {
+    private List<Author> fetchAuthors(List<String> authorLines) {
         List<Author> authors = new ArrayList<>();
         for (String authorLine : authorLines) {
             String[] parts = authorLine.split(",", 2);
-            if (parts.length == 2 && !parts[0].trim().isEmpty() && !parts[1].trim().isEmpty()) {
-                authors.add(new Author(parts[0].trim(), parts[1].trim()));
+            if (parts.length == 2 && !parts[1].trim().isEmpty()) {
+                String channelId = parts[1].trim();
+                try {
+                    authors.add(youtubeDataService.getAuthorDetails(channelId));
+                } catch (IOException e) {
+                    logger.error("Failed to fetch details for author with channel ID: {}. Skipping.", channelId, e);
+                }
             } else {
                 logger.warn("Skipping malformed author line: '{}'", authorLine);
             }
@@ -101,7 +117,7 @@ public class VideoSummarizationService {
                 List<YouTubeVideo> videosInDateRange = filterVideosByDate(fetchedVideos, fromDate, toDate);
 
                 logger.info("Found {} new videos for {} in the period.", videosInDateRange.size(), author.name());
-                videosInDateRange.forEach(video -> allNewVideos.add(new VideoToProcess(video, author.channelId())));
+                videosInDateRange.forEach(video -> allNewVideos.add(new VideoToProcess(video, author)));
 
             } catch (IOException e) {
                 logger.error("Failed to fetch videos for author '{}'. Skipping this author.", author.name(), e);
@@ -113,10 +129,10 @@ public class VideoSummarizationService {
     private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate fromDate, String lastVideoId) throws IOException {
         if (lastVideoId == null) {
             logger.info("No previous state found for {} on or before {}. Fetching recent videos to establish initial state.", author.name(), fromDate);
-            return youtubeDataService.findVideosByAuthor(author.channelId(), fromDate, 50L);
+            return youtubeDataService.findVideosByAuthor(author, fromDate, 50L);
         } else {
             logger.info("Found last processed video ID: {}. Fetching all newer videos since then.", lastVideoId);
-            return youtubeDataService.findNewVideosSince(author.channelId(), lastVideoId);
+            return youtubeDataService.findNewVideosSince(author, lastVideoId);
         }
     }
 
@@ -125,8 +141,7 @@ public class VideoSummarizationService {
      *
      * @return A list of the videos that were actually processed (not in dry run).
      */
-    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate fromDate, LocalDate toDate, Path outputFilePath) {
-        String promptDateString = formatDateRange(fromDate, toDate, " - ");
+    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate toDate, Path outputFilePath) {
         List<YouTubeVideo> processedVideos = new ArrayList<>();
 
         try {
@@ -144,16 +159,20 @@ public class VideoSummarizationService {
                 VideoToProcess videoToProcess = sortedVideos.get(i);
                 YouTubeVideo video = videoToProcess.video();
 
-                logger.info("({}/{}) Summarizing: [{}]({}) by {}, {}", i + 1, sortedVideos.size(), video.title(), video.url(), video.authorName(), video.publishedAt());
-
+                if (logger.isInfoEnabled()) {
+                    logger.info("({}/{}) Summarizing: [{}]({})\n  by {}, Published at: {}, duration: {}", i + 1,
+                            sortedVideos.size(), video.title(), video.url(), video.authorName(),
+                            video.formattedPublishedAt(), video.formattedDuration());
+                }
                 if (i == 0 && !fileInitiallyHadContent) {
                     separator = "";
                 } else {
                     separator = "\n\n---\n\n";
                 }
-                processSingleVideo(videoToProcess, outputFilePath, promptDateString, toDate, separator);
-                processedVideos.add(video);
-                pauseBetweenRequests(i, sortedVideos.size(), 60_000);
+                if (processSingleVideo(videoToProcess, outputFilePath, toDate, separator)) {
+                    processedVideos.add(video);
+                }
+                pauseBetweenRequests();
             }
         } catch (IOException e) {
             logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
@@ -167,16 +186,21 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private void processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath, String promptDateString, LocalDate processingDate, String separator) {
+    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath,
+                                       LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
         try {
-            String summary = videoSummary.createSummary(video.url(), promptDateString);
+            String summary = videoSummary.createSummary(video.url(),
+                    Prompts.VIDEO_SUMMARY_PROMPT.formatted(video.url(), video.title(), video.url(), video.authorName(),
+                            video.formattedPublishedAt(), video.formattedDuration()));
             FileUtils.appendToFile(outputFilePath, separator + summary);
+            return true;
         } catch (Exception e) {
             handleSummaryFailure(video, e);
         } finally {
             updateProcessingState(videoToProcess, processingDate);
         }
+        return false;
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {
@@ -191,9 +215,9 @@ public class VideoSummarizationService {
 
     private void updateProcessingState(VideoToProcess videoToProcess, LocalDate processingDate) {
         YouTubeVideo video = videoToProcess.video();
-        String channelId = videoToProcess.channelId();
+        Author author = videoToProcess.author();
         try {
-            stateService.updateLastProcessedVideoForDate(channelId, video, processingDate);
+            stateService.updateLastProcessedVideoForDate(author.channelId(), video, processingDate);
             stateService.saveState("Updated after processing video ID: " + video.id() + " for date " + processingDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         } catch (IOException stateEx) {
             logger.error("CRITICAL: Failed to update processing state for video: {}. This may cause reprocessing.", video.url(), stateEx);
@@ -214,7 +238,7 @@ public class VideoSummarizationService {
             for (int i = 0; i < videoUrls.size(); i++) {
                 String url = videoUrls.get(i);
                 logger.info("({}/{}) Processing URL: {}", i + 1, videoUrls.size(), url);
-                String summary = videoSummary.createSummary(url, date);
+                String summary = videoSummary.createSummaryForURL(url, date);
                 String contentToAppend;
                 if (i == 0 && !fileInitiallyHadContent) {
                     contentToAppend = summary; // First item to an empty/new file, no leading separator.
@@ -222,7 +246,9 @@ public class VideoSummarizationService {
                     contentToAppend = "\n\n---\n\n" + summary; // Any subsequent item, or first item to a non-empty file.
                 }
                 FileUtils.appendToFile(outputFilePath, contentToAppend);
-                pauseBetweenRequests(i, videoUrls.size(), 60_000);
+                if (i < videoUrls.size() - 1) {
+                    pauseBetweenRequests();
+                }
             }
             logger.info("URL summarization complete.");
         } catch (IOException e) {
@@ -253,20 +279,13 @@ public class VideoSummarizationService {
                 .toList();
     }
 
-    private String formatDateRange(LocalDate fromDate, LocalDate toDate, String separator) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.M.yyyy");
-        return fromDate.equals(toDate) ? fromDate.format(formatter) : String.format("%s%s%s", fromDate.format(formatter), separator, toDate.format(formatter));
-    }
-
-    private void pauseBetweenRequests(int currentIndex, int totalSize, long sleepMillis) {
-        if (currentIndex < totalSize - 1) {
-            logger.info("Waiting for {} seconds before processing the next item...", sleepMillis / 1000);
-            try {
-                sleeper.sleep(sleepMillis);
-            } catch (InterruptedException e) {
-                logger.warn("Sleep timer was interrupted.", e);
-                Thread.currentThread().interrupt();
-            }
+    private void pauseBetweenRequests() {
+        logger.info("Waiting for {} seconds before processing the next item...", PAUSE_BETWEEN_REQUESTS_MS / 1000);
+        try {
+            sleeper.sleep(PAUSE_BETWEEN_REQUESTS_MS);
+        } catch (InterruptedException e) {
+            logger.warn("Sleep timer was interrupted.", e);
+            Thread.currentThread().interrupt();
         }
     }
 }

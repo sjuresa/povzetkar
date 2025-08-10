@@ -12,27 +12,27 @@ import si.jumis.util.ResourceReader;
 
 import java.time.LocalDate;
 
-public class Main {
+import static si.jumis.Povzetkar.DMY_DATE_FORMAT;
 
+public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     /**
      * Holds the application's runtime configuration, parsed from command-line arguments.
      */
-    private record RunConfiguration(String useCase) {
+    private record RunConfiguration(String useCase, LocalDate date) {
     }
 
     public static void main(String[] args) {
-        RunConfiguration config = parseRunConfiguration(args);
-
         String apiKey = System.getenv("YOUTUBE_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
             logger.error("YOUTUBE_API_KEY environment variable not set. Exiting.");
             return;
         }
+        RunConfiguration runConfiguration = parseRunConfiguration(args);
         try (Client genAiClient = new Client()) {
             Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
-            povzetkar.run(config.useCase(), LocalDate.of(2025, 7, 19));
+            povzetkar.run(runConfiguration.useCase(), runConfiguration.date());
         }
     }
 
@@ -49,21 +49,30 @@ public class Main {
 
     /**
      * Parses command-line arguments to determine the application's run configuration.
-     * Defaults to useCase="S_B" if no arguments are provided.
+     * Defaults to useCase="S_B" and date=today if no arguments are provided.
      *
-     * @param args Command-line arguments. Supports --use-case=[S_B|TR|S_URL].
+     * @param args Command-line arguments. Supports --use-case=[S_B|TR|S_URL] and --date=d.M.yyyy.
      * @return A {@link RunConfiguration} object.
      */
     private static RunConfiguration parseRunConfiguration(String[] args) {
         String useCase = "S_B"; // Default use case
+        LocalDate date = LocalDate.now(); // Default date
 
         for (String arg : args) {
             if (arg.toLowerCase().startsWith("--use-case=")) {
                 useCase = arg.substring("--use-case=".length()).trim();
+            } else if (arg.toLowerCase().startsWith("--date=")) {
+                String dateStr = arg.substring("--date=".length()).trim();
+                try {
+                    date = LocalDate.parse(dateStr, DMY_DATE_FORMAT);
+                } catch (java.time.format.DateTimeParseException e) {
+                    logger.error("Invalid date format for --date argument: '{}'. Please use 'd.M.yyyy'. Exiting.", dateStr);
+                    System.exit(1);
+                }
             }
         }
-
-        logger.info("Running with configuration: useCase='{}'", useCase);
-        return new RunConfiguration(useCase);
+        RunConfiguration config = new RunConfiguration(useCase, date);
+        logger.info("Running with configuration: {}", config);
+        return config;
     }
 }

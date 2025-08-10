@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import si.jumis.ai.VideoSummary;
 import si.jumis.ai.YouTubeDataService;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.FileUtils;
 import si.jumis.util.Sleeper;
@@ -43,6 +44,8 @@ class VideoSummarizationServiceTest {
 
     private VideoSummarizationService summarizationService;
 
+    private Author author1;
+    private Author author2;
     private YouTubeVideo video1;
     private LocalDate today;
     private Path testOutputPath;
@@ -51,7 +54,11 @@ class VideoSummarizationServiceTest {
     void setUp() {
         today = LocalDate.of(2025, 7, 17);
         summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, sleeper);
-        video1 = new YouTubeVideo("vid1", "Title 1", "url1", "Author 1", "channel1",
+
+        author1 = new Author("@author1", "Author 1", "channel1", 1000L);
+        author2 = new Author("@author2", "Author 2", "channel2", 2000L);
+
+        video1 = new YouTubeVideo("vid1", "Title 1", "url1", author1.name(), author1.channelId(),
                 today.atStartOfDay(ZoneId.of("UTC")).toInstant(), Duration.ofMinutes(5));
         testOutputPath = Paths.get("summaries", "test_output.md");
     }
@@ -61,18 +68,18 @@ class VideoSummarizationServiceTest {
     void summarizeFromAuthors_whenNoPreviousState_fetchesAndSummarizes() throws IOException {
         try (MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
-            when(stateService.findLastProcessedVideoIdBefore(eq("channel1"), any(LocalDate.class))).thenReturn(null);
-            when(youtubeDataService.findVideosByAuthor(eq("channel1"), any(LocalDate.class), anyLong())).thenReturn(List.of(video1));
+            when(stateService.findLastProcessedVideoIdBefore(eq(author1.channelId()), any(LocalDate.class))).thenReturn(null);
+            when(youtubeDataService.findVideosByAuthor(eq(author1), any(LocalDate.class), anyLong())).thenReturn(List.of(video1));
             when(videoSummary.createSummary(anyString(), anyString())).thenReturn("Summary 1");
 
             // Act
-            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, testOutputPath);
+            summarizationService.summarizeFromAuthors(List.of(author1), today, today, testOutputPath);
 
             // Assert
-            verify(youtubeDataService).findVideosByAuthor(eq("channel1"), any(LocalDate.class), eq(50L));
+            verify(youtubeDataService).findVideosByAuthor(eq(author1), any(LocalDate.class), eq(50L));
             verify(videoSummary).createSummary(eq("url1"), anyString());
             mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(testOutputPath), anyString()));
-            verify(stateService).updateLastProcessedVideoForDate("channel1", video1, today);
+            verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
             verify(stateService).saveState(anyString());
         }
     }
@@ -86,34 +93,32 @@ class VideoSummarizationServiceTest {
             Instant laterTime = processingDate.atStartOfDay(ZoneId.of("UTC")).toInstant().plus(Duration.ofHours(2));
             Instant earlierTime = processingDate.atStartOfDay(ZoneId.of("UTC")).toInstant().plus(Duration.ofHours(1));
 
-            YouTubeVideo videoAuthor1 = new YouTubeVideo("vid1", "Title 1", "url1", "Author 1", "channel1", laterTime, Duration.ofMinutes(5));
-            YouTubeVideo videoAuthor2 = new YouTubeVideo("vid2", "Title 2", "url2", "Author 2", "channel2", earlierTime, Duration.ofMinutes(10));
-
-            List<String> authorLines = List.of("Author 1,channel1", "Author 2,channel2");
+            YouTubeVideo videoAuthor1 = new YouTubeVideo("vid1", "Title 1", "url1", author1.name(), author1.channelId(), laterTime, Duration.ofMinutes(5));
+            YouTubeVideo videoAuthor2 = new YouTubeVideo("vid2", "Title 2", "url2", author2.name(), author2.channelId(), earlierTime, Duration.ofMinutes(10));
 
             when(stateService.findLastProcessedVideoIdBefore(anyString(), eq(processingDate))).thenReturn("lastId");
-            when(youtubeDataService.findNewVideosSince("channel1", "lastId")).thenReturn(List.of(videoAuthor1));
-            when(youtubeDataService.findNewVideosSince("channel2", "lastId")).thenReturn(List.of(videoAuthor2));
+            when(youtubeDataService.findNewVideosSince(author1, "lastId")).thenReturn(List.of(videoAuthor1));
+            when(youtubeDataService.findNewVideosSince(author2, "lastId")).thenReturn(List.of(videoAuthor2));
             when(videoSummary.createSummary(anyString(), anyString())).thenReturn("A summary");
 
             // Act
-            summarizationService.summarizeFromAuthors(authorLines, processingDate, processingDate, testOutputPath);
+            summarizationService.summarizeFromAuthors(List.of(author1, author2), processingDate, processingDate, testOutputPath);
 
             // Assert
             InOrder inOrder = Mockito.inOrder(videoSummary, stateService);
 
             // 1. Process video2 (published earlier)
             inOrder.verify(videoSummary).createSummary(eq("url2"), anyString());
-            inOrder.verify(stateService).updateLastProcessedVideoForDate("channel2", videoAuthor2, processingDate);
+            inOrder.verify(stateService).updateLastProcessedVideoForDate(author2.channelId(), videoAuthor2, processingDate);
             inOrder.verify(stateService).saveState(contains("vid2"));
 
             // 2. Process video1 (published later)
             inOrder.verify(videoSummary).createSummary(eq("url1"), anyString());
-            inOrder.verify(stateService).updateLastProcessedVideoForDate("channel1", videoAuthor1, processingDate);
+            inOrder.verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), videoAuthor1, processingDate);
             inOrder.verify(stateService).saveState(contains("vid1"));
 
             mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(testOutputPath), anyString()), times(2));
-            verify(sleeper, times(1)).sleep(60_000L);
+            verify(sleeper, times(2)).sleep(60_000L);
         }
     }
 
@@ -124,19 +129,19 @@ class VideoSummarizationServiceTest {
             // Arrange
             String errorMessage = "AI model unavailable";
             when(videoSummary.createSummary(eq(video1.url()), anyString())).thenThrow(new RuntimeException(errorMessage));
-            when(stateService.findLastProcessedVideoIdBefore(eq("channel1"), any(LocalDate.class))).thenReturn("lastId");
-            when(youtubeDataService.findNewVideosSince("channel1", "lastId")).thenReturn(List.of(video1));
+            when(stateService.findLastProcessedVideoIdBefore(eq(author1.channelId()), any(LocalDate.class))).thenReturn("lastId");
+            when(youtubeDataService.findNewVideosSince(author1, "lastId")).thenReturn(List.of(video1));
 
             // Act
-            summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, testOutputPath);
+            summarizationService.summarizeFromAuthors(List.of(author1), today, today, testOutputPath);
 
             // Assert
             mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(testOutputPath), anyString()), never());
 
             String expectedFailureLogMessage = String.format("Video URL: %s%nError: %s%n---%n", video1.url(), errorMessage);
-            mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(Paths.get("failed_videos.log")), eq(expectedFailureLogMessage)));
+            mockedFileUtils.verify(() -> FileUtils.appendToFile(Paths.get("failed_videos.log"), expectedFailureLogMessage));
 
-            verify(stateService).updateLastProcessedVideoForDate("channel1", video1, today);
+            verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
             verify(stateService).saveState(contains("Updated after processing video ID: " + video1.id()));
         }
     }
@@ -146,10 +151,10 @@ class VideoSummarizationServiceTest {
     void summarizeFromAuthors_whenNoNewVideos_doesNothing() throws IOException {
         // Arrange
         when(stateService.findLastProcessedVideoIdBefore(anyString(), any(LocalDate.class))).thenReturn("lastId");
-        when(youtubeDataService.findNewVideosSince(anyString(), anyString())).thenReturn(Collections.emptyList());
+        when(youtubeDataService.findNewVideosSince(any(Author.class), anyString())).thenReturn(Collections.emptyList());
 
         // Act
-        summarizationService.summarizeFromAuthors(List.of("Author 1,channel1"), today, today, testOutputPath);
+        summarizationService.summarizeFromAuthors(List.of(author1), today, today, testOutputPath);
 
         // Assert
         verify(videoSummary, never()).createSummary(anyString(), anyString());
@@ -168,14 +173,14 @@ class VideoSummarizationServiceTest {
 
             mockedFileUtils.when(() -> FileUtils.fileExists(any(Path.class))).thenReturn(true);
             mockedFileUtils.when(() -> FileUtils.fileHasContent(any(Path.class))).thenReturn(true);
-            when(videoSummary.createSummary("url1", date)).thenReturn(summary1);
+            when(videoSummary.createSummaryForURL("url1", date)).thenReturn(summary1);
 
             // Act
             summarizationService.summarizeFromUrls(urls, date, urlSummaryPath);
 
             // Assert
             mockedFileUtils.verify(() -> FileUtils.deleteIfExists(any(Path.class)), never());
-            mockedFileUtils.verify(() -> FileUtils.appendToFile(eq(urlSummaryPath), eq("\n\n---\n\n" + summary1)));
+            mockedFileUtils.verify(() -> FileUtils.appendToFile(urlSummaryPath, "\n\n---\n\n" + summary1));
         }
     }
 

@@ -5,6 +5,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
+import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
@@ -17,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
  */
 public class Povzetkar {
     private static final Logger logger = LoggerFactory.getLogger(Povzetkar.class);
-    public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
     public static final String URLS_TO_SUMMARIZE_FILENAME = "videos_to_summarize.txt";
-    public static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.M.yyyy");
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss");
+    public static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("d.M.yyyy");
     private static final DateTimeFormatter YYYY_FORMAT = DateTimeFormatter.ofPattern("yyyy");
     private static final DateTimeFormatter MM_FORMAT = DateTimeFormatter.ofPattern("MM");
 
@@ -75,23 +75,23 @@ public class Povzetkar {
     }
 
     void runSummarizeAndBriefWorkflow(LocalDate date) {
-        List<String> authorsToSummarize = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
+        List<Author> authors = summarizationService.getAuthorsWithDetails();
         String summaryFileName = "summaries_" + date.format(DMY_DATE_FORMAT) + ".md";
         Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
 
-        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authorsToSummarize, date, date, summaryFilePath);
+        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authors, date, date, summaryFilePath);
 
         if (processedVideos.isEmpty()) {
             logger.info("No new videos were processed. Skipping briefing, documentation, and Git operations.");
             return;
         }
         createBriefingFromFileUseCase(date, summaryFilePath);
-        updateDocsAndCommit(processedVideos);
+        updateDocsAndCommit(processedVideos, authors);
     }
 
-    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos) {
+    private void updateDocsAndCommit(List<YouTubeVideo> processedVideos, List<Author> authors) {
         try {
-            updateDocumentationFiles(processedVideos);
+            updateDocumentationFiles(processedVideos, authors);
             String commitMessage = createCommitMessage(processedVideos);
             commitAndPushChanges(commitMessage);
         } catch (IOException e) {
@@ -187,7 +187,7 @@ public class Povzetkar {
         }
     }
 
-    private void updateDocumentationFiles(List<YouTubeVideo> lastBatch) throws IOException {
+    private void updateDocumentationFiles(List<YouTubeVideo> lastBatch, List<Author> authors) throws IOException {
         logger.info("Updating documentation files: README.md and updates.md...");
         List<BriefingInfo> briefings = findAndParseBriefings();
         if (briefings.isEmpty() && lastBatch.isEmpty()) {
@@ -195,7 +195,7 @@ public class Povzetkar {
             return;
         }
 
-        String readmeContent = generateReadmeContent(briefings, lastBatch);
+        String readmeContent = generateReadmeContent(briefings, lastBatch, authors);
         FileUtils.saveToFile(README_PATH, readmeContent);
         logger.info("Successfully updated {}", README_PATH);
 
@@ -217,17 +217,11 @@ public class Povzetkar {
 
     private String createUpdateBlock(List<YouTubeVideo> lastBatch) {
         StringBuilder sb = new StringBuilder();
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
+        String timestamp = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         sb.append(String.format("### Update %s\n\n", timestamp));
 
-        lastBatch.stream()
-                .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
-                .forEach(video -> {
-                    String durationStr = formatDuration(video.duration());
-                    String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-                    sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                            video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
-                });
+        lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
+                video.title(), video.url(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
         sb.append("\n---\n\n");
         return sb.toString();
     }
@@ -283,22 +277,16 @@ public class Povzetkar {
         }
     }
 
-    private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch) {
+    private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch, List<Author> authors) {
         StringBuilder sb = new StringBuilder();
         sb.append("# Intelligence Briefing Dashboard\n");
-        sb.append("Your daily Povzetkar analysis of key crypto topics and trends.\n\n");
+        sb.append("Your daily Povzetkar analysis of key topics and trends.\n\n");
 
         if (!lastBatch.isEmpty()) {
-            String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
+            String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
-            lastBatch.stream()
-                    .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
-                    .forEach(video -> {
-                        String durationStr = formatDuration(video.duration());
-                        String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm"));
-                        sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
-                                video.title(), video.url(), video.authorName(), publishedAtStr, durationStr));
-                    });
+            lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
+                    video.title(), video.url(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
             sb.append("\n");
         }
 
@@ -322,53 +310,30 @@ public class Povzetkar {
         }
 
         sb.append("## Authors\n");
-        List<String> authorLines = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
-        String authorsMarkdown = authorLines.stream()
-                .map(line -> {
-                    String[] parts = line.split(",");
-                    if (parts.length == 2) {
-                        String handle = parts[0].trim();
-                        String channelId = parts[1].trim();
-                        return String.format("[%s](https://www.youtube.com/channel/%s)", handle, channelId);
-                    }
-                    return "";
+        String authorsMarkdown = authors.stream()
+                .sorted(Comparator.comparing(Author::name))
+                .map(author -> {
+                    String subs = author.subscriberCount() > 0 ? String.format(" (%,d subscribers)", author.subscriberCount()) : "";
+                    return String.format("* [%s](https://www.youtube.com/channel/%s)%s",
+                            author.name(), author.channelId(), subs);
                 })
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.joining(", "));
-        sb.append(authorsMarkdown);
+                .collect(Collectors.joining("\n"));
 
+        if (!authorsMarkdown.isEmpty()) {
+            sb.append(authorsMarkdown);
+        }
         return sb.toString();
-    }
-
-    private String formatDuration(Duration duration) {
-        if (duration == null) {
-            return "N/A";
-        }
-        long hours = duration.toHours();
-        long minutes = duration.toMinutesPart();
-        long seconds = duration.toSecondsPart();
-        if (hours > 0) {
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
-        } else {
-            return String.format("%d:%02d", minutes, seconds);
-        }
     }
 
     // --- Git Integration ---
 
     private String createCommitMessage(List<YouTubeVideo> lastBatch) {
         StringBuilder sb = new StringBuilder();
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss"));
+        String timestamp = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         sb.append(String.format("Update %s", timestamp));
 
-        lastBatch.stream()
-                .sorted(Comparator.comparing(YouTubeVideo::publishedAt).reversed())
-                .forEach(video -> {
-                    String durationStr = formatDuration(video.duration());
-                    String publishedAtStr = video.publishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
-                    sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
-                            video.title(), video.authorName(), publishedAtStr, durationStr));
-                });
+        lastBatch.forEach(video -> sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
+                video.title(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
         return sb.toString();
     }
 
@@ -383,7 +348,9 @@ public class Povzetkar {
         try (Git git = Git.open(new File(TLDRLY_DIR.toString()))) {
             git.add().addFilepattern(".").call();
             logger.info("Staged all changes.");
-            git.commit().setMessage(commitMessage).call();
+            git.commit()
+                    .setCommitter("Povzetkar", "sjuresa@gmail.com")
+                    .setMessage(commitMessage).call();
             logger.info("Committed with message: {}", commitMessage);
             git.push()
                     .setCredentialsProvider(new UsernamePasswordCredentialsProvider(
