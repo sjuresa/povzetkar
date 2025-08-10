@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
 public class Povzetkar {
     private static final Logger logger = LoggerFactory.getLogger(Povzetkar.class);
     public static final String URLS_TO_SUMMARIZE_FILENAME = "videos_to_summarize.txt";
-    public static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.M.yyyy");
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss");
+    public static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("d.M.yyyy");
     private static final DateTimeFormatter YYYY_FORMAT = DateTimeFormatter.ofPattern("yyyy");
     private static final DateTimeFormatter MM_FORMAT = DateTimeFormatter.ofPattern("MM");
 
@@ -216,7 +217,7 @@ public class Povzetkar {
 
     private String createUpdateBlock(List<YouTubeVideo> lastBatch) {
         StringBuilder sb = new StringBuilder();
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
+        String timestamp = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         sb.append(String.format("### Update %s\n\n", timestamp));
 
         lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
@@ -282,7 +283,7 @@ public class Povzetkar {
         sb.append("Your daily Povzetkar analysis of key topics and trends.\n\n");
 
         if (!lastBatch.isEmpty()) {
-            String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.M.yyyy HH:mm:ss"));
+            String timestamp = LocalDateTime.now().atZone(ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
             lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
                     video.title(), video.url(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
@@ -328,7 +329,7 @@ public class Povzetkar {
 
     private String createCommitMessage(List<YouTubeVideo> lastBatch) {
         StringBuilder sb = new StringBuilder();
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss"));
+        String timestamp = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         sb.append(String.format("Update %s", timestamp));
 
         lastBatch.forEach(video -> sb.append(String.format("\n%s by %s (Published: %s, duration: %s)",
