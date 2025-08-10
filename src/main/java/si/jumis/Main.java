@@ -11,7 +11,8 @@ import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.ResourceReader;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+
+import static si.jumis.Povzetkar.DMY_DATE_FORMAT;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -56,14 +57,18 @@ public class Main {
     private static RunConfiguration parseRunConfiguration(String[] args) {
         String useCase = "S_B"; // Default use case
         LocalDate date = LocalDate.now(); // Default date
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d.M.yyyy");
 
         for (String arg : args) {
             if (arg.toLowerCase().startsWith("--use-case=")) {
                 useCase = arg.substring("--use-case=".length()).trim();
             } else if (arg.toLowerCase().startsWith("--date=")) {
                 String dateStr = arg.substring("--date=".length()).trim();
-                date = LocalDate.parse(dateStr, formatter);
+                try {
+                    date = LocalDate.parse(dateStr, DMY_DATE_FORMAT);
+                } catch (java.time.format.DateTimeParseException e) {
+                    logger.error("Invalid date format for --date argument: '{}'. Please use 'd.M.yyyy'. Exiting.", dateStr);
+                    System.exit(1);
+                }
             }
         }
         RunConfiguration config = new RunConfiguration(useCase, date);
