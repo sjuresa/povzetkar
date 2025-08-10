@@ -204,7 +204,7 @@ public class VideoSummarizationService {
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {
-        logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url());
+        logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url(), e);
         try {
             String failureMessage = String.format("Video URL: %s%nError: %s%n---%n", video.url(), e.getMessage());
             FileUtils.appendToFile(Paths.get("failed_videos.log"), failureMessage);

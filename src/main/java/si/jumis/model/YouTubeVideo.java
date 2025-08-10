@@ -3,7 +3,8 @@ package si.jumis.model;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+
+import static si.jumis.Povzetkar.DATE_TIME_FORMATTER;
 
 /**
  * An immutable data class representing a single YouTube video.
@@ -47,6 +48,6 @@ public record YouTubeVideo(
         if (publishedAt == null) {
             return "N/A";
         }
-        return publishedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d.M.yyyy HH:mm"));
+        return publishedAt.atZone(ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
     }
 }
