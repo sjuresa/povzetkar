@@ -1,7 +1,5 @@
 package si.jumis.ai;
 
-import com.google.genai.Client;
-import com.google.genai.Models;
 import com.google.genai.errors.ClientException;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentResponse;
@@ -16,7 +14,7 @@ public class VideoSummary {
     private static final int MAX_API_ATTEMPTS = 3;
     private static final long API_RETRY_DELAY_MS = 60_000;
 
-    private final Models models;
+    private final GenAiPool genAiPool;
     private final Sleeper sleeper;
 
     /**
@@ -29,15 +27,15 @@ public class VideoSummary {
         }
     }
 
-    public VideoSummary(Client client) {
-        this(client.models, new Sleeper.DefaultSleeper());
+    public VideoSummary(GenAiPool genAiPool) {
+        this(genAiPool, new Sleeper.DefaultSleeper());
     }
 
     /**
      * Package-private constructor for testing purposes, allowing injection of mock objects.
      */
-    VideoSummary(Models models, Sleeper sleeper) {
-        this.models = models;
+    VideoSummary(GenAiPool genAiPool, Sleeper sleeper) {
+        this.genAiPool = genAiPool;
         this.sleeper = sleeper;
     }
 
@@ -101,7 +99,7 @@ public class VideoSummary {
 
         for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
             try {
-                GenerateContentResponse response = models.generateContent(FLASH_MODEL_NAME, content, null);
+                GenerateContentResponse response = genAiPool.getGenAiClient().getModels().generateContent(FLASH_MODEL_NAME, content, null);
                 logApiCallDuration(startTime, callDescription);
                 return response;
             } catch (ClientException e) {
@@ -119,7 +117,7 @@ public class VideoSummary {
         if (isRetriable(e) && attempt < MAX_API_ATTEMPTS) {
             logAndSleepForRetry(e, attempt);
         } else {
-            logger.error("API call failed on attempt {} and will not be retried.", attempt, e);
+            logger.error("API call failed on attempt {} and will not be retried.", attempt);
             throw e;
         }
     }

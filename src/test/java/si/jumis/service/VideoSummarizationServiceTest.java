@@ -52,7 +52,7 @@ class VideoSummarizationServiceTest {
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
         // Manually instantiate the service, injecting all mocks including the sleeper
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, sleeper);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L);
         today = LocalDate.now(ZoneId.of("CET"));
@@ -101,7 +101,7 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    void summarizeFromAuthors_whenNoPreviousState_fetchesAndSummarizes() throws IOException, InterruptedException {
+    void summarizeFromAuthors_whenNoPreviousState_fetchesAndSummarizes() throws IOException {
         // Arrange
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(video1));
@@ -112,11 +112,10 @@ class VideoSummarizationServiceTest {
         // Assert
         verify(videoSummary).createSummary(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
-        verify(sleeper).sleep(anyLong());
     }
 
     @Test
-    void summarizeFromAuthors_withPreviousState_fetchesAndSummarizes() throws IOException, InterruptedException {
+    void summarizeFromAuthors_withPreviousState_fetchesAndSummarizes() throws IOException {
         // Arrange
         String lastVideoId = "prevId";
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
@@ -128,7 +127,6 @@ class VideoSummarizationServiceTest {
         // Assert
         verify(videoSummary).createSummary(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
-        verify(sleeper).sleep(anyLong());
     }
 
     @Test

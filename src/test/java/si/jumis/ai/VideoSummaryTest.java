@@ -24,6 +24,12 @@ import static org.mockito.Mockito.*;
 class VideoSummaryTest {
 
     @Mock
+    private GenAiPool mockGenAiPool;
+
+    @Mock
+    private GenAiClient mockGenAiClient;
+
+    @Mock
     private Models mockModels;
 
     @Mock
@@ -37,7 +43,7 @@ class VideoSummaryTest {
     @BeforeEach
     void setUp() {
         // Use the package-private constructor to inject mock dependencies for testing.
-        videoSummary = new VideoSummary(mockModels, mockSleeper);
+        videoSummary = new VideoSummary(mockGenAiPool, mockSleeper);
     }
 
     @Test
@@ -45,8 +51,9 @@ class VideoSummaryTest {
     void createSummary_success() {
         // Arrange
         when(mockResponse.text()).thenReturn("Expected video summary");
-        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null)))
-                .thenReturn(mockResponse);
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
+        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null))).thenReturn(mockResponse);
 
         // Act
         String result = videoSummary.createSummary("http://video.url", "2025-07-17");
@@ -66,6 +73,8 @@ class VideoSummaryTest {
         ArgumentCaptor<Content> contentCaptor = ArgumentCaptor.forClass(Content.class);
 
         when(mockResponse.text()).thenReturn(expectedBriefing);
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(eq("gemini-2.5-flash"), contentCaptor.capture(), eq(null)))
                 .thenReturn(mockResponse);
 
@@ -84,6 +93,8 @@ class VideoSummaryTest {
     void createSummaryFromTranscript_success() {
         // Arrange
         when(mockResponse.text()).thenReturn("Expected transcript summary");
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null)))
                 .thenReturn(mockResponse);
 
@@ -102,6 +113,8 @@ class VideoSummaryTest {
         ClientException rateLimitException = new ClientException(429, "429 Rate limit exceeded", "RESOURCE_EXHAUSTED");
         when(mockResponse.text()).thenReturn("Success after retry");
 
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
                 .thenThrow(rateLimitException) // First call fails
                 .thenReturn(mockResponse);   // Second call succeeds
@@ -121,6 +134,8 @@ class VideoSummaryTest {
     void generateContent_shouldThrowAfterMaxRetries() throws InterruptedException {
         // Arrange
         ClientException rateLimitException = new ClientException(429, "429 Rate limit exceeded", "RESOURCE_EXHAUSTED");
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
 
         // Make it fail every time
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
@@ -140,6 +155,8 @@ class VideoSummaryTest {
     void generateContent_shouldNotRetryOnOtherErrors() {
         // Arrange
         ClientException otherException = new ClientException(500, "500 Internal Server Error", "INTERNAL");
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenThrow(otherException);
 
         // Act & Assert
