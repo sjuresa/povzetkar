@@ -17,12 +17,6 @@ import static si.jumis.Povzetkar.DMY_DATE_FORMAT;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-    /**
-     * Holds the application's runtime configuration, parsed from command-line arguments.
-     */
-    private record RunConfiguration(String useCase, LocalDate date) {
-    }
-
     public static void main(String[] args) {
         String apiKey = System.getenv("YOUTUBE_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
@@ -32,7 +26,7 @@ public class Main {
         RunConfiguration runConfiguration = parseRunConfiguration(args);
         try (Client genAiClient = new Client()) {
             Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
-            povzetkar.run(runConfiguration.useCase(), runConfiguration.date());
+            povzetkar.run(runConfiguration);
         }
     }
 
@@ -57,6 +51,7 @@ public class Main {
     private static RunConfiguration parseRunConfiguration(String[] args) {
         String useCase = "S_B"; // Default use case
         LocalDate date = LocalDate.now(); // Default date
+        boolean dryRun = false; // Default dryRun
 
         for (String arg : args) {
             if (arg.toLowerCase().startsWith("--use-case=")) {
@@ -69,9 +64,11 @@ public class Main {
                     logger.error("Invalid date format for --date argument: '{}'. Please use 'd.M.yyyy'. Exiting.", dateStr);
                     System.exit(1);
                 }
+            } else if (arg.equalsIgnoreCase("--dry-run")) {
+                dryRun = true;
             }
         }
-        RunConfiguration config = new RunConfiguration(useCase, date);
+        RunConfiguration config = new RunConfiguration(useCase, date, dryRun);
         logger.info("Running with configuration: {}", config);
         return config;
     }
