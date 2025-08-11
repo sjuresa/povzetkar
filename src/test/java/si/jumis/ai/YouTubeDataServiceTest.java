@@ -70,6 +70,29 @@ class YouTubeDataServiceTest {
         assertTrue(exception.getMessage().contains("Channel not found for ID: invalid-id"));
     }
 
+    @Test
+    @DisplayName("getUploadsPlaylistId should return the correct playlist ID for a valid channel")
+    void getUploadsPlaylistId_shouldReturnCorrectPlaylistId() throws IOException {
+        // Arrange
+        String expectedUploadsId = "UU-test-channel-id";
+        setupChannelsApiMocks();
+
+        Channel mockChannel = new Channel()
+                .setId(VALID_CHANNEL_ID)
+                .setContentDetails(new ChannelContentDetails()
+                        .setRelatedPlaylists(new ChannelContentDetails.RelatedPlaylists()
+                                .setUploads(expectedUploadsId)));
+
+        mockChannelsResponse(List.of(mockChannel));
+
+        // Act
+        String actualUploadsId = youtubeDataService.getUploadsPlaylistId(VALID_CHANNEL_ID);
+
+        // Assert
+        assertEquals(expectedUploadsId, actualUploadsId);
+        verify(mockChannels).list(List.of("contentDetails"));
+    }
+
     // --- Helper Methods ---
 
     private void setupChannelsApiMocks() throws IOException {

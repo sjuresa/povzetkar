@@ -72,6 +72,27 @@ public class YouTubeDataService {
     }
 
     /**
+     * Fetches the uploads playlist ID for a given YouTube channel.
+     *
+     * @param channelId The ID of the channel.
+     * @return The uploads playlist ID.
+     * @throws IOException If an API error occurs or the channel is not found.
+     */
+    public String getUploadsPlaylistId(String channelId) throws IOException {
+        YouTube.Channels.List request = youtubeService.channels()
+                .list(List.of("contentDetails"))
+                .setKey(apiKey)
+                .setId(List.of(channelId));
+
+        List<Channel> items = request.execute().getItems();
+        if (items == null || items.isEmpty()) {
+            throw new IOException("Channel not found for ID: " + channelId);
+        }
+        Channel channel = items.getFirst();
+        return channel.getContentDetails().getRelatedPlaylists().getUploads();
+    }
+
+    /**
      * A record to hold the result of processing a single page of playlist items.
      */
     private record PageProcessingResult(List<PlaylistItem> itemsToAdd, boolean stopFound) {

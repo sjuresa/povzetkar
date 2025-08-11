@@ -124,11 +124,7 @@ public class VideoSummarizationService {
     }
 
     private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate forDate, String lastVideoId) throws IOException {
-        String channelId = author.channelId();
-        if (!channelId.startsWith("UC")) {
-            throw new IOException("Could not find a valid Channel ID for: " + channelId);
-        }
-        String uploadsPlaylistId = "UU" + channelId.substring(2);
+        String uploadsPlaylistId = youtubeDataService.getUploadsPlaylistId(author.channelId());
 
         List<PlaylistItem> playlistItems;
         if (lastVideoId == null) {
