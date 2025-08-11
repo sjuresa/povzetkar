@@ -1,5 +1,6 @@
 package si.jumis.service;
 
+import com.google.api.services.youtube.model.PlaylistItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.Prompts;
@@ -15,14 +16,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Orchestrates different video summarization workflows.
@@ -67,15 +64,16 @@ public class VideoSummarizationService {
      *
      * @return A list of the videos that were processed.
      */
-    public List<YouTubeVideo> summarizeFromAuthors(List<Author> authors, LocalDate fromDate, LocalDate toDate, Path outputFilePath) {
-        logger.info("Starting new video summary workflow for {} author(s) from {} to {}...", authors.size(), fromDate, toDate);
+    public List<YouTubeVideo> summarizeFromAuthors(List<Author> authors, LocalDate forDate,
+                                                   Path outputFilePath, boolean dryRun) {
+        logger.info("Starting new video summary workflow for {} author(s) for {}...", authors.size(), forDate);
 
         if (authors.isEmpty()) {
             logger.warn("No valid authors found to process.");
             return Collections.emptyList();
         }
 
-        List<VideoToProcess> allNewVideos = fetchAllNewVideos(authors, fromDate, toDate);
+        List<VideoToProcess> allNewVideos = fetchAllNewVideos(authors, forDate);
 
         if (allNewVideos.isEmpty()) {
             logger.info("No new videos found for any author in the specified period.");
@@ -86,7 +84,7 @@ public class VideoSummarizationService {
         allNewVideos.sort(Comparator.comparing(v -> v.video().publishedAt()));
         logger.info("A total of {} new videos found and sorted. Generating summaries...", allNewVideos.size());
 
-        return summarizeVideoBatch(allNewVideos, toDate, outputFilePath);
+        return summarizeVideoBatch(allNewVideos, forDate, outputFilePath, dryRun);
     }
 
     private List<Author> fetchAuthors(List<String> authorLines) {
@@ -107,17 +105,16 @@ public class VideoSummarizationService {
         return authors;
     }
 
-    private List<VideoToProcess> fetchAllNewVideos(List<Author> authors, LocalDate fromDate, LocalDate toDate) {
+    private List<VideoToProcess> fetchAllNewVideos(List<Author> authors, LocalDate forDate) {
         List<VideoToProcess> allNewVideos = new ArrayList<>();
         for (Author author : authors) {
             try {
                 logger.info("--- Checking for new videos from {} ---", author.name());
-                String lastVideoId = stateService.findLastProcessedVideoIdBefore(author.channelId(), fromDate);
-                List<YouTubeVideo> fetchedVideos = fetchVideosForAuthor(author, fromDate, lastVideoId);
-                List<YouTubeVideo> videosInDateRange = filterVideosByDate(fetchedVideos, fromDate, toDate);
+                String lastVideoId = stateService.findLastProcessedVideoIdBefore(author.channelId(), forDate);
+                List<YouTubeVideo> fetchedVideos = fetchVideosForAuthor(author, forDate, lastVideoId);
 
-                logger.info("Found {} new videos for {} in the period.", videosInDateRange.size(), author.name());
-                videosInDateRange.forEach(video -> allNewVideos.add(new VideoToProcess(video, author)));
+                logger.info("Found {} new videos for {} in the period.", fetchedVideos.size(), author.name());
+                fetchedVideos.forEach(video -> allNewVideos.add(new VideoToProcess(video, author)));
 
             } catch (IOException e) {
                 logger.error("Failed to fetch videos for author '{}'. Skipping this author.", author.name(), e);
@@ -126,14 +123,27 @@ public class VideoSummarizationService {
         return allNewVideos;
     }
 
-    private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate fromDate, String lastVideoId) throws IOException {
+    private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate forDate, String lastVideoId) throws IOException {
+        String channelId = author.channelId();
+        if (!channelId.startsWith("UC")) {
+            throw new IOException("Could not find a valid Channel ID for: " + channelId);
+        }
+        String uploadsPlaylistId = "UU" + channelId.substring(2);
+
+        List<PlaylistItem> playlistItems;
         if (lastVideoId == null) {
-            logger.info("No previous state found for {} on or before {}. Fetching recent videos to establish initial state.", author.name(), fromDate);
-            return youtubeDataService.findVideosByAuthor(author, fromDate, 50L);
+            logger.info("No previous state found for {} on or before {}. Fetching recent videos to establish initial state.", author.name(), forDate);
+            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, 50L, null);
         } else {
             logger.info("Found last processed video ID: {}. Fetching all newer videos since then.", lastVideoId);
-            return youtubeDataService.findNewVideosSince(author, lastVideoId);
+            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, null, null, lastVideoId);
         }
+        List<String> videoIds = playlistItems.stream()
+                .map(item -> item.getSnippet().getResourceId().getVideoId())
+                .toList();
+        Map<String, Duration> videoDurations = youtubeDataService.fetchVideoDurations(videoIds);
+
+        return youtubeDataService.constructYouTubeVideos(playlistItems, videoDurations, forDate);
     }
 
     /**
@@ -141,7 +151,8 @@ public class VideoSummarizationService {
      *
      * @return A list of the videos that were actually processed (not in dry run).
      */
-    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate toDate, Path outputFilePath) {
+    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate forDate,
+                                                   Path outputFilePath, boolean dryRun) {
         List<YouTubeVideo> processedVideos = new ArrayList<>();
 
         try {
@@ -169,10 +180,12 @@ public class VideoSummarizationService {
                 } else {
                     separator = "\n\n---\n\n";
                 }
-                if (processSingleVideo(videoToProcess, outputFilePath, toDate, separator)) {
-                    processedVideos.add(video);
+                if (!dryRun) {
+                    if (processSingleVideo(videoToProcess, outputFilePath, forDate, separator)) {
+                        processedVideos.add(video);
+                    }
+                    pauseBetweenRequests();
                 }
-                pauseBetweenRequests();
             }
         } catch (IOException e) {
             logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
@@ -269,14 +282,6 @@ public class VideoSummarizationService {
         if (parentDir != null) {
             Files.createDirectories(parentDir);
         }
-    }
-
-    private List<YouTubeVideo> filterVideosByDate(List<YouTubeVideo> videos, LocalDate fromDate, LocalDate toDate) {
-        Instant startInstant = fromDate.atStartOfDay(ZoneId.of("UTC")).toInstant();
-        Instant endInstant = toDate.plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant();
-        return videos.stream()
-                .filter(v -> !v.publishedAt().isBefore(startInstant) && v.publishedAt().isBefore(endInstant))
-                .toList();
     }
 
     private void pauseBetweenRequests() {

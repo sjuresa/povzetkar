@@ -62,30 +62,30 @@ public class Povzetkar {
     /**
      * Runs the application workflow based on the specified use case.
      *
-     * @param useCase The workflow to execute (S_B, TR, S_URL).
-     * @param date    The date for which the workflow should be run.
+     * @param runConfiguration The configuration for the run.
      */
-    public void run(String useCase, LocalDate date) {
-        switch (useCase.toUpperCase()) {
-            case "S_B" -> runSummarizeAndBriefWorkflow(date);
-            case "TR" -> runSummarizeTranscriptWorkflow(date);
-            case "S_URL" -> runSummarizeFromUrlsWorkflow(date);
-            default -> logger.warn("Unknown use case: '{}'. No action will be taken.", useCase);
+    public void run(RunConfiguration runConfiguration) {
+        switch (runConfiguration.useCase().toUpperCase()) {
+            case "S_B" -> runSummarizeAndBriefWorkflow(runConfiguration.date(), runConfiguration.dryRun());
+            case "TR" -> runSummarizeTranscriptWorkflow(runConfiguration.date());
+            case "S_URL" -> runSummarizeFromUrlsWorkflow(runConfiguration.date());
+            default -> logger.warn("Unknown use case: '{}'. No action will be taken.", runConfiguration.useCase());
         }
     }
 
-    void runSummarizeAndBriefWorkflow(LocalDate date) {
+    void runSummarizeAndBriefWorkflow(LocalDate forDate, boolean dryRun) {
         List<Author> authors = summarizationService.getAuthorsWithDetails();
-        String summaryFileName = "summaries_" + date.format(DMY_DATE_FORMAT) + ".md";
+        String summaryFileName = "summaries_" + forDate.format(DMY_DATE_FORMAT) + ".md";
         Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
 
-        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authors, date, date, summaryFilePath);
+        List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authors, forDate,
+                summaryFilePath, dryRun);
 
         if (processedVideos.isEmpty()) {
             logger.info("No new videos were processed. Skipping briefing, documentation, and Git operations.");
             return;
         }
-        createBriefingFromFileUseCase(date, summaryFilePath);
+        createBriefingFromFileUseCase(forDate, summaryFilePath);
         updateDocsAndCommit(processedVideos, authors);
     }
 
