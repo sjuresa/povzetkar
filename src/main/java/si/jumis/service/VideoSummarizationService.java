@@ -10,7 +10,6 @@ import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.FileUtils;
 import si.jumis.util.ResourceReader;
-import si.jumis.util.Sleeper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,7 +25,6 @@ import java.util.*;
  */
 public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
-    private static final long PAUSE_BETWEEN_REQUESTS_MS = 60_000;
     public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
 
     private record VideoToProcess(YouTubeVideo video, Author author) {
@@ -35,21 +33,12 @@ public class VideoSummarizationService {
     private final YouTubeDataService youtubeDataService;
     private final ProcessingStateService stateService;
     private final VideoSummary videoSummary;
-    private final Sleeper sleeper;
     private final ResourceReader resourceReader;
 
     public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary) {
-        this(youtubeDataService, stateService, videoSummary, new Sleeper.DefaultSleeper());
-    }
-
-    /**
-     * Constructor for dependency injection, allowing a custom sleeper for testing.
-     */
-    VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, Sleeper sleeper) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
-        this.sleeper = sleeper;
         this.resourceReader = new ResourceReader();
     }
 
@@ -176,12 +165,10 @@ public class VideoSummarizationService {
                 } else {
                     separator = "\n\n---\n\n";
                 }
-                if (!dryRun) {
-                    if (processSingleVideo(videoToProcess, outputFilePath, forDate, separator)) {
+                if (!dryRun && processSingleVideo(videoToProcess, outputFilePath, forDate, separator)) {
                         processedVideos.add(video);
                     }
-                    pauseBetweenRequests();
-                }
+
             }
         } catch (IOException e) {
             logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
@@ -255,9 +242,6 @@ public class VideoSummarizationService {
                     contentToAppend = "\n\n---\n\n" + summary; // Any subsequent item, or first item to a non-empty file.
                 }
                 FileUtils.appendToFile(outputFilePath, contentToAppend);
-                if (i < videoUrls.size() - 1) {
-                    pauseBetweenRequests();
-                }
             }
             logger.info("URL summarization complete.");
         } catch (IOException e) {
@@ -277,16 +261,6 @@ public class VideoSummarizationService {
         Path parentDir = outputFilePath.getParent();
         if (parentDir != null) {
             Files.createDirectories(parentDir);
-        }
-    }
-
-    private void pauseBetweenRequests() {
-        logger.info("Waiting for {} seconds before processing the next item...", PAUSE_BETWEEN_REQUESTS_MS / 1000);
-        try {
-            sleeper.sleep(PAUSE_BETWEEN_REQUESTS_MS);
-        } catch (InterruptedException e) {
-            logger.warn("Sleep timer was interrupted.", e);
-            Thread.currentThread().interrupt();
         }
     }
 }

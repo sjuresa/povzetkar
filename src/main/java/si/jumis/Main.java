@@ -1,9 +1,9 @@
 package si.jumis;
 
-import com.google.genai.Client;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.jumis.ai.GenAiPool;
 import si.jumis.ai.VideoSummary;
 import si.jumis.ai.YouTubeDataService;
 import si.jumis.service.ProcessingStateService;
@@ -11,11 +11,13 @@ import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.ResourceReader;
 
 import java.time.LocalDate;
+import java.util.concurrent.TimeUnit;
 
 import static si.jumis.Povzetkar.DMY_DATE_FORMAT;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final long COOLDOWN_PERIOD_NS = TimeUnit.SECONDS.toNanos(60);
 
     public static void main(String[] args) {
         String apiKey = System.getenv("YOUTUBE_API_KEY");
@@ -24,15 +26,15 @@ public class Main {
             return;
         }
         RunConfiguration runConfiguration = parseRunConfiguration(args);
-        try (Client genAiClient = new Client()) {
-            Povzetkar povzetkar = getPovzetkar(genAiClient, apiKey);
-            povzetkar.run(runConfiguration);
-        }
+        GenAiPool genAiPool = new GenAiPool(System.getenv("GOOGLE_API_KEY"),
+                System.getenv("GOOGLE_API_KEY1"), COOLDOWN_PERIOD_NS);
+        Povzetkar povzetkar = getPovzetkar(genAiPool, apiKey);
+        povzetkar.run(runConfiguration);
     }
 
     @NotNull
-    private static Povzetkar getPovzetkar(Client genAiClient, String apiKey) {
-        VideoSummary videoSummary = new VideoSummary(genAiClient);
+    private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey) {
+        VideoSummary videoSummary = new VideoSummary(genAiPool);
         ProcessingStateService stateService = new ProcessingStateService();
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey);
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary);
