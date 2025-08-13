@@ -54,7 +54,6 @@ public class GenAiPool {
                 Thread.currentThread().interrupt();
             }
         }
-
         selectedClient.lastUsedTimestamp = System.nanoTime();
         return selectedClient;
     }

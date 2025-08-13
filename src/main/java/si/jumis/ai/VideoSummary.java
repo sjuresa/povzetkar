@@ -78,7 +78,9 @@ public class VideoSummary {
 
         for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
             try {
-                GenerateContentResponse response = genAiPool.getGenAiClient().getModels().generateContent(FLASH_MODEL_NAME, content, null);
+                GenAiClient client = genAiPool.getGenAiClient();
+                GenerateContentResponse response = client.getModels().generateContent(FLASH_MODEL_NAME, content, null);
+                client.usedNow();
                 logApiCallDuration(startTime, callDescription);
                 return response;
             } catch (ClientException e) {
