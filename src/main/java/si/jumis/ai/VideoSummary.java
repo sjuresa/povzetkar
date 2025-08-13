@@ -6,37 +6,16 @@ import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import si.jumis.util.Sleeper;
 
 public class VideoSummary {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummary.class);
     private static final String FLASH_MODEL_NAME = "gemini-2.5-flash";
     private static final int MAX_API_ATTEMPTS = 3;
-    private static final long API_RETRY_DELAY_MS = 60_000;
 
     private final GenAiPool genAiPool;
-    private final Sleeper sleeper;
-
-    /**
-     * Thrown when a thread is interrupted while waiting to retry an API call.
-     * This is an unchecked exception that wraps the original {@link InterruptedException}.
-     */
-    public static class ApiRetryInterruptedException extends RuntimeException {
-        public ApiRetryInterruptedException(String message, InterruptedException cause) {
-            super(message, cause);
-        }
-    }
 
     public VideoSummary(GenAiPool genAiPool) {
-        this(genAiPool, new Sleeper.DefaultSleeper());
-    }
-
-    /**
-     * Package-private constructor for testing purposes, allowing injection of mock objects.
-     */
-    VideoSummary(GenAiPool genAiPool, Sleeper sleeper) {
         this.genAiPool = genAiPool;
-        this.sleeper = sleeper;
     }
 
     public String createSummaryForURL(String videoUrl, String date) {
@@ -115,7 +94,7 @@ public class VideoSummary {
      */
     private void handleApiError(ClientException e, int attempt) {
         if (isRetriable(e) && attempt < MAX_API_ATTEMPTS) {
-            logAndSleepForRetry(e, attempt);
+            logger.warn("API call failed with retriable error on attempt {}: {}.", attempt, e.getMessage());
         } else {
             logger.error("API call failed on attempt {} and will not be retried.", attempt);
             throw e;
@@ -123,25 +102,12 @@ public class VideoSummary {
     }
 
     /**
-     * Checks if a ClientException is due to a retriable error like rate limiting (429) or server overload (503).
+     * Checks if a ClientException is due to a retriable error like rate limiting (429), server overload (503)
+     *  or an internal error (500).
      */
     private boolean isRetriable(ClientException e) {
         String message = e.getMessage();
-        return message != null && (message.contains("429") || message.contains("503"));
-    }
-
-    /**
-     * Logs a warning and pauses execution before the next retry attempt.
-     */
-    private void logAndSleepForRetry(ClientException e, int attempt) {
-        logger.warn("API call failed with retriable error on attempt {}: {}. Waiting {}s before retrying...",
-                attempt, e.getMessage(), API_RETRY_DELAY_MS / 1000);
-        try {
-            sleeper.sleep(API_RETRY_DELAY_MS);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new ApiRetryInterruptedException("Interrupted while waiting to retry API call", ie);
-        }
+        return message != null && (message.contains("429") || message.contains("503") || message.contains("500"));
     }
 
     /**
