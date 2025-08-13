@@ -107,7 +107,7 @@ public class VideoSummary {
      */
     private boolean isRetriable(ClientException e) {
         String message = e.getMessage();
-        return message != null && (message.contains("429") || message.contains("503") || message.contains("500"));
+        return message != null && message.matches("^(429|503|500).*");
     }
 
     /**
