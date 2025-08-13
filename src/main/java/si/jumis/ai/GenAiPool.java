@@ -25,11 +25,11 @@ public class GenAiPool {
 
         if (apiKey1 != null && !apiKey1.isEmpty()) {
             Client client1 = Client.builder().apiKey(apiKey1).build();
-            clientPool.add(new GenAiClient(client1));
+            clientPool.add(new GenAiClient(client1, "Api key 1"));
         }
         if (apiKey2 != null && !apiKey2.isEmpty()) {
             Client client2 = Client.builder().apiKey(apiKey2).build();
-            clientPool.add(new GenAiClient(client2));
+            clientPool.add(new GenAiClient(client2, "API key 2"));
         }
     }
     /**
@@ -43,6 +43,7 @@ public class GenAiPool {
 
         long now = System.nanoTime();
         long timeSinceLastUse = now - selectedClient.lastUsedTimestamp;
+        logger.info("Using {}. Time since last use: {} s.", selectedClient.name, TimeUnit.NANOSECONDS.toSeconds(timeSinceLastUse));
 
         if (timeSinceLastUse < coolDownPeriod) {
             long waitTimeNs = coolDownPeriod - timeSinceLastUse;
