@@ -23,8 +23,8 @@ class PromptsTest {
         Duration duration = Duration.ofMinutes(7).plusSeconds(36);
         YouTubeVideo video = new YouTubeVideo("vid1", "Test Video", "http://youtube.com/watch?v=vid1", "Test Author", "channel1", now, duration);
 
-        String formattedPrompt =  Prompts.VIDEO_SUMMARY_PROMPT.formatted(video.url(), video.title(), video.url(),
-                video.authorName(), video.publishedAt(), video.formattedDuration());
+        String formattedPrompt =  Prompts.VIDEO_SUMMARY_PROMPT.formatted("video url", video.url(), video.title(), video.url(),
+                video.authorName(), video.publishedAt(), video.formattedDuration(), "");
 
         assertNotNull(formattedPrompt);
         assertFalse(formattedPrompt.isBlank());

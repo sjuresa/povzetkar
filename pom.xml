@@ -34,6 +34,11 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>io.github.thoroldvix</groupId>
+            <artifactId>youtube-transcript-api</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
             <version>${google.genai.version}</version>

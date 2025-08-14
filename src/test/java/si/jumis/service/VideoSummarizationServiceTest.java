@@ -110,7 +110,7 @@ class VideoSummarizationServiceTest {
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
 
         // Assert
-        verify(videoSummary).createSummary(any(), any());
+        verify(videoSummary).generateContentWithRetry(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
     }
 
@@ -125,7 +125,7 @@ class VideoSummarizationServiceTest {
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
 
         // Assert
-        verify(videoSummary).createSummary(any(), any());
+        verify(videoSummary).generateContentWithRetry(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
     }
 

@@ -1,6 +1,8 @@
 package si.jumis.service;
 
 import com.google.api.services.youtube.model.PlaylistItem;
+import com.google.genai.types.Content;
+import com.google.genai.types.Part;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.Prompts;
@@ -186,9 +188,8 @@ public class VideoSummarizationService {
                                        LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
         try {
-            String summary = videoSummary.createSummary(video.url(),
-                    Prompts.VIDEO_SUMMARY_PROMPT.formatted(video.url(), video.title(), video.url(), video.authorName(),
-                            video.formattedPublishedAt(), video.formattedDuration()));
+            Content content = getContent(video);
+            String summary = videoSummary.generateContentWithRetry(content, "video summary").text();
             FileUtils.appendToFile(outputFilePath, separator + summary);
             return true;
         } catch (Exception e) {
@@ -197,6 +198,24 @@ public class VideoSummarizationService {
             updateProcessingState(videoToProcess, processingDate);
         }
         return false;
+    }
+
+    private Content getContent(YouTubeVideo video) {
+        if (video.duration().toMinutes() <= 50) {
+            return Content.fromParts(
+                    Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted("video url", video.url(),
+                            video.title(), video.url(), video.authorName(),
+                            video.formattedPublishedAt(), video.formattedDuration(), "")),
+                    Part.fromUri(video.url(), "video/mp4"));
+        }
+        logger.info("Video is longer than 50 minute. Getting transcript.");
+        YouTubeTranscriptService youTubeTranscriptService = new YouTubeTranscriptService();
+        String transcript = youTubeTranscriptService.getTranscript(video.id());
+        logger.info("Got transcript successfully.");
+        return Content.fromParts(
+                Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted("video transcript", video.url(),
+                        video.title(), video.url(), video.authorName(),
+                        video.formattedPublishedAt(), video.formattedDuration(), transcript)));
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {

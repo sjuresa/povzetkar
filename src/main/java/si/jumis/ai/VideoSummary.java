@@ -73,7 +73,7 @@ public class VideoSummary {
      * @return The response from the API.
      * @throws ClientException if a non-retriable error occurs or retries are exhausted.
      */
-    private GenerateContentResponse generateContentWithRetry(Content content, String callDescription) {
+    public GenerateContentResponse generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
 
         for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
