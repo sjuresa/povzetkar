@@ -4,6 +4,7 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -16,11 +17,11 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("YouTubeDataService")
 class YouTubeDataServiceTest {
 
     private static final String FAKE_API_KEY = "test-api-key";
@@ -42,43 +43,54 @@ class YouTubeDataServiceTest {
     private Author testAuthor;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         youtubeDataService = new YouTubeDataService(FAKE_API_KEY, mockYouTube);
         testAuthor = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, TEST_AUTHOR_SUBSCRIBERS);
 
         // Common mock setup
         when(mockYouTube.channels()).thenReturn(mockChannels);
-        when(mockChannels.list(any())).thenReturn(mockChannelsList);
         when(mockChannelsList.setKey(FAKE_API_KEY)).thenReturn(mockChannelsList);
     }
 
-    @Test
-    @DisplayName("getAuthorDetails should return author for valid channel ID")
-    void getAuthorDetails_shouldReturnAuthor() throws IOException {
-        // Arrange
-        List<String> expectedParts = List.of("snippet", "statistics");
-        Channel mockChannel = createMockAuthorChannel(testAuthor);
-        setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
+    @Nested
+    @DisplayName("getAuthorDetails")
+    class GetAuthorDetailsTests {
 
-        // Act
-        Author result = youtubeDataService.getAuthorDetails(VALID_CHANNEL_ID);
+        private final List<String> expectedParts = List.of("snippet", "statistics");
 
-        // Assert
-        assertEquals(testAuthor, result);
-        verify(mockChannels).list(expectedParts);
-        verify(mockChannelsList).setId(List.of(VALID_CHANNEL_ID));
-    }
+        @BeforeEach
+        void setUp() throws IOException {
+            when(mockChannels.list(expectedParts)).thenReturn(mockChannelsList);
+        }
 
-    @Test
-    @DisplayName("getAuthorDetails should throw IOException for invalid channel ID")
-    void getAuthorDetails_withInvalidId_shouldThrowIOException() throws IOException {
-        // Arrange
-        setupMockChannelsList(INVALID_CHANNEL_ID, Collections.emptyList()); // No channel found
+        @Test
+        @DisplayName("should return author for valid channel ID")
+        void shouldReturnAuthor() throws IOException {
+            // Arrange
+            Channel mockChannel = createMockAuthorChannel(testAuthor);
+            setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
 
-        // Act & Assert
-        IOException exception = assertThrows(IOException.class, () -> youtubeDataService.getAuthorDetails(INVALID_CHANNEL_ID));
-        assertTrue(exception.getMessage().contains("Channel not found for ID: " + INVALID_CHANNEL_ID));
-        verify(mockChannelsList).setId(List.of(INVALID_CHANNEL_ID));
+            // Act
+            Author result = youtubeDataService.getAuthorDetails(VALID_CHANNEL_ID);
+
+            // Assert
+            assertEquals(testAuthor, result);
+            verify(mockChannels).list(expectedParts);
+            verify(mockChannelsList).setId(List.of(VALID_CHANNEL_ID));
+        }
+
+        @Test
+        @DisplayName("should throw IOException for invalid channel ID")
+        void withInvalidId_shouldThrowIOException() throws IOException {
+            // Arrange
+            setupMockChannelsList(INVALID_CHANNEL_ID, Collections.emptyList()); // No channel found
+
+            // Act & Assert
+            IOException exception = assertThrows(IOException.class, () -> youtubeDataService.getAuthorDetails(INVALID_CHANNEL_ID));
+            assertTrue(exception.getMessage().contains("Channel not found for ID: " + INVALID_CHANNEL_ID));
+            verify(mockChannels).list(expectedParts);
+            verify(mockChannelsList).setId(List.of(INVALID_CHANNEL_ID));
+        }
     }
 
     @Test
@@ -86,6 +98,7 @@ class YouTubeDataServiceTest {
     void getUploadsPlaylistId_shouldReturnCorrectPlaylistId() throws IOException {
         // Arrange
         List<String> expectedParts = List.of("contentDetails");
+        when(mockChannels.list(expectedParts)).thenReturn(mockChannelsList);
         Channel mockChannel = createMockUploadsChannel(VALID_CHANNEL_ID, UPLOADS_PLAYLIST_ID);
         setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
 
