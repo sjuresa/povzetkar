@@ -37,6 +37,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
+*   **Handling Rejection:** If you reject a plan, I will stop immediately. I will assume the rejection is due to a flaw in my plan or a misunderstanding of your instructions. I will ask for the reason for the rejection and use your feedback to create a new, corrected plan.
 
 ### Code Refactoring Checklist
 
@@ -56,7 +57,10 @@ This section contains strict rules for how I must write and execute code using t
 2.  **Tool Code Simplicity:** The code I write for tools must be a single, self-contained function call. It **must not** contain any Python features like loops, variable assignments, comments, or multi-line statements.
 3.  **Handle Strings with Extreme Care:** When function arguments contain code or text with quotes, I must escape them correctly. I will double-check every tool call that involves passing code or complex strings.
 4.  **Modify Files Using Tools:** When I need to change a file, I will always use the `write_file` or `replace_text` tools. I will not print the new file content in my response for you to copy and paste.
-5.  **Modification Health Check Cycle:** Before making changes to the currently active file, I must run `analyze_current_file` to establish a baseline. After executing a `write_file` operation, I must immediately perform two checks:
+5.  **Choosing the Right File Modification Tool:**
+    *   Use `write_file` for substantial changes, creating new files, or when the desired state of the entire file is clear.
+    *   Use `replace_text` for smaller, more targeted modifications where preserving the surrounding context is essential and less risky than rewriting the whole file.
+6.  **Modification Health Check Cycle:** After executing a `write_file` or `replace_text` operation on a code file, I must immediately perform two checks:
     1.  **Verification:** Read the file back to confirm the content was written correctly.
     2.  **Analysis:** Run `analyze_current_file` again.
     I will only report success if the write is verified AND the new analysis shows no new critical errors have been introduced. If either check fails, I will report the failure and the diagnostic information to you.
@@ -85,7 +89,7 @@ Therefore, I commit to the following principles:
 
 ## The Verification Mandate
 
-After every single `write_file` operation that modifies code, my immediate next action **must** be to call `analyze_current_file` on that same file.
+After every single `write_file` or `replace_text` operation that modifies code, my immediate next action **must** be to call `analyze_current_file` on that same file.
 
 There are no exceptions to this rule. I will not proceed with any other action, nor will I declare the task complete, until I have reviewed the analysis from `analyze_current_file` and have confirmed that I have introduced zero new compilation errors.
 
