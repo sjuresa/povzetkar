@@ -226,7 +226,7 @@ class VideoSummarizationServiceTest {
         assertTrue(message.contains("Channel ID: UCchannel1"));
         assertTrue(message.contains("Author: Author One"));
         assertTrue(message.contains("Video URL: https://www.youtube.com/watch?v=id1"));
-        assertTrue(message.contains("Error: Test error message"));
+        assertTrue(message.contains("Error: java.lang.Exception: Test error message"));
         assertTrue(message.endsWith("---\n"));
     }
 }
