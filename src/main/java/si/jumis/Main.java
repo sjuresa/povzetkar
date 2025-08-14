@@ -7,7 +7,9 @@ import si.jumis.ai.GenAiPool;
 import si.jumis.ai.VideoSummary;
 import si.jumis.ai.YouTubeDataService;
 import si.jumis.service.ProcessingStateService;
+import si.jumis.service.TimeTextFormatter;
 import si.jumis.service.VideoSummarizationService;
+import si.jumis.service.YouTubeTranscriptService;
 import si.jumis.util.ResourceReader;
 
 import java.time.LocalDate;
@@ -37,7 +39,7 @@ public class Main {
         VideoSummary videoSummary = new VideoSummary(genAiPool);
         ProcessingStateService stateService = new ProcessingStateService();
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey);
-        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary);
+        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, new YouTubeTranscriptService(new TimeTextFormatter()));
         ResourceReader resourceReader = new ResourceReader();
 
         return new Povzetkar(summarizationService, videoSummary, resourceReader);
