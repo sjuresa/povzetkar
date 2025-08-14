@@ -17,16 +17,19 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class YouTubeDataServiceTest {
 
     private static final String FAKE_API_KEY = "test-api-key";
     private static final String VALID_CHANNEL_ID = "UC-test-channel-id";
+    private static final String INVALID_CHANNEL_ID = "invalid-id";
     private static final String TEST_AUTHOR_TITLE = "Test Author";
     private static final String TEST_AUTHOR_CUSTOM_URL = "@test";
     private static final long TEST_AUTHOR_SUBSCRIBERS = 12345L;
+    private static final String UPLOADS_PLAYLIST_ID = "UU-test-channel-id";
 
     @Mock
     private YouTube mockYouTube;
@@ -39,79 +42,83 @@ class YouTubeDataServiceTest {
     private Author testAuthor;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         youtubeDataService = new YouTubeDataService(FAKE_API_KEY, mockYouTube);
         testAuthor = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, TEST_AUTHOR_SUBSCRIBERS);
+
+        // Common mock setup
+        when(mockYouTube.channels()).thenReturn(mockChannels);
+        when(mockChannels.list(any())).thenReturn(mockChannelsList);
+        when(mockChannelsList.setKey(FAKE_API_KEY)).thenReturn(mockChannelsList);
     }
 
     @Test
     @DisplayName("getAuthorDetails should return author for valid channel ID")
     void getAuthorDetails_shouldReturnAuthor() throws IOException {
         // Arrange
-        setupChannelsApiMocks();
-        mockChannelsResponse(List.of(createMockChannel(testAuthor)));
+        List<String> expectedParts = List.of("snippet", "statistics");
+        Channel mockChannel = createMockAuthorChannel(testAuthor);
+        setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
 
         // Act
         Author result = youtubeDataService.getAuthorDetails(VALID_CHANNEL_ID);
 
         // Assert
         assertEquals(testAuthor, result);
+        verify(mockChannels).list(expectedParts);
+        verify(mockChannelsList).setId(List.of(VALID_CHANNEL_ID));
     }
 
     @Test
     @DisplayName("getAuthorDetails should throw IOException for invalid channel ID")
     void getAuthorDetails_withInvalidId_shouldThrowIOException() throws IOException {
         // Arrange
-        setupChannelsApiMocks();
-        mockChannelsResponse(Collections.emptyList()); // No channel found
+        setupMockChannelsList(INVALID_CHANNEL_ID, Collections.emptyList()); // No channel found
 
         // Act & Assert
-        IOException exception = assertThrows(IOException.class, () -> youtubeDataService.getAuthorDetails("invalid-id"));
-        assertTrue(exception.getMessage().contains("Channel not found for ID: invalid-id"));
+        IOException exception = assertThrows(IOException.class, () -> youtubeDataService.getAuthorDetails(INVALID_CHANNEL_ID));
+        assertTrue(exception.getMessage().contains("Channel not found for ID: " + INVALID_CHANNEL_ID));
+        verify(mockChannelsList).setId(List.of(INVALID_CHANNEL_ID));
     }
 
     @Test
     @DisplayName("getUploadsPlaylistId should return the correct playlist ID for a valid channel")
     void getUploadsPlaylistId_shouldReturnCorrectPlaylistId() throws IOException {
         // Arrange
-        String expectedUploadsId = "UU-test-channel-id";
-        setupChannelsApiMocks();
-
-        Channel mockChannel = new Channel()
-                .setId(VALID_CHANNEL_ID)
-                .setContentDetails(new ChannelContentDetails()
-                        .setRelatedPlaylists(new ChannelContentDetails.RelatedPlaylists()
-                                .setUploads(expectedUploadsId)));
-
-        mockChannelsResponse(List.of(mockChannel));
+        List<String> expectedParts = List.of("contentDetails");
+        Channel mockChannel = createMockUploadsChannel(VALID_CHANNEL_ID, UPLOADS_PLAYLIST_ID);
+        setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
 
         // Act
         String actualUploadsId = youtubeDataService.getUploadsPlaylistId(VALID_CHANNEL_ID);
 
         // Assert
-        assertEquals(expectedUploadsId, actualUploadsId);
-        verify(mockChannels).list(List.of("contentDetails"));
+        assertEquals(UPLOADS_PLAYLIST_ID, actualUploadsId);
+        verify(mockChannels).list(expectedParts);
+        verify(mockChannelsList).setId(List.of(VALID_CHANNEL_ID));
     }
 
     // --- Helper Methods ---
 
-    private void setupChannelsApiMocks() throws IOException {
-        when(mockYouTube.channels()).thenReturn(mockChannels);
-        when(mockChannels.list(any())).thenReturn(mockChannelsList);
-        when(mockChannelsList.setKey(any())).thenReturn(mockChannelsList);
-        when(mockChannelsList.setId(any())).thenReturn(mockChannelsList);
-        when(mockChannelsList.execute()).thenAnswer(invocation -> new ChannelListResponse()); // Default empty response
-    }
+    private void setupMockChannelsList(String channelId, List<Channel> channels) throws IOException {
+        when(mockChannelsList.setId(List.of(channelId))).thenReturn(mockChannelsList);
 
-    private void mockChannelsResponse(List<Channel> channels) throws IOException {
         ChannelListResponse response = new ChannelListResponse().setItems(channels);
         when(mockChannelsList.execute()).thenReturn(response);
     }
 
-    private Channel createMockChannel(Author author) {
+    private Channel createMockAuthorChannel(Author author) {
         return new Channel()
                 .setId(author.channelId())
                 .setSnippet(new ChannelSnippet().setTitle(author.name()).setCustomUrl(author.handle()))
                 .setStatistics(new ChannelStatistics().setSubscriberCount(BigInteger.valueOf(author.subscriberCount())));
+    }
+
+    private Channel createMockUploadsChannel(String channelId, String uploadsPlaylistId) {
+        return new Channel()
+                .setId(channelId)
+                .setContentDetails(new ChannelContentDetails()
+                        .setRelatedPlaylists(new ChannelContentDetails.RelatedPlaylists()
+                                .setUploads(uploadsPlaylistId)));
     }
 }
