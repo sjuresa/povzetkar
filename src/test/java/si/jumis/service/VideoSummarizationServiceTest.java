@@ -3,6 +3,7 @@ package si.jumis.service;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.PlaylistItemSnippet;
 import com.google.api.services.youtube.model.ResourceId;
+import com.google.genai.types.Content;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -170,5 +172,61 @@ class VideoSummarizationServiceTest {
         verify(youTubeTranscriptService).getTranscript("long_id");
         verify(videoSummary).generateContentWithRetry(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), longVideo, today);
+    }
+
+    @Test
+    void processSingleVideo_whenSummarizationFails_logsErrorAndUpdateState() throws IOException {
+        // Arrange
+        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
+        mockYouTubeApiResponses(null, List.of(video1));
+        when(videoSummary.generateContentWithRetry(any(Content.class), anyString())).thenThrow(new RuntimeException("AI error"));
+
+        // Act
+        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+
+        // Assert
+        verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
+    }
+
+    @Test
+    void processSingleVideo_whenTranscriptFails_logsErrorAndDoesNotUpdateState() throws IOException {
+        // Arrange
+        YouTubeVideo longVideo = new YouTubeVideo(
+                "long_id",
+                "Long Video Title",
+                "https://www.youtube.com/watch?v=long_id",
+                "Author One",
+                "UCchannel1",
+                today.atStartOfDay().toInstant(ZoneId.of("CET").getRules().getOffset(today.atStartOfDay())),
+                Duration.ofMinutes(60)
+        );
+        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
+        mockYouTubeApiResponses(null, List.of(longVideo));
+        when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(""); // Simulate transcript failure
+
+        // Act
+        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+
+        // Assert
+        verify(stateService, never()).updateLastProcessedVideoForDate(anyString(), any(), any());
+    }
+
+
+    @Test
+    void createFailureMessage_formatsCorrectly() {
+        // Arrange
+        Exception testException = new Exception("Test error message");
+
+        // Act
+        String message = VideoSummarizationService.createFailureMessage(video1, testException);
+
+        // Assert
+        assertTrue(message.contains("Timestamp:"));
+        assertTrue(message.contains("Video ID: id1"));
+        assertTrue(message.contains("Channel ID: UCchannel1"));
+        assertTrue(message.contains("Author: Author One"));
+        assertTrue(message.contains("Video URL: https://www.youtube.com/watch?v=id1"));
+        assertTrue(message.contains("Error: Test error message"));
+        assertTrue(message.endsWith("---\n"));
     }
 }

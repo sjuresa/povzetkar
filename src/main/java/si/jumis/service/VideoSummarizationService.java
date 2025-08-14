@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -193,15 +194,24 @@ public class VideoSummarizationService {
         YouTubeVideo video = videoToProcess.video();
         try {
             Content content = getContent(video);
+            if (content == null) {
+                // This case happens when transcript retrieval fails. We log it but do not update the state,
+                // allowing the system to retry fetching the transcript on the next run.
+                handleSummaryFailure(video, new Exception("Transcript retrieval failed, content is null."));
+                return false;
+            }
+
             String summary = videoSummary.generateContentWithRetry(content, "video summary").text();
             FileUtils.appendToFile(outputFilePath, separator + summary);
+            updateProcessingState(videoToProcess, processingDate); // Only update state on full success
             return true;
         } catch (Exception e) {
+            // This case handles failures in the AI summarization step. We log it and update the state
+            // to prevent retrying a video that consistently fails to be summarized.
             handleSummaryFailure(video, e);
-        } finally {
             updateProcessingState(videoToProcess, processingDate);
+            return false;
         }
-        return false;
     }
 
     private Content getContent(YouTubeVideo video) {
@@ -214,7 +224,11 @@ public class VideoSummarizationService {
         }
         logger.info("Video is longer than {} minutes. Getting transcript.", TRANSCRIPT_THRESHOLD_MINUTES);
         String transcript = youTubeTranscriptService.getTranscript(video.id());
-        logger.info("Got transcript successfully.");
+        if (transcript.isBlank()) {
+            logger.warn("Could not retrieve transcript for video {}. It will be skipped for now.", video.url());
+            return null;
+        }
+        logger.info("Got transcript successfully for video {}.", video.url());
         return Content.fromParts(
                 Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted("video transcript", video.url(),
                         video.title(), video.url(), video.authorName(),
@@ -224,11 +238,21 @@ public class VideoSummarizationService {
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {
         logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url(), e);
         try {
-            String failureMessage = String.format("Video URL: %s%nError: %s%n---%n", video.url(), e.getMessage());
+            String failureMessage = createFailureMessage(video, e);
             FileUtils.appendToFile(Paths.get("failed_videos.log"), failureMessage);
         } catch (IOException logEx) {
             logger.error("Additionally, failed to write to the failure log for video: {}", video.url(), logEx);
         }
+    }
+
+    public static String createFailureMessage(YouTubeVideo video, Exception e) {
+        return String.format("Timestamp: %s, Video URL: %s, Video ID: %s\nChannel ID: %s, Author: %s\nError: %s\n---\n",
+                Instant.now().toString(),
+                video.url(),
+                video.id(),
+                video.channelId(),
+                video.authorName(),
+                e.getMessage());
     }
 
     private void updateProcessingState(VideoToProcess videoToProcess, LocalDate processingDate) {
