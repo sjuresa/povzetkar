@@ -79,15 +79,9 @@ public class TimeTextFormatter implements TranscriptFormatter {
             return false;
         }
 
-        if (isTimeGapExceeded(previousFragment, currentFragment)) {
-            return true;
-        }
-
-        if (isCharCountExceeded(charCount)) {
-            return true;
-        }
-
-        return isMinCharCountMet(charCount) && isSentenceEnd(currentGroup);
+        return isTimeGapExceeded(previousFragment, currentFragment)
+                || isCharCountExceeded(charCount)
+                || (isMinCharCountMet(charCount) && isSentenceEnd(currentGroup));
     }
 
     private boolean isTimeGapExceeded(Fragment previous, Fragment current) {

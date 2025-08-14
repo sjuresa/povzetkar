@@ -36,9 +36,6 @@ public class YouTubeTranscriptService {
         } catch (TranscriptRetrievalException e) {
             log.error("Could not retrieve transcript for video ID '{}'. The video may be unavailable or private.", videoId, e);
             return "";
-        } catch (Exception e) {
-            log.error("An unexpected error occurred while processing video ID '{}'.", videoId, e);
-            return "";
         }
     }
 }
