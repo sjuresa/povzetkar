@@ -7,6 +7,17 @@ import org.slf4j.LoggerFactory;
 public class YouTubeTranscriptService {
 
     private static final Logger log = LoggerFactory.getLogger(YouTubeTranscriptService.class);
+    private final TranscriptFormatter formatter;
+    private final YoutubeTranscriptApi youtubeTranscriptApi;
+
+    public YouTubeTranscriptService(TranscriptFormatter formatter) {
+        this(formatter, TranscriptApiFactory.createDefault());
+    }
+
+    YouTubeTranscriptService(TranscriptFormatter formatter, YoutubeTranscriptApi youtubeTranscriptApi) {
+        this.formatter = formatter;
+        this.youtubeTranscriptApi = youtubeTranscriptApi;
+    }
 
     public String getTranscript(String videoId) {
         if (videoId == null || videoId.isBlank()) {
@@ -14,12 +25,10 @@ public class YouTubeTranscriptService {
             return "";
         }
         try {
-            YoutubeTranscriptApi youtubeTranscriptApi = TranscriptApiFactory.createDefault();
             TranscriptContent transcriptContent = youtubeTranscriptApi.listTranscripts(videoId)
                     .findTranscript()
                     .fetch();
 
-            TranscriptFormatter formatter = new TimeTextFormatter();
             return formatter.format(transcriptContent);
         } catch (IllegalArgumentException e) {
             log.warn("The provided video ID '{}' has an invalid format.", videoId, e);

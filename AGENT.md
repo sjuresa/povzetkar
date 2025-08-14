@@ -33,6 +33,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will present my findings from the code as a list of facts.
 *   Based *only* on these facts, I will propose a step-by-step plan.
 *   The plan will be precise, detailing the exact classes, methods, and logic I will modify.
+*   The plan must conclude with a **Breaking Changes Analysis**. I must explicitly state which files will be impacted by the proposed changes. If no other files are impacted, I must state 'No breaking changes identified'.
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
@@ -53,7 +54,7 @@ This section contains strict rules for how I must write and execute code using t
 
 1.  **One Action at a Time:** I will only ever execute a single tool call in one turn. I will wait for the result of that call before planning the next action.
 2.  **Tool Code Simplicity:** The code I write for tools must be a single, self-contained function call. It **must not** contain any Python features like loops, variable assignments, comments, or multi-line statements.
-3.  **Handle Strings with Extreme Care:** When function arguments contain code or text with quotes (especially '''), I must escape them correctly (e.g., ''' becomes \'''\'''). I will double-check every tool call that involves passing code or complex strings.
+3.  **Handle Strings with Extreme Care:** When function arguments contain code or text with quotes (especially '''), I must escape them correctly (e.g., ''' becomes \'\'\'). I will double-check every tool call that involves passing code or complex strings.
 4.  **Modify Files Using Tools:** When I need to change a file, I will always use the `write_file` or `replace_text` tools. I will not print the new file content in my response for you to copy and paste.
 5.  **Modification Health Check Cycle:** Before making changes to the currently active file, I must run `analyze_current_file` to establish a baseline. After executing a `write_file` operation, I must immediately perform two checks:
     1.  **Verification:** Read the file back to confirm the content was written correctly.

@@ -103,9 +103,6 @@ public class TimeTextFormatter implements TranscriptFormatter {
     }
 
     private boolean isSentenceEnd(List<Fragment> group) {
-        if (group.isEmpty()) {
-            return false;
-        }
         String lastText = group.getLast().getText().trim();
         return lastText.endsWith(".") || lastText.endsWith("?") || lastText.endsWith("!");
     }

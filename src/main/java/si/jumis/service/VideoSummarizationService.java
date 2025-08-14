@@ -28,6 +28,8 @@ import java.util.*;
 public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
     public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
+    private static final int TRANSCRIPT_THRESHOLD_MINUTES = 50;
+
 
     private record VideoToProcess(YouTubeVideo video, Author author) {
     }
@@ -36,12 +38,14 @@ public class VideoSummarizationService {
     private final ProcessingStateService stateService;
     private final VideoSummary videoSummary;
     private final ResourceReader resourceReader;
+    private final YouTubeTranscriptService youTubeTranscriptService;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary) {
+    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
         this.resourceReader = new ResourceReader();
+        this.youTubeTranscriptService = youTubeTranscriptService;
     }
 
     public List<Author> getAuthorsWithDetails() {
@@ -201,15 +205,14 @@ public class VideoSummarizationService {
     }
 
     private Content getContent(YouTubeVideo video) {
-        if (video.duration().toMinutes() <= 50) {
+        if (video.duration().toMinutes() <= TRANSCRIPT_THRESHOLD_MINUTES) {
             return Content.fromParts(
                     Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted("video url", video.url(),
                             video.title(), video.url(), video.authorName(),
                             video.formattedPublishedAt(), video.formattedDuration(), "")),
                     Part.fromUri(video.url(), "video/mp4"));
         }
-        logger.info("Video is longer than 50 minute. Getting transcript.");
-        YouTubeTranscriptService youTubeTranscriptService = new YouTubeTranscriptService();
+        logger.info("Video is longer than {} minutes. Getting transcript.", TRANSCRIPT_THRESHOLD_MINUTES);
         String transcript = youTubeTranscriptService.getTranscript(video.id());
         logger.info("Got transcript successfully.");
         return Content.fromParts(

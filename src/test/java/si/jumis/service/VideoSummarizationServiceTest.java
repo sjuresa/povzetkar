@@ -38,6 +38,8 @@ class VideoSummarizationServiceTest {
     @Mock
     private VideoSummary videoSummary;
     @Mock
+    private YouTubeTranscriptService youTubeTranscriptService;
+    @Mock
     private Sleeper sleeper;
 
     private VideoSummarizationService videoSummarizationService;
@@ -51,8 +53,7 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        // Manually instantiate the service, injecting all mocks including the sleeper
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L);
         today = LocalDate.now(ZoneId.of("CET"));
@@ -142,5 +143,32 @@ class VideoSummarizationServiceTest {
         verify(videoSummary, never()).createSummary(anyString(), anyString());
         verify(stateService, never()).updateLastProcessedVideoForDate(anyString(), any(), any());
         verify(sleeper, never()).sleep(anyLong());
+    }
+
+    @Test
+    void summarizeFromAuthors_whenVideoIsLong_usesTranscript() throws IOException {
+        // Arrange
+        YouTubeVideo longVideo = new YouTubeVideo(
+                "long_id",
+                "Long Video Title",
+                "https://www.youtube.com/watch?v=long_id",
+                "Author One",
+                "UCchannel1",
+                today.atStartOfDay().toInstant(ZoneId.of("CET").getRules().getOffset(today.atStartOfDay())),
+                Duration.ofMinutes(60)
+        );
+        String fakeTranscript = "This is a fake transcript.";
+
+        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
+        mockYouTubeApiResponses(null, List.of(longVideo));
+        when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(fakeTranscript);
+
+        // Act
+        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+
+        // Assert
+        verify(youTubeTranscriptService).getTranscript("long_id");
+        verify(videoSummary).generateContentWithRetry(any(), any());
+        verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), longVideo, today);
     }
 }
