@@ -185,7 +185,7 @@ public class YouTubeDataService {
      * @return An {@link ItemProcessingStatus} record containing the evaluation result.
      */
     private ItemProcessingStatus getItemProcessingStatus(PlaylistItem item, LocalDate fetchDate, String stopAtVideoId) {
-        if (stopAtVideoId != null && !stopAtVideoId.isEmpty() && item.getSnippet().getResourceId().getVideoId().equals(stopAtVideoId)) {
+        if (stopAtVideoId != null && !stopAtVideoId.isBlank() && item.getSnippet().getResourceId().getVideoId().equals(stopAtVideoId)) {
             return new ItemProcessingStatus(true, false);
         }
         if (fetchDate == null) {
