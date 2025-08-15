@@ -1,5 +1,6 @@
 package si.jumis.ai;
 
+import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,10 @@ import si.jumis.model.Author;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -177,6 +181,33 @@ class YouTubeDataServiceTest {
             assertEquals(List.of(item1, item2), result);
             verify(mockPlaylistItemsList, times(2)).execute(); // Fetches page 1, then fetches page 2 to find the stop video
         }
+
+        @Test
+        @DisplayName("should stop when item is older than fetchDate")
+        void shouldStopWhenItemIsOlderThanFetchDate() throws IOException {
+            // Arrange
+            LocalDate fetchDate = LocalDate.of(2023, 10, 26);
+            DateTime newDate = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+            DateTime oldDate = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+
+            PlaylistItem item1 = createMockPlaylistItem("video1", newDate);
+            PlaylistItem item2 = createMockPlaylistItem("video2", oldDate); // This item should cause the loop to stop
+
+            PlaylistItemListResponse response1 = new PlaylistItemListResponse().setItems(List.of(item1)).setNextPageToken("nextPage");
+            PlaylistItemListResponse response2 = new PlaylistItemListResponse().setItems(List.of(item2));
+
+            when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
+            when(mockPlaylistItemsList.setPageToken("nextPage")).thenReturn(mockPlaylistItemsList);
+            when(mockPlaylistItemsList.execute()).thenReturn(response1, response2);
+
+            // Act
+            List<PlaylistItem> result = youtubeDataService.fetchPlaylistItems(UPLOADS_PLAYLIST_ID, fetchDate, null, null);
+
+            // Assert
+            assertEquals(1, result.size());
+            assertEquals(List.of(item1), result);
+            verify(mockPlaylistItemsList, times(2)).execute();
+        }
     }
 
     @Test
@@ -224,8 +255,15 @@ class YouTubeDataServiceTest {
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId) {
+        // Maintain backward compatibility for tests that don't need a specific date
+        return createMockPlaylistItem(videoId, new DateTime(new Date()));
+    }
+
+    private PlaylistItem createMockPlaylistItem(String videoId, DateTime publishedAt) {
         return new PlaylistItem().setSnippet(
-                new PlaylistItemSnippet().setResourceId(new ResourceId().setVideoId(videoId))
+                new PlaylistItemSnippet()
+                        .setResourceId(new ResourceId().setVideoId(videoId))
+                        .setPublishedAt(publishedAt)
         );
     }
 }
