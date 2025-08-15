@@ -134,7 +134,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
-- `embedding` (vector): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NULL`
+- `embedding` (vector): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
 - `category_id` (FK, int): References `categories.id`. `NULL`
 - `sentiment_id` (FK, int): References `sentiments.id`. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
@@ -182,3 +182,11 @@ A join table to create a many-to-many relationship between trends and the summar
 - `trend_id` (PK, FK, bigint): References `trends.id`. `NOT NULL`
 - `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
 The primary key for this table is a composite key formed by (`trend_id`, `summary_id`).
+
+### `author_assessments`
+Stores historical records of bias assessments for content authors.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `author_id` (FK, bigint): References `authors.id`. `NOT NULL`
+- `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL`
+- `assessment_details` (text): A detailed, AI-generated explanation for the given score. `NOT NULL`
+- `created_at` (timestamp): When the assessment was performed. `NOT NULL DEFAULT CURRENT_TIMESTAMP`

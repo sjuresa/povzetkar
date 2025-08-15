@@ -52,7 +52,7 @@ This layer will consist of one or more services responsible for fetching raw con
 *   **YouTube Service:** Expands the existing functionality to fetch videos by both channel subscriptions and keyword search.
 *   **Web Scraper Service:** A new service responsible for crawling and extracting textual content from specified websites and blogs.
 *   **Social Media Service(s):** Dedicated modules for interacting with the APIs of platforms like X, Reddit, LinkedIn, and TikTok.
-*   **Mechanism:** Upon finding new content, the service will publish a message to the Messaging Queue containing the content's metadata (e.g., URL, source, author).
+*   **Mechanism:** Upon finding new content, the service will publish a message to the Messaging Queue containing the content's metadata (e.g., URL, source, author's unique ID).
 
 ### 3.2 Content Processing & Enrichment Service
 
