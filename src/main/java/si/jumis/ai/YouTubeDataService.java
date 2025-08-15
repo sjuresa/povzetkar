@@ -185,29 +185,20 @@ public class YouTubeDataService {
      * @return An {@link ItemProcessingStatus} record containing the evaluation result.
      */
     private ItemProcessingStatus getItemProcessingStatus(PlaylistItem item, LocalDate fetchDate, String stopAtVideoId) {
-        // Boundary 1: A specific video ID marks the end.
         if (stopAtVideoId != null && !stopAtVideoId.isEmpty() && item.getSnippet().getResourceId().getVideoId().equals(stopAtVideoId)) {
-            return new ItemProcessingStatus(true, false); // Stop fetching, don't add this item.
+            return new ItemProcessingStatus(true, false);
         }
-
-        boolean shouldAdd = true;
-        if (fetchDate != null) {
-            Instant publishedAt = Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue());
-            LocalDate itemDate = getLocalDateInCet(publishedAt);
-
-            // Boundary 2: A video is older than the target fetch date.
-            if (itemDate.isBefore(fetchDate)) {
-                return new ItemProcessingStatus(true, false); // Stop fetching, don't add this item.
-            }
-            // Condition: A video is newer than the target fetch date.
-            if (itemDate.isAfter(fetchDate)) {
-                shouldAdd = false; // Don't add this item, but continue processing the page.
-            }
+        if (fetchDate == null) {
+            return new ItemProcessingStatus(false, true);
         }
+        Instant publishedAt = Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue());
+        LocalDate itemDate = getLocalDateInCet(publishedAt);
 
-        return new ItemProcessingStatus(false, shouldAdd); // Continue fetching, add item if it wasn't filtered.
+        if (itemDate.isBefore(fetchDate)) {
+            return new ItemProcessingStatus(true, false);
+        }
+        return new ItemProcessingStatus(false, itemDate.equals(fetchDate));
     }
-
 
     /**
      * Fetches video durations for a list of video IDs in batches of 50.
