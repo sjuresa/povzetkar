@@ -145,3 +145,18 @@ A join table creating a many-to-many relationship between reports and summaries.
 - `report_id` (PK, FK, bigint): References `reports.id`.
 - `summary_id` (PK, FK, bigint): References `summaries.id`.
 The primary key for this table is a composite key formed by (`report_id`, `summary_id`).
+
+### `trends`
+Stores identified trends and patterns from the analyzed content.
+- `id` (PK, bigint, auto-increment)
+- `name` (varchar): A concise name for the trend (e.g., "Rise of AI in Java").
+- `description` (text): A detailed explanation of the trend.
+- `start_date` (date): The approximate date when the trend was first observed.
+- `end_date` (date): The date the trend was last observed (can be null for ongoing trends).
+- `created_at` (timestamp): When the trend was first logged in the system.
+
+### `trend_summaries`
+A join table to create a many-to-many relationship between trends and the summaries that constitute them.
+- `trend_id` (PK, FK, bigint): References `trends.id`.
+- `summary_id` (PK, FK, bigint): References `summaries.id`.
+The primary key for this table is a composite key formed by (`trend_id`, `summary_id`).
