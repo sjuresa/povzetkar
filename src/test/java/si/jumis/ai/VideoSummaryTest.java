@@ -83,24 +83,6 @@ class VideoSummaryTest {
     }
 
     @Test
-    @DisplayName("createSummaryFromTranscript should call Gemini API and return response text")
-    void createSummaryFromTranscript_success() {
-        // Arrange
-        when(mockResponse.text()).thenReturn("Expected transcript summary");
-        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
-        when(mockGenAiClient.getModels()).thenReturn(mockModels);
-        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null)))
-                .thenReturn(mockResponse);
-
-        // Act
-        String result = videoSummary.createSummaryFromTranscript("This is a transcript.", "http://test.url", "Test Title", "Test Author", "2025-07-17");
-
-        // Assert
-        assertEquals("Expected transcript summary", result);
-        verify(mockModels).generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null));
-    }
-
-    @Test
     @DisplayName("generateContentWithRetry should retry on 429 error and succeed on second attempt")
     void generateContent_shouldRetryOn429() {
         // Arrange

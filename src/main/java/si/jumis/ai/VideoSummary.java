@@ -49,23 +49,6 @@ public class VideoSummary {
     }
 
     /**
-     * Creates a summary directly from a video transcript.
-     *
-     * @param transcript The full transcript of the video.
-     * @param videoTitle The title of the video for context.
-     * @param date       The date for the summary report.
-     * @return The AI-generated summary as a Markdown string.
-     */
-    public String createSummaryFromTranscript(String transcript, String videoUrl, String videoTitle, String author, String date) {
-        String promptText = Prompts.TRANSCRIPT_SUMMARY_PROMPT.formatted(videoUrl, videoTitle, videoUrl, author, date, transcript);
-
-        Content content = Content.fromParts(Part.fromText(promptText));
-
-        GenerateContentResponse response = generateContentWithRetry(content, "summary from transcript");
-        return response.text();
-    }
-
-    /**
      * Calls the Gemini API to generate content, with built-in retry logic for rate-limiting errors.
      *
      * @param content   The content to send to the model.

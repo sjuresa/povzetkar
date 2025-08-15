@@ -42,10 +42,4 @@ class PromptsTest {
         assertNotNull(Prompts.SUMMARIES_SUMMARY_PROMPT);
         assertFalse(Prompts.SUMMARIES_SUMMARY_PROMPT.isBlank());
     }
-
-    @Test
-    void testTranscriptSummaryPrompt() {
-        assertNotNull(Prompts.TRANSCRIPT_SUMMARY_PROMPT);
-        assertFalse(Prompts.TRANSCRIPT_SUMMARY_PROMPT.isBlank());
-    }
 }

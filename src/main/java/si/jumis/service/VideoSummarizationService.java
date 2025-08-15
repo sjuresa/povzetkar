@@ -292,14 +292,6 @@ public class VideoSummarizationService {
         }
     }
 
-    /**
-     * Creates a summary directly from a video's transcript text.
-     */
-    public String summarizeFromTranscript(String transcript, String videoUrl, String videoTitle, String author, String date) {
-        logger.info("Generating summary from transcript for video: {}", videoTitle);
-        return videoSummary.createSummaryFromTranscript(transcript, videoUrl, videoTitle, author, date);
-    }
-
     private void prepareOutputDirectory(Path outputFilePath) throws IOException {
         Path parentDir = outputFilePath.getParent();
         if (parentDir != null) {
