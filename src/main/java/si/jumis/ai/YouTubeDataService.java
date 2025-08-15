@@ -113,11 +113,13 @@ public class YouTubeDataService {
             if (currentPageItems == null || currentPageItems.isEmpty()) {
                 shouldStop = true;
             } else {
-                PageProcessingResult processingResult = processPageForStopId(currentPageItems, stopAtVideoId);
-                allItems.addAll(processingResult.itemsToAdd());
+                PageProcessingResult stopIdResult = processPageForStopId(currentPageItems, stopAtVideoId);
+                PageProcessingResult dateResult = processPageForDate(stopIdResult.itemsToAdd(), fetchDate);
+
+                allItems.addAll(dateResult.itemsToAdd());
 
                 nextPageToken = response.getNextPageToken();
-                if (processingResult.stopFound() || nextPageToken == null || hasReachedMaxTotal(allItems, maxTotal) || shouldStopPaginationByDate(currentPageItems, fetchDate)) {
+                if (stopIdResult.stopFound() || dateResult.stopFound() || nextPageToken == null || hasReachedMaxTotal(allItems, maxTotal)) {
                     shouldStop = true;
                 }
             }
@@ -165,23 +167,36 @@ public class YouTubeDataService {
     }
 
     /**
+     * Processes a page of items, filtering out items older than the fetchDate.
+     *
+     * @return A {@link PageProcessingResult} containing the items to add and a flag indicating if an older item was found.
+     */
+    private PageProcessingResult processPageForDate(List<PlaylistItem> currentPageItems, LocalDate fetchDate) {
+        if (fetchDate == null) {
+            return new PageProcessingResult(currentPageItems, false); // No date filter, add all and continue
+        }
+
+        List<PlaylistItem> itemsToAdd = new ArrayList<>();
+        for (PlaylistItem item : currentPageItems) {
+            Instant publishedAt = Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue());
+            LocalDate itemDate = getLocalDateInCet(publishedAt);
+
+            if (itemDate.isBefore(fetchDate)) {
+                // Found an item older than the fetch date, stop processing this page.
+                return new PageProcessingResult(itemsToAdd, true);
+            }
+            itemsToAdd.add(item);
+        }
+
+        // All items on this page are valid, continue to the next page.
+        return new PageProcessingResult(itemsToAdd, false);
+    }
+
+    /**
      * Checks if the collected items have reached the specified maximum total.
      */
     private boolean hasReachedMaxTotal(List<PlaylistItem> allItems, Long maxTotal) {
         return maxTotal != null && allItems.size() >= maxTotal;
-    }
-
-    /**
-     * Checks if pagination should stop based on the publish date of the last item on the page.
-     */
-    private boolean shouldStopPaginationByDate(List<PlaylistItem> currentPageItems, LocalDate fetchDate) {
-        if (fetchDate == null) {
-            return false;
-        }
-        PlaylistItem lastItemInPage = currentPageItems.getLast();
-        Instant lastItemPublishedAt = Instant.ofEpochMilli(lastItemInPage.getSnippet().getPublishedAt().getValue());
-        LocalDate lastItemDateInCet = getLocalDateInCet(lastItemPublishedAt);
-        return lastItemDateInCet.isBefore(fetchDate);
     }
 
     /**
