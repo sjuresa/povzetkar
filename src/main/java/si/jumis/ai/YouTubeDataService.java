@@ -1,13 +1,7 @@
 package si.jumis.ai;
 
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.model.Channel;
-import com.google.api.services.youtube.model.PlaylistItem;
-import com.google.api.services.youtube.model.PlaylistItemListResponse;
-import com.google.api.services.youtube.model.Video;
-import com.google.api.services.youtube.model.VideoListResponse;
+import com.google.api.services.youtube.model.*;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 
@@ -31,16 +25,7 @@ public class YouTubeDataService {
     private final YouTube youtubeService;
     private final String apiKey;
 
-    public YouTubeDataService(String apiKey) {
-        this(apiKey, new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
-                .setApplicationName("gemini-test-app")
-                .build());
-    }
-
-    /**
-     * Constructor for dependency injection, allowing a mock YouTube service for testing.
-     */
-    YouTubeDataService(String apiKey, YouTube youtubeService) {
+    public YouTubeDataService(String apiKey, YouTube youtubeService) {
         this.apiKey = apiKey;
         this.youtubeService = youtubeService;
     }

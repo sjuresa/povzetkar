@@ -1,5 +1,8 @@
 package si.jumis;
 
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.youtube.YouTube;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +41,9 @@ public class Main {
     private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey) {
         VideoSummary videoSummary = new VideoSummary(genAiPool);
         ProcessingStateService stateService = new ProcessingStateService();
-        YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey);
+        YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
+                new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
+                .setApplicationName("gemini-test-app").build());
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, new YouTubeTranscriptService(new TimeTextFormatter()));
         ResourceReader resourceReader = new ResourceReader();
 

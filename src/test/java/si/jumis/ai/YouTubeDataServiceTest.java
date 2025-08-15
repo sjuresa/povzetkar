@@ -11,14 +11,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import si.jumis.model.Author;
+import si.jumis.model.YouTubeVideo;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,6 +51,10 @@ class YouTubeDataServiceTest {
     private YouTube.PlaylistItems mockPlaylistItems;
     @Mock
     private YouTube.PlaylistItems.List mockPlaylistItemsList;
+    @Mock
+    private YouTube.Videos mockVideos;
+    @Mock
+    private YouTube.Videos.List mockVideosList;
 
     private YouTubeDataService youtubeDataService;
     private Author testAuthor;
@@ -210,6 +220,113 @@ class YouTubeDataServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("fetchVideoDurations")
+    class FetchVideoDurationsTests {
+
+        @Test
+        @DisplayName("should fetch durations in batches of 50")
+        void shouldFetchDurationsInBatches() throws IOException {
+            // Arrange
+            when(mockYouTube.videos()).thenReturn(mockVideos);
+            when(mockVideos.list(List.of("contentDetails"))).thenReturn(mockVideosList);
+            when(mockVideosList.setKey(FAKE_API_KEY)).thenReturn(mockVideosList);
+
+            List<String> videoIds = IntStream.range(0, 51)
+                    .mapToObj(i -> "video" + i)
+                    .toList();
+
+            // --- Batch 1 ---
+            List<String> batch1Ids = videoIds.subList(0, 50);
+            List<Video> batch1Videos = batch1Ids.stream()
+                    .map(id -> createMockVideo(id, "PT1M"))
+                    .toList();
+            VideoListResponse response1 = new VideoListResponse().setItems(batch1Videos);
+            when(mockVideosList.setId(batch1Ids)).thenReturn(mockVideosList);
+
+            // --- Batch 2 ---
+            List<String> batch2Ids = videoIds.subList(50, 51);
+            List<Video> batch2Videos = batch2Ids.stream()
+                    .map(id -> createMockVideo(id, "PT2M"))
+                    .toList();
+            VideoListResponse response2 = new VideoListResponse().setItems(batch2Videos);
+            when(mockVideosList.setId(batch2Ids)).thenReturn(mockVideosList);
+            when(mockVideosList.execute()).thenReturn(response1, response2);
+
+            // Act
+            Map<String, Duration> result = youtubeDataService.fetchVideoDurations(videoIds);
+
+            // Assert
+            assertEquals(51, result.size());
+            assertEquals(Duration.ofMinutes(1), result.get("video0"));
+            assertEquals(Duration.ofMinutes(2), result.get("video50"));
+            verify(mockVideosList, times(2)).execute();
+        }
+
+        @Test
+        @DisplayName("should return empty map for empty ID list")
+        void shouldReturnEmptyMapForEmptyIdList() throws IOException {
+            // Act
+            Map<String, Duration> result = youtubeDataService.fetchVideoDurations(Collections.emptyList());
+
+            // Assert
+            assertTrue(result.isEmpty());
+            verify(mockYouTube, never()).videos();
+        }
+    }
+
+    @Nested
+    @DisplayName("constructYouTubeVideos")
+    class ConstructYouTubeVideosTests {
+
+        @Test
+        @DisplayName("should construct videos and filter shorts")
+        void shouldConstructVideosAndFilterShorts() {
+            // Arrange
+            PlaylistItem regularVideoItem = createMockPlaylistItem("video1");
+            PlaylistItem shortVideoItem = createMockPlaylistItem("video2");
+            List<PlaylistItem> items = List.of(regularVideoItem, shortVideoItem);
+
+            Map<String, Duration> durations = Map.of(
+                    "video1", Duration.ofMinutes(5),
+                    "video2", Duration.ofSeconds(59) // This is a "Short"
+            );
+
+            // Act
+            List<YouTubeVideo> result = youtubeDataService.constructYouTubeVideos(items, durations, null);
+
+            // Assert
+            assertEquals(1, result.size());
+            assertEquals("video1", result.getFirst().id());
+        }
+
+        @Test
+        @DisplayName("should filter videos by date")
+        void shouldFilterVideosByDate() {
+            // Arrange
+            LocalDate fetchDate = LocalDate.of(2023, 10, 27);
+            // CET is UTC+2 in summer, UTC+1 in winter. Let's use a specific instant.
+            Instant correctInstant = fetchDate.atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant();
+            Instant wrongInstant = fetchDate.minusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant();
+
+            PlaylistItem videoOnDate = createMockPlaylistItem("video1", new DateTime(Date.from(correctInstant)));
+            PlaylistItem videoWrongDate = createMockPlaylistItem("video2", new DateTime(Date.from(wrongInstant)));
+            List<PlaylistItem> items = List.of(videoOnDate, videoWrongDate);
+
+            Map<String, Duration> durations = Map.of(
+                    "video1", Duration.ofMinutes(5),
+                    "video2", Duration.ofMinutes(5)
+            );
+
+            // Act
+            List<YouTubeVideo> result = youtubeDataService.constructYouTubeVideos(items, durations, fetchDate);
+
+            // Assert
+            assertEquals(1, result.size());
+            assertEquals("video1", result.getFirst().id());
+        }
+    }
+
     @Test
     @DisplayName("getUploadsPlaylistId should return the correct playlist ID for a valid channel")
     void getUploadsPlaylistId_shouldReturnCorrectPlaylistId() throws IOException {
@@ -218,7 +335,7 @@ class YouTubeDataServiceTest {
         when(mockChannelsList.setKey(FAKE_API_KEY)).thenReturn(mockChannelsList);
         List<String> expectedParts = List.of("contentDetails");
         when(mockChannels.list(expectedParts)).thenReturn(mockChannelsList);
-        Channel mockChannel = createMockUploadsChannel(VALID_CHANNEL_ID, UPLOADS_PLAYLIST_ID);
+        Channel mockChannel = createMockUploadsChannel();
         setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
 
         // Act
@@ -246,17 +363,17 @@ class YouTubeDataServiceTest {
                 .setStatistics(new ChannelStatistics().setSubscriberCount(BigInteger.valueOf(author.subscriberCount())));
     }
 
-    private Channel createMockUploadsChannel(String channelId, String uploadsPlaylistId) {
+    private Channel createMockUploadsChannel() {
         return new Channel()
-                .setId(channelId)
+                .setId(VALID_CHANNEL_ID)
                 .setContentDetails(new ChannelContentDetails()
                         .setRelatedPlaylists(new ChannelContentDetails.RelatedPlaylists()
-                                .setUploads(uploadsPlaylistId)));
+                                .setUploads(UPLOADS_PLAYLIST_ID)));
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId) {
-        // Maintain backward compatibility for tests that don't need a specific date
-        return createMockPlaylistItem(videoId, new DateTime(0L));
+        // Use a non-zero date to avoid timezone issues with epoch 0
+        return createMockPlaylistItem(videoId, new DateTime(Date.from(Instant.parse("2023-01-01T12:00:00Z"))));
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId, DateTime publishedAt) {
@@ -264,6 +381,15 @@ class YouTubeDataServiceTest {
                 new PlaylistItemSnippet()
                         .setResourceId(new ResourceId().setVideoId(videoId))
                         .setPublishedAt(publishedAt)
+                        .setChannelId(VALID_CHANNEL_ID)
+                        .setChannelTitle(TEST_AUTHOR_TITLE)
+                        .setTitle("Test Video Title")
         );
+    }
+
+    private Video createMockVideo(String videoId, String duration) {
+        return new Video()
+                .setId(videoId)
+                .setContentDetails(new VideoContentDetails().setDuration(duration));
     }
 }
