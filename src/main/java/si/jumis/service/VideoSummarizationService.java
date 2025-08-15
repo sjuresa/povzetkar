@@ -135,7 +135,7 @@ public class VideoSummarizationService {
                 .toList();
         Map<String, Duration> videoDurations = youtubeDataService.fetchVideoDurations(videoIds);
 
-        return youtubeDataService.constructYouTubeVideos(playlistItems, videoDurations, forDate);
+        return youtubeDataService.constructYouTubeVideos(playlistItems, videoDurations);
     }
 
     /**

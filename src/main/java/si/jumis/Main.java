@@ -1,5 +1,8 @@
 package si.jumis;
 
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.youtube.YouTube;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,7 @@ import static si.jumis.Povzetkar.DMY_DATE_FORMAT;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final long COOLDOWN_PERIOD_NS = TimeUnit.SECONDS.toNanos(60);
+    public static final String YOUTUBE_APP_NAME = "gemini-test-app";
 
     public static void main(String[] args) {
         String apiKey = System.getenv("YOUTUBE_API_KEY");
@@ -38,7 +42,9 @@ public class Main {
     private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey) {
         VideoSummary videoSummary = new VideoSummary(genAiPool);
         ProcessingStateService stateService = new ProcessingStateService();
-        YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey);
+        YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
+                new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
+                .setApplicationName(YOUTUBE_APP_NAME).build());
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, new YouTubeTranscriptService(new TimeTextFormatter()));
         ResourceReader resourceReader = new ResourceReader();
 

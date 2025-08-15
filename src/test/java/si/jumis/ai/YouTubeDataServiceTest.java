@@ -11,14 +11,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import si.jumis.model.Author;
+import si.jumis.model.YouTubeVideo;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,6 +47,10 @@ class YouTubeDataServiceTest {
     private YouTube.PlaylistItems mockPlaylistItems;
     @Mock
     private YouTube.PlaylistItems.List mockPlaylistItemsList;
+    @Mock
+    private YouTube.Videos mockVideos;
+    @Mock
+    private YouTube.Videos.List mockVideosList;
 
     private YouTubeDataService youtubeDataService;
     private Author testAuthor;
@@ -183,18 +189,20 @@ class YouTubeDataServiceTest {
         }
 
         @Test
-        @DisplayName("should stop when item is older than fetchDate")
-        void shouldStopWhenItemIsOlderThanFetchDate() throws IOException {
+        @DisplayName("should only fetch items on the given fetchDate")
+        void shouldOnlyFetchItemsOnTheGivenFetchDate() throws IOException {
             // Arrange
             LocalDate fetchDate = LocalDate.of(2023, 10, 26);
-            DateTime newDate = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
-            DateTime oldDate = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+            DateTime dateAfter = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant()));
+            DateTime dateOn = new DateTime(Date.from(fetchDate.atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant()));
+            DateTime dateBefore = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant()));
 
-            PlaylistItem item1 = createMockPlaylistItem("video1", newDate);
-            PlaylistItem item2 = createMockPlaylistItem("video2", oldDate); // This item should cause the loop to stop
+            PlaylistItem itemAfter = createMockPlaylistItem("videoAfter", dateAfter);
+            PlaylistItem itemOn = createMockPlaylistItem("videoOn", dateOn);
+            PlaylistItem itemBefore = createMockPlaylistItem("videoBefore", dateBefore); // This item should cause the loop to stop
 
-            PlaylistItemListResponse response1 = new PlaylistItemListResponse().setItems(List.of(item1)).setNextPageToken("nextPage");
-            PlaylistItemListResponse response2 = new PlaylistItemListResponse().setItems(List.of(item2));
+            PlaylistItemListResponse response1 = new PlaylistItemListResponse().setItems(List.of(itemAfter, itemOn)).setNextPageToken("nextPage");
+            PlaylistItemListResponse response2 = new PlaylistItemListResponse().setItems(List.of(itemBefore));
 
             when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
             when(mockPlaylistItemsList.setPageToken("nextPage")).thenReturn(mockPlaylistItemsList);
@@ -205,8 +213,89 @@ class YouTubeDataServiceTest {
 
             // Assert
             assertEquals(1, result.size());
-            assertEquals(List.of(item1), result);
-            verify(mockPlaylistItemsList, times(2)).execute();
+            assertEquals(List.of(itemOn), result);
+            verify(mockPlaylistItemsList, times(2)).execute(); // Verifies it checks the page with the 'before' date to know it should stop
+        }
+    }
+
+    @Nested
+    @DisplayName("fetchVideoDurations")
+    class FetchVideoDurationsTests {
+
+        @Test
+        @DisplayName("should fetch durations in batches of 50")
+        void shouldFetchDurationsInBatches() throws IOException {
+            // Arrange
+            when(mockYouTube.videos()).thenReturn(mockVideos);
+            when(mockVideos.list(List.of("contentDetails"))).thenReturn(mockVideosList);
+            when(mockVideosList.setKey(FAKE_API_KEY)).thenReturn(mockVideosList);
+
+            List<String> videoIds = IntStream.range(0, 51)
+                    .mapToObj(i -> "video" + i)
+                    .toList();
+
+            // --- Batch 1 ---
+            List<String> batch1Ids = videoIds.subList(0, 50);
+            List<Video> batch1Videos = batch1Ids.stream()
+                    .map(id -> createMockVideo(id, "PT1M"))
+                    .toList();
+            VideoListResponse response1 = new VideoListResponse().setItems(batch1Videos);
+            when(mockVideosList.setId(batch1Ids)).thenReturn(mockVideosList);
+
+            // --- Batch 2 ---
+            List<String> batch2Ids = videoIds.subList(50, 51);
+            List<Video> batch2Videos = batch2Ids.stream()
+                    .map(id -> createMockVideo(id, "PT2M"))
+                    .toList();
+            VideoListResponse response2 = new VideoListResponse().setItems(batch2Videos);
+            when(mockVideosList.setId(batch2Ids)).thenReturn(mockVideosList);
+            when(mockVideosList.execute()).thenReturn(response1, response2);
+
+            // Act
+            Map<String, Duration> result = youtubeDataService.fetchVideoDurations(videoIds);
+
+            // Assert
+            assertEquals(51, result.size());
+            assertEquals(Duration.ofMinutes(1), result.get("video0"));
+            assertEquals(Duration.ofMinutes(2), result.get("video50"));
+            verify(mockVideosList, times(2)).execute();
+        }
+
+        @Test
+        @DisplayName("should return empty map for empty ID list")
+        void shouldReturnEmptyMapForEmptyIdList() throws IOException {
+            // Act
+            Map<String, Duration> result = youtubeDataService.fetchVideoDurations(Collections.emptyList());
+
+            // Assert
+            assertTrue(result.isEmpty());
+            verify(mockYouTube, never()).videos();
+        }
+    }
+
+    @Nested
+    @DisplayName("constructYouTubeVideos")
+    class ConstructYouTubeVideosTests {
+
+        @Test
+        @DisplayName("should construct videos and filter shorts")
+        void shouldConstructVideosAndFilterShorts() {
+            // Arrange
+            PlaylistItem regularVideoItem = createMockPlaylistItem("video1");
+            PlaylistItem shortVideoItem = createMockPlaylistItem("video2");
+            List<PlaylistItem> items = List.of(regularVideoItem, shortVideoItem);
+
+            Map<String, Duration> durations = Map.of(
+                    "video1", Duration.ofMinutes(5),
+                    "video2", Duration.ofSeconds(59) // This is a "Short"
+            );
+
+            // Act
+            List<YouTubeVideo> result = youtubeDataService.constructYouTubeVideos(items, durations);
+
+            // Assert
+            assertEquals(1, result.size());
+            assertEquals("video1", result.getFirst().id());
         }
     }
 
@@ -218,7 +307,7 @@ class YouTubeDataServiceTest {
         when(mockChannelsList.setKey(FAKE_API_KEY)).thenReturn(mockChannelsList);
         List<String> expectedParts = List.of("contentDetails");
         when(mockChannels.list(expectedParts)).thenReturn(mockChannelsList);
-        Channel mockChannel = createMockUploadsChannel(VALID_CHANNEL_ID, UPLOADS_PLAYLIST_ID);
+        Channel mockChannel = createMockUploadsChannel();
         setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
 
         // Act
@@ -246,17 +335,17 @@ class YouTubeDataServiceTest {
                 .setStatistics(new ChannelStatistics().setSubscriberCount(BigInteger.valueOf(author.subscriberCount())));
     }
 
-    private Channel createMockUploadsChannel(String channelId, String uploadsPlaylistId) {
+    private Channel createMockUploadsChannel() {
         return new Channel()
-                .setId(channelId)
+                .setId(VALID_CHANNEL_ID)
                 .setContentDetails(new ChannelContentDetails()
                         .setRelatedPlaylists(new ChannelContentDetails.RelatedPlaylists()
-                                .setUploads(uploadsPlaylistId)));
+                                .setUploads(UPLOADS_PLAYLIST_ID)));
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId) {
-        // Maintain backward compatibility for tests that don't need a specific date
-        return createMockPlaylistItem(videoId, new DateTime(0L));
+        // Use a non-zero date to avoid timezone issues with epoch 0
+        return createMockPlaylistItem(videoId, new DateTime(Date.from(Instant.parse("2023-01-01T12:00:00Z"))));
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId, DateTime publishedAt) {
@@ -264,6 +353,15 @@ class YouTubeDataServiceTest {
                 new PlaylistItemSnippet()
                         .setResourceId(new ResourceId().setVideoId(videoId))
                         .setPublishedAt(publishedAt)
+                        .setChannelId(VALID_CHANNEL_ID)
+                        .setChannelTitle(TEST_AUTHOR_TITLE)
+                        .setTitle("Test Video Title")
         );
+    }
+
+    private Video createMockVideo(String videoId, String duration) {
+        return new Video()
+                .setId(videoId)
+                .setContentDetails(new VideoContentDetails().setDuration(duration));
     }
 }
