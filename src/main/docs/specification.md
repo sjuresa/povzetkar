@@ -33,7 +33,7 @@ graph TD
 
     B --> C
     G --> H
-    C --> H
+    C <--> H
     G --> C
 ```
 

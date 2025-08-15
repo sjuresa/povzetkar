@@ -199,6 +199,6 @@ The primary key for this table is a composite key formed by (`trend_id`, `summar
 Stores historical records of bias assessments for content authors.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `author_id` (FK, bigint): References `authors.id`. `NOT NULL`
-- `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL`
+- `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL CHECK (bias_score >= -1.0 AND bias_score <= 1.0)`
 - `assessment_details` (text): A detailed, AI-generated explanation for the given score. `NOT NULL`
 - `created_at` (timestamp): When the assessment was performed. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
