@@ -209,6 +209,7 @@ public class VideoSummarizationService {
             // This case handles failures in the AI summarization step. We log it and update the state
             // to prevent retrying a video that consistently fails to be summarized.
             handleSummaryFailure(video, e);
+            logger.error("Video will be marked as processed to avoid retries.");
             updateProcessingState(videoToProcess, processingDate);
             return false;
         }
@@ -236,7 +237,7 @@ public class VideoSummarizationService {
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {
-        logger.error("Failed to create summary for video: {}. It will be marked as processed to avoid retries.", video.url(), e);
+        logger.error("Failed to create summary for video: {}.", video.url(), e);
         try {
             String failureMessage = createFailureMessage(video, e);
             FileUtils.appendToFile(Paths.get("failed_videos.log"), failureMessage);
