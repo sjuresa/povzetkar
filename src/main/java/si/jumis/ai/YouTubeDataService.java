@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,14 @@ import java.util.Map;
  * to fetch video information programmatically.
  */
 public class YouTubeDataService {
+
+    private static final int API_MAX_RESULTS = 50;
+    private static final int YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS = 60;
+    private static final String TIMEZONE_ID = "Europe/Ljubljana";
+    private static final String YOUTUBE_VIDEO_URL_PREFIX = "https://www.youtube.com/watch?v=";
+    private static final String PART_SNIPPET = "snippet";
+    private static final String PART_STATISTICS = "statistics";
+    private static final String PART_CONTENT_DETAILS = "contentDetails";
 
     private final YouTube youtubeService;
     private final String apiKey;
@@ -42,7 +51,7 @@ public class YouTubeDataService {
      */
     public Author getAuthorDetails(String channelId) throws IOException {
         YouTube.Channels.List request = youtubeService.channels()
-                .list(List.of("snippet", "statistics"))
+                .list(List.of(PART_SNIPPET, PART_STATISTICS))
                 .setKey(apiKey)
                 .setId(List.of(channelId));
 
@@ -68,7 +77,7 @@ public class YouTubeDataService {
      */
     public String getUploadsPlaylistId(String channelId) throws IOException {
         YouTube.Channels.List request = youtubeService.channels()
-                .list(List.of("contentDetails"))
+                .list(List.of(PART_CONTENT_DETAILS))
                 .setKey(apiKey)
                 .setId(List.of(channelId));
 
@@ -80,10 +89,10 @@ public class YouTubeDataService {
         return channel.getContentDetails().getRelatedPlaylists().getUploads();
     }
 
-    /**
-     * A record to hold the result of processing a single page of playlist items.
-     */
     private record PageProcessingResult(List<PlaylistItem> itemsToAdd, boolean stopFound) {
+    }
+
+    private record ItemProcessingStatus(boolean stopFound, boolean shouldAdd) {
     }
 
     /**
@@ -92,32 +101,46 @@ public class YouTubeDataService {
     public List<PlaylistItem> fetchPlaylistItems(String uploadsPlaylistId, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) throws IOException {
         List<PlaylistItem> allItems = new ArrayList<>();
         String nextPageToken = null;
+        boolean continueFetching = true;
 
-        while (true) {
+        do {
             PlaylistItemListResponse response = executePlaylistItemsRequest(uploadsPlaylistId, nextPageToken);
             List<PlaylistItem> currentPageItems = response.getItems();
 
-            boolean shouldStop = false;
             if (currentPageItems == null || currentPageItems.isEmpty()) {
-                shouldStop = true;
+                continueFetching = false;
             } else {
-                PageProcessingResult stopIdResult = processPageForStopId(currentPageItems, stopAtVideoId);
-                PageProcessingResult dateResult = processPageForDate(stopIdResult.itemsToAdd(), fetchDate);
-
-                allItems.addAll(dateResult.itemsToAdd());
+                PageProcessingResult pageResult = processPage(currentPageItems, fetchDate, stopAtVideoId);
+                addUpToMax(allItems, pageResult.itemsToAdd(), maxTotal);
 
                 nextPageToken = response.getNextPageToken();
-                if (stopIdResult.stopFound() || dateResult.stopFound() || nextPageToken == null || hasReachedMaxTotal(allItems, maxTotal)) {
-                    shouldStop = true;
+
+                if (shouldStopFetching(pageResult, nextPageToken, allItems, maxTotal)) {
+                    continueFetching = false;
                 }
             }
+        } while (continueFetching);
 
-            if (shouldStop) {
-                break; // Single, clear exit point for the loop.
-            }
+        return allItems;
+    }
+
+    private boolean shouldStopFetching(PageProcessingResult pageResult, String nextPageToken, List<PlaylistItem> allItems, Long maxTotal) {
+        return pageResult.stopFound() || nextPageToken == null || (maxTotal != null && allItems.size() >= maxTotal);
+    }
+
+    private void addUpToMax(List<PlaylistItem> allItems, List<PlaylistItem> itemsToAdd, Long maxTotal) {
+        if (itemsToAdd.isEmpty()) {
+            return;
         }
-
-        return trimToMaxTotal(allItems, maxTotal);
+        if (maxTotal == null) {
+            allItems.addAll(itemsToAdd);
+            return;
+        }
+        long remainingCapacity = maxTotal - allItems.size();
+        if (remainingCapacity > 0) {
+            int numToAdd = (int) Math.min(itemsToAdd.size(), remainingCapacity);
+            allItems.addAll(itemsToAdd.subList(0, numToAdd));
+        }
     }
 
     /**
@@ -125,81 +148,66 @@ public class YouTubeDataService {
      */
     private PlaylistItemListResponse executePlaylistItemsRequest(String uploadsPlaylistId, String pageToken) throws IOException {
         YouTube.PlaylistItems.List request = youtubeService.playlistItems()
-                .list(List.of("snippet"))
+                .list(List.of(PART_SNIPPET))
                 .setKey(apiKey)
                 .setPlaylistId(uploadsPlaylistId)
-                .setMaxResults(50L)
+                .setMaxResults((long) API_MAX_RESULTS)
                 .setPageToken(pageToken);
         return request.execute();
     }
 
     /**
-     * Processes a page of items, checking if the `stopAtVideoId` is present.
+     * Processes a single page of playlist items, applying all filtering and stop conditions.
      *
      * @return A {@link PageProcessingResult} containing the items to add and a flag indicating if pagination should stop.
      */
-    private PageProcessingResult processPageForStopId(List<PlaylistItem> currentPageItems, String stopAtVideoId) {
-        if (stopAtVideoId == null || stopAtVideoId.isEmpty()) {
-            return new PageProcessingResult(currentPageItems, false);
-        }
+    private PageProcessingResult processPage(List<PlaylistItem> currentPageItems, LocalDate fetchDate, String stopAtVideoId) {
+        List<PlaylistItem> itemsToAdd = new ArrayList<>();
+        boolean stopFound = false;
 
-        for (int i = 0; i < currentPageItems.size(); i++) {
-            if (currentPageItems.get(i).getSnippet().getResourceId().getVideoId().equals(stopAtVideoId)) {
-                // Stop ID found. Add items before it and signal to stop.
-                return new PageProcessingResult(currentPageItems.subList(0, i), true);
+        for (PlaylistItem item : currentPageItems) {
+            ItemProcessingStatus status = getItemProcessingStatus(item, fetchDate, stopAtVideoId);
+            if (status.stopFound()) {
+                stopFound = true;
+                break;
+            }
+            if (status.shouldAdd()) {
+                itemsToAdd.add(item);
             }
         }
-
-        // Stop ID not found on this page. Add all items and continue.
-        return new PageProcessingResult(currentPageItems, false);
+        return new PageProcessingResult(itemsToAdd, stopFound);
     }
 
     /**
-     * Processes a page of items, filtering out items older than the fetchDate.
+     * Evaluates a single playlist item to determine if it should be added to the results
+     * and if the fetching process should be stopped.
      *
-     * @return A {@link PageProcessingResult} containing the items to add and a flag indicating if an older item was found.
+     * @return An {@link ItemProcessingStatus} record containing the evaluation result.
      */
-    private PageProcessingResult processPageForDate(List<PlaylistItem> currentPageItems, LocalDate fetchDate) {
-        if (fetchDate == null) {
-            return new PageProcessingResult(currentPageItems, false); // No date filter, add all and continue
+    private ItemProcessingStatus getItemProcessingStatus(PlaylistItem item, LocalDate fetchDate, String stopAtVideoId) {
+        // Boundary 1: A specific video ID marks the end.
+        if (stopAtVideoId != null && !stopAtVideoId.isEmpty() && item.getSnippet().getResourceId().getVideoId().equals(stopAtVideoId)) {
+            return new ItemProcessingStatus(true, false); // Stop fetching, don't add this item.
         }
 
-        List<PlaylistItem> itemsToAdd = new ArrayList<>();
-        for (PlaylistItem item : currentPageItems) {
+        boolean shouldAdd = true;
+        if (fetchDate != null) {
             Instant publishedAt = Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue());
             LocalDate itemDate = getLocalDateInCet(publishedAt);
 
+            // Boundary 2: A video is older than the target fetch date.
             if (itemDate.isBefore(fetchDate)) {
-                // Found an item older than the fetch date, stop processing.
-                return new PageProcessingResult(itemsToAdd, true);
-            } else if (itemDate.isEqual(fetchDate)) {
-                // Item is on the correct date, add it.
-                itemsToAdd.add(item);
+                return new ItemProcessingStatus(true, false); // Stop fetching, don't add this item.
             }
-            // else: itemDate.isAfter(fetchDate), so we just skip it and continue processing the page.
+            // Condition: A video is newer than the target fetch date.
+            if (itemDate.isAfter(fetchDate)) {
+                shouldAdd = false; // Don't add this item, but continue processing the page.
+            }
         }
 
-        // We've processed the whole page. Stop only if we found an older item (handled above).
-        // Otherwise, continue to the next page.
-        return new PageProcessingResult(itemsToAdd, false);
+        return new ItemProcessingStatus(false, shouldAdd); // Continue fetching, add item if it wasn't filtered.
     }
 
-    /**
-     * Checks if the collected items have reached the specified maximum total.
-     */
-    private boolean hasReachedMaxTotal(List<PlaylistItem> allItems, Long maxTotal) {
-        return maxTotal != null && allItems.size() >= maxTotal;
-    }
-
-    /**
-     * Trims the final list of items to not exceed the `maxTotal` if specified.
-     */
-    private List<PlaylistItem> trimToMaxTotal(List<PlaylistItem> allItems, Long maxTotal) {
-        if (maxTotal != null && allItems.size() > maxTotal) {
-            return allItems.subList(0, maxTotal.intValue());
-        }
-        return allItems;
-    }
 
     /**
      * Fetches video durations for a list of video IDs in batches of 50.
@@ -209,13 +217,16 @@ public class YouTubeDataService {
      * @throws IOException If an API error occurs.
      */
     public Map<String, Duration> fetchVideoDurations(List<String> videoIds) throws IOException {
+        if (videoIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
         Map<String, Duration> videoDurations = new HashMap<>();
-        for (int i = 0; i < videoIds.size(); i += 50) {
-            int end = Math.min(i + 50, videoIds.size());
+        for (int i = 0; i < videoIds.size(); i += API_MAX_RESULTS) {
+            int end = Math.min(i + API_MAX_RESULTS, videoIds.size());
             List<String> batchIds = videoIds.subList(i, end);
 
             YouTube.Videos.List videoRequest = youtubeService.videos()
-                    .list(List.of("contentDetails")) // Only need duration
+                    .list(List.of(PART_CONTENT_DETAILS)) // Only need duration
                     .setKey(apiKey)
                     .setId(batchIds);
 
@@ -237,19 +248,18 @@ public class YouTubeDataService {
      * @return A list of {@link YouTubeVideo} objects, with shorts filtered out.
      */
     public List<YouTubeVideo> constructYouTubeVideos(List<PlaylistItem> playlistItems, Map<String, Duration> videoDurations) {
-        // Date filtering is now handled in fetchPlaylistItems, so the stream processing is simpler.
         return playlistItems.stream().map(item -> {
                     String videoId = item.getSnippet().getResourceId().getVideoId();
                     return new YouTubeVideo(
                             videoId,
                             item.getSnippet().getTitle(),
-                            "https://www.youtube.com/watch?v=" + videoId,
+                            YOUTUBE_VIDEO_URL_PREFIX + videoId,
                             item.getSnippet().getChannelTitle(),
                             item.getSnippet().getChannelId(),
                             Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
                             videoDurations.getOrDefault(videoId, Duration.ZERO));
                 })
-                .filter(video -> video.duration().getSeconds() > 60) // Filter out videos 60 seconds or less (YouTube Shorts)
+                .filter(video -> video.duration().getSeconds() > YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS) // Filter out videos 60 seconds or less (YouTube Shorts)
                 .toList();
     }
 
@@ -257,6 +267,6 @@ public class YouTubeDataService {
      * Converts a UTC Instant to a LocalDate in the CET timezone.
      */
     private LocalDate getLocalDateInCet(Instant instant) {
-        return instant.atZone(ZoneId.of("Europe/Ljubljana")).toLocalDate();
+        return instant.atZone(ZoneId.of(TIMEZONE_ID)).toLocalDate();
     }
 }
