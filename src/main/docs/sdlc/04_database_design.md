@@ -14,10 +14,11 @@ This diagram shows the high-level relationships between the core entities in the
 ```mermaid
 erDiagram
     AUTHORS ||--o{ CONTENT_ITEMS : "publishes"
-    CONTENT_ITEMS ||--|{ SUMMARIES : "has"
-    SUMMARIES }|--|| REPORTS : "are_aggregated_in"
+    CONTENT_ITEMS ||--|{ SUMMARIES : "has a"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"
     SENTIMENTS ||--o{ SUMMARIES : "describes"
+    REPORTS ||--|{ REPORT_SUMMARIES : "aggregates"
+    SUMMARIES ||--|{ REPORT_SUMMARIES : "is part of"
 
     AUTHORS {
         bigint id PK
@@ -44,6 +45,8 @@ erDiagram
         bigint content_item_id FK
         text summary_text
         vector(1536) embedding
+        int category_id FK
+        int sentiment_id FK
         timestamp created_at
     }
     
@@ -58,6 +61,11 @@ erDiagram
     CATEGORIES {
         int id PK
         varchar name UK
+    }
+
+    REPORT_SUMMARIES {
+        bigint report_id PK, FK
+        bigint summary_id PK, FK
     }
     
     SENTIMENTS {

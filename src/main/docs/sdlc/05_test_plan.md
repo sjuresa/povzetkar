@@ -46,7 +46,7 @@ Testing will cover all major components of the system:
 - **Happy Path - Summarize & Brief:**
     1. Given a new video is published by a tracked author.
     2. When the `summarizeFromAuthors` workflow runs.
-    3. Then a summary is generated, the state is updated, a briefing is created, and documentation is updated.
+    3. Then a summary is generated, the state is updated, a briefing is created, and the output summary file is correctly updated.
 - **Failure - AI Service Unavailable:**
     1. Given the AI model API (e.g., Gemini) returns a 500 error.
     2. When `VideoSummary` attempts to generate a summary.

@@ -70,7 +70,7 @@ A normalized PostgreSQL schema will store all application data.
 *   `authors`: Information about content creators.
 *   `summaries`: The generated summaries, linked to `content_items`. This table will include the vector embedding column managed by `pgvector`.
 *   `reports`: Stores the aggregated periodic reports, including the executive "meta-summary".
-*   `trends`, `sentiments`, etc.: Tables to store the results of the analysis.
+*   `trends`, `categories`, `sentiments`, etc.: Tables to store the results of the analysis.
 
 ### 3.4 RAG & Conversational API
 
