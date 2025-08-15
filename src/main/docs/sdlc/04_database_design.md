@@ -105,3 +105,26 @@ Stores the AI-generated summaries and their vector embeddings.
 - `category_id` (FK, int): References `categories.id`.
 - `sentiment_id` (FK, int): References `sentiments.id`.
 - `created_at` (timestamp): When the summary was generated.
+
+### `reports`
+Stores aggregated periodic reports.
+- `id` (PK, bigint, auto-increment)
+- `title` (varchar): The title of the report.
+- `meta_summary` (text): The executive "meta-summary" of the report.
+- `report_date` (date): The date the report pertains to.
+- `created_at` (timestamp): When the report was generated.
+
+### `categories`
+A lookup table for content categories.
+- `id` (PK, int, auto-increment)
+- `name` (varchar, unique): The name of the category (e.g., 'Technology', 'Politics').
+
+### `sentiments`
+A lookup table for sentiment values.
+- `id` (PK, int, auto-increment)
+- `name` (varchar, unique): The name of the sentiment (e.g., 'Positive', 'Negative', 'Neutral').
+
+### `report_summaries`
+A join table linking reports to the summaries they contain.
+- `report_id` (PK, FK, bigint): References `reports.id`.
+- `summary_id` (PK, FK, bigint): References `summaries.id`.

@@ -1,28 +1,28 @@
-# Projektna dokumentacija: Prihodnje naloge (TODO)
+# Project Documentation: Future Tasks (TODO)
 
-Ta dokument vsebuje seznam priporočenih dokumentov, ki jih bo koristno ustvariti v prihodnosti, ko bo projekt rasel in postajal kompleksnejši. Trenutna dokumentacija je zadostna za začetek, ti dokumenti pa bodo pomagali pri dolgoročnem vzdrževanju in vključevanju novih članov ekipe.
+This document contains a list of recommended documents that will be useful to create in the future as the project grows and becomes more complex. The current documentation is sufficient to get started, and these documents will help with long-term maintenance and onboarding new team members.
 
 ---
 
-### 1. Zapisi o arhitekturnih odločitvah (Architecture Decision Records - ADRs)
+### 1. Architecture Decision Records (ADRs)
 
-*   **Namen:** Zabeležiti ključne arhitekturne odločitve, njihov kontekst in posledice. Odgovorijo na vprašanje *"Zakaj smo izbrali X namesto Y?"*.
-*   **Primeri nalog:**
-    *   Ustvariti ADR za izbiro ogrodja **Quarkus**.
-    *   Ustvariti ADR za izbiro **PostgreSQL s `pgvector`** namesto specializirane vektorske baze.
+*   **Purpose:** To record key architectural decisions, their context, and their consequences. They answer the question *"Why did we choose X instead of Y?"*.
+*   **Example Tasks:**
+    *   Create an ADR for choosing the **Quarkus** framework.
+    *   Create an ADR for choosing **PostgreSQL with `pgvector`** over a specialized vector database.
 
-### 2. Navodila za zagon in vzdrževanje (Deployment & Operations Guide / Runbook)
+### 2. Deployment & Operations Guide / Runbook
 
-*   **Namen:** Podrobno opisati, kako aplikacijo zgraditi, zagnati, konfigurirati in nadzorovati v različnih okoljih.
-*   **Primeri nalog:**
-    *   Dokumentirati vse potrebne okoljske spremenljivke (npr. `DATABASE_URL`, `GEMINI_API_KEY`).
-    *   Napisati navodila za zagon lokalnega okolja z `docker-compose`.
-    *   Opisati postopek za migracijo podatkovne baze.
+*   **Purpose:** To describe in detail how to build, run, configure, and monitor the application in different environments.
+*   **Example Tasks:**
+    *   Document all necessary environment variables (e.g., `DATABASE_URL`, `GEMINI_API_KEY`).
+    *   Write instructions for running the local environment with `docker-compose`.
+    *   Describe the database migration process.
 
-### 3. Vodič za nove razvijalce (Developer Onboarding Guide)
+### 3. Developer Onboarding Guide
 
-*   **Namen:** Omogočiti, da se nov član ekipe čim hitreje in samostojno vključi v delo.
-*   **Primeri nalog:**
-    *   Opisati postopek za kloniranje repozitorija in zagon celotnega sistema na lokalnem računalniku.
-    *   Pojasniti, kako pognati teste in kje se nahajajo ključni deli kode.
-    *   Definirati standarde kodiranja in potek dela z Gitom.
+*   **Purpose:** To enable a new team member to get up to speed as quickly and independently as possible.
+*   **Example Tasks:**
+    *   Describe the process for cloning the repository and running the entire system on a local machine.
+    *   Explain how to run tests and where the key parts of the code are located.
+    *   Define coding standards and the Git workflow.
