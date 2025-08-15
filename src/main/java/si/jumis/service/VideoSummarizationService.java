@@ -246,7 +246,7 @@ public class VideoSummarizationService {
         }
     }
 
-    public static String createFailureMessage(YouTubeVideo video, Exception e) {
+    static String createFailureMessage(YouTubeVideo video, Exception e) {
         return String.format("Timestamp: %s, Video URL: %s, Video ID: %s\nChannel ID: %s, Author: %s\nError: %s\n---\n",
                 Instant.now().toString(), video.url(), video.id(),
                 video.channelId(), video.authorName(),
