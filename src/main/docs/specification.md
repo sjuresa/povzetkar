@@ -32,6 +32,7 @@ graph TD
 
     G --> H
     C --> H
+    G --> C
 ```
 
 ### 2.2 Technology Stack Recommendation

@@ -50,7 +50,7 @@ Testing will cover all major components of the system:
 - **Failure - AI Service Unavailable:**
     1. Given the AI model API (e.g., Gemini) returns a 500 error.
     2. When `VideoSummary` attempts to generate a summary.
-    3. Then the retry logic is triggered, and if it ultimately fails, the failure is logged, and the video is marked as processed to avoid loops.
+    3. Then the retry logic is triggered, and if it ultimately fails, the failure is logged, and the video is marked with a 'failed' status to prevent reprocessing loops while allowing for manual or automated retries.
 - **RAG - Conversational Query:**
     1. Given the database contains several indexed summaries about "Quarkus".
     2. When a user asks "What are the benefits of Quarkus?".
