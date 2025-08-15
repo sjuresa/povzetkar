@@ -18,7 +18,6 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
@@ -193,18 +192,20 @@ class YouTubeDataServiceTest {
         }
 
         @Test
-        @DisplayName("should stop when item is older than fetchDate")
-        void shouldStopWhenItemIsOlderThanFetchDate() throws IOException {
+        @DisplayName("should only fetch items on the given fetchDate")
+        void shouldOnlyFetchItemsOnTheGivenFetchDate() throws IOException {
             // Arrange
             LocalDate fetchDate = LocalDate.of(2023, 10, 26);
-            DateTime newDate = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
-            DateTime oldDate = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+            DateTime dateAfter = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+            DateTime dateOn = new DateTime(Date.from(fetchDate.atStartOfDay().toInstant(ZoneOffset.UTC)));
+            DateTime dateBefore = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
 
-            PlaylistItem item1 = createMockPlaylistItem("video1", newDate);
-            PlaylistItem item2 = createMockPlaylistItem("video2", oldDate); // This item should cause the loop to stop
+            PlaylistItem itemAfter = createMockPlaylistItem("videoAfter", dateAfter);
+            PlaylistItem itemOn = createMockPlaylistItem("videoOn", dateOn);
+            PlaylistItem itemBefore = createMockPlaylistItem("videoBefore", dateBefore); // This item should cause the loop to stop
 
-            PlaylistItemListResponse response1 = new PlaylistItemListResponse().setItems(List.of(item1)).setNextPageToken("nextPage");
-            PlaylistItemListResponse response2 = new PlaylistItemListResponse().setItems(List.of(item2));
+            PlaylistItemListResponse response1 = new PlaylistItemListResponse().setItems(List.of(itemAfter, itemOn)).setNextPageToken("nextPage");
+            PlaylistItemListResponse response2 = new PlaylistItemListResponse().setItems(List.of(itemBefore));
 
             when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
             when(mockPlaylistItemsList.setPageToken("nextPage")).thenReturn(mockPlaylistItemsList);
@@ -215,8 +216,8 @@ class YouTubeDataServiceTest {
 
             // Assert
             assertEquals(1, result.size());
-            assertEquals(List.of(item1), result);
-            verify(mockPlaylistItemsList, times(2)).execute();
+            assertEquals(List.of(itemOn), result);
+            verify(mockPlaylistItemsList, times(2)).execute(); // Verifies it checks the page with the 'before' date to know it should stop
         }
     }
 
@@ -293,33 +294,7 @@ class YouTubeDataServiceTest {
             );
 
             // Act
-            List<YouTubeVideo> result = youtubeDataService.constructYouTubeVideos(items, durations, null);
-
-            // Assert
-            assertEquals(1, result.size());
-            assertEquals("video1", result.getFirst().id());
-        }
-
-        @Test
-        @DisplayName("should filter videos by date")
-        void shouldFilterVideosByDate() {
-            // Arrange
-            LocalDate fetchDate = LocalDate.of(2023, 10, 27);
-            // CET is UTC+2 in summer, UTC+1 in winter. Let's use a specific instant.
-            Instant correctInstant = fetchDate.atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant();
-            Instant wrongInstant = fetchDate.minusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant();
-
-            PlaylistItem videoOnDate = createMockPlaylistItem("video1", new DateTime(Date.from(correctInstant)));
-            PlaylistItem videoWrongDate = createMockPlaylistItem("video2", new DateTime(Date.from(wrongInstant)));
-            List<PlaylistItem> items = List.of(videoOnDate, videoWrongDate);
-
-            Map<String, Duration> durations = Map.of(
-                    "video1", Duration.ofMinutes(5),
-                    "video2", Duration.ofMinutes(5)
-            );
-
-            // Act
-            List<YouTubeVideo> result = youtubeDataService.constructYouTubeVideos(items, durations, fetchDate);
+            List<YouTubeVideo> result = youtubeDataService.constructYouTubeVideos(items, durations);
 
             // Assert
             assertEquals(1, result.size());

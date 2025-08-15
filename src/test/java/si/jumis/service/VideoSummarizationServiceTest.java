@@ -100,7 +100,7 @@ class VideoSummarizationServiceTest {
         if (!videosToReturn.isEmpty()) {
             when(youtubeDataService.fetchVideoDurations(any())).thenReturn(videoDurations);
         }
-        when(youtubeDataService.constructYouTubeVideos(any(), any(), eq(today))).thenReturn(videosToReturn);
+        when(youtubeDataService.constructYouTubeVideos(any(), any())).thenReturn(videosToReturn);
     }
 
     @Test

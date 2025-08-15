@@ -1,7 +1,11 @@
 package si.jumis.ai;
 
 import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.model.*;
+import com.google.api.services.youtube.model.Channel;
+import com.google.api.services.youtube.model.PlaylistItem;
+import com.google.api.services.youtube.model.PlaylistItemListResponse;
+import com.google.api.services.youtube.model.Video;
+import com.google.api.services.youtube.model.VideoListResponse;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 
@@ -14,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * A service class to interact with the YouTube Data API v3
@@ -167,13 +170,17 @@ public class YouTubeDataService {
             LocalDate itemDate = getLocalDateInCet(publishedAt);
 
             if (itemDate.isBefore(fetchDate)) {
-                // Found an item older than the fetch date, stop processing this page.
+                // Found an item older than the fetch date, stop processing.
                 return new PageProcessingResult(itemsToAdd, true);
+            } else if (itemDate.isEqual(fetchDate)) {
+                // Item is on the correct date, add it.
+                itemsToAdd.add(item);
             }
-            itemsToAdd.add(item);
+            // else: itemDate.isAfter(fetchDate), so we just skip it and continue processing the page.
         }
 
-        // All items on this page are valid, continue to the next page.
+        // We've processed the whole page. Stop only if we found an older item (handled above).
+        // Otherwise, continue to the next page.
         return new PageProcessingResult(itemsToAdd, false);
     }
 
@@ -227,28 +234,22 @@ public class YouTubeDataService {
      *
      * @param playlistItems  The list of items fetched from the YouTube API.
      * @param videoDurations A map of video IDs to their durations.
-     * @param fetchDate      The date to filter by. If null, no date filtering is applied.
      * @return A list of {@link YouTubeVideo} objects, with shorts filtered out.
      */
-    public List<YouTubeVideo> constructYouTubeVideos(List<PlaylistItem> playlistItems, Map<String, Duration> videoDurations, LocalDate fetchDate) {
-        Stream<YouTubeVideo> videoStream = playlistItems.stream().map(item -> {
-            String videoId = item.getSnippet().getResourceId().getVideoId();
-            return new YouTubeVideo(
-                    videoId,
-                    item.getSnippet().getTitle(),
-                    "https://www.youtube.com/watch?v=" + videoId,
-                    item.getSnippet().getChannelTitle(),
-                    item.getSnippet().getChannelId(),
-                    Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
-                    videoDurations.getOrDefault(videoId, Duration.ZERO));
-        });
-
-        // If a fetchDate is provided, filter the stream to include only videos published on that date in CET.
-        if (fetchDate != null) {
-            videoStream = videoStream.filter(video -> getLocalDateInCet(video.publishedAt()).equals(fetchDate));
-        }
-
-        return videoStream.filter(video -> video.duration().getSeconds() > 60) // Filter out videos 60 seconds or less (YouTube Shorts)
+    public List<YouTubeVideo> constructYouTubeVideos(List<PlaylistItem> playlistItems, Map<String, Duration> videoDurations) {
+        // Date filtering is now handled in fetchPlaylistItems, so the stream processing is simpler.
+        return playlistItems.stream().map(item -> {
+                    String videoId = item.getSnippet().getResourceId().getVideoId();
+                    return new YouTubeVideo(
+                            videoId,
+                            item.getSnippet().getTitle(),
+                            "https://www.youtube.com/watch?v=" + videoId,
+                            item.getSnippet().getChannelTitle(),
+                            item.getSnippet().getChannelId(),
+                            Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
+                            videoDurations.getOrDefault(videoId, Duration.ZERO));
+                })
+                .filter(video -> video.duration().getSeconds() > 60) // Filter out videos 60 seconds or less (YouTube Shorts)
                 .toList();
     }
 
