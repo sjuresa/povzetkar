@@ -256,7 +256,7 @@ class YouTubeDataServiceTest {
 
     private PlaylistItem createMockPlaylistItem(String videoId) {
         // Maintain backward compatibility for tests that don't need a specific date
-        return createMockPlaylistItem(videoId, new DateTime(new Date()));
+        return createMockPlaylistItem(videoId, new DateTime(0L));
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId, DateTime publishedAt) {
