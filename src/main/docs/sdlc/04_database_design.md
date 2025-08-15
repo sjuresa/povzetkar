@@ -21,7 +21,9 @@ erDiagram
     SUMMARIES ||--|{ REPORT_SUMMARIES : "is part of"
     TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
+    SOURCE_TYPES ||--o{ CONTENT_ITEMS : "is of type"
 
+    AUTHORS ||--o{ AUTHOR_ASSESSMENTS : "is assessed for"
     AUTHORS {
         bigint id PK
         varchar channel_id UK
@@ -35,9 +37,10 @@ erDiagram
         bigint id PK
         bigint author_id FK
         varchar source_url UK
-        varchar source_type
+        int source_type_id FK
         text raw_content
         timestamp published_at
+        varchar processing_status
         integer duration_seconds
         timestamp created_at
     }
@@ -75,6 +78,11 @@ erDiagram
         varchar name UK
     }
 
+    SOURCE_TYPES {
+        int id PK
+        varchar name UK
+    }
+
     TRENDS {
         bigint id PK
         varchar name
@@ -87,6 +95,14 @@ erDiagram
     TREND_SUMMARIES {
         bigint trend_id PK, FK
         bigint summary_id PK, FK
+    }
+
+    AUTHOR_ASSESSMENTS {
+        bigint id PK
+        bigint author_id FK
+        decimal bias_score
+        text assessment_details
+        timestamp created_at
     }
 ```
 
@@ -106,9 +122,10 @@ Stores raw ingested content from various sources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `author_id` (FK, bigint): References `authors.id`. `NOT NULL`
 - `source_url` (varchar, unique): The canonical URL of the content. `NOT NULL`
-- `source_type` (varchar): e.g., 'YOUTUBE', 'BLOG', 'REDDIT'. `NOT NULL`
+- `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
 - `raw_content` (text): The full transcript or article text. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
+- `processing_status` (varchar): The current state of the item. e.g., 'PENDING', 'COMPLETED', 'FAILED'. `NOT NULL DEFAULT 'PENDING'`
 - `duration_seconds` (integer): Duration for video/audio content. `NULL`
 - `created_at` (timestamp): When the item was ingested. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
@@ -117,7 +134,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
-- `embedding` (vector): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
+- `embedding` (vector): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NULL`
 - `category_id` (FK, int): References `categories.id`. `NULL`
 - `sentiment_id` (FK, int): References `sentiments.id`. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
@@ -139,6 +156,11 @@ A lookup table for content categories.
 A lookup table for sentiment values.
 - `id` (PK, int, auto-increment): `NOT NULL`
 - `name` (varchar, unique): The name of the sentiment (e.g., 'Positive', 'Negative', 'Neutral'). `NOT NULL`
+
+### `source_types`
+A lookup table for content source types.
+- `id` (PK, int, auto-increment): `NOT NULL`
+- `name` (varchar, unique): The name of the source type (e.g., 'YOUTUBE', 'BLOG', 'REDDIT'). `NOT NULL`
 
 ### `report_summaries`
 A join table creating a many-to-many relationship between reports and summaries. This allows a single summary to be part of multiple reports (e.g., a daily and a weekly report).
