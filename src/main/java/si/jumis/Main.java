@@ -55,7 +55,7 @@ public class Main {
      * Parses command-line arguments to determine the application's run configuration.
      * Defaults to useCase="S_B" and date=today if no arguments are provided.
      *
-     * @param args Command-line arguments. Supports --use-case=[S_B|TR|S_URL] and --date=d.M.yyyy.
+     * @param args Command-line arguments. Supports --use-case=[S_B|S_URL] and --date=d.M.yyyy.
      * @return A {@link RunConfiguration} object.
      */
     private static RunConfiguration parseRunConfiguration(String[] args) {

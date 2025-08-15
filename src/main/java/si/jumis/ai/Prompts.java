@@ -14,7 +14,6 @@ public final class Prompts {
     public static final String VIDEO_SUMMARY_PROMPT = loadPrompt("video_summary_prompt.txt");
     public static final String VIDEO_SUMMARY_PROMPT_URL = loadPrompt("video_summary_prompt_url.txt");
     public static final String SUMMARIES_SUMMARY_PROMPT = loadPrompt("summaries_summary_prompt.txt");
-    public static final String TRANSCRIPT_SUMMARY_PROMPT = loadPrompt("transcript_summary_prompt.txt");
     private static final Logger logger = LoggerFactory.getLogger(Prompts.class);
 
     private Prompts() {

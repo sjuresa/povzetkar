@@ -39,6 +39,17 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
 *   **Handling Rejection:** If you reject a plan, I will stop immediately. I will assume the rejection is due to a flaw in my plan or a misunderstanding of your instructions. I will ask for the reason for the rejection and use your feedback to create a new, corrected plan.
 
+### The Usage Analysis Mandate
+
+Before any plan to modify or remove existing code is presented for approval, a mandatory usage analysis **must** be performed.
+
+1.  **Identify the Target:** The specific class, method, or variable to be changed or removed is the "target."
+2.  **Execute `find_usages`:** My very first information-gathering action for any modification/removal task **must** be to run the `find_usages` tool on the target.
+3.  **Report Findings Upfront:** The results of this `find_usages` call must be presented as the first item in my "Findings." If the tool returns no usages, I must explicitly state that.
+4.  **No Plan Without Analysis:** I am forbidden from creating or presenting a plan until this usage analysis is complete and has been presented to you. This analysis is a non-negotiable prerequisite for any code modification plan.
+
+This mandate ensures that my plans are based on a verified understanding of the code's dependencies, not on flawed assumptions.
+
 ### Code Refactoring Checklist
 
 To prevent incomplete analysis, any plan involving code modification or refactoring is incomplete until it explicitly addresses the following three areas. I must investigate and include steps for each.

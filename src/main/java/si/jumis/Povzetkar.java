@@ -50,7 +50,6 @@ public class Povzetkar {
     private final VideoSummary videoSummary;
     private final ResourceReader resourceReader;
 
-    private record ParsedTranscript(String title, String url, String author, String content) {}
     private record BriefingInfo(Path path, LocalDate date, String title, String summary) {}
 
     public Povzetkar(VideoSummarizationService summarizationService, VideoSummary videoSummary, ResourceReader resourceReader) {
@@ -67,7 +66,6 @@ public class Povzetkar {
     public void run(RunConfiguration runConfiguration) {
         switch (runConfiguration.useCase().toUpperCase()) {
             case "S_B" -> runSummarizeAndBriefWorkflow(runConfiguration.date(), runConfiguration.dryRun());
-            case "TR" -> runSummarizeTranscriptWorkflow(runConfiguration.date());
             case "S_URL" -> runSummarizeFromUrlsWorkflow(runConfiguration.date());
             default -> logger.warn("Unknown use case: '{}'. No action will be taken.", runConfiguration.useCase());
         }
@@ -111,55 +109,6 @@ public class Povzetkar {
         } else {
             logger.warn("URL file '{}' is empty or not found. Skipping URL summarization.", URLS_TO_SUMMARIZE_FILENAME);
         }
-    }
-
-    void runSummarizeTranscriptWorkflow(LocalDate date) {
-        Path transcriptFilePath = Paths.get("transcript.txt");
-        logger.info("Starting transcript summarization from file: {}", transcriptFilePath);
-        try {
-            Optional<ParsedTranscript> parsedTranscriptOpt = parseTranscriptFile(transcriptFilePath);
-            if (parsedTranscriptOpt.isEmpty()) {
-                return; // Logging is handled inside the parse method
-            }
-            ParsedTranscript parsed = parsedTranscriptOpt.get();
-
-            String dateString = date.format(DMY_DATE_FORMAT);
-            String summary = summarizationService.summarizeFromTranscript(
-                    parsed.content(), parsed.url(), parsed.title(), parsed.author(), dateString);
-
-            String safeTitle = parsed.title().replaceAll("[^a-zA-Z0-9.\\-]", "_").replaceAll("\\s+", "_");
-            String outputFilename = "summary_from_transcript_" + safeTitle + "_" + dateString + ".md";
-            Path outputFilePath = SUMMARIES_DIR.resolve(outputFilename);
-
-            FileUtils.saveToFile(outputFilePath, summary);
-            logger.info("Successfully saved transcript summary to: {}", outputFilePath);
-
-        } catch (NoSuchFileException e) {
-            logger.warn("Transcript file not found, skipping transcript summarization: {}. This is not an error.", transcriptFilePath);
-        } catch (IOException e) {
-            logger.error("An error occurred during transcript summarization for file: {}", transcriptFilePath, e);
-        }
-    }
-
-    private Optional<ParsedTranscript> parseTranscriptFile(Path transcriptFilePath) throws IOException {
-        List<String> lines = Files.readAllLines(transcriptFilePath, StandardCharsets.UTF_8);
-
-        if (lines.size() < 4) {
-            logger.warn("Transcript file '{}' is too short to contain a title, URL, author, and content. Skipping.", transcriptFilePath);
-            return Optional.empty();
-        }
-
-        String videoTitle = lines.get(0).trim();
-        String videoUrl = lines.get(1).trim();
-        String author = lines.get(2).trim();
-        String transcriptContent = lines.stream().skip(3).collect(Collectors.joining("\n")).trim();
-
-        if (transcriptContent.isEmpty()) {
-            logger.warn("Transcript content is empty in '{}', skipping.", transcriptFilePath);
-            return Optional.empty();
-        }
-
-        return Optional.of(new ParsedTranscript(videoTitle, videoUrl, author, transcriptContent));
     }
 
     private void createBriefingFromFileUseCase(LocalDate date, Path summaryFilePath) {
