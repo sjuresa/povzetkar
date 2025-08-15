@@ -17,7 +17,6 @@ A modular, service-oriented architecture is recommended to ensure scalability, m
 graph TD
     subgraph "User Facing"
         A["Frontend <br>(Angular/etc.)"] --> B("Conversational API <br>(RAG)")
-        B --> C{"AI Core <br>(LangChain4j)"}
     end
 
     subgraph "Data Pipeline"
@@ -30,6 +29,9 @@ graph TD
         H["Persistence Layer <br>(PostgreSQL + pgvector)"]
     end
 
+    C{"AI Core <br>(LangChain4j)"}
+
+    B --> C
     G --> H
     C --> H
     G --> C

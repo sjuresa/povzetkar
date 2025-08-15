@@ -14,7 +14,7 @@ This diagram shows the high-level relationships between the core entities in the
 ```mermaid
 erDiagram
     AUTHORS ||--o{ CONTENT_ITEMS : "publishes"
-    CONTENT_ITEMS ||--|{ SUMMARIES : "is summarized by"
+    CONTENT_ITEMS ||--o{ SUMMARIES : "is summarized by"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"
     SENTIMENTS ||--o{ SUMMARIES : "describes"
     REPORTS ||--|{ REPORT_SUMMARIES : "aggregates"
@@ -106,7 +106,7 @@ erDiagram
     }
 ```
 
-## 2.1 Custom Data Types
+## 3 Custom Data Types
 
 To ensure data integrity, the schema uses custom PostgreSQL `ENUM` types for certain columns.
 
@@ -118,7 +118,7 @@ A type to represent the processing state of a content item.
     - `COMPLETED`: The item has been successfully processed (summarized, embedded, etc.).
     - `FAILED`: An unrecoverable error occurred during processing.
 
-## 3. Table Definitions
+## 4. Table Definitions
 
 ### `authors`
 Stores information about content creators.

@@ -49,7 +49,7 @@ Testing will cover all major components of the system:
     3. Then a summary is generated and persisted to the database, and the processing state is correctly updated in the relevant tables.
 - **Failure - AI Service Unavailable:**
     1. Given the AI model API (e.g., Gemini) returns a 500 error.
-    2. When `VideoSummary` attempts to generate a summary.
+    2. When the `VideoSummarizationService` attempts to generate a summary.
     3. Then the retry logic is triggered, and if it ultimately fails, the failure is logged, and the `processing_status` for the item in the `content_items` table is updated to `'FAILED'`. This prevents reprocessing loops while allowing for manual or automated retries.
 - **RAG - Conversational Query:**
     1. Given the database contains several indexed summaries about "Quarkus".
