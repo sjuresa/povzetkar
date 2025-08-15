@@ -11,6 +11,8 @@ import si.jumis.util.Sleeper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -120,5 +122,31 @@ class GenAiPoolTest {
         long expectedSleepTimeMillis = TimeUnit.NANOSECONDS.toMillis(expectedSleepTimeNanos);
 
         assertEquals(expectedSleepTimeMillis, sleepTimeMillis, "Sleep time should be precisely calculated");
+    }
+
+    @Test
+    @DisplayName("getGenAiClient should be thread-safe and enforce cooldown under concurrent load")
+    void getGenAiClient_shouldBeThreadSafe() throws InterruptedException {
+        // Arrange
+        final int numThreads = 3;
+        // Pool has 2 clients. We will make 3 requests.
+        // The first 2 should get a client immediately.
+        // The 3rd should trigger the cooldown sleep.
+
+        // Act
+        try (ExecutorService executor = Executors.newFixedThreadPool(numThreads)) {
+            for (int i = 0; i < numThreads; i++) {
+                executor.submit(() -> genAiPool.getGenAiClient());
+            }
+            executor.shutdown();
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        }
+
+        // Assert
+        // With a race condition, it's possible that sleeper is called 0 times or multiple times.
+        // A correct, thread-safe implementation will ensure it's called exactly once.
+        verify(mockSleeper, times(1)).sleep(anyLong());
     }
 }

@@ -47,10 +47,16 @@ public class GenAiPool {
     }
 
     public GenAiClient getGenAiClient() {
-        GenAiClient selectedClient = selectClient();
+        GenAiClient selectedClient;
+        long timeSinceLastUse;
 
-        long now = timeProvider.nanoTime();
-        long timeSinceLastUse = now - selectedClient.lastUsedTimestamp;
+        synchronized (this) {
+            selectedClient = selectClient();
+            long now = timeProvider.nanoTime();
+            timeSinceLastUse = now - selectedClient.lastUsedTimestamp;
+            selectedClient.lastUsedTimestamp = now;
+        }
+
         logger.info("Using {}. Time since last use: {} s.", selectedClient.name, TimeUnit.NANOSECONDS.toSeconds(timeSinceLastUse));
 
         if (timeSinceLastUse < coolDownPeriod) {
@@ -62,11 +68,10 @@ public class GenAiPool {
                 Thread.currentThread().interrupt();
             }
         }
-        selectedClient.lastUsedTimestamp = timeProvider.nanoTime();
         return selectedClient;
     }
 
-    private synchronized GenAiClient selectClient() {
+    private GenAiClient selectClient() {
         return clientPool.stream()
                 .min(Comparator.comparingLong(c -> c.lastUsedTimestamp))
                 .orElseThrow(() -> new NoSuchElementException("Client pool is empty"));
