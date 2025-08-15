@@ -49,7 +49,7 @@ erDiagram
         bigint id PK
         bigint content_item_id FK
         text summary_text
-        vector(1536) embedding
+        vector(1536) embedding "NOT NULL"
         int category_id FK
         int sentiment_id FK
         timestamp created_at
@@ -146,7 +146,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
-- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NULL`
+- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
 - `category_id` (FK, int): References `categories.id`. `NULL`
 - `sentiment_id` (FK, int): References `sentiments.id`. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
