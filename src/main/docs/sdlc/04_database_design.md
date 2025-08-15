@@ -14,11 +14,13 @@ This diagram shows the high-level relationships between the core entities in the
 ```mermaid
 erDiagram
     AUTHORS ||--o{ CONTENT_ITEMS : "publishes"
-    CONTENT_ITEMS ||--|{ SUMMARIES : "has a"
+    CONTENT_ITEMS ||--|{ SUMMARIES : "is summarized by"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"
     SENTIMENTS ||--o{ SUMMARIES : "describes"
     REPORTS ||--|{ REPORT_SUMMARIES : "aggregates"
     SUMMARIES ||--|{ REPORT_SUMMARIES : "is part of"
+    TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
+    SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
 
     AUTHORS {
         bigint id PK
@@ -71,6 +73,20 @@ erDiagram
     SENTIMENTS {
         int id PK
         varchar name UK
+    }
+
+    TRENDS {
+        bigint id PK
+        varchar name
+        text description
+        date start_date
+        date end_date
+        timestamp created_at
+    }
+
+    TREND_SUMMARIES {
+        bigint trend_id PK, FK
+        bigint summary_id PK, FK
     }
 ```
 
@@ -125,6 +141,7 @@ A lookup table for sentiment values.
 - `name` (varchar, unique): The name of the sentiment (e.g., 'Positive', 'Negative', 'Neutral').
 
 ### `report_summaries`
-A join table linking reports to the summaries they contain.
+A join table creating a many-to-many relationship between reports and summaries. This allows a single summary to be part of multiple reports (e.g., a daily and a weekly report).
 - `report_id` (PK, FK, bigint): References `reports.id`.
 - `summary_id` (PK, FK, bigint): References `summaries.id`.
+The primary key for this table is a composite key formed by (`report_id`, `summary_id`).

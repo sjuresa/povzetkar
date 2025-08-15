@@ -36,7 +36,8 @@ graph TD
 
 ### 2.2 Technology Stack Recommendation
 
-*   **Backend Framework:** **Quarkus**. Chosen for its extremely fast startup times, low memory footprint, superior developer experience (live reload), and first-class support for native compilation with GraalVM. This makes it ideal for efficient, cost-effective deployment in containers.
+*   **Backend Framework:** **Quarkus**. Chosen for its extremely fast startup times, low memory footprint, superior developer experience (live reload), and first-class support for native compilation with 
+* GraalVM. This makes it ideal for efficient, cost-effective deployment in containers.
 *   **AI Orchestration:** **LangChain4j** with `quarkus-langchain4j` extensions. This provides a powerful, vendor-agnostic abstraction over AI models (Gemini, OpenAI, etc.) and offers best-in-class, declarative support for RAG, which is central to the project's vision.
 *   **Database:** **PostgreSQL** with the **`pgvector`** extension. A robust, open-source relational database that, with `pgvector`, becomes a powerful and integrated solution for storing both structured data and the vector embeddings required for RAG.
 *   **Messaging Queue:** **RabbitMQ** or **Apache Kafka**. To decouple data ingestion from processing. This makes the system resilient to failures and allows for independent scaling of ingestion and processing workloads.
