@@ -15,4 +15,11 @@ info:
   title: Povzetkar API
   version: 1.0.0
   description: API for the Povzetkar project.
-paths: {}
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Checks if the service is up and running.
+      responses:
+        '200':
+          description: Service is healthy

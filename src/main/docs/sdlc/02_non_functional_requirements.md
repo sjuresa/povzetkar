@@ -9,7 +9,7 @@ This document defines the quality attributes and constraints of the Povzetkar sy
 
 ## 2. Performance
 
-*   **P-1 (API Response Time):** The p95 latency for all user-facing API endpoints (e.g., conversational queries) must be under **[e.g., 800ms]**.
+*   **P-1 (API Response Time):** The p95 latency for all user-facing API endpoints (e.g., conversational queries) must be under a defined threshold (e.g., 800ms).
 *   **P-2 (Ingestion Throughput):** The system must be capable of ingesting and processing at least **[e.g., 1000]** new content items per hour.
 *   **P-3 (Report Generation):** Generation of a daily briefing report must complete within **[e.g., 5 minutes]** of the scheduled time.
 *   **P-4 (Startup Time):** In a containerized environment, the backend service should be ready to accept requests within **[e.g., 5 seconds]** of container start (leveraging Quarkus native compilation).

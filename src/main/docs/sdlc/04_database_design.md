@@ -40,7 +40,7 @@ erDiagram
         int source_type_id FK
         text raw_content
         timestamp published_at
-        varchar processing_status
+        processing_status_enum processing_status
         integer duration_seconds
         timestamp created_at
     }
@@ -106,6 +106,18 @@ erDiagram
     }
 ```
 
+## 2.1 Custom Data Types
+
+To ensure data integrity, the schema uses custom PostgreSQL `ENUM` types for certain columns.
+
+### `processing_status_enum`
+A type to represent the processing state of a content item.
+- **SQL Definition:** `CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED');`
+- **Values:**
+    - `PENDING`: The item has been ingested but not yet processed.
+    - `COMPLETED`: The item has been successfully processed (summarized, embedded, etc.).
+    - `FAILED`: An unrecoverable error occurred during processing.
+
 ## 3. Table Definitions
 
 ### `authors`
@@ -125,7 +137,7 @@ Stores raw ingested content from various sources.
 - `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
 - `raw_content` (text): The full transcript or article text. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
-- `processing_status` (varchar): The current state of the item. e.g., 'PENDING', 'COMPLETED', 'FAILED'. `NOT NULL DEFAULT 'PENDING'`
+- `processing_status` (processing_status_enum): The current state of the item. `NOT NULL DEFAULT 'PENDING'`
 - `duration_seconds` (integer): Duration for video/audio content. `NULL`
 - `created_at` (timestamp): When the item was ingested. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
@@ -134,7 +146,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
-- `embedding` (vector): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
+- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NULL`
 - `category_id` (FK, int): References `categories.id`. `NULL`
 - `sentiment_id` (FK, int): References `sentiments.id`. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
