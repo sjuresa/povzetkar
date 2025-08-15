@@ -10,16 +10,18 @@ public class GenAiClient {
     final Client client;
     final String name;
     volatile long lastUsedTimestamp; // in nanoseconds
+    private final GenAiPool.TimeProvider timeProvider;
 
-    GenAiClient(Client client, String name) {
+    GenAiClient(Client client, String name, GenAiPool.TimeProvider timeProvider) {
         this.client = client;
         this.name = name;
+        this.timeProvider = timeProvider;
         // Initialize to a time in the past to allow immediate use
-        this.lastUsedTimestamp = System.nanoTime() - TimeUnit.SECONDS.toNanos(60);
+        this.lastUsedTimestamp = timeProvider.nanoTime() - TimeUnit.SECONDS.toNanos(60);
     }
 
     public void usedNow() {
-        this.lastUsedTimestamp = System.nanoTime();
+        this.lastUsedTimestamp = timeProvider.nanoTime();
     }
 
     public Models getModels() {

@@ -1,45 +1,124 @@
 package si.jumis.ai;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import si.jumis.util.Sleeper;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class GenAiPoolTest {
 
+    @Mock
+    private Sleeper mockSleeper;
+
+    @Mock
+    private GenAiPool.TimeProvider mockTimeProvider;
+
+    private GenAiPool genAiPool;
+
+    private final long coolDownPeriod = TimeUnit.SECONDS.toNanos(60);
+    private long currentTime = 0L;
+
+    @BeforeEach
+    void setUp() {
+        List<String> apiKeys = Arrays.asList("key1", "key2");
+        // Mock the time provider to return our controllable current time
+        when(mockTimeProvider.nanoTime()).thenAnswer(invocation -> currentTime);
+        genAiPool = new GenAiPool(apiKeys, coolDownPeriod, mockSleeper, mockTimeProvider);
+    }
+
+    private void advanceTime(long nanos) {
+        currentTime += nanos;
+    }
+
     @Test
-    void basicUseCase() {
-        GenAiPool genAiPool = new GenAiPool("key1", "key", TimeUnit.SECONDS.toNanos(1));
-        GenAiClient client = genAiPool.getGenAiClient();
-        // use client
-        // client1.getModels().generateContent(...)
-        // mark last usage
-        client.usedNow();
-        long last = System.nanoTime();
+    @DisplayName("getGenAiClient should not sleep when pool is fresh")
+    void getGenAiClient_shouldNotSleep_whenPoolIsFresh() throws InterruptedException {
+        // Act
+        genAiPool.getGenAiClient();
 
-        // we should get next client immediately
-        client = genAiPool.getGenAiClient();
-        long now = System.nanoTime();
-        System.out.println("Waited " + (now - last) + "ns");
-        // use client
-        // client2.getModels().generateContent(...)
-        // mark last usage
-        client.usedNow();
-        last = System.nanoTime();
+        // Assert
+        verify(mockSleeper, never()).sleep(anyLong());
+    }
 
-        // this time we have to wait for 60 seconds less the duration of API calls...
-        client = genAiPool.getGenAiClient();
-        now = System.nanoTime();
-        System.out.println("Waited " + (now - last) + "ns");
+    @Test
+    @DisplayName("getGenAiClient should sleep when cooldown is active")
+    void getGenAiClient_shouldSleep_whenCooldownIsActive() throws InterruptedException {
+        // Arrange
+        genAiPool.getGenAiClient(); // Client 1 used at time 0
+        advanceTime(1);
+        genAiPool.getGenAiClient(); // Client 2 used at time 1
 
-        client.usedNow();
-        last = System.nanoTime();
-        // this time we have to wait for 60 seconds less the duration of API calls...
-        client = genAiPool.getGenAiClient();
-        now = System.nanoTime();
-        System.out.println("Waited " + (now - last) + "ns");
-        // ...
-        assertNotNull(client);
+        // Act
+        // All clients are on cooldown, so the next call must wait.
+        advanceTime(1);
+        genAiPool.getGenAiClient();
+
+        // Assert
+        verify(mockSleeper, times(1)).sleep(anyLong());
+    }
+
+    @Test
+    @DisplayName("getGenAiClient should select the least recently used client")
+    void getGenAiClient_shouldSelectLeastRecentlyUsed() {
+        // Arrange
+        // First call at time 0, client 1 is selected
+        GenAiClient client1 = genAiPool.getGenAiClient();
+        client1.usedNow(); // lastUsedTimestamp is now 0
+
+        // Advance time and use the second client
+        advanceTime(TimeUnit.SECONDS.toNanos(10)); // Current time is 10s
+        GenAiClient client2 = genAiPool.getGenAiClient();
+        client2.usedNow(); // lastUsedTimestamp is now 10s
+
+        // Act
+        // Advance time again. The pool should now select client 1, as it was used less recently.
+        advanceTime(TimeUnit.SECONDS.toNanos(10)); // Current time is 20s
+        GenAiClient nextClient = genAiPool.getGenAiClient();
+
+        // Assert
+        assertEquals(client1.name, nextClient.name, "Should have selected the first client as it was used least recently");
+    }
+
+    @Test
+    @DisplayName("getGenAiClient should calculate sleep time correctly")
+    void getGenAiClient_shouldCalculateSleepTimeCorrectly() throws InterruptedException {
+        // Arrange
+        ArgumentCaptor<Long> sleepTimeCaptor = ArgumentCaptor.forClass(Long.class);
+
+        // Use client 1 at time 0
+        genAiPool.getGenAiClient().usedNow();
+
+        // Use client 2 at time 10s
+        advanceTime(TimeUnit.SECONDS.toNanos(10));
+        genAiPool.getGenAiClient().usedNow();
+
+        // Act
+        // Attempt to get a client at time 20s.
+        // The least recently used client is client 1 (used at 0s).
+        // Time since last use is 20s. Cooldown is 60s.
+        // Expected sleep time is 60s - 20s = 40s.
+        advanceTime(TimeUnit.SECONDS.toNanos(10));
+        genAiPool.getGenAiClient();
+
+        // Assert
+        verify(mockSleeper).sleep(sleepTimeCaptor.capture());
+        long sleepTimeMillis = sleepTimeCaptor.getValue();
+
+        long expectedSleepTimeNanos = coolDownPeriod - TimeUnit.SECONDS.toNanos(20);
+        long expectedSleepTimeMillis = TimeUnit.NANOSECONDS.toMillis(expectedSleepTimeNanos);
+
+        assertEquals(expectedSleepTimeMillis, sleepTimeMillis, "Sleep time should be precisely calculated");
     }
 }

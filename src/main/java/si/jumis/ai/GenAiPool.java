@@ -12,36 +12,44 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 public class GenAiPool {
+
+    public interface TimeProvider {
+        long nanoTime();
+    }
+
+    public static class DefaultTimeProvider implements TimeProvider {
+        @Override
+        public long nanoTime() {
+            return System.nanoTime();
+        }
+    }
+
     private final List<GenAiClient> clientPool;
-    private final Sleeper sleeper; // Add Sleeper dependency
+    private final Sleeper sleeper;
     private final long coolDownPeriod;
+    private final TimeProvider timeProvider;
     private static final Logger logger = LoggerFactory.getLogger(GenAiPool.class);
 
-    public GenAiPool(String apiKey1, String apiKey2, long coolDownPeriod) {
-        this.sleeper = new Sleeper.DefaultSleeper();
+    public GenAiPool(List<String> apiKeys, long coolDownPeriod, Sleeper sleeper, TimeProvider timeProvider) {
+        this.sleeper = sleeper;
         this.coolDownPeriod = coolDownPeriod;
+        this.timeProvider = timeProvider;
 
         clientPool = new ArrayList<>();
 
-        if (apiKey1 != null && !apiKey1.isEmpty()) {
-            Client client1 = Client.builder().apiKey(apiKey1).build();
-            clientPool.add(new GenAiClient(client1, "Api key 1"));
-        }
-        if (apiKey2 != null && !apiKey2.isEmpty()) {
-            Client client2 = Client.builder().apiKey(apiKey2).build();
-            clientPool.add(new GenAiClient(client2, "API key 2"));
+        for (int i = 0; i < apiKeys.size(); i++) {
+            String apiKey = apiKeys.get(i).trim();
+            if (!apiKey.isEmpty()) {
+                Client client = Client.builder().apiKey(apiKey).build();
+                clientPool.add(new GenAiClient(client, "API key " + (i + 1), timeProvider));
+            }
         }
     }
-    /**
-     * Selects a client from the pool that has not been used for at least 60 seconds.
-     * If all clients are busy, it waits until one becomes available.
-     *
-     * @return A Models object from an available client.
-     */
+
     public GenAiClient getGenAiClient() {
         GenAiClient selectedClient = selectClient();
 
-        long now = System.nanoTime();
+        long now = timeProvider.nanoTime();
         long timeSinceLastUse = now - selectedClient.lastUsedTimestamp;
         logger.info("Using {}. Time since last use: {} s.", selectedClient.name, TimeUnit.NANOSECONDS.toSeconds(timeSinceLastUse));
 
@@ -54,18 +62,11 @@ public class GenAiPool {
                 Thread.currentThread().interrupt();
             }
         }
-        selectedClient.lastUsedTimestamp = System.nanoTime();
+        selectedClient.lastUsedTimestamp = timeProvider.nanoTime();
         return selectedClient;
     }
 
-    /**
-     * Finds the least recently used client from the pool.
-     * This method is synchronized to ensure thread-safe access to the client pool.
-     *
-     * @return The least recently used PooledClient.
-     */
     private synchronized GenAiClient selectClient() {
-        // Find the least recently used client
         return clientPool.stream()
                 .min(Comparator.comparingLong(c -> c.lastUsedTimestamp))
                 .orElseThrow(() -> new NoSuchElementException("Client pool is empty"));

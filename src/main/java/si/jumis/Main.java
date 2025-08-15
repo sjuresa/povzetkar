@@ -14,8 +14,11 @@ import si.jumis.service.TimeTextFormatter;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.service.YouTubeTranscriptService;
 import si.jumis.util.ResourceReader;
+import si.jumis.util.Sleeper;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static si.jumis.Povzetkar.DMY_DATE_FORMAT;
@@ -26,15 +29,22 @@ public class Main {
     public static final String YOUTUBE_APP_NAME = "gemini-test-app";
 
     public static void main(String[] args) {
-        String apiKey = System.getenv("YOUTUBE_API_KEY");
-        if (apiKey == null || apiKey.isBlank()) {
+        String youtubeApiKey = System.getenv("YOUTUBE_API_KEY");
+        if (youtubeApiKey == null || youtubeApiKey.isBlank()) {
             logger.error("YOUTUBE_API_KEY environment variable not set. Exiting.");
             return;
         }
+
+        String googleApiKeysEnv = System.getenv("GOOGLE_API_KEYS");
+        if (googleApiKeysEnv == null || googleApiKeysEnv.isBlank()) {
+            logger.error("GOOGLE_API_KEYS environment variable not set. Exiting.");
+            return;
+        }
+        List<String> googleApiKeys = Arrays.asList(googleApiKeysEnv.split(","));
+
         RunConfiguration runConfiguration = parseRunConfiguration(args);
-        GenAiPool genAiPool = new GenAiPool(System.getenv("GOOGLE_API_KEY"),
-                System.getenv("GOOGLE_API_KEY1"), COOLDOWN_PERIOD_NS);
-        Povzetkar povzetkar = getPovzetkar(genAiPool, apiKey);
+        GenAiPool genAiPool = new GenAiPool(googleApiKeys, COOLDOWN_PERIOD_NS, new Sleeper.DefaultSleeper(), new GenAiPool.DefaultTimeProvider());
+        Povzetkar povzetkar = getPovzetkar(genAiPool, youtubeApiKey);
         povzetkar.run(runConfiguration);
     }
 
