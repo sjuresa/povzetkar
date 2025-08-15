@@ -192,6 +192,7 @@ public class VideoSummarizationService {
     private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath,
                                        LocalDate processingDate, String separator) {
         YouTubeVideo video = videoToProcess.video();
+        String summary;
         try {
             Content content = getContent(video);
             if (content == null) {
@@ -200,17 +201,22 @@ public class VideoSummarizationService {
                 handleSummaryFailure(video, new Exception("Transcript retrieval failed, content is null."));
                 return false;
             }
-
-            String summary = videoSummary.generateContentWithRetry(content, "video summary").text();
-            FileUtils.appendToFile(outputFilePath, separator + summary);
-            updateProcessingState(videoToProcess, processingDate); // Only update state on full success
-            return true;
+            summary = videoSummary.generateContentWithRetry(content, "video summary").text();
         } catch (Exception e) {
             // This case handles failures in the AI summarization step. We log it and update the state
             // to prevent retrying a video that consistently fails to be summarized.
             handleSummaryFailure(video, e);
             logger.error("Video will be marked as processed to avoid retries.");
             updateProcessingState(videoToProcess, processingDate);
+            return false;
+        }
+
+        try {
+            FileUtils.appendToFile(outputFilePath, separator + summary);
+            updateProcessingState(videoToProcess, processingDate); // Only update state on full success
+            return true;
+        } catch (IOException e) {
+            logger.error("Failed to write summary to file for video: {}. It will NOT be marked as processed.", video.url(), e);
             return false;
         }
     }
