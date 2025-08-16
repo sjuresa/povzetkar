@@ -36,6 +36,7 @@ class YouTubeDataServiceTest {
     private static final String TEST_AUTHOR_CUSTOM_URL = "@test";
     private static final long TEST_AUTHOR_SUBSCRIBERS = 12345L;
     private static final String UPLOADS_PLAYLIST_ID = "UU-test-channel-id";
+    private static final ZoneId TEST_ZONE_ID = ZoneId.of("Europe/Ljubljana");
 
     @Mock
     private YouTube mockYouTube;
@@ -57,7 +58,7 @@ class YouTubeDataServiceTest {
 
     @BeforeEach
     void setUp() {
-        youtubeDataService = new YouTubeDataService(FAKE_API_KEY, mockYouTube);
+        youtubeDataService = new YouTubeDataService(FAKE_API_KEY, mockYouTube, TEST_ZONE_ID);
         testAuthor = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, TEST_AUTHOR_SUBSCRIBERS);
     }
 
@@ -193,9 +194,9 @@ class YouTubeDataServiceTest {
         void shouldOnlyFetchItemsOnTheGivenFetchDate() throws IOException {
             // Arrange
             LocalDate fetchDate = LocalDate.of(2023, 10, 26);
-            DateTime dateAfter = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant()));
-            DateTime dateOn = new DateTime(Date.from(fetchDate.atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant()));
-            DateTime dateBefore = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay(ZoneId.of("Europe/Ljubljana")).toInstant()));
+            DateTime dateAfter = new DateTime(Date.from(fetchDate.plusDays(1).atStartOfDay(TEST_ZONE_ID).toInstant()));
+            DateTime dateOn = new DateTime(Date.from(fetchDate.atStartOfDay(TEST_ZONE_ID).toInstant()));
+            DateTime dateBefore = new DateTime(Date.from(fetchDate.minusDays(1).atStartOfDay(TEST_ZONE_ID).toInstant()));
 
             PlaylistItem itemAfter = createMockPlaylistItem("videoAfter", dateAfter);
             PlaylistItem itemOn = createMockPlaylistItem("videoOn", dateOn);

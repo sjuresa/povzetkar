@@ -17,6 +17,7 @@ import si.jumis.util.ResourceReader;
 import si.jumis.util.Sleeper;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,22 +41,24 @@ public class Main {
             logger.error("GOOGLE_API_KEYS environment variable not set. Exiting.");
             return;
         }
-        List<String> googleApiKeys = Arrays.asList(googleApiKeysEnv.split(","));
+        List<String> googleApiKeys = new java.util.ArrayList<>(Arrays.asList(googleApiKeysEnv.split(",")));
+
+        String timezoneId = System.getenv().getOrDefault("APP_TIMEZONE", "Europe/Ljubljana");
 
         RunConfiguration runConfiguration = parseRunConfiguration(args);
         try (GenAiPool genAiPool = new GenAiPool(googleApiKeys, COOLDOWN_PERIOD_NS, new Sleeper.DefaultSleeper(), new GenAiPool.DefaultTimeProvider())) {
-            Povzetkar povzetkar = getPovzetkar(genAiPool, youtubeApiKey);
+            Povzetkar povzetkar = getPovzetkar(genAiPool, youtubeApiKey, ZoneId.of(timezoneId));
             povzetkar.run(runConfiguration);
         }
     }
 
     @NotNull
-    private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey) {
+    private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey, ZoneId zoneId) {
         VideoSummary videoSummary = new VideoSummary(genAiPool);
         ProcessingStateService stateService = new ProcessingStateService();
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
                 new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
-                        .setApplicationName(YOUTUBE_APP_NAME).build());
+                        .setApplicationName(YOUTUBE_APP_NAME).build(), zoneId);
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, new YouTubeTranscriptService(new TimeTextFormatter()));
         ResourceReader resourceReader = new ResourceReader();
 

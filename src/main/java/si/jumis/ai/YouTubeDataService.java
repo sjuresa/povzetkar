@@ -28,7 +28,6 @@ public class YouTubeDataService {
 
     private static final int API_MAX_RESULTS = 50;
     private static final int YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS = 60;
-    private static final String TIMEZONE_ID = "Europe/Ljubljana";
     private static final String YOUTUBE_VIDEO_URL_PREFIX = "https://www.youtube.com/watch?v=";
     private static final String PART_SNIPPET = "snippet";
     private static final String PART_STATISTICS = "statistics";
@@ -36,10 +35,12 @@ public class YouTubeDataService {
 
     private final YouTube youtubeService;
     private final String apiKey;
+    private final ZoneId zoneId;
 
-    public YouTubeDataService(String apiKey, YouTube youtubeService) {
+    public YouTubeDataService(String apiKey, YouTube youtubeService, ZoneId zoneId) {
         this.apiKey = apiKey;
         this.youtubeService = youtubeService;
+        this.zoneId = zoneId;
     }
 
     /**
@@ -197,7 +198,7 @@ public class YouTubeDataService {
             return new ItemProcessingStatus(false, true);
         }
         Instant publishedAt = Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue());
-        LocalDate itemDate = getLocalDateInCet(publishedAt);
+        LocalDate itemDate = getLocalDateInZone(publishedAt);
 
         if (itemDate.isBefore(fetchDate)) {
             return new ItemProcessingStatus(true, false);
@@ -260,9 +261,9 @@ public class YouTubeDataService {
     }
 
     /**
-     * Converts a UTC Instant to a LocalDate in the CET timezone.
+     * Converts a UTC Instant to a LocalDate in the configured timezone.
      */
-    private LocalDate getLocalDateInCet(Instant instant) {
-        return instant.atZone(ZoneId.of(TIMEZONE_ID)).toLocalDate();
+    private LocalDate getLocalDateInZone(Instant instant) {
+        return instant.atZone(zoneId).toLocalDate();
     }
 }
