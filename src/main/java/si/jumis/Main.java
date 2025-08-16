@@ -43,9 +43,10 @@ public class Main {
         List<String> googleApiKeys = Arrays.asList(googleApiKeysEnv.split(","));
 
         RunConfiguration runConfiguration = parseRunConfiguration(args);
-        GenAiPool genAiPool = new GenAiPool(googleApiKeys, COOLDOWN_PERIOD_NS, new Sleeper.DefaultSleeper(), new GenAiPool.DefaultTimeProvider());
-        Povzetkar povzetkar = getPovzetkar(genAiPool, youtubeApiKey);
-        povzetkar.run(runConfiguration);
+        try (GenAiPool genAiPool = new GenAiPool(googleApiKeys, COOLDOWN_PERIOD_NS, new Sleeper.DefaultSleeper(), new GenAiPool.DefaultTimeProvider())) {
+            Povzetkar povzetkar = getPovzetkar(genAiPool, youtubeApiKey);
+            povzetkar.run(runConfiguration);
+        }
     }
 
     @NotNull
@@ -54,7 +55,7 @@ public class Main {
         ProcessingStateService stateService = new ProcessingStateService();
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
                 new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
-                .setApplicationName(YOUTUBE_APP_NAME).build());
+                        .setApplicationName(YOUTUBE_APP_NAME).build());
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, new YouTubeTranscriptService(new TimeTextFormatter()));
         ResourceReader resourceReader = new ResourceReader();
 

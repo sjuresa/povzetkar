@@ -86,6 +86,11 @@ public class YouTubeDataService {
             throw new IOException("Channel not found for ID: " + channelId);
         }
         Channel channel = items.getFirst();
+        if (channel.getContentDetails() == null ||
+                channel.getContentDetails().getRelatedPlaylists() == null ||
+                channel.getContentDetails().getRelatedPlaylists().getUploads() == null) {
+            throw new IOException("Could not find uploads playlist for channel ID: " + channelId);
+        }
         return channel.getContentDetails().getRelatedPlaylists().getUploads();
     }
 

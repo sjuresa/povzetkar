@@ -1,5 +1,6 @@
 package si.jumis.ai;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,11 @@ class GenAiPoolTest {
         // Mock the time provider to return our controllable current time
         when(mockTimeProvider.nanoTime()).thenAnswer(invocation -> currentTime);
         genAiPool = new GenAiPool(apiKeys, coolDownPeriod, mockSleeper, mockTimeProvider);
+    }
+
+    @AfterEach
+    void tearDown() {
+        genAiPool.close();
     }
 
     private void advanceTime(long nanos) {

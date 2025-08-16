@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
-public class GenAiPool {
+public class GenAiPool implements AutoCloseable {
 
     public interface TimeProvider {
         long nanoTime();
@@ -75,5 +75,16 @@ public class GenAiPool {
         return clientPool.stream()
                 .min(Comparator.comparingLong(c -> c.lastUsedTimestamp))
                 .orElseThrow(() -> new NoSuchElementException("Client pool is empty"));
+    }
+
+    @Override
+    public void close() {
+        for (GenAiClient genAiClient : clientPool) {
+            try {
+                genAiClient.client.close();
+            } catch (Exception e) {
+                logger.error("Failed to close GenAiClient: {}", genAiClient.name, e);
+            }
+        }
     }
 }
