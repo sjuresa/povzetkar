@@ -42,7 +42,11 @@ public class Main {
             return;
         }
         List<String> googleApiKeys = new java.util.ArrayList<>(Arrays.asList(googleApiKeysEnv.split(",")));
-
+        googleApiKeys.removeIf(String::isBlank);
+        if (googleApiKeys.isEmpty()) {
+            logger.error("GOOGLE_API_KEYS environment variable is set but contains no valid keys. Exiting.");
+            return;
+        }
         String timezoneId = System.getenv().getOrDefault("APP_TIMEZONE", "Europe/Ljubljana");
 
         RunConfiguration runConfiguration = parseRunConfiguration(args);
