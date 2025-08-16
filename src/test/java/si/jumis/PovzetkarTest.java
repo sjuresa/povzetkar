@@ -84,7 +84,7 @@ class PovzetkarTest {
             String existingUpdates = "## Update: 2025-07-17 10:00:00\n\nOld stuff.\n\n---\n\n";
 
             when(summarizationService.getAuthorsWithDetails()).thenReturn(authors);
-            when(summarizationService.summarizeFromAuthors(any(), any(), any(), any(Path.class)))
+            when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
                     .thenReturn(processedVideos);
 
             // Mock file system for reading briefings and updates
@@ -94,10 +94,10 @@ class PovzetkarTest {
             mockedFiles.when(() -> Files.readString(eq(UPDATES_PATH), any())).thenReturn(existingUpdates);
 
             // Act
-            povzetkar.run("S_B", testDate);
+            povzetkar.run(new RunConfiguration("S_B", testDate, false));
 
             // Assert
-            verify(summarizationService).summarizeFromAuthors(authorCaptor.capture(), any(), any(), any(Path.class));
+            verify(summarizationService).summarizeFromAuthors(authorCaptor.capture(), any(), any(Path.class), anyBoolean());
             assertThat(authorCaptor.getValue()).isEqualTo(authors);
 
             mockedFileUtils.verify(() -> FileUtils.saveToFile(any(Path.class), fileContentCaptor.capture()), times(3));
@@ -127,13 +127,13 @@ class PovzetkarTest {
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class);
              MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
-            when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), any())).thenReturn(Collections.emptyList());
+            when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), anyBoolean())).thenReturn(Collections.emptyList());
 
             // No briefings found
             mockedFiles.when(() -> Files.exists(BRIEFINGS_BASE_DIR)).thenReturn(false);
 
             // Act
-            povzetkar.run("S_B", testDate);
+            povzetkar.run(new RunConfiguration("S_B", testDate, false));
 
             // Assert
             // No file should be saved because there's nothing to write
@@ -153,7 +153,7 @@ class PovzetkarTest {
             List<YouTubeVideo> processedVideos = List.of(createMockVideo("vid1", "Test Video", videoPublishedDate, 120));
 
             // Condition 1: Must have processed videos to trigger the briefing workflow.
-            when(summarizationService.summarizeFromAuthors(any(), any(), any(), any(Path.class)))
+            when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
                     .thenReturn(processedVideos);
 
             // Condition 2: The summary file created by the above service must be readable.
@@ -165,7 +165,7 @@ class PovzetkarTest {
             when(videoSummary.createBriefingFromSummaries(anyString(), anyString())).thenReturn(briefingContent);
 
             // Act
-            povzetkar.run("S_B", testDate);
+            povzetkar.run(new RunConfiguration("S_B", testDate, false));
 
             // Assert
             // Verify that the briefing was created using the content from the summary file.

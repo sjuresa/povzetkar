@@ -9,13 +9,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import si.jumis.util.Sleeper;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -24,20 +21,23 @@ import static org.mockito.Mockito.*;
 class VideoSummaryTest {
 
     @Mock
+    private GenAiPool mockGenAiPool;
+
+    @Mock
+    private GenAiClient mockGenAiClient;
+
+    @Mock
     private Models mockModels;
 
     @Mock
     private GenerateContentResponse mockResponse;
-
-    @Mock
-    private Sleeper mockSleeper;
 
     private VideoSummary videoSummary;
 
     @BeforeEach
     void setUp() {
         // Use the package-private constructor to inject mock dependencies for testing.
-        videoSummary = new VideoSummary(mockModels, mockSleeper);
+        videoSummary = new VideoSummary(mockGenAiPool);
     }
 
     @Test
@@ -45,8 +45,9 @@ class VideoSummaryTest {
     void createSummary_success() {
         // Arrange
         when(mockResponse.text()).thenReturn("Expected video summary");
-        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null)))
-                .thenReturn(mockResponse);
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
+        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null))).thenReturn(mockResponse);
 
         // Act
         String result = videoSummary.createSummary("http://video.url", "2025-07-17");
@@ -66,6 +67,8 @@ class VideoSummaryTest {
         ArgumentCaptor<Content> contentCaptor = ArgumentCaptor.forClass(Content.class);
 
         when(mockResponse.text()).thenReturn(expectedBriefing);
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(eq("gemini-2.5-flash"), contentCaptor.capture(), eq(null)))
                 .thenReturn(mockResponse);
 
@@ -80,28 +83,14 @@ class VideoSummaryTest {
     }
 
     @Test
-    @DisplayName("createSummaryFromTranscript should call Gemini API and return response text")
-    void createSummaryFromTranscript_success() {
-        // Arrange
-        when(mockResponse.text()).thenReturn("Expected transcript summary");
-        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null)))
-                .thenReturn(mockResponse);
-
-        // Act
-        String result = videoSummary.createSummaryFromTranscript("This is a transcript.", "http://test.url", "Test Title", "Test Author", "2025-07-17");
-
-        // Assert
-        assertEquals("Expected transcript summary", result);
-        verify(mockModels).generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null));
-    }
-
-    @Test
     @DisplayName("generateContentWithRetry should retry on 429 error and succeed on second attempt")
-    void generateContent_shouldRetryOn429() throws InterruptedException {
+    void generateContent_shouldRetryOn429() {
         // Arrange
         ClientException rateLimitException = new ClientException(429, "429 Rate limit exceeded", "RESOURCE_EXHAUSTED");
         when(mockResponse.text()).thenReturn("Success after retry");
 
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
                 .thenThrow(rateLimitException) // First call fails
                 .thenReturn(mockResponse);   // Second call succeeds
@@ -112,15 +101,16 @@ class VideoSummaryTest {
         // Assert
         assertEquals("Success after retry", result);
         // Verify the API was called twice
-        verify(mockSleeper, times(1)).sleep(60_000L);
         verify(mockModels, times(2)).generateContent(anyString(), any(Content.class), eq(null));
     }
 
     @Test
     @DisplayName("generateContentWithRetry should throw exception after exhausting all retries")
-    void generateContent_shouldThrowAfterMaxRetries() throws InterruptedException {
+    void generateContent_shouldThrowAfterMaxRetries() {
         // Arrange
         ClientException rateLimitException = new ClientException(429, "429 Rate limit exceeded", "RESOURCE_EXHAUSTED");
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
 
         // Make it fail every time
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
@@ -131,15 +121,16 @@ class VideoSummaryTest {
 
         assertEquals(rateLimitException, thrown);
         // Verify it was called 3 times (1 initial try + 2 retries)
-        verify(mockSleeper, times(2)).sleep(60_000L);
         verify(mockModels, times(3)).generateContent(anyString(), any(Content.class), eq(null));
     }
 
     @Test
-    @DisplayName("generateContentWithRetry should not retry on a non-429 error")
+    @DisplayName("generateContentWithRetry should not retry on a non-429, 500 and 503 error")
     void generateContent_shouldNotRetryOnOtherErrors() {
         // Arrange
-        ClientException otherException = new ClientException(500, "500 Internal Server Error", "INTERNAL");
+        ClientException otherException = new ClientException(501, "501 Internal Server Error", "INTERNAL");
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenThrow(otherException);
 
         // Act & Assert
