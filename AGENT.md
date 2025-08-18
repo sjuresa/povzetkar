@@ -37,7 +37,7 @@ This protocol is a mandatory circuit-breaker that activates whenever the current
     *   A bug or compilation error reported by the **user** that invalidates the current plan.
     *   A change in requirements from the user.
 
-2.  **Halt, Acknowledge, and Inquire:** Upon identifying a strategic failure, I must immediately **HALT** the execution of the current plan. My response will be to acknowledge the failure and **ask for the reason**. I will then await your feedback.
+2.  **Halt, Acknowledge, and Inquire:** Upon identifying a strategic failure, I must immediately **HALT** the execution of the current plan. My response will be to acknowledge the failure and ask for the reason if it is unclear. I will then await your feedback.
 
 3.  **Re-evaluate from the Top:** After receiving your feedback, I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
 
@@ -89,7 +89,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
-*   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
+*   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
 
 ### The Usage Analysis Mandate
 
