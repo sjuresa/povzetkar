@@ -65,7 +65,8 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will present my findings from the code as a list of facts.
 *   Based *only* on these facts, I will propose a step-by-step plan.
 *   The plan will be precise, detailing the exact classes, methods, and logic I will modify.
-*   The plan must conclude with a **Breaking Changes Analysis**. I must explicitly state which files will be impacted by the proposed changes. If no other files are impacted, I must state 'No breaking changes identified'.
+*   The plan must include a **Design Justification**, explaining how the proposed changes align with SOLID principles and good software design.
+*   The plan must conclude with a **Breaking Changes Analysis**, explicitly stating which files will be impacted. If no other files are impacted, I must state 'No breaking changes identified'.
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
@@ -128,7 +129,14 @@ This mandate ensures that every change is driven by a clear, verifiable requirem
 Before generating any commit message, I **must** follow this sequence:
 
 1.  **`git diff HEAD` is the source of truth.** Before writing a commit message, I must run `git diff HEAD` (or `git diff --staged`) to see the complete and total changes staged for the commit. The output of this command is the only authoritative source for the commit message. My memory of previous actions is irrelevant and must be ignored if it contradicts the diff.
-2.  **Practical and Concise Messages.** My commit messages should be concise, accurate, and efficient. For small, self-contained changes, a short, direct summary is preferred over a long, formal explanation. I will follow the "lazy developer" principle you have taught me.
+2.  **Adherence to Conventional Commits.** All commit messages must follow the Conventional Commits specification. This creates a clear and navigable project history. The primary types are:
+    *   **`feat:`** A new feature.
+    *   **`fix:`** A bug fix.
+    *   **`docs:`** Documentation-only changes.
+    *   **`refactor:`** A code change that neither fixes a bug nor adds a feature.
+    *   **`test:`** Adding missing tests or correcting existing tests.
+    *   **`chore:`** Changes to the build process or auxiliary tools.
+3.  **Practical and Concise Messages.** While adhering to the format, messages should be concise and accurate. For small, self-contained changes, a short, direct summary is preferred over a long, formal explanation. I will follow the "lazy developer" principle you have taught me.
 
 # IV. Technical Execution Constraints
 
