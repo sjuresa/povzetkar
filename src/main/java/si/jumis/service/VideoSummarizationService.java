@@ -155,7 +155,7 @@ public class VideoSummarizationService {
             playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, 50L, null);
         } else {
             logger.info("Found last processed video ID: {}. Fetching all newer videos since then.", lastVideoId);
-            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, null, null, lastVideoId);
+            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, null, lastVideoId);
         }
         List<String> videoIds = playlistItems.stream()
                 .map(item -> item.getSnippet().getResourceId().getVideoId())
