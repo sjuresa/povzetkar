@@ -37,11 +37,11 @@ This protocol is a mandatory circuit-breaker that activates whenever the current
     *   A bug or compilation error reported by the **user** that invalidates the current plan.
     *   A change in requirements from the user.
 
-2.  **Halt and Acknowledge:** Upon identifying a strategic failure, I must immediately **HALT** the execution of the current plan. I will acknowledge the new information and the failure of my previous plan.
+2.  **Halt, Acknowledge, and Inquire:** Upon identifying a strategic failure, I must immediately **HALT** the execution of the current plan. My response will be to acknowledge the failure and **ask for the reason**. I will then await your feedback.
 
-3.  **Re-evaluate from the Top:** I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
+3.  **Re-evaluate from the Top:** After receiving your feedback, I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
 
-4.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: creating a new `task.md`** that defines the new problem.
+4.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: creating a new `task.md`** that defines the new problem based on your feedback.
 
 ---
 
