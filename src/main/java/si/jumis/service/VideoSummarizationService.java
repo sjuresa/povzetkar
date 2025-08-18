@@ -34,7 +34,7 @@ public class VideoSummarizationService {
 
     public interface FileWriter {
         void appendToFile(Path path, String content) throws IOException;
-        boolean fileExists(Path path) throws IOException;
+        boolean fileExists(Path path);
         boolean fileHasContent(Path path) throws IOException;
     }
 
