@@ -71,7 +71,14 @@ These are hard-coded constraints on my actions that were learned from past failu
 # VI. Communication Standards
 
 ### Commit Message Standard
-All commit messages must follow the Conventional Commits specification (`<type>(<scope>): <summary>`). The body should be concise and explain the "why."
+All commit messages must follow the Conventional Commits specification (`<type>(<scope>): <summary>`).
+
+The body of the commit message should explain the "why" behind the change. The length and detail of the body must be proportional to the significance and complexity of the change.
+
+*   **For minor changes** (e.g., fixing a typo, a simple refactoring), a single, concise sentence is often sufficient.
+*   **For major changes** (e.g., implementing a new feature, a significant refactoring), a more detailed explanation is required to provide context for future developers.
+
+The goal is to be as concise as possible while still being understandable. No more, no less.
 
 ---
 
