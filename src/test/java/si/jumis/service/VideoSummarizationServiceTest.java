@@ -151,6 +151,27 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
+    void summarizeFromAuthors_withPreviousState_respectsForDateBoundary() throws IOException {
+        // Arrange
+        String lastVideoId = "prevId";
+        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
+        when(youtubeDataService.getUploadsPlaylistId(author1.channelId())).thenReturn("UUchannel1");
+
+        // Act
+        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+
+        // Assert
+        // This verification will fail with the current code because the second argument will be `null`.
+        // Mockito will report that this specific method call was wanted but not invoked.
+        verify(youtubeDataService).fetchPlaylistItems(
+                eq("UUchannel1"),
+                eq(today),
+                isNull(),
+                eq(lastVideoId)
+        );
+    }
+
+    @Test
     void summarizeFromAuthors_whenNoNewVideos_doesNothing() throws IOException, InterruptedException {
         // Arrange
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
