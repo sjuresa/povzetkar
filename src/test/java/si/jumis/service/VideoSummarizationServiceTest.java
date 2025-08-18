@@ -21,10 +21,8 @@ import si.jumis.util.Sleeper;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +36,9 @@ import static org.mockito.Mockito.*;
 class VideoSummarizationServiceTest {
 
     private static final ZoneId TEST_ZONE_ID = ZoneId.of("Europe/Ljubljana");
+    private static final Instant TEST_INSTANT = Instant.parse("2024-01-01T10:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(TEST_INSTANT, TEST_ZONE_ID);
+
     @Mock
     private YouTubeDataService youtubeDataService;
     @Mock
@@ -62,7 +63,7 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, TEST_ZONE_ID);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, TEST_ZONE_ID, FIXED_CLOCK);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L);
         today = LocalDate.now(TEST_ZONE_ID);
@@ -249,9 +250,9 @@ class VideoSummarizationServiceTest {
         String message = videoSummarizationService.createFailureMessage(video1, testException);
 
         // Assert
-        String expectedOffset = ZonedDateTime.now(TEST_ZONE_ID).getOffset().toString();
-        assertTrue(message.contains("Timestamp:"));
-        assertTrue(message.contains(expectedOffset));
+        ZonedDateTime expectedTimestamp = ZonedDateTime.ofInstant(TEST_INSTANT, TEST_ZONE_ID);
+        String expectedTimestampString = expectedTimestamp.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        assertTrue(message.contains("Timestamp: " + expectedTimestampString));
         assertTrue(message.contains("Video ID: id1"));
         assertTrue(message.contains("Channel ID: UCchannel1"));
         assertTrue(message.contains("Author: Author One"));
