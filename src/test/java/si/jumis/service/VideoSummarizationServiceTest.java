@@ -35,9 +35,8 @@ import static org.mockito.Mockito.*;
 
 class VideoSummarizationServiceTest {
 
-    private static final ZoneId TEST_ZONE_ID = ZoneId.of("Europe/Ljubljana");
     private static final Instant TEST_INSTANT = Instant.parse("2024-01-01T10:00:00Z");
-    private static final Clock FIXED_CLOCK = Clock.fixed(TEST_INSTANT, TEST_ZONE_ID);
+    private static final Clock FIXED_CLOCK = Clock.fixed(TEST_INSTANT, ZoneId.of("Europe/Ljubljana"));
 
     @Mock
     private YouTubeDataService youtubeDataService;
@@ -63,10 +62,10 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, TEST_ZONE_ID, FIXED_CLOCK);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L);
-        today = LocalDate.now(TEST_ZONE_ID);
+        today = LocalDate.now(FIXED_CLOCK);
         testOutputPath = Paths.get("test_output.txt");
         video1 = new YouTubeVideo(
                 "id1",
@@ -74,7 +73,7 @@ class VideoSummarizationServiceTest {
                 "https://www.youtube.com/watch?v=id1",
                 "Author One",
                 "UCchannel1",
-                today.atStartOfDay(TEST_ZONE_ID).toInstant(),
+                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(5)
         );
     }
@@ -176,7 +175,7 @@ class VideoSummarizationServiceTest {
                 "https://www.youtube.com/watch?v=long_id",
                 "Author One",
                 "UCchannel1",
-                today.atStartOfDay(TEST_ZONE_ID).toInstant(),
+                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(60)
         );
         String fakeTranscript = "This is a fake transcript.";
@@ -223,7 +222,7 @@ class VideoSummarizationServiceTest {
                 "https://www.youtube.com/watch?v=long_id",
                 "Author One",
                 "UCchannel1",
-                today.atStartOfDay(TEST_ZONE_ID).toInstant(),
+                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(60)
         );
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
@@ -250,7 +249,7 @@ class VideoSummarizationServiceTest {
         String message = videoSummarizationService.createFailureMessage(video1, testException);
 
         // Assert
-        ZonedDateTime expectedTimestamp = ZonedDateTime.ofInstant(TEST_INSTANT, TEST_ZONE_ID);
+        ZonedDateTime expectedTimestamp = ZonedDateTime.ofInstant(TEST_INSTANT, FIXED_CLOCK.getZone());
         String expectedTimestampString = expectedTimestamp.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         assertTrue(message.contains("Timestamp: " + expectedTimestampString));
         assertTrue(message.contains("Video ID: id1"));

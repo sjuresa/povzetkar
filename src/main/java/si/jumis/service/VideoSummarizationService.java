@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -65,17 +64,15 @@ public class VideoSummarizationService {
     private final ResourceReader resourceReader;
     private final YouTubeTranscriptService youTubeTranscriptService;
     private final FileWriter fileWriter;
-    private final ZoneId zoneId;
     private final Clock clock;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, ZoneId zoneId, Clock clock) {
+    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
         this.resourceReader = new ResourceReader();
         this.youTubeTranscriptService = youTubeTranscriptService;
         this.fileWriter = fileWriter;
-        this.zoneId = zoneId;
         this.clock = clock;
     }
 
@@ -284,7 +281,7 @@ public class VideoSummarizationService {
 
     String createFailureMessage(YouTubeVideo video, Exception e) {
         return String.format("Timestamp: %s, Video URL: %s, Video ID: %s\nChannel ID: %s, Author: %s\nError: %s\n---\n",
-                ZonedDateTime.now(clock.withZone(zoneId)).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), video.url(), video.id(),
+                ZonedDateTime.now(clock).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), video.url(), video.id(),
                 video.channelId(), video.authorName(),
                 e.toString());
     }
