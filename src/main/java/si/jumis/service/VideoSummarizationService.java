@@ -228,7 +228,7 @@ public class VideoSummarizationService {
                 handleSummaryFailure(video, new Exception("Transcript retrieval failed, content is null."));
                 return false;
             }
-            summary = videoSummary.generateContentWithRetry(content, "video summary").text();
+            summary = videoSummary.generateContentWithRetry(content, "video summary");
         } catch (Exception e) {
             // This case handles failures in the AI summarization step. We log it and update the state
             // to prevent retrying a video that consistently fails to be summarized.
