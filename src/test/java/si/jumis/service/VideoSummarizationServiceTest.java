@@ -76,6 +76,7 @@ class VideoSummarizationServiceTest {
                 today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(5)
         );
+        when(mockFileWriter.fileExists(any())).thenReturn(false);
     }
 
     @AfterEach
@@ -121,7 +122,6 @@ class VideoSummarizationServiceTest {
         // Arrange
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(video1));
-        when(mockFileWriter.fileExists(any())).thenReturn(false);
         mockSuccessfulSummaryGeneration();
 
         // Act
@@ -139,7 +139,6 @@ class VideoSummarizationServiceTest {
         String lastVideoId = "prevId";
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
         mockYouTubeApiResponses(lastVideoId, List.of(video1));
-        when(mockFileWriter.fileExists(any())).thenReturn(false);
         mockSuccessfulSummaryGeneration();
 
         // Act
@@ -183,7 +182,6 @@ class VideoSummarizationServiceTest {
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(longVideo));
         when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(fakeTranscript);
-        when(mockFileWriter.fileExists(any())).thenReturn(false);
         mockSuccessfulSummaryGeneration();
 
         // Act
@@ -202,7 +200,6 @@ class VideoSummarizationServiceTest {
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(video1));
         when(videoSummary.generateContentWithRetry(any(Content.class), anyString())).thenThrow(new RuntimeException("AI error"));
-        when(mockFileWriter.fileExists(any())).thenReturn(false);
 
         // Act
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
@@ -228,7 +225,6 @@ class VideoSummarizationServiceTest {
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(longVideo));
         when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(""); // Simulate transcript failure
-        when(mockFileWriter.fileExists(any())).thenReturn(false);
 
         // Act
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
