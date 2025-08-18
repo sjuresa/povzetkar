@@ -17,9 +17,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -31,6 +32,28 @@ public class VideoSummarizationService {
     public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
     private static final int TRANSCRIPT_THRESHOLD_MINUTES = 50;
 
+    public interface FileWriter {
+        void appendToFile(Path path, String content) throws IOException;
+        boolean fileExists(Path path);
+        boolean fileHasContent(Path path) throws IOException;
+    }
+
+    public static class DefaultFileWriter implements FileWriter {
+        @Override
+        public void appendToFile(Path path, String content) throws IOException {
+            FileUtils.appendToFile(path, content);
+        }
+
+        @Override
+        public boolean fileExists(Path path) {
+            return FileUtils.fileExists(path);
+        }
+
+        @Override
+        public boolean fileHasContent(Path path) throws IOException {
+            return FileUtils.fileHasContent(path);
+        }
+    }
 
     private record VideoToProcess(YouTubeVideo video, Author author) {
     }
@@ -40,13 +63,17 @@ public class VideoSummarizationService {
     private final VideoSummary videoSummary;
     private final ResourceReader resourceReader;
     private final YouTubeTranscriptService youTubeTranscriptService;
+    private final FileWriter fileWriter;
+    private final Clock clock;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService) {
+    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
         this.resourceReader = new ResourceReader();
         this.youTubeTranscriptService = youTubeTranscriptService;
+        this.fileWriter = fileWriter;
+        this.clock = clock;
     }
 
     public List<Author> getAuthorsWithDetails() {
@@ -155,7 +182,7 @@ public class VideoSummarizationService {
         }
 
         try {
-            boolean fileInitiallyHadContent = FileUtils.fileExists(outputFilePath) && FileUtils.fileHasContent(outputFilePath);
+            boolean fileInitiallyHadContent = fileWriter.fileExists(outputFilePath) && fileWriter.fileHasContent(outputFilePath);
             String separator;
 
             for (int i = 0; i < sortedVideos.size(); i++) {
@@ -212,7 +239,7 @@ public class VideoSummarizationService {
         }
 
         try {
-            FileUtils.appendToFile(outputFilePath, separator + summary);
+            fileWriter.appendToFile(outputFilePath, separator + summary);
             updateProcessingState(videoToProcess, processingDate); // Only update state on full success
             return true;
         } catch (IOException e) {
@@ -246,15 +273,15 @@ public class VideoSummarizationService {
         logger.error("Failed to create summary for video: {}.", video.url(), e);
         try {
             String failureMessage = createFailureMessage(video, e);
-            FileUtils.appendToFile(Paths.get("failed_videos.log"), failureMessage);
+            fileWriter.appendToFile(Paths.get("failed_videos.log"), failureMessage);
         } catch (IOException logEx) {
             logger.error("Additionally, failed to write to the failure log for video: {}", video.url(), logEx);
         }
     }
 
-    static String createFailureMessage(YouTubeVideo video, Exception e) {
+    String createFailureMessage(YouTubeVideo video, Exception e) {
         return String.format("Timestamp: %s, Video URL: %s, Video ID: %s\nChannel ID: %s, Author: %s\nError: %s\n---\n",
-                Instant.now().toString(), video.url(), video.id(),
+                ZonedDateTime.now(clock).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), video.url(), video.id(),
                 video.channelId(), video.authorName(),
                 e.toString());
     }
@@ -279,7 +306,7 @@ public class VideoSummarizationService {
         try {
             prepareOutputDirectory(outputFilePath);
 
-            boolean fileInitiallyHadContent = FileUtils.fileExists(outputFilePath) && FileUtils.fileHasContent(outputFilePath);
+            boolean fileInitiallyHadContent = fileWriter.fileExists(outputFilePath) && fileWriter.fileHasContent(outputFilePath);
 
             for (int i = 0; i < videoUrls.size(); i++) {
                 String url = videoUrls.get(i);
@@ -291,7 +318,7 @@ public class VideoSummarizationService {
                 } else {
                     contentToAppend = "\n\n---\n\n" + summary; // Any subsequent item, or first item to a non-empty file.
                 }
-                FileUtils.appendToFile(outputFilePath, contentToAppend);
+                fileWriter.appendToFile(outputFilePath, contentToAppend);
             }
             logger.info("URL summarization complete.");
         } catch (IOException e) {

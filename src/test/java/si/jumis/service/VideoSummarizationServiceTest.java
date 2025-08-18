@@ -4,9 +4,12 @@ import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.PlaylistItemSnippet;
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.genai.types.Content;
+import com.google.genai.types.GenerateContentResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import si.jumis.ai.VideoSummary;
@@ -18,9 +21,8 @@ import si.jumis.util.Sleeper;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,9 @@ import static org.mockito.Mockito.*;
 
 class VideoSummarizationServiceTest {
 
+    private static final Instant TEST_INSTANT = Instant.parse("2024-01-01T10:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(TEST_INSTANT, ZoneId.of("Europe/Ljubljana"));
+
     @Mock
     private YouTubeDataService youtubeDataService;
     @Mock
@@ -43,9 +48,11 @@ class VideoSummarizationServiceTest {
     private YouTubeTranscriptService youTubeTranscriptService;
     @Mock
     private Sleeper sleeper;
-
+    @Mock
+    private VideoSummarizationService.FileWriter mockFileWriter;
+    @Captor
+    private ArgumentCaptor<String> stringCaptor;
     private VideoSummarizationService videoSummarizationService;
-
     private Author author1;
     private YouTubeVideo video1;
     private LocalDate today;
@@ -55,10 +62,10 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L);
-        today = LocalDate.now(ZoneId.of("CET"));
+        today = LocalDate.now(FIXED_CLOCK);
         testOutputPath = Paths.get("test_output.txt");
         video1 = new YouTubeVideo(
                 "id1",
@@ -66,9 +73,10 @@ class VideoSummarizationServiceTest {
                 "https://www.youtube.com/watch?v=id1",
                 "Author One",
                 "UCchannel1",
-                today.atStartOfDay().toInstant(ZoneId.of("CET").getRules().getOffset(today.atStartOfDay())),
+                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(5)
         );
+        when(mockFileWriter.fileExists(any())).thenReturn(false);
     }
 
     @AfterEach
@@ -103,11 +111,18 @@ class VideoSummarizationServiceTest {
         when(youtubeDataService.constructYouTubeVideos(any(), any())).thenReturn(videosToReturn);
     }
 
+    private void mockSuccessfulSummaryGeneration() {
+        GenerateContentResponse mockResponse = mock(GenerateContentResponse.class);
+        when(videoSummary.generateContentWithRetry(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.text()).thenReturn("A fake summary.");
+    }
+
     @Test
     void summarizeFromAuthors_whenNoPreviousState_fetchesAndSummarizes() throws IOException {
         // Arrange
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(video1));
+        mockSuccessfulSummaryGeneration();
 
         // Act
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
@@ -115,6 +130,7 @@ class VideoSummarizationServiceTest {
         // Assert
         verify(videoSummary).generateContentWithRetry(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
+        verify(mockFileWriter).appendToFile(eq(testOutputPath), anyString());
     }
 
     @Test
@@ -123,6 +139,7 @@ class VideoSummarizationServiceTest {
         String lastVideoId = "prevId";
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
         mockYouTubeApiResponses(lastVideoId, List.of(video1));
+        mockSuccessfulSummaryGeneration();
 
         // Act
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
@@ -130,6 +147,7 @@ class VideoSummarizationServiceTest {
         // Assert
         verify(videoSummary).generateContentWithRetry(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
+        verify(mockFileWriter).appendToFile(eq(testOutputPath), anyString());
     }
 
     @Test
@@ -156,7 +174,7 @@ class VideoSummarizationServiceTest {
                 "https://www.youtube.com/watch?v=long_id",
                 "Author One",
                 "UCchannel1",
-                today.atStartOfDay().toInstant(ZoneId.of("CET").getRules().getOffset(today.atStartOfDay())),
+                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(60)
         );
         String fakeTranscript = "This is a fake transcript.";
@@ -164,6 +182,7 @@ class VideoSummarizationServiceTest {
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
         mockYouTubeApiResponses(null, List.of(longVideo));
         when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(fakeTranscript);
+        mockSuccessfulSummaryGeneration();
 
         // Act
         videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
@@ -172,6 +191,7 @@ class VideoSummarizationServiceTest {
         verify(youTubeTranscriptService).getTranscript("long_id");
         verify(videoSummary).generateContentWithRetry(any(), any());
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), longVideo, today);
+        verify(mockFileWriter).appendToFile(eq(testOutputPath), anyString());
     }
 
     @Test
@@ -186,6 +206,8 @@ class VideoSummarizationServiceTest {
 
         // Assert
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
+        verify(mockFileWriter).appendToFile(eq(Paths.get("failed_videos.log")), stringCaptor.capture());
+        assertTrue(stringCaptor.getValue().contains("AI error"));
     }
 
     @Test
@@ -197,7 +219,7 @@ class VideoSummarizationServiceTest {
                 "https://www.youtube.com/watch?v=long_id",
                 "Author One",
                 "UCchannel1",
-                today.atStartOfDay().toInstant(ZoneId.of("CET").getRules().getOffset(today.atStartOfDay())),
+                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(60)
         );
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
@@ -209,6 +231,8 @@ class VideoSummarizationServiceTest {
 
         // Assert
         verify(stateService, never()).updateLastProcessedVideoForDate(anyString(), any(), any());
+        verify(mockFileWriter).appendToFile(eq(Paths.get("failed_videos.log")), stringCaptor.capture());
+        assertTrue(stringCaptor.getValue().contains("Transcript retrieval failed"));
     }
 
 
@@ -218,10 +242,12 @@ class VideoSummarizationServiceTest {
         Exception testException = new Exception("Test error message");
 
         // Act
-        String message = VideoSummarizationService.createFailureMessage(video1, testException);
+        String message = videoSummarizationService.createFailureMessage(video1, testException);
 
         // Assert
-        assertTrue(message.contains("Timestamp:"));
+        ZonedDateTime expectedTimestamp = ZonedDateTime.ofInstant(TEST_INSTANT, FIXED_CLOCK.getZone());
+        String expectedTimestampString = expectedTimestamp.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        assertTrue(message.contains("Timestamp: " + expectedTimestampString));
         assertTrue(message.contains("Video ID: id1"));
         assertTrue(message.contains("Channel ID: UCchannel1"));
         assertTrue(message.contains("Author: Author One"));

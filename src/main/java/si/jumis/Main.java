@@ -16,6 +16,7 @@ import si.jumis.service.YouTubeTranscriptService;
 import si.jumis.util.ResourceReader;
 import si.jumis.util.Sleeper;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -63,7 +64,10 @@ public class Main {
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
                 new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
                         .setApplicationName(YOUTUBE_APP_NAME).build(), zoneId);
-        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, new YouTubeTranscriptService(new TimeTextFormatter()));
+        YouTubeTranscriptService transcriptService = new YouTubeTranscriptService(new TimeTextFormatter());
+        VideoSummarizationService.FileWriter fileWriter = new VideoSummarizationService.DefaultFileWriter();
+        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService,
+                videoSummary, transcriptService, fileWriter, Clock.system(zoneId));
         ResourceReader resourceReader = new ResourceReader();
 
         return new Povzetkar(summarizationService, videoSummary, resourceReader);
