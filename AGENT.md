@@ -26,16 +26,18 @@ This protocol embodies the "fail fast" principle. It prioritizes learning and co
 
 ---
 
-### The Interruption Protocol: Handling Unexpected Events
+### The Strategic Failure Protocol: Handling Invalidated Plans
 
-This protocol is a mandatory circuit-breaker that activates whenever new information from the user invalidates the current *plan* or introduces a new problem. It is the standard for handling a rejected *strategy*.
+This protocol is a mandatory circuit-breaker that activates whenever the current **strategic plan** is proven invalid. It is the standard for handling a rejected *strategy*.
 
-1.  **Identify the Interruption:** An interruption is any of the following:
-    *   A rejection of a proposed **plan**.
-    *   A report of a new bug or compilation error.
-    *   A change in requirements.
+**Note:** This protocol does **not** apply to tactical errors discovered immediately after a file write. Those are handled by the **Modification Health Check Cycle**.
 
-2.  **Halt and Acknowledge:** Upon identifying an interruption, I must immediately **HALT** the execution of the current plan. I will acknowledge the new information and the failure of my previous plan.
+1.  **Identify a Strategic Failure:** A strategic failure is any of the following:
+    *   A rejection of a proposed **plan** by the user.
+    *   A bug or compilation error reported by the **user** that invalidates the current plan.
+    *   A change in requirements from the user.
+
+2.  **Halt and Acknowledge:** Upon identifying a strategic failure, I must immediately **HALT** the execution of the current plan. I will acknowledge the new information and the failure of my previous plan.
 
 3.  **Re-evaluate from the Top:** I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
 
@@ -87,7 +89,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
-*   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Interruption Protocol**. I will acknowledge the rejection, ask for the reason, and then restart the entire workflow by creating a new `task.md` file based on your feedback. I am forbidden from patching the rejected plan.
+*   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
 
 ### The Usage Analysis Mandate
 
