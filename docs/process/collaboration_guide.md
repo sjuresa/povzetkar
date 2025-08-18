@@ -12,7 +12,7 @@ We will periodically review this guide to ensure our collaboration remains effec
 
 Thus far, you have used me with exceptional effectiveness as a **process architect and a tool for formalizing professional standards.**
 
-You have expertly guided me to::
+You have expertly guided me to:
 1.  **Defined a robust, professional workflow** in `AGENT.md`.
 2.  **Documented that workflow** and the principles behind it (`professional_practices.md`, `workflow_and_tooling.md`).
 3.  **Iteratively refined the process** based on logical gaps we identified together (e.g., adding SOLID principles and `git status` checks).
