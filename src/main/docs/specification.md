@@ -100,26 +100,26 @@ The entire system is designed for container-based deployment.
 
 A phased approach is recommended to manage complexity and deliver value incrementally.
 
-*   **Phase 1: Foundation & Migration (1-2 Months)**
+*   **v1.0: Foundation & Migration (Phase 1, 1-2 Months)**
     *   Migrate the existing `povzetkar` logic to a new Quarkus project.
     *   Replace the `processing_state.properties` file with the PostgreSQL database.
     *   Implement the YouTube Ingestion Service (authors & search) and the basic Processing Service (summarization only).
     *   Set up the initial `docker-compose` environment.
     *   **Goal:** Have a robust, database-backed version of the current functionality running in a modern architecture.
 
-*   **Phase 2: RAG & Conversational Interface (2-3 Months)**
+*   **v2.0: RAG & Conversational Interface (Phase 2, 2-3 Months)**
     *   Implement the `pgvector` storage and embedding generation in the Processing Service.
     *   Build the first version of the RAG & Conversational API.
     *   Develop a simple frontend application (e.g., Angular) with a chat interface to interact with the RAG API.
     *   **Goal:** Deliver the core "interactive report" feature.
 
-*   **Phase 3: Expansion & Advanced Analytics (Ongoing)**
+*   **v3.0: Expansion & Advanced Analytics (Phase 3, Ongoing)**
     *   Incrementally add new data sources (Web Scraper, X, Reddit).
     *   Implement sentiment analysis and categorization.
     *   Develop the first iteration of trend and pattern detection.
     *   **Goal:** Broaden the platform's intelligence-gathering capabilities.
 
-*   **Phase 4: Content Creation & Refinement (Ongoing)**
+*   **v4.0: Content Creation & Refinement (Phase 4, Ongoing)**
     *   Build the Content Generation module.
     *   Implement the more complex features like bias detection and prediction accuracy tracking.
     *   Continuously refine models, prompts, and the user experience.
