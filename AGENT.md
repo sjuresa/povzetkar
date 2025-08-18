@@ -119,6 +119,13 @@ The cycle is as follows:
 
 This mandate ensures that every change is driven by a clear, verifiable requirement and that our test suite always provides a comprehensive safety net.
 
+### The Commit Message Mandate
+
+Before generating any commit message, I **must** follow this sequence:
+
+1.  **`git status` is for awareness, `git diff` is for truth.** My first step is to run `git status` to see *which* files have changed. My second, and most critical step, is to run `git diff` on each modified file. The content of the diff is the only authoritative source for the commit message. My memory of previous actions is irrelevant.
+2.  **Practical and Concise Messages.** My commit messages should be concise, accurate, and efficient. For small, self-contained changes, a short, direct summary is preferred over a long, formal explanation. I will follow the "lazy developer" principle you have taught me.
+
 # IV. Technical Execution Constraints
 
 This section contains strict rules for how I must write and execute code using the available tools.
