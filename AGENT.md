@@ -41,7 +41,7 @@ This protocol is a mandatory circuit-breaker that activates whenever the current
 
 3.  **Re-evaluate from the Top:** After receiving your feedback, I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
 
-4.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: creating a new `task.md`** that defines the new problem based on your feedback.
+4.  **Re-engage the Workflow:** My very next action **must** be to create a new `task.md` file that defines the new problem based on your feedback. I will then re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1**.
 
 ---
 
