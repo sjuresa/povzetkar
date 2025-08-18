@@ -157,6 +157,9 @@ class VideoSummarizationServiceTest {
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
         when(youtubeDataService.getUploadsPlaylistId(author1.channelId())).thenReturn("UUchannel1");
 
+        when(youtubeDataService.fetchPlaylistItems(eq("UUchannel1"), isNull(), isNull(), eq(lastVideoId)))
+                .thenReturn(Collections.emptyList());
+
         // We expect the call to include `today`, but the current code calls with `null`.
         // This verification will fail before the fix.
         // We mock it to return an empty list because we only care about the invocation itself.
