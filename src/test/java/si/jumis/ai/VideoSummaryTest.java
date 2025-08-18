@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,6 +58,31 @@ class VideoSummaryTest {
         assertEquals("Expected video summary", result);
         verify(mockModels).generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null));
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'--- A summary. ---', 'A summary.'",
+            "'   --- Another summary.---   ', 'Another summary.'",
+            "'A clean summary.', 'A clean summary.'",
+            "'---', ''",
+            "'   ', ''",
+            "'' , ''"
+    })
+    @DisplayName("Should clean AI response by trimming whitespace and separators")
+    void cleanAiResponse_shouldTrimWhitespaceAndSeparators(String rawResponse, String expectedCleanedResponse) {
+        // Arrange
+        when(mockResponse.text()).thenReturn(rawResponse);
+        when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
+        when(mockGenAiClient.getModels()).thenReturn(mockModels);
+        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null))).thenReturn(mockResponse);
+
+        // Act
+        String result = videoSummary.createSummary("http://video.url", "2025-07-17");
+
+        // Assert
+        assertEquals(expectedCleanedResponse, result);
+    }
+
 
     @Test
     @DisplayName("createBriefingFromSummaries should call Gemini API and return response text")

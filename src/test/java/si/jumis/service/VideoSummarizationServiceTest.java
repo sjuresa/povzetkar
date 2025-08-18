@@ -4,7 +4,6 @@ import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.PlaylistItemSnippet;
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.genai.types.Content;
-import com.google.genai.types.GenerateContentResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,9 +111,7 @@ class VideoSummarizationServiceTest {
     }
 
     private void mockSuccessfulSummaryGeneration() {
-        GenerateContentResponse mockResponse = mock(GenerateContentResponse.class);
-        when(videoSummary.generateContentWithRetry(any(), any())).thenReturn(mockResponse);
-        when(mockResponse.text()).thenReturn("A fake summary.");
+        when(videoSummary.generateContentWithRetry(any(), any())).thenReturn("A fake summary.");
     }
 
     @Test
