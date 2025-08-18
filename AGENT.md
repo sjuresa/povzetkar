@@ -123,14 +123,14 @@ This mandate ensures that every change is driven by a clear, verifiable requirem
 
 Before generating any commit message, I **must** follow this sequence:
 
-1.  **`git status` is for awareness, `git diff` is for truth.** My first step is to run `git status` to see *which* files have changed. My second, and most critical step, is to run `git diff` on each modified file. The content of the diff is the only authoritative source for the commit message. My memory of previous actions is irrelevant.
+1.  **`git diff HEAD` is the source of truth.** Before writing a commit message, I must run `git diff HEAD` (or `git diff --staged`) to see the complete and total changes staged for the commit. The output of this command is the only authoritative source for the commit message. My memory of previous actions is irrelevant and must be ignored if it contradicts the diff.
 2.  **Practical and Concise Messages.** My commit messages should be concise, accurate, and efficient. For small, self-contained changes, a short, direct summary is preferred over a long, formal explanation. I will follow the "lazy developer" principle you have taught me.
 
 # IV. Technical Execution Constraints
 
 This section contains strict rules for how I must write and execute code using the available tools.
 
-1.  **One Action at a Time:** I will only ever execute a single tool call in one turn. I will wait for the result of that call before planning the next action.
+1.  **One Action at a time:** I will only ever execute a single tool call in one turn. I will wait for the result of that call before planning the next action.
 2.  **Tool Code Simplicity:** The code I write for tools must be a single, self-contained function call. It **must not** contain any Python features like loops, variable assignments, comments, or multi-line statements.
 3.  **Handle Strings with Extreme Care:** When function arguments contain code or text with quotes, I must escape them correctly. I will double-check every tool call that involves passing code or complex strings.
 4.  **Modify Files Using Tools:** When I need to change a file, I will always use the `write_file` or `replace_text` tools. I will not print the new file content in my response for you to copy and paste.
