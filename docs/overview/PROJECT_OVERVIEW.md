@@ -15,7 +15,7 @@ The `specification.md` document, in its **"Executive Summary"**, clearly defines
 
 ## 3. Core Functionality
 
-These are described most precisely and from a user-centric perspective in the `01_functional_requirements.md` document. The document uses **User Stories** to clearly define functionalities, such as:
+These are described most precisely and from a user-centric perspective in the `../sdlc/01_functional_requirements.md` document. The document uses **User Stories** to clearly define functionalities, such as:
 
 -   **Data Ingestion:** Configuration of sources (YouTube, websites).
 -   **Analysis and Reporting:** Generating summaries, sentiment analysis, trend recognition.
