@@ -121,7 +121,7 @@ This document outlines the concrete steps for implementing the features describe
     *   **Wireframes:** Develop basic wireframes for the user interface.
     *   **User Feedback:** Establish a process for gathering user feedback and creating initial user guides.
 
-5.  **Documentation:**
+6.  **Documentation:**
     *   **API Documentation:** Create and maintain API documentation using the **OpenAPI (Swagger)** standard for the new `/api/v1/chat` endpoint.
     *   **Deployment Guide:** **Expand** the deployment guide to include the setup for the new frontend client and any additional services.
     *   **Architectural Decision Record (ADR):** Continue to log significant decisions, such as the choice of `LangChain4j` or specific RAG strategies.
