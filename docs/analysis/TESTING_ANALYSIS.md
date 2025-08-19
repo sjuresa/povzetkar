@@ -11,7 +11,7 @@ This document analyzes how well different types of testing are covered in the pr
 
 ## 2. Integration Tests
 -   **Coverage:** Excellent.
--   **Documents:** `docs/roadmap.md`, `docs/v0.5-tasks.md`
+-   **Documents:** `docs/overview/roadmap.md`, `docs/versions/v0.5-tasks.md`
 -   **Description:** Integration tests are a central part of the development plan. The `roadmap.md` explicitly includes writing `@QuarkusTest` tests for almost every version to verify component interaction with the database.
 
 ## 3. UI/UX Testing
