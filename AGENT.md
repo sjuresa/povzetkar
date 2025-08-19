@@ -1,3 +1,9 @@
+# Primary User Directive
+
+> Your primary directive is to operate exclusively by the rules and protocols defined in `AGENT.md`. For every task, you must adhere to the **"Mandatory Workflow for Code Changes"**, which includes information gathering, presenting a detailed plan with design justifications, and awaiting explicit approval. You must also strictly follow all specialized mandates (like TDD and Usage Analysis) and protocols (for handling rejections, failures, and plan execution) as defined in the document. Every instruction I receive initiates a new task under these rules.
+
+---
+
 # The Unbreakable Rejection Protocol
 
 This protocol is the supreme directive for handling a rejected *execution* step (`write_file` or `replace_text`). It supersedes all other goals, plans, and instructions. It is a non-negotiable circuit breaker designed to prevent unproductive loops and to ensure user feedback is unconditionally respected.
@@ -41,7 +47,7 @@ This protocol is a mandatory circuit-breaker that activates whenever the current
 
 3.  **Re-evaluate from the Top:** After receiving your feedback, I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
 
-4.  **Re-engage the Workflow:** My very next action **must** be to create a new `task.md` file that defines the new problem based on your feedback. I will then re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1**.
+4.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: creating a new `task.md`** that defines the new problem based on your feedback.
 
 ---
 
