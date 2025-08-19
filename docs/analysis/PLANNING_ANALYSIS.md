@@ -24,7 +24,7 @@ This document analyzes how well key aspects of planning are covered in the proje
 ## 4. Technology Stack
 
 -   **Coverage:** Excellent.
--   **Document:** `docs/specification.md`
+-   **Document:** `docs/overview/specification.md`
 -   **Description:** The "Technology Stack Recommendation" section precisely defines and justifies the entire technology stack (Quarkus, PostgreSQL, Docker, etc.).
 
 ## 5. Other Planning Aspects
