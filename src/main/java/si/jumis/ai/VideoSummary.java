@@ -28,8 +28,7 @@ public class VideoSummary {
                         Part.fromText(prompt),
                         Part.fromUri(videoUrl, "video/mp4"));
 
-        GenerateContentResponse response = generateContentWithRetry(content, "video summary from URL");
-        return response.text();
+        return generateContentWithRetry(content, "video summary from URL");
     }
 
     /**
@@ -44,8 +43,7 @@ public class VideoSummary {
 
         Content content = Content.fromParts(Part.fromText(finalPrompt));
 
-        GenerateContentResponse response = generateContentWithRetry(content, "daily briefing");
-        return response.text();
+        return generateContentWithRetry(content, "daily briefing");
     }
 
     /**
@@ -53,10 +51,10 @@ public class VideoSummary {
      *
      * @param content   The content to send to the model.
      * @param callDescription A short description of the call for logging purposes.
-     * @return The response from the API.
+     * @return The cleaned, string response from the API.
      * @throws ClientException if a non-retriable error occurs or retries are exhausted.
      */
-    public GenerateContentResponse generateContentWithRetry(Content content, String callDescription) {
+    public String generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
 
         for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
@@ -65,7 +63,7 @@ public class VideoSummary {
                 GenerateContentResponse response = client.getModels().generateContent(FLASH_MODEL_NAME, content, null);
                 client.usedNow();
                 logApiCallDuration(startTime, callDescription);
-                return response;
+                return cleanAiResponse(response.text());
             } catch (ClientException e) {
                 handleApiError(e, attempt);
             }
@@ -73,6 +71,28 @@ public class VideoSummary {
         // This line should be unreachable due to the exception handling above.
         throw new IllegalStateException("Failed to generate content after " + MAX_API_ATTEMPTS + " retries, but no exception was thrown.");
     }
+
+    /**
+     * Cleans the raw text response from the AI model.
+     * It trims whitespace and removes any leading or trailing "---" separators.
+     *
+     * @param text The raw text from the AI.
+     * @return A cleaned string.
+     */
+    private String cleanAiResponse(String text) {
+        if (text == null) {
+            return "";
+        }
+        String cleanedText = text.trim();
+        while (cleanedText.startsWith("---")) {
+            cleanedText = cleanedText.substring(3).trim();
+        }
+        while (cleanedText.endsWith("---")) {
+            cleanedText = cleanedText.substring(0, cleanedText.length() - 3).trim();
+        }
+        return cleanedText;
+    }
+
 
     /**
      * Handles exceptions from the Gemini API call, deciding whether to retry or rethrow.
