@@ -22,7 +22,7 @@ This document outlines the concrete steps for implementing the features describe
 4.  **Initial Test:**
     *   Create a basic `@QuarkusTest` that verifies the application can start and connect to a Testcontainers-managed database.
 5.  **Foundational Process Documentation:**
-    *   Create a `06_development_process.md` document outlining onboarding, branching strategy, and contribution guidelines.
+    *   [x] Create a `06_development_process.md` document outlining onboarding, branching strategy, and contribution guidelines.
 
 ---
 
@@ -78,11 +78,14 @@ This document outlines the concrete steps for implementing the features describe
     *   Write unit and integration tests for the `ReportingService` to ensure it correctly queries the database and generates the expected Markdown content.
 5.  **Initial Foundational Documentation:**
     *   **Architectural Decision Record (ADR):** Create the first ADR to document the decision to migrate to a Quarkus, PostgreSQL, and Docker-based architecture.
-    *   **Deployment Guide:** Create an initial `DEPLOYMENT.md` that explains how to set up and run the `v1.0` application using `docker-compose`.
+    *   **Deployment Guide:** Expand the `RUNBOOK.md` with instructions for configuring and running the `v1.0` application in a production-like environment.
 
 ---
+## v1.5: Production Hardening
+-   **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
+-   **Security Hardening:** Conduct a basic security review and implement initial security measures.
 
-## v2.0: RAG & Conversational Interface (Phase 2)
+## v2.0: RAG & Conversational Interface (Phase 2) & User Experience
 
 **Goal:** Deliver the core "interactive report" feature by implementing the RAG pipeline and a user-facing API.
 
@@ -113,6 +116,11 @@ This document outlines the concrete steps for implementing the features describe
     *   The frontend will have a simple chat input field and a display area for the conversation.
     *   It will make asynchronous calls to the `/api/v1/chat` endpoint and display the returned answers.
 
+5.  **User Experience Planning:**
+    *   **ADR for Frontend:** Create an Architectural Decision Record for the choice of frontend framework.
+    *   **Wireframes:** Develop basic wireframes for the user interface.
+    *   **User Feedback:** Establish a process for gathering user feedback and creating initial user guides.
+
 5.  **Documentation:**
     *   **API Documentation:** Create and maintain API documentation using the **OpenAPI (Swagger)** standard for the new `/api/v1/chat` endpoint.
     *   **Deployment Guide:** **Expand** the deployment guide to include the setup for the new frontend client and any additional services.
@@ -140,6 +148,9 @@ This document outlines the concrete steps for implementing the features describe
     *   Implement the `AuthorAssessment` JPA entity.
     *   Create another scheduled task or integrate it into the trend detection task.
     *   This logic will analyze the sentiment and topics of a single author's content over time to generate a `bias_score` and a textual `assessment_details`, storing the results in the `author_assessments` table.
+
+4.  **Production Quality Testing:**
+    *   **Performance Testing:** Conduct initial load tests on the RAG API to identify performance bottlenecks.
 
 ---
 
