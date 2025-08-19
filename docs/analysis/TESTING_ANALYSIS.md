@@ -16,7 +16,7 @@ This document analyzes how well different types of testing are covered in the pr
 
 ## 3. UI/UX Testing
 -   **Coverage:** Not Covered.
--   **Document:** `docs/PLANNING_ANALYSIS.md`
+-   **Document:** `docs/analysis/PLANNING_ANALYSIS.md`
 -   **Description:** Since the user interface is not yet in the planning phase, testing in this area has logically not been defined, which is acceptable for the current project stage.
 
 ## 4. Performance Tests

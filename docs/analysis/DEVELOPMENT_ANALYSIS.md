@@ -1,7 +1,7 @@
 # Development Process Coverage Analysis
 
 This document analyzes how well the key aspects of the development process itself are covered in the project documentation.
- 
+This document analyzes how well the key aspects of the development process itself are covered in the project documentation.
 ---
 
 ## 1. Environment Setup
@@ -30,12 +30,12 @@ This document analyzes how well the key aspects of the development process itsel
 
 ## 6. LLM Integration
 -   **Coverage:** Good.
--   **Documents:** `docs/specification.md`, `docs/roadmap.md`
+-   **Documents:** `docs/overview/specification.md`, `docs/overview/roadmap.md`
 -   **Description:** The strategic decision to use `LangChain4j` is clearly defined, and the `roadmap.md` plans for a concrete implementation of the RAG interface in version `v2.0`.
 
 ## 7. Functionality Implementation
 -   **Coverage:** Excellent.
--   **Document:** `docs/roadmap.md`
+-   **Document:** `docs/overview/roadmap.md`
 -   **Description:** The development plan is divided into logical, manageable, and iterative phases, allowing for gradual value addition.
 
 ## 8. Future Opportunities
