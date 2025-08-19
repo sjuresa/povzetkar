@@ -6,32 +6,32 @@ This document analyzes how well key aspects of planning are covered in the proje
 
 ## 1. User Flows
 
--   **Pokritost:** Odlična.
--   **Dokument:** `docs/sdlc/01_functional_requirements.md`
+-   **Coverage:** Excellent.
+-   **Document:** `docs/sdlc/01_functional_requirements.md`
 -   **Description:** This document uses **User Stories** to precisely define what users (in the roles of "User/Consumer" and "Administrator") do in the application. This is a standard in agile development for describing functionality from a user's perspective.
 
 ## 2. Wireframes and Prototypes
 
--   **Pokritost:** Ni pokrito.
+-   **Coverage:** Not Covered.
 -   **Description:** The current documentation does **not** contain explicit visual mockups like wireframes or prototypes. This is the only area that is not currently detailed, which is expected in the early stages when the focus is on architecture and backend systems.
 
 ## 3. Technical Architecture
 
--   **Pokritost:** Odlična.
--   **Dokument:** `docs/specification.md`
+-   **Coverage:** Excellent.
+-   **Document:** `docs/specification.md`
 -   **Description:** This document contains a very clear architectural diagram (`High-Level Architectural Diagram`) that shows how all key parts of the system are interconnected: user interface, API, data pipeline, database, and the AI Core.
 
 ## 4. Technology Stack
 
--   **Pokritost:** Odlična.
--   **Dokument:** `docs/specification.md`
+-   **Coverage:** Excellent.
+-   **Document:** `docs/specification.md`
 -   **Description:** The "Technology Stack Recommendation" section precisely defines and justifies the entire technology stack (Quarkus, PostgreSQL, Docker, etc.).
 
 ## 5. Other Planning Aspects
 
--   **Pokritost:** Odlična.
--   **Dokumenti:** `docs/roadmap.md` in `docs/v0.5-tasks.md`
--   **Opis:**
+-   **Coverage:** Excellent.
+-   **Documents:** `docs/roadmap.md` and `docs/v0.5-tasks.md`
+-   **Description:**
     -   **Strategic Planning:** `roadmap.md` divides the entire project into logical, sequential phases.
     -   **Tactical Planning:** `v0.5-tasks.md` breaks down a phase into concrete tasks, including time estimates.
 

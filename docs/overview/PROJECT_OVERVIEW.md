@@ -1,27 +1,27 @@
-# Pregled Projekta: Vizija, Cilji in Funkcionalnosti
+# Project Overview: Vision, Goals, and Functionality
 
-Ta dokument povzema ključne aspekte projekta Povzetkar in služi kot hiter uvod v njegovo vizijo, probleme, ki jih rešuje, in glavne funkcionalnosti.
+This document summarizes the key aspects of the Povzetkar project and serves as a quick introduction to its vision, the problems it solves, and its main functionalities.
 
 ---
 
-## 1. Problem, ki ga rešujemo
+## 1. The Problem We Are Solving
 
-Dokument `specification.md` v **"Executive Summary"** jasno opredeli problem informacijske preobremenjenosti. Projekt se razvija iz orodja za povzemanje YouTube videov v napredno platformo za zbiranje in analizo obveščevalnih podatkov iz več virov.
+The `specification.md` document, in its **"Executive Summary"**, clearly defines the problem of information overload. The project is evolving from a tool for summarizing YouTube videos into an advanced platform for collecting and analyzing intelligence data from multiple sources.
 
-## 2. Cilji projekta
+## 2. Project Goals
 
--   **Strateški cilji** so opisani v `specification.md`. Glavni cilj je ustvariti avtomatizirano obveščevalno platformo z naprednimi AI zmožnostmi (analiza trendov, RAG vmesnik).
--   **Taktični cilji** so razdelani v `roadmap.md`. Ta dokument razdeli pot do končnega cilja v logične, zaporedne verzije (`v0.5`, `v0.6`, `v1.0` ...), kar kaže na jasno in premišljeno strategijo razvoja. Vsaka verzija ima natančno opredeljen cilj, npr. `v0.5` je "arhitekturni skelet", `v1.0` pa doseganje funkcionalne paritete s staro arhitekturo.
+-   **Strategic Goals** are described in `specification.md`. The main goal is to create an automated intelligence platform with advanced AI capabilities (trend analysis, RAG interface).
+-   **Tactical Goals** are detailed in `roadmap.md`. This document breaks down the path to the final goal into logical, sequential versions (`v0.5`, `v0.6`, `v1.0`...), demonstrating a clear and well-thought-out development strategy. Each version has a precisely defined goal, e.g., `v0.5` is the "architectural skeleton," and `v1.0` is achieving feature parity with the old architecture.
 
-## 3. Osnovne funkcionalnosti
+## 3. Core Functionality
 
-Te so najbolj natančno in uporabniško usmerjeno opisane v dokumentu `01_functional_requirements.md`. Dokument uporablja **uporabniške zgodbe** (User Stories) za jasno definiranje funkcionalnosti, kot so:
+These are described most precisely and from a user-centric perspective in the `01_functional_requirements.md` document. The document uses **User Stories** to clearly define functionalities, such as:
 
--   **Zajem podatkov:** Konfiguracija virov (YouTube, spletne strani).
--   **Analiza in poročanje:** Generiranje povzetkov, analiza sentimenta, prepoznavanje trendov.
--   **Pogovorni vmesnik (RAG):** Postavljanje vprašanj v naravnem jeziku in prejemanje odgovorov, podprtih z viri.
--   **Ustvarjanje vsebine:** Generiranje osnutkov za bloge in socialna omrežja.
+-   **Data Ingestion:** Configuration of sources (YouTube, websites).
+-   **Analysis and Reporting:** Generating summaries, sentiment analysis, trend recognition.
+-   **Conversational Interface (RAG):** Asking questions in natural language and receiving answers supported by sources.
+-   **Content Creation:** Generating drafts for blogs and social media.
 
-## Zaključek
+## Conclusion
 
-Projektna dokumentacija je zgledno pripravljena in ne pušča dvomov o tem, **kaj** gradite, **zakaj** to gradite in **kako** boste to dosegli.
+The project documentation is exemplarily prepared and leaves no doubt about **what** you are building, **why** you are building it, and **how** you will achieve it.
