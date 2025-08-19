@@ -6,7 +6,7 @@ This document analyzes how well the project is prepared for a production launch,
 
 ## 1. Documentation
 -   **Coverage:** Very Good (for technical documentation).
--   **Documents:** `specification.md`, `roadmap.md`, `RUNBOOK.md`, the entire `docs/sdlc` folder.
+-   **Documents:** `docs/overview/specification.md`, `docs/overview/roadmap.md`, `docs/RUNBOOK.md`, the entire `docs/sdlc` folder.
 -   **Description:** The project has exceptionally thorough technical and process documentation, which is crucial for the internal team and future developers.
 
 ## 2. User Guide Preparation
