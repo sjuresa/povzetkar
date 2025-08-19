@@ -26,7 +26,8 @@ erDiagram
     AUTHORS ||--o{ AUTHOR_ASSESSMENTS : "is assessed for"
     AUTHORS {
         bigint id PK
-        varchar channel_id UK
+        varchar source_author_id
+        int source_type_id FK
         varchar name
         text description
         integer subscriber_count
@@ -123,7 +124,8 @@ A type to represent the processing state of a content item.
 ### `authors`
 Stores information about content creators.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `channel_id` (varchar, unique): The unique identifier from the source platform (e.g., YouTube channel ID). `NOT NULL`
+- `source_author_id` (varchar): The unique identifier for the author on the source platform (e.g., YouTube channel ID, Reddit username). `NOT NULL`
+- `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
 - `name` (varchar): The author's name. `NOT NULL`
 - `description` (text): The author's channel/profile description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
