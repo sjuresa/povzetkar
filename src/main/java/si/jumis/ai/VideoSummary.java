@@ -1,7 +1,6 @@
 package si.jumis.ai;
 
 import com.google.genai.errors.ApiException;
-import com.google.genai.errors.ClientException;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
@@ -53,7 +52,7 @@ public class VideoSummary {
      * @param content   The content to send to the model.
      * @param callDescription A short description of the call for logging purposes.
      * @return The cleaned, string response from the API.
-     * @throws ClientException if a non-retriable error occurs or retries are exhausted.
+     * @throws IllegalStateException if a non-retriable error occurs or retries are exhausted.
      */
     public String generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
@@ -108,7 +107,7 @@ public class VideoSummary {
     }
 
     /**
-     * Checks if a ClientException is due to a retriable error like rate limiting (429), server overload (503)
+     * Checks if a ApiException is due to a retriable error like rate limiting (429), server overload (503)
      *  or an internal error (500).
      */
     private boolean isRetriable(ApiException e) {
