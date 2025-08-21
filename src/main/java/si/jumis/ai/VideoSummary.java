@@ -1,5 +1,6 @@
 package si.jumis.ai;
 
+import com.google.genai.errors.ApiException;
 import com.google.genai.errors.ClientException;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentResponse;
@@ -64,7 +65,7 @@ public class VideoSummary {
                 client.usedNow();
                 logApiCallDuration(startTime, callDescription);
                 return cleanAiResponse(response.text());
-            } catch (ClientException e) {
+            } catch (ApiException e) {
                 handleApiError(e, attempt);
             }
         }
@@ -97,7 +98,7 @@ public class VideoSummary {
     /**
      * Handles exceptions from the Gemini API call, deciding whether to retry or rethrow.
      */
-    private void handleApiError(ClientException e, int attempt) {
+    private void handleApiError(ApiException e, int attempt) {
         if (isRetriable(e) && attempt < MAX_API_ATTEMPTS) {
             logger.warn("API call failed with retriable error on attempt {}: {}.", attempt, e.getMessage());
         } else {
@@ -110,7 +111,7 @@ public class VideoSummary {
      * Checks if a ClientException is due to a retriable error like rate limiting (429), server overload (503)
      *  or an internal error (500).
      */
-    private boolean isRetriable(ClientException e) {
+    private boolean isRetriable(ApiException e) {
         String message = e.getMessage();
         return message != null && message.matches("^(429|503|500).*");
     }
