@@ -201,7 +201,7 @@ public class VideoSummarizationService {
                 }
                 if (!dryRun && processSingleVideo(videoToProcess, outputFilePath, forDate, separator)) {
                         processedVideos.add(video);
-                    }
+                }
 
             }
         } catch (IOException e) {
