@@ -1,6 +1,6 @@
 package si.jumis.ai;
 
-import com.google.genai.errors.ClientException;
+import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
@@ -52,7 +52,7 @@ public class VideoSummary {
      * @param content   The content to send to the model.
      * @param callDescription A short description of the call for logging purposes.
      * @return The cleaned, string response from the API.
-     * @throws ClientException if a non-retriable error occurs or retries are exhausted.
+     * @throws ApiException if a non-retriable error occurs or retries are exhausted.
      */
     public String generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
@@ -64,7 +64,7 @@ public class VideoSummary {
                 client.usedNow();
                 logApiCallDuration(startTime, callDescription);
                 return cleanAiResponse(response.text());
-            } catch (ClientException e) {
+            } catch (ApiException e) {
                 handleApiError(e, attempt);
             }
         }
@@ -97,7 +97,7 @@ public class VideoSummary {
     /**
      * Handles exceptions from the Gemini API call, deciding whether to retry or rethrow.
      */
-    private void handleApiError(ClientException e, int attempt) {
+    private void handleApiError(ApiException e, int attempt) {
         if (isRetriable(e) && attempt < MAX_API_ATTEMPTS) {
             logger.warn("API call failed with retriable error on attempt {}: {}.", attempt, e.getMessage());
         } else {
@@ -107,10 +107,10 @@ public class VideoSummary {
     }
 
     /**
-     * Checks if a ClientException is due to a retriable error like rate limiting (429), server overload (503)
+     * Checks if a ApiException is due to a retriable error like rate limiting (429), server overload (503)
      *  or an internal error (500).
      */
-    private boolean isRetriable(ClientException e) {
+    private boolean isRetriable(ApiException e) {
         String message = e.getMessage();
         return message != null && message.matches("^(429|503|500).*");
     }
