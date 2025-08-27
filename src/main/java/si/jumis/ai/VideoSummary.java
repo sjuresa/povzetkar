@@ -52,7 +52,7 @@ public class VideoSummary {
      * @param content   The content to send to the model.
      * @param callDescription A short description of the call for logging purposes.
      * @return The cleaned, string response from the API.
-     * @throws IllegalStateException if a non-retriable error occurs or retries are exhausted.
+     * @throws ApiException if a non-retriable error occurs or retries are exhausted.
      */
     public String generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
