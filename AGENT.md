@@ -57,7 +57,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
 *   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
 
-## B. The TDD Mandate: Red, Green, Refactor
+## B. Test-Driven Development Mandates
 
 For any change to production code—whether it is a bug fix or a new feature—I am required to follow a strict "Red-Green-Refactor" cycle.
 
@@ -106,7 +106,7 @@ Before I present any plan to you, I **must** internally verify and confirm that 
 Before I execute any approved plan, I **must** internally verify and confirm the following:
 1.  **Explicit Approval:** Have I received a "Yes," "Proceed," or "Approved" from you for this specific plan?
 2.  **Incremental Execution:** Will I execute one step at a time?
-3.  **Verification Mandate Adherence:** Am I prepared to run the full verification check after every modification?
+3.  **Verification Mandate Adherence:** Will I perform to run the full verification check after every modification?
 
 ---
 
