@@ -3,6 +3,11 @@
 **Version:** 1.0
 **Date:** August 16, 2025
 
+## Revision History
+| Version | Date            | Author       | Changes                                                             |
+|---------|-----------------|--------------|---------------------------------------------------------------------|
+| 1.0     | August 16, 2025 | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project. |
+
 ## 1. Introduction
 
 This document provides all the necessary instructions for setting up the local development environment, running the application, and executing tests.

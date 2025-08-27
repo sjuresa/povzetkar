@@ -1,5 +1,14 @@
 # Project Povzetkar: Development Roadmap
 
+**Version:** 1.1
+**Date:** August 27, 2025
+
+## Revision History
+| Version | Date            | Author       | Changes                                                                                                                                                           |
+|---------|-----------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.1     | August 27, 2025 | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
+| 1.0     | August 15, 2025 | Povzetkar AI | Initial version of the roadmap.                                                                       |
+
 This document outlines the concrete steps for implementing the features described in the `specification.md`. It breaks down the high-level phases into actionable tasks.
 
 ---
@@ -30,16 +39,22 @@ This document outlines the concrete steps for implementing the features describe
 
 **Goal:** Completely replace the file-based `processing_state.properties` with database logic. The application will now track its state robustly in PostgreSQL.
 
-### Key Tasks:
-1.  **Refactor `ProcessingStateService`:**
-    *   Rewrite the service to use Panache entities.
-    *   **Read Operation:** Implement `findLastProcessedVideoIdBefore` by querying the `ContentItem` table.
-    *   **Write Operation:** Implement `updateLastProcessedVideoForDate` by persisting new `ContentItem` entities.
-    *   The dependency on `processing_state.properties` is removed.
-2.  **Finalize Core Entities:**
-    *   Flesh out the `Author` and `ContentItem` entities with all necessary columns, constraints, and relationships as defined in the database design.
-3.  **Integration Testing:**
-    *   Write `@QuarkusTest` cases for the new `ProcessingStateService` to ensure it correctly finds, creates, and updates records in the test database.
+### Key Tasks & Implementation Steps:
+1.  **Implement Video Ingestion Service:**
+    *   Create a service in the Quarkus app that replicates the logic of `fetchAllNewVideos`.
+    *   This service will:
+        1.  Fetch all monitored channels from the `channels` table (created in v0.5).
+        2.  For each channel, query its own database to find the last processed video timestamp.
+        3.  Call the YouTube API to get all new videos since that timestamp.
+        4.  Persist these new videos as `ContentItem` records with a `PENDING` status.
+        5.  Return a consolidated and chronologically sorted list of new `ContentItem` DTOs.
+    *   Expose this logic via a single endpoint: `POST /api/v1/ingestion/fetch-new-videos`.
+2.  **Refactor Old Application to Delegate Video Fetching:**
+    *   Modify the `VideoSummarizationService.summarizeFromAuthors` method in the old application.
+    *   The call to the internal `fetchAllNewVideos` method will be replaced with a REST client call to the new `POST /api/v1/ingestion/fetch-new-videos` endpoint.
+    *   The rest of the method's logic (looping through the returned list, summarizing, etc.) remains unchanged for now.
+3.  **Testing:**
+    *   Write a `@QuarkusTest` integration test for the new ingestion endpoint. This test must mock the external YouTube API but use a real Testcontainer DB to verify the entire internal logic and the API response.
 
 ---
 
@@ -47,38 +62,64 @@ This document outlines the concrete steps for implementing the features describe
 
 **Goal:** Migrate the core summarization workflow to be fully database-centric. Summaries are now persisted in the database instead of `.md` files.
 
-### Key Tasks:
-1.  **Create CDI Services:**
-    *   Refactor `VideoSummarizationService` and `VideoSummary` into `@ApplicationScoped` CDI beans.
-    *   Inject dependencies (like the new `ProcessingStateService` and AI services) using `@Inject`.
-2.  **Update Summarization Logic:**
-    *   The main workflow will no longer write to files using `FileUtils`.
-    *   After generating a summary, it will create a `Summary` entity, link it to the corresponding `ContentItem`, and persist it to the database within a `@Transactional` method.
-3.  **Retire File-Based Logic:**
-    *   Remove calls to `FileUtils.appendToFile` for summaries from the core workflow.
-4.  **Comprehensive Testing:**
-    *   Write a full integration test for `VideoSummarizationService`.
-    *   This test will mock external API calls (YouTube, GenAI) but will use a real Testcontainer database to verify that `ContentItem` and `Summary` records are created correctly.
+### Key Tasks & Implementation Steps:
+1.  **Implement Unified Processing Result API:**
+    *   Create the `Summary` JPA entity.
+    *   Create a new, unified endpoint: `PUT /api/v1/content-items/{id}/processing-result`.
+    *   This endpoint will accept a DTO (`ProcessingResultRequest`) containing two fields:
+        - `status`: An enum (`COMPLETED`, `FAILED`, or `RETRY_LATER`).
+        - `details`: A string containing either the full summary text (on success) or the error message (on failure).
+    *   The service logic will:
+        - If `status` is `COMPLETED`, create a new `Summary` record, link it to the `ContentItem`, and update the `ContentItem`'s status to `COMPLETED`.
+        - If `status` is `FAILED`, log the error from `details` and update the `ContentItem`'s status to `FAILED`.
+        - If `status` is `RETRY_LATER`, log the reason from `details` and update the `ContentItem`'s status to `RETRY_LATER`.
+2.  **Refactor Old Application to Use the New Result API:**
+    *   In the `VideoSummarizationService` loop, modify the logic to call the new unified endpoint:
+        - On successful summary generation, call the `PUT` endpoint with `status: COMPLETED` and the summary text.
+        - If a transcript is not available (`getContent` returns null), call the `PUT` endpoint with `status: RETRY_LATER` and a descriptive message.
+        - On a non-recoverable AI error, call the `PUT` endpoint with `status: FAILED` and the error message.
+    *   The logic for writing to `summaries_...md` and `failed_videos.log` will be removed.
+3.  **Testing:**
+    *   Write `@QuarkusTest` integration tests for the new unified endpoint.
+    *   One test must verify the "success" path (a `Summary` is created, `ContentItem` is `COMPLETED`).
+    *   Another test must verify the "failure" path (`ContentItem` is `FAILED`, no `Summary` is created).
+    *   A third test must verify the "retry" path (`ContentItem` is `RETRY_LATER`, no `Summary` is created).
 
 ---
 
-## v1.0: Database-Driven Reporting (Phase 1 Complete)
+## v0.8: AI Logic Migration
+
+**Goal:** Migrate the AI-driven summary generation logic into the new Quarkus application, making it fully self-contained.
+
+### Key Tasks & Implementation Steps:
+1.  **Implement Self-Contained Summarization Service:**
+    *   Create a `SummarizationService` in the Quarkus app that encapsulates transcript fetching and GenAI calls.
+    *   The service must include robust, internal error handling, updating the `ContentItem` status to `COMPLETED` or `FAILED` directly in the database.
+    *   Expose this logic via a new endpoint: `POST /api/v1/summarization/trigger/{contentItemId}`.
+2.  **Refactor Old Application to Delegate Summarization:**
+    *   Modify the summarization loop in the old application's `VideoSummarizationService`.
+    *   The direct call to the AI service (`videoSummary.generateContentWithRetry`) will be replaced with a REST client call to the new `POST /api/v1/summarization/trigger/{contentItemId}` endpoint for each video.
+    *   The `google-genai` and `youtube-transcript-api` dependencies will be removed from the old application's `pom.xml`.
+3.  **Testing:**
+    *   Write `@QuarkusTest` integration tests for the new `SummarizationService`. The tests must verify that the `ContentItem` status is correctly updated on success and various mocked failure scenarios.
+
+---
+
+## v1.0: Database-Driven Reporting & Automation (Phase 1 Complete)
 
 **Goal:** Re-implement the briefing generation and documentation updates, sourcing all data from the database. This brings the application to feature parity with the original version, but on the new, robust architecture.
 
-### Key Tasks:
-1.  **Create Reporting Service:**
-    *   Refactor the logic from the `Povzetkar` class responsible for briefings and documentation into a new, dedicated CDI service (e.g., `ReportingService`).
-2.  **Rewrite Data Sourcing:**
-    *   **Briefing Generation:** Instead of reading from a summary file, the service will query the `summaries` table for a given date range to gather content for the daily briefing.
-    *   **Documentation Update:** The logic for updating `README.md` and `updates.md` will also fetch its data (latest videos, past briefings) directly from the database.
-3.  **Preserve Output Logic:**
-    *   The final steps of writing the generated `.md` content to `tldrly/` and committing to Git will be preserved in this new service.
-4.  **Testing:**
-    *   Write unit and integration tests for the `ReportingService` to ensure it correctly queries the database and generates the expected Markdown content.
-5.  **Initial Foundational Documentation:**
-    *   **Architectural Decision Record (ADR):** Create the first ADR to document the decision to migrate to a Quarkus, PostgreSQL, and Docker-based architecture.
-    *   **Deployment Guide:** Expand the `RUNBOOK.md` with instructions for configuring and running the `v1.0` application in a production-like environment.
+### Key Tasks & Implementation Steps:
+1.  **Implement Reporting Service:**
+    *   Create a `ReportingService` in the Quarkus app. It will query the database for all necessary data (summaries, content items) and perform the Git operations to update documentation.
+    *   Expose this logic via a new endpoint: `POST /api/v1/reports/generate`.
+2.  **Establish New Trigger Mechanism:**
+    *   Create a Quarkus Scheduler (`@Scheduled`) method that orchestrates the entire workflow by calling the `POST /api/v1/ingestion/fetch-new-videos` and `POST /api/v1/reports/generate` endpoints in the correct sequence.
+3.  **Decommission Old Application:**
+    *   The entire old application's source code (`src/main/java/si/jumis/...`) and its Maven module will be deleted.
+    *   The project will now be a single-module, self-contained Quarkus application.
+4.  **Documentation:**
+    *   Update `RUNBOOK.md` to reflect the new, fully automated execution process and remove references to the old application.
 
 ---
 ## v1.5: Production Hardening

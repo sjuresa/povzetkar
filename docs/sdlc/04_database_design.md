@@ -1,7 +1,14 @@
 # Database Design Document - Project Povzetkar
 
 **Version:** 1.0
-**Date:** August 15, 2025
+**Date:** August 27, 2025
+
+## Revision History
+
+| Date            | Author       | Changes                                          |
+|-----------------|--------------|--------------------------------------------------|
+| August 27, 2025 | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
+| August 15, 2025 | Povzetkar AI | Initial version of the database design.          |
 
 ## 1. Introduction
 
@@ -113,11 +120,12 @@ To ensure data integrity, the schema uses custom PostgreSQL `ENUM` types for cer
 
 ### `processing_status_enum`
 A type to represent the processing state of a content item.
-- **SQL Definition:** `CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED');`
+- **SQL Definition:** `CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'RETRY_LATER');`
 - **Values:**
     - `PENDING`: The item has been ingested but not yet processed.
     - `COMPLETED`: The item has been successfully processed (summarized, embedded, etc.).
     - `FAILED`: An unrecoverable error occurred during processing.
+    - `RETRY_LATER`: A transient, recoverable error occurred (e.g., transcript not yet available). The system should re-attempt processing later.
 
 ## 4. Table Definitions
 
