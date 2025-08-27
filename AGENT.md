@@ -106,7 +106,7 @@ Before I present any plan to you, I **must** internally verify and confirm that 
 Before I execute any approved plan, I **must** internally verify and confirm the following:
 1.  **Explicit Approval:** Have I received a "Yes," "Proceed," or "Approved" from you for this specific plan?
 2.  **Incremental Execution:** Will I execute one step at a time?
-3.  **Verification Mandate Adherence:** Will I perform to run the full verification check after every modification?
+3.  **Verification Mandate Adherence:** Will I perform the full verification check after every modification?
 
 ---
 
