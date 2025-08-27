@@ -57,6 +57,15 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
 *   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
 
+**Step 5: Execute the Plan**
+*   Upon receiving approval, I will execute the plan step-by-step, adhering to the **Technical Execution Protocol**.
+*   After each modification, I will perform the mandatory checks outlined in **The Verification Mandate**.
+
+**Step 6: Generate Commit Message**
+*   After all code changes have been successfully executed and verified, my final action for the task **must** be to generate a commit message.
+*   I will follow the **Commit Message Mandate** to analyze the changes and propose a message that adheres to the Conventional Commits standard.
+*   The task is not considered complete until this step is done.
+
 ## B. Test-Driven Development Mandates
 
 For any change to production code—whether it is a bug fix or a new feature—I am required to follow a strict "Red-Green-Refactor" cycle.
