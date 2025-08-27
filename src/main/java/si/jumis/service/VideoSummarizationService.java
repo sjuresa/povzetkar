@@ -130,6 +130,7 @@ public class VideoSummarizationService {
 
     private List<VideoToProcess> fetchAllNewVideos(List<Author> authors, LocalDate forDate) {
         List<VideoToProcess> allNewVideos = new ArrayList<>();
+        Set<String> processedVideoIds = new HashSet<>();
         for (Author author : authors) {
             try {
                 logger.info("--- Checking for new videos from {} ---", author.name());
@@ -137,7 +138,13 @@ public class VideoSummarizationService {
                 List<YouTubeVideo> fetchedVideos = fetchVideosForAuthor(author, forDate, lastVideoId);
 
                 logger.info("Found {} new videos for {} in the period.", fetchedVideos.size(), author.name());
-                fetchedVideos.forEach(video -> allNewVideos.add(new VideoToProcess(video, author)));
+                for (YouTubeVideo video : fetchedVideos) {
+                    if (processedVideoIds.add(video.id())) {
+                        allNewVideos.add(new VideoToProcess(video, author));
+                    } else {
+                        logger.info("Skipping duplicate video: {} ({})", video.title(), video.id());
+                    }
+                }
 
             } catch (IOException e) {
                 logger.error("Failed to fetch videos for author '{}'. Skipping this author.", author.name(), e);
