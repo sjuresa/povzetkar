@@ -25,12 +25,12 @@ The entire local environment is managed by Docker Compose.
 1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
-    cd povzetkar
+    cd <repository-directory-name>
     ```
 2.  **Start the environment:**
     This command will start the PostgreSQL database and any other required services.
     ```bash
-    docker-compose up -d
+    docker compose up -d
     ```
 3.  **Run the application in development mode:**
     Quarkus's dev mode provides live reloading, making development fast and efficient.

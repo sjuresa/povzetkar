@@ -134,6 +134,7 @@ Stores information about content creators.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `source_author_id` (varchar): The unique identifier for the author on the source platform (e.g., YouTube channel ID, Reddit username). `NOT NULL`
 - `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
+- **Constraints**: `UNIQUE (source_author_id, source_type_id)`
 - `name` (varchar): The author's name. `NOT NULL`
 - `description` (text): The author's channel/profile description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
