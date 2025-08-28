@@ -1,7 +1,14 @@
 # Database Design Document - Project Povzetkar
 
 **Version:** 1.0
-**Date:** August 15, 2025
+**Date:** August 27, 2025
+
+## Revision History
+
+| Date            | Author       | Changes                                          |
+|-----------------|--------------|--------------------------------------------------|
+| August 27, 2025 | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
+| August 15, 2025 | Povzetkar AI | Initial version of the database design.          |
 
 ## 1. Introduction
 
@@ -26,7 +33,8 @@ erDiagram
     AUTHORS ||--o{ AUTHOR_ASSESSMENTS : "is assessed for"
     AUTHORS {
         bigint id PK
-        varchar channel_id UK
+        varchar source_author_id
+        int source_type_id FK
         varchar name
         text description
         integer subscriber_count
@@ -112,18 +120,21 @@ To ensure data integrity, the schema uses custom PostgreSQL `ENUM` types for cer
 
 ### `processing_status_enum`
 A type to represent the processing state of a content item.
-- **SQL Definition:** `CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED');`
+- **SQL Definition:** `CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'RETRY_LATER');`
 - **Values:**
     - `PENDING`: The item has been ingested but not yet processed.
     - `COMPLETED`: The item has been successfully processed (summarized, embedded, etc.).
     - `FAILED`: An unrecoverable error occurred during processing.
+    - `RETRY_LATER`: A transient, recoverable error occurred (e.g., transcript not yet available). The system should re-attempt processing later.
 
 ## 4. Table Definitions
 
 ### `authors`
 Stores information about content creators.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `channel_id` (varchar, unique): The unique identifier from the source platform (e.g., YouTube channel ID). `NOT NULL`
+- `source_author_id` (varchar): The unique identifier for the author on the source platform (e.g., YouTube channel ID, Reddit username). `NOT NULL`
+- `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
+- **Constraints**: `UNIQUE (source_author_id, source_type_id)`
 - `name` (varchar): The author's name. `NOT NULL`
 - `description` (text): The author's channel/profile description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
