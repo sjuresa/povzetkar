@@ -6,17 +6,17 @@ This document analyzes how well different types of testing are covered in the pr
 
 ## 1. Unit Tests
 -   **Coverage:** Excellent.
--   **Document:** `docs/sdlc/06_development_process.md`
+-   **Document:** [`docs/sdlc/06_development_process.md`](../sdlc/06_development_process.md)
 -   **Description:** The project has a formal commitment to **Test-Driven Development (TDD)**. The rule is that every new feature or bug fix must first be covered by an appropriate test.
 
 ## 2. Integration Tests
 -   **Coverage:** Excellent.
--   **Documents:** `docs/overview/roadmap.md`, `docs/versions/v0.5-tasks.md`
+-   **Documents:** [`docs/overview/roadmap.md`](../overview/roadmap.md), [`docs/versions/v0.5-tasks.md`](../versions/v0.5-tasks.md)
 -   **Description:** Integration tests are a central part of the development plan. The `roadmap.md` explicitly includes writing `@QuarkusTest` tests for almost every version to verify component interaction with the database.
 
 ## 3. UI/UX Testing
 -   **Coverage:** Not Covered.
--   **Document:** `docs/analysis/PLANNING_ANALYSIS.md`
+-   **Document:** [`docs/analysis/PLANNING_ANALYSIS.md`](PLANNING_ANALYSIS.md)
 -   **Description:** Since the user interface is not yet in the planning phase, testing in this area has logically not been defined, which is acceptable for the current project stage.
 
 ## 4. Performance Tests
@@ -25,5 +25,5 @@ This document analyzes how well different types of testing are covered in the pr
 
 ## 5. Security Tests
 -   **Coverage:** Partial (at the planning level only).
--   **Documents:** `docs/DEVELOPMENT_ANALYSIS.md`, `docs/sdlc/03_api_specification.md`
+-   **Documents:** [`docs/analysis/DEVELOPMENT_ANALYSIS.md`](DEVELOPMENT_ANALYSIS.md), [`docs/sdlc/03_api_specification.md`](../sdlc/03_api_specification.md)
 -   **Description:** Security is mentioned as an important aspect (e.g., using OAuth2), but there is no formal plan for **security testing** in the documentation yet.

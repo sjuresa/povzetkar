@@ -20,7 +20,7 @@ We use a version-based branching model to manage development for specific releas
 -   `main`: This branch contains only production-ready, tagged releases. Direct commits are strictly forbidden. All merges into `main` must come from a completed version branch via a Pull Request.
 
 -   **Version Branches** (e.g., `v0.5`, `v0.6`):
-    -   Each major or minor version from the `roadmap.md` gets its own long-lived branch, created from `main`.
+    -   Each major or minor version from the [`roadmap.md`](../overview/roadmap.md) gets its own long-lived branch, created from `main`.
     -   This branch serves as the integration point for all features and fixes planned for that specific version.
 
 -   **Task Branches** (e.g., `feature/task-name`, `fix/bug-name`):
@@ -68,13 +68,13 @@ This section describes the process for creating and publishing a new version of 
 The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). All versions prior to `1.0.0` are considered initial development and may introduce breaking changes.
 
 ### 4.2 Release Process
-Creating a new release is a manual process performed when all tasks for a given version in the `roadmap.md` are complete and merged into its corresponding version branch.
+Creating a new release is a manual process performed when all tasks for a given version in the [`roadmap.md`](../overview/roadmap.md) are complete and merged into its corresponding version branch.
 
 The steps are as follows:
 
 1.  **Finalize the Version Branch (e.g., `v0.5`):**
     *   Ensure all task branches for the version are merged.
-    *   Update `CHANGELOG.md`: Change the `[Unreleased]` section to the new version number and date (e.g., `[0.5] - 2025-08-17`) and add a new `[Unreleased]` section at the top.
+    *   Update [`CHANGELOG.md`](../../changelog.md): Change the `[Unreleased]` section to the new version number and date (e.g., `[0.5] - 2025-08-17`) and add a new `[Unreleased]` section at the top.
     *   Update Project Version: In `pom.xml`, remove the `-SNAPSHOT` suffix from the `<version>` tag (e.g., change `<version>0.5-SNAPSHOT</version>` to `<version>0.5</version>`).
     *   Commit these final changes to the version branch with a message like `chore(release): prepare for release v0.5`.
 

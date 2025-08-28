@@ -6,22 +6,22 @@ This document analyzes how well the project is prepared for a production launch,
 
 ## 1. Documentation
 -   **Coverage:** Very Good (for technical documentation).
--   **Documents:** `docs/overview/specification.md`, `docs/overview/roadmap.md`, `docs/RUNBOOK.md`, the entire `docs/sdlc` folder.
+-   **Documents:** [`docs/overview/specification.md`](../overview/specification.md), [`docs/overview/roadmap.md`](../overview/roadmap.md), [`docs/RUNBOOK.md`](../RUNBOOK.md), the entire [`docs/sdlc`](../sdlc) folder.
 -   **Description:** The project has exceptionally thorough technical and process documentation, which is crucial for the internal team and future developers.
 
 ## 2. User Guide Preparation
 -   **Coverage:** Not Covered.
--   **Documents:** `PLANNING_ANALYSIS.md`, `01_functional_requirements.md`.
+-   **Documents:** [`PLANNING_ANALYSIS.md`](PLANNING_ANALYSIS.md), [`01_functional_requirements.md`](../sdlc/01_functional_requirements.md).
 -   **Description:** Since the current focus is on the backend systems, user guides have not yet been prepared. This will be a key step when frontend development begins. The functional requirements document is an excellent foundation for preparing these guides.
 
 ## 3. Final Performance Optimizations
 -   **Coverage:** Not Covered.
--   **Document:** `docs/TESTING_ANALYSIS.md`.
+-   **Document:** [`docs/TESTING_ANALYSIS.md`](TESTING_ANALYSIS.md).
 -   **Description:** The documentation explicitly states that performance tests are not part of the current plan. It will be essential to conduct at least basic load tests before a production launch.
 
 ## 4. Production Deployment
 -   **Coverage:** Partial.
--   **Documents:** `docs/DEVELOPMENT_ANALYSIS.md`, `docs/RUNBOOK.md`.
+-   **Documents:** [`docs/DEVELOPMENT_ANALYSIS.md`](DEVELOPMENT_ANALYSIS.md), [`docs/RUNBOOK.md`](../RUNBOOK.md).
 -   **Description:** The `RUNBOOK.md` excellently covers local setup, but a detailed plan for the production environment is missing. This includes a CI/CD pipeline, secrets management, and a strategy for monitoring and logging.
 
 ## Conclusion

@@ -9,7 +9,7 @@
 | 1.1     | August 27, 2025 | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
 | 1.0     | August 15, 2025 | Povzetkar AI | Initial version of the roadmap.                                                                       |
 
-This document outlines the concrete steps for implementing the features described in the `specification.md`. It breaks down the high-level phases into actionable tasks.
+This document outlines the concrete steps for implementing the features described in the [`specification.md`](specification.md). It breaks down the high-level phases into actionable tasks.
 
 ---
 
@@ -27,11 +27,11 @@ This document outlines the concrete steps for implementing the features describe
     *   Create a `docker-compose.yml` with a PostgreSQL service, including the `pgvector` extension for future use.
     *   Configure `application.properties` to connect the Quarkus app to the Dockerized database.
 3.  **Initial Data Model:**
-    *   Create the first JPA entities based on `04_database_design.md`: `Author`, `ContentItem`, and `Summary`. These will be simple classes extending `PanacheEntity` without all relationships yet.
+    *   Create the first JPA entities based on [`04_database_design.md`](../sdlc/04_database_design.md): `Author`, `ContentItem`, and `Summary`. These will be simple classes extending `PanacheEntity` without all relationships yet.
 4.  **Initial Test:**
     *   Create a basic `@QuarkusTest` that verifies the application can start and connect to a Testcontainers-managed database.
 5.  **Foundational Process Documentation:**
-    *   [x] Create a `06_development_process.md` document outlining onboarding, branching strategy, and contribution guidelines.
+    *   [x] Create a [`06_development_process.md`](../sdlc/06_development_process.md) document outlining onboarding, branching strategy, and contribution guidelines.
 
 ---
 
@@ -119,7 +119,7 @@ This document outlines the concrete steps for implementing the features describe
     *   The entire old application's source code (`src/main/java/si/jumis/...`) and its Maven module will be deleted.
     *   The project will now be a single-module, self-contained Quarkus application.
 4.  **Documentation:**
-    *   Update `RUNBOOK.md` to reflect the new, fully automated execution process and remove references to the old application.
+    *   Update [`RUNBOOK.md`](../RUNBOOK.md) to reflect the new, fully automated execution process and remove references to the old application.
 
 ---
 ## v1.5: Production Hardening
