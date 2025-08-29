@@ -12,7 +12,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import si.jumis.ai.VideoSummary;
-import si.jumis.ai.YouTubeDataService;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 
