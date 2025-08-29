@@ -7,10 +7,12 @@ package si.jumis.model;
  * @param name            The display name of the channel.
  * @param channelId       The unique ID of the channel.
  * @param subscriberCount The number of subscribers.
+ * @param uploadsPlaylistId The ID of the playlist containing the channel's uploads.
  */
 public record Author(
         String handle,
         String name,
         String channelId,
-        long subscriberCount
+        long subscriberCount,
+        String uploadsPlaylistId
 ) {}
