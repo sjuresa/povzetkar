@@ -10,6 +10,7 @@ import si.jumis.ai.GenAiPool;
 import si.jumis.ai.VideoSummary;
 import si.jumis.service.DefaultFileWriter;
 import si.jumis.service.FileWriter;
+import si.jumis.service.NewVideoFetcherService;
 import si.jumis.service.ProcessingStateService;
 import si.jumis.service.TimeTextFormatter;
 import si.jumis.service.VideoSummarizationService;
@@ -69,8 +70,9 @@ public class Main {
         YouTubeTranscriptService transcriptService = new YouTubeTranscriptService(new TimeTextFormatter());
         FileWriter fileWriter = new DefaultFileWriter();
         ResourceReader resourceReader = new ResourceReader();
+        NewVideoFetcherService newVideoFetcherService = new NewVideoFetcherService(youtubeDataService, stateService);
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService,
-                videoSummary, transcriptService, fileWriter, Clock.system(zoneId), resourceReader);
+                videoSummary, transcriptService, fileWriter, Clock.system(zoneId), resourceReader, newVideoFetcherService);
 
         return new Povzetkar(summarizationService, videoSummary, resourceReader);
     }

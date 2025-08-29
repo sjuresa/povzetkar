@@ -1,8 +1,5 @@
 package si.jumis.service;
 
-import com.google.api.services.youtube.model.PlaylistItem;
-import com.google.api.services.youtube.model.PlaylistItemSnippet;
-import com.google.api.services.youtube.model.ResourceId;
 import com.google.genai.types.Content;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,15 +20,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class VideoSummarizationServiceTest {
@@ -51,11 +46,12 @@ class VideoSummarizationServiceTest {
     private FileWriter mockFileWriter;
     @Mock
     private ResourceReader resourceReader;
+    @Mock
+    private NewVideoFetcherService newVideoFetcherService;
     @Captor
     private ArgumentCaptor<String> stringCaptor;
     private VideoSummarizationService videoSummarizationService;
     private Author author1;
-    private Author author2;
     private YouTubeVideo video1;
     private LocalDate today;
     private Path testOutputPath;
@@ -64,10 +60,9 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK, resourceReader);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK, resourceReader, newVideoFetcherService);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L, "UUchannel1");
-        author2 = new Author("@author2", "Author Two", "UCchannel2", 2000L, "UUchannel2");
         today = LocalDate.now(FIXED_CLOCK);
         testOutputPath = Paths.get("test_output.txt");
         video1 = new YouTubeVideo(
@@ -97,58 +92,22 @@ class VideoSummarizationServiceTest {
             // Arrange
             List<String> authorLines = List.of(
                     "Author One, UCchannel1",
-                    "Author Two, UCchannel2",
                     "Malformed Line", // This line should be skipped
                     "Failing Author, UCchannel3" // This should cause an exception
             );
 
             when(resourceReader.readLines(anyString(), anyString())).thenReturn(authorLines);
             when(youtubeDataService.getAuthorDetails("UCchannel1")).thenReturn(author1);
-            when(youtubeDataService.getAuthorDetails("UCchannel2")).thenReturn(author2);
             when(youtubeDataService.getAuthorDetails("UCchannel3")).thenThrow(new IOException("API error"));
 
             // Act
             List<Author> result = videoSummarizationService.getAuthorsWithDetails();
 
             // Assert
-            assertThat(result).containsExactlyInAnyOrder(author1, author2);
+            assertThat(result).containsExactly(author1);
             verify(youtubeDataService, times(1)).getAuthorDetails("UCchannel1");
-            verify(youtubeDataService, times(1)).getAuthorDetails("UCchannel2");
             verify(youtubeDataService, times(1)).getAuthorDetails("UCchannel3");
         }
-    }
-
-
-    private void mockYouTubeApiResponses(Author author, String lastVideoId, List<YouTubeVideo> videosToReturn) throws IOException {
-        String uploadsPlaylistId = author.uploadsPlaylistId();
-
-        List<PlaylistItem> mockedPlaylistItems = videosToReturn.stream()
-                .map(video -> {
-                    PlaylistItem mockedItem = mock(PlaylistItem.class);
-                    PlaylistItemSnippet mockedSnippet = mock(PlaylistItemSnippet.class);
-                    ResourceId mockedResourceId = mock(ResourceId.class);
-
-                    when(mockedItem.getSnippet()).thenReturn(mockedSnippet);
-                    when(mockedSnippet.getResourceId()).thenReturn(mockedResourceId);
-                    when(mockedResourceId.getVideoId()).thenReturn(video.id());
-                    return mockedItem;
-                })
-                .toList();
-
-        List<String> videoIds = videosToReturn.stream().map(YouTubeVideo::id).toList();
-        Map<String, Duration> videoDurations = videosToReturn.stream()
-                .collect(Collectors.toMap(YouTubeVideo::id, YouTubeVideo::duration));
-
-        if (lastVideoId == null) {
-            when(youtubeDataService.fetchPlaylistItems(eq(uploadsPlaylistId), eq(today), anyLong(), isNull())).thenReturn(mockedPlaylistItems);
-        } else {
-            when(youtubeDataService.fetchPlaylistItems(eq(uploadsPlaylistId), eq(today), isNull(), eq(lastVideoId))).thenReturn(mockedPlaylistItems);
-        }
-
-        if (!videosToReturn.isEmpty()) {
-            when(youtubeDataService.fetchVideoDurations(videoIds)).thenReturn(videoDurations);
-        }
-        when(youtubeDataService.constructYouTubeVideos(eq(mockedPlaylistItems), anyMap())).thenReturn(videosToReturn);
     }
 
     private void mockSuccessfulSummaryGeneration() {
@@ -156,14 +115,15 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    void summarizeFromAuthors_whenNoPreviousState_fetchesAndSummarizes() throws IOException {
+    void summarizeFromAuthors_whenNewVideosExist_fetchesAndSummarizes() throws IOException {
         // Arrange
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
-        mockYouTubeApiResponses(author1, null, List.of(video1));
+        List<Author> authors = List.of(author1);
+        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(video1, author1)));
+        when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
         mockSuccessfulSummaryGeneration();
 
         // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
 
         // Assert
         verify(videoSummary).generateContentWithRetry(any(), any());
@@ -172,49 +132,13 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    void summarizeFromAuthors_withPreviousState_fetchesAndSummarizes() throws IOException {
+    void summarizeFromAuthors_whenNoNewVideos_doesNothing() {
         // Arrange
-        String lastVideoId = "prevId";
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
-        mockYouTubeApiResponses(author1, lastVideoId, List.of(video1));
-        mockSuccessfulSummaryGeneration();
+        List<Author> authors = List.of(author1);
+        when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(Collections.emptyList());
 
         // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
-
-        // Assert
-        verify(videoSummary).generateContentWithRetry(any(), any());
-        verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
-        verify(mockFileWriter).appendToFile(eq(testOutputPath), anyString());
-    }
-
-    @Test
-    void summarizeFromAuthors_withPreviousState_respectsForDateBoundary() throws IOException {
-        // Arrange
-        String lastVideoId = "prevId";
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
-        mockYouTubeApiResponses(author1, lastVideoId, Collections.emptyList());
-
-        // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
-
-        // Assert
-        verify(youtubeDataService).fetchPlaylistItems(
-                eq(author1.uploadsPlaylistId()),
-                eq(today),
-                isNull(),
-                eq(lastVideoId)
-        );
-    }
-
-    @Test
-    void summarizeFromAuthors_whenNoNewVideos_doesNothing() throws IOException {
-        // Arrange
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
-        mockYouTubeApiResponses(author1, null, Collections.emptyList());
-
-        // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
 
         // Assert
         verify(videoSummary, never()).generateContentWithRetry(any(), any());
@@ -222,37 +146,9 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    void summarizeFromAuthors_whenDuplicateVideos_summarizesOnlyOnce() throws IOException {
-        // Arrange
-        List<Author> authors = List.of(author1, author2);
-        YouTubeVideo video2 = new YouTubeVideo(
-                "id1", // Same ID as video1
-                "Title 1",
-                "https://www.youtube.com/watch?v=id1",
-                "Author Two", // Different author
-                "UCchannel2",
-                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
-                Duration.ofMinutes(5)
-        );
-
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
-        when(stateService.findLastProcessedVideoIdBefore(author2.channelId(), today)).thenReturn(null);
-
-        mockYouTubeApiResponses(author1, null, List.of(video1));
-        mockYouTubeApiResponses(author2, null, List.of(video2)); // video2 has same ID
-
-        mockSuccessfulSummaryGeneration();
-
-        // Act
-        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
-
-        // Assert
-        verify(videoSummary, times(1)).generateContentWithRetry(any(), any());
-    }
-
-    @Test
     void summarizeFromAuthors_whenVideoIsLong_usesTranscript() throws IOException {
         // Arrange
+        List<Author> authors = List.of(author1);
         YouTubeVideo longVideo = new YouTubeVideo(
                 "long_id",
                 "Long Video Title",
@@ -262,15 +158,15 @@ class VideoSummarizationServiceTest {
                 today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(60)
         );
+        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(longVideo, author1)));
         String fakeTranscript = "This is a fake transcript.";
 
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
-        mockYouTubeApiResponses(author1, null, List.of(longVideo));
+        when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
         when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(fakeTranscript);
         mockSuccessfulSummaryGeneration();
 
         // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
 
         // Assert
         verify(youTubeTranscriptService).getTranscript("long_id");
@@ -282,12 +178,13 @@ class VideoSummarizationServiceTest {
     @Test
     void processSingleVideo_whenSummarizationFails_logsErrorAndUpdateState() throws IOException {
         // Arrange
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
-        mockYouTubeApiResponses(author1, null, List.of(video1));
+        List<Author> authors = List.of(author1);
+        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(video1, author1)));
+        when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
         when(videoSummary.generateContentWithRetry(any(Content.class), anyString())).thenThrow(new RuntimeException("AI error"));
 
         // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
 
         // Assert
         verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), video1, today);
@@ -298,6 +195,7 @@ class VideoSummarizationServiceTest {
     @Test
     void processSingleVideo_whenTranscriptFails_logsErrorAndDoesNotUpdateState() throws IOException {
         // Arrange
+        List<Author> authors = List.of(author1);
         YouTubeVideo longVideo = new YouTubeVideo(
                 "long_id",
                 "Long Video Title",
@@ -307,12 +205,12 @@ class VideoSummarizationServiceTest {
                 today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
                 Duration.ofMinutes(60)
         );
-        when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(null);
-        mockYouTubeApiResponses(author1, null, List.of(longVideo));
+        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(longVideo, author1)));
+        when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
         when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(""); // Simulate transcript failure
 
         // Act
-        videoSummarizationService.summarizeFromAuthors(List.of(author1), today, testOutputPath, false);
+        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
 
         // Assert
         verify(stateService, never()).updateLastProcessedVideoForDate(anyString(), any(), any());
