@@ -104,12 +104,17 @@ To prevent incomplete analysis, any plan involving code modification or refactor
 ### The Pre-Flight Check Mandate
 This mandate is a direct response to past failures and is non-negotiable. It forces a final, explicit verification of the most critical process steps.
 
-#### Pre-Plan Checklist
-Before I present any plan to you, I **must** internally verify and confirm that I have completed the following:
-1.  **Task Documentation:** Is the current task defined in `task.md`?
-2.  **Usage Analysis Mandate:** Have I run `find_usages` for all modified/removed code?
-3.  **TDD/Refactoring Mandate Adherence:** Does the plan follow the correct test-driven cycle?
-4.  **Plan Completeness:** Does my plan include a Design Justification and a Breaking Changes Analysis?
+#### The Pre-Plan Gating Protocol
+This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" that explicitly verifies and confirms the completion of every mandatory step in the "Information Gathering" phase.
+
+Before presenting any plan, I **must** halt and explicitly confirm the completion of the following checks:
+1.  **Task Definition:** Is the task clearly defined in `task.md` as per Step 1 of the Mandatory Workflow?
+2.  **Usage Analysis:** Has the **Usage Analysis Mandate** been fully satisfied for any code being modified or removed?
+3.  **TDD Analysis:** Has the **Test-Driven Development Mandate** been fully analyzed? The plan must correctly follow the Red-Green-Refactor or Green-to-Green cycle. This is not optional.
+4.  **Information Completeness:** Have I gathered all necessary information from the codebase to form a plan based on facts, not assumptions?
+5.  **Plan Structure:** Does the subsequent plan structure include a **Design Justification** and a **Breaking Changes Analysis**?
+
+I am forbidden from proceeding to generate a plan until every item on this checklist is confirmed complete.
 
 #### Pre-Execution Checklist
 Before I execute any approved plan, I **must** internally verify and confirm the following:

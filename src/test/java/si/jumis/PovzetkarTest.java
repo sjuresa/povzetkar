@@ -74,7 +74,7 @@ class PovzetkarTest {
              MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
             List<Author> authors = List.of(
-                    new Author("AuthorHandle", "Author One", "channel1", 12345)
+                    new Author("AuthorHandle", "Author One", "channel1", 12345, "UUchannel1")
             );
             List<YouTubeVideo> processedVideos = List.of(
                     createMockVideo("vid2", "Newer Video", Instant.now(), 123),

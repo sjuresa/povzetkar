@@ -59,14 +59,14 @@ class YouTubeDataServiceTest {
     @BeforeEach
     void setUp() {
         youtubeDataService = new YouTubeDataService(FAKE_API_KEY, mockYouTube, TEST_ZONE_ID);
-        testAuthor = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, TEST_AUTHOR_SUBSCRIBERS);
+        testAuthor = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, TEST_AUTHOR_SUBSCRIBERS, UPLOADS_PLAYLIST_ID);
     }
 
     @Nested
     @DisplayName("getAuthorDetails")
     class GetAuthorDetailsTests {
 
-        private final List<String> expectedParts = List.of("snippet", "statistics");
+        private final List<String> expectedParts = List.of("snippet", "statistics", "contentDetails");
 
         @BeforeEach
         void setUp() throws IOException {
@@ -102,6 +102,24 @@ class YouTubeDataServiceTest {
             assertTrue(exception.getMessage().contains("Channel not found for ID: " + INVALID_CHANNEL_ID));
             verify(mockChannels).list(expectedParts);
             verify(mockChannelsList).setId(List.of(INVALID_CHANNEL_ID));
+        }
+
+        @Test
+        @DisplayName("should handle null subscriber count gracefully")
+        void shouldHandleNullSubscriberCountGracefully() throws IOException {
+            // Arrange
+            Author authorWithNullSubscribers = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, 0L, UPLOADS_PLAYLIST_ID);
+            Channel mockChannel = createMockAuthorChannel(authorWithNullSubscribers);
+            // Explicitly set subscriber count to null to simulate a hidden subscriber count
+            mockChannel.getStatistics().setSubscriberCount(null);
+
+            setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
+
+            // Act
+            Author result = youtubeDataService.getAuthorDetails(VALID_CHANNEL_ID);
+
+            // Assert
+            assertEquals(0L, result.subscriberCount());
         }
     }
 
@@ -300,26 +318,6 @@ class YouTubeDataServiceTest {
         }
     }
 
-    @Test
-    @DisplayName("getUploadsPlaylistId should return the correct playlist ID for a valid channel")
-    void getUploadsPlaylistId_shouldReturnCorrectPlaylistId() throws IOException {
-        // Arrange
-        when(mockYouTube.channels()).thenReturn(mockChannels);
-        when(mockChannelsList.setKey(FAKE_API_KEY)).thenReturn(mockChannelsList);
-        List<String> expectedParts = List.of("contentDetails");
-        when(mockChannels.list(expectedParts)).thenReturn(mockChannelsList);
-        Channel mockChannel = createMockUploadsChannel();
-        setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
-
-        // Act
-        String actualUploadsId = youtubeDataService.getUploadsPlaylistId(VALID_CHANNEL_ID);
-
-        // Assert
-        assertEquals(UPLOADS_PLAYLIST_ID, actualUploadsId);
-        verify(mockChannels).list(expectedParts);
-        verify(mockChannelsList).setId(List.of(VALID_CHANNEL_ID));
-    }
-
     // --- Helper Methods ---
 
     private void setupMockChannelsList(String channelId, List<Channel> channels) throws IOException {
@@ -333,15 +331,10 @@ class YouTubeDataServiceTest {
         return new Channel()
                 .setId(author.channelId())
                 .setSnippet(new ChannelSnippet().setTitle(author.name()).setCustomUrl(author.handle()))
-                .setStatistics(new ChannelStatistics().setSubscriberCount(BigInteger.valueOf(author.subscriberCount())));
-    }
-
-    private Channel createMockUploadsChannel() {
-        return new Channel()
-                .setId(VALID_CHANNEL_ID)
+                .setStatistics(new ChannelStatistics().setSubscriberCount(BigInteger.valueOf(author.subscriberCount())))
                 .setContentDetails(new ChannelContentDetails()
                         .setRelatedPlaylists(new ChannelContentDetails.RelatedPlaylists()
-                                .setUploads(UPLOADS_PLAYLIST_ID)));
+                                .setUploads(author.uploadsPlaylistId())));
     }
 
     private PlaylistItem createMockPlaylistItem(String videoId) {

@@ -154,7 +154,7 @@ public class VideoSummarizationService {
     }
 
     private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate forDate, String lastVideoId) throws IOException {
-        String uploadsPlaylistId = youtubeDataService.getUploadsPlaylistId(author.channelId());
+        String uploadsPlaylistId = author.uploadsPlaylistId();
 
         List<PlaylistItem> playlistItems;
         if (lastVideoId == null) {

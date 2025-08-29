@@ -52,33 +52,7 @@ public class YouTubeDataService {
      */
     public Author getAuthorDetails(String channelId) throws IOException {
         YouTube.Channels.List request = youtubeService.channels()
-                .list(List.of(PART_SNIPPET, PART_STATISTICS))
-                .setKey(apiKey)
-                .setId(List.of(channelId));
-
-        List<Channel> items = request.execute().getItems();
-        if (items == null || items.isEmpty()) {
-            throw new IOException("Channel not found for ID: " + channelId);
-        }
-        Channel channel = items.getFirst();
-        return new Author(
-                channel.getSnippet().getCustomUrl(),
-                channel.getSnippet().getTitle(),
-                channel.getId(),
-                channel.getStatistics().getSubscriberCount().longValue()
-        );
-    }
-
-    /**
-     * Fetches the uploads playlist ID for a given YouTube channel.
-     *
-     * @param channelId The ID of the channel.
-     * @return The uploads playlist ID.
-     * @throws IOException If an API error occurs or the channel is not found.
-     */
-    public String getUploadsPlaylistId(String channelId) throws IOException {
-        YouTube.Channels.List request = youtubeService.channels()
-                .list(List.of(PART_CONTENT_DETAILS))
+                .list(List.of(PART_SNIPPET, PART_STATISTICS, PART_CONTENT_DETAILS))
                 .setKey(apiKey)
                 .setId(List.of(channelId));
 
@@ -92,7 +66,19 @@ public class YouTubeDataService {
                 channel.getContentDetails().getRelatedPlaylists().getUploads() == null) {
             throw new IOException("Could not find uploads playlist for channel ID: " + channelId);
         }
-        return channel.getContentDetails().getRelatedPlaylists().getUploads();
+
+        long subscriberCount = 0L;
+        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
+            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+        }
+
+        return new Author(
+                channel.getSnippet().getCustomUrl(),
+                channel.getSnippet().getTitle(),
+                channel.getId(),
+                subscriberCount,
+                channel.getContentDetails().getRelatedPlaylists().getUploads()
+        );
     }
 
     private record PageProcessingResult(List<PlaylistItem> itemsToAdd, boolean stopFound) {

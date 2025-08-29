@@ -61,8 +61,8 @@ class VideoSummarizationServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK);
 
-        author1 = new Author("@author1", "Author One", "UCchannel1", 1000L);
-        author2 = new Author("@author2", "Author Two", "UCchannel2", 2000L);
+        author1 = new Author("@author1", "Author One", "UCchannel1", 1000L, "UUchannel1");
+        author2 = new Author("@author2", "Author Two", "UCchannel2", 2000L, "UUchannel2");
         today = LocalDate.now(FIXED_CLOCK);
         testOutputPath = Paths.get("test_output.txt");
         video1 = new YouTubeVideo(
@@ -83,8 +83,7 @@ class VideoSummarizationServiceTest {
     }
 
     private void mockYouTubeApiResponses(Author author, String lastVideoId, List<YouTubeVideo> videosToReturn) throws IOException {
-        String uploadsPlaylistId = "UU" + author.channelId().substring(2);
-        when(youtubeDataService.getUploadsPlaylistId(author.channelId())).thenReturn(uploadsPlaylistId);
+        String uploadsPlaylistId = author.uploadsPlaylistId();
 
         List<PlaylistItem> mockedPlaylistItems = videosToReturn.stream()
                 .map(video -> {
@@ -157,7 +156,6 @@ class VideoSummarizationServiceTest {
         // Arrange
         String lastVideoId = "prevId";
         when(stateService.findLastProcessedVideoIdBefore(author1.channelId(), today)).thenReturn(lastVideoId);
-        when(youtubeDataService.getUploadsPlaylistId(author1.channelId())).thenReturn("UUchannel1");
         mockYouTubeApiResponses(author1, lastVideoId, Collections.emptyList());
 
         // Act
@@ -165,7 +163,7 @@ class VideoSummarizationServiceTest {
 
         // Assert
         verify(youtubeDataService).fetchPlaylistItems(
-                eq("UUchannel1"),
+                eq(author1.uploadsPlaylistId()),
                 eq(today),
                 isNull(),
                 eq(lastVideoId)
