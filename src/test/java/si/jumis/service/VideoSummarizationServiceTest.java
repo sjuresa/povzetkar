@@ -6,6 +6,8 @@ import com.google.api.services.youtube.model.ResourceId;
 import com.google.genai.types.Content;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -14,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
+import si.jumis.util.ResourceReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,6 +49,8 @@ class VideoSummarizationServiceTest {
     private YouTubeTranscriptService youTubeTranscriptService;
     @Mock
     private VideoSummarizationService.FileWriter mockFileWriter;
+    @Mock
+    private ResourceReader resourceReader;
     @Captor
     private ArgumentCaptor<String> stringCaptor;
     private VideoSummarizationService videoSummarizationService;
@@ -58,7 +64,7 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK, resourceReader);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L, "UUchannel1");
         author2 = new Author("@author2", "Author Two", "UCchannel2", 2000L, "UUchannel2");
@@ -80,6 +86,38 @@ class VideoSummarizationServiceTest {
     void tearDown() throws Exception {
         mocks.close();
     }
+
+    @Nested
+    @DisplayName("getAuthorsWithDetails")
+    class GetAuthorsWithDetails {
+
+        @Test
+        @DisplayName("should parse valid authors and skip malformed lines")
+        void shouldParseValidAuthorsAndSkipMalformedLines() throws IOException {
+            // Arrange
+            List<String> authorLines = List.of(
+                    "Author One, UCchannel1",
+                    "Author Two, UCchannel2",
+                    "Malformed Line", // This line should be skipped
+                    "Failing Author, UCchannel3" // This should cause an exception
+            );
+
+            when(resourceReader.readLines(anyString(), anyString())).thenReturn(authorLines);
+            when(youtubeDataService.getAuthorDetails("UCchannel1")).thenReturn(author1);
+            when(youtubeDataService.getAuthorDetails("UCchannel2")).thenReturn(author2);
+            when(youtubeDataService.getAuthorDetails("UCchannel3")).thenThrow(new IOException("API error"));
+
+            // Act
+            List<Author> result = videoSummarizationService.getAuthorsWithDetails();
+
+            // Assert
+            assertThat(result).containsExactlyInAnyOrder(author1, author2);
+            verify(youtubeDataService, times(1)).getAuthorDetails("UCchannel1");
+            verify(youtubeDataService, times(1)).getAuthorDetails("UCchannel2");
+            verify(youtubeDataService, times(1)).getAuthorDetails("UCchannel3");
+        }
+    }
+
 
     private void mockYouTubeApiResponses(Author author, String lastVideoId, List<YouTubeVideo> videosToReturn) throws IOException {
         String uploadsPlaylistId = author.uploadsPlaylistId();

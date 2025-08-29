@@ -65,14 +65,14 @@ public class VideoSummarizationService {
     private final FileWriter fileWriter;
     private final Clock clock;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock) {
+    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock, ResourceReader resourceReader) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
-        this.resourceReader = new ResourceReader();
         this.youTubeTranscriptService = youTubeTranscriptService;
         this.fileWriter = fileWriter;
         this.clock = clock;
+        this.resourceReader = resourceReader;
     }
 
     public List<Author> getAuthorsWithDetails() {

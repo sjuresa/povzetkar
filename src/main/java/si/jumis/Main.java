@@ -66,9 +66,9 @@ public class Main {
                         .setApplicationName(YOUTUBE_APP_NAME).build(), zoneId);
         YouTubeTranscriptService transcriptService = new YouTubeTranscriptService(new TimeTextFormatter());
         VideoSummarizationService.FileWriter fileWriter = new VideoSummarizationService.DefaultFileWriter();
-        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService,
-                videoSummary, transcriptService, fileWriter, Clock.system(zoneId));
         ResourceReader resourceReader = new ResourceReader();
+        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService,
+                videoSummary, transcriptService, fileWriter, Clock.system(zoneId), resourceReader);
 
         return new Povzetkar(summarizationService, videoSummary, resourceReader);
     }
