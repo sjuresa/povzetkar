@@ -128,6 +128,9 @@ public class YouTubeDataService {
 
         // Add the item only if it matches the fetch date or if no date is specified.
         if (fetchDate == null || itemDate.equals(fetchDate)) {
+            if (maxTotal != null && allItems.size() >= maxTotal) {
+                return true; // Stop, list is already full
+            }
             allItems.add(item);
         }
 

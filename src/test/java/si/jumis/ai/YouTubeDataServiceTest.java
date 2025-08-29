@@ -182,6 +182,27 @@ class YouTubeDataServiceTest {
         }
 
         @Test
+        @DisplayName("should strictly respect maxTotal and not exceed it")
+        void shouldStrictlyRespectMaxTotal() throws IOException {
+            // Arrange
+            final long maxTotal = 2L;
+            PlaylistItem item1 = createMockPlaylistItem("video1");
+            PlaylistItem item2 = createMockPlaylistItem("video2");
+            PlaylistItem item3 = createMockPlaylistItem("video3"); // This item should not be added
+
+            PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2, item3));
+
+            when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
+            when(mockPlaylistItemsList.execute()).thenReturn(response);
+
+            // Act
+            List<PlaylistItem> result = youtubeDataService.fetchPlaylistItems(UPLOADS_PLAYLIST_ID, null, maxTotal, null);
+
+            // Assert
+            assertEquals(maxTotal, result.size());
+        }
+
+        @Test
         @DisplayName("should stop when stopAtVideoId is found")
         void shouldStopWhenStopAtVideoIdIsFound() throws IOException {
             // Arrange
