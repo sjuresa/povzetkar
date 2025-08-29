@@ -113,7 +113,11 @@ public class YouTubeDataService {
      * @return {@code true} if the fetching process should be stopped, {@code false} otherwise.
      */
     private boolean processPlaylistItem(PlaylistItem item, List<PlaylistItem> allItems, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) {
-        // Stop condition 1: Reached a specific video ID.
+        // Stop condition 1: Reached the maximum number of items requested.
+        if (maxTotal != null && allItems.size() >= maxTotal) {
+            return true;
+        }
+        // Stop condition 2: Reached a specific video ID.
         if (stopAtVideoId != null && !stopAtVideoId.isBlank() && item.getSnippet().getResourceId().getVideoId().equals(stopAtVideoId)) {
             return true;
         }
@@ -121,21 +125,17 @@ public class YouTubeDataService {
         Instant publishedAt = Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue());
         LocalDate itemDate = getLocalDateInZone(publishedAt);
 
-        // Stop condition 2: Reached videos older than the target date.
+        // Stop condition 3: Reached videos older than the target date.
         if (fetchDate != null && itemDate.isBefore(fetchDate)) {
             return true;
         }
 
         // Add the item only if it matches the fetch date or if no date is specified.
         if (fetchDate == null || itemDate.equals(fetchDate)) {
-            if (maxTotal != null && allItems.size() >= maxTotal) {
-                return true; // Stop, list is already full
-            }
             allItems.add(item);
         }
 
-        // Stop condition 3: Reached the maximum number of items requested.
-        return maxTotal != null && allItems.size() >= maxTotal;
+        return false; // Continue processing
     }
 
 

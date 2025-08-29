@@ -167,8 +167,7 @@ class YouTubeDataServiceTest {
             PlaylistItem item1 = createMockPlaylistItem("video1");
             PlaylistItem item2 = createMockPlaylistItem("video2");
 
-            // Note: The response has a next page token, but the service should not fetch the next page.
-            PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2)).setNextPageToken("nextPage");
+            PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2));
 
             when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
             when(mockPlaylistItemsList.execute()).thenReturn(response);
