@@ -9,8 +9,8 @@ import si.jumis.ai.Prompts;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
-import si.jumis.util.FileUtils;
 import si.jumis.util.ResourceReader;
+import si.jumis.util.SummaryFileAppender;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,29 +30,6 @@ public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
     public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
     private static final int TRANSCRIPT_THRESHOLD_MINUTES = 50;
-
-    public interface FileWriter {
-        void appendToFile(Path path, String content) throws IOException;
-        boolean fileExists(Path path);
-        boolean fileHasContent(Path path) throws IOException;
-    }
-
-    public static class DefaultFileWriter implements FileWriter {
-        @Override
-        public void appendToFile(Path path, String content) throws IOException {
-            FileUtils.appendToFile(path, content);
-        }
-
-        @Override
-        public boolean fileExists(Path path) {
-            return FileUtils.fileExists(path);
-        }
-
-        @Override
-        public boolean fileHasContent(Path path) throws IOException {
-            return FileUtils.fileHasContent(path);
-        }
-    }
 
     private record VideoToProcess(YouTubeVideo video, Author author) {
     }
@@ -182,14 +159,7 @@ public class VideoSummarizationService {
 
         try {
             prepareOutputDirectory(outputFilePath);
-        } catch (IOException e) {
-            logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
-            return Collections.emptyList();
-        }
-
-        try {
-            boolean fileInitiallyHadContent = fileWriter.fileExists(outputFilePath) && fileWriter.fileHasContent(outputFilePath);
-            String separator;
+            SummaryFileAppender appender = new SummaryFileAppender(fileWriter, outputFilePath);
 
             for (int i = 0; i < sortedVideos.size(); i++) {
                 VideoToProcess videoToProcess = sortedVideos.get(i);
@@ -200,13 +170,8 @@ public class VideoSummarizationService {
                             sortedVideos.size(), video.title(), video.url(), video.authorName(),
                             video.formattedPublishedAt(), video.formattedDuration());
                 }
-                if (i == 0 && !fileInitiallyHadContent) {
-                    separator = "";
-                } else {
-                    separator = "\n\n---\n\n";
-                }
-                if (!dryRun && processSingleVideo(videoToProcess, outputFilePath, forDate, separator)) {
-                        processedVideos.add(video);
+                if (!dryRun && processSingleVideo(videoToProcess, appender, forDate)) {
+                    processedVideos.add(video);
                 }
 
             }
@@ -222,8 +187,8 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private boolean processSingleVideo(VideoToProcess videoToProcess, Path outputFilePath,
-                                       LocalDate processingDate, String separator) {
+    private boolean processSingleVideo(VideoToProcess videoToProcess, SummaryFileAppender appender,
+                                       LocalDate processingDate) {
         YouTubeVideo video = videoToProcess.video();
         String summary;
         try {
@@ -245,7 +210,7 @@ public class VideoSummarizationService {
         }
 
         try {
-            fileWriter.appendToFile(outputFilePath, separator + summary);
+            appender.append(summary);
             updateProcessingState(videoToProcess, processingDate); // Only update state on full success
             return true;
         } catch (IOException e) {
@@ -311,20 +276,12 @@ public class VideoSummarizationService {
 
         try {
             prepareOutputDirectory(outputFilePath);
+            SummaryFileAppender appender = new SummaryFileAppender(fileWriter, outputFilePath);
 
-            boolean fileInitiallyHadContent = fileWriter.fileExists(outputFilePath) && fileWriter.fileHasContent(outputFilePath);
-
-            for (int i = 0; i < videoUrls.size(); i++) {
-                String url = videoUrls.get(i);
-                logger.info("({}/{}) Processing URL: {}", i + 1, videoUrls.size(), url);
+            for (String url : videoUrls) {
+                logger.info("Processing URL: {}", url);
                 String summary = videoSummary.createSummaryForURL(url, date);
-                String contentToAppend;
-                if (i == 0 && !fileInitiallyHadContent) {
-                    contentToAppend = summary; // First item to an empty/new file, no leading separator.
-                } else {
-                    contentToAppend = "\n\n---\n\n" + summary; // Any subsequent item, or first item to a non-empty file.
-                }
-                fileWriter.appendToFile(outputFilePath, contentToAppend);
+                appender.append(summary);
             }
             logger.info("URL summarization complete.");
         } catch (IOException e) {

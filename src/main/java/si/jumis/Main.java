@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.GenAiPool;
 import si.jumis.ai.VideoSummary;
+import si.jumis.service.DefaultFileWriter;
+import si.jumis.service.FileWriter;
 import si.jumis.service.ProcessingStateService;
 import si.jumis.service.TimeTextFormatter;
 import si.jumis.service.VideoSummarizationService;
@@ -65,7 +67,7 @@ public class Main {
                 new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
                         .setApplicationName(YOUTUBE_APP_NAME).build(), zoneId);
         YouTubeTranscriptService transcriptService = new YouTubeTranscriptService(new TimeTextFormatter());
-        VideoSummarizationService.FileWriter fileWriter = new VideoSummarizationService.DefaultFileWriter();
+        FileWriter fileWriter = new DefaultFileWriter();
         ResourceReader resourceReader = new ResourceReader();
         VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService,
                 videoSummary, transcriptService, fileWriter, Clock.system(zoneId), resourceReader);
