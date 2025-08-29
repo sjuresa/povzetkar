@@ -10,7 +10,6 @@ import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.ResourceReader;
-import si.jumis.util.SummaryFileAppender;
 
 import java.io.IOException;
 import java.nio.file.Files;

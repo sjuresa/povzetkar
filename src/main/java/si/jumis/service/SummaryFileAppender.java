@@ -1,6 +1,4 @@
-package si.jumis.util;
-
-import si.jumis.service.FileWriter;
+package si.jumis.service;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -10,6 +8,7 @@ import java.nio.file.Path;
  */
 public class SummaryFileAppender {
 
+    public static final String SUMMARY_SEPARATOR = "\n\n---\n\n";
     private final FileWriter fileWriter;
     private final Path path;
     private boolean needsSeparator;
@@ -23,7 +22,7 @@ public class SummaryFileAppender {
     public void append(String content) throws IOException {
         String contentToAppend;
         if (needsSeparator) {
-            contentToAppend = "\n\n---\n\n" + content;
+            contentToAppend = SUMMARY_SEPARATOR + content;
         } else {
             contentToAppend = content;
             needsSeparator = true;
