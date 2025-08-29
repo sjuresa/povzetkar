@@ -18,6 +18,7 @@ import java.util.Set;
 public class NewVideoFetcherService {
 
     private static final Logger logger = LoggerFactory.getLogger(NewVideoFetcherService.class);
+    private static final long INITIAL_FETCH_VIDEO_COUNT = 50L;
 
     private final YouTubeDataService youtubeDataService;
     private final ProcessingStateService stateService;
@@ -61,7 +62,7 @@ public class NewVideoFetcherService {
         List<PlaylistItem> playlistItems;
         if (lastVideoId == null) {
             logger.info("No previous state found for {} on or before {}. Fetching recent videos to establish initial state.", author.name(), forDate);
-            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, 50L, null);
+            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, INITIAL_FETCH_VIDEO_COUNT, null);
         } else {
             logger.info("Found last processed video ID: {}. Fetching all newer videos since then.", lastVideoId);
             playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, null, lastVideoId);

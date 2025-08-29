@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,8 +48,18 @@ class NewVideoFetcherServiceTest {
             List<YouTubeVideo> expectedVideos = List.of(video);
             LocalDate today = LocalDate.now();
 
+            // Setup mocks for a consistent data flow
+            com.google.api.services.youtube.model.PlaylistItem mockedItem = org.mockito.Mockito.mock(com.google.api.services.youtube.model.PlaylistItem.class);
+            com.google.api.services.youtube.model.PlaylistItemSnippet mockedSnippet = org.mockito.Mockito.mock(com.google.api.services.youtube.model.PlaylistItemSnippet.class);
+            com.google.api.services.youtube.model.ResourceId mockedResourceId = org.mockito.Mockito.mock(com.google.api.services.youtube.model.ResourceId.class);
+            when(mockedItem.getSnippet()).thenReturn(mockedSnippet);
+            when(mockedSnippet.getResourceId()).thenReturn(mockedResourceId);
+            when(mockedResourceId.getVideoId()).thenReturn("id1");
+            List<com.google.api.services.youtube.model.PlaylistItem> playlistItems = List.of(mockedItem);
+
             when(stateService.findLastProcessedVideoIdBefore(author.channelId(), today)).thenReturn(null);
-            when(youtubeDataService.fetchPlaylistItems(author.uploadsPlaylistId(), today, 50L, null)).thenReturn(Collections.emptyList());
+            when(youtubeDataService.fetchPlaylistItems(author.uploadsPlaylistId(), today, 50L, null)).thenReturn(playlistItems);
+            when(youtubeDataService.fetchVideoDurations(List.of("id1"))).thenReturn(java.util.Map.of("id1", video.duration()));
             when(youtubeDataService.constructYouTubeVideos(any(), any())).thenReturn(expectedVideos);
 
             // Act
