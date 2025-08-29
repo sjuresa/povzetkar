@@ -87,29 +87,22 @@ public class YouTubeDataService {
     public List<PlaylistItem> fetchPlaylistItems(String uploadsPlaylistId, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) throws IOException {
         List<PlaylistItem> allItems = new ArrayList<>();
         String nextPageToken = null;
-        boolean stopFetching = false;
+        boolean stopProcessing = false;
 
         do {
             PlaylistItemListResponse response = executePlaylistItemsRequest(uploadsPlaylistId, nextPageToken);
             List<PlaylistItem> currentPageItems = response.getItems();
 
-            if (currentPageItems == null || currentPageItems.isEmpty()) {
-                break; // No more items to fetch
-            }
-
-            for (PlaylistItem item : currentPageItems) {
-                if (processPlaylistItem(item, allItems, fetchDate, maxTotal, stopAtVideoId)) {
-                    stopFetching = true;
-                    break;
+            if (currentPageItems != null && !currentPageItems.isEmpty()) {
+                for (PlaylistItem item : currentPageItems) {
+                    if (processPlaylistItem(item, allItems, fetchDate, maxTotal, stopAtVideoId)) {
+                        stopProcessing = true;
+                        break;
+                    }
                 }
             }
-
             nextPageToken = response.getNextPageToken();
-            if (nextPageToken == null) {
-                stopFetching = true; // No more pages to fetch
-            }
-
-        } while (!stopFetching);
+        } while (nextPageToken != null && !stopProcessing);
 
         return allItems;
     }
