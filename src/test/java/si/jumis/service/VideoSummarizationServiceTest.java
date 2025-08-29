@@ -14,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
+import si.jumis.util.ResourceReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,6 +46,8 @@ class VideoSummarizationServiceTest {
     private YouTubeTranscriptService youTubeTranscriptService;
     @Mock
     private VideoSummarizationService.FileWriter mockFileWriter;
+    @Mock
+    private ResourceReader resourceReader;
     @Captor
     private ArgumentCaptor<String> stringCaptor;
     private VideoSummarizationService videoSummarizationService;
@@ -58,7 +61,7 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK, resourceReader);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L, "UUchannel1");
         author2 = new Author("@author2", "Author Two", "UCchannel2", 2000L, "UUchannel2");
