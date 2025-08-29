@@ -155,27 +155,28 @@ public class VideoSummarizationService {
     private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate forDate,
                                                    Path outputFilePath, boolean dryRun) {
         List<YouTubeVideo> processedVideos = new ArrayList<>();
+        SummaryFileAppender appender;
 
         try {
             prepareOutputDirectory(outputFilePath);
-            SummaryFileAppender appender = new SummaryFileAppender(fileWriter, outputFilePath);
-
-            for (int i = 0; i < sortedVideos.size(); i++) {
-                VideoToProcess videoToProcess = sortedVideos.get(i);
-                YouTubeVideo video = videoToProcess.video();
-
-                if (logger.isInfoEnabled()) {
-                    logger.info("({}/{}) Summarizing: [{}]({})\n  by {}, Published at: {}, duration: {}", i + 1,
-                            sortedVideos.size(), video.title(), video.url(), video.authorName(),
-                            video.formattedPublishedAt(), video.formattedDuration());
-                }
-                if (!dryRun && processSingleVideo(videoToProcess, appender, forDate)) {
-                    processedVideos.add(video);
-                }
-
-            }
+            appender = new SummaryFileAppender(fileWriter, outputFilePath);
         } catch (IOException e) {
-            logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
+            logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
+            return Collections.emptyList();
+        }
+
+        for (int i = 0; i < sortedVideos.size(); i++) {
+            VideoToProcess videoToProcess = sortedVideos.get(i);
+            YouTubeVideo video = videoToProcess.video();
+
+            if (logger.isInfoEnabled()) {
+                logger.info("({}/{}) Summarizing: [{}]({})\n  by {}, Published at: {}, duration: {}", i + 1,
+                        sortedVideos.size(), video.title(), video.url(), video.authorName(),
+                        video.formattedPublishedAt(), video.formattedDuration());
+            }
+            if (!dryRun && processSingleVideo(videoToProcess, appender, forDate)) {
+                processedVideos.add(video);
+            }
         }
 
         logger.info("Author summarization workflow complete.");
@@ -272,20 +273,26 @@ public class VideoSummarizationService {
      */
     public void summarizeFromUrls(List<String> videoUrls, String date, Path outputFilePath) {
         logger.info("Preparing to generate {} summaries from URLs and save to {}", videoUrls.size(), outputFilePath);
-
+        SummaryFileAppender appender;
         try {
             prepareOutputDirectory(outputFilePath);
-            SummaryFileAppender appender = new SummaryFileAppender(fileWriter, outputFilePath);
+            appender = new SummaryFileAppender(fileWriter, outputFilePath);
+        } catch (IOException e) {
+            logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
+            return;
+        }
 
-            for (String url : videoUrls) {
-                logger.info("Processing URL: {}", url);
+        int count = 0;
+        for (String url : videoUrls) {
+            try {
+                logger.info("({}/{}) Processing URL: {}", ++count, videoUrls.size(), url);
                 String summary = videoSummary.createSummaryForURL(url, date);
                 appender.append(summary);
+            } catch (IOException e) {
+                logger.error("An error occurred while writing summary to file: {}. Skipping URL: {}", outputFilePath, url, e);
             }
-            logger.info("URL summarization complete.");
-        } catch (IOException e) {
-            logger.error("An error occurred while writing summaries to file: {}", outputFilePath, e);
         }
+        logger.info("URL summarization complete.");
     }
 
     private void prepareOutputDirectory(Path outputFilePath) throws IOException {
