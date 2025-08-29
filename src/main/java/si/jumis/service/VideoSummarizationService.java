@@ -69,10 +69,10 @@ public class VideoSummarizationService {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
-        this.resourceReader = resourceReader;
         this.youTubeTranscriptService = youTubeTranscriptService;
         this.fileWriter = fileWriter;
         this.clock = clock;
+        this.resourceReader = resourceReader;
     }
 
     public List<Author> getAuthorsWithDetails() {
