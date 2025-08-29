@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.Prompts;
 import si.jumis.ai.VideoSummary;
-import si.jumis.ai.YouTubeDataService;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.FileUtils;

@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.GenAiPool;
 import si.jumis.ai.VideoSummary;
-import si.jumis.ai.YouTubeDataService;
+import si.jumis.service.YouTubeDataService;
 import si.jumis.service.ProcessingStateService;
 import si.jumis.service.TimeTextFormatter;
 import si.jumis.service.VideoSummarizationService;

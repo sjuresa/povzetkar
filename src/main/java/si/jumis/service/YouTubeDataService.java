@@ -1,4 +1,4 @@
-package si.jumis.ai;
+package si.jumis.service;
 
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Channel;
