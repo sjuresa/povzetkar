@@ -66,11 +66,17 @@ public class YouTubeDataService {
                 channel.getContentDetails().getRelatedPlaylists().getUploads() == null) {
             throw new IOException("Could not find uploads playlist for channel ID: " + channelId);
         }
+
+        long subscriberCount = 0L;
+        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
+            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+        }
+
         return new Author(
                 channel.getSnippet().getCustomUrl(),
                 channel.getSnippet().getTitle(),
                 channel.getId(),
-                channel.getStatistics().getSubscriberCount().longValue(),
+                subscriberCount,
                 channel.getContentDetails().getRelatedPlaylists().getUploads()
         );
     }

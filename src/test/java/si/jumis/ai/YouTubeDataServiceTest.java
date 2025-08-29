@@ -103,6 +103,24 @@ class YouTubeDataServiceTest {
             verify(mockChannels).list(expectedParts);
             verify(mockChannelsList).setId(List.of(INVALID_CHANNEL_ID));
         }
+
+        @Test
+        @DisplayName("should handle null subscriber count gracefully")
+        void shouldHandleNullSubscriberCountGracefully() throws IOException {
+            // Arrange
+            Author authorWithNullSubscribers = new Author(TEST_AUTHOR_CUSTOM_URL, TEST_AUTHOR_TITLE, VALID_CHANNEL_ID, 0L, UPLOADS_PLAYLIST_ID);
+            Channel mockChannel = createMockAuthorChannel(authorWithNullSubscribers);
+            // Explicitly set subscriber count to null to simulate a hidden subscriber count
+            mockChannel.getStatistics().setSubscriberCount(null);
+
+            setupMockChannelsList(VALID_CHANNEL_ID, List.of(mockChannel));
+
+            // Act
+            Author result = youtubeDataService.getAuthorDetails(VALID_CHANNEL_ID);
+
+            // Assert
+            assertEquals(0L, result.subscriberCount());
+        }
     }
 
     @Nested
