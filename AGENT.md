@@ -68,21 +68,21 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 
 ## B. Test-Driven Development Mandates
 
-For any change to production code—whether it is a bug fix or a new feature—I am required to follow a strict "Red-Green-Refactor" cycle.
+I will adhere to one of the following two TDD workflows for all code changes.
 
-**The Core Prohibition: I am forbidden from modifying any production code (`/src/main/`) until a corresponding failing test (`/src/test/`) has been created and acknowledged.**
+### 1. For Changes to External Behavior (Bug Fixes & New Features)
+This workflow applies to any change that alters the public contract of the code, including new public classes and methods. It **must** follow the **"Red-Green-Refactor"** cycle.
 
-1.  **RED — Write a Failing Test:** Before touching any production code, I **must** first write a new test that reproduces the bug or defines the new feature. I must demonstrate that this test fails against the current codebase.
+*   **RED — Write a Failing Test:** Before touching any production code, I **must** first write a new test that reproduces the bug or defines the new feature. I must demonstrate that this test fails against the current codebase.
+*   **GREEN — Make the Test Pass:** I will then write the **absolute minimum** amount of production code necessary to make the new test pass.
+*   **REFACTOR — Improve the Code:** Only after the test is passing may I refactor the production and test code to improve its design, clarity, and maintainability, confident that the passing test will protect against regressions.
 
-2.  **GREEN — Make the Test Pass:** I will then write the **absolute minimum** amount of production code necessary to make the new test pass.
+### 2. For Changes to Internal Implementation (Refactoring)
+This workflow applies only to changes that do not alter the public contract of the code (e.g., refactoring a private method). It **must** follow the **"Green-to-Green"** cycle.
 
-3.  **REFACTOR — Improve the Code:** Only after the test is passing may I refactor the production and test code to improve its design, clarity, and maintainability, confident that the passing test will protect against regressions.
-
-#### Handling Pure Refactoring
-A pure refactoring does not change external behavior and follows a slightly different, "Green-to-Green" cycle:
-1.  **Verify Green:** First, I will run all relevant existing tests to confirm they are passing.
-2.  **Refactor:** I will then perform the code refactoring.
-3.  **Verify Green Again:** Finally, I will run the same tests again to ensure they still pass, proving that the refactoring did not introduce a regression.
+*   **Verify Green:** First, I will run all relevant existing tests to confirm they are passing.
+*   **Refactor:** I will then perform the code refactoring.
+*   **Verify Green Again:** Finally, I will run the same tests again to ensure they still pass, proving that the refactoring did not introduce a regression.
 
 ## C. Supporting Mandates
 
@@ -94,6 +94,9 @@ Before any plan to modify or remove existing code is presented for approval, a m
 2.  **Execute `find_usages`:** My very first information-gathering action for any modification/removal task **must** be to run the `find_usages` tool on the target.
 3.  **Report Findings Upfront:** The results of this `find_usages` call must be presented as the first item in my "Findings." If the tool returns no usages, I must explicitly state that.
 4.  **No Plan Without Analysis:** I am forbidden from creating or presenting a plan until this usage analysis is complete and has been presented to you.
+
+### The Test Coverage Mandate
+For any change that introduces new, publicly accessible behavior (e.g., a new public class or a new public method), a corresponding new test **must** be created to validate that behavior. The plan is incomplete until it explicitly accounts for this new test.
 
 ### Code Refactoring Checklist
 To prevent incomplete analysis, any plan involving code modification or refactoring is incomplete until it explicitly addresses the following three areas.
@@ -110,7 +113,7 @@ This protocol is a non-negotiable internal gating mechanism. It is a prerequisit
 Before presenting any plan, I **must** halt and explicitly confirm the completion of the following checks:
 1.  **Task Definition:** Is the task clearly defined in `task.md` as per Step 1 of the Mandatory Workflow?
 2.  **Usage Analysis:** Has the **Usage Analysis Mandate** been fully satisfied for any code being modified or removed?
-3.  **TDD Analysis:** Has the **Test-Driven Development Mandate** been fully analyzed? The plan must correctly follow the Red-Green-Refactor or Green-to-Green cycle. This is not optional.
+3.  **TDD Analysis:** Has the **Test-Driven Development Mandate** been fully analyzed? The plan must correctly follow the appropriate TDD workflow (Red-Green-Refactor for new behavior, Green-to-Green for internal refactoring).
 4.  **Information Completeness:** Have I gathered all necessary information from the codebase to form a plan based on facts, not assumptions?
 5.  **Plan Structure:** Does the subsequent plan structure include a **Design Justification** and a **Breaking Changes Analysis**?
 

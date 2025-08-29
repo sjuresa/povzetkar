@@ -1,6 +1,5 @@
 package si.jumis.service;
 
-import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.genai.types.Content;
 import com.google.genai.types.Part;
 import org.slf4j.Logger;
@@ -16,11 +15,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Orchestrates different video summarization workflows.
@@ -30,9 +31,6 @@ public class VideoSummarizationService {
     public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
     private static final int TRANSCRIPT_THRESHOLD_MINUTES = 50;
 
-    private record VideoToProcess(YouTubeVideo video, Author author) {
-    }
-
     private final YouTubeDataService youtubeDataService;
     private final ProcessingStateService stateService;
     private final VideoSummary videoSummary;
@@ -40,8 +38,9 @@ public class VideoSummarizationService {
     private final YouTubeTranscriptService youTubeTranscriptService;
     private final FileWriter fileWriter;
     private final Clock clock;
+    private final NewVideoFetcherService newVideoFetcherService;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock, ResourceReader resourceReader) {
+    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock, ResourceReader resourceReader, NewVideoFetcherService newVideoFetcherService) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
@@ -49,6 +48,7 @@ public class VideoSummarizationService {
         this.fileWriter = fileWriter;
         this.clock = clock;
         this.resourceReader = resourceReader;
+        this.newVideoFetcherService = newVideoFetcherService;
     }
 
     public List<Author> getAuthorsWithDetails() {
@@ -71,7 +71,7 @@ public class VideoSummarizationService {
             return Collections.emptyList();
         }
 
-        List<VideoToProcess> allNewVideos = fetchAllNewVideos(authors, forDate);
+        List<NewVideoFetcherService.VideoToProcess> allNewVideos = newVideoFetcherService.fetchAllNewVideos(authors, forDate);
 
         if (allNewVideos.isEmpty()) {
             logger.info("No new videos found for any author in the specified period.");
@@ -103,56 +103,12 @@ public class VideoSummarizationService {
         return authors;
     }
 
-    private List<VideoToProcess> fetchAllNewVideos(List<Author> authors, LocalDate forDate) {
-        List<VideoToProcess> allNewVideos = new ArrayList<>();
-        Set<String> processedVideoIds = new HashSet<>();
-        for (Author author : authors) {
-            try {
-                logger.info("--- Checking for new videos from {} ---", author.name());
-                String lastVideoId = stateService.findLastProcessedVideoIdBefore(author.channelId(), forDate);
-                List<YouTubeVideo> fetchedVideos = fetchVideosForAuthor(author, forDate, lastVideoId);
-
-                logger.info("Found {} new videos for {} in the period.", fetchedVideos.size(), author.name());
-                for (YouTubeVideo video : fetchedVideos) {
-                    if (processedVideoIds.add(video.id())) {
-                        allNewVideos.add(new VideoToProcess(video, author));
-                    } else {
-                        logger.info("Skipping duplicate video: {} ({})", video.title(), video.id());
-                    }
-                }
-
-            } catch (IOException e) {
-                logger.error("Failed to fetch videos for author '{}'. Skipping this author.", author.name(), e);
-            }
-        }
-        return allNewVideos;
-    }
-
-    private List<YouTubeVideo> fetchVideosForAuthor(Author author, LocalDate forDate, String lastVideoId) throws IOException {
-        String uploadsPlaylistId = author.uploadsPlaylistId();
-
-        List<PlaylistItem> playlistItems;
-        if (lastVideoId == null) {
-            logger.info("No previous state found for {} on or before {}. Fetching recent videos to establish initial state.", author.name(), forDate);
-            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, 50L, null);
-        } else {
-            logger.info("Found last processed video ID: {}. Fetching all newer videos since then.", lastVideoId);
-            playlistItems = youtubeDataService.fetchPlaylistItems(uploadsPlaylistId, forDate, null, lastVideoId);
-        }
-        List<String> videoIds = playlistItems.stream()
-                .map(item -> item.getSnippet().getResourceId().getVideoId())
-                .toList();
-        Map<String, Duration> videoDurations = youtubeDataService.fetchVideoDurations(videoIds);
-
-        return youtubeDataService.constructYouTubeVideos(playlistItems, videoDurations);
-    }
-
     /**
      * Processes a pre-sorted batch of videos, handling file creation and looping.
      *
      * @return A list of the videos that were actually processed (not in dry run).
      */
-    private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate forDate,
+    private List<YouTubeVideo> summarizeVideoBatch(List<NewVideoFetcherService.VideoToProcess> sortedVideos, LocalDate forDate,
                                                    Path outputFilePath, boolean dryRun) {
         List<YouTubeVideo> processedVideos = new ArrayList<>();
         SummaryFileAppender appender = null;
@@ -167,7 +123,7 @@ public class VideoSummarizationService {
         }
 
         for (int i = 0; i < sortedVideos.size(); i++) {
-            VideoToProcess videoToProcess = sortedVideos.get(i);
+            NewVideoFetcherService.VideoToProcess videoToProcess = sortedVideos.get(i);
             YouTubeVideo video = videoToProcess.video();
 
             if (logger.isInfoEnabled()) {
@@ -188,7 +144,7 @@ public class VideoSummarizationService {
      * Handles the summarization, file writing, and state update for a single video.
      * If summarization fails, it logs the error and still updates the processing state.
      */
-    private boolean processSingleVideo(VideoToProcess videoToProcess, SummaryFileAppender appender,
+    private boolean processSingleVideo(NewVideoFetcherService.VideoToProcess videoToProcess, SummaryFileAppender appender,
                                        LocalDate processingDate) {
         YouTubeVideo video = videoToProcess.video();
         String summary;
@@ -258,7 +214,7 @@ public class VideoSummarizationService {
                 e.toString());
     }
 
-    private void updateProcessingState(VideoToProcess videoToProcess, LocalDate processingDate) {
+    private void updateProcessingState(NewVideoFetcherService.VideoToProcess videoToProcess, LocalDate processingDate) {
         YouTubeVideo video = videoToProcess.video();
         Author author = videoToProcess.author();
         try {
