@@ -155,14 +155,15 @@ public class VideoSummarizationService {
     private List<YouTubeVideo> summarizeVideoBatch(List<VideoToProcess> sortedVideos, LocalDate forDate,
                                                    Path outputFilePath, boolean dryRun) {
         List<YouTubeVideo> processedVideos = new ArrayList<>();
-        SummaryFileAppender appender;
-
-        try {
-            prepareOutputDirectory(outputFilePath);
-            appender = new SummaryFileAppender(fileWriter, outputFilePath);
-        } catch (IOException e) {
-            logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
-            return Collections.emptyList();
+        SummaryFileAppender appender = null;
+        if (!dryRun) {
+            try {
+                prepareOutputDirectory(outputFilePath);
+                appender = new SummaryFileAppender(fileWriter, outputFilePath);
+            } catch (IOException e) {
+                logger.error("Failed to prepare output file directory for {}. Aborting summarization.", outputFilePath, e);
+                return Collections.emptyList();
+            }
         }
 
         for (int i = 0; i < sortedVideos.size(); i++) {

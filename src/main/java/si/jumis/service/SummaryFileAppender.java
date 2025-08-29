@@ -8,7 +8,7 @@ import java.nio.file.Path;
  */
 public class SummaryFileAppender {
 
-    public static final String SUMMARY_SEPARATOR = "\n\n---\n\n";
+    private static final String SUMMARY_SEPARATOR = "\n\n---\n\n";
     private final FileWriter fileWriter;
     private final Path path;
     private boolean needsSeparator;
