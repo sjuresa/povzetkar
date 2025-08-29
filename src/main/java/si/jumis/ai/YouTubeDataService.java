@@ -93,7 +93,9 @@ public class YouTubeDataService {
             PlaylistItemListResponse response = executePlaylistItemsRequest(uploadsPlaylistId, nextPageToken);
             List<PlaylistItem> currentPageItems = response.getItems();
 
-            if (currentPageItems != null && !currentPageItems.isEmpty()) {
+            if (currentPageItems == null || currentPageItems.isEmpty()) {
+                stopProcessing = true;
+            } else {
                 for (PlaylistItem item : currentPageItems) {
                     if (processPlaylistItem(item, allItems, fetchDate, maxTotal, stopAtVideoId)) {
                         stopProcessing = true;
@@ -135,7 +137,8 @@ public class YouTubeDataService {
             allItems.add(item);
         }
 
-        return false; // Continue processing
+        // Return true to stop if the max total is now reached.
+        return maxTotal != null && allItems.size() >= maxTotal;
     }
 
 

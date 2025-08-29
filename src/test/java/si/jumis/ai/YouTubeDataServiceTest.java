@@ -167,7 +167,7 @@ class YouTubeDataServiceTest {
             PlaylistItem item1 = createMockPlaylistItem("video1");
             PlaylistItem item2 = createMockPlaylistItem("video2");
 
-            PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2));
+            PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2)).setNextPageToken("nextPage");
 
             when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
             when(mockPlaylistItemsList.execute()).thenReturn(response);
