@@ -167,7 +167,6 @@ class YouTubeDataServiceTest {
             PlaylistItem item1 = createMockPlaylistItem("video1");
             PlaylistItem item2 = createMockPlaylistItem("video2");
 
-            // Note: The response has a next page token, but the service should not fetch the next page.
             PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2)).setNextPageToken("nextPage");
 
             when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
@@ -179,6 +178,27 @@ class YouTubeDataServiceTest {
             // Assert
             assertEquals(2, result.size());
             verify(mockPlaylistItemsList, times(1)).execute(); // Verify that we did not paginate
+        }
+
+        @Test
+        @DisplayName("should strictly respect maxTotal and not exceed it")
+        void shouldStrictlyRespectMaxTotal() throws IOException {
+            // Arrange
+            final long maxTotal = 2L;
+            PlaylistItem item1 = createMockPlaylistItem("video1");
+            PlaylistItem item2 = createMockPlaylistItem("video2");
+            PlaylistItem item3 = createMockPlaylistItem("video3"); // This item should not be added
+
+            PlaylistItemListResponse response = new PlaylistItemListResponse().setItems(List.of(item1, item2, item3));
+
+            when(mockPlaylistItemsList.setPageToken(null)).thenReturn(mockPlaylistItemsList);
+            when(mockPlaylistItemsList.execute()).thenReturn(response);
+
+            // Act
+            List<PlaylistItem> result = youtubeDataService.fetchPlaylistItems(UPLOADS_PLAYLIST_ID, null, maxTotal, null);
+
+            // Assert
+            assertEquals(maxTotal, result.size());
         }
 
         @Test

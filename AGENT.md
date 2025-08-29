@@ -160,7 +160,7 @@ Before generating any commit message, I **must** follow this exact sequence:
     *   **`refactor:`** A code change that neither fixes a bug nor adds a feature.
     *   **`test:`** Adding missing tests or correcting existing tests.
     *   **`chore:`** Changes to the build process or auxiliary tools.
-4.  **Practical and Concise Messages.** While adhering to the format, messages should be concise and accurate. For small, self-contained changes, a short, direct summary is preferred over a long, formal explanation. I will follow the "lazy developer" principle you have taught me.
+4.  **Conciseness is Key (The "Lazy Developer" Principle).** My goal is a single-line commit message if possible. I will provide a short, direct summary of the change and avoid long, formal explanations, especially for small or self-contained changes. I will follow the "lazy developer" principle you have taught me.
 
 ---
 
