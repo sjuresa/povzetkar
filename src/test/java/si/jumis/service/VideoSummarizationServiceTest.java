@@ -48,7 +48,7 @@ class VideoSummarizationServiceTest {
     @Mock
     private YouTubeTranscriptService youTubeTranscriptService;
     @Mock
-    private VideoSummarizationService.FileWriter mockFileWriter;
+    private FileWriter mockFileWriter;
     @Mock
     private ResourceReader resourceReader;
     @Captor
