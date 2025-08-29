@@ -288,8 +288,8 @@ public class VideoSummarizationService {
                 logger.info("({}/{}) Processing URL: {}", ++count, videoUrls.size(), url);
                 String summary = videoSummary.createSummaryForURL(url, date);
                 appender.append(summary);
-            } catch (IOException e) {
-                logger.error("An error occurred while writing summary to file: {}. Skipping URL: {}", outputFilePath, url, e);
+            } catch (Exception e) {
+                logger.error("Failed to process and write summary for URL: {}. Skipping.", url, e);
             }
         }
         logger.info("URL summarization complete.");

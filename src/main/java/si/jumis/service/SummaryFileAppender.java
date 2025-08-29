@@ -20,13 +20,8 @@ public class SummaryFileAppender {
     }
 
     public void append(String content) throws IOException {
-        String contentToAppend;
-        if (needsSeparator) {
-            contentToAppend = SUMMARY_SEPARATOR + content;
-        } else {
-            contentToAppend = content;
-            needsSeparator = true;
-        }
+        String contentToAppend = needsSeparator ? SUMMARY_SEPARATOR + content : content;
         fileWriter.appendToFile(path, contentToAppend);
+        needsSeparator = true;
     }
 }
