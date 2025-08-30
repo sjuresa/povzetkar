@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
+import si.jumis.service.AuthorService;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
 import si.jumis.util.ResourceReader;
@@ -49,13 +50,15 @@ public class Povzetkar {
     private final VideoSummarizationService summarizationService;
     private final VideoSummary videoSummary;
     private final ResourceReader resourceReader;
+    private final AuthorService authorService;
 
     private record BriefingInfo(Path path, LocalDate date, String title, String summary) {}
 
-    public Povzetkar(VideoSummarizationService summarizationService, VideoSummary videoSummary, ResourceReader resourceReader) {
+    public Povzetkar(VideoSummarizationService summarizationService, VideoSummary videoSummary, ResourceReader resourceReader, AuthorService authorService) {
         this.summarizationService = summarizationService;
         this.videoSummary = videoSummary;
         this.resourceReader = resourceReader;
+        this.authorService = authorService;
     }
 
     /**
@@ -72,7 +75,7 @@ public class Povzetkar {
     }
 
     void runSummarizeAndBriefWorkflow(LocalDate forDate, boolean dryRun) {
-        List<Author> authors = summarizationService.getAuthorsWithDetails();
+        List<Author> authors = authorService.getAuthorsWithDetails();
         String summaryFileName = "summaries_" + forDate.format(DMY_DATE_FORMAT) + ".md";
         Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
 

@@ -8,7 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.GenAiPool;
 import si.jumis.ai.VideoSummary;
+import si.jumis.service.AuthorService;
+import si.jumis.service.ContentCreationService;
 import si.jumis.service.DefaultFileWriter;
+import si.jumis.service.FailureLoggerService;
 import si.jumis.service.FileWriter;
 import si.jumis.service.NewVideoFetcherService;
 import si.jumis.service.ProcessingStateService;
@@ -71,10 +74,13 @@ public class Main {
         FileWriter fileWriter = new DefaultFileWriter();
         ResourceReader resourceReader = new ResourceReader();
         NewVideoFetcherService newVideoFetcherService = new NewVideoFetcherService(youtubeDataService, stateService);
-        VideoSummarizationService summarizationService = new VideoSummarizationService(youtubeDataService, stateService,
-                videoSummary, transcriptService, fileWriter, Clock.system(zoneId), resourceReader, newVideoFetcherService);
+        ContentCreationService contentCreationService = new ContentCreationService(transcriptService);
+        FailureLoggerService failureLoggerService = new FailureLoggerService(fileWriter, Clock.system(zoneId));
+        VideoSummarizationService summarizationService = new VideoSummarizationService(stateService,
+                videoSummary, fileWriter, newVideoFetcherService, contentCreationService, failureLoggerService);
+        AuthorService authorService = new AuthorService(youtubeDataService, resourceReader);
 
-        return new Povzetkar(summarizationService, videoSummary, resourceReader);
+        return new Povzetkar(summarizationService, videoSummary, resourceReader, authorService);
     }
 
     /**
