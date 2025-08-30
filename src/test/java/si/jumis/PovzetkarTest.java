@@ -4,11 +4,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
+import si.jumis.service.AuthorService;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
 
@@ -37,6 +43,8 @@ class PovzetkarTest {
     private VideoSummarizationService summarizationService;
     @Mock
     private VideoSummary videoSummary;
+    @Mock
+    private AuthorService authorService;
 
     @InjectMocks
     private Povzetkar povzetkar;
@@ -83,7 +91,7 @@ class PovzetkarTest {
             Path briefingPath = BRIEFINGS_BASE_DIR.resolve("2025/07/daily_briefing_18.7.2025.md");
             String existingUpdates = "## Update: 2025-07-17 10:00:00\n\nOld stuff.\n\n---\n\n";
 
-            when(summarizationService.getAuthorsWithDetails()).thenReturn(authors);
+            when(authorService.getAuthorsWithDetails()).thenReturn(authors);
             when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
                     .thenReturn(processedVideos);
 
@@ -127,6 +135,10 @@ class PovzetkarTest {
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class);
              MockedStatic<FileUtils> mockedFileUtils = Mockito.mockStatic(FileUtils.class)) {
             // Arrange
+            List<Author> authors = List.of(
+                    new Author("AuthorHandle", "Author One", "channel1", 12345, "UUchannel1")
+            );
+            when(authorService.getAuthorsWithDetails()).thenReturn(authors);
             when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), anyBoolean())).thenReturn(Collections.emptyList());
 
             // No briefings found
@@ -151,6 +163,11 @@ class PovzetkarTest {
             String briefingContent = "## Briefing\n\n" + summaryContent;
             Instant videoPublishedDate = Instant.parse("2025-07-18T10:00:00Z");
             List<YouTubeVideo> processedVideos = List.of(createMockVideo("vid1", "Test Video", videoPublishedDate, 120));
+
+            List<Author> authors = List.of(
+                    new Author("AuthorHandle", "Author One", "channel1", 12345, "UUchannel1")
+            );
+            when(authorService.getAuthorsWithDetails()).thenReturn(authors);
 
             // Condition 1: Must have processed videos to trigger the briefing workflow.
             when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
