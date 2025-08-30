@@ -1,5 +1,7 @@
 package si.jumis.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.FileUtils;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 public class DocumentationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(DocumentationService.class);
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss");
     private static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("d.M.yyyy");
 
@@ -39,13 +42,16 @@ public class DocumentationService {
     public record BriefingInfo(Path path, LocalDate date, String title, String summary) {}
 
     public void updateDocumentationFiles(List<YouTubeVideo> lastBatch, List<Author> authors) throws IOException {
+        logger.info("Updating documentation files...");
         List<BriefingInfo> briefings = findAndParseBriefings();
         if (briefings.isEmpty() && lastBatch.isEmpty()) {
+            logger.info("No new videos or briefings. Skipping documentation update.");
             return;
         }
 
         String readmeContent = generateReadmeContent(briefings, lastBatch, authors);
         FileUtils.saveToFile(README_PATH, readmeContent);
+        logger.info("Successfully updated README.md at {}", README_PATH);
 
         insertUpdatesToFile(lastBatch);
     }
@@ -59,6 +65,7 @@ public class DocumentationService {
         }
 
         FileUtils.saveToFile(UPDATES_PATH, newUpdateBlock + existingContent);
+        logger.info("Successfully updated updates.md at {}", UPDATES_PATH);
     }
 
     private String createUpdateBlock(List<YouTubeVideo> lastBatch) {
@@ -118,9 +125,9 @@ public class DocumentationService {
 
             return Optional.of(new BriefingInfo(path, date, title, summary));
         } catch (IOException | java.time.format.DateTimeParseException e) {
+            logger.warn("Could not parse briefing file: {}. Skipping.", path, e);
             return Optional.empty();
-        }
-    }
+        }    }
 
     private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch, List<Author> authors) {
         StringBuilder sb = new StringBuilder();
