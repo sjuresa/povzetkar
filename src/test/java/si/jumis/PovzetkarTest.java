@@ -67,25 +67,30 @@ class PovzetkarTest {
     @Test
     @DisplayName("S_B workflow with new videos updates documentation")
     void run_summarizeAndBriefWorkflow_withNewVideos_updatesDocumentation() throws IOException {
-        // Arrange
-        List<Author> authors = List.of(
-                new Author("AuthorHandle", "Author One", "channel1", 12345, "UUchannel1")
-        );
-        List<YouTubeVideo> processedVideos = List.of(
-                createMockVideo("vid2", "Newer Video", Instant.now(), 123),
-                createMockVideo("vid1", "Older Video", Instant.now().minus(Duration.ofHours(1)), 456)
-        );
+        try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
+            // Arrange
+            List<Author> authors = List.of(
+                    new Author("AuthorHandle", "Author One", "channel1", 12345, "UUchannel1")
+            );
+            List<YouTubeVideo> processedVideos = List.of(
+                    createMockVideo("vid2", "Newer Video", Instant.now(), 123),
+                    createMockVideo("vid1", "Older Video", Instant.now().minus(Duration.ofHours(1)), 456)
+            );
 
-        when(authorService.getAuthorsWithDetails()).thenReturn(authors);
-        when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
-                .thenReturn(processedVideos);
-        when(videoSummary.createBriefingFromSummaries(anyString(), anyString())).thenReturn("briefing");
+            when(authorService.getAuthorsWithDetails()).thenReturn(authors);
+            when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
+                    .thenReturn(processedVideos);
 
-        // Act
-        povzetkar.run(new RunConfiguration("S_B", testDate, false));
+            // Mock file system to prevent NoSuchFileException and ensure deterministic behavior
+            mockedFiles.when(() -> Files.readString(any(Path.class))).thenReturn("summary content");
+            when(videoSummary.createBriefingFromSummaries(anyString(), anyString())).thenReturn("briefing");
 
-        // Assert
-        verify(documentationService).updateDocumentationFiles(processedVideos, authors);
+            // Act
+            povzetkar.run(new RunConfiguration("S_B", testDate, false));
+
+            // Assert
+            verify(documentationService).updateDocumentationFiles(processedVideos, authors);
+        }
     }
 
     @Test

@@ -39,7 +39,7 @@ public class DocumentationService {
         this.clock = clock;
     }
 
-    public record BriefingInfo(Path path, LocalDate date, String title, String summary) {}
+    private record BriefingInfo(Path path, LocalDate date, String title, String summary) {}
 
     public void updateDocumentationFiles(List<YouTubeVideo> lastBatch, List<Author> authors) throws IOException {
         logger.info("Updating documentation files...");
