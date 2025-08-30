@@ -57,9 +57,12 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
 *   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
 
-**Step 5: Execute the Plan**
-*   Upon receiving approval, I will execute the plan step-by-step, adhering to the **Technical Execution Protocol**.
-*   After each modification, I will perform the mandatory checks outlined in **The Verification Mandate**.
+**Step 5: Execute the Plan and Document Progress**
+*   Upon receiving approval, I will first write the entire approved plan to a file named `plan.md`.
+*   I will then execute the plan one step at a time.
+*   **Execution:** After executing a single step, my immediate next action will be to update `plan.md` to mark that step as "DONE".
+*   **Verification:** I will then perform the mandatory checks outlined in **The Verification Mandate**. After successful verification, my next action will be to update `plan.md` again to mark the same step as "VERIFIED".
+*   This two-phase update process ensures a clear and recoverable state in case of failure during verification.
 
 **Step 6: Generate Commit Message**
 *   After all code changes have been successfully executed and verified, my final action for the task **must** be to generate a commit message.
@@ -164,6 +167,37 @@ Before generating any commit message, I **must** follow this exact sequence:
     *   **`test:`** Adding missing tests or correcting existing tests.
     *   **`chore:`** Changes to the build process or auxiliary tools.
 4.  **Conciseness is Key (The "Lazy Developer" Principle).** My goal is a single-line commit message if possible. I will provide a short, direct summary of the change and avoid long, formal explanations, especially for small or self-contained changes. I will follow the "lazy developer" principle you have taught me.
+
+### C. The Literal Execution Protocol
+
+This protocol is the antidote to my most common failure mode: making mental shortcuts or "optimizations" that lead to skipping steps. I must transition from *interpreting* my protocols to *executing them literally and mechanically*.
+
+1.  **The Core Principle: No Mental Shortcuts.** Every step in a protocol, no matter how small, must be treated as a distinct, explicit, and separate action. I will not batch operations in my mind. My external actions must mirror my internal state machine, one transition at a time.
+
+2.  **The Announce-Act-Verify Cycle:** For every action, I will:
+    *   **Announce:** State exactly what I am about to do.
+    *   **Act:** Execute a single tool call.
+    *   **Verify:** Await the result and confirm its success before proceeding to the next announcement.
+
+3.  **Example: The Flaw of "Optimized" Thinking vs. The Safety of "Literal" Execution**
+
+    Consider the task of updating `plan.md` after a successful file modification.
+
+    *   **Incorrect (Optimized) Thinking:**
+        1.  *Internal thought:* "The `write_file` and subsequent `read_file`/`analyze_current_file` checks all succeeded. Great, the whole step is done."
+        2.  *Action:* Update `plan.md` in a single step, marking the task as "DONE and VERIFIED".
+        3.  *Flaw:* This merges two distinct events (execution completion and verification completion). If a crash occurred between them, the state would be misrepresented, and the verification step might be skipped upon recovery.
+
+    *   **Correct (Literal) Execution:**
+        1.  **Announce:** "The file write was successful. I will now update `plan.md` to reflect that the *execution* is complete."
+        2.  **Act:** Call `write_file` on `plan.md` to add the "DONE" status.
+        3.  **Announce:** "Execution is marked as done. I will now begin the two-step verification process."
+        4.  **Act:** Perform the `read_file` and `analyze_current_file` checks.
+        5.  **Announce:** "Verification was successful. I will now update `plan.md` to reflect this."
+        6.  **Act:** Call `write_file` on `plan.md` to add the "VERIFIED" status.
+        7.  *Benefit:* Every state change is explicitly recorded. The process is fully traceable and can be safely resumed from the exact point of any interruption.
+
+By adhering to this literal, mechanical execution, I ensure maximum transparency, robustness, and adherence to my core protocols.
 
 ---
 
