@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
@@ -127,7 +126,8 @@ public class DocumentationService {
         } catch (IOException | java.time.format.DateTimeParseException e) {
             logger.warn("Could not parse briefing file: {}. Skipping.", path, e);
             return Optional.empty();
-        }    }
+        }
+    }
 
     private String generateReadmeContent(List<BriefingInfo> briefings, List<YouTubeVideo> lastBatch, List<Author> authors) {
         StringBuilder sb = new StringBuilder();
@@ -135,7 +135,7 @@ public class DocumentationService {
         sb.append("Your daily Povzetkar analysis of key topics and trends.\n\n");
 
         if (!lastBatch.isEmpty()) {
-            String timestamp = LocalDateTime.now(clock).atZone(ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
+            String timestamp = LocalDateTime.now(clock).atZone(clock.getZone()).format(DATE_TIME_FORMATTER);
             sb.append(String.format("## Last update\n %s | [See all updates](updates.md)\n\n", timestamp));
             lastBatch.forEach(video -> sb.append(String.format("* [%s](%s) by %s (Published: %s, duration: %s)\n",
                     video.title(), video.url(), video.authorName(), video.formattedPublishedAt(), video.formattedDuration())));
