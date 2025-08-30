@@ -6,15 +6,11 @@ import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
-import si.jumis.util.ResourceReader;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,31 +22,21 @@ import java.util.List;
  */
 public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
-    public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
 
-    private final YouTubeDataService youtubeDataService;
     private final ProcessingStateService stateService;
     private final VideoSummary videoSummary;
-    private final ResourceReader resourceReader;
     private final FileWriter fileWriter;
-    private final Clock clock;
     private final NewVideoFetcherService newVideoFetcherService;
     private final ContentCreationService contentCreationService;
+    private final FailureLoggerService failureLoggerService;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, FileWriter fileWriter, Clock clock, ResourceReader resourceReader, NewVideoFetcherService newVideoFetcherService, ContentCreationService contentCreationService) {
-        this.youtubeDataService = youtubeDataService;
+    public VideoSummarizationService(ProcessingStateService stateService, VideoSummary videoSummary, FileWriter fileWriter, NewVideoFetcherService newVideoFetcherService, ContentCreationService contentCreationService, FailureLoggerService failureLoggerService) {
         this.stateService = stateService;
         this.videoSummary = videoSummary;
         this.fileWriter = fileWriter;
-        this.clock = clock;
-        this.resourceReader = resourceReader;
         this.newVideoFetcherService = newVideoFetcherService;
         this.contentCreationService = contentCreationService;
-    }
-
-    public List<Author> getAuthorsWithDetails() {
-        List<String> authorLines = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
-        return fetchAuthors(authorLines);
+        this.failureLoggerService = failureLoggerService;
     }
 
     /**
@@ -80,24 +66,6 @@ public class VideoSummarizationService {
         logger.info("A total of {} new videos found and sorted. Generating summaries...", allNewVideos.size());
 
         return summarizeVideoBatch(allNewVideos, forDate, outputFilePath, dryRun);
-    }
-
-    private List<Author> fetchAuthors(List<String> authorLines) {
-        List<Author> authors = new ArrayList<>();
-        for (String authorLine : authorLines) {
-            String[] parts = authorLine.split(",", 2);
-            if (parts.length == 2 && !parts[1].trim().isEmpty()) {
-                String channelId = parts[1].trim();
-                try {
-                    authors.add(youtubeDataService.getAuthorDetails(channelId));
-                } catch (IOException e) {
-                    logger.error("Failed to fetch details for author with channel ID: {}. Skipping.", channelId, e);
-                }
-            } else {
-                logger.warn("Skipping malformed author line: '{}'", authorLine);
-            }
-        }
-        return authors;
     }
 
     /**
@@ -150,14 +118,14 @@ public class VideoSummarizationService {
             if (content == null) {
                 // This case happens when transcript retrieval fails. We log it but do not update the state,
                 // allowing the system to retry fetching the transcript on the next run.
-                handleSummaryFailure(video, new Exception("Transcript retrieval failed, content is null."));
+                failureLoggerService.logVideoSummaryFailure(video, new Exception("Transcript retrieval failed, content is null."));
                 return false;
             }
             summary = videoSummary.generateContentWithRetry(content, "video summary");
         } catch (Exception e) {
             // This case handles failures in the AI summarization step. We log it and update the state
             // to prevent retrying a video that consistently fails to be summarized.
-            handleSummaryFailure(video, e);
+            failureLoggerService.logVideoSummaryFailure(video, e);
             logger.error("Video will be marked as processed to avoid retries.");
             updateProcessingState(videoToProcess, processingDate);
             return false;
@@ -171,23 +139,6 @@ public class VideoSummarizationService {
             logger.error("Failed to write summary to file for video: {}. It will NOT be marked as processed.", video.url(), e);
             return false;
         }
-    }
-
-    private void handleSummaryFailure(YouTubeVideo video, Exception e) {
-        logger.error("Failed to create summary for video: {}.", video.url(), e);
-        try {
-            String failureMessage = createFailureMessage(video, e);
-            fileWriter.appendToFile(Paths.get("failed_videos.log"), failureMessage);
-        } catch (IOException logEx) {
-            logger.error("Additionally, failed to write to the failure log for video: {}", video.url(), logEx);
-        }
-    }
-
-    String createFailureMessage(YouTubeVideo video, Exception e) {
-        return String.format("Timestamp: %s, Video URL: %s, Video ID: %s\nChannel ID: %s, Author: %s\nError: %s\n---\n",
-                ZonedDateTime.now(clock).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), video.url(), video.id(),
-                video.channelId(), video.authorName(),
-                e.toString());
     }
 
     private void updateProcessingState(NewVideoFetcherService.VideoToProcess videoToProcess, LocalDate processingDate) {
