@@ -1,10 +1,8 @@
 package si.jumis.service;
 
 import com.google.genai.types.Content;
-import com.google.genai.types.Part;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import si.jumis.ai.Prompts;
 import si.jumis.ai.VideoSummary;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
@@ -29,26 +27,25 @@ import java.util.List;
 public class VideoSummarizationService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummarizationService.class);
     public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
-    private static final int TRANSCRIPT_THRESHOLD_MINUTES = 50;
 
     private final YouTubeDataService youtubeDataService;
     private final ProcessingStateService stateService;
     private final VideoSummary videoSummary;
     private final ResourceReader resourceReader;
-    private final YouTubeTranscriptService youTubeTranscriptService;
     private final FileWriter fileWriter;
     private final Clock clock;
     private final NewVideoFetcherService newVideoFetcherService;
+    private final ContentCreationService contentCreationService;
 
-    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, YouTubeTranscriptService youTubeTranscriptService, FileWriter fileWriter, Clock clock, ResourceReader resourceReader, NewVideoFetcherService newVideoFetcherService) {
+    public VideoSummarizationService(YouTubeDataService youtubeDataService, ProcessingStateService stateService, VideoSummary videoSummary, FileWriter fileWriter, Clock clock, ResourceReader resourceReader, NewVideoFetcherService newVideoFetcherService, ContentCreationService contentCreationService) {
         this.youtubeDataService = youtubeDataService;
         this.stateService = stateService;
         this.videoSummary = videoSummary;
-        this.youTubeTranscriptService = youTubeTranscriptService;
         this.fileWriter = fileWriter;
         this.clock = clock;
         this.resourceReader = resourceReader;
         this.newVideoFetcherService = newVideoFetcherService;
+        this.contentCreationService = contentCreationService;
     }
 
     public List<Author> getAuthorsWithDetails() {
@@ -149,7 +146,7 @@ public class VideoSummarizationService {
         YouTubeVideo video = videoToProcess.video();
         String summary;
         try {
-            Content content = getContent(video);
+            Content content = contentCreationService.createContentForVideo(video);
             if (content == null) {
                 // This case happens when transcript retrieval fails. We log it but do not update the state,
                 // allowing the system to retry fetching the transcript on the next run.
@@ -174,27 +171,6 @@ public class VideoSummarizationService {
             logger.error("Failed to write summary to file for video: {}. It will NOT be marked as processed.", video.url(), e);
             return false;
         }
-    }
-
-    private Content getContent(YouTubeVideo video) {
-        if (video.duration().toMinutes() <= TRANSCRIPT_THRESHOLD_MINUTES) {
-            return Content.fromParts(
-                    Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted("video url", video.url(),
-                            video.title(), video.url(), video.authorName(),
-                            video.formattedPublishedAt(), video.formattedDuration(), "")),
-                    Part.fromUri(video.url(), "video/mp4"));
-        }
-        logger.info("Video is longer than {} minutes. Getting transcript.", TRANSCRIPT_THRESHOLD_MINUTES);
-        String transcript = youTubeTranscriptService.getTranscript(video.id());
-        if (transcript.isBlank()) {
-            logger.warn("Could not retrieve transcript for video {}. It will be skipped for now.", video.url());
-            return null;
-        }
-        logger.info("Got transcript successfully for video {}.", video.url());
-        return Content.fromParts(
-                Part.fromText(Prompts.VIDEO_SUMMARY_PROMPT.formatted("video transcript", video.url(),
-                        video.title(), video.url(), video.authorName(),
-                        video.formattedPublishedAt(), video.formattedDuration(), transcript)));
     }
 
     private void handleSummaryFailure(YouTubeVideo video, Exception e) {

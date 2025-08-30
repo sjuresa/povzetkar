@@ -41,13 +41,13 @@ class VideoSummarizationServiceTest {
     @Mock
     private VideoSummary videoSummary;
     @Mock
-    private YouTubeTranscriptService youTubeTranscriptService;
-    @Mock
     private FileWriter mockFileWriter;
     @Mock
     private ResourceReader resourceReader;
     @Mock
     private NewVideoFetcherService newVideoFetcherService;
+    @Mock
+    private ContentCreationService contentCreationService;
     @Captor
     private ArgumentCaptor<String> stringCaptor;
     private VideoSummarizationService videoSummarizationService;
@@ -60,7 +60,7 @@ class VideoSummarizationServiceTest {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, youTubeTranscriptService, mockFileWriter, FIXED_CLOCK, resourceReader, newVideoFetcherService);
+        videoSummarizationService = new VideoSummarizationService(youtubeDataService, stateService, videoSummary, mockFileWriter, FIXED_CLOCK, resourceReader, newVideoFetcherService, contentCreationService);
 
         author1 = new Author("@author1", "Author One", "UCchannel1", 1000L, "UUchannel1");
         today = LocalDate.now(FIXED_CLOCK);
@@ -120,6 +120,7 @@ class VideoSummarizationServiceTest {
         List<Author> authors = List.of(author1);
         List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(video1, author1)));
         when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
+        when(contentCreationService.createContentForVideo(video1)).thenReturn(mock(Content.class));
         mockSuccessfulSummaryGeneration();
 
         // Act
@@ -146,41 +147,12 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    void summarizeFromAuthors_whenVideoIsLong_usesTranscript() throws IOException {
-        // Arrange
-        List<Author> authors = List.of(author1);
-        YouTubeVideo longVideo = new YouTubeVideo(
-                "long_id",
-                "Long Video Title",
-                "https://www.youtube.com/watch?v=long_id",
-                "Author One",
-                "UCchannel1",
-                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
-                Duration.ofMinutes(60)
-        );
-        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(longVideo, author1)));
-        String fakeTranscript = "This is a fake transcript.";
-
-        when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
-        when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(fakeTranscript);
-        mockSuccessfulSummaryGeneration();
-
-        // Act
-        videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
-
-        // Assert
-        verify(youTubeTranscriptService).getTranscript("long_id");
-        verify(videoSummary).generateContentWithRetry(any(), any());
-        verify(stateService).updateLastProcessedVideoForDate(author1.channelId(), longVideo, today);
-        verify(mockFileWriter).appendToFile(eq(testOutputPath), anyString());
-    }
-
-    @Test
     void processSingleVideo_whenSummarizationFails_logsErrorAndUpdateState() throws IOException {
         // Arrange
         List<Author> authors = List.of(author1);
         List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(video1, author1)));
         when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
+        when(contentCreationService.createContentForVideo(video1)).thenReturn(mock(Content.class));
         when(videoSummary.generateContentWithRetry(any(Content.class), anyString())).thenThrow(new RuntimeException("AI error"));
 
         // Act
@@ -193,21 +165,12 @@ class VideoSummarizationServiceTest {
     }
 
     @Test
-    void processSingleVideo_whenTranscriptFails_logsErrorAndDoesNotUpdateState() throws IOException {
+    void processSingleVideo_whenContentCreationFails_logsErrorAndDoesNotUpdateState() throws IOException {
         // Arrange
         List<Author> authors = List.of(author1);
-        YouTubeVideo longVideo = new YouTubeVideo(
-                "long_id",
-                "Long Video Title",
-                "https://www.youtube.com/watch?v=long_id",
-                "Author One",
-                "UCchannel1",
-                today.atStartOfDay(FIXED_CLOCK.getZone()).toInstant(),
-                Duration.ofMinutes(60)
-        );
-        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(longVideo, author1)));
+        List<NewVideoFetcherService.VideoToProcess> videosToProcess = new ArrayList<>(List.of(new NewVideoFetcherService.VideoToProcess(video1, author1)));
         when(newVideoFetcherService.fetchAllNewVideos(authors, today)).thenReturn(videosToProcess);
-        when(youTubeTranscriptService.getTranscript("long_id")).thenReturn(""); // Simulate transcript failure
+        when(contentCreationService.createContentForVideo(video1)).thenReturn(null); // Simulate transcript failure
 
         // Act
         videoSummarizationService.summarizeFromAuthors(authors, today, testOutputPath, false);
