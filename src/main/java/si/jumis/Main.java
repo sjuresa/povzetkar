@@ -11,6 +11,7 @@ import si.jumis.ai.VideoSummary;
 import si.jumis.service.AuthorService;
 import si.jumis.service.ContentCreationService;
 import si.jumis.service.DefaultFileWriter;
+import si.jumis.service.DocumentationService;
 import si.jumis.service.FailureLoggerService;
 import si.jumis.service.FileWriter;
 import si.jumis.service.NewVideoFetcherService;
@@ -79,8 +80,9 @@ public class Main {
         VideoSummarizationService summarizationService = new VideoSummarizationService(stateService,
                 videoSummary, fileWriter, newVideoFetcherService, contentCreationService, failureLoggerService);
         AuthorService authorService = new AuthorService(youtubeDataService, resourceReader);
+        DocumentationService documentationService = new DocumentationService(Clock.system(zoneId));
 
-        return new Povzetkar(summarizationService, videoSummary, resourceReader, authorService);
+        return new Povzetkar(summarizationService, videoSummary, resourceReader, authorService, documentationService);
     }
 
     /**
