@@ -2,6 +2,7 @@ package si.jumis.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.jumis.config.AppConfig;
 import si.jumis.model.Author;
 import si.jumis.util.ResourceReader;
 
@@ -11,18 +12,19 @@ import java.util.List;
 
 public class AuthorService {
     private static final Logger logger = LoggerFactory.getLogger(AuthorService.class);
-    public static final String AUTHORS_TO_QUERY_FILENAME = "authors_to_query.txt";
 
     private final YouTubeDataService youtubeDataService;
     private final ResourceReader resourceReader;
+    private final AppConfig appConfig;
 
-    public AuthorService(YouTubeDataService youtubeDataService, ResourceReader resourceReader) {
+    public AuthorService(YouTubeDataService youtubeDataService, ResourceReader resourceReader, AppConfig appConfig) {
         this.youtubeDataService = youtubeDataService;
         this.resourceReader = resourceReader;
+        this.appConfig = appConfig;
     }
 
     public List<Author> getAuthorsWithDetails() {
-        List<String> authorLines = resourceReader.readLines(AUTHORS_TO_QUERY_FILENAME, "authors");
+        List<String> authorLines = resourceReader.readLines(appConfig.getAuthorsListPath().toString(), "authors");
         return fetchAuthors(authorLines);
     }
 

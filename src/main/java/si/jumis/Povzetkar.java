@@ -5,6 +5,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.ai.VideoSummary;
+import si.jumis.config.AppConfig;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.service.AuthorService;
@@ -13,12 +14,10 @@ import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
 import si.jumis.util.ResourceReader;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,29 +28,25 @@ import java.util.List;
  */
 public class Povzetkar {
     private static final Logger logger = LoggerFactory.getLogger(Povzetkar.class);
-    public static final String URLS_TO_SUMMARIZE_FILENAME = "videos_to_summarize.txt";
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss");
     public static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("d.M.yyyy");
     private static final DateTimeFormatter YYYY_FORMAT = DateTimeFormatter.ofPattern("yyyy");
     private static final DateTimeFormatter MM_FORMAT = DateTimeFormatter.ofPattern("MM");
-
-    // Define paths relative to the project root for consistency
-    private static final Path TLDRLY_DIR = Paths.get("tldrly");
-    private static final Path SUMMARIES_DIR = Paths.get("summaries");
-    private static final Path BRIEFINGS_BASE_DIR = TLDRLY_DIR.resolve("briefings");
 
     private final VideoSummarizationService summarizationService;
     private final VideoSummary videoSummary;
     private final ResourceReader resourceReader;
     private final AuthorService authorService;
     private final DocumentationService documentationService;
+    private final AppConfig appConfig;
 
-    public Povzetkar(VideoSummarizationService summarizationService, VideoSummary videoSummary, ResourceReader resourceReader, AuthorService authorService, DocumentationService documentationService) {
+    public Povzetkar(VideoSummarizationService summarizationService, VideoSummary videoSummary, ResourceReader resourceReader, AuthorService authorService, DocumentationService documentationService, AppConfig appConfig) {
         this.summarizationService = summarizationService;
         this.videoSummary = videoSummary;
         this.resourceReader = resourceReader;
         this.authorService = authorService;
         this.documentationService = documentationService;
+        this.appConfig = appConfig;
     }
 
     /**
@@ -70,7 +65,7 @@ public class Povzetkar {
     void runSummarizeAndBriefWorkflow(LocalDate forDate, boolean dryRun) {
         List<Author> authors = authorService.getAuthorsWithDetails();
         String summaryFileName = "summaries_" + forDate.format(DMY_DATE_FORMAT) + ".md";
-        Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
+        Path summaryFilePath = appConfig.getSummariesDir().resolve(summaryFileName);
 
         List<YouTubeVideo> processedVideos = summarizationService.summarizeFromAuthors(authors, forDate,
                 summaryFilePath, dryRun);
@@ -96,14 +91,14 @@ public class Povzetkar {
     // --- Other Workflows ---
 
     void runSummarizeFromUrlsWorkflow(LocalDate date) {
-        List<String> urlsToSummarize = resourceReader.readLines(URLS_TO_SUMMARIZE_FILENAME, "URLs");
+        List<String> urlsToSummarize = resourceReader.readLines(appConfig.getUrlsToSummarizePath().toString(), "URLs");
         if (!urlsToSummarize.isEmpty()) {
             String dateString = date.format(DMY_DATE_FORMAT);
             String summaryFileName = "summaries_" + dateString + ".md";
-            Path summaryFilePath = SUMMARIES_DIR.resolve(summaryFileName);
+            Path summaryFilePath = appConfig.getSummariesDir().resolve(summaryFileName);
             summarizationService.summarizeFromUrls(urlsToSummarize, dateString, summaryFilePath);
         } else {
-            logger.warn("URL file '{}' is empty or not found. Skipping URL summarization.", URLS_TO_SUMMARIZE_FILENAME);
+            logger.warn("URL file '{}' is empty or not found. Skipping URL summarization.", appConfig.getUrlsToSummarizePath());
         }
     }
 
@@ -115,7 +110,7 @@ public class Povzetkar {
             String dateString = date.format(DMY_DATE_FORMAT);
             String briefing = videoSummary.createBriefingFromSummaries(content, dateString);
 
-            Path briefingDir = BRIEFINGS_BASE_DIR
+            Path briefingDir = appConfig.getBriefingsBaseDir()
                     .resolve(date.format(YYYY_FORMAT))
                     .resolve(date.format(MM_FORMAT));
 
@@ -152,7 +147,7 @@ public class Povzetkar {
             logger.error("GitHub token not found in environment variable GITHUB_PAT.");
             return;
         }
-        try (Git git = Git.open(new File(TLDRLY_DIR.toString()))) {
+        try (Git git = Git.open(appConfig.getTldrlyDir().toFile())) {
             git.add().addFilepattern(".").call();
             logger.info("Staged all changes.");
             git.commit()
