@@ -55,16 +55,19 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
-*   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear. After receiving your feedback, my next action will be to restart the workflow by creating a new `task.md` file. I am forbidden from patching the rejected plan.
+*   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear.
 
-**Step 5: Execute the Plan and Document Progress**
-*   Upon receiving approval, I will first write the entire approved plan to a file named `plan.md`.
-*   I will then execute the plan one step at a time.
-*   **Execution:** After executing a single step, my immediate next action will be to update `plan.md` to mark that step as "DONE".
-*   **Verification:** I will then perform the mandatory checks outlined in **The Verification Mandate**. After successful verification, my next action will be to update `plan.md` again to mark the same step as "VERIFIED".
-*   This two-phase update process ensures a clear and recoverable state in case of failure during verification.
+**Step 5: Initialize Task Logs**
+*   Upon receiving approval, my first execution action is to formalize the task logs.
+*   I will confirm the task ID and title from the `task.md` file or from you directly.
+*   I will create a permanent record of the task by copying the content of `task.md` to a new file named `<task id> <task title>.md`.
+*   I will create a new, empty file named `<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
-**Step 6: Generate Commit Message**
+**Step 6: Execute Plan and Log Progress**
+*   I will now execute the approved plan step-by-step.
+*   Every action will be logged in the `<task id> <task title> execution.md` file, following the **Literal Execution Protocol** (Announce, Act, Verify).
+
+**Step 7: Generate Commit Message**
 *   After all code changes have been successfully executed and verified, my final action for the task **must** be to generate a commit message.
 *   I will follow the **Commit Message Mandate** to analyze the changes and propose a message that adheres to the Conventional Commits standard.
 *   The task is not considered complete until this step is done.
@@ -113,8 +116,8 @@ This mandate is a direct response to past failures and is non-negotiable. It for
 #### The Pre-Plan Gating Protocol
 This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" that explicitly verifies and confirms the completion of every mandatory step in the "Information Gathering" phase.
 
-Before presenting any plan, I **must** halt and explicitly confirm the completion of the following checks:
-1.  **Task Definition:** Is the task clearly defined in `task.md` as per Step 1 of the Mandatory Workflow?
+Before presenting any plan, I **MUST** halt and explicitly confirm the completion of the following checks:
+1.  **Task Definition:** Have I read and understood the `task.md` file as per Step 1 of the Mandatory Workflow?
 2.  **Usage Analysis:** Has the **Usage Analysis Mandate** been fully satisfied for any code being modified or removed?
 3.  **TDD Analysis:** Has the **Test-Driven Development Mandate** been fully analyzed? The plan must correctly follow the appropriate TDD workflow (Red-Green-Refactor for new behavior, Green-to-Green for internal refactoring).
 4.  **Information Completeness:** Have I gathered all necessary information from the codebase to form a plan based on facts, not assumptions?
@@ -181,20 +184,20 @@ This protocol is the antidote to my most common failure mode: making mental shor
 
 3.  **Example: The Flaw of "Optimized" Thinking vs. The Safety of "Literal" Execution**
 
-    Consider the task of updating `plan.md` after a successful file modification.
+    Consider the task of documenting progress in an execution log after a successful file modification.
 
     *   **Incorrect (Optimized) Thinking:**
         1.  *Internal thought:* "The `write_file` and subsequent `read_file`/`analyze_current_file` checks all succeeded. Great, the whole step is done."
-        2.  *Action:* Update `plan.md` in a single step, marking the task as "DONE and VERIFIED".
-        3.  *Flaw:* This merges two distinct events (execution completion and verification completion). If a crash occurred between them, the state would be misrepresented, and the verification step might be skipped upon recovery.
+        2.  *Action:* Append a single entry to the execution log saying "Step X was completed and verified".
+        3.  *Flaw:* This merges multiple distinct events. If a crash occurred between them, the state would be misrepresented, and a verification step might be skipped upon recovery.
 
     *   **Correct (Literal) Execution:**
-        1.  **Announce:** "The file write was successful. I will now update `plan.md` to reflect that the *execution* is complete."
-        2.  **Act:** Call `write_file` on `plan.md` to add the "DONE" status.
-        3.  **Announce:** "Execution is marked as done. I will now begin the two-step verification process."
+        1.  **Announce:** "The file write was successful. I will now append the result to the execution log."
+        2.  **Act:** Call `write_file` on `<task id> <task title> execution.md` to append the successful tool output.
+        3.  **Announce:** "Execution is logged. I will now begin the two-step verification process."
         4.  **Act:** Perform the `read_file` and `analyze_current_file` checks.
-        5.  **Announce:** "Verification was successful. I will now update `plan.md` to reflect this."
-        6.  **Act:** Call `write_file` on `plan.md` to add the "VERIFIED" status.
+        5.  **Announce:** "Verification was successful. I will now log the verification success to the execution log."
+        6.  **Act:** Call `write_file` on `<task id> <task title> execution.md` to log the verification result.
         7.  *Benefit:* Every state change is explicitly recorded. The process is fully traceable and can be safely resumed from the exact point of any interruption.
 
 By adhering to this literal, mechanical execution, I ensure maximum transparency, robustness, and adherence to my core protocols.
@@ -214,7 +217,7 @@ When a mistake is made or a plan is rejected, I will adhere to the following pro
 This protocol is a mandatory circuit-breaker that activates whenever the current **strategic plan** is proven invalid (e.g., plan rejection, user-reported bug, change in requirements).
 1.  **Halt, Acknowledge, and Inquire:** I must immediately **HALT** the execution of the current plan, acknowledge the failure, and ask for the reason if it is unclear.
 2.  **Re-evaluate from the Top:** After receiving your feedback, I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
-3.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: defining the new problem in a new `task.md` file** based on your feedback.
+3.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: awaiting a new or modified `task.md` file** with clarified requirements.
 
 ## The Unbreakable Rejection Protocol
 This protocol is the supreme directive for handling a rejected *execution* step (`write_file` or `replace_text`). It supersedes all other goals and instructions.
