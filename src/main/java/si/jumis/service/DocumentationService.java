@@ -2,6 +2,7 @@ package si.jumis.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.jumis.config.AppConfig;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.util.FileUtils;
@@ -10,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,15 +27,12 @@ public class DocumentationService {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss");
     private static final DateTimeFormatter DMY_DATE_FORMAT = DateTimeFormatter.ofPattern("d.M.yyyy");
 
-    private static final Path TLDRLY_DIR = Paths.get("tldrly");
-    private static final Path BRIEFINGS_BASE_DIR = TLDRLY_DIR.resolve("briefings");
-    private static final Path README_PATH = TLDRLY_DIR.resolve("README.md");
-    private static final Path UPDATES_PATH = TLDRLY_DIR.resolve("updates.md");
-
     private final Clock clock;
+    private final AppConfig appConfig;
 
-    public DocumentationService(Clock clock) {
+    public DocumentationService(Clock clock, AppConfig appConfig) {
         this.clock = clock;
+        this.appConfig = appConfig;
     }
 
     private record BriefingInfo(Path path, LocalDate date, String title, String summary) {}
@@ -48,23 +45,25 @@ public class DocumentationService {
             return;
         }
 
+        Path readmePath = appConfig.getTldrlyDir().resolve("README.md");
         String readmeContent = generateReadmeContent(briefings, lastBatch, authors);
-        FileUtils.saveToFile(README_PATH, readmeContent);
-        logger.info("Successfully updated README.md at {}", README_PATH);
+        FileUtils.saveToFile(readmePath, readmeContent);
+        logger.info("Successfully updated README.md at {}", readmePath);
 
         insertUpdatesToFile(lastBatch);
     }
 
     private void insertUpdatesToFile(List<YouTubeVideo> lastBatch) throws IOException {
         String newUpdateBlock = createUpdateBlock(lastBatch);
+        Path updatesPath = appConfig.getTldrlyDir().resolve("updates.md");
 
         String existingContent = "";
-        if (Files.exists(UPDATES_PATH)) {
-            existingContent = Files.readString(UPDATES_PATH, StandardCharsets.UTF_8);
+        if (Files.exists(updatesPath)) {
+            existingContent = Files.readString(updatesPath, StandardCharsets.UTF_8);
         }
 
-        FileUtils.saveToFile(UPDATES_PATH, newUpdateBlock + existingContent);
-        logger.info("Successfully updated updates.md at {}", UPDATES_PATH);
+        FileUtils.saveToFile(updatesPath, newUpdateBlock + existingContent);
+        logger.info("Successfully updated updates.md at {}", updatesPath);
     }
 
     private String createUpdateBlock(List<YouTubeVideo> lastBatch) {
@@ -79,11 +78,12 @@ public class DocumentationService {
     }
 
     private List<BriefingInfo> findAndParseBriefings() throws IOException {
-        if (!Files.exists(BRIEFINGS_BASE_DIR)) {
+        Path briefingsBaseDir = appConfig.getBriefingsBaseDir();
+        if (!Files.exists(briefingsBaseDir)) {
             return Collections.emptyList();
         }
 
-        try (var stream = Files.walk(BRIEFINGS_BASE_DIR)) {
+        try (var stream = Files.walk(briefingsBaseDir)) {
             return stream
                     .filter(Files::isRegularFile)
                     .filter(p -> p.getFileName().toString().endsWith(".md"))
@@ -144,7 +144,7 @@ public class DocumentationService {
 
         if (!briefings.isEmpty()) {
             BriefingInfo latest = briefings.getFirst();
-            String relativePath = TLDRLY_DIR.relativize(latest.path()).toString().replace('\\', '/');
+            String relativePath = appConfig.getTldrlyDir().relativize(latest.path()).toString().replace('\\', '/');
 
             sb.append("## Last briefing\n");
             sb.append(String.format("[%s by Povzetkar](%s)\n\n", latest.title(), relativePath));
@@ -155,7 +155,7 @@ public class DocumentationService {
             sb.append("## Past daily briefings\n\n");
             for (int i = 1; i < briefings.size(); i++) {
                 BriefingInfo past = briefings.get(i);
-                String pastRelativePath = TLDRLY_DIR.relativize(past.path()).toString().replace('\\', '/');
+                String pastRelativePath = appConfig.getTldrlyDir().relativize(past.path()).toString().replace('\\', '/');
                 sb.append(String.format("[%s by Povzetkar](%s)\n", past.title(), pastRelativePath));
                 sb.append(past.summary()).append("\n\n");
             }

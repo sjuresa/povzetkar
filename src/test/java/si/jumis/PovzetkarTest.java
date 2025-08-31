@@ -4,22 +4,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import si.jumis.ai.VideoSummary;
+import si.jumis.config.AppConfig;
 import si.jumis.model.Author;
 import si.jumis.model.YouTubeVideo;
 import si.jumis.service.AuthorService;
 import si.jumis.service.DocumentationService;
 import si.jumis.service.VideoSummarizationService;
 import si.jumis.util.FileUtils;
+import si.jumis.util.ResourceReader;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -40,8 +42,11 @@ class PovzetkarTest {
     private AuthorService authorService;
     @Mock
     private DocumentationService documentationService;
+    @Mock
+    private AppConfig appConfig;
+    @Mock
+    private ResourceReader resourceReader;
 
-    @InjectMocks
     private Povzetkar povzetkar;
 
     private LocalDate testDate;
@@ -49,7 +54,7 @@ class PovzetkarTest {
     @BeforeEach
     void setUp() {
         testDate = LocalDate.of(2025, 7, 18);
-        testDate.format(Povzetkar.DMY_DATE_FORMAT);
+        povzetkar = new Povzetkar(summarizationService, videoSummary, resourceReader, authorService, documentationService, appConfig);
     }
 
     private YouTubeVideo createMockVideo(String id, String title, Instant publishedAt, long durationSeconds) {
@@ -78,6 +83,10 @@ class PovzetkarTest {
             );
 
             when(authorService.getAuthorsWithDetails()).thenReturn(authors);
+            // Mock AppConfig behavior
+            when(appConfig.getSummariesDir()).thenReturn(Paths.get("summaries"));
+            when(appConfig.getBriefingsBaseDir()).thenReturn(Paths.get("tldrly/briefings"));
+
             when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
                     .thenReturn(processedVideos);
 
@@ -102,6 +111,8 @@ class PovzetkarTest {
         );
         when(authorService.getAuthorsWithDetails()).thenReturn(authors);
         when(summarizationService.summarizeFromAuthors(anyList(), any(), any(), anyBoolean())).thenReturn(Collections.emptyList());
+        // Mock AppConfig behavior
+        when(appConfig.getSummariesDir()).thenReturn(Paths.get("summaries"));
 
         // Act
         povzetkar.run(new RunConfiguration("S_B", testDate, false));
@@ -125,6 +136,10 @@ class PovzetkarTest {
                     new Author("AuthorHandle", "Author One", "channel1", 12345, "UUchannel1")
             );
             when(authorService.getAuthorsWithDetails()).thenReturn(authors);
+
+            // Mock AppConfig behavior
+            when(appConfig.getSummariesDir()).thenReturn(Paths.get("summaries"));
+            when(appConfig.getBriefingsBaseDir()).thenReturn(Paths.get("tldrly/briefings"));
 
             // Condition 1: Must have processed videos to trigger the briefing workflow.
             when(summarizationService.summarizeFromAuthors(any(), any(), any(Path.class), anyBoolean()))
