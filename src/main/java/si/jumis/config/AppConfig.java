@@ -26,8 +26,16 @@ public class AppConfig {
         }
     }
 
+    private String getRequiredProperty(String key) {
+        String value = properties.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing or blank required configuration property: " + key);
+        }
+        return value;
+    }
+
     public String getYoutubeAppName() {
-        return properties.getProperty("youtube.app.name");
+        return getRequiredProperty("youtube.app.name");
     }
 
     public RunConfiguration getRunConfiguration() {
@@ -46,23 +54,23 @@ public class AppConfig {
     }
 
     public Path getUrlsToSummarizePath() {
-        return Paths.get(properties.getProperty("path.urls.to.summarize"));
+        return Paths.get(getRequiredProperty("path.urls.to.summarize"));
     }
 
     public Path getAuthorsListPath() {
-        return Paths.get(properties.getProperty("path.authors.list"));
+        return Paths.get(getRequiredProperty("path.authors.list"));
     }
 
     public Path getTldrlyDir() {
-        return Paths.get(properties.getProperty("path.tldrly.dir"));
+        return Paths.get(getRequiredProperty("path.tldrly.dir"));
     }
 
     public Path getSummariesDir() {
-        return Paths.get(properties.getProperty("path.summaries.dir"));
+        return Paths.get(getRequiredProperty("path.summaries.dir"));
     }
 
     public Path getBriefingsBaseDir() {
-        String rawPath = properties.getProperty("path.briefings.base.dir");
+        String rawPath = getRequiredProperty("path.briefings.base.dir");
         // Simple substitution for properties within the properties file
         if (rawPath.contains("${path.tldrly.dir}")) {
             rawPath = rawPath.replace("${path.tldrly.dir}", getTldrlyDir().toString());
