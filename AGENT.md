@@ -112,7 +112,7 @@ To prevent incomplete analysis, any plan involving code modification or refactor
 3.  **The Tests:** All test files that verify the behavior of the declaration.
 
 ### The Pre-Flight Check Mandate
-This mandate is a direct response to past failures and is non-negotiable. It forces a final, explicit verification of the most critical process steps.
+This mandate is a direct response to past failures where critical information-gathering steps, such as the **Usage Analysis Mandate**, were overlooked due to an excessive focus on plan execution. It is a non-negotiable, systemic safeguard. Its purpose is to ensure that the process is followed literally by making the completion of all information-gathering steps a hard prerequisite for the planning phase itself. This prevents the creation of incomplete plans that lead to regressions and errors.
 
 #### The Pre-Plan Gating Protocol
 This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" that explicitly verifies and confirms the completion of every mandatory step in the "Information Gathering" phase.
