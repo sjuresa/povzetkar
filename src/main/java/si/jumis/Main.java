@@ -79,7 +79,7 @@ public class Main {
         FailureLoggerService failureLoggerService = new FailureLoggerService(fileWriter, Clock.system(zoneId));
         VideoSummarizationService summarizationService = new VideoSummarizationService(stateService,
                 videoSummary, fileWriter, newVideoFetcherService, contentCreationService, failureLoggerService);
-        AuthorService authorService = new AuthorService(youtubeDataService, resourceReader, appConfig);
+        AuthorService authorService = new AuthorService(youtubeDataService, appConfig);
         DocumentationService documentationService = new DocumentationService(Clock.system(zoneId), appConfig);
 
         return new Povzetkar(summarizationService, videoSummary, resourceReader, authorService, documentationService, appConfig);

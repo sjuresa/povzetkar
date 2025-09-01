@@ -4,27 +4,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import si.jumis.config.AppConfig;
 import si.jumis.model.Author;
-import si.jumis.util.ResourceReader;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AuthorService {
     private static final Logger logger = LoggerFactory.getLogger(AuthorService.class);
 
     private final YouTubeDataService youtubeDataService;
-    private final ResourceReader resourceReader;
     private final AppConfig appConfig;
 
-    public AuthorService(YouTubeDataService youtubeDataService, ResourceReader resourceReader, AppConfig appConfig) {
+    public AuthorService(YouTubeDataService youtubeDataService, AppConfig appConfig) {
         this.youtubeDataService = youtubeDataService;
-        this.resourceReader = resourceReader;
         this.appConfig = appConfig;
     }
 
     public List<Author> getAuthorsWithDetails() {
-        List<String> authorLines = resourceReader.readLines(appConfig.getAuthorsListPath().toString(), "authors");
+        List<String> authorLines;
+        try {
+            authorLines = Files.readAllLines(appConfig.getAuthorsListPath());
+        } catch (IOException e) {
+            logger.error("Failed to read authors list from path: {}. Returning empty list.", appConfig.getAuthorsListPath(), e);
+            return Collections.emptyList();
+        }
         return fetchAuthors(authorLines);
     }
 
