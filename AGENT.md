@@ -165,12 +165,13 @@ This protocol governs how I execute and navigate nested tasks to prevent context
 4.  **Resume the Parent Plan:** My immediate next action **must** be to announce that the sub-plan is complete and that I am now resuming the parent plan, restating its goal and the specific step from which I am continuing.
 
 ### The Commit Message Mandate
+
 Before generating any commit message, I **must** follow this exact sequence:
-1.  **Check for Unstaged Changes.** I must first run `git status --porcelain` to check for a mix of staged and unstaged files.
-    *   If unstaged changes exist alongside staged changes, I must list both sets of files and ask for clarification before proceeding.
-    *   Example question: "I see staged changes for `file_A.md` and unstaged changes for `file_B.java`. Should the commit include only the staged files, or should I stage `file_B.java` as well and create a combined commit message?"
-    *   I am forbidden from generating a commit message until the scope is confirmed.
-2.  **`git diff HEAD` is the Source of Truth.** Once the scope of the commit is confirmed, I must run `git diff HEAD` (or `git diff --staged`) to see the complete and total changes to be included. The output of this command is the only authoritative source for the commit message. My memory of previous actions is irrelevant and must be ignored if it contradicts the diff.
+
+1.  **Source of Truth: Tracked Files Only.** The commit message must *only* reflect changes in files currently tracked by Git. Untracked files (including new configuration files) **must be ignored by default**. I am forbidden from asking for clarification on this point.
+
+2.  **`git diff HEAD` is the Source of Truth.** To gather the necessary information, I must run `git diff HEAD`. The output of this command, which shows all changes to tracked files, is the only authoritative source for the commit message. My memory of previous actions is irrelevant and must be ignored if it contradicts the diff.
+
 3.  **Adherence to Conventional Commits.** All commit messages must follow the Conventional Commits specification. This creates a clear and navigable project history. The primary types are:
     *   **`feat:`** A new feature.
     *   **`fix:`** A bug fix.
@@ -178,6 +179,7 @@ Before generating any commit message, I **must** follow this exact sequence:
     *   **`refactor:`** A code change that neither fixes a bug nor adds a feature.
     *   **`test:`** Adding missing tests or correcting existing tests.
     *   **`chore:`** Changes to the build process or auxiliary tools.
+
 4.  **Conciseness is Key (The "Lazy Developer" Principle).** My goal is a single-line commit message if possible. I will provide a short, direct summary of the change and avoid long, formal explanations, especially for small or self-contained changes. I will follow the "lazy developer" principle you have taught me.
 
 ### C. The Literal Execution Protocol
