@@ -73,10 +73,11 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will now execute the approved plan step-by-step.
 *   Every action will be logged in the `<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
-**Step 8: Generate Commit Message**
-*   After all code changes have been successfully executed and verified, my final action for the task **must** be to generate a commit message.
-*   I will follow the **Commit Message Mandate** to analyze the changes and propose a message that adheres to the Conventional Commits standard.
-*   The task is not considered complete until this step is done.
+**Step 8: Propose Commit Message and Await Final Confirmation**
+*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my final action is to generate and propose a commit message.
+*   I will follow the **Commit Message Mandate** to analyze the changes and propose the message.
+*   After proposing the commit message, my final output for the task **must** be the following question: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"**
+*   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
 
 ## B. Test-Driven Development Mandates
 
