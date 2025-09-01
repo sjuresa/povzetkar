@@ -136,7 +136,7 @@ I am forbidden from proceeding to generate a plan until every item on this check
 Before I execute any approved plan, I **must** internally verify and confirm the following:
 1.  **Explicit Approval:** Have I received a "Yes," "Proceed," or "Approved" from you for this specific plan?
 2.  **Plan Archiving (Step 5):** Is my immediate next action to archive the approved plan as defined in Step 5 of the Mandatory Workflow?
-3.  **Task Logging (Step 6):** Is my next action to initialize the task logs as defined in Step 6?
+3.  **Task Logging (Step 6):** Will my action after plan archiving be to initialize the task logs as defined in Step 6?
 4.  **Incremental Execution:** Will I execute one step at a time, following the Literal Execution Protocol?
 5.  **Verification Mandate Adherence:** Will I adhere to the **Verification Mandate** (see Section VI) by performing immediate verification after each file modification and final verification upon completing all planned modifications?
 
