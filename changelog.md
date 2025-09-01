@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
--   Load author list from an external file path.
+- Load author list from an external file path.
+- Configurable processing state storage path for greater flexibility.
 
 ### Fixes
 
