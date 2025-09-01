@@ -2,6 +2,7 @@ package si.jumis.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import si.jumis.config.AppConfig;
 import si.jumis.model.YouTubeVideo;
 
 import java.io.IOException;
@@ -9,7 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -30,15 +30,8 @@ public class ProcessingStateService {
     private final Path stateFilePath;
     private final Properties properties = new Properties();
 
-    public ProcessingStateService() {
-        this(Paths.get("processing_state.properties"));
-    }
-
-    /**
-     * Constructor for dependency injection, allowing a custom file path for testing.
-     */
-    ProcessingStateService(Path stateFilePath) {
-        this.stateFilePath = stateFilePath;
+    public ProcessingStateService(AppConfig appConfig) {
+        this.stateFilePath = appConfig.getProcessingStatePath();
         if (Files.exists(this.stateFilePath)) {
             try (InputStream input = Files.newInputStream(this.stateFilePath)) {
                 properties.load(input);

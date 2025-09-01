@@ -67,7 +67,7 @@ public class Main {
     @NotNull
     private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey, ZoneId zoneId, AppConfig appConfig) {
         VideoSummary videoSummary = new VideoSummary(genAiPool);
-        ProcessingStateService stateService = new ProcessingStateService();
+        ProcessingStateService stateService = new ProcessingStateService(appConfig);
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
                 new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
                         .setApplicationName(appConfig.getYoutubeAppName()).build(), zoneId);
@@ -79,7 +79,7 @@ public class Main {
         FailureLoggerService failureLoggerService = new FailureLoggerService(fileWriter, Clock.system(zoneId));
         VideoSummarizationService summarizationService = new VideoSummarizationService(stateService,
                 videoSummary, fileWriter, newVideoFetcherService, contentCreationService, failureLoggerService);
-        AuthorService authorService = new AuthorService(youtubeDataService, resourceReader, appConfig);
+        AuthorService authorService = new AuthorService(youtubeDataService, appConfig);
         DocumentationService documentationService = new DocumentationService(Clock.system(zoneId), appConfig);
 
         return new Povzetkar(summarizationService, videoSummary, resourceReader, authorService, documentationService, appConfig);
