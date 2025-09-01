@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] 2025-09-01
+
+### Features
+
+-   Load author list from an external file path.
+
+### Fixes
+
+-   Improved test isolation in `ProcessingStateServiceTest`.
+
+### Documentation
+
+-   Refined the Commit Message Mandate for clarity.
+-   Enhanced the consistency and clarity of the `AGENT.md` document.
+-   Resolved ambiguity and improved phrasing in the documentation.
+-   Made examples in the documentation clearer and more consistent with protocols.
+-   Clarified logging and expanded the execution example.
+-   Formalized task conclusion with a handover question.
+-   Clarified two-stage verification in the pre-execution checklist.
+
+### Chores
+
+-   Refined and hardened the agent execution workflow.
+
 ## [0.4.3] - 2025-08-31
 
 ### New Features
