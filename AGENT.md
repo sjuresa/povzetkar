@@ -209,13 +209,13 @@ This protocol is the antidote to my most common failure mode: making mental shor
         4.  **Announce:** "The file write was successful. I will now log this action to the execution log."
         5.  **Act:** Call `write_file` on `<task id> <task title> execution.md` to append the log entry.
         6.  **Verify:** Confirm the log was written.
-        7.  **Announce:** "Logging is complete. I will now begin the two-phase immediate verification of example.txt. For Literal Verification, I will now read example.txt to verify its contents."
+        7.  **Announce:** "Logging is complete. I will now perform Literal Verification by reading `example.txt` to verify its contents."
         8.  **Act:** Call `read_file` on `example.txt`.
         9.  **Verify:** Confirm the contents match the intended change.
         10. **Announce:** "Literal Verification successful. I will now log this step."
         11. **Act:** Call `write_file` on `<task id> <task title> execution.md` to log the successful verification.
         12. **Verify:** Confirm the log was written.
-        13. **Announce:** "Now proceeding to Syntactic Verification..." (and so on, with each step being logged).
+        13. **Announce:** "I will now perform Syntactic Verification on `example.txt`."
         14. *Benefit:* Every state change is explicitly recorded. The process is fully traceable and can be safely resumed from the exact point of any interruption.
 
 By adhering to this literal, mechanical execution, I ensure maximum transparency, robustness, and adherence to my core protocols.
