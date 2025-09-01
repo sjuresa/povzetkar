@@ -31,7 +31,6 @@ class ProcessingStateServiceTest {
     private AppConfig mockAppConfig;
 
     private Path stateFile;
-    private ProcessingStateService stateService;
 
     private final String channel1 = "UC-channel-1";
     private final LocalDate today = LocalDate.of(2025, 7, 17);
@@ -41,7 +40,6 @@ class ProcessingStateServiceTest {
     void setUp() {
         stateFile = tempDir.resolve("test_state.properties");
         when(mockAppConfig.getProcessingStatePath()).thenReturn(stateFile);
-        stateService = new ProcessingStateService(mockAppConfig);
     }
 
     @Test
@@ -64,7 +62,10 @@ class ProcessingStateServiceTest {
     @Test
     @DisplayName("Constructor should initialize empty properties when state file does not exist")
     void constructor_whenFileDoesNotExist_initializesEmpty() {
-        // The setUp method already creates a service with a non-existent file path.
+        // Arrange
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
+
+        // Act & Assert
         assertNull(stateService.findLastProcessedVideoIdBefore(channel1, today));
     }
 
@@ -72,6 +73,7 @@ class ProcessingStateServiceTest {
     @DisplayName("saveState should write current properties to the file")
     void saveState_writesPropertiesToFile() throws IOException {
         // Arrange
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
         stateService.updateLastProcessedVideoForDate(channel1, video1, today);
 
         // Act
@@ -85,7 +87,12 @@ class ProcessingStateServiceTest {
 
     @Test
     @DisplayName("findLastProcessedVideoIdBefore should return null if no state exists for the channel")
-    void findLastProcessedVideoIdBefore_withNoState_returnsNull() {
+    void findLastProcessedVideoIdBefore_withNoState_returnsNull() throws IOException {
+        // Arrange
+        Files.createFile(stateFile);
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
+
+        // Act & Assert
         assertNull(stateService.findLastProcessedVideoIdBefore(channel1, today));
     }
 
@@ -95,8 +102,7 @@ class ProcessingStateServiceTest {
         // Arrange
         LocalDate date1 = today.minusDays(2); // 2025-07-15
         LocalDate date2 = today.minusDays(1); // 2025-07-16
-        // 2025-07-17
-
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
         stateService.updateLastProcessedVideoForDate(channel1, new YouTubeVideo("vid_old", "", "", "", "", Instant.now(), Duration.ZERO), date1);
         stateService.updateLastProcessedVideoForDate(channel1, new YouTubeVideo("vid_correct", "", "", "", "", Instant.now(), Duration.ZERO), date2);
         stateService.updateLastProcessedVideoForDate(channel1, new YouTubeVideo("vid_future", "", "", "", "", Instant.now(), Duration.ZERO), today);
@@ -112,6 +118,7 @@ class ProcessingStateServiceTest {
     @DisplayName("findLastProcessedVideoIdBefore should return null if all state is after the reference date")
     void findLastProcessedVideoIdBefore_withOnlyFutureDates_returnsNull() {
         // Arrange
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
         stateService.updateLastProcessedVideoForDate(channel1, video1, today.plusDays(1));
 
         // Act
@@ -126,6 +133,7 @@ class ProcessingStateServiceTest {
     void findLastProcessedVideoIdBefore_ignoresOtherChannels() {
         // Arrange
         String channel2 = "UC-channel-2";
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
         stateService.updateLastProcessedVideoForDate(channel2, video1, today);
 
         // Act
@@ -161,6 +169,7 @@ class ProcessingStateServiceTest {
         // Arrange
         Instant publishedAt = Instant.parse("2025-07-17T10:00:00Z");
         YouTubeVideo video = new YouTubeVideo("vid123", "Title", "url", "Author", channel1, publishedAt, Duration.ZERO);
+        ProcessingStateService stateService = new ProcessingStateService(mockAppConfig);
 
         // Act
         stateService.updateLastProcessedVideoForDate(channel1, video, today);
