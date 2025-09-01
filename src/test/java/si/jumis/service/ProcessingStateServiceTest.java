@@ -3,7 +3,11 @@ package si.jumis.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import si.jumis.config.AppConfig;
 import si.jumis.model.YouTubeVideo;
 
 import java.io.IOException;
@@ -15,11 +19,16 @@ import java.time.LocalDate;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ProcessingStateServiceTest {
 
     @TempDir
     Path tempDir;
+
+    @Mock
+    private AppConfig mockAppConfig;
 
     private Path stateFile;
     private ProcessingStateService stateService;
@@ -31,7 +40,8 @@ class ProcessingStateServiceTest {
     @BeforeEach
     void setUp() {
         stateFile = tempDir.resolve("test_state.properties");
-        stateService = new ProcessingStateService(stateFile);
+        when(mockAppConfig.getProcessingStatePath()).thenReturn(stateFile);
+        stateService = new ProcessingStateService(mockAppConfig);
     }
 
     @Test
@@ -45,7 +55,7 @@ class ProcessingStateServiceTest {
         }
 
         // Act: Create a new service instance to trigger loading from the file
-        ProcessingStateService loadedService = new ProcessingStateService(stateFile);
+        ProcessingStateService loadedService = new ProcessingStateService(mockAppConfig);
 
         // Assert
         assertEquals("existing_vid", loadedService.findLastProcessedVideoIdBefore(channel1, today));
@@ -136,7 +146,7 @@ class ProcessingStateServiceTest {
                 UC-channel-1.2025-07-10.lastVideoId=new_video_id
                 """;
         Files.writeString(stateFile, fileContent);
-        ProcessingStateService loadedService = new ProcessingStateService(stateFile);
+        ProcessingStateService loadedService = new ProcessingStateService(mockAppConfig);
 
         // Act
         String result = loadedService.findLastProcessedVideoIdBefore(channel1, today);

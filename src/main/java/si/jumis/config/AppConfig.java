@@ -77,4 +77,8 @@ public class AppConfig {
         }
         return Paths.get(rawPath);
     }
+
+    public Path getProcessingStatePath() {
+        return Paths.get(getRequiredProperty("path.processing.state"));
+    }
 }
