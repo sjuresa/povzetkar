@@ -67,7 +67,7 @@ public class Main {
     @NotNull
     private static Povzetkar getPovzetkar(GenAiPool genAiPool, String apiKey, ZoneId zoneId, AppConfig appConfig) {
         VideoSummary videoSummary = new VideoSummary(genAiPool);
-        ProcessingStateService stateService = new ProcessingStateService();
+        ProcessingStateService stateService = new ProcessingStateService(appConfig);
         YouTubeDataService youtubeDataService = new YouTubeDataService(apiKey,
                 new YouTube.Builder(new NetHttpTransport(), new GsonFactory(), null)
                         .setApplicationName(appConfig.getYoutubeAppName()).build(), zoneId);
