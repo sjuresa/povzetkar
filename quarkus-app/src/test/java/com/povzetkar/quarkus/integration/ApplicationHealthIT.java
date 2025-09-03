@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
-class DatabaseConnectionTest {
+class ApplicationHealthIT {
 
     @Inject
     DataSource dataSource;
