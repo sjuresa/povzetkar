@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
@@ -19,9 +20,10 @@ class DatabaseConnectionTest {
     @Test
     void testHealthEndpoint() {
         given()
-          .when().get("/q/health")
-          .then()
-             .statusCode(200);
+                .when().get("/q/health/live")
+                .then()
+                .statusCode(200)
+                .body("status", is("UP"));
     }
 
     @Test
@@ -29,4 +31,5 @@ class DatabaseConnectionTest {
         try (Connection connection = dataSource.getConnection()) {
             assertTrue(connection.isValid(1), "Database connection should be valid.");
         }
-    }}
+    }
+}
