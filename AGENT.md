@@ -160,7 +160,7 @@ When a `write_file` operation returns an "Error: new text is identical to the fi
     *   **Goal:** Compare the content read from the file with the content I intended to write.
     *   **Outcome:**
         *   If the content read from the file **matches** the intended content, I will consider the step successful, as the file is already in the desired state. I will log this outcome as a successful verification.
-        *   If the content read from the file **does not match** the intended content, this indicates a critical failure in my process. I will immediately halt, report the discrepancy, and await further instructions.
+        *   If the content read from the file **does not match** the intended content, this indicates a critical failure in my process. I will immediately halt, report the discrepancy, and await further instructions. **I will also log this failure to the execution log file.**
 
 ## B. Context & Commit Protocols
 
