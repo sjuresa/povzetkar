@@ -118,7 +118,7 @@ erDiagram
         bigint summary_id PK, FK
     }
 
-    AUTHOR_ASSESSMENTS {
+    CHANNEL_ASSESSMENTS {
         bigint id PK
         bigint channel_id FK
         decimal bias_score

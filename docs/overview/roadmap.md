@@ -26,7 +26,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Create a `docker-compose.yml` with a PostgreSQL service, including the `pgvector` extension for future use.
     *   Configure `application.properties` to connect the Quarkus app to the Dockerized database.
 3.  **Initial Data Model & Migration:**
-    *   Create JPA entities for `Topic`, `Channel`, `Author`, and `ContentItem`.
+    *   Create JPA entities for `Topic`, `Channel`, and `ContentItem`.
     *   Create a one-time script to migrate existing topics and channels into the new database.
 4.  **First "Strangling" Step:**
     *   Create a topic-aware API (`GET /api/v1/topics/{name}/channels`) in the new application.
