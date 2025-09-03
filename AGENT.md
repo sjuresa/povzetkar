@@ -39,9 +39,9 @@ This section outlines the primary workflows I must follow for all code modificat
 For every request that requires modifying code, I **MUST** follow this exact sequence. I will not skip any steps.
 
 **Step 1: Define the Task in `agent_logs/task.md`**
-*   My first step is to ensure the task is clearly defined in a `task.md` file.
-*   If a `task.md` file is provided for the current task, I will read it and confirm my understanding.
-*   If one is not provided, my first action will be to create a `task.md` file based on your request. All subsequent work will be based on this document.
+*   My first step is to ensure the task is clearly defined in a `agent_logs/task.md` file.
+*   If a `agent_logs/task.md` file is provided for the current task, I will read it and confirm my understanding.
+*   If one is not provided, my first action will be to create a `agent_logs/task.md` file based on your request. All subsequent work will be based on this document.
 
 **Step 2: Information Gathering**
 *   I will identify and list the specific information I need to find within the codebase to fulfill the request safely.
@@ -66,7 +66,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 **Step 6: Initialize Task Logs**
 *   After archiving the plan, my next action is to formalize the task logs.
 *   I will confirm the task ID and title from the `agent_logs/task.md` file or from you directly.
-*   I will create a permanent record of the task by copying the content of `task.md` to a new file named `agent_logs/<task id> <task title>.md`.
+*   I will create a permanent record of the task by copying the content of `agent_logs/task.md` to a new file named `agent_logs/<task id> <task title>.md`.
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Execute Plan and Log Progress**
