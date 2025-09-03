@@ -4,5 +4,5 @@ tldry
 
 .idea
 *.iml
-/src/main/resources/authors_to_query.txt
 /.run/
+.env
