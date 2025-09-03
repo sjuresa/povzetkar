@@ -38,7 +38,7 @@ This section outlines the primary workflows I must follow for all code modificat
 
 For every request that requires modifying code, I **MUST** follow this exact sequence. I will not skip any steps.
 
-**Step 1: Define the Task in `task.md`**
+**Step 1: Define the Task in `agent_logs/task.md`**
 *   My first step is to ensure the task is clearly defined in a `task.md` file.
 *   If a `task.md` file is provided for the current task, I will read it and confirm my understanding.
 *   If one is not provided, my first action will be to create a `task.md` file based on your request. All subsequent work will be based on this document.
@@ -60,23 +60,22 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 
 **Step 5: Archive the Approved Plan**
 *   Upon receiving approval, my first action is to archive the exact plan that was approved.
-*   I will create a new file named `<task id> <task title> plan.md`.
+*   I will create a new file named `agent_logs/<task id> <task title> plan.md`.
 *   Into this file, I will write the complete content of the approved plan, including the "Findings," "Detailed Plan," "Design Justification," and "Breaking Changes Analysis" sections.
 
 **Step 6: Initialize Task Logs**
 *   After archiving the plan, my next action is to formalize the task logs.
-*   I will confirm the task ID and title from the `task.md` file or from you directly.
-*   I will create a permanent record of the task by copying the content of `task.md` to a new file named `<task id> <task title>.md`.
-*   I will create a new, empty file named `<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
+*   I will confirm the task ID and title from the `agent_logs/task.md` file or from you directly.
+*   I will create a permanent record of the task by copying the content of `task.md` to a new file named `agent_logs/<task id> <task title>.md`.
+*   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Execute Plan and Log Progress**
 *   I will now execute the approved plan step-by-step.
-*   Every action will be logged in the `<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
+*   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
 **Step 8: Propose Commit Message and Await Final Confirmation**
 *   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
 *   I will follow the **Commit Message Mandate** to analyze the changes and propose the message.
-*   After proposing the commit message, my final output for the task **must** be the following question: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"**
 *   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
 
 ## B. Test-Driven Development Mandates
@@ -124,7 +123,7 @@ This mandate is a direct response to past failures where critical information-ga
 This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" that explicitly verifies and confirms the completion of every mandatory step in the "Information Gathering" phase.
 
 Before presenting any plan, I **MUST** halt and explicitly confirm the completion of the following checks:
-1.  **Task Definition:** Have I read and understood the `task.md` file as per Step 1 of the Mandatory Workflow?
+1.  **Task Definition:** Have I read and understood the `agent_logs/task.md` file as per Step 1 of the Mandatory Workflow?
 2.  **Usage Analysis:** Has the **Usage Analysis Mandate** been fully satisfied for any code being modified or removed?
 3.  **TDD Analysis:** Has the **Test-Driven Development Mandate** been fully analyzed? The plan must correctly follow the appropriate TDD workflow (Red-Green-Refactor for new behavior, Green-to-Green for internal refactoring).
 4.  **Information Completeness:** Have I gathered all necessary information from the codebase to form a plan based on facts, not assumptions?
@@ -154,6 +153,14 @@ Before I execute any approved plan, I **must** internally verify and confirm the
     *   I will use `write_file` for substantial changes, creating new files, or when the desired state of the entire file is clear.
     *   I will use `replace_text` for smaller, more targeted modifications where preserving the surrounding context is essential and less risky than rewriting the whole file.
 6.  **Adherence to the Verification Mandate:** After every `write_file` or `replace_text` operation, I must immediately follow the **Immediate File-Level Verification** protocol (see Section VI) to ensure the change was successful and introduced no errors before proceeding.
+
+7. Handling 'Identical Content' Write Errors
+When a `write_file` operation returns an "Error: new text is identical to the file's current contents", I will not automatically consider this a successful operation. Instead, I will perform the following verification:
+    *   **Action:** Immediately after receiving this error, I will read the file back using `read_file`.
+    *   **Goal:** Compare the content read from the file with the content I intended to write.
+    *   **Outcome:**
+        *   If the content read from the file **matches** the intended content, I will consider the step successful, as the file is already in the desired state. I will log this outcome as a successful verification.
+        *   If the content read from the file **does not match** the intended content, this indicates a critical failure in my process. I will immediately halt, report the discrepancy, and await further instructions.
 
 ## B. Context & Commit Protocols
 
@@ -193,7 +200,7 @@ This protocol is the antidote to my most common failure mode: making mental shor
     *   **Act:** Execute a single tool call.
     *   **Verify:** Await the result and confirm its success before proceeding to the next announcement.
 
-3.  **The Execution Logging Mandate:** The `Announce-Act-Verify` cycle is incomplete without logging. After successfully verifying an action, my immediate next step **must** be to announce and execute the logging of that action to the `<task id> <task title> execution.md` file. I am forbidden from starting a new task-related action until the previous action has been verifiably logged.
+3.  **The Execution Logging Mandate:** The `Announce-Act-Verify` cycle is incomplete without logging. After successfully verifying an action, my immediate next step **must** be to announce and execute the logging of that action to the `agent_logs/<task id> <task title> execution.md` file. I am forbidden from starting a new task-related action until the previous action has been verifiably logged.
 
 4.  **Example: The Flaw of "Optimized" Thinking vs. The Safety of "Literal" Execution**
 
@@ -242,7 +249,7 @@ When a mistake is made or a plan is rejected, I will adhere to the following pro
 This protocol is a mandatory circuit-breaker that activates whenever the current **strategic plan** is proven invalid (e.g., plan rejection, user-reported bug, change in requirements).
 1.  **Halt, Acknowledge, and Inquire:** I must immediately **HALT** the execution of the current plan, acknowledge the failure, and ask for the reason if it is unclear.
 2.  **Re-evaluate from the Top:** After receiving your feedback, I am forbidden from simply patching the old plan. I must treat the new information as a **new, distinct task**.
-3.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: awaiting a new or modified `task.md` file** with clarified requirements.
+3.  **Re-engage the Workflow:** My very next action **must** be to re-engage the "Mandatory Workflow for Code Changes," starting with **Step 1: awaiting a new or modified `agent_logs/task.md` file** with clarified requirements.
 
 ## The Unbreakable Rejection Protocol
 This protocol is the supreme directive for handling a rejected *execution* step (`write_file` or `replace_text`). It supersedes all other goals and instructions.
