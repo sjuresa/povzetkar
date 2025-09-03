@@ -1,14 +1,14 @@
 # Project Povzetkar: Development Roadmap
 
-**Version:** 1.2
-**Date:** September 1, 2025
+**Version:** 1.3
 
 ## Revision History
-| Version | Date            | Author       | Changes                                                                                                                                                           |
-|---------|-----------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.2     | September 1, 2025 | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                  |
-| 1.1     | August 27, 2025 | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
-| 1.0     | August 15, 2025 | Povzetkar AI | Initial version of the roadmap.                                                                       |
+| Version | Date              | Author       | Changes                                                                                                                                                            |
+|---------|-------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.3     | September 3, 2025 | Povzetkar AI | Aligned v0.6 ingestion endpoint with topic-aware architecture.                                                                                                     |
+| 1.2     | September 1, 2025 | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
+| 1.1     | August 27, 2025   | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
+| 1.0     | August 15, 2025   | Povzetkar AI | Initial version of the roadmap.                                                                                                                                    |
 
 This document outlines the concrete steps for implementing the features described in the [`specification.md`](specification.md). It breaks down the high-level phases into actionable tasks.
 
@@ -47,10 +47,10 @@ This document outlines the concrete steps for implementing the features describe
         3.  Call the YouTube API to get all new videos since that timestamp.
         4.  Persist these new videos as `ContentItem` records with a `PENDING` status.
         5.  Return a consolidated and chronologically sorted list of new `ContentItem` DTOs.
-    *   Expose this logic via a single endpoint: `POST /api/v1/ingestion/fetch-new-videos`.
+    *   Expose this logic via a single endpoint: `POST /api/v1/topics/{name}/ingestion/fetch-new`.
 2.  **Refactor Old Application to Delegate Video Fetching:**
     *   Modify the `VideoSummarizationService.summarizeFromAuthors` method in the old application.
-    *   The call to the internal `fetchAllNewVideos` method will be replaced with a REST client call to the new `POST /api/v1/ingestion/fetch-new-videos` endpoint.
+    *   The call to the internal `fetchAllNewVideos` method will be replaced with a REST client call to the new `POST /api/v1/topics/{name}/ingestion/fetch-new` endpoint.
     *   The rest of the method's logic (looping through the returned list, summarizing, etc.) remains unchanged for now.
 3.  **Testing:**
     *   Write a `@QuarkusTest` integration test for the new ingestion endpoint. This test must mock the external YouTube API but use a real Testcontainer DB to verify the entire internal logic and the API response.
@@ -113,7 +113,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Create a `ReportingService` in the Quarkus app. It will query the database for all necessary data (summaries, content items) and perform the Git operations to update documentation.
     *   Expose this logic via a new endpoint: `POST /api/v1/reports/generate`.
 2.  **Establish New Trigger Mechanism:**
-    *   Create a Quarkus Scheduler (`@Scheduled`) method that orchestrates the entire workflow by calling the `POST /api/v1/ingestion/fetch-new-videos` and `POST /api/v1/reports/generate` endpoints in the correct sequence.
+    *   Create a Quarkus Scheduler (`@Scheduled`) method that orchestrates the entire workflow by calling the `POST /api/v1/topics/{name}/ingestion/fetch-new` and `POST /api/v1/reports/generate` endpoints in the correct sequence.
 3.  **Decommission Old Application:**
     *   The entire old application's source code (`src/main/java/si/jumis/...`) and its Maven module will be deleted.
     *   The project will now be a single-module, self-contained Quarkus application.
