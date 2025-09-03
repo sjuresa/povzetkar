@@ -5,3 +5,4 @@ tldry
 .idea
 *.iml
 /.run/
+.env
