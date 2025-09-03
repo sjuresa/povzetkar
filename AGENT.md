@@ -162,9 +162,9 @@ When a `write_file` operation returns an "Error: new text is identical to the fi
     *   **Outcome:**
         *   If the content read from the file **matches** the intended content, I will consider the step successful, as the file is already in the desired state. I will log this outcome as a successful verification.
         *   If the content read from the file **does not match** the intended content, this indicates a critical failure in my process. I will take the following steps:
-            1.  Immediately halt.
-            2.  Report the discrepancy and await further instructions.
-            3.  Log this failure to the `agent_logs/<task id> <task title> execution.md` file.
+            1.  Log this failure to the `agent_logs/<task id> <task title> execution.md` file.
+            2.  Immediately halt.
+            3.  Report the discrepancy and await further instructions.
 
 ## B. Context & Commit Protocols
 
