@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,14 +16,14 @@ class ContentItemTest {
     @Transactional
     void testPrePersistSetsCreatedAtAndProcessingStatus() {
         Channel channel = new Channel();
-        channel.sourceChannelId = "testChannelId" + java.util.UUID.randomUUID();
+        channel.sourceChannelId = "testChannelId" +  UUID.randomUUID();
         channel.sourceTypeId = 1;
         channel.name = "Test Channel";
         channel.persist();
 
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
-        contentItem.sourceUrl = "http://example.com/test/" + java.util.UUID.randomUUID();
+        contentItem.sourceUrl = "http://example.com/test/" + UUID.randomUUID();
         contentItem.rawContent = "Some raw content";
         contentItem.publishedAt = Instant.now();
         // processingStatus is not set, should default to PENDING
@@ -38,14 +39,14 @@ class ContentItemTest {
     @Transactional
     void testContentItemRelationships() {
         Channel channel = new Channel();
-        channel.sourceChannelId = "channel456-" + java.util.UUID.randomUUID();
+        channel.sourceChannelId = "channel456-" + UUID.randomUUID();
         channel.sourceTypeId = 1;
         channel.name = "Another Channel";
         channel.persist();
 
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
-        contentItem.sourceUrl = "http://example.com/another/" + java.util.UUID.randomUUID();
+        contentItem.sourceUrl = "http://example.com/another/" + UUID.randomUUID();
         contentItem.rawContent = "More raw content";
         contentItem.publishedAt = Instant.now();
         contentItem.processingStatus = ProcessingStatus.COMPLETED;

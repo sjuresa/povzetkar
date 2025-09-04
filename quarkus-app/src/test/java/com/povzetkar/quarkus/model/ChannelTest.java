@@ -16,7 +16,7 @@ class ChannelTest {
     @Transactional
     void testChannelDefaultsAndPrePersist() {
         Channel channel = new Channel();
-        channel.sourceChannelId = "testChannelId" + java.util.UUID.randomUUID();
+        channel.sourceChannelId = "testChannelId" + UUID.randomUUID();
         channel.sourceTypeId = 1;
         channel.name = "Test Channel";
         channel.description = "A test description";

@@ -5,6 +5,8 @@ import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
@@ -14,7 +16,7 @@ class TopicTest {
     @Transactional
     void testPrePersistSetsCreatedAt() {
         Topic topic = new Topic();
-        topic.name = "Test Topic" + java.util.UUID.randomUUID();
+        topic.name = "Test Topic" + UUID.randomUUID();
         topic.persist();
         assertNotNull(topic.createdAt);
     }
@@ -22,7 +24,7 @@ class TopicTest {
     @Test
     @Transactional
     void testNameIsUnique() {
-        String uniqueName = "Unique Topic" + java.util.UUID.randomUUID();
+        String uniqueName = "Unique Topic" + UUID.randomUUID();
         Topic topic1 = new Topic();
         topic1.name = uniqueName;
         topic1.persistAndFlush();
