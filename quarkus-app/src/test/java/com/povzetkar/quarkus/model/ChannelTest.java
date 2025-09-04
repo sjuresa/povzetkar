@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.model;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -40,9 +39,9 @@ class ChannelTest {
         channel.persist();
 
         Channel retrievedChannel = Channel.find("sourceChannelId", sourceChannelId).firstResult();
-        Assertions.assertNotNull(retrievedChannel);
-        Assertions.assertEquals("Test Channel", retrievedChannel.name);
-        Assertions.assertEquals(1000, retrievedChannel.subscriberCount);
-        Assertions.assertNotNull(retrievedChannel.createdAt);
+        assertNotNull(retrievedChannel);
+        assertEquals("Test Channel", retrievedChannel.name);
+        assertEquals(1000, retrievedChannel.subscriberCount);
+        assertNotNull(retrievedChannel.createdAt);
     }
 }

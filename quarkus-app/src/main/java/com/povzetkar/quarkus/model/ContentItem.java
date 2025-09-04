@@ -27,7 +27,7 @@ public class ContentItem extends PanacheEntityBase {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "processing_status", nullable = false)
-    public ProcessingStatus processingStatus;
+    public ProcessingStatus processingStatus = ProcessingStatus.PENDING;
 
     @Column(name = "duration_seconds")
     public Integer durationSeconds;
@@ -39,9 +39,6 @@ public class ContentItem extends PanacheEntityBase {
     void prePersist() {
         if (createdAt == null) {
             createdAt = Instant.now();
-        }
-        if (processingStatus == null) {
-            processingStatus = ProcessingStatus.PENDING;
         }
     }
 }

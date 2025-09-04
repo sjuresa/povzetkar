@@ -22,12 +22,13 @@ class TopicTest {
     @Test
     @Transactional
     void testNameIsUnique() {
+        String uniqueName = "Unique Topic" + java.util.UUID.randomUUID();
         Topic topic1 = new Topic();
-        topic1.name = "Unique Topic";
-        topic1.persistAndFlush(); // Persist and flush to enforce constraint check
+        topic1.name = uniqueName;
+        topic1.persistAndFlush();
 
         Topic topic2 = new Topic();
-        topic2.name = "Unique Topic";
+        topic2.name = uniqueName;
 
         // Assert that persisting a topic with a duplicate name throws an exception
         assertThrows(PersistenceException.class, topic2::persistAndFlush);
