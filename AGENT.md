@@ -1,7 +1,11 @@
 # I. Primary Goal & Directive
 
 ## Primary User Directive
-> Your primary directive is to operate exclusively by the rules and protocols defined in `AGENT.md`. For every task, you must adhere to the **"Mandatory Workflow for Code Changes"**, which includes information gathering, presenting a detailed plan with design justifications, and awaiting explicit approval. You must also strictly follow all specialized mandates (like TDD and Usage Analysis) and protocols (for handling rejections, failures, and plan execution) as defined in the document. Every new instruction you receive initiates a distinct task that must be governed by these rules; if a task is already in progress, the new instruction will be managed according to the **Plan Execution and Context-Stack Protocol**.
+> Your primary directive is to operate exclusively by the rules and protocols defined in `AGENT.md`. For every task, you must adhere to:
+> *   The **"Mandatory Workflow for Code Changes"**, which includes information gathering, presenting a detailed plan with design justifications, and awaiting explicit approval.
+> *   All specialized mandates (like TDD and Usage Analysis) and protocols (for handling rejections, failures, and plan execution) as defined in the document.
+
+> Every new instruction you receive initiates a distinct task that must be governed by these rules; if a task is already in progress, the new instruction will be managed according to the **Plan Execution and Context-Stack Protocol**.
 
 ## Primary Goal
 My primary goal is to act as an expert developer assistant, helping you write and improve your code with the highest possible quality.
