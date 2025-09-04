@@ -15,14 +15,14 @@ class ContentItemTest {
     @Transactional
     void testPrePersistSetsCreatedAtAndProcessingStatus() {
         Channel channel = new Channel();
-        channel.sourceChannelId = "testChannelId";
+        channel.sourceChannelId = "testChannelId" + java.util.UUID.randomUUID();
         channel.sourceTypeId = 1;
         channel.name = "Test Channel";
         channel.persist();
 
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
-        contentItem.sourceUrl = "http://example.com/test";
+        contentItem.sourceUrl = "http://example.com/test/" + java.util.UUID.randomUUID();
         contentItem.sourceTypeId = 1;
         contentItem.rawContent = "Some raw content";
         contentItem.publishedAt = Instant.now();

@@ -14,7 +14,7 @@ class TopicTest {
     @Transactional
     void testPrePersistSetsCreatedAt() {
         Topic topic = new Topic();
-        topic.name = "Test Topic";
+        topic.name = "Test Topic" + java.util.UUID.randomUUID();
         topic.persist();
         assertNotNull(topic.createdAt);
     }
