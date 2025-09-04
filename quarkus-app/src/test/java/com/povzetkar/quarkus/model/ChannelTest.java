@@ -5,7 +5,6 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,15 +46,20 @@ class ChannelTest {
         channel.description = "Description";
         channel.subscriberCount = 1000;
         channel.createdAt = Instant.now();
-        channel.topics = new HashSet<>();
-        channel.topics.add(topic1);
-        channel.topics.add(topic2);
+        channel.persist(); // Persist channel first to get an ID
 
-        channel.persist();
+        // Now, manage the relationship from the owning side (Topic)
+        topic1.channels.add(channel);
+        topic2.channels.add(channel);
 
-        assertNotNull(channel.id);
-        assertEquals(2, channel.topics.size());
-        assertTrue(channel.topics.contains(topic1));
-        assertTrue(channel.topics.contains(topic2));
+        // To properly test, you should flush the session and re-fetch the channel
+        // to ensure the relationship was persisted correctly.
+        Channel.flush();
+        Channel fetchedChannel = Channel.findById(channel.id);
+
+        assertNotNull(fetchedChannel.id);
+        assertEquals(2, fetchedChannel.topics.size());
+        assertTrue(fetchedChannel.topics.stream().anyMatch(t -> t.id.equals(topic1.id)));
+        assertTrue(fetchedChannel.topics.stream().anyMatch(t -> t.id.equals(topic2.id)));
     }
 }

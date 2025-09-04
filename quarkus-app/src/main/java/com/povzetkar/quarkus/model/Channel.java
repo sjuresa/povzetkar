@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "channels")
+@Table(name = "channels", uniqueConstraints = { @UniqueConstraint(columnNames = {"source_channel_id", "source_type_id"}) })
 public class Channel extends PanacheEntityBase {
 
     @Id
@@ -27,7 +27,7 @@ public class Channel extends PanacheEntityBase {
     public String description;
 
     @Column(name = "subscriber_count", nullable = false)
-    public int subscriberCount;
+    public int subscriberCount = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
