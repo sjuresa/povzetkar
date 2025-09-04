@@ -214,6 +214,7 @@ A lookup table for content topics or categories.
 A join table creating a many-to-many relationship between channels and topics.
 - `channel_id` (PK, FK, bigint): References `channels.id`. `NOT NULL`
 - `topic_id` (PK, FK, bigint): References `topics.id`. `NOT NULL`
+This table facilitates the many-to-many relationship between `topics` and `channels`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying channels associated with a specific topic.
 
 ### `trends`
 Stores identified trends and patterns from the analyzed content.
