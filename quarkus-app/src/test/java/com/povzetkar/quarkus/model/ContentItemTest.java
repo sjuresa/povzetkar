@@ -23,7 +23,6 @@ class ContentItemTest {
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
         contentItem.sourceUrl = "http://example.com/test/" + java.util.UUID.randomUUID();
-        contentItem.sourceTypeId = 1;
         contentItem.rawContent = "Some raw content";
         contentItem.publishedAt = Instant.now();
         // processingStatus is not set, should default to PENDING
@@ -39,15 +38,14 @@ class ContentItemTest {
     @Transactional
     void testContentItemRelationships() {
         Channel channel = new Channel();
-        channel.sourceChannelId = "channel456";
+        channel.sourceChannelId = "channel456-" + java.util.UUID.randomUUID();
         channel.sourceTypeId = 1;
         channel.name = "Another Channel";
         channel.persist();
 
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
-        contentItem.sourceUrl = "http://example.com/another";
-        contentItem.sourceTypeId = 1;
+        contentItem.sourceUrl = "http://example.com/another/" + java.util.UUID.randomUUID();
         contentItem.rawContent = "More raw content";
         contentItem.publishedAt = Instant.now();
         contentItem.processingStatus = ProcessingStatus.COMPLETED;

@@ -19,9 +19,6 @@ public class ContentItem extends PanacheEntityBase {
     @Column(name = "source_url", unique = true, nullable = false)
     public String sourceUrl;
 
-    @Column(name = "source_type_id", nullable = false)
-    public int sourceTypeId;
-
     @Column(name = "raw_content", columnDefinition = "TEXT", nullable = false)
     public String rawContent;
 

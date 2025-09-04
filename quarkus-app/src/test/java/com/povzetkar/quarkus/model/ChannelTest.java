@@ -5,6 +5,8 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -31,19 +33,16 @@ class ChannelTest {
     @Test
     @Transactional
     void testCreateAndPersistChannel() {
-        Topic topic = new Topic();
-        topic.name = "test-topic-for-channel";
-        topic.persist();
-
         Channel channel = new Channel();
-        channel.sourceChannelId = "test-channel-id";
+        String sourceChannelId = "test-channel-id" + UUID.randomUUID();
+        channel.sourceChannelId = sourceChannelId;
         channel.sourceTypeId = 1;
         channel.name = "Test Channel";
         channel.description = "Description";
         channel.subscriberCount = 1000;
         channel.persist();
 
-        Channel retrievedChannel = Channel.find("sourceChannelId", "test-channel-id").firstResult();
+        Channel retrievedChannel = Channel.find("sourceChannelId", sourceChannelId).firstResult();
         Assertions.assertNotNull(retrievedChannel);
         Assertions.assertEquals("Test Channel", retrievedChannel.name);
         Assertions.assertEquals(1000, retrievedChannel.subscriberCount);
