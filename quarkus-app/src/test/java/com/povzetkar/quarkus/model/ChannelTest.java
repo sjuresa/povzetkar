@@ -15,15 +15,12 @@ class ChannelTest {
 
     @Test
     @Transactional
-    void testPrePersistSetsCreatedAtAndSubscriberCount() {
+    void testChannelDefaultsAndPrePersist() {
         Channel channel = new Channel();
         channel.sourceChannelId = "testChannelId" + java.util.UUID.randomUUID();
         channel.sourceTypeId = 1;
         channel.name = "Test Channel";
         channel.description = "A test description";
-        // subscriberCount is not set, should default to 0
-        // createdAt is not set, should be set by @PrePersist
-
         channel.persist();
 
         assertNotNull(channel.createdAt);
