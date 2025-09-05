@@ -20,7 +20,7 @@ public class Topic extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "channel_topics",
                joinColumns = @JoinColumn(name = "topic_id"),
                inverseJoinColumns = @JoinColumn(name = "channel_id"))
