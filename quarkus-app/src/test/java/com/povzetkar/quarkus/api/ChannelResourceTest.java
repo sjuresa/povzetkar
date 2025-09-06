@@ -99,4 +99,19 @@ class ChannelResourceTest {
                 .statusCode(200)
                 .body("$", hasSize(expectedSize));
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "-1, 10",  // Invalid page
+            "0, 0",    // Invalid size (too small)
+            "0, 101"   // Invalid size (too large)
+    })
+    void testGetChannelsByTopic_InvalidPagination(int page, int size) {
+        given()
+                .queryParam("page", page)
+                .queryParam("size", size)
+                .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
+                .then()
+                .statusCode(400);
+    }
 }
