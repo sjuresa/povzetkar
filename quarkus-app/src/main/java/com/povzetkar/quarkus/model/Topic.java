@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -20,10 +21,11 @@ public class Topic extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "channel_topics",
                joinColumns = @JoinColumn(name = "topic_id"),
                inverseJoinColumns = @JoinColumn(name = "channel_id"))
+    @JsonManagedReference
     public Set<Channel> channels = new HashSet<>();
 
     @PrePersist
