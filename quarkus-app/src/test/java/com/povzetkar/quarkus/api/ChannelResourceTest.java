@@ -28,6 +28,14 @@ class ChannelResourceTest {
     }
 
     @Test
+    void testGetChannelsByTopic_BlankName() {
+        given()
+          .when().get("/api/v1/topics/ /channels")
+          .then()
+             .statusCode(400);
+    }
+
+    @Test
     void testGetChannelsByTopic_Success() throws Exception {
         // Arrange: Manually manage the transaction to ensure data is committed before the HTTP call
         userTransaction.begin();
@@ -58,10 +66,7 @@ class ChannelResourceTest {
     @Transactional
     void cleanup() {
         // This runs in a new transaction after each test to clean up the data
-        Topic topic = Topic.find("name", "test-topic").firstResult();
-        if (topic != null) {
-            topic.delete();
-        }
+        Topic.delete("name", "test-topic");
         Channel.delete("sourceChannelId", "UC-test-id");
     }
 }
