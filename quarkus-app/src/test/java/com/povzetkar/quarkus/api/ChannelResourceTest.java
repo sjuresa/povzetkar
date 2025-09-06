@@ -24,7 +24,6 @@ class ChannelResourceTest {
     private static final String TEST_CHANNEL_ID_PREFIX = "UC-test-id-";
     private static final String TEST_CHANNEL_NAME_PREFIX = "Test Channel ";
     private static final String NON_EXISTENT_TOPIC_NAME = "non-existent-topic";
-    private static final String TEST_CHANNEL_NAME_LIKE_PATTERN = "Test Channel %";
 
     @Inject
     UserTransaction userTransaction;
