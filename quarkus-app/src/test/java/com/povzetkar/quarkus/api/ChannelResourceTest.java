@@ -55,13 +55,11 @@ class ChannelResourceTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        Topic topic = Topic.find("name", TEST_TOPIC_NAME).firstResult();
-        if (topic != null) {
-            // Use instance delete on the owning side to clean up the join table
-            topic.delete();
-        }
-        // Now channels can be safely deleted
-        Channel.delete("name like ?1", TEST_CHANNEL_NAME_LIKE_PATTERN);    }
+        // Deleting the topic will also clean up the join table entries
+        Topic.delete("name", TEST_TOPIC_NAME);
+        // Delete channels created by this test using a more specific attribute
+        Channel.delete("sourceChannelId like ?1", TEST_CHANNEL_ID_PREFIX + "%");
+    }
 
     @Test
     void testGetChannelsByTopic_NotFound() {
