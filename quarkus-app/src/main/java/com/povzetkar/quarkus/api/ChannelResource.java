@@ -23,12 +23,12 @@ public class ChannelResource {
                                        @QueryParam("page") @DefaultValue("0") @Min(0) int page,
                                        @QueryParam("size") @DefaultValue("10") @Min(1) @Max(100) int size) {
 
-        Topic topic = Topic.find("name", name).firstResult();
-        if (topic == null) {
+        List<Channel> channels = Channel.findByTopicName(name, page, size);
+        // If no channels are found, we must check if the topic exists at all
+        // to return a 404, otherwise we'll correctly return a 200 with an empty list.
+        if (channels.isEmpty() && Topic.count("name", name) == 0) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-
-        List<Channel> channels = Channel.findByTopicName(name, page, size);
 
         return Response.ok(channels).build();
     }
