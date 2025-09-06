@@ -18,6 +18,12 @@ import static org.hamcrest.Matchers.hasSize;
 @QuarkusTest
 class ChannelResourceTest {
 
+    private static final String TEST_TOPIC_NAME = "test-topic";
+    private static final String TEST_CHANNEL_ID_PREFIX = "UC-test-id-";
+    private static final String TEST_CHANNEL_NAME_PREFIX = "Test Channel ";
+    private static final String NON_EXISTENT_TOPIC_NAME = "non-existent-topic";
+    private static final String TEST_CHANNEL_NAME_LIKE_PATTERN = "Test Channel %";
+
     @Inject
     UserTransaction userTransaction;
 
@@ -25,13 +31,13 @@ class ChannelResourceTest {
     void setup() throws Exception {
         userTransaction.begin();
         Topic topic = new Topic();
-        topic.name = "test-topic";
+        topic.name = TEST_TOPIC_NAME;
 
         IntStream.range(0, 15).forEach(i -> {
             Channel channel = new Channel();
-            channel.sourceChannelId = "UC-test-id-" + i;
+            channel.sourceChannelId = TEST_CHANNEL_ID_PREFIX + i;
             channel.sourceTypeId = 1;
-            channel.name = "Test Channel " + i;
+            channel.name = TEST_CHANNEL_NAME_PREFIX + i;
             topic.channels.add(channel);
         });
 
@@ -42,14 +48,14 @@ class ChannelResourceTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        Topic.delete("name", "test-topic");
-        Channel.delete("name like ?1", "Test Channel %");
+        Topic.delete("name", TEST_TOPIC_NAME);
+        Channel.delete("name like ?1", TEST_CHANNEL_NAME_LIKE_PATTERN);
     }
 
     @Test
     void testGetChannelsByTopic_NotFound() {
         given()
-          .when().get("/api/v1/topics/non-existent-topic/channels")
+          .when().get("/api/v1/topics/" + NON_EXISTENT_TOPIC_NAME + "/channels")
           .then()
              .statusCode(404);
     }
@@ -65,7 +71,7 @@ class ChannelResourceTest {
     @Test
     void testGetChannelsByTopic_DefaultPagination() {
         given()
-          .when().get("/api/v1/topics/test-topic/channels")
+          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
           .then()
              .statusCode(200)
              .body("$", hasSize(10));
@@ -77,7 +83,7 @@ class ChannelResourceTest {
         given()
           .queryParam("page", 1)
           .queryParam("size", 5)
-          .when().get("/api/v1/topics/test-topic/channels")
+          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
           .then()
              .statusCode(200)
              .body("$", hasSize(5));
@@ -86,7 +92,7 @@ class ChannelResourceTest {
         given()
           .queryParam("page", 1)
           .queryParam("size", 10)
-          .when().get("/api/v1/topics/test-topic/channels")
+          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
           .then()
              .statusCode(200)
              .body("$", hasSize(5));
@@ -95,7 +101,7 @@ class ChannelResourceTest {
         given()
           .queryParam("page", 2)
           .queryParam("size", 10)
-          .when().get("/api/v1/topics/test-topic/channels")
+          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
           .then()
              .statusCode(200)
              .body("$", hasSize(0));
