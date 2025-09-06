@@ -30,19 +30,24 @@ class ChannelResourceTest {
     @BeforeEach
     void setup() throws Exception {
         userTransaction.begin();
-        Topic topic = new Topic();
-        topic.name = TEST_TOPIC_NAME;
+        try {
+            Topic topic = new Topic();
+            topic.name = TEST_TOPIC_NAME;
 
-        IntStream.range(0, 15).forEach(i -> {
-            Channel channel = new Channel();
-            channel.sourceChannelId = TEST_CHANNEL_ID_PREFIX + i;
-            channel.sourceTypeId = 1;
-            channel.name = TEST_CHANNEL_NAME_PREFIX + i;
-            topic.channels.add(channel);
-        });
+            IntStream.range(0, 15).forEach(i -> {
+                Channel channel = new Channel();
+                channel.sourceChannelId = TEST_CHANNEL_ID_PREFIX + i;
+                channel.sourceTypeId = 1;
+                channel.name = TEST_CHANNEL_NAME_PREFIX + i;
+                topic.channels.add(channel);
+            });
 
-        topic.persist();
-        userTransaction.commit();
+            topic.persist();
+            userTransaction.commit();
+        } catch (Exception e) {
+            userTransaction.rollback();
+            throw e;
+        }
     }
 
     @AfterEach
@@ -77,33 +82,19 @@ class ChannelResourceTest {
              .body("$", hasSize(10));
     }
 
-    @Test
-    void testGetChannelsByTopic_CustomPagination() {
-        // Second page
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+            "1, 5, 5",   // Second page
+            "1, 10, 5",  // Last page (incomplete)
+            "2, 10, 0"   // Page beyond results
+    })
+    void testGetChannelsByTopic_CustomPagination(int page, int size, int expectedSize) {
         given()
-          .queryParam("page", 1)
-          .queryParam("size", 5)
-          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
-          .then()
-             .statusCode(200)
-             .body("$", hasSize(5));
-
-        // Last page (incomplete)
-        given()
-          .queryParam("page", 1)
-          .queryParam("size", 10)
-          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
-          .then()
-             .statusCode(200)
-             .body("$", hasSize(5));
-
-        // Page beyond results
-        given()
-          .queryParam("page", 2)
-          .queryParam("size", 10)
-          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
-          .then()
-             .statusCode(200)
-             .body("$", hasSize(0));
+                .queryParam("page", page)
+                .queryParam("size", size)
+                .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(expectedSize));
     }
 }

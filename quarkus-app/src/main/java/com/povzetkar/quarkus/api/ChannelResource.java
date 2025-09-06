@@ -16,10 +16,13 @@ public class ChannelResource {
     @Path("/{name}/channels")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelsByTopic(@PathParam("name") @NotBlank String name,
-                                       @QueryParam("page") @DefaultValue("0") int page,
-                                       @QueryParam("size") @DefaultValue("10") int size) {
+                                       @QueryParam("page") @DefaultValue("0")
+                                       @jakarta.validation.constraints.Min(0) int page,
+                                       @QueryParam("size") @DefaultValue("10")
+                                       @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int size) {
 
-        if (Topic.count("name", name) == 0) {
+        Topic topic = Topic.find("name", name).firstResult();
+        if (topic == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
