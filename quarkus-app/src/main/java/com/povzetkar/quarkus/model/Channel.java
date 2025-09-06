@@ -1,16 +1,12 @@
 package com.povzetkar.quarkus.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "channels", uniqueConstraints = { @UniqueConstraint(columnNames = {"source_channel_id", "source_type_id"}) })
@@ -37,6 +33,10 @@ public class Channel extends PanacheEntityBase {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
+
+    @ManyToMany(mappedBy = "channels")
+    @JsonBackReference
+    public Set<Topic> topics = new HashSet<>();
 
     @PrePersist
     void prePersist() {

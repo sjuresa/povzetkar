@@ -1,13 +1,13 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.model.Channel;
 import com.povzetkar.quarkus.model.Topic;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.List;
 
 @Path("/api/v1/topics")
 public class ChannelResource {
@@ -15,11 +15,18 @@ public class ChannelResource {
     @GET
     @Path("/{name}/channels")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannelsByTopic(@PathParam("name") @NotBlank String name) {
-        Topic topic = Topic.find("from Topic t left join fetch t.channels where t.name = ?1", name).firstResult();
-        if (topic == null) {
+    public Response getChannelsByTopic(@PathParam("name") @NotBlank String name,
+                                       @QueryParam("page") @DefaultValue("0") int page,
+                                       @QueryParam("size") @DefaultValue("10") int size) {
+
+        if (Topic.count("name", name) == 0) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(topic.channels).build();
+
+        List<Channel> channels = Channel.find("SELECT c FROM Channel c JOIN c.topics t WHERE t.name = ?1 ORDER BY c.name", name)
+                .page(page, size)
+                .list();
+
+        return Response.ok(channels).build();
     }
 }
