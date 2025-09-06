@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -43,5 +44,11 @@ public class Channel extends PanacheEntityBase {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+    }
+
+    public static List<Channel> findByTopicName(String topicName, int pageIndex, int pageSize) {
+        return find("SELECT c FROM Channel c JOIN c.topics t WHERE t.name = ?1 ORDER BY c.name", topicName)
+                .page(pageIndex, pageSize)
+                .list();
     }
 }

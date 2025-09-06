@@ -9,6 +9,8 @@ import jakarta.transaction.UserTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.stream.IntStream;
 
@@ -82,8 +84,8 @@ class ChannelResourceTest {
              .body("$", hasSize(10));
     }
 
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.CsvSource({
+    @ParameterizedTest
+    @CsvSource({
             "1, 5, 5",   // Second page
             "1, 10, 5",  // Last page (incomplete)
             "2, 10, 0"   // Page beyond results

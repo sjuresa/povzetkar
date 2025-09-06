@@ -2,6 +2,8 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.model.Channel;
 import com.povzetkar.quarkus.model.Topic;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -16,19 +18,15 @@ public class ChannelResource {
     @Path("/{name}/channels")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelsByTopic(@PathParam("name") @NotBlank String name,
-                                       @QueryParam("page") @DefaultValue("0")
-                                       @jakarta.validation.constraints.Min(0) int page,
-                                       @QueryParam("size") @DefaultValue("10")
-                                       @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int size) {
+                                       @QueryParam("page") @DefaultValue("0") @Min(0) int page,
+                                       @QueryParam("size") @DefaultValue("10") @Min(1) @Max(100) int size) {
 
         Topic topic = Topic.find("name", name).firstResult();
         if (topic == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        List<Channel> channels = Channel.find("SELECT c FROM Channel c JOIN c.topics t WHERE t.name = ?1 ORDER BY c.name", name)
-                .page(page, size)
-                .list();
+        List<Channel> channels = Channel.findByTopicName(name, page, size);
 
         return Response.ok(channels).build();
     }
