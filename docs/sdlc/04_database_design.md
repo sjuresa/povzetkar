@@ -1,14 +1,14 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.0
-**Date:** August 27, 2025
+**Version:** 1.2
 
 ## Revision History
 
-| Date            | Author       | Changes                                          |
-|-----------------|--------------|--------------------------------------------------|
-| August 27, 2025 | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
-| August 15, 2025 | Povzetkar AI | Initial version of the database design.          |
+| Version | Date              | Author       | Changes                                          |
+|---------|-------------------|--------------|--------------------------------------------------|
+| 1.2     | September 2, 2025 | Povzetkar AI | Replaced Author with Channel and added Topic.    |
+| 1.1     | August 27, 2025   | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
+| 1.0     | August 15, 2025   | Povzetkar AI | Initial version of the database design.          |
 
 ## 1. Introduction
 
@@ -20,7 +20,7 @@ This diagram shows the high-level relationships between the core entities in the
 
 ```mermaid
 erDiagram
-    AUTHORS ||--o{ CONTENT_ITEMS : "publishes"
+    CHANNELS ||--o{ CONTENT_ITEMS : "publishes"
     CONTENT_ITEMS ||--o{ SUMMARIES : "is summarized by"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"
     SENTIMENTS ||--o{ SUMMARIES : "describes"
@@ -30,10 +30,18 @@ erDiagram
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
     SOURCE_TYPES ||--o{ CONTENT_ITEMS : "is of type"
 
-    AUTHORS ||--o{ AUTHOR_ASSESSMENTS : "is assessed for"
-    AUTHORS {
+    CHANNELS ||--o{ CHANNEL_ASSESSMENTS : "is assessed for"
+    TOPICS }|--|{ CHANNELS : "contains"
+
+    TOPICS {
         bigint id PK
-        varchar source_author_id
+        varchar name UK
+        timestamp created_at
+    }
+
+    CHANNELS {
+        bigint id PK
+        varchar source_channel_id
         int source_type_id FK
         varchar name
         text description
@@ -43,7 +51,7 @@ erDiagram
 
     CONTENT_ITEMS {
         bigint id PK
-        bigint author_id FK
+        bigint channel_id FK
         varchar source_url UK
         int source_type_id FK
         text raw_content
@@ -80,7 +88,12 @@ erDiagram
         bigint report_id PK, FK
         bigint summary_id PK, FK
     }
-    
+
+    CHANNEL_TOPICS {
+        bigint channel_id PK, FK
+        bigint topic_id PK, FK
+    }
+
     SENTIMENTS {
         int id PK
         varchar name UK
@@ -105,9 +118,9 @@ erDiagram
         bigint summary_id PK, FK
     }
 
-    AUTHOR_ASSESSMENTS {
+    CHANNEL_ASSESSMENTS {
         bigint id PK
-        bigint author_id FK
+        bigint channel_id FK
         decimal bias_score
         text assessment_details
         timestamp created_at
@@ -129,21 +142,21 @@ A type to represent the processing state of a content item.
 
 ## 4. Table Definitions
 
-### `authors`
-Stores information about content creators.
+### `channels`
+Stores information about content channels (e.g., YouTube channels).
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `source_author_id` (varchar): The unique identifier for the author on the source platform (e.g., YouTube channel ID, Reddit username). `NOT NULL`
+- `source_channel_id` (varchar): The unique identifier for the channel on the source platform (e.g., YouTube channel ID). `NOT NULL`
 - `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
-- **Constraints**: `UNIQUE (source_author_id, source_type_id)`
-- `name` (varchar): The author's name. `NOT NULL`
-- `description` (text): The author's channel/profile description. `NULL`
+- **Constraints**: `UNIQUE (source_channel_id, source_type_id)`
+- `name` (varchar): The channel's name. `NOT NULL`
+- `description` (text): The channel's description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
 - `created_at` (timestamp): When the author was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `content_items`
 Stores raw ingested content from various sources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `author_id` (FK, bigint): References `authors.id`. `NOT NULL`
+- `channel_id` (FK, bigint): References `channels.id`. `NOT NULL`
 - `source_url` (varchar, unique): The canonical URL of the content. `NOT NULL`
 - `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
 - `raw_content` (text): The full transcript or article text. `NOT NULL`
@@ -191,6 +204,18 @@ A join table creating a many-to-many relationship between reports and summaries.
 - `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
 The primary key for this table is a composite key formed by (`report_id`, `summary_id`).
 
+### `topics`
+A lookup table for content topics or categories.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `name` (varchar, unique): The name of the topic (e.g., 'ai', 'crypto'). `NOT NULL`
+- `created_at` (timestamp): When the topic was created. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+
+### `channel_topics`
+A join table creating a many-to-many relationship between channels and topics.
+- `channel_id` (PK, FK, bigint): References `channels.id`. `NOT NULL`
+- `topic_id` (PK, FK, bigint): References `topics.id`. `NOT NULL`
+This table facilitates the many-to-many relationship between `topics` and `channels`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying channels associated with a specific topic.
+
 ### `trends`
 Stores identified trends and patterns from the analyzed content.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
@@ -206,10 +231,10 @@ A join table to create a many-to-many relationship between trends and the summar
 - `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
 The primary key for this table is a composite key formed by (`trend_id`, `summary_id`).
 
-### `author_assessments`
-Stores historical records of bias assessments for content authors.
+### `channel_assessments`
+Stores historical records of bias assessments for content channels.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `author_id` (FK, bigint): References `authors.id`. `NOT NULL`
+- `channel_id` (FK, bigint): References `channels.id`. `NOT NULL`
 - `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL CHECK (bias_score >= -1.0 AND bias_score <= 1.0)`
 - `assessment_details` (text): A detailed, AI-generated explanation for the given score. `NOT NULL`
 - `created_at` (timestamp): When the assessment was performed. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
