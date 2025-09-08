@@ -38,6 +38,14 @@ public class AppConfig {
         return getRequiredProperty("youtube.app.name");
     }
 
+    public String getApiTopic() {
+        return getRequiredProperty("app.topic");
+    }
+
+    public String getQuarkusApiBaseUrl() {
+        return getRequiredProperty("quarkus.api.base.url");
+    }
+
     public RunConfiguration getRunConfiguration() {
         String useCase = properties.getProperty("app.use.case", "S_B");
         boolean dryRun = Boolean.parseBoolean(properties.getProperty("app.dry.run", "false"));
