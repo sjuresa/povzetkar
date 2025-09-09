@@ -1,12 +1,12 @@
 # Development Methodology Comparison
 
-**Version:** 1.1
-**Date:** September 1, 2025
+**Version:** 1.2
 
 ## Revision History
-| Version | Date            | Author       | Changes                                           |
-|---------|-----------------|--------------|---------------------------------------------------|
-| 1.1     | September 1, 2025 | Povzetkar AI | Added section on adopted practices for improvement. |
+| Version | Date              | Author       | Changes                                           |
+|---------|-------------------|--------------|---------------------------------------------------|
+| 1.2     | September 9, 2025 | Povzetkar AI | Refined Section 7 to clarify the adoption status of new practices. |
+| 1.1     | September 1, 2025 | Povzetkar AI | Added section on adopted practices for improvement.            |
 | 1.0     | September 1, 2025 | Povzetkar AI | Initial version of the methodology comparison.    |
 
 ## 1. Introduction
@@ -98,9 +98,9 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 
 ---
 
-## 7. Adopted Practices for Future Improvement
+## 7. Adopted Practices for Continuous Improvement
 
-To formalize our commitment to continuous improvement (Kaizen), we are adopting the following practices into our workflow, effective immediately.
+To formalize our commitment to continuous improvement (Kaizen), we are adopting the following practices into our workflow. This section documents the practices we have committed to integrating to make our process more robust and reflective.
 
 ### 7.1. Version Retrospectives (from Scrum)
 
