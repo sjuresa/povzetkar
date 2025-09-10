@@ -18,7 +18,7 @@ The architecture consists of a single, modular Quarkus service that handles all 
 graph TD
     subgraph Quarkus Application
         A[Scheduler] --> B[Orchestrator Service];
-        C[Channel Detail Service];
+        A --> C[Channel Detail Service];
         B --> D[Summarization Service];
         B --> E[Briefing Service];
         B --> F[Git Publishing Service];
