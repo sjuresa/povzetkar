@@ -3,12 +3,12 @@
 **Version:** 1.3
 
 ## Revision History
-| Version | Date              | Author       | Changes                                                                                                                                                            |
-|---------|-------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.3     | September 9, 2025 | Povzetkar AI | Integrated Multi-Topic Support directly into v0.6-v0.8, removing the separate v0.9 MTS version.                                                                    |
-| 1.2     | September 1, 2025 | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
-| 1.1     | August 27, 2025   | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
-| 1.0     | August 15, 2025   | Povzetkar AI | Initial version of the roadmap.                                                                                                                                    |
+| Version | Date               | Author       | Changes                                                                                                                                                            |
+|---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.              |
+| 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
+| 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the roadmap.                                                                                                                                    |
 
 This document outlines the concrete steps for implementing the features described in the [`specification.md`](specification.md). It breaks down the high-level phases into actionable tasks.
 
@@ -17,6 +17,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.5: The Architectural Skeleton
 
 **Goal:** Establish the foundational Quarkus project structure, database, and core data model, including support for Topics. This version completes the **first concrete migration step** by delegating the file-based author/channel fetching from the legacy application to a new, database-backed API.
+**Status:** ✅ Completed
 
 ### Key Tasks:
 1.  **Project Transformation:**
@@ -34,47 +35,45 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.6: Full Channel Data & Multi-Topic Model
+## v0.6: Core Logic Migration & Automation
 
-**Goal:** Fully centralize all channel/author data into the new database and prepare the data model for full multi-topic support.
-
-### Key Tasks & Implementation Steps:
-1.  **Extend Channel Data Model:** Add fields for channel details (title, description, thumbnail) to the `Channel` entity.
-2.  **Extend Topic Data Model:** Add configuration fields to the `Topic` entity (e.g., `outputRepositoryPath`).
-3.  **Implement Enrichment Service:** Create a service in Quarkus that uses the YouTube API to fetch and persist full details for all channels in the database.
-4.  **Refactor Legacy App:** Modify the legacy application to get all channel details from a new Quarkus API, fully deprecating the old `AuthorService`.
-
----
-
-## v0.7: Topic-Aware Summarization Workflow
-
-**Goal:** Migrate the core business logic, ensuring it is topic-aware from the start.
+**Goal:** Migrate the entire core workflow—fetching new videos, creating summaries, generating daily briefings, and publishing to Git—into the new Quarkus application, making it fully autonomous.
 
 ### Key Tasks & Implementation Steps:
 1.  **Extend Data Model:** Create `Summary` and `Briefing` JPA entities with appropriate relationships.
-2.  **Implement Topic-Aware Orchestrator:** Create a `@Scheduled` service in Quarkus that **iterates over all active topics** and, for each one, fetches new videos, orchestrates summarization, and persists `Summary` and `Briefing` entities.
-3.  **Decommission Legacy Services:** The core logic from `NewVideoFetcherService`, `VideoSummarizationService`, etc., is now fully migrated and can be removed from the legacy app.
+2.  **Full Author/Channel Migration:** Migrate the remaining logic of `AuthorService`, including YouTube API calls for fetching channel details, into a Quarkus service.
+3.  **Implement Scheduled Orchestrator:** Create a `@Scheduled` service in Quarkus that periodically:
+    *   Fetches new videos for all channels.
+    *   Orchestrates summarization using GenAI APIs.
+    *   Generates daily `Briefing` entities.
+4.  **Git Integration:** Implement a service within Quarkus to handle committing and pushing the generated briefings to the Git repository.
 
 ---
 
-## v0.8: Topic-Aware Presentation Layer (UI & Git)
+## v0.7: Standalone Application Deployment
 
-**Goal:** Make the generated briefings accessible, ensuring that both the UI and Git integration respect the multi-topic architecture.
+**Goal:** Prepare and document the process for building and running the Quarkus application as a standalone executable (JAR or native binary), moving away from development mode (`mvn quarkus:dev`).
 
 ### Key Tasks & Implementation Steps:
-1.  **API for UI:** Create a set of read-only REST endpoints for retrieving briefings and summaries.
-2.  **Simple UI:** Implement a basic, server-side rendered web interface (e.g., using Quarkus Qute templates) to display a list of briefings and their content.
-3.  **Topic-Aware Git Integration:** Implement the service for publishing briefings, ensuring it uses the topic-specific repository path from the `Topic` entity.
+1.  **Build Configuration:** Configure the Maven `pom.xml` to produce a runnable JAR (`quarkus-app/quarkus-run.jar`).
+2.  **Containerization:** Create a `Dockerfile` to package the application into a container image for consistent and isolated deployments.
+3.  **Deployment Documentation:** Update `RUNBOOK.md` with clear instructions on how to build the container image and run the application using Docker or `docker-compose`.
+4.  **Configuration Management:** Ensure the application can be fully configured via environment variables passed to the Docker container, which is crucial for production environments.
 
 ---
 
-## v0.9: Production Hardening
+## v0.8: Production Hardening & UI Preparation
+
+**Goal:** Stabilize the new autonomous application and prepare for a future user interface.
+
+### Key Tasks & Implementation Steps:
+1.  **API for UI:** Create a comprehensive set of read-only REST endpoints for retrieving briefings, summaries, and channels to support a future GUI.
 -   **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
 -   **Security Hardening:** Conduct a basic security review and implement initial security measures.
 
 ---
 
-## v1.0: RAG & Conversational Interface (Phase 2) & User Experience
+## v0.9: RAG & Conversational Interface (Phase 2)
 
 **Goal:** Deliver the core "interactive report" feature by implementing the RAG pipeline and a user-facing API.
 
@@ -117,7 +116,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v1.5: Expansion & Advanced Analytics (Phase 3)
+## v1.0: Expansion & Advanced Analytics (Phase 3)
 
 **Goal:** Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.
 
@@ -143,6 +142,6 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v2.0: Content Creation & Refinement (Phase 4)
+## v1.1: Content Creation & Refinement (Phase 4)
 
 *(Details to be added as Phase 3 nears completion)*
