@@ -12,13 +12,13 @@ The system now operates as a single, self-contained **Quarkus application**. Thi
 
 ## 2. System Architecture
 
-The architecture consists of a single, modular Quarkus service that handles all aspects of the workflow.
+The architecture consists of a single, modular Quarkus application that handles all aspects of the workflow.
 
 ```mermaid
 graph TD
     subgraph Quarkus Application
         A[Scheduler] --> B[Orchestrator Service];
-        A --> C[Channel Detail Service];
+        C[Channel Detail Service];
         B --> D[Summarization Service];
         B --> E[Briefing Service];
         B --> F[Git Publishing Service];
@@ -56,13 +56,13 @@ graph TD
     *   Invokes the `Briefing Service` once all summaries are complete.
     *   Invokes the `Git Publishing Service` to publish the final output.
 
-3.  **Channel Detail Service**: Responsible for enriching and refreshing channel metadata from the YouTube API.
+3.  **Channel Detail Service**: Responsible for enriching and refreshing channel metadata from the YouTube API and storing it in the database. This service is triggered periodically on its own schedule.
 
-4.  **Summarization Service**: Fetches video transcripts and uses a GenAI service to produce summaries. It handles the status and error-handling logic for individual content items.
+4.  **Summarization Service**: Fetches video transcripts from YouTube and uses a GenAI service to produce summaries. It handles the status and error-handling logic for individual content items, storing results in the database.
 
 5.  **Briefing Service**: Aggregates individual summaries from the database into a coherent daily briefing.
 
-6.  **Git Publishing Service**: Generates the final Markdown output for a briefing and publishes it to the appropriate Git repository using JGit.
+6.  **Git Publishing Service**: Generates the final Markdown output for a briefing by reading briefing data from the database, and publishes it to the appropriate Git repository using JGit.
 
 ## 3. Data Flow
 
