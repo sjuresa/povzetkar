@@ -68,8 +68,8 @@ This document outlines the concrete steps for implementing the features describe
 
 ### Key Tasks & Implementation Steps:
 1.  **API for UI:** Create a comprehensive set of read-only REST endpoints for retrieving briefings, summaries, and channels to support a future GUI.
-2.   **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
-3.   **Security Hardening:** Conduct a basic security review and implement initial security measures.
+2.  **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
+3.  **Security Hardening:** Conduct a basic security review and implement initial security measures.
 
 ---
 
