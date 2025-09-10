@@ -18,7 +18,7 @@ The architecture consists of a single, modular Quarkus service that handles all 
 graph TD
     subgraph Quarkus Application
         A[Scheduler] --> B[Orchestrator Service];
-        B --> C[Channel Detail Service];
+        C[Channel Detail Service];
         B --> D[Summarization Service];
         B --> E[Briefing Service];
         B --> F[Git Publishing Service];
@@ -75,4 +75,4 @@ graph TD
 
 ## 4. Decommissioning of Legacy App
 
-As of this version, a legacy Java application is fully decommissioned. Its responsibilities have been entirely migrated to the Quarkus application. This change significantly simplifies the deployment, monitoring, and maintenance of the system.
+As of this version, the legacy Java application is fully decommissioned. Its responsibilities have been entirely migrated to the Quarkus application. This change significantly simplifies the deployment, monitoring, and maintenance of the system.
