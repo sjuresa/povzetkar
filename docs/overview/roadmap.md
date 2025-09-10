@@ -37,7 +37,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.6: Core Logic Migration & Automation
 
-**Goal:** Migrate the entire core workflow—fetching new videos, creating summaries, generating daily briefings, and publishing to Git—into the new Quarkus application, making it fully autonomous.
+**Goal:** Migrate the entire core workflow—fetching new videos, creating summaries, generating daily briefings, and publishing to Git—into the new Quarkus application. This version makes the application fully autonomous and delivers **full multi-topic support**, allowing separate processing and output for different content categories.
 
 ### Key Tasks & Implementation Steps:
 1.  **Extend Data Model:** Create `Summary` and `Briefing` JPA entities with appropriate relationships.
