@@ -1,14 +1,15 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.2
+**Version:** 1.3
 
 ## Revision History
 
-| Version | Date              | Author       | Changes                                          |
-|---------|-------------------|--------------|--------------------------------------------------|
-| 1.2     | September 2, 2025 | Povzetkar AI | Replaced Author with Channel and added Topic.    |
-| 1.1     | August 27, 2025   | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
-| 1.0     | August 15, 2025   | Povzetkar AI | Initial version of the database design.          |
+| Version | Date               | Author       | Changes                                          |
+|---------|--------------------|--------------|--------------------------------------------------|
+| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).        |
+| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.    |
+| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.          |
 
 ## 1. Introduction
 
@@ -24,8 +25,8 @@ erDiagram
     CONTENT_ITEMS ||--o{ SUMMARIES : "is summarized by"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"
     SENTIMENTS ||--o{ SUMMARIES : "describes"
-    REPORTS ||--|{ REPORT_SUMMARIES : "aggregates"
-    SUMMARIES ||--|{ REPORT_SUMMARIES : "is part of"
+    BRIEFINGS ||--|{ BRIEFING_SUMMARIES : "aggregates"
+    SUMMARIES ||--|{ BRIEFING_SUMMARIES : "is part of"
     TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
     SOURCE_TYPES ||--o{ CONTENT_ITEMS : "is of type"
@@ -71,11 +72,11 @@ erDiagram
         timestamp created_at
     }
     
-    REPORTS {
+    BRIEFINGS {
         bigint id PK
         varchar title
         text meta_summary
-        date report_date
+        date briefing_date
         timestamp created_at
     }
     
@@ -84,8 +85,8 @@ erDiagram
         varchar name UK
     }
 
-    REPORT_SUMMARIES {
-        bigint report_id PK, FK
+    BRIEFING_SUMMARIES {
+        bigint briefing_id PK, FK
         bigint summary_id PK, FK
     }
 
@@ -175,13 +176,13 @@ Stores the AI-generated summaries and their vector embeddings.
 - `sentiment_id` (FK, int): References `sentiments.id`. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
-### `reports`
-Stores aggregated periodic reports.
+### `briefings`
+Stores aggregated periodic briefings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `title` (varchar): The title of the report. `NOT NULL`
 - `meta_summary` (text): The executive "meta-summary" of the report. `NOT NULL`
-- `report_date` (date): The date the report pertains to. `NOT NULL`
-- `created_at` (timestamp): When the report was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+- `briefing_date` (date): The date the briefing pertains to. `NOT NULL`
+- `created_at` (timestamp): When the briefing was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `categories`
 A lookup table for content categories.
@@ -198,11 +199,11 @@ A lookup table for content source types.
 - `id` (PK, int, auto-increment): `NOT NULL`
 - `name` (varchar, unique): The name of the source type (e.g., 'YOUTUBE', 'BLOG', 'REDDIT'). `NOT NULL`
 
-### `report_summaries`
-A join table creating a many-to-many relationship between reports and summaries. This allows a single summary to be part of multiple reports (e.g., a daily and a weekly report).
-- `report_id` (PK, FK, bigint): References `reports.id`. `NOT NULL`
+### `briefing_summaries`
+A join table creating a many-to-many relationship between briefings and summaries. This allows a single summary to be part of multiple briefings (e.g., a daily and a weekly briefing).
+- `briefing_id` (PK, FK, bigint): References `briefings.id`. `NOT NULL`
 - `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
-The primary key for this table is a composite key formed by (`report_id`, `summary_id`).
+The primary key for this table is a composite key formed by (`briefing_id`, `summary_id`).
 
 ### `topics`
 A lookup table for content topics or categories.
