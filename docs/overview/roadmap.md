@@ -41,8 +41,8 @@ This document outlines the concrete steps for implementing the features describe
 ### Key Tasks & Implementation Steps:
 1.  **Extend Channel Data Model:** Add fields for channel details (title, description, thumbnail) to the `Channel` entity.
 2.  **Extend Topic Data Model:** Add configuration fields to the `Topic` entity (e.g., `outputRepositoryPath`).
-2.  **Implement Enrichment Service:** Create a service in Quarkus that uses the YouTube API to fetch and persist full details for all channels in the database.
-3.  **Refactor Legacy App:** Modify the legacy application to get all channel details from a new Quarkus API, fully deprecating the old `AuthorService`.
+3.  **Implement Enrichment Service:** Create a service in Quarkus that uses the YouTube API to fetch and persist full details for all channels in the database.
+4.  **Refactor Legacy App:** Modify the legacy application to get all channel details from a new Quarkus API, fully deprecating the old `AuthorService`.
 
 ---
 
