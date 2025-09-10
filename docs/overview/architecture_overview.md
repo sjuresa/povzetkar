@@ -31,11 +31,13 @@ graph TD
         J[Git Repository]
     end
 
+    B --> G;
     C --> G;
     D --> G;
     D --> I;
     F --> J;
 
+    B --> H;
     C --> H;
     D --> H;
     E --> H;
