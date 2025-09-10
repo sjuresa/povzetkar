@@ -17,7 +17,7 @@ The architecture consists of a single, modular Quarkus service that handles all 
 ```mermaid
 graph TD
     subgraph Quarkus Application
-        A[Scheduler] --> B{Orchestrator Service};
+        A[Scheduler] --> B[Orchestrator Service];
         B --> C[Channel Detail Service];
         B --> D[Summarization Service];
         B --> E[Briefing Service];
@@ -26,9 +26,9 @@ graph TD
 
     subgraph External Systems
         G[YouTube API]
-        H[PostgreSQL Database]
         I[GenAI Service]
         J[Git Repository]
+        H[PostgreSQL Database]
     end
 
     B --> G;
@@ -68,7 +68,7 @@ graph TD
 
 1.  The **Scheduler** initiates the process.
 2.  The **Orchestrator** fetches new videos for each topic, creating `ContentItem` records in the **PostgreSQL Database**.
-3.  The **Summarization Service** is called for each new item. It fetches transcripts from YouTube, sends them to the **GenAI Service**, and stores the resulting `Summary` in the database.
+3.  The **Summarization Service** is called for each new item (in parallel). It fetches transcripts from YouTube, sends them to the **GenAI Service**, and stores the resulting `Summary` in the database.
 4.  Once all summaries for the batch are complete, the **Orchestrator** calls the **Briefing Service**.
 5.  The **Briefing Service** queries the database for recent summaries and creates a `Briefing` record.
 6.  Finally, the **Orchestrator** calls the **Git Publishing Service**, which generates a Markdown file from the briefing data and pushes it to the target **Git Repository**.
