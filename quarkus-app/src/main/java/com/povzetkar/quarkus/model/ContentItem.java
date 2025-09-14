@@ -2,6 +2,9 @@ package com.povzetkar.quarkus.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 
 @Entity
@@ -25,7 +28,7 @@ public class ContentItem extends PanacheEntityBase {
     @Column(name = "published_at", nullable = false)
     public Instant publishedAt;
 
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "processing_status", nullable = false)
     public ProcessingStatus processingStatus = ProcessingStatus.PENDING;
 
