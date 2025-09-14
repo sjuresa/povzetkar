@@ -1,3 +1,6 @@
+-- Create custom ENUM type for processing status
+CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'RETRY_LATER');
+
 -- Table for source types (e.g., YOUTUBE, BLOG)
 CREATE TABLE source_types (
     id SERIAL PRIMARY KEY,
@@ -31,7 +34,7 @@ CREATE TABLE content_items (
     source_type_id INT NOT NULL REFERENCES source_types(id),
     raw_content TEXT NOT NULL,
     published_at TIMESTAMPTZ NOT NULL,
-    processing_status VARCHAR(255) NOT NULL DEFAULT 'PENDING' CHECK (processing_status IN ('PENDING', 'COMPLETED', 'FAILED', 'RETRY_LATER')),
+    processing_status processing_status_enum NOT NULL DEFAULT 'PENDING',
     duration_seconds INT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
