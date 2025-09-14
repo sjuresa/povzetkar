@@ -1,6 +1,3 @@
--- Create custom ENUM type for processing status
-CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'RETRY_LATER');
-
 -- Table for source types (e.g., YOUTUBE, BLOG)
 CREATE TABLE source_types (
     id SERIAL PRIMARY KEY,
@@ -11,7 +8,7 @@ CREATE TABLE source_types (
 CREATE TABLE topics (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table for channels (e.g., YouTube channels)
@@ -22,7 +19,7 @@ CREATE TABLE channels (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     subscriber_count INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (source_channel_id, source_type_id)
 );
 
@@ -33,10 +30,10 @@ CREATE TABLE content_items (
     source_url VARCHAR(255) UNIQUE NOT NULL,
     source_type_id INT NOT NULL REFERENCES source_types(id),
     raw_content TEXT NOT NULL,
-    published_at TIMESTAMP NOT NULL,
-    processing_status processing_status_enum NOT NULL DEFAULT 'PENDING',
+    published_at TIMESTAMPTZ NOT NULL,
+    processing_status VARCHAR(255) NOT NULL DEFAULT 'PENDING' CHECK (processing_status IN ('PENDING', 'COMPLETED', 'FAILED', 'RETRY_LATER')),
     duration_seconds INT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Join table for the many-to-many relationship between channels and topics
@@ -45,3 +42,9 @@ CREATE TABLE channel_topics (
     topic_id BIGINT NOT NULL REFERENCES topics(id),
     PRIMARY KEY (channel_id, topic_id)
 );
+
+-- Indexes for foreign keys to improve query performance
+CREATE INDEX idx_channels_on_source_type_id ON channels (source_type_id);
+CREATE INDEX idx_content_items_on_channel_id ON content_items (channel_id);
+CREATE INDEX idx_content_items_on_source_type_id ON content_items (source_type_id);
+CREATE INDEX idx_channel_topics_on_topic_id ON channel_topics (topic_id);
