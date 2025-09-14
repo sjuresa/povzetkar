@@ -50,4 +50,5 @@ CREATE TABLE channel_topics (
 CREATE INDEX idx_channels_on_source_type_id ON channels (source_type_id);
 CREATE INDEX idx_content_items_on_channel_id ON content_items (channel_id);
 CREATE INDEX idx_content_items_on_source_type_id ON content_items (source_type_id);
+CREATE INDEX idx_content_items_on_processing_status ON content_items (processing_status);
 CREATE INDEX idx_channel_topics_on_topic_id ON channel_topics (topic_id);
