@@ -19,9 +19,6 @@ public class ContentItem extends PanacheEntityBase {
     @JoinColumn(name = "channel_id", nullable = false)
     public Channel channel;
 
-    @Column(name = "source_type_id", nullable = false)
-    public int sourceTypeId;
-
     @Column(name = "source_url", unique = true, nullable = false)
     public String sourceUrl;
 

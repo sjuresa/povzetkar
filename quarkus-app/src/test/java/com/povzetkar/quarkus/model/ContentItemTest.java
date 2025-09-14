@@ -23,7 +23,6 @@ class ContentItemTest {
 
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
-        contentItem.sourceTypeId = channel.sourceTypeId;
         contentItem.sourceUrl = "http://example.com/test/" + UUID.randomUUID();
         contentItem.rawContent = "Some raw content";
         contentItem.publishedAt = Instant.now();
@@ -47,7 +46,6 @@ class ContentItemTest {
 
         ContentItem contentItem = new ContentItem();
         contentItem.channel = channel;
-        contentItem.sourceTypeId = channel.sourceTypeId;
         contentItem.sourceUrl = "http://example.com/another/" + UUID.randomUUID();
         contentItem.rawContent = "More raw content";
         contentItem.publishedAt = Instant.now();
