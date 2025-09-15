@@ -38,7 +38,7 @@ erDiagram
     USERS {
         bigint id PK
         boolean active
-        varchar name
+        varchar(255) name
     }
 
     TOPICS {
@@ -155,7 +155,7 @@ A type to represent the processing state of a content item.
 Stores user accounts that own topics and other resources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `active` (boolean): Whether the user account is active. `NOT NULL DEFAULT TRUE`
-- `name` (varchar): The name of the user. `NOT NULL`
+- `name` (varchar(255)): The name of the user. `NOT NULL`
 
 ### `topics`
 A lookup table for content topics or categories, owned by a user.
