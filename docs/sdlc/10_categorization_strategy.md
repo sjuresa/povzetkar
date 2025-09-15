@@ -1,7 +1,13 @@
 # Categorization Strategy
 
-**Version:** 1.0
+**Version:** 1.2
 **Date:** September 11, 2025
+
+## Revision History
+| Version | Date               | Author       | Changes                                                                 |
+|---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 1.2     | September 11, 2025 | Povzetkar AI | Clarified that the Hybrid Model is a future evolution, not an alternative. |
+| 1.0     | September 11, 2025 | Povzetkar AI | Initial version of the strategy document.                               |
 
 ## 1. The Added Value of Categorization
 
@@ -45,7 +51,11 @@ The workflow will be as follows:
 
     *   **Example JSON Output:** `{"chosen_category": "AI_ETHICS"}`
 
-4.  **Application Logic:** The application will receive the AI's response, find the corresponding `Category` entity in the database by its name, and create the link to the `Summary` entity.
+4.  **Application Logic & Error Handling:** The application will receive the AI's response and attempt to find the corresponding `Category` entity in the database by its name.
+    *   **On Success:** If the category exists, the application creates the link to the `Summary` entity.
+    *   **On Failure (Category Not Found):** If the AI returns a category name that is not in the curated list, the system will:
+        1.  Log the event as a warning, including the invalid category name returned by the AI. This is crucial for monitoring and improving prompt effectiveness.
+        2.  Leave the summary uncategorized (the `category_id` foreign key will remain `NULL`). This allows for easy identification and potential manual review of uncategorized items later.
 
 ### 2.2. Benefits of this Approach
 
@@ -57,7 +67,7 @@ The workflow will be as follows:
 
 ## 3. Future Evolution: A Hybrid "Suggest and Approve" Model
 
-While the "Constrained Choice" strategy is essential for initial consistency, it can be too restrictive in the long term, failing to capture new, emerging concepts. To address this, a future version of the system can adopt a hybrid model.
+The "Constrained Choice" model is the required first implementation to ensure baseline consistency. Once this system is stable and has gathered data, it can be evolved into the following hybrid model to increase flexibility and adapt to new concepts.
 
 ### 3.1. The Hybrid Workflow
 
