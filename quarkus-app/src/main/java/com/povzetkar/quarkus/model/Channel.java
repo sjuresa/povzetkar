@@ -2,11 +2,18 @@ package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -44,11 +51,5 @@ public class Channel extends PanacheEntityBase {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-    }
-
-    public static List<Channel> findByTopicName(String topicName, int pageIndex, int pageSize) {
-        return find("SELECT c FROM Channel c JOIN c.topics t WHERE t.name = ?1 ORDER BY c.name", topicName)
-                .page(pageIndex, pageSize)
-                .list();
     }
 }

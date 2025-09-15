@@ -1,11 +1,12 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.3
+**Version:** 1.4
 
 ## Revision History
 
 | Version | Date               | Author       | Changes                                          |
 |---------|--------------------|--------------|--------------------------------------------------|
+| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant. |
 | 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).        |
 | 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.    |
 | 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
@@ -21,6 +22,9 @@ This diagram shows the high-level relationships between the core entities in the
 
 ```mermaid
 erDiagram
+    USERS ||--|{ TOPICS : "owns"
+    TOPICS ||--|{ CHANNEL_TOPICS : "is part of"
+    CHANNELS ||--|{ CHANNEL_TOPICS : "contains"
     CHANNELS ||--o{ CONTENT_ITEMS : "publishes"
     CONTENT_ITEMS ||--o{ SUMMARIES : "is summarized by"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"
@@ -30,13 +34,18 @@ erDiagram
     TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
     SOURCE_TYPES ||--o{ CONTENT_ITEMS : "is of type"
-
     CHANNELS ||--o{ CHANNEL_ASSESSMENTS : "is assessed for"
-    TOPICS }|--|{ CHANNELS : "contains"
+
+    USERS {
+        bigint id PK
+        boolean active
+        varchar name
+    }
 
     TOPICS {
         bigint id PK
-        varchar name UK
+        bigint user_id FK
+        varchar name
         timestamp created_at
     }
 
@@ -48,6 +57,11 @@ erDiagram
         text description
         integer subscriber_count
         timestamp created_at
+    }
+
+    CHANNEL_TOPICS {
+        bigint channel_id PK, FK
+        bigint topic_id PK, FK
     }
 
     CONTENT_ITEMS {
@@ -88,11 +102,6 @@ erDiagram
     BRIEFING_SUMMARIES {
         bigint briefing_id PK, FK
         bigint summary_id PK, FK
-    }
-
-    CHANNEL_TOPICS {
-        bigint channel_id PK, FK
-        bigint topic_id PK, FK
     }
 
     SENTIMENTS {
@@ -143,6 +152,20 @@ A type to represent the processing state of a content item.
 
 ## 4. Table Definitions
 
+### `users`
+Stores user accounts that own topics and other resources.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `active` (boolean): Whether the user account is active. `NOT NULL DEFAULT TRUE`
+- `name` (varchar): The name of the user. `NOT NULL`
+
+### `topics`
+A lookup table for content topics or categories, owned by a user.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `user_id` (FK, bigint): References `users.id`. `NOT NULL`
+- `name` (varchar): The name of the topic (e.g., 'ai', 'crypto'). `NOT NULL`
+- **Constraints**: `UNIQUE (user_id, name)`
+- `created_at` (timestamp): When the topic was created. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+
 ### `channels`
 Stores information about content channels (e.g., YouTube channels).
 - `id` (PK, bigint, auto-increment): `NOT NULL`
@@ -153,6 +176,12 @@ Stores information about content channels (e.g., YouTube channels).
 - `description` (text): The channel's description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
 - `created_at` (timestamp): When the author was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+
+### `channel_topics`
+A join table creating a many-to-many relationship between channels and topics.
+- `channel_id` (PK, FK, bigint): References `channels.id`. `NOT NULL`
+- `topic_id` (PK, FK, bigint): References `topics.id`. `NOT NULL`
+This table facilitates the many-to-many relationship between `topics` and `channels`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying channels associated with a specific topic.
 
 ### `content_items`
 Stores raw ingested content from various sources.
@@ -204,18 +233,6 @@ A join table creating a many-to-many relationship between briefings and summarie
 - `briefing_id` (PK, FK, bigint): References `briefings.id`. `NOT NULL`
 - `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
 The primary key for this table is a composite key formed by (`briefing_id`, `summary_id`).
-
-### `topics`
-A lookup table for content topics or categories.
-- `id` (PK, bigint, auto-increment): `NOT NULL`
-- `name` (varchar, unique): The name of the topic (e.g., 'ai', 'crypto'). `NOT NULL`
-- `created_at` (timestamp): When the topic was created. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
-
-### `channel_topics`
-A join table creating a many-to-many relationship between channels and topics.
-- `channel_id` (PK, FK, bigint): References `channels.id`. `NOT NULL`
-- `topic_id` (PK, FK, bigint): References `topics.id`. `NOT NULL`
-This table facilitates the many-to-many relationship between `topics` and `channels`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying channels associated with a specific topic.
 
 ### `trends`
 Stores identified trends and patterns from the analyzed content.

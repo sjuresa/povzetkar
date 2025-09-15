@@ -2,10 +2,11 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.model.Channel;
 import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import jakarta.transaction.UserTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,44 +27,49 @@ class ChannelResourceTest {
     private static final String NON_EXISTENT_TOPIC_NAME = "non-existent-topic";
 
     @Inject
-    UserTransaction userTransaction;
+    EntityManager em;
+
+    private Long testUserId;
 
     @BeforeEach
-    void setup() throws Exception {
-        userTransaction.begin();
-        try {
-            Topic topic = new Topic();
-            topic.name = TEST_TOPIC_NAME;
+    @Transactional
+    void setup() {
+        User user = new User();
+        user.name = "Test User"; // Set a default name for the user
+        em.persist(user);
+        this.testUserId = user.id;
 
-            IntStream.range(0, 15).forEach(i -> {
-                Channel channel = new Channel();
-                channel.sourceChannelId = TEST_CHANNEL_ID_PREFIX + i;
-                channel.sourceTypeId = 1;
-                channel.name = TEST_CHANNEL_NAME_PREFIX + i;
-                topic.channels.add(channel);
-            });
+        Topic topic = new Topic();
+        topic.name = TEST_TOPIC_NAME;
+        topic.user = user;
+        em.persist(topic); // Persist the topic before channels
 
-            topic.persist();
-            userTransaction.commit();
-        } catch (Exception e) {
-            userTransaction.rollback();
-            throw e;
-        }
+        IntStream.range(0, 15).forEach(i -> {
+            Channel channel = new Channel();
+            channel.sourceChannelId = TEST_CHANNEL_ID_PREFIX + i;
+            channel.sourceTypeId = 1;
+            channel.name = TEST_CHANNEL_NAME_PREFIX + i;
+            // Establish ManyToMany relationship
+            topic.channels.add(channel);
+            channel.topics.add(topic);
+            em.persist(channel);
+        });
     }
 
     @AfterEach
     @Transactional
     void cleanup() {
-        // Deleting the topic will also clean up the join table entries
-        Topic.delete("name", TEST_TOPIC_NAME);
-        // Delete channels created by this test using a more specific attribute
+        // Explicitly delete channels first, as orphanRemoval might not be sufficient for ManyToMany
         Channel.delete("sourceChannelId like ?1", TEST_CHANNEL_ID_PREFIX + "%");
+        Topic.delete("user.id", testUserId);
+        User.delete("id", testUserId);
     }
 
     @Test
-    void testGetChannelsByTopic_NotFound() {
+    void testGetChannelsByTopic_TopicNotFound() {
         given()
-          .when().get("/api/v1/topics/" + NON_EXISTENT_TOPIC_NAME + "/channels")
+          .pathParam("userId", testUserId)
+          .when().get("/api/v1/users/{userId}/topics/" + NON_EXISTENT_TOPIC_NAME + "/channels")
           .then()
              .statusCode(404);
     }
@@ -71,7 +77,8 @@ class ChannelResourceTest {
     @Test
     void testGetChannelsByTopic_BlankName() {
         given()
-          .when().get("/api/v1/topics/ /channels")
+          .pathParam("userId", testUserId)
+          .when().get("/api/v1/users/{userId}/topics/ /channels")
           .then()
              .statusCode(400);
     }
@@ -79,7 +86,8 @@ class ChannelResourceTest {
     @Test
     void testGetChannelsByTopic_DefaultPagination() {
         given()
-          .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
+          .pathParam("userId", testUserId)
+          .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/channels")
           .then()
              .statusCode(200)
              .body("$", hasSize(10));
@@ -87,15 +95,16 @@ class ChannelResourceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "1, 5, 5",   // Second page
-            "1, 10, 5",  // Last page (incomplete)
-            "2, 10, 0"   // Page beyond results
+            "1, 5, 5",
+            "1, 10, 5",
+            "2, 10, 0"
     })
     void testGetChannelsByTopic_CustomPagination(int page, int size, int expectedSize) {
         given()
+                .pathParam("userId", testUserId)
                 .queryParam("page", page)
                 .queryParam("size", size)
-                .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
+                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/channels")
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(expectedSize));
@@ -103,15 +112,16 @@ class ChannelResourceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "-1, 10",  // Invalid page
-            "0, 0",    // Invalid size (too small)
-            "0, 101"   // Invalid size (too large)
+            "-1, 10",
+            "0, 0",
+            "0, 101"
     })
     void testGetChannelsByTopic_InvalidPagination(int page, int size) {
         given()
+                .pathParam("userId", testUserId)
                 .queryParam("page", page)
                 .queryParam("size", size)
-                .when().get("/api/v1/topics/" + TEST_TOPIC_NAME + "/channels")
+                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/channels")
                 .then()
                 .statusCode(400);
     }
