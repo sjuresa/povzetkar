@@ -24,7 +24,7 @@ public class ChannelResource {
                                        @QueryParam("page") @DefaultValue("0") @Min(0) int page,
                                        @QueryParam("size") @DefaultValue("10") @Min(1) @Max(100) int size) {
 
-        List<Channel> channels = Channel.find("SELECT c FROM Channel c JOIN c.topics t WHERE t.user.id = ?1 AND t.name = ?2", userId, name)
+        List<Channel> channels = Channel.find("SELECT c FROM Channel c JOIN c.topics t WHERE t.user.id = ?1 AND t.name = ?2 ORDER BY c.name", userId, name)
                 .page(page, size)
                 .list();
 
