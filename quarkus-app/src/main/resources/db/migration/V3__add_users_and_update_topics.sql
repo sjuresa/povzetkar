@@ -4,7 +4,7 @@
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     active BOOLEAN NOT NULL DEFAULT TRUE,
-    name VARCHAR(255) NOT NULL DEFAULT 'Default User'
+    name VARCHAR(255) NOT NULL
 );
 
 -- Add the user_id foreign key column to the 'topics' table
