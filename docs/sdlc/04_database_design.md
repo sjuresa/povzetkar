@@ -23,7 +23,8 @@ This diagram shows the high-level relationships between the core entities in the
 ```mermaid
 erDiagram
     USERS ||--|{ TOPICS : "owns"
-    TOPICS }o--o{ CHANNELS : "contains"
+    TOPICS ||--|{ CHANNEL_TOPICS : "is part of"
+    CHANNELS ||--|{ CHANNEL_TOPICS : "contains"
     CHANNELS ||--o{ CONTENT_ITEMS : "publishes"
     CONTENT_ITEMS ||--o{ SUMMARIES : "is summarized by"
     CATEGORIES ||--o{ SUMMARIES : "categorizes"

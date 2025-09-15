@@ -67,9 +67,8 @@ class TopicTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        // Explicitly delete all Topics and Users created by tests
-        Topic.deleteAll();
-        User.deleteAll();
+        Topic.delete("name = 'shared-name' or name = 'unique-name'");
+        User.delete("name = 'User 1' or name = 'User 2' or name = 'Single User'");
     }
 
     private void persistAndFlush(Topic topic) {

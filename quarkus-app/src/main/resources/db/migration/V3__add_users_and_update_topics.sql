@@ -9,7 +9,15 @@ CREATE TABLE users (
 
 -- Add the user_id foreign key column to the 'topics' table
 ALTER TABLE topics
-ADD COLUMN user_id BIGINT NOT NULL;
+ADD COLUMN user_id BIGINT;
+
+-- NOTE: If you have existing topics, you must populate the user_id column before making it NOT NULL.
+-- Example: INSERT INTO users (name) VALUES ('system_user') ON CONFLICT DO NOTHING;
+-- UPDATE topics SET user_id = (SELECT id FROM users WHERE name = 'system_user') WHERE user_id IS NULL;
+
+-- Now, make the column NOT NULL
+ALTER TABLE topics
+ALTER COLUMN user_id SET NOT NULL;
 
 -- Add a foreign key constraint to link topics.user_id to users.id
 ALTER TABLE topics
