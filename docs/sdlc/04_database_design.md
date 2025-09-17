@@ -77,7 +77,8 @@ erDiagram
         bigint id PK
         bigint content_item_id FK
         text summary_text
-        vector(1536) embedding "NOT NULL"        timestamp created_at
+        vector(1536) embedding "NOT NULL"
+        timestamp created_at
     }
     
     BRIEFINGS {
