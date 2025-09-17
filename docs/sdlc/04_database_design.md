@@ -186,7 +186,7 @@ Stores information about various content sources (e.g., YouTube channels, blogs,
 - `name` (varchar): The source's name. `NOT NULL`
 - `description` (text): The source's description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
-- `created_at` (timestamp): When the author was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+- `created_at` (timestamp): When the source was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `content_source_topics`
 A join table creating a many-to-many relationship between content sources and topics.
