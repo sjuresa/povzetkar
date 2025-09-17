@@ -34,6 +34,7 @@ erDiagram
     TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
     CONTENT_SOURCES ||--o{ CONTENT_SOURCE_ASSESSMENTS : "is assessed for"
+    SOURCE_TYPES ||--o{ CONTENT_SOURCES : "is of type"
 
     USERS {
         bigint id PK
