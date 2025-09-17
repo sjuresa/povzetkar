@@ -35,6 +35,10 @@ erDiagram
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
     CONTENT_SOURCES ||--o{ CONTENT_SOURCE_ASSESSMENTS : "is assessed for"
     SOURCE_TYPES ||--o{ CONTENT_SOURCES : "is of type"
+    CATEGORIES ||--|{ SUMMARY_CATEGORIES : "categorizes"
+    SUMMARIES ||--|{ SUMMARY_CATEGORIES : "is categorized by"
+    SENTIMENTS ||--|{ SUMMARY_SENTIMENTS : "describes"
+    SUMMARIES ||--|{ SUMMARY_SENTIMENTS : "is described by"
 
     USERS {
         bigint id PK
@@ -135,10 +139,6 @@ erDiagram
         bigint summary_id PK, FK
     }
 
-    CATEGORIES ||--|{ SUMMARY_CATEGORIES : "categorizes"
-    SUMMARIES ||--|{ SUMMARY_CATEGORIES : "is categorized by"
-    SENTIMENTS ||--|{ SUMMARY_SENTIMENTS : "describes"
-    SUMMARIES ||--|{ SUMMARY_SENTIMENTS : "is described by"
     CONTENT_SOURCE_ASSESSMENTS {
         bigint id PK
         bigint content_source_id FK
