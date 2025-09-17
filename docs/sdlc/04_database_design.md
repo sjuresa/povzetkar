@@ -32,6 +32,7 @@ erDiagram
     BRIEFINGS ||--|{ BRIEFING_SUMMARIES : "aggregates"
     SUMMARIES ||--|{ BRIEFING_SUMMARIES : "is part of"
     TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
+    SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
     CONTENT_SOURCES ||--o{ CONTENT_SOURCE_ASSESSMENTS : "is assessed for"
 
     USERS {
@@ -190,7 +191,7 @@ Stores information about various content sources (e.g., YouTube channels, blogs,
 A join table creating a many-to-many relationship between content sources and topics.
 - `content_source_id` (PK, FK, bigint): References `content_sources.id`. `NOT NULL`
 - `topic_id` (PK, FK, bigint): References `topics.id`. `NOT NULL`
-This table facilitates the many-to-many relationship between `topics` and `content_sources`. For JPA implementations, `Topic` is considered the owning side of this relationship.
+This table facilitates the many-to-many relationship between `topics` and `content_sources`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying content sources associated with a specific topic.
 
 ### `content_items`
 Stores raw ingested content from various sources.
