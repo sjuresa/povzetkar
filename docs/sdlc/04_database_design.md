@@ -1,16 +1,18 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.4
+**Version:** 1.6
 
 ## Revision History
 
-| Version | Date               | Author       | Changes                                          |
-|---------|--------------------|--------------|--------------------------------------------------|
-| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant. |
-| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).        |
-| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.    |
-| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`. |
-| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.          |
+| Version | Date               | Author       | Changes                                                              |
+|---------|--------------------|--------------|----------------------------------------------------------------------|
+| 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments. |
+| 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.              |
+| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant.                     |
+| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).                            |
+| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.                        |
+| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`.                     |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.                              |
 
 ## 1. Introduction
 
@@ -23,18 +25,20 @@ This diagram shows the high-level relationships between the core entities in the
 ```mermaid
 erDiagram
     USERS ||--|{ TOPICS : "owns"
-    TOPICS ||--|{ CHANNEL_TOPICS : "is part of"
-    CHANNELS ||--|{ CHANNEL_TOPICS : "contains"
-    CHANNELS ||--o{ CONTENT_ITEMS : "publishes"
+    TOPICS ||--|{ CONTENT_SOURCE_TOPICS : "is part of"
+    CONTENT_SOURCES ||--|{ CONTENT_SOURCE_TOPICS : "contains"
+    CONTENT_SOURCES ||--o{ CONTENT_ITEMS : "publishes"
     CONTENT_ITEMS ||--o{ SUMMARIES : "is summarized by"
-    CATEGORIES ||--o{ SUMMARIES : "categorizes"
-    SENTIMENTS ||--o{ SUMMARIES : "describes"
     BRIEFINGS ||--|{ BRIEFING_SUMMARIES : "aggregates"
     SUMMARIES ||--|{ BRIEFING_SUMMARIES : "is part of"
     TRENDS ||--|{ TREND_SUMMARIES : "is composed of"
     SUMMARIES ||--|{ TREND_SUMMARIES : "contributes to"
-    SOURCE_TYPES ||--o{ CONTENT_ITEMS : "is of type"
-    CHANNELS ||--o{ CHANNEL_ASSESSMENTS : "is assessed for"
+    CONTENT_SOURCES ||--o{ CONTENT_SOURCE_ASSESSMENTS : "is assessed for"
+    SOURCE_TYPES ||--o{ CONTENT_SOURCES : "is of type"
+    CATEGORIES ||--|{ SUMMARY_CATEGORIES : "categorizes"
+    SUMMARIES ||--|{ SUMMARY_CATEGORIES : "is categorized by"
+    SENTIMENTS ||--|{ SUMMARY_SENTIMENTS : "describes"
+    SUMMARIES ||--|{ SUMMARY_SENTIMENTS : "is described by"
 
     USERS {
         bigint id PK
@@ -49,9 +53,9 @@ erDiagram
         timestamp created_at
     }
 
-    CHANNELS {
+    CONTENT_SOURCES {
         bigint id PK
-        varchar source_channel_id
+        varchar source_identifier
         int source_type_id FK
         varchar name
         text description
@@ -59,16 +63,15 @@ erDiagram
         timestamp created_at
     }
 
-    CHANNEL_TOPICS {
-        bigint channel_id PK, FK
+    CONTENT_SOURCE_TOPICS {
+        bigint content_source_id PK, FK
         bigint topic_id PK, FK
     }
 
     CONTENT_ITEMS {
         bigint id PK
-        bigint channel_id FK
+        bigint content_source_id FK
         varchar source_url UK
-        int source_type_id FK
         text raw_content
         timestamp published_at
         processing_status_enum processing_status
@@ -81,8 +84,6 @@ erDiagram
         bigint content_item_id FK
         text summary_text
         vector(1536) embedding "NOT NULL"
-        int category_id FK
-        int sentiment_id FK
         timestamp created_at
     }
     
@@ -97,6 +98,16 @@ erDiagram
     CATEGORIES {
         int id PK
         varchar name UK
+    }
+
+    SUMMARY_CATEGORIES {
+        bigint summary_id PK, FK
+        int category_id PK, FK
+    }
+
+    SUMMARY_SENTIMENTS {
+        bigint summary_id PK, FK
+        int sentiment_id PK, FK
     }
 
     BRIEFING_SUMMARIES {
@@ -128,9 +139,9 @@ erDiagram
         bigint summary_id PK, FK
     }
 
-    CHANNEL_ASSESSMENTS {
+    CONTENT_SOURCE_ASSESSMENTS {
         bigint id PK
-        bigint channel_id FK
+        bigint content_source_id FK
         decimal bias_score
         text assessment_details
         timestamp created_at
@@ -166,29 +177,28 @@ A lookup table for content topics or categories, owned by a user.
 - **Constraints**: `UNIQUE (user_id, name)`
 - `created_at` (timestamp): When the topic was created. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
-### `channels`
-Stores information about content channels (e.g., YouTube channels).
+### `content_sources`
+Stores information about various content sources (e.g., YouTube channels, blogs, Twitter accounts).
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `source_channel_id` (varchar): The unique identifier for the channel on the source platform (e.g., YouTube channel ID). `NOT NULL`
+- `source_identifier` (varchar): The unique identifier for the source on its platform (e.g., YouTube channel ID, blog domain, Twitter handle). `NOT NULL`
 - `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
-- **Constraints**: `UNIQUE (source_channel_id, source_type_id)`
-- `name` (varchar): The channel's name. `NOT NULL`
-- `description` (text): The channel's description. `NULL`
+- **Constraints**: `UNIQUE (source_identifier, source_type_id)`
+- `name` (varchar): The source's name. `NOT NULL`
+- `description` (text): The source's description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
-- `created_at` (timestamp): When the author was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+- `created_at` (timestamp): When the source was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
-### `channel_topics`
-A join table creating a many-to-many relationship between channels and topics.
-- `channel_id` (PK, FK, bigint): References `channels.id`. `NOT NULL`
+### `content_source_topics`
+A join table creating a many-to-many relationship between content sources and topics.
+- `content_source_id` (PK, FK, bigint): References `content_sources.id`. `NOT NULL`
 - `topic_id` (PK, FK, bigint): References `topics.id`. `NOT NULL`
-This table facilitates the many-to-many relationship between `topics` and `channels`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying channels associated with a specific topic.
+This table facilitates the many-to-many relationship between `topics` and `content_sources`. For JPA implementations, `Topic` is considered the owning side of this relationship, meaning the `Topic` entity will manage the join table (e.g., by holding the `@JoinTable` annotation). This aligns with the use case of querying content sources associated with a specific topic.
 
 ### `content_items`
 Stores raw ingested content from various sources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `channel_id` (FK, bigint): References `channels.id`. `NOT NULL`
+- `content_source_id` (FK, bigint): References `content_sources.id`. `NOT NULL`
 - `source_url` (varchar, unique): The canonical URL of the content. `NOT NULL`
-- `source_type_id` (FK, int): References `source_types.id`. `NOT NULL`
 - `raw_content` (text): The full transcript or article text. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
 - `processing_status` (processing_status_enum): The current state of the item. `NOT NULL DEFAULT 'PENDING'`
@@ -201,8 +211,6 @@ Stores the AI-generated summaries and their vector embeddings.
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
 - `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
-- `category_id` (FK, int): References `categories.id`. `NULL`
-- `sentiment_id` (FK, int): References `sentiments.id`. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `briefings`
@@ -228,6 +236,18 @@ A lookup table for content source types.
 - `id` (PK, int, auto-increment): `NOT NULL`
 - `name` (varchar, unique): The name of the source type (e.g., 'YOUTUBE', 'BLOG', 'REDDIT'). `NOT NULL`
 
+### `summary_categories`
+A join table creating a many-to-many relationship between summaries and categories.
+- `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
+- `category_id` (PK, FK, int): References `categories.id`. `NOT NULL`
+The primary key is a composite of (`summary_id`, `category_id`).
+
+### `summary_sentiments`
+A join table creating a many-to-many relationship between summaries and sentiments.
+- `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
+- `sentiment_id` (PK, FK, int): References `sentiments.id`. `NOT NULL`
+The primary key is a composite of (`summary_id`, `sentiment_id`).
+
 ### `briefing_summaries`
 A join table creating a many-to-many relationship between briefings and summaries. This allows a single summary to be part of multiple briefings (e.g., a daily and a weekly briefing).
 - `briefing_id` (PK, FK, bigint): References `briefings.id`. `NOT NULL`
@@ -249,10 +269,10 @@ A join table to create a many-to-many relationship between trends and the summar
 - `summary_id` (PK, FK, bigint): References `summaries.id`. `NOT NULL`
 The primary key for this table is a composite key formed by (`trend_id`, `summary_id`).
 
-### `channel_assessments`
-Stores historical records of bias assessments for content channels.
+### `content_source_assessments`
+Stores historical records of bias assessments for content sources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
-- `channel_id` (FK, bigint): References `channels.id`. `NOT NULL`
+- `content_source_id` (FK, bigint): References `content_sources.id`. `NOT NULL`
 - `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL CHECK (bias_score >= -1.0 AND bias_score <= 1.0)`
 - `assessment_details` (text): A detailed, AI-generated explanation for the given score. `NOT NULL`
 - `created_at` (timestamp): When the assessment was performed. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
