@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
@@ -16,26 +18,36 @@ class TopicTest {
     @Inject
     EntityManager em;
 
+    private String uniqueSharedName;
+    private String uniqueName;
+    private Long user1Id;
+    private Long user2Id;
+    private Long singleUserId;
+
     @Test
     @Transactional
     void testSameTopicNameForDifferentUsers() {
         User user1 = new User();
-        user1.name = "User 1"; // Set a default name for the user
+        user1.name = "User 1-" + UUID.randomUUID();
         em.persist(user1);
+        user1Id = user1.id;
 
         User user2 = new User();
-        user2.name = "User 2"; // Set a default name for the user
+        user2.name = "User 2-" + UUID.randomUUID();
         em.persist(user2);
+        user2Id = user2.id;
+
+        uniqueSharedName = "shared-name-" + UUID.randomUUID();
 
         assertDoesNotThrow(() -> {
             Topic topic1 = new Topic();
-            topic1.name = "shared-name";
+            topic1.name = uniqueSharedName;
             topic1.user = user1;
             em.persist(topic1);
             em.flush(); // Force the insert to happen now
 
             Topic topic2 = new Topic();
-            topic2.name = "shared-name";
+            topic2.name = uniqueSharedName;
             topic2.user = user2;
             em.persist(topic2);
             em.flush(); // Force the insert to happen now
@@ -46,17 +58,20 @@ class TopicTest {
     @Transactional
     void testSameTopicNameForSameUserThrowsException() {
         User user = new User();
-        user.name = "Single User"; // Set a default name for the user
+        user.name = "Single User-" + UUID.randomUUID();
         em.persist(user);
+        singleUserId = user.id;
+
+        uniqueName = "unique-name-" + UUID.randomUUID();
 
         Topic topic1 = new Topic();
-        topic1.name = "unique-name";
+        topic1.name = uniqueName;
         topic1.user = user;
         em.persist(topic1);
         em.flush(); // Ensure the first topic is persisted
 
         Topic topic2 = new Topic();
-        topic2.name = "unique-name";
+        topic2.name = uniqueName;
         topic2.user = user;
 
         // Assert that persisting the second topic throws a PersistenceException
@@ -67,8 +82,21 @@ class TopicTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        Topic.delete("name = 'shared-name' or name = 'unique-name'");
-        User.delete("name = 'User 1' or name = 'User 2' or name = 'Single User'");
+        if (uniqueSharedName != null) {
+            Topic.delete("name", uniqueSharedName);
+        }
+        if (uniqueName != null) {
+            Topic.delete("name", uniqueName);
+        }
+        if (user1Id != null) {
+            User.deleteById(user1Id);
+        }
+        if (user2Id != null) {
+            User.deleteById(user2Id);
+        }
+        if (singleUserId != null) {
+            User.deleteById(singleUserId);
+        }
     }
 
     private void persistAndFlush(Topic topic) {

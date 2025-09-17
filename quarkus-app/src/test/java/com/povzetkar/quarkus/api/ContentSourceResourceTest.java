@@ -1,6 +1,6 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.model.Channel;
+import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
@@ -19,11 +19,11 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
-class ChannelResourceTest {
+class ContentSourceResourceTest {
 
     private static final String TEST_TOPIC_NAME = "test-topic";
-    private static final String TEST_CHANNEL_ID_PREFIX = "UC-test-id-";
-    private static final String TEST_CHANNEL_NAME_PREFIX = "Test Channel ";
+    private static final String TEST_CONTENT_SOURCE_ID_PREFIX = "UC-test-id-";
+    private static final String TEST_CONTENT_SOURCE_NAME_PREFIX = "Test ContentSource ";
     private static final String NON_EXISTENT_TOPIC_NAME = "non-existent-topic";
 
     @Inject
@@ -42,52 +42,52 @@ class ChannelResourceTest {
         Topic topic = new Topic();
         topic.name = TEST_TOPIC_NAME;
         topic.user = user;
-        em.persist(topic); // Persist the topic before channels
+        em.persist(topic);
 
         IntStream.range(0, 15).forEach(i -> {
-            Channel channel = new Channel();
-            channel.sourceChannelId = TEST_CHANNEL_ID_PREFIX + i;
-            channel.sourceTypeId = 1;
-            channel.name = TEST_CHANNEL_NAME_PREFIX + i;
+            ContentSource contentSource = new ContentSource();
+            contentSource.sourceIdentifier = TEST_CONTENT_SOURCE_ID_PREFIX + i;
+            contentSource.sourceTypeId = 1;
+            contentSource.name = TEST_CONTENT_SOURCE_NAME_PREFIX + i;
             // Establish ManyToMany relationship
-            topic.channels.add(channel);
-            channel.topics.add(topic);
-            em.persist(channel);
+            topic.contentSources.add(contentSource);
+            contentSource.topics.add(topic);
+            em.persist(contentSource);
         });
     }
 
     @AfterEach
     @Transactional
     void cleanup() {
-        // Explicitly delete channels first, as orphanRemoval might not be sufficient for ManyToMany
-        Channel.delete("sourceChannelId like ?1", TEST_CHANNEL_ID_PREFIX + "%");
+        // Explicitly delete contentSources first, as orphanRemoval might not be sufficient for ManyToMany
+        ContentSource.delete("sourceIdentifier like ?1", TEST_CONTENT_SOURCE_ID_PREFIX + "%");
         Topic.delete("user.id", testUserId);
         User.delete("id", testUserId);
     }
 
     @Test
-    void testGetChannelsByTopic_TopicNotFound() {
+    void testGetContentSourcesByTopic_TopicNotFound() {
         given()
           .pathParam("userId", testUserId)
-          .when().get("/api/v1/users/{userId}/topics/" + NON_EXISTENT_TOPIC_NAME + "/channels")
+          .when().get("/api/v1/users/{userId}/topics/" + NON_EXISTENT_TOPIC_NAME + "/content-sources")
           .then()
              .statusCode(404);
     }
 
     @Test
-    void testGetChannelsByTopic_BlankName() {
+    void testGetContentSourcesByTopic_BlankName() {
         given()
           .pathParam("userId", testUserId)
-          .when().get("/api/v1/users/{userId}/topics/ /channels")
+          .when().get("/api/v1/users/{userId}/topics/ /content-sources")
           .then()
              .statusCode(400);
     }
 
     @Test
-    void testGetChannelsByTopic_DefaultPagination() {
+    void testGetContentSourcesByTopic_DefaultPagination() {
         given()
           .pathParam("userId", testUserId)
-          .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/channels")
+          .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/content-sources")
           .then()
              .statusCode(200)
              .body("$", hasSize(10));
@@ -99,12 +99,12 @@ class ChannelResourceTest {
             "1, 10, 5",
             "2, 10, 0"
     })
-    void testGetChannelsByTopic_CustomPagination(int page, int size, int expectedSize) {
+    void testGetContentSourcesByTopic_CustomPagination(int page, int size, int expectedSize) {
         given()
                 .pathParam("userId", testUserId)
                 .queryParam("page", page)
                 .queryParam("size", size)
-                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/channels")
+                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/content-sources")
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(expectedSize));
@@ -116,12 +116,12 @@ class ChannelResourceTest {
             "0, 0",
             "0, 101"
     })
-    void testGetChannelsByTopic_InvalidPagination(int page, int size) {
+    void testGetContentSourcesByTopic_InvalidPagination(int page, int size) {
         given()
                 .pathParam("userId", testUserId)
                 .queryParam("page", page)
                 .queryParam("size", size)
-                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/channels")
+                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/content-sources")
                 .then()
                 .statusCode(400);
     }

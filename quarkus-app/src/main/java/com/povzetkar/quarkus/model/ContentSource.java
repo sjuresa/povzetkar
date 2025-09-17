@@ -17,15 +17,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "channels", uniqueConstraints = { @UniqueConstraint(columnNames = {"source_channel_id", "source_type_id"}) })
-public class Channel extends PanacheEntityBase {
+@Table(name = "content_sources", uniqueConstraints = { @UniqueConstraint(columnNames = {"source_identifier", "source_type_id"}) })
+public class ContentSource extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Column(name = "source_channel_id", nullable = false)
-    public String sourceChannelId;
+    @Column(name = "source_identifier", nullable = false)
+    public String sourceIdentifier;
 
     @Column(name = "source_type_id", nullable = false)
     public int sourceTypeId;
@@ -42,7 +42,7 @@ public class Channel extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
 
-    @ManyToMany(mappedBy = "channels")
+    @ManyToMany(mappedBy = "contentSources")
     @JsonBackReference
     public Set<Topic> topics = new HashSet<>();
 
