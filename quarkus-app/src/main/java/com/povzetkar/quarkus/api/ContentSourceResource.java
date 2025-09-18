@@ -65,13 +65,6 @@ public class ContentSourceResource {
             throw new BadRequestException("ContentSource name cannot be blank");
         }
 
-        Optional<ContentSource> existingWithSameKey = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
-                contentSource.sourceIdentifier, contentSource.sourceTypeId, id).firstResultOptional();
-
-        if (existingWithSameKey.isPresent()) {
-            throw new WebApplicationException("Another ContentSource with the same sourceIdentifier and sourceTypeId already exists.", Response.Status.CONFLICT);
-        }
-
         entity.name = contentSource.name;
         entity.description = contentSource.description;
         entity.subscriberCount = contentSource.subscriberCount;
