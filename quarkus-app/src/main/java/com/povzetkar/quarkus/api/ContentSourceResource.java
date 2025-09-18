@@ -32,11 +32,8 @@ public class ContentSourceResource {
     @GET
     @Path("/content-sources/{id}")
     public ContentSource getContentSourceById(@PathParam("id") Long id) {
-        ContentSource entity = ContentSource.findById(id);
-        if (entity == null) {
-            throw new NotFoundException("ContentSource with id " + id + " not found");
-        }
-        return entity;
+        return ContentSource.<ContentSource>findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException("ContentSource with id " + id + " not found"));
     }
 
     @POST
@@ -58,10 +55,8 @@ public class ContentSourceResource {
     @Path("/content-sources/{id}")
     @Transactional
     public ContentSource updateContentSource(@PathParam("id") Long id, @Valid @NotNull ContentSource contentSource) {
-        ContentSource entity = ContentSource.findById(id);
-        if (entity == null) {
-            throw new NotFoundException("ContentSource with id " + id + " not found");
-        }
+        ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException("ContentSource with id " + id + " not found"));
 
         Optional<ContentSource> existingWithSameKey = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
                 contentSource.sourceIdentifier, contentSource.sourceTypeId, id).firstResultOptional();
@@ -84,7 +79,7 @@ public class ContentSourceResource {
     public Response deleteContentSource(@PathParam("id") Long id) {
         ContentSource entity = ContentSource.findById(id);
         if (entity == null) {
-            throw new NotFoundException();
+            throw new NotFoundException("ContentSource with id " + id + " not found");
         }
         entity.delete();
         return Response.noContent().build();

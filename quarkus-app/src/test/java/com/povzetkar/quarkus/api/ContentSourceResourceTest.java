@@ -14,7 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -182,19 +184,26 @@ class ContentSourceResourceTest {
     @Test
     void testCreateContentSource_InvalidInput() {
         // Case 1: name is missing, which is not allowed
-        String invalidJson1 = "{\"sourceIdentifier\": \"invalid-id\", \"sourceTypeId\": 1}";
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sourceIdentifier", "invalid-id");
+        payload.put("sourceTypeId", 1);
+        // name is intentionally omitted
+
         given()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(invalidJson1)
+                .body(payload)
                 .when().post("/api/v1/content-sources")
                 .then()
                 .statusCode(400);
 
         // Case 2: sourceIdentifier is missing, which is not allowed
-        String invalidJson2 = "{\"name\": \"A valid name\", \"sourceTypeId\": 1}";
+        Map<String, Object> payload2 = new HashMap<>();
+        payload2.put("sourceTypeId", 1);
+        payload2.put("name", "A valid name");
+        // sourceIdentifier is intentionally omitted
         given()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(invalidJson2)
+                .body(payload2)
                 .when().post("/api/v1/content-sources")
                 .then()
                 .statusCode(400);
@@ -274,30 +283,38 @@ class ContentSourceResourceTest {
                 .findFirst().orElseThrow();
 
         // Case 1: name is null
-        String invalidJson1 = String.format(
-            "{\"sourceIdentifier\": \"%s\", \"sourceTypeId\": %d, \"name\": null}",
-            existingContentSource.sourceIdentifier, existingContentSource.sourceTypeId
-        );
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sourceIdentifier", existingContentSource.sourceIdentifier);
+        payload.put("sourceTypeId", existingContentSource.sourceTypeId);
+        payload.put("name", null); // Intentionally invalid
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .pathParam("id", existingContentSource.id)
-                .body(invalidJson1)
+                .body(payload)
                 .when().put("/api/v1/content-sources/{id}")
                 .then()
                 .statusCode(400);
 
         // Case 2: sourceIdentifier is null
-        String invalidJson2 = String.format(
-            "{\"sourceIdentifier\": null, \"sourceTypeId\": %d, \"name\": \"%s\"}",
-            existingContentSource.sourceTypeId, existingContentSource.name
-        );
+        payload.put("sourceIdentifier", null);
+        payload.put("name", existingContentSource.name);
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .pathParam("id", existingContentSource.id)
-                .body(invalidJson2)
+                .body(payload)
                 .when().put("/api/v1/content-sources/{id}")
                 .then()
                 .statusCode(400);
+
+        // Case 3: empty JSON object
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("id", existingContentSource.id)
+                .body("")
+                .when().put("/api/v1/content-sources/{id}")
+                .then()
+                .statusCode(400);
+
     }
 
     @Test
