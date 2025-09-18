@@ -15,14 +15,14 @@ class ContentItemTest {
     @Test
     @Transactional
     void testPrePersistSetsCreatedAtAndProcessingStatus() {
-        Channel channel = new Channel();
-        channel.sourceChannelId = "testChannelId" +  UUID.randomUUID();
-        channel.sourceTypeId = 1;
-        channel.name = "Test Channel";
-        channel.persist();
+        ContentSource contentSource = new ContentSource();
+        contentSource.sourceIdentifier = "testContentSourceId" +  UUID.randomUUID();
+        contentSource.sourceTypeId = 1;
+        contentSource.name = "Test ContentSource";
+        contentSource.persist();
 
         ContentItem contentItem = new ContentItem();
-        contentItem.channel = channel;
+        contentItem.contentSource = contentSource;
         contentItem.sourceUrl = "http://example.com/test/" + UUID.randomUUID();
         contentItem.rawContent = "Some raw content";
         contentItem.publishedAt = Instant.now();
@@ -38,14 +38,14 @@ class ContentItemTest {
     @Test
     @Transactional
     void testContentItemRelationships() {
-        Channel channel = new Channel();
-        channel.sourceChannelId = "channel456-" + UUID.randomUUID();
-        channel.sourceTypeId = 1;
-        channel.name = "Another Channel";
-        channel.persist();
+        ContentSource contentSource = new ContentSource();
+        contentSource.sourceIdentifier = "contentSource456-" + UUID.randomUUID();
+        contentSource.sourceTypeId = 1;
+        contentSource.name = "Another ContentSource";
+        contentSource.persist();
 
         ContentItem contentItem = new ContentItem();
-        contentItem.channel = channel;
+        contentItem.contentSource = contentSource;
         contentItem.sourceUrl = "http://example.com/another/" + UUID.randomUUID();
         contentItem.rawContent = "More raw content";
         contentItem.publishedAt = Instant.now();
@@ -54,6 +54,6 @@ class ContentItemTest {
         contentItem.persist();
 
         assertNotNull(contentItem.id);
-        assertEquals(channel.id, contentItem.channel.id);
+        assertEquals(contentSource.id, contentItem.contentSource.id);
     }
 }

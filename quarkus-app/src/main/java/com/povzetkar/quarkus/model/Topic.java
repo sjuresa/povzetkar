@@ -27,11 +27,11 @@ public class Topic extends PanacheEntityBase {
     public User user;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "channel_topics",
+    @JoinTable(name = "content_source_topics",
                joinColumns = @JoinColumn(name = "topic_id"),
-               inverseJoinColumns = @JoinColumn(name = "channel_id"))
+               inverseJoinColumns = @JoinColumn(name = "content_source_id"))
     @JsonManagedReference
-    public Set<Channel> channels = new HashSet<>();
+    public Set<ContentSource> contentSources = new HashSet<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;

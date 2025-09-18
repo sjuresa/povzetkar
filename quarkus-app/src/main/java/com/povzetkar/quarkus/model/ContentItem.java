@@ -16,8 +16,8 @@ public class ContentItem extends PanacheEntityBase {
     public Long id;
 
     @ManyToOne
-    @JoinColumn(name = "channel_id", nullable = false)
-    public Channel channel;
+    @JoinColumn(name = "content_source_id", nullable = false)
+    public ContentSource contentSource;
 
     @Column(name = "source_url", unique = true, nullable = false)
     public String sourceUrl;

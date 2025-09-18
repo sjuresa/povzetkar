@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres_test_db:
-        image: postgres:17.6
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
           POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
