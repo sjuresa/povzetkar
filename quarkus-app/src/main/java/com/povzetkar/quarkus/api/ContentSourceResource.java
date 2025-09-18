@@ -55,6 +55,9 @@ public class ContentSourceResource {
     @Path("/content-sources/{id}")
     @Transactional
     public ContentSource updateContentSource(@PathParam("id") Long id, @Valid @NotNull ContentSource contentSource) {
+        if (contentSource.id != null && !id.equals(contentSource.id)) {
+            throw new BadRequestException("The ID in the path does not match the ID in the request body.");
+        }
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException("ContentSource with id " + id + " not found"));
 
