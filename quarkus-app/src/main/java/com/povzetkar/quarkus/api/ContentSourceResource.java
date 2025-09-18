@@ -2,7 +2,7 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
-import com.povzetkar.quarkus.model.User;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -91,17 +91,10 @@ public class ContentSourceResource {
             @QueryParam("page") @DefaultValue("0") @Min(0) int page,
             @QueryParam("size") @DefaultValue("10") @Min(1) @Max(100) int size) {
 
-        User user = User.findById(userId);
-        if (user == null) {
-            throw new NotFoundException("User not found");
-        }
+        Topic topic = Topic.<Topic>find("user.id = ?1 and name = ?2", userId, topicName).firstResultOptional()
+                .orElseThrow(() -> new NotFoundException("Topic '" + topicName + "' not found for user with id " + userId));
 
-        Topic topic = Topic.find("user = ?1 and name = ?2", user, topicName).firstResult();
-        if (topic == null) {
-            throw new NotFoundException("Topic not found for user");
-        }
-
-        io.quarkus.panache.common.Page panachePage = io.quarkus.panache.common.Page.of(page, size);
+        Page panachePage = io.quarkus.panache.common.Page.of(page, size);
         return ContentSource.find("select cs from ContentSource cs join cs.topics t where t = ?1 order by cs.name", topic)
                 .page(panachePage)
                 .list();
