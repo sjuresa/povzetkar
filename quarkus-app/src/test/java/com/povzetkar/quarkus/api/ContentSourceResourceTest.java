@@ -181,23 +181,31 @@ class ContentSourceResourceTest {
 
     @Test
     void testCreateContentSource_InvalidInput() {
-        ContentSource invalidContentSource = new ContentSource(); // Missing required fields
-        invalidContentSource.sourceIdentifier = "invalid";
-        // name is null, which is not allowed
-
+        // Case 1: name is missing, which is not allowed
+        String invalidJson1 = "{\"sourceIdentifier\": \"invalid-id\", \"sourceTypeId\": 1}";
         given()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(invalidContentSource)
+                .body(invalidJson1)
                 .when().post("/api/v1/content-sources")
                 .then()
-                .statusCode(400); // Expecting Bad Request
+                .statusCode(400);
 
+        // Case 2: sourceIdentifier is missing, which is not allowed
+        String invalidJson2 = "{\"name\": \"A valid name\", \"sourceTypeId\": 1}";
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(invalidJson2)
+                .when().post("/api/v1/content-sources")
+                .then()
+                .statusCode(400);
+
+        // Case 3: empty JSON object
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("")
                 .when().post("/api/v1/content-sources")
                 .then()
-                .statusCode(400); // Expecting Bad Request
+                .statusCode(400);
     }
 
     @Test
@@ -265,15 +273,31 @@ class ContentSourceResourceTest {
                 .map(id -> (ContentSource) ContentSource.findById(id))
                 .findFirst().orElseThrow();
 
-        existingContentSource.name = null; // Invalid input
-
+        // Case 1: name is null
+        String invalidJson1 = String.format(
+            "{\"sourceIdentifier\": \"%s\", \"sourceTypeId\": %d, \"name\": null}",
+            existingContentSource.sourceIdentifier, existingContentSource.sourceTypeId
+        );
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .pathParam("id", existingContentSource.id)
-                .body(existingContentSource)
+                .body(invalidJson1)
                 .when().put("/api/v1/content-sources/{id}")
                 .then()
-                .statusCode(400); // Expecting Bad Request
+                .statusCode(400);
+
+        // Case 2: sourceIdentifier is null
+        String invalidJson2 = String.format(
+            "{\"sourceIdentifier\": null, \"sourceTypeId\": %d, \"name\": \"%s\"}",
+            existingContentSource.sourceTypeId, existingContentSource.name
+        );
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("id", existingContentSource.id)
+                .body(invalidJson2)
+                .when().put("/api/v1/content-sources/{id}")
+                .then()
+                .statusCode(400);
     }
 
     @Test

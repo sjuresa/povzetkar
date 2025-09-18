@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
@@ -12,6 +11,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -26,12 +26,14 @@ public class ContentSource extends PanacheEntityBase {
     public Long id;
 
     @Column(name = "source_identifier", nullable = false)
+    @NotBlank
     public String sourceIdentifier;
 
     @Column(name = "source_type_id", nullable = false)
     public int sourceTypeId;
 
     @Column(nullable = false)
+    @NotBlank
     public String name;
 
     @Column(columnDefinition = "TEXT")
@@ -44,7 +46,6 @@ public class ContentSource extends PanacheEntityBase {
     public Instant createdAt;
 
     @ManyToMany(mappedBy = "contentSources")
-    @JsonBackReference
     @JsonIgnore
     public Set<Topic> topics = new HashSet<>();
 
