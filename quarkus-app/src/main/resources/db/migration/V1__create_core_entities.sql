@@ -17,7 +17,7 @@ CREATE TABLE topics (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user
         FOREIGN KEY(user_id)
         REFERENCES users(id)
@@ -39,7 +39,7 @@ CREATE TABLE content_sources (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     subscriber_count INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_source_type
         FOREIGN KEY(source_type_id)
         REFERENCES source_types(id)
@@ -68,10 +68,10 @@ CREATE TABLE content_items (
     content_source_id BIGINT NOT NULL,
     source_url VARCHAR(255) UNIQUE NOT NULL,
     raw_content TEXT NOT NULL,
-    published_at TIMESTAMP NOT NULL,
+    published_at TIMESTAMPTZ NOT NULL,
     processing_status processing_status_enum NOT NULL DEFAULT 'PENDING',
     duration_seconds INTEGER,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_content_source_item
         FOREIGN KEY(content_source_id)
         REFERENCES content_sources(id)
@@ -84,7 +84,7 @@ CREATE TABLE summaries (
     content_item_id BIGINT NOT NULL,
     summary_text TEXT NOT NULL,
     embedding VECTOR(1536) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_content_item_summary
         FOREIGN KEY(content_item_id)
         REFERENCES content_items(id)
@@ -97,7 +97,7 @@ CREATE TABLE briefings (
     title VARCHAR(255) NOT NULL,
     meta_summary TEXT NOT NULL,
     briefing_date DATE NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- categories
@@ -164,7 +164,7 @@ CREATE TABLE trends (
     description TEXT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- trend_summaries
@@ -188,7 +188,7 @@ CREATE TABLE content_source_assessments (
     content_source_id BIGINT NOT NULL,
     bias_score DECIMAL(3,2) NOT NULL CHECK (bias_score >= -1.0 AND bias_score <= 1.0),
     assessment_details TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_content_source_assessment
         FOREIGN KEY(content_source_id)
         REFERENCES content_sources(id)

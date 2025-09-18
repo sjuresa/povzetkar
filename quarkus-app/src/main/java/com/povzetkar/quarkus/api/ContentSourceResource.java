@@ -3,19 +3,19 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.Optional;
 
 @Path("/api/v1")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
 public class ContentSourceResource {
 
     @GET
@@ -41,6 +41,14 @@ public class ContentSourceResource {
         if (contentSource == null || contentSource.name == null || contentSource.name.trim().isEmpty()) {
             throw new BadRequestException("ContentSource name cannot be blank");
         }
+
+        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
+                contentSource.sourceIdentifier, contentSource.sourceTypeId).firstResultOptional();
+
+        if (existing.isPresent()) {
+            throw new WebApplicationException("ContentSource with the same sourceIdentifier and sourceTypeId already exists.", Response.Status.CONFLICT);
+        }
+
         contentSource.persist();
         return Response.status(Response.Status.CREATED).entity(contentSource).build();
     }
@@ -56,8 +64,14 @@ public class ContentSourceResource {
         if (contentSource == null || contentSource.name == null || contentSource.name.trim().isEmpty()) {
             throw new BadRequestException("ContentSource name cannot be blank");
         }
-        entity.sourceIdentifier = contentSource.sourceIdentifier;
-        entity.sourceTypeId = contentSource.sourceTypeId;
+
+        Optional<ContentSource> existingWithSameKey = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
+                contentSource.sourceIdentifier, contentSource.sourceTypeId, id).firstResultOptional();
+
+        if (existingWithSameKey.isPresent()) {
+            throw new WebApplicationException("Another ContentSource with the same sourceIdentifier and sourceTypeId already exists.", Response.Status.CONFLICT);
+        }
+
         entity.name = contentSource.name;
         entity.description = contentSource.description;
         entity.subscriberCount = contentSource.subscriberCount;
@@ -67,12 +81,13 @@ public class ContentSourceResource {
     @DELETE
     @Path("/content-sources/{id}")
     @Transactional
-    public void deleteContentSource(@PathParam("id") Long id) {
+    public Response deleteContentSource(@PathParam("id") Long id) {
         ContentSource entity = ContentSource.findById(id);
         if (entity == null) {
             throw new NotFoundException();
         }
         entity.delete();
+        return Response.noContent().build();
     }
 
     @GET

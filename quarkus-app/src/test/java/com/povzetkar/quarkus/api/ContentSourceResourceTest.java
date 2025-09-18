@@ -201,6 +201,22 @@ class ContentSourceResourceTest {
     }
 
     @Test
+    void testCreateContentSource_Conflict() {
+        ContentSource duplicateContentSource = new ContentSource();
+        duplicateContentSource.sourceIdentifier = TEST_CONTENT_SOURCE_ID_PREFIX + 0;
+        duplicateContentSource.sourceTypeId = 1;
+        duplicateContentSource.name = "Duplicate Content Source";
+        duplicateContentSource.description = "This should cause a conflict.";
+
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(duplicateContentSource)
+                .when().post("/api/v1/content-sources")
+                .then()
+                .statusCode(409);
+    }
+
+    @Test
     @Transactional
     void testUpdateContentSource_Success() {
         ContentSource existingContentSource = createdContentSourceIds.stream()
