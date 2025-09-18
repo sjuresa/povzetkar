@@ -10,8 +10,9 @@ public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestExce
 
     @Override
     public Response toResponse(BadRequestException exception) {
+        var errorResponse = java.util.Collections.singletonMap("error", exception.getMessage());
         return Response.status(Response.Status.BAD_REQUEST)
-                .entity(exception.getMessage())
+                .entity(errorResponse)
                 .build();
     }
 }

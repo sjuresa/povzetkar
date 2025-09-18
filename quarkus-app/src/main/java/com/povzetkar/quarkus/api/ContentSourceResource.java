@@ -77,11 +77,9 @@ public class ContentSourceResource {
     @Path("/content-sources/{id}")
     @Transactional
     public Response deleteContentSource(@PathParam("id") Long id) {
-        ContentSource entity = ContentSource.findById(id);
-        if (entity == null) {
-            throw new NotFoundException("ContentSource with id " + id + " not found");
-        }
-        entity.delete();
+        ContentSource.findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException("ContentSource with id " + id + " not found"));
+        ContentSource.deleteById(id);
         return Response.noContent().build();
     }
 
