@@ -71,29 +71,18 @@ class ContentSourceResourceTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        // Clean up content sources first to avoid FK issues with topics
-        createdContentSourceIds.forEach(id -> {
-            ContentSource cs = ContentSource.findById(id);
-            if (cs != null) {
-                cs.delete();
-            }
-        });
+        if (!createdContentSourceIds.isEmpty()) {
+            ContentSource.delete("id in ?1", createdContentSourceIds);
+        }
+        if (!createdTopicIds.isEmpty()) {
+            Topic.delete("id in ?1", createdTopicIds);
+        }
+        if (!createdUserIds.isEmpty()) {
+            User.delete("id in ?1", createdUserIds);
+        }
+
         createdContentSourceIds.clear();
-
-        createdTopicIds.forEach(id -> {
-            Topic t = Topic.findById(id);
-            if (t != null) {
-                t.delete();
-            }
-        });
         createdTopicIds.clear();
-
-        createdUserIds.forEach(id -> {
-            User u = User.findById(id);
-            if (u != null) {
-                u.delete();
-            }
-        });
         createdUserIds.clear();
     }
 
