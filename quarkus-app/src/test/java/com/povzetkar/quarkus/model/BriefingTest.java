@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -38,22 +36,19 @@ class BriefingTest {
 
         // Create two Summary entities for the briefing
         String summaryText1 = "Summary one for briefing.";
-        LocalDateTime createdAt1 = LocalDateTime.now().minusHours(1);
-        Summary summary1 = new Summary(summaryText1, contentItem, createdAt1);
+        Summary summary1 = new Summary(summaryText1, contentItem);
         summary1.persist();
 
         String summaryText2 = "Summary two for briefing.";
-        LocalDateTime createdAt2 = LocalDateTime.now();
-        Summary summary2 = new Summary(summaryText2, contentItem, createdAt2);
+        Summary summary2 = new Summary(summaryText2, contentItem);
         summary2.persist();
 
         // Create a Briefing entity
         String title = "Test Briefing Title";
         String metaSummary = "This is the meta summary for the test briefing.";
         LocalDate briefingDate = LocalDate.now();
-        LocalDateTime briefingCreatedAt = LocalDateTime.now();
 
-        Briefing briefing = new Briefing(title, metaSummary, briefingDate, briefingCreatedAt);
+        Briefing briefing = new Briefing(title, metaSummary, briefingDate);
         briefing.summaries = new HashSet<>(Arrays.asList(summary1, summary2));
         briefing.persist();
 
@@ -65,7 +60,6 @@ class BriefingTest {
         assertEquals(title, retrievedBriefing.title);
         assertEquals(metaSummary, retrievedBriefing.metaSummary);
         assertEquals(briefingDate, retrievedBriefing.briefingDate);
-        assertEquals(briefingCreatedAt.toEpochSecond(ZoneOffset.UTC), retrievedBriefing.createdAt.toEpochSecond(ZoneOffset.UTC));
         assertEquals(2, retrievedBriefing.summaries.size());
         assertTrue(retrievedBriefing.summaries.stream().anyMatch(s -> s.id.equals(summary1.id)));
         assertTrue(retrievedBriefing.summaries.stream().anyMatch(s -> s.id.equals(summary2.id)));

@@ -5,10 +5,9 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 class SummaryTest {
@@ -35,9 +34,8 @@ class SummaryTest {
 
         // Create a Summary entity
         String summaryText = "This is a test summary.";
-        LocalDateTime createdAt = LocalDateTime.now();
 
-        Summary summary = new Summary(summaryText, contentItem, createdAt);
+        Summary summary = new Summary(summaryText, contentItem);
         summary.persist();
 
         assertNotNull(summary.id);
@@ -47,6 +45,5 @@ class SummaryTest {
         assertNotNull(retrievedSummary);
         assertEquals(summaryText, retrievedSummary.summaryText);
         assertEquals(contentItem.id, retrievedSummary.contentItem.id);
-        assertEquals(createdAt.toEpochSecond(ZoneOffset.UTC), retrievedSummary.createdAt.toEpochSecond(ZoneOffset.UTC));
     }
 }

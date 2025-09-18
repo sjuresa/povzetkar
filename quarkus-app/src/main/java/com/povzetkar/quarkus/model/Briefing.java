@@ -2,8 +2,8 @@ package com.povzetkar.quarkus.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,32 +15,39 @@ public class Briefing extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Column(nullable = false)
     public String title;
 
     @Lob
-    @Column(name = "meta_summary")
+    @Column(name = "meta_summary", nullable = false)
     public String metaSummary;
 
-    @Column(name = "briefing_date")
+    @Column(name = "briefing_date", nullable = false)
     public LocalDate briefingDate;
 
-    @Column(name = "created_at")
-    public LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    public java.time.Instant createdAt;
 
     @ManyToMany
     @JoinTable(name = "briefing_summaries",
-               joinColumns = @JoinColumn(name = "briefing_id"),
-               inverseJoinColumns = @JoinColumn(name = "summary_id"))
+            joinColumns = @JoinColumn(name = "briefing_id"),
+            inverseJoinColumns = @JoinColumn(name = "summary_id"))
     public Set<Summary> summaries = new HashSet<>();
 
     // Default constructor for JPA
     public Briefing() {
     }
 
-    public Briefing(String title, String metaSummary, LocalDate briefingDate, LocalDateTime createdAt) {
+    public Briefing(String title, String metaSummary, LocalDate briefingDate) {
         this.title = title;
         this.metaSummary = metaSummary;
         this.briefingDate = briefingDate;
-        this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) {
+            createdAt = java.time.Instant.now();
+        }
     }
 }

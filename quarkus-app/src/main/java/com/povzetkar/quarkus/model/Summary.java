@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "summaries")
@@ -13,23 +12,29 @@ public class Summary extends PanacheEntityBase {
     public Long id;
 
     @Lob
-    @Column(name = "summary_text")
+    @Column(name = "summary_text", nullable = false)
     public String summaryText;
 
     @ManyToOne
-    @JoinColumn(name = "content_item_id")
+    @JoinColumn(name = "content_item_id", nullable = false)
     public ContentItem contentItem;
 
-    @Column(name = "created_at")
-    public LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    public java.time.Instant createdAt;
 
     // Default constructor for JPA
     public Summary() {
     }
 
-    public Summary(String summaryText, ContentItem contentItem, LocalDateTime createdAt) {
+    public Summary(String summaryText, ContentItem contentItem) {
         this.summaryText = summaryText;
         this.contentItem = contentItem;
-        this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) {
+            createdAt = java.time.Instant.now();
+        }
     }
 }
