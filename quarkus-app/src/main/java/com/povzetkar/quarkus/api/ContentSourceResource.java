@@ -4,15 +4,16 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-@Path("")
+@Path("/api/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ContentSourceResource {
@@ -26,13 +27,20 @@ public class ContentSourceResource {
     @GET
     @Path("/content-sources/{id}")
     public ContentSource getContentSourceById(@PathParam("id") Long id) {
-        return ContentSource.findById(id);
+        ContentSource entity = ContentSource.findById(id);
+        if (entity == null) {
+            throw new NotFoundException("ContentSource with id " + id + " not found");
+        }
+        return entity;
     }
 
     @POST
     @Path("/content-sources")
     @Transactional
     public Response createContentSource(ContentSource contentSource) {
+        if (contentSource == null || contentSource.name == null || contentSource.name.trim().isEmpty()) {
+            throw new BadRequestException("ContentSource name cannot be blank");
+        }
         contentSource.persist();
         return Response.status(Response.Status.CREATED).entity(contentSource).build();
     }
@@ -44,6 +52,9 @@ public class ContentSourceResource {
         ContentSource entity = ContentSource.findById(id);
         if (entity == null) {
             throw new NotFoundException();
+        }
+        if (contentSource == null || contentSource.name == null || contentSource.name.trim().isEmpty()) {
+            throw new BadRequestException("ContentSource name cannot be blank");
         }
         entity.sourceIdentifier = contentSource.sourceIdentifier;
         entity.sourceTypeId = contentSource.sourceTypeId;
@@ -65,23 +76,12 @@ public class ContentSourceResource {
     }
 
     @GET
-    @Path("/api/v1/users/{userId}/topics/{topicName}/content-sources")
+    @Path("/users/{userId}/topics/{topicName}/content-sources")
     public List<ContentSource> getContentSourcesByTopic(
             @PathParam("userId") Long userId,
-            @PathParam("topicName") String topicName,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("10") int size) {
-
-        if (topicName == null || topicName.trim().isEmpty()) {
-            throw new BadRequestException("Topic name cannot be blank");
-        }
-
-        if (page < 0) {
-            throw new BadRequestException("Page number cannot be negative");
-        }
-        if (size <= 0 || size > 100) {
-            throw new BadRequestException("Page size must be between 1 and 100");
-        }
+            @PathParam("topicName") @NotBlank String topicName,
+            @QueryParam("page") @DefaultValue("0") @Min(0) int page,
+            @QueryParam("size") @DefaultValue("10") @Min(1) @Max(100) int size) {
 
         User user = User.findById(userId);
         if (user == null) {
@@ -93,14 +93,9 @@ public class ContentSourceResource {
             throw new NotFoundException("Topic not found for user");
         }
 
-        List<ContentSource> allContentSources = new ArrayList<>(topic.contentSources);
-
-        int fromIndex = page * size;
-        if (fromIndex >= allContentSources.size()) {
-            return Collections.emptyList();
-        }
-        int toIndex = Math.min(fromIndex + size, allContentSources.size());
-
-        return allContentSources.subList(fromIndex, toIndex);
+        io.quarkus.panache.common.Page panachePage = io.quarkus.panache.common.Page.of(page, size);
+        return ContentSource.find("select cs from ContentSource cs join cs.topics t where t = ?1 order by cs.name", topic)
+                .page(panachePage)
+                .list();
     }
 }

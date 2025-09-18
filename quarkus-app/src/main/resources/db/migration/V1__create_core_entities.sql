@@ -194,3 +194,11 @@ CREATE TABLE content_source_assessments (
         REFERENCES content_sources(id)
         ON DELETE CASCADE
 );
+
+-- Index Definitions
+CREATE INDEX idx_topics_on_user_id ON topics(user_id);
+CREATE INDEX idx_content_sources_on_source_type_id ON content_sources(source_type_id);
+CREATE INDEX idx_content_items_on_content_source_id ON content_items(content_source_id);
+CREATE INDEX idx_content_items_on_processing_status ON content_items(processing_status);
+CREATE INDEX idx_summaries_on_content_item_id ON summaries(content_item_id);
+CREATE INDEX idx_content_source_assessments_on_content_source_id ON content_source_assessments(content_source_id);
