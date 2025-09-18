@@ -83,7 +83,7 @@ CREATE TABLE summaries (
     id BIGSERIAL PRIMARY KEY,
     content_item_id BIGINT NOT NULL,
     summary_text TEXT NOT NULL,
-    embedding VECTOR(1536) NOT NULL,
+    embedding VECTOR(1536),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_content_item_summary
         FOREIGN KEY(content_item_id)
