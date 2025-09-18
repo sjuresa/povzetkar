@@ -326,16 +326,16 @@ class ContentSourceResourceTest {
         newContentSource.name = "New Content Source";
         newContentSource.description = "A brand new source";
 
-        given()
+        ContentSource contentSourceToDelete = given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(newContentSource)
                 .when().post("/api/v1/content-sources")
                 .then()
                 .statusCode(201)
-                .body("name", is("New Content Source"));
+                .body("name", is("New Content Source"))
+                .extract().as(ContentSource.class);
 
-        // Verify it's in the database
-        ContentSource contentSourceToDelete = ContentSource.find("sourceIdentifier", newContentSource.sourceIdentifier).firstResult();
+        createdContentSourceIds.add(contentSourceToDelete.id);
         assertNotNull(contentSourceToDelete);
 
         given()
