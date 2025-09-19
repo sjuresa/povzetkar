@@ -1,0 +1,128 @@
+package com.povzetkar.quarkus.service;
+
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.Channel;
+import com.povzetkar.quarkus.model.ContentSource;
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+@ApplicationScoped
+public class ContentSourceDetailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContentSourceDetailService.class);
+    private static final String APPLICATION_NAME = "PovzetkarQuarkusApp";
+    private static final String PART_SNIPPET = "snippet";
+    private static final String PART_STATISTICS = "statistics";
+    private static final String PART_CONTENT_DETAILS = "contentDetails";
+
+    private final String youtubeApiKey;
+    private final YouTube youtubeService;
+
+    // Constructor for production use, where YouTube service is built internally
+    @Inject
+    public ContentSourceDetailService(
+            @ConfigProperty(name = "youtube.api.key") String youtubeApiKey) {
+        this.youtubeApiKey = youtubeApiKey;
+        this.youtubeService = new YouTube.Builder(
+                new NetHttpTransport(), new GsonFactory(),
+                null)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+    }
+
+    // Constructor for testing, where YouTube service is provided externally
+    public ContentSourceDetailService(String youtubeApiKey, YouTube youtubeService) {
+        this.youtubeApiKey = youtubeApiKey;
+        this.youtubeService = youtubeService;
+    }
+
+    // A record to hold the fetched content source details
+    public record ContentSourceDetails(String name, String description, Long subscriberCount) {}
+
+    /**
+     * Fetches details for a given YouTube channel ID from the YouTube Data API.
+     *
+     * @param channelId The ID of the channel to fetch details for.
+     * @return An Optional containing ContentSourceDetails if found, or empty if not.
+     */
+    public Optional<ContentSourceDetails> fetchContentSourceDetails(String channelId) {
+        try {
+            YouTube.Channels.List request = youtubeService.channels()
+                    .list(List.of(PART_SNIPPET, PART_STATISTICS, PART_CONTENT_DETAILS))
+                    .setKey(youtubeApiKey)
+                    .setId(List.of(channelId));
+
+            List<Channel> items = request.execute().getItems();
+            if (items == null || items.isEmpty()) {
+                logger.warn("Channel not found for ID: {}", channelId);
+                return Optional.empty();
+            }
+
+            Channel channel = items.getFirst();
+
+            String name = channel.getSnippet().getTitle();
+            String description = channel.getSnippet().getDescription();
+            long subscriberCount = 0L;
+            if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
+                subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+            }
+
+            return Optional.of(new ContentSourceDetails(name, description, subscriberCount));
+
+        } catch (IOException e) {
+            logger.error("Failed to fetch details for channel ID: {}", channelId, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Queries the database for ContentSource entities that are missing details
+     * and enriches them by fetching data from the YouTube API.
+     */
+    @Transactional
+    public void enrichContentSources() {
+        // Find content sources that are missing name, description, or have 0 subscriber count
+        List<ContentSource> contentSourcesToEnrich = ContentSource.list(
+                "name is null or name = '' or description is null or description = '' or subscriberCount = 0");
+
+        logger.info("Found {} content sources to enrich.", contentSourcesToEnrich.size());
+
+        for (ContentSource source : contentSourcesToEnrich) {
+            logger.debug("Attempting to enrich content source with identifier: {}", source.sourceIdentifier);
+            Optional<ContentSourceDetails> details = fetchContentSourceDetails(source.sourceIdentifier);
+
+            if (details.isPresent()) {
+                ContentSourceDetails fetchedDetails = details.get();
+                source.name = fetchedDetails.name();
+                source.description = fetchedDetails.description();
+                source.subscriberCount = fetchedDetails.subscriberCount().intValue(); // Convert Long to int
+                source.persist(); // Persist the changes
+                logger.info("Successfully enriched content source: {} ({})", source.name, source.sourceIdentifier);
+            } else {
+                logger.warn("Could not enrich content source with identifier: {}", source.sourceIdentifier);
+            }
+        }
+    }
+
+    /**
+     * Scheduled method to periodically refresh the details of existing content sources.
+     * The interval is configured via 'quarkus.scheduler.enrich-content-sources.cron'.
+     */
+    @Scheduled(cron = "${quarkus.scheduler.enrich-content-sources.cron}")
+    void scheduledEnrichContentSources() {
+        logger.info("Running scheduled content source enrichment.");
+        enrichContentSources();
+    }
+
+}

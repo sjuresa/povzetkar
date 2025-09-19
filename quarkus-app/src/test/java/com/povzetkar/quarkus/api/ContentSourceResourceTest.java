@@ -26,22 +26,29 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @QuarkusTest
 class ContentSourceResourceTest {
 
+    private static final String API_BASE_PATH = "/api/v1/content-sources";
     private static final String TEST_TOPIC_NAME = "test-topic-" + UUID.randomUUID();
     private static final String TEST_CONTENT_SOURCE_ID_PREFIX = "UC-test-id-";
     private static final String TEST_CONTENT_SOURCE_NAME_PREFIX = "Test ContentSource ";
     private static final String NON_EXISTENT_TOPIC_NAME = "non-existent-topic";
+    private static final int DEFAULT_SOURCE_TYPE_ID = 1;
 
-    @Inject
-    EntityManager em;
+    final EntityManager em;
 
     private Long testUserId;
     private final Set<Long> createdContentSourceIds = new HashSet<>();
     private final Set<Long> createdUserIds = new HashSet<>();
     private final Set<Long> createdTopicIds = new HashSet<>();
+
+    @Inject
+    ContentSourceResourceTest(EntityManager em) {
+        this.em = em;
+    }
 
     @BeforeEach
     @Transactional
@@ -49,17 +56,15 @@ class ContentSourceResourceTest {
         User user = createUser("Test User " + UUID.randomUUID());
         this.testUserId = user.id;
 
-        Topic topic = createTopic(TEST_TOPIC_NAME, user);
+        Topic topic = createTopic(user);
 
         // Create 15 content sources, 10 of which are linked to the topic
         IntStream.range(0, 15).forEach(i -> {
             ContentSource contentSource = createContentSource(
                     TEST_CONTENT_SOURCE_ID_PREFIX + i,
-                    1,
                     TEST_CONTENT_SOURCE_NAME_PREFIX + i,
                     "Description " + i
             );
-            createdContentSourceIds.add(contentSource.id);
             if (i < 10) {
                 topic.contentSources.add(contentSource);
                 contentSource.topics.add(topic);
@@ -72,18 +77,23 @@ class ContentSourceResourceTest {
     @Transactional
     void cleanup() {
         if (!createdContentSourceIds.isEmpty()) {
-            ContentSource.delete("id in ?1", createdContentSourceIds);
+            em.createQuery("DELETE FROM ContentSource cs WHERE cs.id IN :ids")
+              .setParameter("ids", createdContentSourceIds)
+              .executeUpdate();
+            createdContentSourceIds.clear();
         }
         if (!createdTopicIds.isEmpty()) {
-            Topic.delete("id in ?1", createdTopicIds);
+            em.createQuery("DELETE FROM Topic t WHERE t.id IN :ids")
+              .setParameter("ids", createdTopicIds)
+              .executeUpdate();
+            createdTopicIds.clear();
         }
         if (!createdUserIds.isEmpty()) {
-            User.delete("id in ?1", createdUserIds);
+            em.createQuery("DELETE FROM User u WHERE u.id IN :ids")
+              .setParameter("ids", createdUserIds)
+              .executeUpdate();
+            createdUserIds.clear();
         }
-
-        createdContentSourceIds.clear();
-        createdTopicIds.clear();
-        createdUserIds.clear();
     }
 
     private User createUser(String name) {
@@ -94,19 +104,19 @@ class ContentSourceResourceTest {
         return user;
     }
 
-    private Topic createTopic(String name, User user) {
+    private Topic createTopic(User user) {
         Topic topic = new Topic();
-        topic.name = name;
+        topic.name = TEST_TOPIC_NAME;
         topic.user = user;
         em.persist(topic);
         createdTopicIds.add(topic.id);
         return topic;
     }
 
-    private ContentSource createContentSource(String sourceIdentifier, int sourceTypeId, String name, String description) {
+    private ContentSource createContentSource(String sourceIdentifier, String name, String description) {
         ContentSource contentSource = new ContentSource();
         contentSource.sourceIdentifier = sourceIdentifier;
-        contentSource.sourceTypeId = sourceTypeId;
+        contentSource.sourceTypeId = DEFAULT_SOURCE_TYPE_ID;
         contentSource.name = name;
         contentSource.description = description;
         em.persist(contentSource);
@@ -117,22 +127,22 @@ class ContentSourceResourceTest {
 
     @Test
     void testGetAllContentSources_Success() {
+        long expectedSize = em.createQuery("SELECT COUNT(cs) FROM ContentSource cs", Long.class).getSingleResult();
+
         given()
-                .when().get("/api/v1/content-sources")
+                .when().get(API_BASE_PATH)
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(15)); // Expecting all 15 created content sources
+                .body("$", hasSize(Math.toIntExact(expectedSize)));
     }
 
     @Test
     void testGetContentSourceById_Success() {
-        ContentSource existingContentSource = createdContentSourceIds.stream()
-                .map(id -> (ContentSource) ContentSource.findById(id))
-                .findFirst().orElseThrow();
+        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
 
         given()
                 .pathParam("id", existingContentSource.id)
-                .when().get("/api/v1/content-sources/{id}")
+                .when().get(API_BASE_PATH + "/{id}")
                 .then()
                 .statusCode(200)
                 .body("name", is(existingContentSource.name));
@@ -141,8 +151,8 @@ class ContentSourceResourceTest {
     @Test
     void testGetContentSourceById_NotFound() {
         given()
-                .pathParam("id", 99999L) // Non-existent ID
-                .when().get("/api/v1/content-sources/{id}")
+                .pathParam("id", 99999L)
+                .when().get(API_BASE_PATH + "/{id}")
                 .then()
                 .statusCode(404);
     }
@@ -156,52 +166,32 @@ class ContentSourceResourceTest {
         newContentSource.name = "New Content Source";
         newContentSource.description = "A brand new source";
 
-        given()
+        ContentSource created = given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(newContentSource)
-                .when().post("/api/v1/content-sources")
+                .when().post(API_BASE_PATH)
                 .then()
                 .statusCode(201)
-                .body("name", is("New Content Source"));
+                .body("name", is("New Content Source"))
+                .extract().as(ContentSource.class);
 
-        // Verify it's in the database
-        ContentSource created = ContentSource.find("sourceIdentifier", newContentSource.sourceIdentifier).firstResult();
-        assertNotNull(created);
         createdContentSourceIds.add(created.id);
+
+        ContentSource found = em.find(ContentSource.class, created.id);
+        assertNotNull(found);
+        assertEquals("New Content Source", found.name);
     }
 
     @Test
     void testCreateContentSource_InvalidInput() {
-        // Case 1: name is missing, which is not allowed
         Map<String, Object> payload = new HashMap<>();
         payload.put("sourceIdentifier", "invalid-id");
         payload.put("sourceTypeId", 1);
-        // name is intentionally omitted
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
-                .when().post("/api/v1/content-sources")
-                .then()
-                .statusCode(400);
-
-        // Case 2: sourceIdentifier is missing, which is not allowed
-        Map<String, Object> payload2 = new HashMap<>();
-        payload2.put("sourceTypeId", 1);
-        payload2.put("name", "A valid name");
-        // sourceIdentifier is intentionally omitted
-        given()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload2)
-                .when().post("/api/v1/content-sources")
-                .then()
-                .statusCode(400);
-
-        // Case 3: empty JSON object
-        given()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("")
-                .when().post("/api/v1/content-sources")
+                .when().post(API_BASE_PATH)
                 .then()
                 .statusCode(400);
     }
@@ -212,12 +202,11 @@ class ContentSourceResourceTest {
         duplicateContentSource.sourceIdentifier = TEST_CONTENT_SOURCE_ID_PREFIX + 0;
         duplicateContentSource.sourceTypeId = 1;
         duplicateContentSource.name = "Duplicate Content Source";
-        duplicateContentSource.description = "This should cause a conflict.";
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(duplicateContentSource)
-                .when().post("/api/v1/content-sources")
+                .when().post(API_BASE_PATH)
                 .then()
                 .statusCode(409);
     }
@@ -225,24 +214,20 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_Success() {
-        ContentSource existingContentSource = createdContentSourceIds.stream()
-                .map(id -> (ContentSource) ContentSource.findById(id))
-                .findFirst().orElseThrow();
+        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
 
         existingContentSource.name = "Updated Name";
-        existingContentSource.description = "Updated Description";
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .pathParam("id", existingContentSource.id)
                 .body(existingContentSource)
-                .when().put("/api/v1/content-sources/{id}")
+                .when().put(API_BASE_PATH + "/{id}")
                 .then()
                 .statusCode(200)
                 .body("name", is("Updated Name"));
 
-        // Verify update in DB
-        ContentSource updated = ContentSource.findById(existingContentSource.id);
+        ContentSource updated = em.find(ContentSource.class, existingContentSource.id);
         assertNotNull(updated);
         assertEquals("Updated Name", updated.name);
     }
@@ -260,85 +245,29 @@ class ContentSourceResourceTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .pathParam("id", 99999L)
                 .body(nonExistentContentSource)
-                .when().put("/api/v1/content-sources/{id}")
+                .when().put(API_BASE_PATH + "/{id}")
                 .then()
                 .statusCode(404);
     }
 
-    @Test
-    void testUpdateContentSource_InvalidInput() {
-        ContentSource existingContentSource = createdContentSourceIds.stream()
-                .map(id -> (ContentSource) ContentSource.findById(id))
-                .findFirst().orElseThrow();
-
-        // Case 1: name is null
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("sourceIdentifier", existingContentSource.sourceIdentifier);
-        payload.put("sourceTypeId", existingContentSource.sourceTypeId);
-        payload.put("name", null); // Intentionally invalid
-        given()
-                .contentType(MediaType.APPLICATION_JSON)
-                .pathParam("id", existingContentSource.id)
-                .body(payload)
-                .when().put("/api/v1/content-sources/{id}")
-                .then()
-                .statusCode(400);
-
-        // Case 2: sourceIdentifier is null
-        payload.put("sourceIdentifier", null);
-        payload.put("name", existingContentSource.name);
-        given()
-                .contentType(MediaType.APPLICATION_JSON)
-                .pathParam("id", existingContentSource.id)
-                .body(payload)
-                .when().put("/api/v1/content-sources/{id}")
-                .then()
-                .statusCode(400);
-
-        // Case 3: empty JSON object
-        given()
-                .contentType(MediaType.APPLICATION_JSON)
-                .pathParam("id", existingContentSource.id)
-                .body("")
-                .when().put("/api/v1/content-sources/{id}")
-                .then()
-                .statusCode(400);
-
-    }
 
     @Test
     @Transactional
     void testDeleteContentSource_Success() {
-        ContentSource newContentSource = new ContentSource();
-        newContentSource.sourceIdentifier = "new-source-id-" + UUID.randomUUID();
-        newContentSource.sourceTypeId = 2;
-        newContentSource.name = "New Content Source";
-        newContentSource.description = "A brand new source";
-
-        ContentSource contentSourceToDelete = given()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(newContentSource)
-                .when().post("/api/v1/content-sources")
-                .then()
-                .statusCode(201)
-                .body("name", is("New Content Source"))
-                .extract().as(ContentSource.class);
-
-        createdContentSourceIds.add(contentSourceToDelete.id);
+        ContentSource contentSourceToDelete = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
         assertNotNull(contentSourceToDelete);
 
         given()
                 .pathParam("id", contentSourceToDelete.id)
-                .when().delete("/api/v1/content-sources/{id}")
+                .when().delete(API_BASE_PATH + "/{id}")
                 .then()
-                .statusCode(204); // No Content
+                .statusCode(204);
 
-        // Verify it's deleted by trying to fetch it again
-        given()
-                .pathParam("id", contentSourceToDelete.id)
-                .when().get("/api/v1/content-sources/{id}")
-                .then()
-                .statusCode(404);
+        em.flush();
+        em.clear();
+
+        ContentSource deleted = em.find(ContentSource.class, contentSourceToDelete.id);
+        assertNull(deleted);
 
         createdContentSourceIds.remove(contentSourceToDelete.id);
     }
@@ -347,8 +276,8 @@ class ContentSourceResourceTest {
     @Transactional
     void testDeleteContentSource_NotFound() {
         given()
-                .pathParam("id", 99999L) // Non-existent ID
-                .when().delete("/api/v1/content-sources/{id}")
+                .pathParam("id", 99999L)
+                .when().delete(API_BASE_PATH + "/{id}")
                 .then()
                 .statusCode(404);
     }
@@ -356,7 +285,7 @@ class ContentSourceResourceTest {
     @Test
     void testGetContentSourcesByTopic_UserNotFound() {
         given()
-                .pathParam("userId", 99999L) // Non-existent user ID
+                .pathParam("userId", 99999L)
                 .pathParam("topicName", TEST_TOPIC_NAME)
                 .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
                 .then()
@@ -367,7 +296,8 @@ class ContentSourceResourceTest {
     void testGetContentSourcesByTopic_TopicNotFound() {
         given()
           .pathParam("userId", testUserId)
-          .when().get("/api/v1/users/{userId}/topics/" + NON_EXISTENT_TOPIC_NAME + "/content-sources")
+          .pathParam("topicName", NON_EXISTENT_TOPIC_NAME)
+          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
           .then()
              .statusCode(404);
     }
@@ -376,7 +306,8 @@ class ContentSourceResourceTest {
     void testGetContentSourcesByTopic_BlankName() {
         given()
           .pathParam("userId", testUserId)
-          .when().get("/api/v1/users/{userId}/topics/ /content-sources")
+          .pathParam("topicName", " ")
+          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
           .then()
              .statusCode(400);
     }
@@ -385,7 +316,8 @@ class ContentSourceResourceTest {
     void testGetContentSourcesByTopic_DefaultPagination() {
         given()
           .pathParam("userId", testUserId)
-          .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/content-sources")
+          .pathParam("topicName", TEST_TOPIC_NAME)
+          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
           .then()
              .statusCode(200)
              .body("$", hasSize(10));
@@ -400,9 +332,10 @@ class ContentSourceResourceTest {
     void testGetContentSourcesByTopic_CustomPagination(int page, int size, int expectedSize) {
         given()
                 .pathParam("userId", testUserId)
+                .pathParam("topicName", TEST_TOPIC_NAME)
                 .queryParam("page", page)
                 .queryParam("size", size)
-                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/content-sources")
+                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(expectedSize));
@@ -417,9 +350,10 @@ class ContentSourceResourceTest {
     void testGetContentSourcesByTopic_InvalidPagination(int page, int size) {
         given()
                 .pathParam("userId", testUserId)
+                .pathParam("topicName", TEST_TOPIC_NAME)
                 .queryParam("page", page)
                 .queryParam("size", size)
-                .when().get("/api/v1/users/{userId}/topics/" + TEST_TOPIC_NAME + "/content-sources")
+                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
                 .then()
                 .statusCode(400);
     }

@@ -1,10 +1,11 @@
 # Application Runbook
 
-**Version:** 1.1
+**Version:** 1.2
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                             |
 |---------|--------------------|--------------|---------------------------------------------------------------------|
+| 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                   |
 | 1.1     | September 17, 2025 | Povzetkar AI | Added instructions for verifying the pgvector extension.            |
 | 1.0     | August 16, 2025    | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project. |
 
@@ -92,3 +93,30 @@ To run the full test suite:
 ```bash
 ./mvnw verify
 ```
+
+## 8. Application Usage
+
+### 8.1 Content Source Management
+
+The `ContentSourceDetailService` is responsible for enriching and refreshing details (like name, description, and subscriber count) for content sources in the database. This service can be triggered on-demand or runs on a schedule.
+
+#### 8.1.1 On-Demand Enrichment
+
+To manually trigger the enrichment process for all content sources that are missing details:
+
+*   **Endpoint:** `POST /api/v1/content-sources/enrich`
+*   **Method:** `POST`
+*   **Example using curl:**
+    ```bash
+    curl -X POST http://localhost:8080/api/v1/content-sources/enrich
+    ```
+
+#### 8.1.2 Scheduled Refresh
+
+The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
+
+*   **Configuration Property:** `quarkus.scheduler.enrich-content-sources.cron`
+*   **Location:** `quarkus-app/src/main/resources/application.properties`
+*   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
+
+    You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
