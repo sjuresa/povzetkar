@@ -106,7 +106,7 @@ public class ContentSourceDetailService {
                 ContentSourceDetails fetchedDetails = details.get();
                 source.name = fetchedDetails.name();
                 source.description = fetchedDetails.description();
-                source.subscriberCount = fetchedDetails.subscriberCount().intValue(); // Convert Long to int
+                source.subscriberCount = fetchedDetails.subscriberCount();
                 source.persist(); // Persist the changes
                 logger.info("Successfully enriched content source: {} ({})", source.name, source.sourceIdentifier);
             } else {

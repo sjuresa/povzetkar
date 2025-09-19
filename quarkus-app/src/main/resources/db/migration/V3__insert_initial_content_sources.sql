@@ -35,7 +35,7 @@ BEGIN
         INSERT INTO content_source_topics (content_source_id, topic_id)
         SELECT cs.id, default_topic_id
         FROM content_sources cs
-        WHERE cs.source_identifier IN ('UCXuqSBlHAE6Xw-yeWEh0zxg', 'UCBJycNpcLCajMh-V-g1Y2tQ', 'UCsXVk37bltHxD1HnmNxoYPw')
+        WHERE cs.source_identifier IN ('UCSHZKyawb77ixDdsGog4iWA', 'UCHnyfMqiRRG1u-2MsSQLbXA', 'UCsXVk37bltHxD1rDPwtNM8Q')
         ON CONFLICT (content_source_id, topic_id) DO NOTHING;
     END;
 END $$;

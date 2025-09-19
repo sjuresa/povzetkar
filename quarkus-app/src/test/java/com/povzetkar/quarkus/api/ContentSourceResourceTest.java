@@ -194,6 +194,23 @@ class ContentSourceResourceTest {
                 .when().post(API_BASE_PATH)
                 .then()
                 .statusCode(400);
+
+        payload.put("name", "Valid Name");
+        payload.remove("sourceIdentifier");
+
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .when().post(API_BASE_PATH)
+                .then()
+                .statusCode(400);
+
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("")
+                .when().post("/api/v1/content-sources")
+                .then()
+                .statusCode(400);
     }
 
     @Test
@@ -250,6 +267,44 @@ class ContentSourceResourceTest {
                 .statusCode(404);
     }
 
+    @Test
+    @Transactional
+    void testUpdateContentSource_InvalidInput() {
+        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+
+        // Case 1: name is null
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sourceIdentifier", existingContentSource.sourceIdentifier);
+        payload.put("sourceTypeId", existingContentSource.sourceTypeId);
+        payload.put("name", null); // Intentionally invalid
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("id", existingContentSource.id)
+                .body(payload)
+                .when().put(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(400);
+
+        // Case 2: sourceIdentifier is null
+        payload.put("sourceIdentifier", null);
+        payload.put("name", existingContentSource.name);
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("id", existingContentSource.id)
+                .body(payload)
+                .when().put(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(400);
+
+        // Case 3: empty JSON object
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("id", existingContentSource.id)
+                .body("")
+                .when().put(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(400);
+    }
 
     @Test
     @Transactional
