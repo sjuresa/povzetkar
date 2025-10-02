@@ -137,7 +137,7 @@ class ContentSourceDetailServiceTest {
         Mockito.verify(sourceSpy).persist();
         assertEquals(channelName, sourceSpy.name);
         assertEquals(channelDesc, sourceSpy.description);
-        assertEquals((int) subCount, sourceSpy.subscriberCount);
+        assertEquals(subCount, sourceSpy.subscriberCount);
     }
 
     @Test

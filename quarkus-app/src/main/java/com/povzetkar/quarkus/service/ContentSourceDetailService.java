@@ -24,7 +24,6 @@ public class ContentSourceDetailService {
     private static final String APPLICATION_NAME = "PovzetkarQuarkusApp";
     private static final String PART_SNIPPET = "snippet";
     private static final String PART_STATISTICS = "statistics";
-    private static final String PART_CONTENT_DETAILS = "contentDetails";
 
     private final String youtubeApiKey;
     private final YouTube youtubeService;
@@ -33,6 +32,9 @@ public class ContentSourceDetailService {
     @Inject
     public ContentSourceDetailService(
             @ConfigProperty(name = "youtube.api.key") String youtubeApiKey) {
+        if (youtubeApiKey == null || youtubeApiKey.isBlank() || "your_youtube_api_key_here".equals(youtubeApiKey)) {
+            throw new IllegalArgumentException("YouTube API key is not configured. Please set 'youtube.api.key' in application.properties.");
+        }
         this.youtubeApiKey = youtubeApiKey;
         this.youtubeService = new YouTube.Builder(
                 new NetHttpTransport(), new GsonFactory(),
@@ -59,7 +61,7 @@ public class ContentSourceDetailService {
     public Optional<ContentSourceDetails> fetchContentSourceDetails(String channelId) {
         try {
             YouTube.Channels.List request = youtubeService.channels()
-                    .list(List.of(PART_SNIPPET, PART_STATISTICS, PART_CONTENT_DETAILS))
+                    .list(List.of(PART_SNIPPET, PART_STATISTICS))
                     .setKey(youtubeApiKey)
                     .setId(List.of(channelId));
 
@@ -92,9 +94,9 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void enrichContentSources() {
-        // Find content sources that are missing name, description, or have 0 subscriber count
+        // Find content sources that are missing name or description
         List<ContentSource> contentSourcesToEnrich = ContentSource.list(
-                "name is null or name = '' or description is null or description = '' or subscriberCount = 0");
+                "name is null or name = '' or description is null or description = ''");
 
         logger.info("Found {} content sources to enrich.", contentSourcesToEnrich.size());
 
@@ -116,13 +118,39 @@ public class ContentSourceDetailService {
     }
 
     /**
+     * Iterates over all content sources and updates their details from the YouTube API.
+     */
+    @Transactional
+    public void refreshAllContentSources() {
+        List<ContentSource> allContentSources = ContentSource.listAll();
+
+        logger.info("Found {} content sources to refresh.", allContentSources.size());
+
+        for (ContentSource source : allContentSources) {
+            logger.debug("Attempting to refresh content source with identifier: {}", source.sourceIdentifier);
+            Optional<ContentSourceDetails> details = fetchContentSourceDetails(source.sourceIdentifier);
+
+            if (details.isPresent()) {
+                ContentSourceDetails fetchedDetails = details.get();
+                source.name = fetchedDetails.name();
+                source.description = fetchedDetails.description();
+                source.subscriberCount = fetchedDetails.subscriberCount();
+                source.persist(); // Persist the changes
+                logger.info("Successfully refreshed content source: {} ({})", source.name, source.sourceIdentifier);
+            } else {
+                logger.warn("Could not refresh content source with identifier: {}", source.sourceIdentifier);
+            }
+        }
+    }
+
+    /**
      * Scheduled method to periodically refresh the details of existing content sources.
      * The interval is configured via 'quarkus.scheduler.enrich-content-sources.cron'.
      */
     @Scheduled(cron = "${quarkus.scheduler.enrich-content-sources.cron}")
-    void scheduledEnrichContentSources() {
-        logger.info("Running scheduled content source enrichment.");
-        enrichContentSources();
+    void scheduledRefreshAllContentSources() {
+        logger.info("Running scheduled content source refresh.");
+        refreshAllContentSources();
     }
 
 }

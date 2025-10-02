@@ -116,6 +116,6 @@ public class ContentSourceResource {
     @Path("/content-sources/enrich")
     public Response enrichContentSources() {
         contentSourceDetailService.enrichContentSources();
-        return Response.ok().build();
+        return Response.accepted().build();
     }
 }
