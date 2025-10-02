@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,15 @@ public class ContentSourceDetailService {
         }
         this.youtubeApiKey = youtubeApiKey;
         this.youtubeService = new YouTube.Builder(
-                new NetHttpTransport(), new GsonFactory(),
+                new NetHttpTransport.Builder()
+                        .setConnectionFactory(url -> {
+                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                            connection.setConnectTimeout(20_000); // 20 seconds
+                            connection.setReadTimeout(20_000);    // 20 seconds
+                            return connection;
+                        })
+                        .build(),
+                new GsonFactory(),
                 null)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
@@ -100,8 +109,12 @@ public class ContentSourceDetailService {
 
         logger.info("Found {} content sources to enrich.", contentSourcesToEnrich.size());
 
+        enrichSources(contentSourcesToEnrich, "Attempting to enrich content source with identifier: {}", "Successfully enriched content source: {} ({})", "Could not enrich content source with identifier: {}");
+    }
+
+    private void enrichSources(List<ContentSource> contentSourcesToEnrich, String s, String s1, String s2) {
         for (ContentSource source : contentSourcesToEnrich) {
-            logger.debug("Attempting to enrich content source with identifier: {}", source.sourceIdentifier);
+            logger.debug(s, source.sourceIdentifier);
             Optional<ContentSourceDetails> details = fetchContentSourceDetails(source.sourceIdentifier);
 
             if (details.isPresent()) {
@@ -110,9 +123,9 @@ public class ContentSourceDetailService {
                 source.description = fetchedDetails.description();
                 source.subscriberCount = fetchedDetails.subscriberCount();
                 source.persist(); // Persist the changes
-                logger.info("Successfully enriched content source: {} ({})", source.name, source.sourceIdentifier);
+                logger.info(s1, source.name, source.sourceIdentifier);
             } else {
-                logger.warn("Could not enrich content source with identifier: {}", source.sourceIdentifier);
+                logger.warn(s2, source.sourceIdentifier);
             }
         }
     }
@@ -126,21 +139,7 @@ public class ContentSourceDetailService {
 
         logger.info("Found {} content sources to refresh.", allContentSources.size());
 
-        for (ContentSource source : allContentSources) {
-            logger.debug("Attempting to refresh content source with identifier: {}", source.sourceIdentifier);
-            Optional<ContentSourceDetails> details = fetchContentSourceDetails(source.sourceIdentifier);
-
-            if (details.isPresent()) {
-                ContentSourceDetails fetchedDetails = details.get();
-                source.name = fetchedDetails.name();
-                source.description = fetchedDetails.description();
-                source.subscriberCount = fetchedDetails.subscriberCount();
-                source.persist(); // Persist the changes
-                logger.info("Successfully refreshed content source: {} ({})", source.name, source.sourceIdentifier);
-            } else {
-                logger.warn("Could not refresh content source with identifier: {}", source.sourceIdentifier);
-            }
-        }
+        enrichSources(allContentSources, "Attempting to refresh content source with identifier: {}", "Successfully refreshed content source: {} ({})", "Could not refresh content source with identifier: {}");
     }
 
     /**
