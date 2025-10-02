@@ -109,42 +109,55 @@ public class ContentSourceDetailService {
     }
 
     private void enrichSources(List<ContentSource> sourcesToEnrich, String successLog, String failureLog) {
-        final int BATCH_SIZE = 50; // Max IDs per YouTube API request
+        // Max IDs per YouTube API request is 50.
+        final int BATCH_SIZE = 50;
 
         for (int i = 0; i < sourcesToEnrich.size(); i += BATCH_SIZE) {
             List<ContentSource> batch = sourcesToEnrich.subList(i, Math.min(i + BATCH_SIZE, sourcesToEnrich.size()));
-            List<String> channelIds = batch.stream().map(source -> source.sourceIdentifier).toList();
-
-            logger.debug("Attempting to enrich/refresh batch of {} sources.", batch.size());
-
-            try {
-                YouTube.Channels.List request = youtubeService.channels()
-                        .list(List.of(PART_SNIPPET, PART_STATISTICS))
-                        .setKey(youtubeApiKey)
-                        .setId(channelIds);
-
-                List<Channel> items = request.execute().getItems();
-                Map<String, Channel> channelMap = (items == null) ? Collections.emptyMap() :
-                        items.stream().collect(Collectors.toMap(Channel::getId, c -> c));
-
-                for (ContentSource source : batch) {
-                    Channel channel = channelMap.get(source.sourceIdentifier);
-                    if (channel != null) {
-                        ContentSourceDetails result = extractContentSourceDetails(channel);
-                        source.name = result.name();
-                        source.description = result.description();
-                        source.subscriberCount = result.subscriberCount();
-                        source.persist();
-                        logger.info(successLog, source.name, source.sourceIdentifier);
-                    } else {
-                        logger.warn(failureLog, source.sourceIdentifier);
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Failed to fetch details for batch of channel IDs: {}", channelIds, e);
-                batch.forEach(source -> logger.warn(failureLog, source.sourceIdentifier));
-            }
+            processBatch(batch, successLog, failureLog);
         }
+    }
+
+    private void processBatch(List<ContentSource> batch, String successLog, String failureLog) {
+        List<String> channelIds = batch.stream().map(source -> source.sourceIdentifier).toList();
+        logger.debug("Attempting to enrich/refresh batch of {} sources.", batch.size());
+
+        try {
+            Map<String, Channel> channelMap = fetchChannelsInBatch(channelIds);
+
+            for (ContentSource source : batch) {
+                Channel channel = channelMap.get(source.sourceIdentifier);
+                if (channel != null) {
+                    updateSourceFromChannel(source, channel);
+                    logger.info(successLog, source.name, source.sourceIdentifier);
+                } else {
+                    logger.warn(failureLog, source.sourceIdentifier);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("API call failed for batch of channel IDs: {}. Marking all as failed.", channelIds, e);
+            batch.forEach(source -> logger.warn(failureLog, source.sourceIdentifier));
+        }
+    }
+
+    private Map<String, Channel> fetchChannelsInBatch(List<String> channelIds) throws IOException {
+        YouTube.Channels.List request = youtubeService.channels()
+                .list(List.of(PART_SNIPPET, PART_STATISTICS))
+                .setKey(youtubeApiKey)
+                .setId(channelIds);
+
+        List<Channel> items = request.execute().getItems();
+
+        return (items == null) ? Collections.emptyMap() :
+                items.stream().collect(Collectors.toMap(Channel::getId, channel -> channel));
+    }
+
+    private void updateSourceFromChannel(ContentSource source, Channel channel) {
+        ContentSourceDetails details = extractContentSourceDetails(channel);
+        source.name = details.name();
+        source.description = details.description();
+        source.subscriberCount = details.subscriberCount();
+        source.persist();
     }
 
     private ContentSourceDetails extractContentSourceDetails(Channel channel) {
