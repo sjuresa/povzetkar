@@ -112,20 +112,19 @@ public class ContentSourceDetailService {
         enrichSources(contentSourcesToEnrich, "Attempting to enrich content source with identifier: {}", "Successfully enriched content source: {} ({})", "Could not enrich content source with identifier: {}");
     }
 
-    private void enrichSources(List<ContentSource> contentSourcesToEnrich, String s, String s1, String s2) {
+    private void enrichSources(List<ContentSource> contentSourcesToEnrich, String attemptLog, String successLog, String failureLog) {
         for (ContentSource source : contentSourcesToEnrich) {
-            logger.debug(s, source.sourceIdentifier);
+            logger.debug(attemptLog, source.sourceIdentifier);
             Optional<ContentSourceDetails> details = fetchContentSourceDetails(source.sourceIdentifier);
-
             if (details.isPresent()) {
                 ContentSourceDetails fetchedDetails = details.get();
                 source.name = fetchedDetails.name();
                 source.description = fetchedDetails.description();
                 source.subscriberCount = fetchedDetails.subscriberCount();
                 source.persist(); // Persist the changes
-                logger.info(s1, source.name, source.sourceIdentifier);
+                logger.info(successLog, source.name, source.sourceIdentifier);
             } else {
-                logger.warn(s2, source.sourceIdentifier);
+                logger.warn(failureLog, source.sourceIdentifier);
             }
         }
     }
