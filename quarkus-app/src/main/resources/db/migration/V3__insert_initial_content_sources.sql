@@ -27,14 +27,12 @@ BEGIN
     INSERT INTO topics (user_id, name) VALUES (default_user_id, 'Default Topic') ON CONFLICT (user_id, name) DO NOTHING;
 
     -- Get the ID of the default topic
-    BEGIN
-        SELECT id INTO default_topic_id FROM topics WHERE user_id = default_user_id AND name = 'Default Topic';
+    SELECT id INTO default_topic_id FROM topics WHERE user_id = default_user_id AND name = 'Default Topic';
 
-        -- Link content sources to the default topic
-        INSERT INTO content_source_topics (content_source_id, topic_id)
-        SELECT cs.id, default_topic_id
-        FROM content_sources cs
-        WHERE cs.source_identifier IN ('UCSHZKyawb77ixDdsGog4iWA', 'UCHnyfMqiRRG1u-2MsSQLbXA', 'UCsXVk37bltHxD1rDPwtNM8Q')
-        ON CONFLICT (content_source_id, topic_id) DO NOTHING;
-    END;
+    -- Link content sources to the default topic
+    INSERT INTO content_source_topics (content_source_id, topic_id)
+    SELECT cs.id, default_topic_id
+    FROM content_sources cs
+    WHERE cs.source_identifier IN ('UCSHZKyawb77ixDdsGog4iWA', 'UCHnyfMqiRRG1u-2MsSQLbXA', 'UCsXVk37bltHxD1rDPwtNM8Q')
+    ON CONFLICT (content_source_id, topic_id) DO NOTHING;
 END $$;

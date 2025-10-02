@@ -25,6 +25,7 @@ public class ContentSourceDetailService {
     private static final String APPLICATION_NAME = "PovzetkarQuarkusApp";
     private static final String PART_SNIPPET = "snippet";
     private static final String PART_STATISTICS = "statistics";
+    private static final int YOUTUBE_SOURCE_TYPE_ID = 1;
 
     private final String youtubeApiKey;
     private final YouTube youtubeService;
@@ -105,7 +106,7 @@ public class ContentSourceDetailService {
     public void enrichContentSources() {
         // Find content sources that are missing name or description. Only for YouTube sources at the moment.
         List<ContentSource> contentSourcesToEnrich = ContentSource.list(
-                "sourceTypeId = 1 and (name is null or name = '' or description is null or description = '')");
+                "sourceTypeId = ?1 and (name is null or name = '' or description is null or description = '')", YOUTUBE_SOURCE_TYPE_ID);
 
         logger.info("Found {} content sources to enrich.", contentSourcesToEnrich.size());
 
