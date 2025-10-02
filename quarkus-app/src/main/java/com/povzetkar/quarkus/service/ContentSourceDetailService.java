@@ -15,8 +15,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ContentSourceDetailService {
@@ -54,7 +57,7 @@ public class ContentSourceDetailService {
     }
 
     // Constructor for testing, where YouTube service is provided externally
-    public ContentSourceDetailService(String youtubeApiKey, YouTube youtubeService) {
+    ContentSourceDetailService(String youtubeApiKey, YouTube youtubeService) {
         this.youtubeApiKey = youtubeApiKey;
         this.youtubeService = youtubeService;
     }
@@ -124,26 +127,21 @@ public class ContentSourceDetailService {
 
             try {
                 YouTube.Channels.List request = youtubeService.channels()
-                        .list(java.util.List.of(PART_SNIPPET, PART_STATISTICS))
+                        .list(List.of(PART_SNIPPET, PART_STATISTICS))
                         .setKey(youtubeApiKey)
                         .setId(channelIds);
 
                 List<Channel> items = request.execute().getItems();
-                java.util.Map<String, Channel> channelMap = (items == null) ? java.util.Collections.emptyMap() :
-                        items.stream().collect(java.util.stream.Collectors.toMap(Channel::getId, c -> c));
+                Map<String, Channel> channelMap = (items == null) ? Collections.emptyMap() :
+                        items.stream().collect(Collectors.toMap(Channel::getId, c -> c));
 
                 for (ContentSource source : batch) {
                     Channel channel = channelMap.get(source.sourceIdentifier);
                     if (channel != null) {
-                        String name = channel.getSnippet().getTitle();
-                        String description = channel.getSnippet().getDescription();
-                        long subscriberCount = 0L;
-                        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
-                            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
-                        }
-                        source.name = name;
-                        source.description = description;
-                        source.subscriberCount = subscriberCount;
+                        ExtractDetailsFromChannel result = getExtractDetailsFromChannel(channel);
+                        source.name = result.name();
+                        source.description = result.description();
+                        source.subscriberCount = result.subscriberCount();
                         source.persist();
                         logger.info(successLog, source.name, source.sourceIdentifier);
                     } else {
@@ -155,6 +153,19 @@ public class ContentSourceDetailService {
                 batch.forEach(source -> logger.warn(failureLog, source.sourceIdentifier));
             }
         }
+    }
+
+    private static ExtractDetailsFromChannel getExtractDetailsFromChannel(Channel channel) {
+        String name = channel.getSnippet().getTitle();
+        String description = channel.getSnippet().getDescription();
+        long subscriberCount = 0L;
+        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
+            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+        }
+        return new ExtractDetailsFromChannel(name, description, subscriberCount);
+    }
+
+    private record ExtractDetailsFromChannel(String name, String description, long subscriberCount) {
     }
 
     /**
