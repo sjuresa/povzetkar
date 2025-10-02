@@ -103,28 +103,55 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void enrichContentSources() {
-        // Find content sources that are missing name or description
+        // Find content sources that are missing name or description. Only for YouTube sources at the moment.
         List<ContentSource> contentSourcesToEnrich = ContentSource.list(
-                "name is null or name = '' or description is null or description = ''");
+                "sourceTypeId = 1 and (name is null or name = '' or description is null or description = '')");
 
         logger.info("Found {} content sources to enrich.", contentSourcesToEnrich.size());
 
-        enrichSources(contentSourcesToEnrich, "Attempting to enrich content source with identifier: {}", "Successfully enriched content source: {} ({})", "Could not enrich content source with identifier: {}");
+        enrichSources(contentSourcesToEnrich, "Successfully enriched content source: {} ({})", "Could not enrich content source with identifier: {}");
     }
 
-    private void enrichSources(List<ContentSource> contentSourcesToEnrich, String attemptLog, String successLog, String failureLog) {
-        for (ContentSource source : contentSourcesToEnrich) {
-            logger.debug(attemptLog, source.sourceIdentifier);
-            Optional<ContentSourceDetails> details = fetchContentSourceDetails(source.sourceIdentifier);
-            if (details.isPresent()) {
-                ContentSourceDetails fetchedDetails = details.get();
-                source.name = fetchedDetails.name();
-                source.description = fetchedDetails.description();
-                source.subscriberCount = fetchedDetails.subscriberCount();
-                source.persist(); // Persist the changes
-                logger.info(successLog, source.name, source.sourceIdentifier);
-            } else {
-                logger.warn(failureLog, source.sourceIdentifier);
+    private void enrichSources(List<ContentSource> sourcesToEnrich, String successLog, String failureLog) {
+        final int BATCH_SIZE = 50; // Max IDs per YouTube API request
+
+        for (int i = 0; i < sourcesToEnrich.size(); i += BATCH_SIZE) {
+            List<ContentSource> batch = sourcesToEnrich.subList(i, Math.min(i + BATCH_SIZE, sourcesToEnrich.size()));
+            List<String> channelIds = batch.stream().map(source -> source.sourceIdentifier).toList();
+
+            logger.debug("Attempting to enrich/refresh batch of {} sources.", batch.size());
+
+            try {
+                YouTube.Channels.List request = youtubeService.channels()
+                        .list(java.util.List.of(PART_SNIPPET, PART_STATISTICS))
+                        .setKey(youtubeApiKey)
+                        .setId(channelIds);
+
+                List<Channel> items = request.execute().getItems();
+                java.util.Map<String, Channel> channelMap = (items == null) ? java.util.Collections.emptyMap() :
+                        items.stream().collect(java.util.stream.Collectors.toMap(Channel::getId, c -> c));
+
+                for (ContentSource source : batch) {
+                    Channel channel = channelMap.get(source.sourceIdentifier);
+                    if (channel != null) {
+                        String name = channel.getSnippet().getTitle();
+                        String description = channel.getSnippet().getDescription();
+                        long subscriberCount = 0L;
+                        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
+                            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+                        }
+                        source.name = name;
+                        source.description = description;
+                        source.subscriberCount = subscriberCount;
+                        source.persist();
+                        logger.info(successLog, source.name, source.sourceIdentifier);
+                    } else {
+                        logger.warn(failureLog, source.sourceIdentifier);
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Failed to fetch details for batch of channel IDs: {}", channelIds, e);
+                batch.forEach(source -> logger.warn(failureLog, source.sourceIdentifier));
             }
         }
     }
@@ -134,11 +161,11 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void refreshAllContentSources() {
-        List<ContentSource> allContentSources = ContentSource.listAll();
+        List<ContentSource> allContentSources = ContentSource.list("sourceTypeId = 1");
 
         logger.info("Found {} content sources to refresh.", allContentSources.size());
 
-        enrichSources(allContentSources, "Attempting to refresh content source with identifier: {}", "Successfully refreshed content source: {} ({})", "Could not refresh content source with identifier: {}");
+        enrichSources(allContentSources, "Successfully refreshed content source: {} ({})", "Could not refresh content source with identifier: {}");
     }
 
     /**
