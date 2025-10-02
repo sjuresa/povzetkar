@@ -85,15 +85,7 @@ public class ContentSourceDetailService {
             }
 
             Channel channel = items.getFirst();
-
-            String name = channel.getSnippet().getTitle();
-            String description = channel.getSnippet().getDescription();
-            long subscriberCount = 0L;
-            if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
-                subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
-            }
-
-            return Optional.of(new ContentSourceDetails(name, description, subscriberCount));
+            return Optional.of(extractContentSourceDetails(channel));
 
         } catch (IOException e) {
             logger.error("Failed to fetch details for channel ID: {}", channelId, e);
@@ -138,7 +130,7 @@ public class ContentSourceDetailService {
                 for (ContentSource source : batch) {
                     Channel channel = channelMap.get(source.sourceIdentifier);
                     if (channel != null) {
-                        ExtractDetailsFromChannel result = getExtractDetailsFromChannel(channel);
+                        ContentSourceDetails result = extractContentSourceDetails(channel);
                         source.name = result.name();
                         source.description = result.description();
                         source.subscriberCount = result.subscriberCount();
@@ -155,17 +147,14 @@ public class ContentSourceDetailService {
         }
     }
 
-    private static ExtractDetailsFromChannel getExtractDetailsFromChannel(Channel channel) {
+    private ContentSourceDetails extractContentSourceDetails(Channel channel) {
         String name = channel.getSnippet().getTitle();
         String description = channel.getSnippet().getDescription();
         long subscriberCount = 0L;
         if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
             subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
         }
-        return new ExtractDetailsFromChannel(name, description, subscriberCount);
-    }
-
-    private record ExtractDetailsFromChannel(String name, String description, long subscriberCount) {
+        return new ContentSourceDetails(name, description, subscriberCount);
     }
 
     /**
