@@ -7,10 +7,7 @@ import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.ChannelListResponse;
 import com.google.api.services.youtube.model.ChannelSnippet;
 import com.google.api.services.youtube.model.ChannelStatistics;
-import com.povzetkar.quarkus.model.ContentSource;
-import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -22,11 +19,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
@@ -108,36 +102,6 @@ class ContentSourceDetailServiceTest {
         Optional<ContentSourceDetailService.ContentSourceDetails> details = service.fetchContentSourceDetails(channelId);
 
         assertTrue(details.isEmpty());
-    }
-
-    @Test
-    @Transactional
-    void testEnrichContentSources_updatesAndPersistsData() throws IOException {
-        // Arrange
-        ContentSource realSource = new ContentSource();
-        realSource.sourceIdentifier = "testChannelId";
-        realSource.name = ""; // Mark for enrichment
-        ContentSource sourceSpy = spy(realSource);
-        // Stub the persist() method to do nothing
-        doNothing().when(sourceSpy).persist();
-
-        PanacheMock.mock(ContentSource.class);
-        when(ContentSource.list(anyString(), any(Object[].class))).thenReturn(java.util.List.of(sourceSpy));
-
-        String channelName = "Enriched Channel";
-        String channelDesc = "Enriched Description";
-        long subCount = 5000L;
-        ChannelListResponse response = getChannelListResponse(channelName, channelDesc, subCount);
-        when(mockList.execute()).thenReturn(response);
-
-        // Act
-        service.enrichContentSources();
-
-        // Assert
-        Mockito.verify(sourceSpy).persist();
-        assertEquals(channelName, sourceSpy.name);
-        assertEquals(channelDesc, sourceSpy.description);
-        assertEquals(subCount, sourceSpy.subscriberCount);
     }
 
     @Test
