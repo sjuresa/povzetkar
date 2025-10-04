@@ -1,21 +1,14 @@
 package com.povzetkar.quarkus.service;
 
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Channel;
 import com.povzetkar.quarkus.model.ContentSource;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,44 +18,16 @@ import java.util.stream.Collectors;
 public class ContentSourceDetailService {
 
     private static final Logger logger = LoggerFactory.getLogger(ContentSourceDetailService.class);
-    private static final String APPLICATION_NAME = "PovzetkarQuarkusApp";
-    private static final String PART_SNIPPET = "snippet";
-    private static final String PART_STATISTICS = "statistics";
     private static final int YOUTUBE_SOURCE_TYPE_ID = 1;
 
-    private final String youtubeApiKey;
-    private final YouTube youtubeService;
+    private final YouTubeDataApiClient youtubeDataApiClient;
 
-    // Constructor for production use, where YouTube service is built internally
-    @Inject
-    public ContentSourceDetailService(
-            @ConfigProperty(name = "youtube.api.key") String youtubeApiKey) {
-        if (youtubeApiKey == null || youtubeApiKey.isBlank() || "your_youtube_api_key_here".equals(youtubeApiKey)) {
-            throw new IllegalArgumentException("YouTube API key is not configured. Please set 'youtube.api.key' in application.properties.");
-        }
-        this.youtubeApiKey = youtubeApiKey;
-        this.youtubeService = new YouTube.Builder(
-                new NetHttpTransport.Builder()
-                        .setConnectionFactory(url -> {
-                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                            connection.setConnectTimeout(20_000); // 20 seconds
-                            connection.setReadTimeout(20_000);    // 20 seconds
-                            return connection;
-                        })
-                        .build(),
-                new GsonFactory(),
-                null)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-    }
-
-    // Constructor for testing, where YouTube service is provided externally
-    ContentSourceDetailService(String youtubeApiKey, YouTube youtubeService) {
-        this.youtubeApiKey = youtubeApiKey;
-        this.youtubeService = youtubeService;
+    public ContentSourceDetailService(YouTubeDataApiClient youtubeDataApiClient) {
+        this.youtubeDataApiClient = youtubeDataApiClient;
     }
 
     // A record to hold the fetched content source details
+
     public record ContentSourceDetails(String name, String description, Long subscriberCount) {}
 
     /**
@@ -73,12 +38,7 @@ public class ContentSourceDetailService {
      */
     public Optional<ContentSourceDetails> fetchContentSourceDetails(String channelId) {
         try {
-            YouTube.Channels.List request = youtubeService.channels()
-                    .list(List.of(PART_SNIPPET, PART_STATISTICS))
-                    .setKey(youtubeApiKey)
-                    .setId(List.of(channelId));
-
-            List<Channel> items = request.execute().getItems();
+            List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(channelId));
             if (items == null || items.isEmpty()) {
                 logger.warn("Channel not found for ID: {}", channelId);
                 return Optional.empty();
@@ -141,15 +101,8 @@ public class ContentSourceDetailService {
     }
 
     private Map<String, Channel> fetchChannelsInBatch(List<String> channelIds) throws IOException {
-        YouTube.Channels.List request = youtubeService.channels()
-                .list(List.of(PART_SNIPPET, PART_STATISTICS))
-                .setKey(youtubeApiKey)
-                .setId(channelIds);
-
-        List<Channel> items = request.execute().getItems();
-
-        return (items == null) ? Collections.emptyMap() :
-                items.stream().collect(Collectors.toMap(Channel::getId, channel -> channel));
+        List<Channel> items = youtubeDataApiClient.fetchChannels(channelIds);
+        return items.stream().collect(Collectors.toMap(Channel::getId, channel -> channel));
     }
 
     private void updateSourceFromChannel(ContentSource source, Channel channel) {
@@ -175,7 +128,7 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void refreshAllContentSources() {
-        List<ContentSource> allContentSources = ContentSource.list("sourceTypeId = 1");
+        List<ContentSource> allContentSources = ContentSource.list("sourceTypeId = ?1", YOUTUBE_SOURCE_TYPE_ID);
 
         logger.info("Found {} content sources to refresh.", allContentSources.size());
 
