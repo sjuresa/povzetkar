@@ -2,8 +2,10 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -22,6 +24,13 @@ import java.util.Optional;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ContentSourceResource {
+
+    private final ContentSourceDetailService contentSourceDetailService;
+
+    @Inject
+    public ContentSourceResource(ContentSourceDetailService contentSourceDetailService) {
+        this.contentSourceDetailService = contentSourceDetailService;
+    }
 
     @GET
     @Path("/content-sources")
@@ -101,5 +110,12 @@ public class ContentSourceResource {
         return ContentSource.find("select cs from ContentSource cs join cs.topics t where t = ?1 order by cs.name", topic)
                 .page(panachePage)
                 .list();
+    }
+
+    @POST
+    @Path("/content-sources/enrich")
+    public Response enrichContentSources() {
+        contentSourceDetailService.enrichContentSources();
+        return Response.accepted().build();
     }
 }
