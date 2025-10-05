@@ -110,7 +110,6 @@ public class ContentSourceDetailService {
         source.name = details.name();
         source.description = details.description();
         source.subscriberCount = details.subscriberCount();
-        source.persist();
     }
 
     private ContentSourceDetails extractContentSourceDetails(Channel channel) {
