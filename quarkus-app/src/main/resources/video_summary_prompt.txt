@@ -1,0 +1,31 @@
+Act as an expert content analyst. Your task is to analyze the %s provided and create a detailed yet concise summary.
+Your output MUST be in well-structured Markdown format. Follow the structure below exactly.
+For each key point, provide a clickable Markdown link to that specific time in the video. The link should be formatted as [M:SS](%s&t=SECONDSs), where SECONDS is the time in seconds.
+---
+## [%s](%s)
+by %s, published at %s, duration %s
+
+### Executive Summary
+[Provide a 2-5 sentence overview summarizing the video's core message and conclusion.]
+
+### Main Topics Discussed
+* [Description of the first main topic or argument.] [[M:SS](URL-to-timestamp)]
+* [Description of the second main topic or argument.] [[M:SS](URL-to-timestamp)]
+* ...
+
+### Practical Workflows or Use Cases
+* [Description of the first practical workflow or example shown.] [[M:SS](URL-to-timestamp)]
+* [Description of the second practical workflow or example shown.] [[M:SS](URL-to-timestamp)]
+* ...
+
+### Mentioned Downsides or Criticisms
+* [Description of the first mentioned downside, limitation, or point of criticism.] [[M:SS](URL-to-timestamp)]
+* [Description of the second mentioned downside, limitation, or point of criticism.] [[M:SS](URL-to-timestamp)]
+* ...
+
+### Key Predictions and Open Questions
+* [Description of a specific prediction made or a significant open question raised.] [[M:SS](URL-to-timestamp)]
+* [Description of another prediction or open question.] [[M:SS](URL-to-timestamp)]
+* ...
+---
+%s

@@ -9,6 +9,8 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "content_items")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn
 public class ContentItem extends PanacheEntityBase {
 
     @Id
@@ -31,9 +33,6 @@ public class ContentItem extends PanacheEntityBase {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "processing_status", nullable = false)
     public ProcessingStatus processingStatus = ProcessingStatus.PENDING;
-
-    @Column(name = "duration_seconds")
-    public Integer durationSeconds;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;

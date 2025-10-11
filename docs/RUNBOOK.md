@@ -84,14 +84,19 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 ## 6. Running the Application
 
 With the database running, you can start the Quarkus application in development mode:
+Run the quarkus:dev goal for the quarkus-app module:
 ```bash
-./mvnw quarkus:dev
+./mvnw quarkus:dev -pl quarkus-app
 ```
 
+**Access the Endpoint:**
+`http://localhost:8080/q/health/live`
+`http://localhost:8080/q/health`
+
 ## 7. Running Tests
-To run the full test suite:
+To run the test suite:
 ```bash
-./mvnw verify
+./mvnw test -pl quarkus-app
 ```
 
 ## 8. Application Usage

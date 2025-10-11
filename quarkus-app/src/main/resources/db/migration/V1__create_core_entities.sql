@@ -65,12 +65,12 @@ CREATE TABLE content_source_topics (
 -- content_items
 CREATE TABLE content_items (
     id BIGSERIAL PRIMARY KEY,
+    DTYPE VARCHAR(31) NOT NULL,
     content_source_id BIGINT NOT NULL,
     source_url VARCHAR(255) UNIQUE NOT NULL,
     raw_content TEXT NOT NULL,
     published_at TIMESTAMPTZ NOT NULL,
     processing_status processing_status_enum NOT NULL DEFAULT 'PENDING',
-    duration_seconds INTEGER,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_content_source_item
         FOREIGN KEY(content_source_id)
@@ -195,6 +195,21 @@ CREATE TABLE content_source_assessments (
         ON DELETE CASCADE
 );
 
+-- youtube_videos
+CREATE TABLE youtube_videos (
+    content_item_id BIGINT PRIMARY KEY,
+    video_id VARCHAR(255) NOT NULL UNIQUE,
+    title VARCHAR(255) NOT NULL,
+    author_name VARCHAR(255),
+    channel_id VARCHAR(255),
+    transcript TEXT,
+    duration_seconds INTEGER,
+    CONSTRAINT fk_youtube_video_content_item
+        FOREIGN KEY(content_item_id)
+        REFERENCES content_items(id)
+        ON DELETE CASCADE
+);
+
 -- Index Definitions
 CREATE INDEX idx_topics_on_user_id ON topics(user_id);
 CREATE INDEX idx_content_sources_on_source_type_id ON content_sources(source_type_id);
@@ -202,3 +217,4 @@ CREATE INDEX idx_content_items_on_content_source_id ON content_items(content_sou
 CREATE INDEX idx_content_items_on_processing_status ON content_items(processing_status);
 CREATE INDEX idx_summaries_on_content_item_id ON summaries(content_item_id);
 CREATE INDEX idx_content_source_assessments_on_content_source_id ON content_source_assessments(content_source_id);
+CREATE INDEX idx_youtube_videos_on_video_id ON youtube_videos(video_id);
