@@ -77,7 +77,7 @@ class SummarizationServiceTest {
     void testSummarizeVideo_AlreadySummarized_SkipsProcessing() {
         try (MockedStatic<Summary> mockedSummary = Mockito.mockStatic(Summary.class)) {
             // Arrange
-            Mockito.when(Summary.findByContentId(mockVideo.id)).thenReturn(new Summary());
+            mockedSummary.when(() -> Summary.findByContentId(mockVideo.id)).thenReturn(new Summary());
 
             // Act
             boolean result = summarizationService.summarizeVideo(mockVideo);

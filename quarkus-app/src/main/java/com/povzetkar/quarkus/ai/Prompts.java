@@ -22,10 +22,10 @@ public final class Prompts {
 
     private static String loadPrompt(String resourceName) {
         try (InputStream inputStream = Prompts.class.getResourceAsStream("/" + resourceName)) {
-if (inputStream == null) {
-    logger.error("FATAL ERROR: Could not find prompt resource: {}", resourceName);
-    throw new IllegalStateException("Could not find prompt resource: " + resourceName);
-}
+            if (inputStream == null) {
+                logger.error("FATAL ERROR: Could not find prompt resource: {}", resourceName);
+                throw new IllegalStateException("Could not find prompt resource: " + resourceName);
+            }
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             logger.error("Failed to read prompt: {}", resourceName, e.getMessage());
