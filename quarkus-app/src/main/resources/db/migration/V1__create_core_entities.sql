@@ -65,17 +65,28 @@ CREATE TABLE content_source_topics (
 -- content_items
 CREATE TABLE content_items (
     id BIGSERIAL PRIMARY KEY,
+    DTYPE VARCHAR(31) NOT NULL,
     content_source_id BIGINT NOT NULL,
     source_url VARCHAR(255) UNIQUE NOT NULL,
     raw_content TEXT NOT NULL,
     published_at TIMESTAMPTZ NOT NULL,
     processing_status processing_status_enum NOT NULL DEFAULT 'PENDING',
-    duration_seconds INTEGER,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- YouTubeVideo specific columns (nullable)
+    video_id VARCHAR(255),
+    title VARCHAR(255),
+    author_name VARCHAR(255),
+    channel_id VARCHAR(255),
+    transcript TEXT,
+    duration_seconds INTEGER,
+
     CONSTRAINT fk_content_source_item
         FOREIGN KEY(content_source_id)
         REFERENCES content_sources(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT uc_video_id UNIQUE (video_id),
+    CONSTRAINT chk_video_id_not_null_for_youtube_video CHECK (DTYPE <> 'YouTubeVideo' OR video_id IS NOT NULL)
 );
 
 -- summaries

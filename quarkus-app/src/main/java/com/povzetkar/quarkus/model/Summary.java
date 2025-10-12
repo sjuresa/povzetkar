@@ -37,4 +37,8 @@ public class Summary extends PanacheEntityBase {
             createdAt = java.time.Instant.now();
         }
     }
+
+    public static Summary findByContentId(Long id){
+        return find("content_item_id", id).firstResult();
+    }
 }
