@@ -23,7 +23,11 @@ public class SummarizationService {
 
     @Transactional
     public boolean summarizeVideo(ContentItem item) {
-        YouTubeVideo video = (YouTubeVideo) item;
+        if (!(item instanceof YouTubeVideo video)) {
+            logger.error("Summarization attempted on an unsupported content item type: {}", item.getClass().getName());
+            item.processingStatus = ProcessingStatus.FAILED;
+            return false;
+        }
         Summary testSummary = Summary.findByContentId(video.id);
         if (testSummary != null) {
             return true;
@@ -45,7 +49,7 @@ public class SummarizationService {
             video.processingStatus = ProcessingStatus.COMPLETED;
             return true;
         } catch (Exception e) {
-            logger.error("Failed to create summary for video: {}.", video.sourceUrl, e.getMessage());
+            logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);
             video.processingStatus = ProcessingStatus.FAILED;
             logger.error("Video will be marked as failed to avoid retries.");
             return false;

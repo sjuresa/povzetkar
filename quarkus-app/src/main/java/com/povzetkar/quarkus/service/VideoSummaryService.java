@@ -53,7 +53,6 @@ public class VideoSummaryService {
             try {
                 GenAiClient client = genAiPool.getGenAiClient();
                 GenerateContentResponse response = client.getModels().generateContent(FLASH_MODEL_NAME, content, null);
-                client.usedNow();
                 logApiCallDuration(startTime, callDescription);
                 return cleanAiResponse(response.text());
             } catch (ApiException e) {

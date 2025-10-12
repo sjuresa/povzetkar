@@ -17,10 +17,10 @@ import java.util.Objects;
 public class YouTubeVideo extends ContentItem {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d.M.yyyy HH:mm:ss");
 
-    @Column(name = "video_id", nullable = false, unique = true)
+    @Column(name = "video_id", unique = true)
     public String videoId;
 
-    @Column(nullable = false)
+    @Column
     public String title;
 
     @Column(name = "author_name")

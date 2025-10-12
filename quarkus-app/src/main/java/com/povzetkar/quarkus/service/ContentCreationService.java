@@ -18,9 +18,9 @@ public class ContentCreationService {
     private final YouTubeTranscriptService youTubeTranscriptService;
 
     public ContentCreationService(YouTubeTranscriptService youTubeTranscriptService,
-                                  @ConfigProperty(name = "transcript.threshold.minutes") int treshold) {
+                                  @ConfigProperty(name = "transcript.threshold.minutes") int threshold) {
         this.youTubeTranscriptService = youTubeTranscriptService;
-        this.transcriptThresholdMinutes = treshold;
+        this.transcriptThresholdMinutes = threshold;
     }
 
     public Content createContentForVideo(YouTubeVideo video) {
