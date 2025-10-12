@@ -89,7 +89,7 @@ public class YouTubeVideo extends ContentItem {
         if (publishedAt == null) {
             return "N/A";
         }
-        return publishedAt.atZone(ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
+        return publishedAt.atZone(ZoneId.of("UTC")).format(DATE_TIME_FORMATTER);
     }
 
 

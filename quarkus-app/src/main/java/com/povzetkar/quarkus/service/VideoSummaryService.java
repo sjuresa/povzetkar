@@ -8,19 +8,24 @@ import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
 import com.povzetkar.quarkus.ai.Prompts;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class VideoSummaryService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummaryService.class);
-    private static final String FLASH_MODEL_NAME = "gemini-2.5-flash";
-    private static final int MAX_API_ATTEMPTS = 3;
 
     private final GenAiPool genAiPool;
+    private final String flashModelName;
+    private final int maxApiAttempts;
 
-    public VideoSummaryService(GenAiPool genAiPool) {
+    public VideoSummaryService(GenAiPool genAiPool,
+                               @ConfigProperty(name = "gemini.model.name") String flashModelName,
+                               @ConfigProperty(name = "gemini.max.api.attempts") int maxApiAttempts) {
         this.genAiPool = genAiPool;
+        this.flashModelName = flashModelName;
+        this.maxApiAttempts = maxApiAttempts;
     }
 
     /**
@@ -49,10 +54,10 @@ public class VideoSummaryService {
     public String generateContentWithRetry(Content content, String callDescription) {
         long startTime = System.nanoTime();
 
-        for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
+        for (int attempt = 1; attempt <= maxApiAttempts; attempt++) {
             try {
                 GenAiClient client = genAiPool.getGenAiClient();
-                GenerateContentResponse response = client.getModels().generateContent(FLASH_MODEL_NAME, content, null);
+                GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
                 logApiCallDuration(startTime, callDescription);
                 return cleanAiResponse(response.text());
             } catch (ApiException e) {
@@ -88,7 +93,7 @@ public class VideoSummaryService {
      * Handles exceptions from the Gemini API call, deciding whether to retry or rethrow.
      */
     private void handleApiError(ApiException e, int attempt) {
-        if (isRetriable(e) && attempt < MAX_API_ATTEMPTS) {
+        if (isRetriable(e) && attempt < maxApiAttempts) {
             logger.warn("API call failed with retriable error on attempt {}: {}.", attempt, e.getMessage());
         } else {
             logger.error("API call failed on attempt {} and will not be retried.", attempt);

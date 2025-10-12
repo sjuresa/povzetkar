@@ -6,41 +6,45 @@ import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentResponse;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class VideoSummaryServiceTest {
 
-    @Mock
-    private GenAiPool mockGenAiPool;
+    @Inject
+    VideoSummaryService videoSummaryService;
 
-    @Mock
-    private GenAiClient mockGenAiClient;
+    @InjectMock
+    GenAiPool mockGenAiPool;
 
-    @Mock
-    private Models mockModels;
-
-    @Mock
-    private GenerateContentResponse mockResponse;
-
-    private VideoSummaryService videoSummaryService;
+    // Mocks for chained calls, not beans
+    GenAiClient mockGenAiClient;
+    Models mockModels;
+    GenerateContentResponse mockResponse;
 
     @BeforeEach
     void setUp() {
-        videoSummaryService = new VideoSummaryService(mockGenAiPool);
+        // Initialize mocks for non-bean objects
+        mockGenAiClient = Mockito.mock(GenAiClient.class);
+        mockModels = Mockito.mock(Models.class);
+        mockResponse = Mockito.mock(GenerateContentResponse.class);
+
+        // Mock the chain of calls
         when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
         when(mockGenAiClient.getModels()).thenReturn(mockModels);
     }
@@ -55,7 +59,7 @@ class VideoSummaryServiceTest {
         ArgumentCaptor<Content> contentCaptor = ArgumentCaptor.forClass(Content.class);
 
         when(mockResponse.text()).thenReturn(expectedBriefing);
-        when(mockModels.generateContent(eq("gemini-2.5-flash"), contentCaptor.capture(), eq(null)))
+        when(mockModels.generateContent(anyString(), contentCaptor.capture(), eq(null)))
                 .thenReturn(mockResponse);
 
         // Act
@@ -81,7 +85,7 @@ class VideoSummaryServiceTest {
     void generateContentWithRetry_shouldCleanAiResponse(String rawResponse, String expectedCleanedResponse) {
         // Arrange
         when(mockResponse.text()).thenReturn(rawResponse);
-        when(mockModels.generateContent(eq("gemini-2.5-flash"), any(Content.class), eq(null))).thenReturn(mockResponse);
+        when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenReturn(mockResponse);
 
         // Act
         String result = videoSummaryService.createBriefingFromSummaries("some summary", "2025-07-17");
@@ -124,7 +128,7 @@ class VideoSummaryServiceTest {
         ApiException thrown = assertThrows(ApiException.class, () -> videoSummaryService.createBriefingFromSummaries("some summary", "2025-07-17"));
 
         assertEquals(rateLimitException, thrown);
-        // Verify it was called 3 times (1 initial try + 2 retries)
+        // The number of attempts is now configurable. The test default is 3.
         verify(mockModels, times(3)).generateContent(anyString(), any(Content.class), eq(null));
     }
 

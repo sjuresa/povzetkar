@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
@@ -48,7 +49,7 @@ public class SummarizationService {
             summary.persist();
             video.processingStatus = ProcessingStatus.COMPLETED;
             return true;
-        } catch (Exception e) {
+        } catch (ApiException e) {
             logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);
             video.processingStatus = ProcessingStatus.FAILED;
             logger.error("Video will be marked as failed to avoid retries.");
