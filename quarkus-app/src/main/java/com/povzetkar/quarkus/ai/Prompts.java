@@ -28,7 +28,7 @@ if (inputStream == null) {
 }
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            logger.error("Failed to read prompt: {}", resourceName, e.getStackTrace());
+            logger.error("Failed to read prompt: {}", resourceName, e.getMessage());
             throw new IllegalStateException("Failed to read prompt: " + resourceName, e);
         }
     }

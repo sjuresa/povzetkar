@@ -86,6 +86,7 @@ CREATE TABLE content_items (
         REFERENCES content_sources(id)
         ON DELETE CASCADE,
     CONSTRAINT uc_video_id UNIQUE (video_id)
+    CONSTRAINT chk_video_id_not_null_for_youtube_video CHECK (DTYPE <> 'YouTubeVideo' OR video_id IS NOT NULL)
 );
 
 -- summaries
