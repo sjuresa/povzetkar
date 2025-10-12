@@ -28,8 +28,8 @@ public class SummarizationService {
             item.processingStatus = ProcessingStatus.FAILED;
             return false;
         }
-        Summary testSummary = Summary.findByContentId(video.id);
-        if (testSummary != null) {
+        Summary existingSummary = Summary.findByContentId(video.id);
+        if (existingSummary != null) {
             return true;
         }
         Content content = contentCreationService.createContentForVideo(video);

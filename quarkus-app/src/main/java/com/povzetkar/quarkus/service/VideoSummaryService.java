@@ -101,8 +101,7 @@ public class VideoSummaryService {
      *  or an internal error (500).
      */
     private boolean isRetriable(ApiException e) {
-        String message = e.getMessage();
-        return message != null && message.matches("^(429|503|500).*");
+        return e.code() == 429 || e.code() == 503 || e.code() == 500;
     }
 
     /**

@@ -55,7 +55,7 @@ class SummarizationServiceTest {
     @DisplayName("summarizeVideo should return true and set status to COMPLETED on successful summarization")
     void testSummarizeVideo_Success() {
         PanacheMock.mock(Summary.class);
-        Mockito.doNothing().when(session).persist(Summary.class);
+        Mockito.doNothing().when(session).persist(any(Summary.class));
         // Arrange
         Mockito.when(Summary.findByContentId(mockVideo.id)).thenReturn(null);
         when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText("test prompt")));
@@ -69,7 +69,7 @@ class SummarizationServiceTest {
         assertEquals(ProcessingStatus.COMPLETED, mockVideo.processingStatus);
         verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
         verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
-        Mockito.verify(session, Mockito.times(1)).persist(Mockito.any());
+        Mockito.verify(session, Mockito.times(1)).persist(any(Summary.class));
     }
 
     @Test
@@ -86,7 +86,7 @@ class SummarizationServiceTest {
             assertTrue(result);
             verifyNoInteractions(contentCreationService);
             verifyNoInteractions(videoSummaryService);
-            Mockito.verify(session, Mockito.never()).persist(Mockito.any());
+            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
         }
     }
 
@@ -108,7 +108,7 @@ class SummarizationServiceTest {
             assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
             verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
             verifyNoInteractions(videoSummaryService);
-            Mockito.verify(session, Mockito.never()).persist(Mockito.any());
+            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
         }
     }
 
@@ -129,7 +129,7 @@ class SummarizationServiceTest {
             assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
             verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
             verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
-            Mockito.verify(session, Mockito.never()).persist(Mockito.any());
+            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
         }
     }
 
@@ -150,7 +150,7 @@ class SummarizationServiceTest {
             assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
             verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
             verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
-            Mockito.verify(session, Mockito.never()).persist(Mockito.any());
+            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
         }
     }
 }
