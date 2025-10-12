@@ -93,64 +93,59 @@ class SummarizationServiceTest {
     @Test
     @DisplayName("summarizeVideo should return false and set status to RETRY_LATER if content creation fails")
     void testSummarizeVideo_ContentCreationFails_SetsStatusToRetryLater() {
-        try (MockedStatic<Summary> mockedSummary = Mockito.mockStatic(Summary.class)) {
-            // Arrange
-            mockedSummary.when(() -> Summary.find("content_item_id", mockVideo.id).firstResult()).thenReturn(null);
-            when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText("test prompt")));
-            // The above line is not strictly necessary if contentCreationService.createContentForVideo returns null, but it's good for clarity.
-            when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(null);
+        // Arrange
+        PanacheMock.mock(Summary.class);
+        when(Summary.findByContentId(mockVideo.id)).thenReturn(null);
+        when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(null);
 
-            // Act
-            boolean result = summarizationService.summarizeVideo(mockVideo);
+        // Act
+        boolean result = summarizationService.summarizeVideo(mockVideo);
 
-            // Assert
-            assertFalse(result);
-            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
-            verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
-            verifyNoInteractions(videoSummaryService);
-            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
-        }
+        // Assert
+        assertFalse(result);
+        assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+        verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
+        verifyNoInteractions(videoSummaryService);
+        Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
     }
 
     @Test
     @DisplayName("summarizeVideo should return false and set status to FAILED if GenAI throws ApiException")
     void testSummarizeVideo_GenAiThrowsApiException_SetsStatusToFailed() {
-        try (MockedStatic<Summary> mockedSummary = Mockito.mockStatic(Summary.class)) {
             // Arrange
-            mockedSummary.when(() -> Summary.find("content_item_id", mockVideo.id).firstResult()).thenReturn(null);
-            when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText("test prompt")));
-            when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), anyString())).thenThrow(new ApiException(500, "GenAI Error", null));
+        PanacheMock.mock(Summary.class);
+        when(Summary.findByContentId(mockVideo.id)).thenReturn(null);
+        when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText("test prompt")));
+        when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), anyString())).thenThrow(new ApiException(500, "GenAI Error", null));
 
-            // Act
-            boolean result = summarizationService.summarizeVideo(mockVideo);
+        // Act
+        boolean result = summarizationService.summarizeVideo(mockVideo);
 
-            // Assert
-            assertFalse(result);
-            assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
-            verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
-            verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
-            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
-        }
+        // Assert
+        assertFalse(result);
+        assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
+        verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
+        verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
+        Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
     }
 
     @Test
     @DisplayName("summarizeVideo should return false and set status to RETRY_LATER if GenAI returns null summary")
     void testSummarizeVideo_GenAiReturnsNullSummary_SetsStatusToRetryLater() {
-        try (MockedStatic<Summary> mockedSummary = Mockito.mockStatic(Summary.class)) {
             // Arrange
-            mockedSummary.when(() -> Summary.find("content_item_id", mockVideo.id).firstResult()).thenReturn(null);
-            when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText("test prompt")));
-            when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), anyString())).thenReturn(null);
+        PanacheMock.mock(Summary.class);
+        when(Summary.findByContentId(mockVideo.id)).thenReturn(null);
+        when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenReturn(com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText("test prompt")));
+        when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), anyString())).thenReturn(null);
 
-            // Act
-            boolean result = summarizationService.summarizeVideo(mockVideo);
+        // Act
+        boolean result = summarizationService.summarizeVideo(mockVideo);
 
-            // Assert
-            assertFalse(result);
-            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
-            verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
-            verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
-            Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
-        }
+        // Assert
+        assertFalse(result);
+        assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+        verify(contentCreationService, times(1)).createContentForVideo(mockVideo);
+        verify(videoSummaryService, times(1)).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
+        Mockito.verify(session, Mockito.never()).persist(any(Summary.class));
     }
 }

@@ -34,7 +34,7 @@ public class GenAiPool implements AutoCloseable {
     private final TimeProvider timeProvider;
 
     @Inject
-    public GenAiPool(@ConfigProperty(name = "google.api.keyz") List<String> apiKeys,
+    public GenAiPool(@ConfigProperty(name = "google.api.keys") List<String> apiKeys,
                      @ConfigProperty(name = "cooldown.period.sec") long coolDownPeriod) {
         this(apiKeys, coolDownPeriod, new DefaultTimeProvider(), Sleeper.DEFAULT);
     }
