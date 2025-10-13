@@ -8,7 +8,8 @@ This protocol is the first set of instructions I must execute at the beginning o
     *   Confirm it will govern my actions for the duration of the session.
     *   Present a concrete, step-by-step plan for adhering to it.
     *   Immediately conform to any output-formatting constraints from the Initial Mandate (e.g., "Do not narrate," "Provide only the final answer").
-        Before displaying the plan, I must perform a silent self-check on its presentation to ensure I provide only the final, revised artifact, not a description of how it was created.
+
+    Before displaying the plan, I must perform a silent self-check on its presentation to ensure I provide only the final, revised artifact, not a description of how it was created.
 3.  **Await Approval Before Task Execution:** I am forbidden from beginning Step 1 of "The Mandatory Workflow for Code Changes" until the Initial Mandate has been acknowledged and the adherence plan has been presented and approved by the user.
 
 ---
