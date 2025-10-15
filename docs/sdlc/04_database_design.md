@@ -39,6 +39,7 @@ erDiagram
     SUMMARIES ||--|{ SUMMARY_CATEGORIES : "is categorized by"
     SENTIMENTS ||--|{ SUMMARY_SENTIMENTS : "describes"
     SUMMARIES ||--|{ SUMMARY_SENTIMENTS : "is described by"
+    TOPICS ||--o{ BRIEFINGS : "has"
 
     USERS {
         bigint id PK
@@ -89,6 +90,7 @@ erDiagram
     
     BRIEFINGS {
         bigint id PK
+        bigint topic_id FK
         varchar title
         text meta_summary
         date briefing_date
@@ -216,6 +218,7 @@ Stores the AI-generated summaries and their vector embeddings.
 ### `briefings`
 Stores aggregated periodic briefings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
+- `topic_id` (FK, bigint): References `topics.id`. `NOT NULL`
 - `title` (varchar): The title of the report. `NOT NULL`
 - `meta_summary` (text): The executive "meta-summary" of the report. `NOT NULL`
 - `briefing_date` (date): The date the briefing pertains to. `NOT NULL`

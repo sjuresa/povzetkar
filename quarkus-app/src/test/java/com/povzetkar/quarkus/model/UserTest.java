@@ -87,7 +87,8 @@ class UserTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        // Explicitly delete all Topics before Users to avoid foreign key constraint violation
+        // Explicitly delete all Briefings, then Topics, then Users to avoid foreign key constraint violations
+        Briefing.deleteAll();
         Topic.deleteAll();
         User.deleteAll();
     }

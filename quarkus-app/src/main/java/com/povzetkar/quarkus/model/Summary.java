@@ -3,6 +3,10 @@ package com.povzetkar.quarkus.model;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
+
 @Entity
 @Table(name = "summaries")
 public class Summary extends PanacheEntityBase {
@@ -40,5 +44,14 @@ public class Summary extends PanacheEntityBase {
 
     public static Summary findByContentId(Long id){
         return find("content_item_id", id).firstResult();
+    }
+
+    public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
+        // Convert LocalDate to Instant range for comparison with createdAt
+        java.time.Instant startOfDay = date.atStartOfDay().toInstant(ZoneOffset.UTC);
+        java.time.Instant endOfDay = date.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        return find("contentItem.contentSource.contentSourceTopics.topic = ?1 and createdAt >= ?2 and createdAt < ?3",
+                topic, startOfDay, endOfDay).list();
     }
 }

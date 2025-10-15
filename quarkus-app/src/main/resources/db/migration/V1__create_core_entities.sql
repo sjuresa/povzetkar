@@ -27,7 +27,7 @@ CREATE TABLE topics (
 
 -- source_types
 CREATE TABLE source_types (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL
 );
 
@@ -105,10 +105,15 @@ CREATE TABLE summaries (
 -- briefings
 CREATE TABLE briefings (
     id BIGSERIAL PRIMARY KEY,
+    topic_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     meta_summary TEXT NOT NULL,
     briefing_date DATE NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_topic_briefing
+        FOREIGN KEY(topic_id)
+        REFERENCES topics(id)
+        ON DELETE CASCADE
 );
 
 -- categories

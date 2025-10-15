@@ -1,0 +1,43 @@
+package com.povzetkar.quarkus.service;
+
+import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.model.Topic;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@ApplicationScoped
+public class BriefingService {
+
+    private final VideoSummaryService videoSummaryService;
+
+    @Inject
+    public BriefingService(VideoSummaryService videoSummaryService) {
+        this.videoSummaryService = videoSummaryService;
+    }
+
+    @Transactional
+    public Briefing generateBriefing(Topic topic, LocalDate briefingDate) {
+        // 1. Query the database for all Summary entities for the given topic within that period.
+        List<Summary> summaries = Summary.findByTopicAndDateRange(topic, briefingDate);
+
+        // 2. Format these Summary entities into a single rawSummaries string.
+        String rawSummaries = summaries.stream()
+                .map(s -> s.summaryText)
+                .collect(Collectors.joining("\n---\n"));
+
+        // 3. Use the GenAI service to create a meta-summary from the collected summaries.
+        String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.toString());
+
+        // 4. Create a new Briefing entity, linking it to the parent Topic and all relevant summaries, then persisting it.
+        Briefing briefing = new Briefing(topic, "Daily Briefing for " + briefingDate.toString(), metaSummary, briefingDate);
+        briefing.summaries.addAll(summaries);
+        briefing.persist();
+        return briefing;
+    }
+}

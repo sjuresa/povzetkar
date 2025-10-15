@@ -118,4 +118,11 @@ public class ContentSourceResource {
         contentSourceDetailService.enrichContentSources();
         return Response.accepted().build();
     }
+
+    @GET
+    @Path("/content-sources/details/{channelId}")
+    public ContentSourceDetailService.ContentSourceDetails getContentSourceDetails(@PathParam("channelId") String channelId) {
+        return contentSourceDetailService.fetchContentSourceDetails(channelId)
+                .orElseThrow(() -> new NotFoundException("Details for channel ID " + channelId + " not found"));
+    }
 }

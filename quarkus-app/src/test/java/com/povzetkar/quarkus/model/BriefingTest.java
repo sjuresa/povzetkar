@@ -17,6 +17,18 @@ class BriefingTest {
     @Test
     @Transactional
     void testBriefingPersistence() {
+        // Create a User dependency
+        User user = new User();
+        user.name = "Test User";
+        user.active = true;
+        user.persist();
+
+        // Create a Topic dependency
+        Topic topic = new Topic();
+        topic.name = "Test Topic";
+        topic.user = user;
+        topic.persist();
+
         // Create a ContentSource dependency
         ContentSource contentSource = new ContentSource();
         contentSource.sourceIdentifier = "test_briefing_source_id";
@@ -48,7 +60,7 @@ class BriefingTest {
         String metaSummary = "This is the meta summary for the test briefing.";
         LocalDate briefingDate = LocalDate.now();
 
-        Briefing briefing = new Briefing(title, metaSummary, briefingDate);
+        Briefing briefing = new Briefing(topic, title, metaSummary, briefingDate);
         briefing.summaries = new HashSet<>(Arrays.asList(summary1, summary2));
         briefing.persist();
 
@@ -60,6 +72,7 @@ class BriefingTest {
         assertEquals(title, retrievedBriefing.title);
         assertEquals(metaSummary, retrievedBriefing.metaSummary);
         assertEquals(briefingDate, retrievedBriefing.briefingDate);
+        assertEquals(topic.id, retrievedBriefing.topic.id);
         assertEquals(2, retrievedBriefing.summaries.size());
         assertTrue(retrievedBriefing.summaries.stream().anyMatch(s -> s.id.equals(summary1.id)));
         assertTrue(retrievedBriefing.summaries.stream().anyMatch(s -> s.id.equals(summary2.id)));
