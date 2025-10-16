@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +34,7 @@ class OrchestratorServiceTest {
     ContentItemFetcher contentItemFetcher;
 
     @InjectMock
-    SummarizationService summarizationService;
+    AsyncSummarizationService asyncSummarizationService;
 
     @InjectMock
     BriefingService briefingService;
@@ -43,7 +44,7 @@ class OrchestratorServiceTest {
 
     @BeforeEach
     void setUp() {
-        Mockito.reset(contentItemFetcher, summarizationService, briefingService);
+        Mockito.reset(contentItemFetcher, asyncSummarizationService, briefingService);
         mockedUser = Mockito.mockStatic(User.class);
         mockedTopic = Mockito.mockStatic(Topic.class);
     }
@@ -84,8 +85,8 @@ class OrchestratorServiceTest {
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), any(LocalDate.class), eq(null), eq(null)))
                 .thenReturn(fetchedItems);
-        when(summarizationService.summarizeVideo(any(ContentItem.class)))
-                .thenReturn(true);
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class)))
+                .thenReturn(Uni.createFrom().voidItem());
 
         // When
         orchestratorService.runOrchestration();
@@ -94,7 +95,7 @@ class OrchestratorServiceTest {
         mockedUser.verify(User::listAllActive, times(1));
         mockedTopic.verify(() -> Topic.findByUser(eq(user)), times(1));
         verify(contentItemFetcher, times(1)).fetchItems(eq(contentSource), any(LocalDate.class), eq(null), eq(null));
-        verify(summarizationService, times(1)).summarizeVideo(contentItem);
+        verify(asyncSummarizationService, times(1)).summarizeAsync(contentItem);
         verify(briefingService, times(1)).generateBriefing(eq(topic), any(LocalDate.class));
     }
 }

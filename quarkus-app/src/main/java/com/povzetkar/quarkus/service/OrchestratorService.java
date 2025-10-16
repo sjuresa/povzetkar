@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.scheduler.Scheduled;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @ApplicationScoped
 public class OrchestratorService {
@@ -20,13 +20,13 @@ public class OrchestratorService {
     private static final Logger logger = LoggerFactory.getLogger(OrchestratorService.class);
 
     private final ContentItemFetcher contentItemFetcher;
-    private final SummarizationService summarizationService;
+    private final AsyncSummarizationService asyncSummarizationService;
     private final BriefingService briefingService;
 
     @Inject
-    public OrchestratorService(ContentItemFetcher contentItemFetcher, SummarizationService summarizationService, BriefingService briefingService) {
+    public OrchestratorService(ContentItemFetcher contentItemFetcher, AsyncSummarizationService asyncSummarizationService, BriefingService briefingService) {
         this.contentItemFetcher = contentItemFetcher;
-        this.summarizationService = summarizationService;
+        this.asyncSummarizationService = asyncSummarizationService;
         this.briefingService = briefingService;
     }
 
@@ -51,16 +51,14 @@ public class OrchestratorService {
                         .toList();
 
                 // 4. Summarize in parallel
-                List<CompletableFuture<Void>> summarizationTasks = newContentItems.stream()
-                        .map(item -> CompletableFuture.runAsync(() -> summarizationService.summarizeVideo(item))
-                                .exceptionally(ex -> {
-                                    logger.error("Failed to summarize content item with id: {}", item.id, ex);
-                                    return null; // Complete successfully to not block allOf, but log the error.
-                                }))
+                List<Uni<Void>> summarizationTasks = newContentItems.stream()
+                        .map(item -> asyncSummarizationService.summarizeAsync(item)
+                                .onFailure().invoke(ex -> logger.error("Failed to summarize content item with id: {}", item.id, ex))
+                                .onFailure().recoverWithNull())
                         .toList();
 
                 // 5. Wait for all summarization tasks to complete
-                CompletableFuture.allOf(summarizationTasks.toArray(new CompletableFuture[0])).join();
+                Uni.combine().all().unis(summarizationTasks).discardItems().await().indefinitely();
 
                 // 6. Generate briefing
                 briefingService.generateBriefing(topic, orchestrationDate);
