@@ -15,19 +15,23 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
     public void migrate(Context context) throws Exception {
         // 1. Insert a default user if one does not exist
         long defaultUserId;
-        try (Statement select = context.getConnection().createStatement();
-             ResultSet rows = select.executeQuery("SELECT id FROM users WHERE name = 'default_user'")) {
-            if (rows.next()) {
-                defaultUserId = rows.getLong(1);
-            } else {
-                try (PreparedStatement insert = context.getConnection().prepareStatement(
-                        "INSERT INTO users (name, active) VALUES ('default_user', TRUE)", Statement.RETURN_GENERATED_KEYS)) {
-                    insert.executeUpdate();
-                    ResultSet generatedKeys = insert.getGeneratedKeys();
-                    if (generatedKeys.next()) {
-                        defaultUserId = generatedKeys.getLong(1);
-                    } else {
-                        throw new SQLException("Creating user failed, no ID obtained.");
+        try (PreparedStatement select = context.getConnection().prepareStatement("SELECT id FROM users WHERE name = ?")) {
+            select.setString(1, "default_user");
+            try (ResultSet rows = select.executeQuery()) {
+                if (rows.next()) {
+                    defaultUserId = rows.getLong(1);
+                } else {
+                    try (PreparedStatement insert = context.getConnection().prepareStatement(
+                            "INSERT INTO users (name, active) VALUES (?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
+                        insert.setString(1, "default_user");
+                        insert.executeUpdate();
+                        try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                defaultUserId = generatedKeys.getLong(1);
+                            } else {
+                                throw new SQLException("Creating user failed, no ID obtained.");
+                            }
+                        }
                     }
                 }
             }
