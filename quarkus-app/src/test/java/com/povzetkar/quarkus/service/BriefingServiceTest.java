@@ -1,6 +1,13 @@
 package com.povzetkar.quarkus.service;
 
-import com.povzetkar.quarkus.model.*;
+import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.model.User;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -15,12 +22,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class BriefingServiceTest {
@@ -37,11 +41,13 @@ class BriefingServiceTest {
     void setUp() {
         Mockito.reset(videoSummaryService);
         mockedSummary = Mockito.mockStatic(Summary.class);
+        PanacheMock.mock(Briefing.class); // Correctly mock Briefing using PanacheMock
     }
 
     @AfterEach
     void tearDown() {
         mockedSummary.close();
+        // PanacheMock does not need to be closed like MockedStatic
     }
 
     @Test
@@ -84,6 +90,11 @@ class BriefingServiceTest {
         mockedSummary.when(() -> Summary.findByTopicAndDateRange(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(summaries);
 
+        // Mock Briefing.find().count() to indicate NO existing briefing
+        PanacheQuery mockQuery = mock(PanacheQuery.class);
+        Mockito.when(Briefing.find(anyString(), any(Object[].class))).thenReturn(mockQuery);
+        when(mockQuery.count()).thenReturn(0L);
+
         String expectedRawSummaries = "Summary text 1.\n---\nSummary text 2.";
         String expectedMetaSummary = "Meta-summary from GenAI";
 
@@ -103,5 +114,37 @@ class BriefingServiceTest {
 
         mockedSummary.verify(() -> Summary.findByTopicAndDateRange(eq(topic), eq(briefingDate)), Mockito.times(1));
         verify(videoSummaryService, Mockito.times(1)).createBriefingFromSummaries(expectedRawSummaries, briefingDate.toString());
+        PanacheMock.verify(Briefing.class).find(anyString(), any(Object[].class), times(1));
+    }
+
+    @Test
+    @Transactional
+    void testGenerateBriefing_AlreadyExists_SkipsGeneration() {
+        // Given
+        User user = new User();
+        user.name = "Test User";
+        user.active = true;
+        user.persist();
+
+        Topic topic = new Topic();
+        topic.name = "Test Topic";
+        topic.user = user;
+        topic.persist();
+
+        LocalDate briefingDate = LocalDate.now();
+
+        // Mock Briefing.find().count() to indicate an existing briefing
+        PanacheQuery mockQuery = mock(PanacheQuery.class);
+        Mockito.when(Briefing.find(anyString(), any(Object[].class))).thenReturn(mockQuery);
+        when(mockQuery.count()).thenReturn(1L);
+
+        // When
+        Briefing briefing = briefingService.generateBriefing(topic, briefingDate);
+
+        // Then
+        assertNull(briefing);
+        PanacheMock.verify(Briefing.class).find(anyString(), any(Object[].class), times(1));
+        verifyNoInteractions(videoSummaryService);
+        mockedSummary.verifyNoInteractions();
     }
 }

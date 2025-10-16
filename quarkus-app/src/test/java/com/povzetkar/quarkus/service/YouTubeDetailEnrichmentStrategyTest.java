@@ -9,7 +9,6 @@ import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -34,11 +33,6 @@ class YouTubeDetailEnrichmentStrategyTest {
 
     @InjectMock
     YouTubeDataApiClient mockYouTubeDataApiClient;
-
-    @BeforeAll
-    static void setupPanache() {
-        // PanacheMock.mock(ContentSource.class); // Removed from @BeforeAll
-    }
 
     @BeforeEach
     void setup() {

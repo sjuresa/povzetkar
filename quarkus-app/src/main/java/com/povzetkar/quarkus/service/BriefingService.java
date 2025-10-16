@@ -26,6 +26,12 @@ public class BriefingService {
 
     @Transactional
     public Briefing generateBriefing(Topic topic, LocalDate briefingDate) {
+        // Check if a briefing for this topic and date already exists.
+        if (Briefing.find("topic = ?1 and briefingDate = ?2", topic, briefingDate).count() > 0) {
+            logger.info("Briefing for topic '{}' on {} already exists. Skipping generation.", topic.name, briefingDate);
+            return null;
+        }
+
         // 1. Query the database for all Summary entities for the given topic within that period.
         List<Summary> summaries = Summary.findByTopicAndDateRange(topic, briefingDate);
 
