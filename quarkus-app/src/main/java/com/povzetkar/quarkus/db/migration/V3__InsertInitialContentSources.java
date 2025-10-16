@@ -29,58 +29,54 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
     }
 
     private long getOrCreateUser(Context context, String userName) throws SQLException {
-        long userId;
         try (PreparedStatement select = context.getConnection().prepareStatement("SELECT id FROM users WHERE name = ?")) {
             select.setString(1, userName);
             try (ResultSet rows = select.executeQuery()) {
                 if (rows.next()) {
-                    userId = rows.getLong(1);
-                } else {
-                    try (PreparedStatement insert = context.getConnection().prepareStatement(
-                            "INSERT INTO users (name, active) VALUES (?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
-                        insert.setString(1, userName);
-                        insert.executeUpdate();
-                        try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                userId = generatedKeys.getLong(1);
-                            } else {
-                                throw new SQLException("Creating user failed, no ID obtained.");
-                            }
-                        }
-                    }
+                    return rows.getLong(1);
                 }
             }
         }
-        return userId;
+
+        try (PreparedStatement insert = context.getConnection().prepareStatement(
+                "INSERT INTO users (name, active) VALUES (?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
+            insert.setString(1, userName);
+            insert.executeUpdate();
+            try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getLong(1);
+                } else {
+                    throw new SQLException("Creating user failed, no ID obtained.");
+                }
+            }
+        }
     }
 
     private long getOrCreateTopic(Context context, long userId, String topicName) throws SQLException {
-        long topicId;
         try (PreparedStatement select = context.getConnection().prepareStatement(
                 "SELECT id FROM topics WHERE user_id = ? AND name = ?")) {
             select.setLong(1, userId);
             select.setString(2, topicName);
             try (ResultSet rows = select.executeQuery()) {
                 if (rows.next()) {
-                    topicId = rows.getLong(1);
-                } else {
-                    try (PreparedStatement insert = context.getConnection().prepareStatement(
-                            "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                        insert.setLong(1, userId);
-                        insert.setString(2, topicName);
-                        insert.executeUpdate();
-                        try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                topicId = generatedKeys.getLong(1);
-                            } else {
-                                throw new SQLException("Creating topic failed, no ID obtained.");
-                            }
-                        }
-                    }
+                    return rows.getLong(1);
                 }
             }
         }
-        return topicId;
+
+        try (PreparedStatement insert = context.getConnection().prepareStatement(
+                "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            insert.setLong(1, userId);
+            insert.setString(2, topicName);
+            insert.executeUpdate();
+            try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getLong(1);
+                } else {
+                    throw new SQLException("Creating topic failed, no ID obtained.");
+                }
+            }
+        }
     }
 
     private void insertContentSources(Context context, int youtubeSourceTypeId, String[] channelIdentifiers) throws SQLException {
