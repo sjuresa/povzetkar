@@ -46,11 +46,12 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         enrichSources(sourcesToRefresh, "Successfully refreshed content source: {} ({})", "Could not refresh content source with identifier: {}");
     }
 
-    public Optional<ContentSourceDetailService.ContentSourceDetails> fetchDetailsForChannel(String channelId) {
+    @Override
+    public Optional<ContentSourceDetailService.ContentSourceDetails> fetchDetails(String identifier) {
         try {
-            List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(channelId));
+            List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(identifier));
             if (items == null || items.isEmpty()) {
-                logger.warn("Channel not found for ID: {}", channelId);
+                logger.warn("Channel not found for ID: {}", identifier);
                 return Optional.empty();
             }
 
@@ -58,7 +59,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             return Optional.of(ContentSourceDetailService.extractContentSourceDetails(channel));
 
         } catch (IOException e) {
-            logger.error("Failed to fetch details for channel ID: {}", channelId, e);
+            logger.error("Failed to fetch details for channel ID: {}", identifier, e);
             return Optional.empty();
         }
     }

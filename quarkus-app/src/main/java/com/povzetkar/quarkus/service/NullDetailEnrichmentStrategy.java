@@ -5,6 +5,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 @ApplicationScoped
 @EnrichmentStrategy(SourceTypeEnum.DEFAULT)
 public class NullDetailEnrichmentStrategy implements ContentSourceDetailEnrichmentStrategy {
@@ -19,5 +21,11 @@ public class NullDetailEnrichmentStrategy implements ContentSourceDetailEnrichme
     @Override
     public void refresh() {
         logger.warn("No content detail refresh strategy found. Skipping refresh.");
+    }
+
+    @Override
+    public Optional<ContentSourceDetailService.ContentSourceDetails> fetchDetails(String identifier) {
+        logger.warn("No content detail fetching strategy found. Skipping fetch.");
+        return Optional.empty();
     }
 }

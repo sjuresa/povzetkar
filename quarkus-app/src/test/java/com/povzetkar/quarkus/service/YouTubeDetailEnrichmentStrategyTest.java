@@ -156,7 +156,7 @@ class YouTubeDetailEnrichmentStrategyTest {
     }
 
     @Test
-    void testFetchDetailsForChannel_success() throws IOException {
+    void testFetchDetails_success() throws IOException {
         // Given
         String channelId = "testChannelId";
         String channelName = "Test Channel";
@@ -167,7 +167,7 @@ class YouTubeDetailEnrichmentStrategyTest {
         when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenReturn(List.of(testChannel));
 
         // When
-        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetailsForChannel(channelId);
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(channelId);
 
         // Then
         assertTrue(details.isPresent());
@@ -178,13 +178,13 @@ class YouTubeDetailEnrichmentStrategyTest {
     }
 
     @Test
-    void testFetchDetailsForChannel_notFound() throws IOException {
+    void testFetchDetails_notFound() throws IOException {
         // Given
         String channelId = "nonExistentChannel";
         when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenReturn(Collections.emptyList());
 
         // When
-        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetailsForChannel(channelId);
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(channelId);
 
         // Then
         assertTrue(details.isEmpty());
@@ -192,13 +192,13 @@ class YouTubeDetailEnrichmentStrategyTest {
     }
 
     @Test
-    void testFetchDetailsForChannel_apiError() throws IOException {
+    void testFetchDetails_apiError() throws IOException {
         // Given
         String channelId = "errorChannel";
         when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenThrow(new IOException("API Error"));
 
         // When
-        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetailsForChannel(channelId);
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(channelId);
 
         // Then
         assertTrue(details.isEmpty());

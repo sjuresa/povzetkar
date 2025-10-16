@@ -34,10 +34,7 @@ public class ContentSourceDetailService {
      */
     public Optional<ContentSourceDetails> fetchContentSourceDetails(String channelId) {
         ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
-        if (strategy instanceof YouTubeDetailEnrichmentStrategy youtubeStrategy) {
-            return youtubeStrategy.fetchDetailsForChannel(channelId);
-        }
-        return Optional.empty();
+        return strategy.fetchDetails(channelId);
     }
 
     /**
