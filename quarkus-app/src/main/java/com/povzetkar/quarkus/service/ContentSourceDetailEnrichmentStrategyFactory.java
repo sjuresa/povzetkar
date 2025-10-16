@@ -8,6 +8,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -37,5 +38,12 @@ public class ContentSourceDetailEnrichmentStrategyFactory {
     public ContentSourceDetailEnrichmentStrategy getStrategy(int sourceTypeId) {
         SourceTypeEnum sourceType = SourceTypeEnum.fromId(sourceTypeId);
         return strategyMap.getOrDefault(sourceType, strategyMap.get(SourceTypeEnum.DEFAULT));
+    }
+
+    public Collection<ContentSourceDetailEnrichmentStrategy> getStrategies() {
+        return strategyMap.entrySet().stream()
+                .filter(entry -> entry.getKey() != SourceTypeEnum.DEFAULT)
+                .map(Map.Entry::getValue)
+                .toList();
     }
 }

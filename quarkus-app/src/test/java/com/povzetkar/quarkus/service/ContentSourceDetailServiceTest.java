@@ -1,12 +1,13 @@
 package com.povzetkar.quarkus.service;
 
-import com.povzetkar.quarkus.model.SourceTypeEnum;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 
@@ -19,48 +20,42 @@ class ContentSourceDetailServiceTest {
     @InjectMock
     ContentSourceDetailEnrichmentStrategyFactory strategyFactory;
 
-    @InjectMock
-    @EnrichmentStrategy(SourceTypeEnum.YOUTUBE)
-    YouTubeDetailEnrichmentStrategy youtubeStrategy;
-
-    @InjectMock
-    @EnrichmentStrategy(SourceTypeEnum.DEFAULT)
-    NullDetailEnrichmentStrategy nullStrategy;
+    // These mocks are now just for the collection returned by the factory
+    YouTubeDetailEnrichmentStrategy youtubeStrategy = mock(YouTubeDetailEnrichmentStrategy.class);
+    ContentSourceDetailEnrichmentStrategy anotherStrategy = mock(ContentSourceDetailEnrichmentStrategy.class);
 
     @BeforeEach
     void setUp() {
-        Mockito.reset(strategyFactory, youtubeStrategy, nullStrategy);
+        Mockito.reset(strategyFactory, youtubeStrategy, anotherStrategy);
     }
 
     @Test
-    void testEnrichContentSources_delegatesToCorrectStrategies() {
+    void testEnrichContentSources_delegatesToAllStrategies() {
         // Given
-        when(strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId())).thenReturn(youtubeStrategy);
-        when(strategyFactory.getStrategy(SourceTypeEnum.BLOG.getId())).thenReturn(nullStrategy);
+        List<ContentSourceDetailEnrichmentStrategy> strategies = List.of(youtubeStrategy, anotherStrategy);
+        when(strategyFactory.getStrategies()).thenReturn(strategies);
 
         // When
         service.enrichContentSources();
 
         // Then
-        verify(strategyFactory).getStrategy(SourceTypeEnum.YOUTUBE.getId());
+        verify(strategyFactory).getStrategies();
         verify(youtubeStrategy).enrich();
-        verify(strategyFactory, never()).getStrategy(SourceTypeEnum.BLOG.getId());
-        verify(nullStrategy, never()).enrich();
+        verify(anotherStrategy).enrich();
     }
 
     @Test
-    void testRefreshAllContentSources_delegatesToCorrectStrategies() {
+    void testRefreshAllContentSources_delegatesToAllStrategies() {
         // Given
-        when(strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId())).thenReturn(youtubeStrategy);
-        when(strategyFactory.getStrategy(SourceTypeEnum.BLOG.getId())).thenReturn(nullStrategy);
+        List<ContentSourceDetailEnrichmentStrategy> strategies = List.of(youtubeStrategy, anotherStrategy);
+        when(strategyFactory.getStrategies()).thenReturn(strategies);
 
         // When
         service.refreshAllContentSources();
 
         // Then
-        verify(strategyFactory).getStrategy(SourceTypeEnum.YOUTUBE.getId());
+        verify(strategyFactory).getStrategies();
         verify(youtubeStrategy).refresh();
-        verify(strategyFactory, never()).getStrategy(SourceTypeEnum.BLOG.getId());
-        verify(nullStrategy, never()).refresh();
+        verify(anotherStrategy).refresh();
     }
 }

@@ -17,12 +17,10 @@ public class ContentSourceDetailService {
     private static final Logger logger = LoggerFactory.getLogger(ContentSourceDetailService.class);
 
     private final ContentSourceDetailEnrichmentStrategyFactory strategyFactory;
-    private final YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy;
 
     @Inject
-    public ContentSourceDetailService(ContentSourceDetailEnrichmentStrategyFactory strategyFactory, @EnrichmentStrategy(SourceTypeEnum.YOUTUBE) YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy) {
+    public ContentSourceDetailService(ContentSourceDetailEnrichmentStrategyFactory strategyFactory) {
         this.strategyFactory = strategyFactory;
-        this.youTubeDetailEnrichmentStrategy = youTubeDetailEnrichmentStrategy;
     }
 
     // A record to hold the fetched content source details
@@ -35,28 +33,30 @@ public class ContentSourceDetailService {
      * @return An Optional containing ContentSourceDetails if found, or empty if not.
      */
     public Optional<ContentSourceDetails> fetchContentSourceDetails(String channelId) {
-        return youTubeDetailEnrichmentStrategy.fetchDetailsForChannel(channelId);
+        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
+        if (strategy instanceof YouTubeDetailEnrichmentStrategy youtubeStrategy) {
+            return youtubeStrategy.fetchDetailsForChannel(channelId);
+        }
+        return Optional.empty();
     }
 
     /**
      * Queries the database for ContentSource entities that are missing details
-     * and enriches them by fetching data from the YouTube API.
+     * and enriches them by fetching data from the appropriate source API.
      */
     @Transactional
     public void enrichContentSources() {
-        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
-        if (strategy != null) {
+        for (ContentSourceDetailEnrichmentStrategy strategy : strategyFactory.getStrategies()) {
             strategy.enrich();
         }
     }
 
     /**
-     * Iterates over all content sources and updates their details from the YouTube API.
+     * Iterates over all content sources and updates their details from the appropriate source API.
      */
     @Transactional
     public void refreshAllContentSources() {
-        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
-        if (strategy != null) {
+        for (ContentSourceDetailEnrichmentStrategy strategy : strategyFactory.getStrategies()) {
             strategy.refresh();
         }
     }
