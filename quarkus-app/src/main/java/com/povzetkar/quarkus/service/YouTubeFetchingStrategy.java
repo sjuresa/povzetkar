@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.SourceTypeEnum;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApplicationScoped
+@SourceStrategy(SourceTypeEnum.YOUTUBE)
 public class YouTubeFetchingStrategy implements ContentFetchingStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeFetchingStrategy.class);

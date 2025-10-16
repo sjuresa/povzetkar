@@ -44,8 +44,8 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void enrichContentSources() {
-        for (SourceTypeEnum sourceType : SourceTypeEnum.values()) {
-            ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(sourceType.getId());
+        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
+        if (strategy != null) {
             strategy.enrich();
         }
     }
@@ -55,9 +55,8 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void refreshAllContentSources() {
-        // For now, we assume all sources need refreshing.
-        for (SourceTypeEnum sourceType : SourceTypeEnum.values()) {
-            ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(sourceType.getId());
+        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
+        if (strategy != null) {
             strategy.refresh();
         }
     }

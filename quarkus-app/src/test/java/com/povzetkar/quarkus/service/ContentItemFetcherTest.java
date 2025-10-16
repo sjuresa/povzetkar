@@ -30,9 +30,11 @@ class ContentItemFetcherTest {
     ContentFetchingStrategyFactory strategyFactory;
 
     @InjectMock
+    @SourceStrategy(SourceTypeEnum.YOUTUBE)
     YouTubeFetchingStrategy youTubeFetchingStrategy;
 
     @InjectMock
+    @SourceStrategy(SourceTypeEnum.DEFAULT)
     NullContentFetchingStrategy nullContentFetchingStrategy;
 
     @BeforeEach
