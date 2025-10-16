@@ -7,7 +7,6 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,6 @@ public class YouTubeContentFetcherService {
         this.youTubeDataApiClient = youTubeDataApiClient;
     }
 
-    @Transactional
     public List<YouTubeVideo> fetchYouTubeVideos(ContentSource contentSource, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) throws IOException {
         // Assuming contentSource.sourceIdentifier is the channel ID
         // First, get the uploads playlist ID from the channel details

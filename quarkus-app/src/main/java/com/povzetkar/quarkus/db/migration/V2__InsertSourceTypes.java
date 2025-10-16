@@ -11,7 +11,7 @@ public class V2__InsertSourceTypes extends BaseJavaMigration {
     public void migrate(Context context) throws Exception {
         for (SourceTypeEnum sourceType : SourceTypeEnum.values()) {
             try (PreparedStatement statement = context.getConnection().prepareStatement(
-                    "INSERT INTO source_types (id, name) VALUES (?, ?)")) {
+                    "INSERT INTO source_types (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING")) {
                 statement.setInt(1, sourceType.getId());
                 statement.setString(2, sourceType.name());
                 statement.execute();

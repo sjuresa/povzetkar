@@ -6,6 +6,8 @@ import com.povzetkar.quarkus.model.Topic;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class BriefingService {
 
     private final VideoSummaryService videoSummaryService;
+    private static final Logger logger = LoggerFactory.getLogger(BriefingService.class);
 
     @Inject
     public BriefingService(VideoSummaryService videoSummaryService) {
@@ -26,6 +29,11 @@ public class BriefingService {
         // 1. Query the database for all Summary entities for the given topic within that period.
         List<Summary> summaries = Summary.findByTopicAndDateRange(topic, briefingDate);
 
+        if (summaries.isEmpty()) {
+            logger.info("No new summaries found for topic '{}' on {}. Skipping briefing generation.", topic.name, briefingDate);
+            return null;
+        }
+
         // 2. Format these Summary entities into a single rawSummaries string.
         String rawSummaries = summaries.stream()
                 .map(s -> s.summaryText)
@@ -35,7 +43,7 @@ public class BriefingService {
         String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.toString());
 
         // 4. Create a new Briefing entity, linking it to the parent Topic and all relevant summaries, then persisting it.
-        Briefing briefing = new Briefing(topic, "Daily Briefing for " + briefingDate.toString(), metaSummary, briefingDate);
+        Briefing briefing = new Briefing(topic, "Daily Briefing for " + briefingDate, metaSummary, briefingDate);
         briefing.summaries.addAll(summaries);
         briefing.persist();
         return briefing;

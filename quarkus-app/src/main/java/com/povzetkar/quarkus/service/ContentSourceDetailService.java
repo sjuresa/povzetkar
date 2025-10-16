@@ -44,7 +44,6 @@ public class ContentSourceDetailService {
      */
     @Transactional
     public void enrichContentSources() {
-        // For now, we assume all sources need enrichment.
         for (SourceTypeEnum sourceType : SourceTypeEnum.values()) {
             ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(sourceType.getId());
             strategy.enrich();

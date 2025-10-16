@@ -51,7 +51,11 @@ public class OrchestratorService {
 
                 // 4. Summarize in parallel
                 List<CompletableFuture<Void>> summarizationTasks = newContentItems.stream()
-                        .map(item -> CompletableFuture.runAsync(() -> summarizationService.summarizeVideo(item)))
+                        .map(item -> CompletableFuture.runAsync(() -> summarizationService.summarizeVideo(item))
+                                .exceptionally(ex -> {
+                                    logger.error("Failed to summarize content item with id: {}", item.id, ex);
+                                    return null; // Complete successfully to not block allOf, but log the error.
+                                }))
                         .toList();
 
                 // 5. Wait for all summarization tasks to complete
