@@ -20,7 +20,7 @@ public class ContentSourceDetailService {
     private final YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy;
 
     @Inject
-    public ContentSourceDetailService(ContentSourceDetailEnrichmentStrategyFactory strategyFactory, YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy) {
+    public ContentSourceDetailService(ContentSourceDetailEnrichmentStrategyFactory strategyFactory, @EnrichmentStrategy(SourceTypeEnum.YOUTUBE) YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy) {
         this.strategyFactory = strategyFactory;
         this.youTubeDetailEnrichmentStrategy = youTubeDetailEnrichmentStrategy;
     }

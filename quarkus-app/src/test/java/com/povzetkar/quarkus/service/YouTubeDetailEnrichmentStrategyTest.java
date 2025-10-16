@@ -29,6 +29,7 @@ import static org.mockito.Mockito.*;
 class YouTubeDetailEnrichmentStrategyTest {
 
     @Inject
+    @EnrichmentStrategy(SourceTypeEnum.YOUTUBE)
     YouTubeDetailEnrichmentStrategy strategy;
 
     @InjectMock

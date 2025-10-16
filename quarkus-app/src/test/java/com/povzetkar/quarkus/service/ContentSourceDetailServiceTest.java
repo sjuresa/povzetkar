@@ -20,9 +20,11 @@ class ContentSourceDetailServiceTest {
     ContentSourceDetailEnrichmentStrategyFactory strategyFactory;
 
     @InjectMock
+    @EnrichmentStrategy(SourceTypeEnum.YOUTUBE)
     YouTubeDetailEnrichmentStrategy youtubeStrategy;
 
     @InjectMock
+    @EnrichmentStrategy(SourceTypeEnum.DEFAULT)
     NullDetailEnrichmentStrategy nullStrategy;
 
     @BeforeEach

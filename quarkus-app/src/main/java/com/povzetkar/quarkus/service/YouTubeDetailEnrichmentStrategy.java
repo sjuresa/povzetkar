@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
+@EnrichmentStrategy(SourceTypeEnum.YOUTUBE)
 public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnrichmentStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeDetailEnrichmentStrategy.class);

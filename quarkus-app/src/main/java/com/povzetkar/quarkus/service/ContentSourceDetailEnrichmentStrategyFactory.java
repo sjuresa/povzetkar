@@ -1,25 +1,41 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.SourceTypeEnum;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+
+import java.lang.annotation.Annotation;
+import java.util.EnumMap;
+import java.util.Map;
 
 @ApplicationScoped
 public class ContentSourceDetailEnrichmentStrategyFactory {
 
-    private final YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy;
-    private final NullDetailEnrichmentStrategy nullDetailEnrichmentStrategy;
+    private final Instance<ContentSourceDetailEnrichmentStrategy> strategies;
+    private final Map<SourceTypeEnum, ContentSourceDetailEnrichmentStrategy> strategyMap = new EnumMap<>(SourceTypeEnum.class);
 
     @Inject
-    public ContentSourceDetailEnrichmentStrategyFactory(YouTubeDetailEnrichmentStrategy youTubeDetailEnrichmentStrategy, NullDetailEnrichmentStrategy nullDetailEnrichmentStrategy) {
-        this.youTubeDetailEnrichmentStrategy = youTubeDetailEnrichmentStrategy;
-        this.nullDetailEnrichmentStrategy = nullDetailEnrichmentStrategy;
+    public ContentSourceDetailEnrichmentStrategyFactory(@Any Instance<ContentSourceDetailEnrichmentStrategy> strategies) {
+        this.strategies = strategies;
+    }
+
+    @PostConstruct
+    void init() {
+        for (Instance.Handle<ContentSourceDetailEnrichmentStrategy> handle : strategies.handles()) {
+            ContentSourceDetailEnrichmentStrategy strategy = handle.get();
+            for (Annotation qualifier : handle.getBean().getQualifiers()) {
+                if (qualifier instanceof EnrichmentStrategy enrichmentStrategy) {
+                    strategyMap.put(enrichmentStrategy.value(), strategy);
+                }
+            }
+        }
     }
 
     public ContentSourceDetailEnrichmentStrategy getStrategy(int sourceTypeId) {
-        if (sourceTypeId == SourceTypeEnum.YOUTUBE.getId()) {
-            return youTubeDetailEnrichmentStrategy;
-        }
-        return nullDetailEnrichmentStrategy;
+        SourceTypeEnum sourceType = SourceTypeEnum.fromId(sourceTypeId);
+        return strategyMap.getOrDefault(sourceType, strategyMap.get(SourceTypeEnum.DEFAULT));
     }
 }

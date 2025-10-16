@@ -34,6 +34,7 @@ public class OrchestratorService {
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
     public void runOrchestration() {
         logger.info("Orchestration started.");
+        final LocalDate orchestrationDate = LocalDate.now();
 
         List<User> activeUsers = User.listAllActive();
 
@@ -46,7 +47,7 @@ public class OrchestratorService {
 
                 // 3. Fetch new content
                 List<ContentItem> newContentItems = topic.contentSources.stream()
-                        .flatMap(contentSource -> contentItemFetcher.fetchItems(contentSource, LocalDate.now(), null, null).stream())
+                        .flatMap(contentSource -> contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null).stream())
                         .toList();
 
                 // 4. Summarize in parallel
@@ -62,7 +63,7 @@ public class OrchestratorService {
                 CompletableFuture.allOf(summarizationTasks.toArray(new CompletableFuture[0])).join();
 
                 // 6. Generate briefing
-                briefingService.generateBriefing(topic, LocalDate.now());
+                briefingService.generateBriefing(topic, orchestrationDate);
             }
         }
         logger.info("Orchestration finished.");
