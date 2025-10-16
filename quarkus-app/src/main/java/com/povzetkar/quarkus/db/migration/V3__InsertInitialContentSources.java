@@ -14,20 +14,35 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
     @Override
     public void migrate(Context context) throws Exception {
         // 1. Insert a default user if one does not exist
-        long defaultUserId;
+        long defaultUserId = getOrCreateUser(context, "default_user");
+
+        // 2. Insert sample YouTube channels (Content Sources)
+        int youtubeSourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+        String[] channelIdentifiers = {"UCSHZKyawb77ixDdsGog4iWA", "UCHnyfMqiRRG1u-2MsSQLbXA", "UCsXVk37bltHxD1rDPwtNM8Q"};
+        insertContentSources(context, youtubeSourceTypeId, channelIdentifiers);
+
+        // 3. Link these content sources to a default topic for the default user
+        long defaultTopicId = getOrCreateTopic(context, defaultUserId, "Default Topic");
+
+        // 4. Link content sources to the default topic
+        linkContentSourcesToTopic(context, defaultTopicId, channelIdentifiers);
+    }
+
+    private long getOrCreateUser(Context context, String userName) throws SQLException {
+        long userId;
         try (PreparedStatement select = context.getConnection().prepareStatement("SELECT id FROM users WHERE name = ?")) {
-            select.setString(1, "default_user");
+            select.setString(1, userName);
             try (ResultSet rows = select.executeQuery()) {
                 if (rows.next()) {
-                    defaultUserId = rows.getLong(1);
+                    userId = rows.getLong(1);
                 } else {
                     try (PreparedStatement insert = context.getConnection().prepareStatement(
                             "INSERT INTO users (name, active) VALUES (?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
-                        insert.setString(1, "default_user");
+                        insert.setString(1, userName);
                         insert.executeUpdate();
                         try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
                             if (generatedKeys.next()) {
-                                defaultUserId = generatedKeys.getLong(1);
+                                userId = generatedKeys.getLong(1);
                             } else {
                                 throw new SQLException("Creating user failed, no ID obtained.");
                             }
@@ -36,11 +51,39 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
                 }
             }
         }
+        return userId;
+    }
 
-        // 2. Insert sample YouTube channels (Content Sources)
-        int youtubeSourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        String[] channelIdentifiers = {"UCSHZKyawb77ixDdsGog4iWA", "UCHnyfMqiRRG1u-2MsSQLbXA", "UCsXVk37bltHxD1rDPwtNM8Q"};
+    private long getOrCreateTopic(Context context, long userId, String topicName) throws SQLException {
+        long topicId;
+        try (PreparedStatement select = context.getConnection().prepareStatement(
+                "SELECT id FROM topics WHERE user_id = ? AND name = ?")) {
+            select.setLong(1, userId);
+            select.setString(2, topicName);
+            try (ResultSet rows = select.executeQuery()) {
+                if (rows.next()) {
+                    topicId = rows.getLong(1);
+                } else {
+                    try (PreparedStatement insert = context.getConnection().prepareStatement(
+                            "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                        insert.setLong(1, userId);
+                        insert.setString(2, topicName);
+                        insert.executeUpdate();
+                        try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                topicId = generatedKeys.getLong(1);
+                            } else {
+                                throw new SQLException("Creating topic failed, no ID obtained.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return topicId;
+    }
 
+    private void insertContentSources(Context context, int youtubeSourceTypeId, String[] channelIdentifiers) throws SQLException {
         String insertContentSourceSql = "INSERT INTO content_sources (source_identifier, source_type_id, name, description, subscriber_count) VALUES (?, ?, '', '', 0) ON CONFLICT (source_identifier, source_type_id) DO NOTHING";
         try (PreparedStatement statement = context.getConnection().prepareStatement(insertContentSourceSql)) {
             for (String identifier : channelIdentifiers) {
@@ -50,34 +93,9 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
             }
             statement.executeBatch();
         }
+    }
 
-        // 3. Link these content sources to a default topic for the default user
-        long defaultTopicId;
-        String topicName = "Default Topic";
-        try (PreparedStatement select = context.getConnection().prepareStatement(
-                "SELECT id FROM topics WHERE user_id = ? AND name = ?")) {
-            select.setLong(1, defaultUserId);
-            select.setString(2, topicName);
-            ResultSet rows = select.executeQuery();
-            if (rows.next()) {
-                defaultTopicId = rows.getLong(1);
-            } else {
-                try (PreparedStatement insert = context.getConnection().prepareStatement(
-                        "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                    insert.setLong(1, defaultUserId);
-                    insert.setString(2, topicName);
-                    insert.executeUpdate();
-                    ResultSet generatedKeys = insert.getGeneratedKeys();
-                    if (generatedKeys.next()) {
-                        defaultTopicId = generatedKeys.getLong(1);
-                    } else {
-                        throw new SQLException("Creating topic failed, no ID obtained.");
-                    }
-                }
-            }
-        }
-
-        // 4. Link content sources to the default topic
+    private void linkContentSourcesToTopic(Context context, long defaultTopicId, String[] channelIdentifiers) throws SQLException {
         String linkSql = "INSERT INTO content_source_topics (content_source_id, topic_id) SELECT cs.id, ? FROM content_sources cs WHERE cs.source_identifier = ? ON CONFLICT (content_source_id, topic_id) DO NOTHING";
         try (PreparedStatement statement = context.getConnection().prepareStatement(linkSql)) {
             for (String identifier : channelIdentifiers) {

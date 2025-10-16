@@ -7,7 +7,6 @@ import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,6 @@ public class OrchestratorService {
         this.briefingService = briefingService;
     }
 
-    @Transactional
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
     public void runOrchestration() {
         logger.info("Orchestration started.");
