@@ -49,6 +49,6 @@ public class Topic extends PanacheEntityBase {
     }
 
     public static List<Topic> findByUser(User user) {
-        return list("user", user);
+        return find("select distinct t from Topic t left join fetch t.contentSources where t.user = ?1", user).list();
     }
 }
