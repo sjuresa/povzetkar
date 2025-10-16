@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,12 +28,22 @@ public class YouTubeFetchingStrategy implements ContentFetchingStrategy {
     }
 
     @Override
+    @Transactional
     public List<ContentItem> fetch(ContentSource source, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) {
         try {
             LocalDate actualFetchDate = (fetchDate != null) ? fetchDate : LocalDate.now();
-            return youTubeContentFetcherService.fetchYouTubeVideos(source, actualFetchDate, maxTotal, stopAtVideoId).stream()
-                    .map(ContentItem.class::cast)
-                    .toList();
+            List<com.povzetkar.quarkus.model.YouTubeVideo> fetchedVideos = youTubeContentFetcherService.fetchYouTubeVideos(source, actualFetchDate, maxTotal, stopAtVideoId);
+
+            java.util.List<ContentItem> newItems = new java.util.ArrayList<>();
+            for (com.povzetkar.quarkus.model.YouTubeVideo video : fetchedVideos) {
+                // Check for existence to ensure idempotency.
+                if (com.povzetkar.quarkus.model.YouTubeVideo.find("videoId", video.videoId).count() == 0) {
+                    video.contentSource = source;
+                    video.persist();
+                    newItems.add(video);
+                }
+            }
+            return newItems;
         } catch (IOException e) {
             logger.error("Failed to fetch YouTube videos for content source: {}", source.sourceIdentifier, e);
             return Collections.emptyList();
