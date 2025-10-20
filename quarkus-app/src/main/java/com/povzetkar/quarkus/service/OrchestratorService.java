@@ -7,11 +7,13 @@ import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @ApplicationScoped
 public class OrchestratorService {
@@ -21,12 +23,14 @@ public class OrchestratorService {
     private final ContentItemFetcher contentItemFetcher;
     private final AsyncSummarizationService asyncSummarizationService;
     private final BriefingService briefingService;
+    private final ManagedExecutor managedExecutor;
 
     @Inject
-    public OrchestratorService(ContentItemFetcher contentItemFetcher, AsyncSummarizationService asyncSummarizationService, BriefingService briefingService) {
+    public OrchestratorService(ContentItemFetcher contentItemFetcher, AsyncSummarizationService asyncSummarizationService, BriefingService briefingService, ManagedExecutor managedExecutor) {
         this.contentItemFetcher = contentItemFetcher;
         this.asyncSummarizationService = asyncSummarizationService;
         this.briefingService = briefingService;
+        this.managedExecutor = managedExecutor;
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
@@ -43,9 +47,18 @@ public class OrchestratorService {
             for (Topic topic : userTopics) {
                 logger.debug("Processing topic: {}", topic.name);
 
-                // 3. Fetch new content
-                List<ContentItem> newContentItems = topic.contentSources.stream()
-                        .flatMap(contentSource -> contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null).stream())
+                // 3. Fetch new content in parallel
+                List<Uni<List<ContentItem>>> fetchTasks = topic.contentSources.stream()
+                        .map(contentSource -> Uni.createFrom().completionStage(managedExecutor.supplyAsync(() ->
+                                contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null)
+                        )))
+                        .toList();
+                List<ContentItem> newContentItems = Uni.join().all(fetchTasks)
+                        .andCollectFailures()
+                        .await().indefinitely()
+                        .stream()
+                        .filter(Objects::nonNull)  // Remove nulls from failed fetches
+                        .flatMap(List::stream)
                         .toList();
 
                 // 4. Summarize in parallel
