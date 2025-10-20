@@ -44,7 +44,7 @@ public class OrchestratorService {
                 logger.debug("Processing topic: {}", topic.name);
 
                 // 3. Fetch new content
-                List<ContentItem> newContentItems = topic.contentSources.parallelStream()
+                List<ContentItem> newContentItems = topic.contentSources.stream()
                         .flatMap(contentSource -> contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null).stream())
                         .toList();
 

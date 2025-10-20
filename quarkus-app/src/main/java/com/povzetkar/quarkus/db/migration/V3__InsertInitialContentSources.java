@@ -6,7 +6,6 @@ import org.flywaydb.core.api.migration.Context;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
 
 public class V3__InsertInitialContentSources extends BaseJavaMigration {
@@ -51,32 +50,28 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
     }
 
     private long getOrCreateTopic(Context context, long userId, String topicName) throws SQLException {
-        long topicId;
+        // Attempt to insert, ignoring conflicts on (user_id, name)
+        try (PreparedStatement insert = context.getConnection().prepareStatement(
+                "INSERT INTO topics (user_id, name) VALUES (?, ?) ON CONFLICT (user_id, name) DO NOTHING")) {
+            insert.setLong(1, userId);
+            insert.setString(2, topicName);
+            insert.executeUpdate();
+        }
+
+        // Always select to get the ID, whether it was just inserted or already existed
         try (PreparedStatement select = context.getConnection().prepareStatement(
                 "SELECT id FROM topics WHERE user_id = ? AND name = ?")) {
             select.setLong(1, userId);
             select.setString(2, topicName);
             try (ResultSet rows = select.executeQuery()) {
                 if (rows.next()) {
-                    topicId = rows.getLong(1);
+                    return rows.getLong(1);
                 } else {
-                    try (PreparedStatement insert = context.getConnection().prepareStatement(
-                            "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                        insert.setLong(1, userId);
-                        insert.setString(2, topicName);
-                        insert.executeUpdate();
-                        try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                topicId = generatedKeys.getLong(1);
-                            } else {
-                                throw new SQLException("Creating topic failed, no ID obtained.");
-                            }
-                        }
-                    }
+                    // This should not happen if the unique constraint and logic are correct
+                    throw new SQLException("Topic '" + topicName + "' for user ID " + userId + " not found after insert attempt.");
                 }
             }
         }
-        return topicId;
     }
 
     private void insertContentSources(Context context, int youtubeSourceTypeId, String[] channelIdentifiers) throws SQLException {
