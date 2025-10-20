@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,6 +20,7 @@ class BriefingTest {
     void testBriefingPersistence() {
         // Create a User dependency
         User user = new User();
+        user.username = "test_user_briefing_" + UUID.randomUUID();
         user.name = "Test User";
         user.active = true;
         user.persist();

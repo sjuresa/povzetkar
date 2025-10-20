@@ -16,6 +16,9 @@ public class User extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Column(unique = true, nullable = false)
+    public String username;
+
     @Column(nullable = false)
     public boolean active = true;
 

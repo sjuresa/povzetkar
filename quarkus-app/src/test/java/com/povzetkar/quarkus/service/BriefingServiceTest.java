@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -41,13 +42,12 @@ class BriefingServiceTest {
     void setUp() {
         Mockito.reset(videoSummaryService);
         mockedSummary = Mockito.mockStatic(Summary.class);
-        PanacheMock.mock(Briefing.class); // Correctly mock Briefing using PanacheMock
+        PanacheMock.mock(Briefing.class);
     }
 
     @AfterEach
     void tearDown() {
         mockedSummary.close();
-        // PanacheMock does not need to be closed like MockedStatic
     }
 
     @Test
@@ -55,6 +55,7 @@ class BriefingServiceTest {
     void testGenerateBriefingCreatesAndPersistsBriefing() {
         // Given
         User user = new User();
+        user.username = "test_user_briefing_1_" + UUID.randomUUID();
         user.name = "Test User";
         user.active = true;
         user.persist();
@@ -122,6 +123,7 @@ class BriefingServiceTest {
     void testGenerateBriefing_AlreadyExists_SkipsGeneration() {
         // Given
         User user = new User();
+        user.username = "test_user_briefing_2_" + UUID.randomUUID();
         user.name = "Test User";
         user.active = true;
         user.persist();

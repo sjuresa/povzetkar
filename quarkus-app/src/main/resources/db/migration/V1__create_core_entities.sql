@@ -8,6 +8,7 @@ CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'R
 -- users
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     name VARCHAR(255) NOT NULL
 );

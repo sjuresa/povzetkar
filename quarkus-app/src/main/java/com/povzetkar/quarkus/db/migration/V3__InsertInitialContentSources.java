@@ -14,7 +14,7 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
     @Override
     public void migrate(Context context) throws Exception {
         // 1. Insert a default user if one does not exist
-        long defaultUserId = getOrCreateUser(context, "default_user");
+        long defaultUserId = getOrCreateUser(context, "default_user", "default_user");
 
         // 2. Insert sample YouTube channels (Content Sources)
         int youtubeSourceTypeId = SourceTypeEnum.YOUTUBE.getId();
@@ -28,55 +28,55 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
         linkContentSourcesToTopic(context, defaultTopicId, channelIdentifiers);
     }
 
-    private long getOrCreateUser(Context context, String userName) throws SQLException {
-        try (PreparedStatement select = context.getConnection().prepareStatement("SELECT id FROM users WHERE name = ?")) {
-            select.setString(1, userName);
+    private long getOrCreateUser(Context context, String username, String name) throws SQLException {
+        // Attempt to insert, ignoring conflicts
+        try (PreparedStatement insert = context.getConnection().prepareStatement(
+                "INSERT INTO users (username, name, active) VALUES (?, ?, TRUE) ON CONFLICT (username) DO NOTHING")) {
+            insert.setString(1, username);
+            insert.setString(2, name);
+            insert.executeUpdate();
+        }
+
+        // Always select to get the ID, whether it was just inserted or already existed
+        try (PreparedStatement select = context.getConnection().prepareStatement("SELECT id FROM users WHERE username = ?")) {
+            select.setString(1, username);
             try (ResultSet rows = select.executeQuery()) {
                 if (rows.next()) {
                     return rows.getLong(1);
-                }
-            }
-        }
-
-        try (PreparedStatement insert = context.getConnection().prepareStatement(
-                "INSERT INTO users (name, active) VALUES (?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
-            insert.setString(1, userName);
-            insert.executeUpdate();
-            try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getLong(1);
                 } else {
-                    throw new SQLException("Creating user failed, no ID obtained.");
+                    throw new SQLException("User with username '" + username + "' not found after insert attempt.");
                 }
             }
         }
     }
 
     private long getOrCreateTopic(Context context, long userId, String topicName) throws SQLException {
+        long topicId;
         try (PreparedStatement select = context.getConnection().prepareStatement(
                 "SELECT id FROM topics WHERE user_id = ? AND name = ?")) {
             select.setLong(1, userId);
             select.setString(2, topicName);
             try (ResultSet rows = select.executeQuery()) {
                 if (rows.next()) {
-                    return rows.getLong(1);
-                }
-            }
-        }
-
-        try (PreparedStatement insert = context.getConnection().prepareStatement(
-                "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-            insert.setLong(1, userId);
-            insert.setString(2, topicName);
-            insert.executeUpdate();
-            try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getLong(1);
+                    topicId = rows.getLong(1);
                 } else {
-                    throw new SQLException("Creating topic failed, no ID obtained.");
+                    try (PreparedStatement insert = context.getConnection().prepareStatement(
+                            "INSERT INTO topics (user_id, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                        insert.setLong(1, userId);
+                        insert.setString(2, topicName);
+                        insert.executeUpdate();
+                        try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                topicId = generatedKeys.getLong(1);
+                            } else {
+                                throw new SQLException("Creating topic failed, no ID obtained.");
+                            }
+                        }
+                    }
                 }
             }
         }
+        return topicId;
     }
 
     private void insertContentSources(Context context, int youtubeSourceTypeId, String[] channelIdentifiers) throws SQLException {

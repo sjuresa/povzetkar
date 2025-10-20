@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,6 +61,7 @@ class OrchestratorServiceTest {
         // Given
         User user = new User();
         user.id = 1L;
+        user.username = "test_user_" + UUID.randomUUID();
         user.name = "Test User";
         user.active = true;
 
