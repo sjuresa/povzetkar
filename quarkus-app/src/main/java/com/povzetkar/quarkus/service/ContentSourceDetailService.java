@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.service;
 
-import com.google.api.services.youtube.model.Channel;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -66,15 +65,5 @@ public class ContentSourceDetailService {
     void scheduledRefreshAllContentSources() {
         logger.info("Running scheduled content source refresh.");
         refreshAllContentSources();
-    }
-
-    public static ContentSourceDetails extractContentSourceDetails(Channel channel) {
-        String name = channel.getSnippet().getTitle();
-        String description = channel.getSnippet().getDescription();
-        long subscriberCount = 0L;
-        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
-            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
-        }
-        return new ContentSourceDetails(name, description, subscriberCount);
     }
 }

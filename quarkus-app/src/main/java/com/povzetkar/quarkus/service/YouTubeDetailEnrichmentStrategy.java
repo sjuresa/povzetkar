@@ -56,7 +56,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             }
 
             Channel channel = items.getFirst();
-            return Optional.of(ContentSourceDetailService.extractContentSourceDetails(channel));
+            return Optional.of(extractContentSourceDetails(channel));
 
         } catch (IOException e) {
             logger.error("Failed to fetch details for channel ID: {}", identifier, e);
@@ -99,9 +99,19 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     }
 
     private void updateSourceFromChannel(ContentSource source, Channel channel) {
-        ContentSourceDetailService.ContentSourceDetails details = ContentSourceDetailService.extractContentSourceDetails(channel);
+        ContentSourceDetailService.ContentSourceDetails details = extractContentSourceDetails(channel);
         source.name = details.name();
         source.description = details.description();
         source.subscriberCount = details.subscriberCount();
+    }
+
+    private ContentSourceDetailService.ContentSourceDetails extractContentSourceDetails(Channel channel) {
+        String name = channel.getSnippet().getTitle();
+        String description = channel.getSnippet().getDescription();
+        long subscriberCount = 0L;
+        if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
+            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+        }
+        return new ContentSourceDetailService.ContentSourceDetails(name, description, subscriberCount);
     }
 }
