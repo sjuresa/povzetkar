@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import io.quarkus.panache.common.Page;
@@ -120,9 +121,9 @@ public class ContentSourceResource {
     }
 
     @GET
-    @Path("/content-sources/details/{channelId}")
-    public ContentSourceDetailService.ContentSourceDetails getContentSourceDetails(@PathParam("channelId") String channelId) {
-        return contentSourceDetailService.fetchContentSourceDetails(channelId)
-                .orElseThrow(() -> new NotFoundException("Details for channel ID " + channelId + " not found"));
+    @Path("/content-sources/details/{sourceTypeId}/{identifier}")
+    public ContentSourceDetailService.ContentSourceDetails getContentSourceDetails(@PathParam("sourceTypeId") int sourceTypeId, @PathParam("identifier") String identifier) {
+        return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)
+                .orElseThrow(() -> new NotFoundException("Details for source type " + SourceTypeEnum.fromId(sourceTypeId) + " with identifier " + identifier + " not found"));
     }
 }

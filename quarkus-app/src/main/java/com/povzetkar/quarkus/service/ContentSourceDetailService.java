@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.service;
 
-import com.povzetkar.quarkus.model.SourceTypeEnum;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,14 +25,15 @@ public class ContentSourceDetailService {
     public record ContentSourceDetails(String name, String description, Long subscriberCount) {}
 
     /**
-     * Fetches details for a given YouTube channel ID from the YouTube Data API.
+     * Fetches details for a given channel ID from the appropriate source API.
      *
-     * @param channelId The ID of the channel to fetch details for.
+     * @param sourceTypeId The ID of the source type (e.g., YouTube).
+     * @param identifier The ID of the channel/source to fetch details for.
      * @return An Optional containing ContentSourceDetails if found, or empty if not.
      */
-    public Optional<ContentSourceDetails> fetchContentSourceDetails(String channelId) {
-        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(SourceTypeEnum.YOUTUBE.getId());
-        return strategy.fetchDetails(channelId);
+    public Optional<ContentSourceDetails> fetchContentSourceDetails(int sourceTypeId, String identifier) {
+        ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(sourceTypeId);
+        return strategy.fetchDetails(identifier);
     }
 
     /**
