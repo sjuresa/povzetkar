@@ -47,15 +47,17 @@ public class YouTubeFetchingStrategy implements ContentFetchingStrategy {
                     .stream()
                     .map(v -> v.videoId).collect(Collectors.toSet());
 
-            List<ContentItem> newItems = new ArrayList<>();
+            List<YouTubeVideo> newVideosToPersist = new ArrayList<>();
             for (YouTubeVideo video : fetchedVideos) {
                 if (!existingVideoIds.contains(video.videoId)) {
                     video.contentSource = source;
-                    video.persist();
-                    newItems.add(video);
+                    newVideosToPersist.add(video);
                 }
             }
-            return newItems;
+            if (!newVideosToPersist.isEmpty()) {
+                YouTubeVideo.persist(newVideosToPersist);
+            }
+            return new ArrayList<>(newVideosToPersist);
         } catch (IOException e) {
             logger.error("Failed to fetch YouTube videos for content source: {}", source.sourceIdentifier, e);
             return Collections.emptyList();
