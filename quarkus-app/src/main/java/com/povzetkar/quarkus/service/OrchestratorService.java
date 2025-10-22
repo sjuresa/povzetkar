@@ -41,12 +41,12 @@ public class OrchestratorService {
 
         List<User> activeUsers = User.listAllActive();
 
-        List<Topic> allTopics = activeUsers.stream()
-                .flatMap(user -> {
-                    logger.info("Processing user: {}", user.name);
-                    return Topic.findByUser(user).stream();
-                })
-                .toList();
+        if (activeUsers.isEmpty()) {
+            logger.info("No active users found. Orchestration finished.");
+            return;
+        }
+
+        List<Topic> allTopics = Topic.findByUsers(activeUsers);
 
         List<CompletableFuture<Void>> topicFutures = allTopics.stream()
                 .map(topic -> managedExecutor.runAsync(() -> {
