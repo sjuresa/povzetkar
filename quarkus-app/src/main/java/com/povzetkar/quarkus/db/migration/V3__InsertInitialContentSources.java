@@ -43,7 +43,7 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
                 if (rows.next()) {
                     return rows.getLong(1);
                 } else {
-                    throw new SQLException("User with username '" + username + "' not found after insert attempt.");
+                    throw new SQLException(String.format("User with username '%s' not found after insert attempt.", username));
                 }
             }
         }

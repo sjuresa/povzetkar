@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +27,6 @@ public class BriefingService {
 
     @Transactional
     public Briefing generateBriefing(Topic topic, LocalDate briefingDate) {
-        // Check if a briefing for this topic and date already exists.
-        if (Briefing.find("topic = ?1 and briefingDate = ?2", topic, briefingDate).count() > 0) {
-            logger.info("Briefing for topic '{}' on {} already exists. Skipping generation.", topic.name, briefingDate);
-            return null;
-        }
-
         // 1. Query the database for all Summary entities for the given topic within that period.
         List<Summary> summaries = Summary.findByTopicAndDateRange(topic, briefingDate);
 
@@ -51,7 +46,14 @@ public class BriefingService {
         // 4. Create a new Briefing entity, linking it to the parent Topic and all relevant summaries, then persisting it.
         Briefing briefing = new Briefing(topic, "Daily Briefing for " + briefingDate, metaSummary, briefingDate);
         briefing.summaries.addAll(summaries);
-        briefing.persist();
-        return briefing;
+
+        try {
+            briefing.persist();
+            return briefing;
+        } catch (PersistenceException e) {
+            // This is expected if another process created the briefing in the meantime due to the unique constraint.
+            logger.warn("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate);
+            return null;
+        }
     }
 }

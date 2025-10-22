@@ -114,7 +114,8 @@ CREATE TABLE briefings (
     CONSTRAINT fk_topic_briefing
         FOREIGN KEY(topic_id)
         REFERENCES topics(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT uc_topic_id_briefing_date UNIQUE (topic_id, briefing_date)
 );
 
 -- categories
