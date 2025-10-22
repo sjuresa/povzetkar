@@ -15,9 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import java.time.LocalDate;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -63,44 +61,55 @@ class OrchestratorServiceTest {
     }
 
     @Test
-    void testOrchestratorRunsScheduledTasks() {
+    void testOrchestratorRunsScheduledTasksInParallel() {
         // Given
-        User user = new User();
-        user.id = 1L;
-        user.username = "test_user_" + UUID.randomUUID();
-        user.name = "Test User";
-        user.active = true;
+        User user1 = new User();
+        user1.id = 1L;
+        user1.username = "user1_" + UUID.randomUUID();
+        user1.name = "User One";
 
-        Topic topic = new Topic();
-        topic.id = 1L;
-        topic.name = "Test Topic";
-        topic.user = user;
+        Topic topic1 = new Topic();
+        topic1.id = 1L;
+        topic1.name = "Topic One";
+        topic1.user = user1;
+        topic1.contentSources = Set.of(new ContentSource());
 
-        ContentSource contentSource = new ContentSource();
-        contentSource.id = 1L;
-        contentSource.name = "Test Content Source";
-        Set<ContentSource> contentSources = new HashSet<>();
-        contentSources.add(contentSource);
-        topic.contentSources = contentSources;
+        Topic topic2 = new Topic();
+        topic2.id = 2L;
+        topic2.name = "Topic Two";
+        topic2.user = user1;
+        topic2.contentSources = Set.of(new ContentSource());
 
-        user.topics.add(topic);
+        User user2 = new User();
+        user2.id = 2L;
+        user2.username = "user2_" + UUID.randomUUID();
+        user2.name = "User Two";
 
-        mockedUser.when(User::listAllActive).thenReturn(Collections.singletonList(user));
-        mockedTopic.when(() -> Topic.findByUser(any(User.class))).thenReturn(Collections.singletonList(topic));
+        Topic topic3 = new Topic();
+        topic3.id = 3L;
+        topic3.name = "Topic Three";
+        topic3.user = user2;
+        topic3.contentSources = Set.of(new ContentSource());
 
-        ContentItem contentItem = new ContentItem(); // Simplified ContentItem
+        mockedUser.when(User::listAllActive).thenReturn(List.of(user1, user2));
+        mockedTopic.when(() -> Topic.findByUser(user1)).thenReturn(List.of(topic1, topic2));
+        mockedTopic.when(() -> Topic.findByUser(user2)).thenReturn(List.of(topic3));
+
+        ContentItem contentItem = new ContentItem();
         List<ContentItem> fetchedItems = Collections.singletonList(contentItem);
 
-        when(contentItemFetcher.fetchItems(any(ContentSource.class), any(LocalDate.class), eq(null), eq(null)))
-                .thenReturn(fetchedItems);
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class)))
-                .thenReturn(Uni.createFrom().voidItem());
+        when(contentItemFetcher.fetchItems(any(), any(), any(), any())).thenReturn(fetchedItems);
+        when(asyncSummarizationService.summarizeAsync(any())).thenReturn(Uni.createFrom().voidItem());
 
-        // Mock ManagedExecutor to run the Supplier immediately and return a completed future
+        // Mock the inner parallel fetch
         when(managedExecutor.supplyAsync(any(Supplier.class)))
+            .thenAnswer(invocation -> CompletableFuture.completedFuture(invocation.getArgument(0, Supplier.class).get()));
+
+        // Mock the outer parallel topic processing
+        when(managedExecutor.runAsync(any(Runnable.class)))
             .thenAnswer(invocation -> {
-                Supplier<List<ContentItem>> supplier = invocation.getArgument(0);
-                return CompletableFuture.completedFuture(supplier.get()); // Execute the supplier and return its result
+                invocation.getArgument(0, Runnable.class).run();
+                return CompletableFuture.completedFuture(null);
             });
 
         // When
@@ -108,11 +117,17 @@ class OrchestratorServiceTest {
 
         // Then
         mockedUser.verify(User::listAllActive, times(1));
-        mockedTopic.verify(() -> Topic.findByUser(eq(user)), times(1));
-        // Verify that managedExecutor.supplyAsync was called for each content source
-        verify(managedExecutor, times(contentSources.size())).supplyAsync(any(Supplier.class));
-        verify(contentItemFetcher, times(contentSources.size())).fetchItems(eq(contentSource), any(LocalDate.class), eq(null), eq(null));
-        verify(asyncSummarizationService, times(fetchedItems.size())).summarizeAsync(contentItem);
-        verify(briefingService, times(1)).generateBriefing(eq(topic), any(LocalDate.class));
+        mockedTopic.verify(() -> Topic.findByUser(user1), times(1));
+        mockedTopic.verify(() -> Topic.findByUser(user2), times(1));
+
+        // Verify that a task was submitted for each of the 3 topics
+        verify(managedExecutor, times(3)).runAsync(any(Runnable.class));
+
+        // Verify inner logic was called for each topic
+        verify(contentItemFetcher, times(3)).fetchItems(any(), any(), any(), any());
+        verify(asyncSummarizationService, times(3)).summarizeAsync(any());
+        verify(briefingService, times(1)).generateBriefing(eq(topic1), any());
+        verify(briefingService, times(1)).generateBriefing(eq(topic2), any());
+        verify(briefingService, times(1)).generateBriefing(eq(topic3), any());
     }
 }
