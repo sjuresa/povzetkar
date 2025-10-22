@@ -39,22 +39,30 @@ class BriefingTest {
         contentSource.subscriberCount = 200;
         contentSource.persist();
 
-        // Create a ContentItem dependency
-        ContentItem contentItem = new ContentItem();
-        contentItem.contentSource = contentSource;
-        contentItem.sourceUrl = "http://example.com/test_briefing_content_item";
-        contentItem.rawContent = "Raw content for briefing item.";
-        contentItem.publishedAt = Instant.now();
-        contentItem.processingStatus = ProcessingStatus.COMPLETED;
-        contentItem.persist();
+        // Create two unique ContentItem dependencies
+        ContentItem contentItem1 = new ContentItem();
+        contentItem1.contentSource = contentSource;
+        contentItem1.sourceUrl = "http://example.com/test_briefing_content_item_1";
+        contentItem1.rawContent = "Raw content for briefing item 1.";
+        contentItem1.publishedAt = Instant.now();
+        contentItem1.processingStatus = ProcessingStatus.COMPLETED;
+        contentItem1.persist();
 
-        // Create two Summary entities for the briefing
+        ContentItem contentItem2 = new ContentItem();
+        contentItem2.contentSource = contentSource;
+        contentItem2.sourceUrl = "http://example.com/test_briefing_content_item_2";
+        contentItem2.rawContent = "Raw content for briefing item 2.";
+        contentItem2.publishedAt = Instant.now();
+        contentItem2.processingStatus = ProcessingStatus.COMPLETED;
+        contentItem2.persist();
+
+        // Create two Summary entities, each linked to a unique ContentItem
         String summaryText1 = "Summary one for briefing.";
-        Summary summary1 = new Summary(summaryText1, contentItem);
+        Summary summary1 = new Summary(summaryText1, contentItem1);
         summary1.persist();
 
         String summaryText2 = "Summary two for briefing.";
-        Summary summary2 = new Summary(summaryText2, contentItem);
+        Summary summary2 = new Summary(summaryText2, contentItem2);
         summary2.persist();
 
         // Create a Briefing entity

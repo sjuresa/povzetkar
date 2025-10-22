@@ -1,13 +1,13 @@
 package com.povzetkar.quarkus.model;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 class SummaryTest {
@@ -45,5 +45,37 @@ class SummaryTest {
         assertNotNull(retrievedSummary);
         assertEquals(summaryText, retrievedSummary.summaryText);
         assertEquals(contentItem.id, retrievedSummary.contentItem.id);
+    }
+
+    @Test
+    @Transactional
+    void testSummaryPersistence_DuplicateContentItemFails() {
+        // Create a ContentSource dependency
+        ContentSource contentSource = new ContentSource();
+        contentSource.sourceIdentifier = "test_source_id_duplicate";
+        contentSource.sourceTypeId = 1;
+        contentSource.name = "Test Source Duplicate";
+        contentSource.subscriberCount = 100;
+        contentSource.persist();
+
+        // Create a ContentItem dependency
+        ContentItem contentItem = new ContentItem();
+        contentItem.contentSource = contentSource;
+        contentItem.sourceUrl = "http://example.com/test_content_item_duplicate";
+        contentItem.rawContent = "This is the raw content for the test item duplicate.";
+        contentItem.publishedAt = Instant.now();
+        contentItem.processingStatus = ProcessingStatus.COMPLETED;
+        contentItem.persist();
+
+        // Persist the first Summary
+        Summary summary1 = new Summary("First summary.", contentItem);
+        summary1.persist();
+        assertNotNull(summary1.id);
+
+        // Attempt to persist a second Summary for the same ContentItem
+        Summary summary2 = new Summary("Second summary.", contentItem);
+
+        // Expect a PersistenceException due to the unique constraint
+        assertThrows(PersistenceException.class, summary2::persist);
     }
 }

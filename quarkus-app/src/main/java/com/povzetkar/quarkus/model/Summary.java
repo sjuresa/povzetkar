@@ -19,7 +19,7 @@ public class Summary extends PanacheEntityBase {
     @Column(name = "summary_text", nullable = false)
     public String summaryText;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "content_item_id", nullable = false)
     public ContentItem contentItem;
 

@@ -100,7 +100,8 @@ CREATE TABLE summaries (
     CONSTRAINT fk_content_item_summary
         FOREIGN KEY(content_item_id)
         REFERENCES content_items(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT uc_content_item_id UNIQUE (content_item_id)
 );
 
 -- briefings
