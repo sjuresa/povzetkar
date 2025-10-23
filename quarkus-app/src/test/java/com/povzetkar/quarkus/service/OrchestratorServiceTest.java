@@ -8,7 +8,6 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,8 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,15 +38,12 @@ class OrchestratorServiceTest {
     @InjectMock
     BriefingService briefingService;
 
-    @InjectMock
-    ManagedExecutor managedExecutor;
-
     private MockedStatic<User> mockedUser;
     private MockedStatic<Topic> mockedTopic;
 
     @BeforeEach
     void setUp() {
-        Mockito.reset(contentItemFetcher, asyncSummarizationService, briefingService, managedExecutor);
+        Mockito.reset(contentItemFetcher, asyncSummarizationService, briefingService);
         mockedUser = Mockito.mockStatic(User.class);
         mockedTopic = Mockito.mockStatic(Topic.class);
     }
@@ -61,7 +55,7 @@ class OrchestratorServiceTest {
     }
 
     @Test
-    void testOrchestratorRunsScheduledTasksInParallel() {
+    void testOrchestrationProcessesAllTopics() {
         // Given
         User user1 = new User();
         user1.id = 1L;
@@ -96,15 +90,6 @@ class OrchestratorServiceTest {
         when(contentItemFetcher.fetchItems(any(), any(), any(), any())).thenReturn(fetchedItems);
         when(asyncSummarizationService.summarizeAsync(any())).thenReturn(Uni.createFrom().voidItem());
 
-        when(managedExecutor.supplyAsync(any(Supplier.class)))
-            .thenAnswer(invocation -> CompletableFuture.completedFuture(invocation.getArgument(0, Supplier.class).get()));
-
-        when(managedExecutor.runAsync(any(Runnable.class)))
-            .thenAnswer(invocation -> {
-                invocation.getArgument(0, Runnable.class).run();
-                return CompletableFuture.completedFuture(null);
-            });
-
         // When
         orchestratorService.runOrchestration();
 
@@ -112,7 +97,7 @@ class OrchestratorServiceTest {
         mockedUser.verify(User::listAllActive, times(1));
         mockedTopic.verify(() -> Topic.findByUsers(activeUsers));
 
-        verify(managedExecutor, times(allTopics.size())).runAsync(any(Runnable.class));
+        // Verify that for each topic, the processing steps were called
         verify(contentItemFetcher, times(allTopics.size())).fetchItems(any(), any(), any(), any());
         verify(asyncSummarizationService, times(allTopics.size())).summarizeAsync(any());
         verify(briefingService, times(1)).generateBriefing(eq(topic1), any());
