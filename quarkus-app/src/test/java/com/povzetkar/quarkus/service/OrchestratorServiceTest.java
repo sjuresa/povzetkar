@@ -53,8 +53,15 @@ class OrchestratorServiceTest {
         mockedUser = Mockito.mockStatic(User.class);
         mockedTopic = Mockito.mockStatic(Topic.class);
 
-        // Mock the executor to run tasks immediately on the same thread
+        // Mock the executor to run tasks immediately on the same thread for supplyAsync
         when(managedExecutor.supplyAsync(any())).thenAnswer(invocation -> CompletableFuture.completedFuture(invocation.getArgument(0, java.util.function.Supplier.class).get()));
+
+        // Mock the executor to run tasks immediately on the same thread for execute
+        doAnswer(invocation -> {
+            Runnable runnable = invocation.getArgument(0);
+            runnable.run(); // Execute immediately
+            return null;
+        }).when(managedExecutor).execute(any(Runnable.class));
     }
 
     @AfterEach
