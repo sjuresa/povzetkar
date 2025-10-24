@@ -28,47 +28,36 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
     }
 
     private long getOrCreateUser(Context context, String username, String name) throws SQLException {
-        // Attempt to insert, ignoring conflicts
-        try (PreparedStatement insert = context.getConnection().prepareStatement(
-                "INSERT INTO users (username, name, active) VALUES (?, ?, TRUE) ON CONFLICT (username) DO NOTHING")) {
-            insert.setString(1, username);
-            insert.setString(2, name);
-            insert.executeUpdate();
-        }
-
-        // Always select to get the ID, whether it was just inserted or already existed
-        try (PreparedStatement select = context.getConnection().prepareStatement("SELECT id FROM users WHERE username = ?")) {
-            select.setString(1, username);
-            try (ResultSet rows = select.executeQuery()) {
-                if (rows.next()) {
-                    return rows.getLong(1);
+        String sql = "INSERT INTO users (username, name, active) VALUES (?, ?, TRUE) " +
+                     "ON CONFLICT (username) DO UPDATE SET name = users.name " + // A no-op update to allow RETURNING
+                     "RETURNING id";
+        try (PreparedStatement statement = context.getConnection().prepareStatement(sql)) {
+            statement.setString(1, username);
+            statement.setString(2, name);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
                 } else {
-                    throw new SQLException(String.format("User with username '%s' not found after insert attempt.", username));
+                    // This path should not be reached if the SQL is correct and the user exists or is created.
+                    throw new SQLException(String.format("Could not get or create user with username '%s'.", username));
                 }
             }
         }
     }
 
     private long getOrCreateTopic(Context context, long userId, String topicName) throws SQLException {
-        // Attempt to insert, ignoring conflicts on (user_id, name)
-        try (PreparedStatement insert = context.getConnection().prepareStatement(
-                "INSERT INTO topics (user_id, name) VALUES (?, ?) ON CONFLICT (user_id, name) DO NOTHING")) {
-            insert.setLong(1, userId);
-            insert.setString(2, topicName);
-            insert.executeUpdate();
-        }
-
-        // Always select to get the ID, whether it was just inserted or already existed
-        try (PreparedStatement select = context.getConnection().prepareStatement(
-                "SELECT id FROM topics WHERE user_id = ? AND name = ?")) {
-            select.setLong(1, userId);
-            select.setString(2, topicName);
-            try (ResultSet rows = select.executeQuery()) {
-                if (rows.next()) {
-                    return rows.getLong(1);
+        String sql = "INSERT INTO topics (user_id, name) VALUES (?, ?) " +
+                     "ON CONFLICT (user_id, name) DO UPDATE SET name = topics.name " + // A no-op update to allow RETURNING
+                     "RETURNING id";
+        try (PreparedStatement statement = context.getConnection().prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            statement.setString(2, topicName);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
                 } else {
-                    // This should not happen if the unique constraint and logic are correct
-                    throw new SQLException("Topic '" + topicName + "' for user ID " + userId + " not found after insert attempt.");
+                    // This path should not be reached if the SQL is correct and the topic exists or is created.
+                    throw new SQLException(String.format("Could not get or create topic '%s' for user ID %d.", topicName, userId));
                 }
             }
         }
