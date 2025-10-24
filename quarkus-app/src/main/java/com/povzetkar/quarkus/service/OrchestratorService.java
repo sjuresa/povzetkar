@@ -35,59 +35,61 @@ public class OrchestratorService {
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
-    public void runOrchestration() {
+    public Uni<Void> runOrchestration() {
         logger.info("Orchestration started.");
         final LocalDate orchestrationDate = LocalDate.now();
-        final int topicConcurrency = 5;
 
         List<User> activeUsers = User.listAllActive();
         if (activeUsers.isEmpty()) {
             logger.info("No active users found. Orchestration finished.");
-            return;
+            return Uni.createFrom().voidItem();
         }
 
         List<Topic> allTopics = Topic.findByUsers(activeUsers);
 
-        Multi.createFrom().iterable(allTopics)
+        return Multi.createFrom().iterable(allTopics)
                 .onItem().transformToUni(topic -> processTopicUni(topic, orchestrationDate))
-                .merge(topicConcurrency)
+                .merge()
                 .collect().asList()
-                .await().indefinitely();
-
-        logger.info("Orchestration finished.");
+                .onItem().invoke(() -> logger.info("Orchestration finished."))
+                .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly", ex))
+                .replaceWithVoid();
     }
 
     private Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate) {
-        return Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
-            logger.debug("Processing topic: {}", topic.name);
+        logger.debug("Processing topic: {}", topic.name);
 
-            // 3. Fetch new content in parallel
-            List<Uni<List<ContentItem>>> fetchTasks = topic.contentSources.stream()
-                    .map(contentSource -> Uni.createFrom().completionStage(managedExecutor.supplyAsync(() ->
-                            contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null)
-                    )))
-                    .toList();
-            List<ContentItem> newContentItems = Uni.join().all(fetchTasks)
-                    .andCollectFailures()
-                    .await().indefinitely()
-                    .stream()
-                    .filter(Objects::nonNull)  // Remove nulls from failed fetches
-                    .flatMap(List::stream)
-                    .toList();
+        // 1. Fetch new content in parallel
+        List<Uni<List<ContentItem>>> fetchTasks = topic.contentSources.stream()
+                .map(contentSource -> Uni.createFrom().completionStage(managedExecutor.supplyAsync(() ->
+                        contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null)
+                )))
+                .toList();
 
-            // 4. Summarize in parallel
-            List<Uni<Void>> summarizationTasks = newContentItems.stream()
-                    .map(item -> asyncSummarizationService.summarizeAsync(item)
-                            .onFailure().invoke(ex -> logger.error("Failed to summarize content item with id: {}", item.id, ex))
-                            .onFailure().recoverWithNull())
-                    .toList();
+        return Uni.join().all(fetchTasks).andCollectFailures()
+                .onItem().transform(results -> results.stream()
+                        .filter(Objects::nonNull)  // Remove nulls from failed fetches
+                        .flatMap(List::stream)
+                        .toList())
+                .onItem().transformToUni(newContentItems -> {
+                    if (newContentItems.isEmpty()) {
+                        logger.debug("No new content for topic '{}', skipping summarization and briefing.", topic.name);
+                        return Uni.createFrom().voidItem();
+                    }
 
-            // 5. Wait for all summarization tasks to complete
-            Uni.combine().all().unis(summarizationTasks).discardItems().await().indefinitely();
+                    // 2. Summarize in parallel
+                    List<Uni<Void>> summarizationTasks = newContentItems.stream()
+                            .map(item -> asyncSummarizationService.summarizeAsync(item)
+                                    .onFailure().invoke(ex -> logger.error("Failed to summarize content item with id: {}", item.id, ex))
+                                    .onFailure().recoverWithNull())
+                            .toList();
 
-            // 6. Generate briefing
-            briefingService.generateBriefing(topic, orchestrationDate);
-        })).onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration", topic.name, ex))
-                .onFailure().recoverWithNull();
+                    // 3. After all summarizations, generate briefing
+                    return Uni.combine().all().unis(summarizationTasks).discardItems()
+                            .onItem().invoke(() -> briefingService.generateBriefing(topic, orchestrationDate));
+                })
+                .onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration", topic.name, ex))
+                .onFailure().recoverWithNull()
+                .replaceWithVoid();
     }
 }

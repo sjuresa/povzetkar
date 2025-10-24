@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class BriefingService {
 
+    public static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
     private final VideoSummaryService videoSummaryService;
     private static final Logger logger = LoggerFactory.getLogger(BriefingService.class);
 
@@ -44,7 +45,7 @@ public class BriefingService {
         String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.toString());
 
         // 4. Create a new Briefing entity, linking it to the parent Topic and all relevant summaries, then persisting it.
-        Briefing briefing = new Briefing(topic, "Daily Briefing for " + briefingDate, metaSummary, briefingDate);
+        Briefing briefing = new Briefing(topic, String.format(BRIEFING_TITLE_FORMAT, briefingDate), metaSummary, briefingDate);
         briefing.summaries.addAll(summaries);
 
         try {
