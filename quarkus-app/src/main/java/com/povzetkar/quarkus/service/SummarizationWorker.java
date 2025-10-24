@@ -4,7 +4,6 @@ import com.povzetkar.quarkus.model.ContentItem;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class SummarizationWorker {
@@ -16,7 +15,6 @@ public class SummarizationWorker {
         this.strategies = strategies;
     }
 
-    @Transactional
     public boolean summarize(ContentItem item) {
         SummarizationStrategy strategy = strategies.stream()
                 .filter(s -> s.supports(item))
