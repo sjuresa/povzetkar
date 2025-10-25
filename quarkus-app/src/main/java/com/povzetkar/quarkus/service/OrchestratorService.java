@@ -13,8 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @ApplicationScoped
 public class OrchestratorService {
@@ -35,13 +37,41 @@ public class OrchestratorService {
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
-    public Uni<Void> runOrchestration() {
-        logger.info("Orchestration started.");
-        final LocalDate orchestrationDate = LocalDate.now();
+    public Uni<Void> runOrchestrationScheduled() {
+        logger.info("Scheduled orchestration triggered.");
+        return executeOrchestrationForDate(LocalDate.now());
+    }
+
+    public Uni<Void> runOrchestrationManually(LocalDate startDate, LocalDate endDate) {
+        LocalDate actualStartDate = (startDate != null) ? startDate : LocalDate.now();
+        LocalDate actualEndDate = (endDate != null) ? endDate : actualStartDate;
+
+        if (actualStartDate.isAfter(LocalDate.now()) || actualEndDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Orchestration cannot be run for future dates.");
+        }
+        if (actualStartDate.isAfter(actualEndDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date.");
+        }
+
+        long numOfDays = ChronoUnit.DAYS.between(actualStartDate, actualEndDate) + 1;
+
+        List<Uni<Void>> dailyOrchestrations = IntStream.range(0, (int) numOfDays)
+                .mapToObj(actualStartDate::plusDays)
+                .map(this::executeOrchestrationForDate)
+                .toList();
+
+        return Uni.combine().all().unis(dailyOrchestrations).discardItems()
+                .onItem().invoke(() -> logger.info("Manual orchestration for date range {}-{} finished.", actualStartDate, actualEndDate))
+                .onFailure().invoke(ex -> logger.error("Manual orchestration for date range {}-{} failed unexpectedly", actualStartDate, actualEndDate, ex))
+                .replaceWithVoid();
+    }
+
+    private Uni<Void> executeOrchestrationForDate(LocalDate orchestrationDate) {
+        logger.info("Orchestration started for date: {}.", orchestrationDate);
 
         List<User> activeUsers = User.listAllActive();
         if (activeUsers.isEmpty()) {
-            logger.info("No active users found. Orchestration finished.");
+            logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
             return Uni.createFrom().voidItem();
         }
 
@@ -51,8 +81,8 @@ public class OrchestratorService {
                 .onItem().transformToUni(topic -> processTopicUni(topic, orchestrationDate))
                 .merge()
                 .collect().asList()
-                .onItem().invoke(() -> logger.info("Orchestration finished."))
-                .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly", ex))
+                .onItem().invoke(() -> logger.info("Orchestration finished for date: {}.", orchestrationDate))
+                .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
                 .replaceWithVoid();
     }
 
