@@ -56,6 +56,27 @@ public class OrchestratorService {
                 .replaceWithVoid();
     }
 
+    /**
+     * Processes a single topic within a reactive pipeline. This method orchestrates the fetching of new content,
+     * the summarization of that content, and the generation of a daily briefing.
+     *
+     * <p>The pipeline is designed for resilience and parallel execution:</p>
+     * <ol>
+     *   <li><b>Content Fetching:</b> All content sources for the topic are fetched in parallel. Failures in fetching from
+     *       any single source are logged and collected, but do not stop the processing of other sources.</li>
+     *   <li><b>Summarization:</b> All newly fetched content items are summarized in parallel. Individual summarization
+     *       failures are logged and recovered from (by returning null), allowing the pipeline to continue with the
+     *       successfully summarized items.</li>
+     *   <li><b>Briefing Generation:</b> After all summarization tasks are complete, a single briefing is generated for the topic.</li>
+     * </ol>
+     *
+     * <p><b>Error Handling Strategy:</b> The entire pipeline for a single topic is wrapped in its own failure recovery.
+     * This ensures that the failure of one topic's processing does not halt the entire orchestration run for other topics.</p>
+     *
+     * @param topic The topic to be processed.
+     * @param orchestrationDate The date for which the orchestration is running.
+     * @return a {@link Uni} that completes when the topic processing is finished.
+     */
     private Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate) {
         logger.debug("Processing topic: {}", topic.name);
 
