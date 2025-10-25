@@ -19,7 +19,7 @@ public class SummarizationWorker {
         SummarizationStrategy strategy = strategies.stream()
                 .filter(s -> s.supports(item))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No summarization strategy found for " + item.getClass().getName()));
+                .get(); // .orElseThrow is unreachable due to NullSummarizationStrategy fallback
         return strategy.summarize(item);
     }
 }

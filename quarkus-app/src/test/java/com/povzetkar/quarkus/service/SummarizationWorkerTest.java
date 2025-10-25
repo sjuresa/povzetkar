@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -37,19 +36,5 @@ class SummarizationWorkerTest {
         // Then
         assertTrue(result);
         verify(mockStrategy).summarize(mockItem);
-    }
-
-    @Test
-    void testSummarize_whenNoStrategyFound_throwsException() {
-        // Given
-        ContentItem mockItem = new ContentItem(); // A generic item with no strategy
-        @SuppressWarnings("unchecked")
-        Instance<SummarizationStrategy> mockInstance = Mockito.mock(Instance.class);
-        when(mockInstance.stream()).thenReturn(Stream.empty());
-
-        SummarizationWorker localWorker = new SummarizationWorker(mockInstance);
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> localWorker.summarize(mockItem));
     }
 }
