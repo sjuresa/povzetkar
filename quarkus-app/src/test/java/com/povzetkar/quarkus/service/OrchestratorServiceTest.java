@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,6 +66,13 @@ class OrchestratorServiceTest {
             runnable.run(); // Execute immediately
             return null;
         }).when(managedExecutor).execute(any(Runnable.class));
+
+        // Stub runAsync to return a completed CompletableFuture
+        doAnswer(invocation -> {
+            Runnable runnable = invocation.getArgument(0);
+            runnable.run();
+            return CompletableFuture.completedFuture(null);
+        }).when(managedExecutor).runAsync(any(Runnable.class));
 
         // Setup common test data
         testUser = new User();
