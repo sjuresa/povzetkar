@@ -33,6 +33,9 @@ public class ContentSourceDetailEnrichmentStrategyFactory {
                 }
             }
         }
+        if (!strategyMap.containsKey(SourceTypeEnum.DEFAULT)) {
+            throw new IllegalStateException("No default content enrichment strategy found. A bean with @EnrichmentStrategy(SourceTypeEnum.DEFAULT) must be provided.");
+        }
     }
 
     public ContentSourceDetailEnrichmentStrategy getStrategy(int sourceTypeId) {

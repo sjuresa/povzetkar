@@ -32,6 +32,9 @@ public class ContentFetchingStrategyFactory {
                 }
             }
         }
+        if (!strategyMap.containsKey(SourceTypeEnum.DEFAULT)) {
+            throw new IllegalStateException("No default content fetching strategy found. A bean with @SourceStrategy(SourceTypeEnum.DEFAULT) must be provided.");
+        }
     }
 
     public ContentFetchingStrategy getStrategy(int sourceTypeId) {
