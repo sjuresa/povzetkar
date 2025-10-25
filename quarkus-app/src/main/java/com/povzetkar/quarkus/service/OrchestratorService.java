@@ -119,7 +119,7 @@ public class OrchestratorService {
                         .onFailure().recoverWithItem(Collections.emptyList()))
                 .toList();
 
-        return Uni.join().all(fetchTasks).andFailFast()
+        return Uni.join().all(fetchTasks).andCollectFailures()
                 .onItem().transform(results -> results.stream()
                         .flatMap(List::stream)
                         .toList())
