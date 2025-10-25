@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.Optional;
 
 @Path("/api/v1/orchestrator")
 public class OrchestratorResource {
@@ -32,8 +33,8 @@ public class OrchestratorResource {
 
         LocalDate finalStartDate, finalEndDate;
         try {
-            finalStartDate = (startDateStr == null || startDateStr.isEmpty()) ? null : LocalDate.parse(startDateStr);
-            finalEndDate = (endDateStr == null || endDateStr.isEmpty()) ? null : LocalDate.parse(endDateStr);
+            finalStartDate = Optional.ofNullable(startDateStr).filter(s -> !s.isEmpty()).map(LocalDate::parse).orElse(null);
+            finalEndDate = Optional.ofNullable(endDateStr).filter(s -> !s.isEmpty()).map(LocalDate::parse).orElse(null);
         } catch (DateTimeParseException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid date format. Please use YYYY-MM-DD.").build();
         }
