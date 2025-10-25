@@ -34,8 +34,8 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
         // if the user already exists, allowing the RETURNING id clause to always return the ID
         // without a separate SELECT statement and avoiding potential race conditions.
         String sql = "INSERT INTO users (username, name, active) VALUES (?, ?, TRUE) " +
-                     "ON CONFLICT (username) DO UPDATE SET name = users.name " +
-                     "RETURNING id";
+                "ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username " +
+                "RETURNING id";
         try (PreparedStatement statement = context.getConnection().prepareStatement(sql)) {
             statement.setString(1, username);
             statement.setString(2, name);
@@ -56,8 +56,8 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
         // if the topic already exists, allowing the RETURNING id clause to always return the ID
         // without a separate SELECT statement and avoiding potential race conditions.
         String sql = "INSERT INTO topics (user_id, name) VALUES (?, ?) " +
-                     "ON CONFLICT (user_id, name) DO UPDATE SET name = topics.name " +
-                     "RETURNING id";
+                "ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name " +
+                "RETURNING id";
         try (PreparedStatement statement = context.getConnection().prepareStatement(sql)) {
             statement.setLong(1, userId);
             statement.setString(2, topicName);
