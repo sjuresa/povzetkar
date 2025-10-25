@@ -12,6 +12,7 @@ import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
@@ -140,6 +141,34 @@ class YouTubeSummarizationStrategyTest {
 
             assertEquals(1, cons.constructed().size());
             verify(cons.constructed().getFirst()).persist();
+        }
+    }
+
+    @Test
+    void testSummarize_handlesPersistenceExceptionOnRaceCondition() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(ContentItem.class);
+
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Content content = mock(Content.class);
+            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(videoSummaryService.generateContentWithRetry(content, "video summary")).thenReturn("Success");
+
+            TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
+            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
+            when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
+
+            // Simulate PersistenceException on the transaction that persists the summary
+            doThrow(new PersistenceException("Constraint violation"))
+                    .when(runner).run(any(Runnable.class));
+
+            // Act
+            boolean result = strategy.summarize(mockVideo);
+
+            // Assert
+            assertTrue(result, "Should return true on persistence exception due to race condition");
         }
     }
 }

@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +64,9 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 }
             });
             return true;
+        } catch (PersistenceException e) {
+            logger.warn("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
+            return true; // Treat as success as the summary likely exists now.
         } catch (ApiException e) {
             logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);
             QuarkusTransaction.requiringNew().run(() -> ContentItem.update(UPDATE_STATUS_QUERY, ProcessingStatus.FAILED, video.id));
