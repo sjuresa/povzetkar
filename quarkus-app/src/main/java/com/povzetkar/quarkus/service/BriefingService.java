@@ -7,6 +7,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class BriefingService {
 
-    private static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
+    public static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
     private final VideoSummaryService videoSummaryService;
     private static final Logger logger = LoggerFactory.getLogger(BriefingService.class);
 
@@ -54,9 +55,13 @@ public class BriefingService {
                 return briefing;
             });
         } catch (PersistenceException e) {
-            // This is expected if another process created the briefing in the meantime due to the unique constraint.
-            logger.info("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate);
-            return null;
+            if (e.getCause() instanceof ConstraintViolationException) {
+                // This is expected if another process created the briefing in the meantime due to the unique constraint.
+                logger.info("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate);
+                return null;
+            }
+            // Re-throw other persistence exceptions to be handled by the orchestrator.
+            throw e;
         }
     }
 }

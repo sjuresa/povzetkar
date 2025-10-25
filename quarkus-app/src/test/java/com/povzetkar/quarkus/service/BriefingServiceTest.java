@@ -9,6 +9,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
@@ -43,6 +44,10 @@ class BriefingServiceTest {
         TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
         when(runner.call(any(Callable.class)))
                 .thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
+        doAnswer(i -> {
+            ((Runnable) i.getArgument(0)).run();
+            return null;
+        }).when(runner).run(any(Runnable.class));
         return runner;
     }
 
@@ -89,9 +94,10 @@ class BriefingServiceTest {
     }
 
     @Test
-    void testGenerateBriefing_HandlesDuplicateGracefully() {
+    void testGenerateBriefing_HandlesConstraintViolationGracefully() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
-             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doThrow(new PersistenceException("Duplicate entry")).when(mock).persist())) {
+             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doThrow(new PersistenceException("Duplicate entry", new ConstraintViolationException("Constraint violated", null, "constraint_name")))
+                     .when(mock).persist())) {
 
             TransactionRunnerOptions runner = setupMockTransactionRunnerOptions();
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
@@ -120,6 +126,37 @@ class BriefingServiceTest {
             assertNull(newBriefing);
             assertEquals(1, cons.constructed().size());
             verify(cons.constructed().getFirst()).persist();
+        }
+    }
+
+    @Test
+    void testGenerateBriefing_RethrowsOtherPersistenceExceptions() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doThrow(new PersistenceException("Some other error"))
+                     .when(mock).persist())) {
+
+            TransactionRunnerOptions runner = setupMockTransactionRunnerOptions();
+            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
+
+            // Given
+            User user = new User();
+            user.username = "test_user_" + UUID.randomUUID();
+            user.name = "Test User";
+
+            Topic topic = new Topic();
+            topic.name = "Test Topic";
+            topic.user = user;
+
+            LocalDate briefingDate = LocalDate.now();
+
+            Summary summary = new Summary(); summary.id = 1L;
+            List<Summary> summaries = List.of(summary);
+            when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
+            when(Summary.list("id in ?1", List.of(summary.id))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
+            when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("A new meta summary");
+
+            // When / Then
+            assertThrows(PersistenceException.class, () -> briefingService.generateBriefing(topic, briefingDate));
         }
     }
 }
