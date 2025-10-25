@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class BriefingService {
 
-    public static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
+    private static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
     private final VideoSummaryService videoSummaryService;
     private static final Logger logger = LoggerFactory.getLogger(BriefingService.class);
 
@@ -53,7 +53,7 @@ public class BriefingService {
             return briefing;
         } catch (PersistenceException e) {
             // This is expected if another process created the briefing in the meantime due to the unique constraint.
-            logger.warn("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate);
+            logger.warn("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate, e);
             return null;
         }
     }
