@@ -139,7 +139,7 @@ public class YouTubeContentFetcherService {
                             Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
                             videoDurations.getOrDefault(videoId, Duration.ZERO));
                 })
-                .filter(video -> video.getDuration().getSeconds() > YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS)
+                .filter(video -> video.duration.getSeconds() > YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS)
                 .toList();
     }
 

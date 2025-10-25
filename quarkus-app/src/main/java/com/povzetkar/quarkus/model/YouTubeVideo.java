@@ -66,10 +66,6 @@ public class YouTubeVideo extends ContentItem {
         this.duration = duration;
     }
 
-    public Duration getDuration() {
-        return this.duration;
-    }
-
     /**
      * Formats the video's duration into a human-readable HH:MM:SS or MM:SS format.
      *
