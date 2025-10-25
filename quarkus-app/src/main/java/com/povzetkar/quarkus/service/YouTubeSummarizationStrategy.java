@@ -65,7 +65,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             });
             return true;
         } catch (PersistenceException e) {
-            logger.warn("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id, e);
+            logger.info("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
             return true; // Treat as success as the summary likely exists now.
         } catch (ApiException e) {
             logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);

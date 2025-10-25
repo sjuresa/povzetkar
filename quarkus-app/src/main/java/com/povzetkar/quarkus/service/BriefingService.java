@@ -55,7 +55,7 @@ public class BriefingService {
             });
         } catch (PersistenceException e) {
             // This is expected if another process created the briefing in the meantime due to the unique constraint.
-            logger.warn("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate, e);
+            logger.info("Briefing for topic '{}' on {} already exists. Another process likely created it. Skipping generation.", topic.name, briefingDate);
             return null;
         }
     }

@@ -108,7 +108,10 @@ public class OrchestratorService {
 
                     // 3. After all summarizations, generate briefing
                     return Uni.combine().all().unis(summarizationTasks).discardItems()
-                            .onItem().transformToUni(ignored -> Uni.createFrom().item(() -> briefingService.generateBriefing(topic, orchestrationDate))
+                            .onItem().transformToUni(ignored -> Uni.createFrom().item(() -> {
+                                        briefingService.generateBriefing(topic, orchestrationDate);
+                                        return true;
+                                    })
                                     .runSubscriptionOn(managedExecutor));
                 })
                 .onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration", topic.name, ex))
