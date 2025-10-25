@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -68,9 +69,11 @@ class YouTubeFetchingStrategyTest {
 
         YouTubeVideo newVideo1 = new YouTubeVideo();
         newVideo1.videoId = "new123";
+        newVideo1.duration = Duration.ofSeconds(120);
 
         YouTubeVideo newVideo2 = new YouTubeVideo();
         newVideo2.videoId = "new456";
+        newVideo2.duration = Duration.ofSeconds(300);
 
         List<YouTubeVideo> fetchedVideos = List.of(existingVideo, newVideo1, newVideo2);
         when(mockFetcherService.fetchYouTubeVideos(any(), any(), any(), any())).thenReturn(fetchedVideos);
@@ -96,8 +99,8 @@ class YouTubeFetchingStrategyTest {
             List<YouTubeVideo> persistedVideos = captor.getValue();
 
             assertEquals(2, persistedVideos.size());
-            assertTrue(persistedVideos.stream().anyMatch(v -> "new123".equals(v.videoId)));
-            assertTrue(persistedVideos.stream().anyMatch(v -> "new456".equals(v.videoId)));
+            assertTrue(persistedVideos.stream().anyMatch(v -> "new123".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(120))));
+            assertTrue(persistedVideos.stream().anyMatch(v -> "new456".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(300))));
 
             assertEquals(2, result.size());
         }

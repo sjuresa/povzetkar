@@ -3,8 +3,7 @@ package com.povzetkar.quarkus.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.DiscriminatorValue;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import jakarta.persistence.Convert;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -33,7 +32,7 @@ public class YouTubeVideo extends ContentItem {
     public String transcript;
 
     @Column(name = "duration_seconds")
-    @JdbcTypeCode(SqlTypes.INTEGER)
+    @Convert(converter = DurationToIntegerConverter.class)
     public Duration duration;
 
     public YouTubeVideo() {
