@@ -14,8 +14,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -33,12 +35,13 @@ public class YouTubeDataApiClient {
     }
 
     public List<Channel> fetchChannels(List<String> channelIds) throws IOException {
-        return youTubeService.channels()
+        List<Channel> channels = youTubeService.channels()
                 .list(List.of("contentDetails", "snippet", "statistics"))
                 .setId(channelIds)
                 .setKey(apiKey)
                 .execute()
                 .getItems();
+        return Optional.ofNullable(channels).orElse(Collections.emptyList());
     }
 
     public PlaylistItemListResponse executePlaylistItemsRequest(String playlistId, String pageToken) throws IOException {
@@ -62,7 +65,12 @@ public class YouTubeDataApiClient {
                 .setKey(apiKey)
                 .execute();
 
-        return videoResponse.getItems().stream()
+        List<Video> items = videoResponse.getItems();
+        if (items == null) {
+            return Collections.emptyMap();
+        }
+
+        return items.stream()
                 .collect(Collectors.toMap(Video::getId, v -> Duration.parse(v.getContentDetails().getDuration())));
     }
 
