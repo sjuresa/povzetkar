@@ -107,10 +107,10 @@ class BriefingServiceTest {
 
             LocalDate briefingDate = LocalDate.now();
 
-            List<Summary> summaries = List.of(new Summary());
+            Summary summary = new Summary(); summary.id = 1L;
+            List<Summary> summaries = List.of(summary);
             when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
-            // Explicitly use the List<Object...> version
-            when(Summary.list("id in ?1", List.of(1L))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
+            when(Summary.list("id in ?1", List.of(summary.id))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
             when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("A new meta summary");
 
             // When
