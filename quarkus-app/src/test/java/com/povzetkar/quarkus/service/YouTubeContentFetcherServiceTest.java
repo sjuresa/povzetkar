@@ -29,8 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class YouTubeContentFetcherServiceTest {
@@ -41,54 +41,112 @@ class YouTubeContentFetcherServiceTest {
     @InjectMock
     YouTubeDataApiClient youTubeDataApiClient;
 
+    private ContentSource contentSource;
+    private LocalDate fetchDate;
+    private Instant publishedInstant;
+
     @BeforeEach
     void setUp() {
         Mockito.reset(youTubeDataApiClient);
+        contentSource = new ContentSource();
+        contentSource.sourceIdentifier = "UC_testChannelId";
+        contentSource.name = "Test Channel";
+        fetchDate = LocalDate.of(2025, 10, 26);
+        publishedInstant = fetchDate.atStartOfDay().toInstant(ZoneOffset.UTC);
     }
 
-    @Test
-    void testFetchYouTubeVideos() throws IOException {
-        // Given
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceIdentifier = "testChannelId";
-        contentSource.name = "Test Channel";
-
-        LocalDate fetchDate = LocalDate.of(2025, 10, 26);
-        Instant publishedInstant = fetchDate.atStartOfDay().toInstant(ZoneOffset.UTC);
-
-        // Mock Channel response
-        Channel channel = new Channel();
-        ChannelContentDetails contentDetails = new ChannelContentDetails();
-        ChannelContentDetails.RelatedPlaylists relatedPlaylists = new ChannelContentDetails.RelatedPlaylists();
-        relatedPlaylists.setUploads("testUploadsPlaylistId");
-        contentDetails.setRelatedPlaylists(relatedPlaylists);
-        channel.setContentDetails(contentDetails);
-
-        // Mock PlaylistItem response
+    private PlaylistItemListResponse createMockPlaylistResponse() {
         PlaylistItemSnippet snippet = new PlaylistItemSnippet();
         ResourceId resourceId = new ResourceId();
         resourceId.setVideoId("testVideoId");
         snippet.setResourceId(resourceId);
         snippet.setTitle("Test Video Title");
         snippet.setChannelTitle("Test Channel");
-        snippet.setChannelId("testChannelId");
+        snippet.setChannelId("UC_testChannelId");
         snippet.setPublishedAt(new DateTime(publishedInstant.toEpochMilli()));
         PlaylistItem playlistItem = new PlaylistItem().setSnippet(snippet);
 
         PlaylistItemListResponse playlistItemListResponse = new PlaylistItemListResponse();
         playlistItemListResponse.setItems(Collections.singletonList(playlistItem));
+        return playlistItemListResponse;
+    }
 
-        // Mock API client calls
-        when(youTubeDataApiClient.fetchChannels(anyList())).thenReturn(Collections.singletonList(channel));
-        when(youTubeDataApiClient.executePlaylistItemsRequest(anyString(), any())).thenReturn(playlistItemListResponse);
+    @Test
+    void testFetchYouTubeVideos_withDerivedPlaylistId_success() throws IOException {
+        // Given: The derived playlist ID (UU_...) works
+        String derivedPlaylistId = "UU_testChannelId";
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L))).thenReturn(createMockPlaylistResponse());
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any())).thenReturn(createMockPlaylistResponse());
         when(youTubeDataApiClient.fetchVideoDurations(anyList())).thenReturn(Map.of("testVideoId", Duration.ofSeconds(90)));
         when(youTubeDataApiClient.getLocalDateInZone(any(Instant.class))).thenReturn(fetchDate);
 
         // When
         List<YouTubeVideo> videos = youTubeContentFetcherService.fetchYouTubeVideos(contentSource, fetchDate, null, null);
 
-        // Then
+        // Then: The optimization is used, and fetchChannels is NOT called
         assertNotNull(videos);
-        assertFalse(videos.isEmpty(), "The returned list of videos should not be empty");
+        assertFalse(videos.isEmpty());
+        verify(youTubeDataApiClient, never()).fetchChannels(anyList());
+        verify(youTubeDataApiClient, times(1)).executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L));
+    }
+
+    @Test
+    void testFetchYouTubeVideos_withDerivedPlaylistId_fallbackOnException() throws IOException {
+        // Given: The derived playlist ID fails with an exception, forcing a fallback
+        String derivedPlaylistId = "UU_testChannelId";
+        String realPlaylistId = "realUploadsPlaylistId";
+
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L)))
+                .thenThrow(new IOException("Simulating 404 Not Found"));
+
+        setupFallbackMocks(realPlaylistId);
+
+        // When
+        List<YouTubeVideo> videos = youTubeContentFetcherService.fetchYouTubeVideos(contentSource, fetchDate, null, null);
+
+        // Then: The fallback is used
+        assertNotNull(videos);
+        assertFalse(videos.isEmpty());
+        verifyFallbackWasUsed(derivedPlaylistId, realPlaylistId);
+    }
+
+    @Test
+    void testFetchYouTubeVideos_withDerivedPlaylistId_fallbackOnEmptyResponse() throws IOException {
+        // Given: The derived playlist ID returns an empty response, forcing a fallback
+        String derivedPlaylistId = "UU_testChannelId";
+        String realPlaylistId = "realUploadsPlaylistId";
+
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L)))
+                .thenReturn(new PlaylistItemListResponse()); // Empty response
+
+        setupFallbackMocks(realPlaylistId);
+
+        // When
+        List<YouTubeVideo> videos = youTubeContentFetcherService.fetchYouTubeVideos(contentSource, fetchDate, null, null);
+
+        // Then: The fallback is used
+        assertNotNull(videos);
+        assertFalse(videos.isEmpty());
+        verifyFallbackWasUsed(derivedPlaylistId, realPlaylistId);
+    }
+
+    private void setupFallbackMocks(String realPlaylistId) throws IOException {
+        Channel channel = new Channel();
+        ChannelContentDetails contentDetails = new ChannelContentDetails();
+        ChannelContentDetails.RelatedPlaylists relatedPlaylists = new ChannelContentDetails.RelatedPlaylists();
+        relatedPlaylists.setUploads(realPlaylistId);
+        contentDetails.setRelatedPlaylists(relatedPlaylists);
+        channel.setContentDetails(contentDetails);
+        when(youTubeDataApiClient.fetchChannels(anyList())).thenReturn(Collections.singletonList(channel));
+
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(realPlaylistId), any())).thenReturn(createMockPlaylistResponse());
+        when(youTubeDataApiClient.fetchVideoDurations(anyList())).thenReturn(Map.of("testVideoId", Duration.ofSeconds(90)));
+        when(youTubeDataApiClient.getLocalDateInZone(any(Instant.class))).thenReturn(fetchDate);
+    }
+
+    private void verifyFallbackWasUsed(String derivedPlaylistId, String realPlaylistId) throws IOException {
+        verify(youTubeDataApiClient, times(1)).executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L)); // First attempt
+        verify(youTubeDataApiClient, times(1)).fetchChannels(anyList()); // Fallback was triggered
+        verify(youTubeDataApiClient, times(1)).executePlaylistItemsRequest(eq(realPlaylistId), any()); // Second attempt
     }
 }

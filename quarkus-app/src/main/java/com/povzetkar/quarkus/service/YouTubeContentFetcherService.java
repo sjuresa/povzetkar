@@ -34,12 +34,10 @@ public class YouTubeContentFetcherService {
     }
 
     public List<YouTubeVideo> fetchYouTubeVideos(ContentSource contentSource, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) throws IOException {
-        List<Channel> channels = youTubeDataApiClient.fetchChannels(List.of(contentSource.sourceIdentifier));
-        if (channels.isEmpty()) {
-            logger.warn("Could not find channel for source identifier: {}", contentSource.sourceIdentifier);
+        String uploadsPlaylistId = getUploadsPlaylistId(contentSource);
+        if (uploadsPlaylistId == null) {
             return Collections.emptyList();
         }
-        String uploadsPlaylistId = channels.getFirst().getContentDetails().getRelatedPlaylists().getUploads();
 
         List<PlaylistItem> playlistItems = fetchPlaylistItems(uploadsPlaylistId, fetchDate, maxTotal, stopAtVideoId);
 
@@ -51,6 +49,31 @@ public class YouTubeContentFetcherService {
 
         return constructYouTubeVideos(playlistItems, videoDurations);
     }
+
+    private String getUploadsPlaylistId(ContentSource contentSource) throws IOException {
+        String channelId = contentSource.sourceIdentifier;
+        if (channelId.startsWith("UC")) {
+            String derivedPlaylistId = "UU" + channelId.substring(2);
+            try {
+                PlaylistItemListResponse response = youTubeDataApiClient.executePlaylistItemsRequest(derivedPlaylistId, null, 1L);
+                if (response != null && response.getItems() != null && !response.getItems().isEmpty()) {
+                    logger.debug("Successfully used derived uploads playlist ID for channel: {}", channelId);
+                    return derivedPlaylistId;
+                }
+                logger.warn("Derived playlist ID for channel {} returned an empty or null response. Falling back to API call.", channelId);
+            } catch (IOException e) {
+                logger.warn("Failed to use derived uploads playlist ID for channel: {}. Falling back to API call.", channelId, e);
+            }
+        }
+
+        List<Channel> channels = youTubeDataApiClient.fetchChannels(List.of(channelId));
+        if (channels.isEmpty()) {
+            logger.warn("Could not find channel for source identifier: {}", channelId);
+            return null;
+        }
+        return channels.getFirst().getContentDetails().getRelatedPlaylists().getUploads();
+    }
+
 
     private List<PlaylistItem> fetchPlaylistItems(String uploadsPlaylistId, LocalDate fetchDate, Long maxTotal, String stopAtVideoId) throws IOException {
         List<PlaylistItem> allItems = new ArrayList<>();
