@@ -82,9 +82,9 @@ public class OrchestratorService {
 
         // 1. Fetch new content in parallel
         List<Uni<List<ContentItem>>> fetchTasks = topic.contentSources.stream()
-                .map(contentSource -> Uni.createFrom().completionStage(managedExecutor.supplyAsync(() ->
+                .map(contentSource -> Uni.createFrom().item(() ->
                                 contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null)
-                        ))
+                        ).runSubscriptionOn(managedExecutor)
                         .onFailure().invoke(ex -> logger.error("Failed to fetch content for source: {}", contentSource.sourceIdentifier, ex))
                         .onFailure().recoverWithItem(Collections.emptyList()))
                 .toList();

@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,9 +51,6 @@ class OrchestratorServiceTest {
         Mockito.reset(contentItemFetcher, asyncSummarizationService, briefingService, managedExecutor);
         mockedUser = Mockito.mockStatic(User.class);
         mockedTopic = Mockito.mockStatic(Topic.class);
-
-        // Mock the executor to run tasks immediately on the same thread for supplyAsync
-        when(managedExecutor.supplyAsync(any())).thenAnswer(invocation -> CompletableFuture.completedFuture(invocation.getArgument(0, java.util.function.Supplier.class).get()));
 
         // Mock the executor to run tasks immediately on the same thread for execute
         doAnswer(invocation -> {
