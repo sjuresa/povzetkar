@@ -1,24 +1,28 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.*;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.narayana.jta.TransactionRunnerOptions;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterEach;
+import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class BriefingServiceTest {
@@ -29,100 +33,93 @@ class BriefingServiceTest {
     @InjectMock
     VideoSummaryService videoSummaryService;
 
-    private MockedStatic<Summary> mockedSummary;
-
     @BeforeEach
     void setUp() {
-        Mockito.reset(videoSummaryService);
-        mockedSummary = Mockito.mockStatic(Summary.class);
+        reset(videoSummaryService);
+        PanacheMock.mock(Summary.class);
     }
 
-    @AfterEach
-    @Transactional
-    void tearDown() {
-        mockedSummary.close();
-        Briefing.deleteAll();
-        Summary.deleteAll();
-        ContentItem.deleteAll();
-        ContentSource.deleteAll();
-        Topic.deleteAll();
-        User.deleteAll();
+    private TransactionRunnerOptions setupMockTransactionRunnerOptions() {
+        TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
+        when(runner.call(any(Callable.class)))
+                .thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
+        return runner;
     }
 
     @Test
-    @Transactional
     void testGenerateBriefing_CreatesAndPersistsBriefing() {
-        // Given
-        User user = new User();
-        user.username = "test_user_" + UUID.randomUUID();
-        user.name = "Test User";
-        user.persist();
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doNothing().when(mock).persist())) {
 
-        Topic topic = new Topic();
-        topic.name = "Test Topic";
-        topic.user = user;
-        topic.persist();
+            TransactionRunnerOptions runner = setupMockTransactionRunnerOptions();
+            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
 
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceIdentifier = "source-id-" + UUID.randomUUID();
-        contentSource.sourceTypeId = 1;
-        contentSource.name = "Test Source";
-        contentSource.persist();
+            // Given
+            User user = new User();
+            user.username = "test_user_" + UUID.randomUUID();
+            user.name = "Test User";
 
-        ContentItem contentItem = new ContentItem();
-        contentItem.contentSource = contentSource;
-        contentItem.sourceUrl = "http://example.com/" + UUID.randomUUID();
-        contentItem.rawContent = "raw content";
-        contentItem.publishedAt = Instant.now();
-        contentItem.persist();
+            Topic topic = new Topic();
+            topic.name = "Test Topic";
+            topic.user = user;
 
-        Summary summary = new Summary("Summary text 1.", contentItem);
-        summary.persist();
-        List<Summary> summaries = List.of(summary);
+            ContentItem contentItem = new ContentItem();
+            contentItem.sourceUrl = "http://example.com/" + UUID.randomUUID();
+            contentItem.rawContent = "raw content";
+            contentItem.publishedAt = Instant.now();
 
-        LocalDate briefingDate = LocalDate.now();
+            Summary summary = new Summary("Summary text 1.", contentItem);
+            summary.id = 1L;
+            List<Summary> summaries = List.of(summary);
 
-        mockedSummary.when(() -> Summary.findByTopicAndDateRange(topic, briefingDate)).thenReturn(summaries);
-        when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("Meta-summary from GenAI");
+            LocalDate briefingDate = LocalDate.now();
 
-        // When
-        Briefing briefing = briefingService.generateBriefing(topic, briefingDate);
+            when(Summary.findByTopicAndDateRange(topic, briefingDate)).thenReturn(summaries);
+            when(Summary.list("id in ?1", List.of(1L))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
+            when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("Meta-summary from GenAI");
 
-        // Then
-        assertNotNull(briefing);
-        assertNotNull(briefing.id, "Briefing should be persisted and have an ID");
-        assertEquals(1, Briefing.count());
+            // When
+            Briefing briefing = briefingService.generateBriefing(topic, briefingDate);
+
+            // Then
+            assertNotNull(briefing);
+            assertEquals(1, cons.constructed().size());
+            verify(cons.constructed().getFirst()).persist();
+        }
     }
 
     @Test
-    @Transactional
     void testGenerateBriefing_HandlesDuplicateGracefully() {
-        // Given
-        User user = new User();
-        user.username = "test_user_" + UUID.randomUUID();
-        user.name = "Test User";
-        user.persist();
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doThrow(new PersistenceException("Duplicate entry")).when(mock).persist())) {
 
-        Topic topic = new Topic();
-        topic.name = "Test Topic";
-        topic.user = user;
-        topic.persist();
+            TransactionRunnerOptions runner = setupMockTransactionRunnerOptions();
+            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
 
-        LocalDate briefingDate = LocalDate.now();
+            // Given
+            User user = new User();
+            user.username = "test_user_" + UUID.randomUUID();
+            user.name = "Test User";
 
-        // 1. Create and persist a briefing first to set up the duplicate condition
-        Briefing existingBriefing = new Briefing(topic, "Existing Briefing", "Existing meta summary", briefingDate);
-        existingBriefing.persistAndFlush();
+            Topic topic = new Topic();
+            topic.name = "Test Topic";
+            topic.user = user;
 
-        // 2. Set up mocks for the second call
-        List<Summary> summaries = List.of(new Summary());
-        mockedSummary.when(() -> Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
-        when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("A new meta summary");
+            LocalDate briefingDate = LocalDate.now();
 
-        // When
-        Briefing newBriefing = briefingService.generateBriefing(topic, briefingDate);
+            List<Summary> summaries = List.of(new Summary());
+            when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
+            // Explicitly use the List<Object...> version
+            when(Summary.list("id in ?1", List.of(1L))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
+            when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("A new meta summary");
 
-        // Then
-        assertNull(newBriefing, "Briefing should be null when a duplicate exists");
+            // When
+            Briefing newBriefing = briefingService.generateBriefing(topic, briefingDate);
+
+            // Then
+            assertNull(newBriefing);
+            assertEquals(1, cons.constructed().size());
+            verify(cons.constructed().getFirst()).persist();
+        }
     }
 }
