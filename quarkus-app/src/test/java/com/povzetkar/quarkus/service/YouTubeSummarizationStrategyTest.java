@@ -13,16 +13,19 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -160,8 +163,8 @@ class YouTubeSummarizationStrategyTest {
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
             when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
 
-            // Simulate PersistenceException on the transaction that persists the summary
-            doThrow(new PersistenceException("Constraint violation"))
+            // Simulate PersistenceException with ConstraintViolationException as cause
+            doThrow(new PersistenceException("Constraint violation", new ConstraintViolationException("Constraint violation", new SQLException("23505"), "constraint_name")))
                     .when(runner).run(any(Runnable.class));
 
             // Act
@@ -169,6 +172,42 @@ class YouTubeSummarizationStrategyTest {
 
             // Assert
             assertTrue(result, "Should return true on persistence exception due to race condition");
+        }
+    }
+
+    @Test
+    void testSummarize_handlesOtherPersistenceExceptionAsFailure() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(ContentItem.class);
+
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Content content = mock(Content.class);
+            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(videoSummaryService.generateContentWithRetry(content, "video summary")).thenReturn("Success");
+
+            // Mock the static ContentItem.update method to prevent nested PersistenceException
+            Mockito.when(ContentItem.update(anyString(), any(Object[].class))).thenReturn(1);
+
+            TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
+            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
+            when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
+
+            // Simulate a generic PersistenceException without ConstraintViolationException as cause
+            doThrow(new PersistenceException("Generic persistence error"))
+                    .doAnswer(i -> {
+                        ((Runnable) i.getArgument(0)).run();
+                        return null;
+                    })
+                    .when(runner).run(any(Runnable.class));
+
+            // Act
+            boolean result = strategy.summarize(mockVideo);
+
+            // Assert
+            assertFalse(result, "Should return false for generic persistence exception");
+            PanacheMock.verify(ContentItem.class).update("processingStatus = ?1 where id = ?2", ProcessingStatus.FAILED, mockVideo.id);
         }
     }
 }

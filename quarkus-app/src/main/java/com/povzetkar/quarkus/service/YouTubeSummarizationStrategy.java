@@ -10,6 +10,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +66,14 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             });
             return true;
         } catch (PersistenceException e) {
-            logger.info("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
-            return true; // Treat as success as the summary likely exists now.
+            if (e.getCause() instanceof ConstraintViolationException) {
+                logger.info("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
+                return true; // Treat as success as the summary likely exists now.
+            } else {
+                logger.error("Persistence error while creating summary for video: {}.", video.sourceUrl, e);
+                updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
+                return false;
+            }
         } catch (ApiException e) {
             logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);
             updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
