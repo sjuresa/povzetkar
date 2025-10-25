@@ -14,6 +14,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+
 @ApplicationScoped
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
@@ -35,7 +37,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
     }
 
     @Override
-    public boolean summarize(ContentItem item) {
+    public boolean summarize(ContentItem item, LocalDate orchestrationDate) {
         YouTubeVideo video = (YouTubeVideo) item;
 
         boolean alreadySummarized = QuarkusTransaction.requiringNew().call(() -> Summary.findByContentId(video.id) != null);
@@ -59,7 +61,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             QuarkusTransaction.requiringNew().run(() -> {
                 ContentItem attachedItem = ContentItem.findById(video.id);
                 if (attachedItem != null) {
-                    Summary summary = new Summary(summaryText, attachedItem);
+                    Summary summary = new Summary(summaryText, attachedItem, orchestrationDate);
                     summary.persist();
                     attachedItem.processingStatus = ProcessingStatus.COMPLETED;
                 }

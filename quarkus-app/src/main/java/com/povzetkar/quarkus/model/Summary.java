@@ -1,10 +1,17 @@
 package com.povzetkar.quarkus.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Entity
@@ -25,13 +32,17 @@ public class Summary extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public java.time.Instant createdAt;
 
+    @Column(name = "briefing_date", nullable = false)
+    public LocalDate briefingDate;
+
     // Default constructor for JPA
     public Summary() {
     }
 
-    public Summary(String summaryText, ContentItem contentItem) {
+    public Summary(String summaryText, ContentItem contentItem, LocalDate briefingDate) {
         this.summaryText = summaryText;
         this.contentItem = contentItem;
+        this.briefingDate = briefingDate;
     }
 
     @PrePersist
@@ -46,12 +57,8 @@ public class Summary extends PanacheEntityBase {
     }
 
     public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
-        // Convert LocalDate to Instant range for comparison with createdAt
-        java.time.Instant startOfDay = date.atStartOfDay().toInstant(ZoneOffset.UTC);
-        java.time.Instant endOfDay = date.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-
         return find("from Summary s where s.contentItem.contentSource.id in " +
-                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.createdAt >= ?2 and s.createdAt < ?3",
-                topic, startOfDay, endOfDay).list();
+                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2",
+                topic, date).list();
     }
 }

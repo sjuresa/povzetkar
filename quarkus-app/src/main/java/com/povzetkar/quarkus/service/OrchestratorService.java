@@ -131,7 +131,7 @@ public class OrchestratorService {
 
                     // 2. Summarize in parallel
                     List<Uni<Void>> summarizationTasks = newContentItems.stream()
-                            .map(item -> asyncSummarizationService.summarizeAsync(item)
+                            .map(item -> asyncSummarizationService.summarizeAsync(item, orchestrationDate)
                                     .onFailure().invoke(ex -> logger.error("Failed to summarize content item with id: {}", item.id, ex))
                                     .onFailure().recoverWithNull())
                             .toList();

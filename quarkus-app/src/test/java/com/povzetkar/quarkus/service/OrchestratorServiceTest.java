@@ -108,7 +108,7 @@ class OrchestratorServiceTest {
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(orchestrationDate), eq(null), eq(null)))
                 .thenReturn(Collections.singletonList(testContentItem));
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class)))
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), eq(orchestrationDate)))
                 .thenReturn(Uni.createFrom().voidItem());
         when(briefingService.generateBriefing(any(Topic.class), eq(orchestrationDate)))
                 .thenReturn(null); // Return null or a mock Briefing if needed
@@ -127,7 +127,7 @@ class OrchestratorServiceTest {
         mockedUser.verify(User::listAllActive, times(1));
         mockedTopic.verify(() -> Topic.findByUsers(eq(Collections.singletonList(testUser))), times(1));
         verify(contentItemFetcher, times(1)).fetchItems(eq(testContentSource), eq(expectedDate), eq(null), eq(null));
-        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem);
+        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem, expectedDate);
         verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
     }
 
@@ -144,7 +144,7 @@ class OrchestratorServiceTest {
         mockedUser.verify(User::listAllActive, times(1));
         mockedTopic.verify(() -> Topic.findByUsers(eq(Collections.singletonList(testUser))), times(1));
         verify(contentItemFetcher, times(1)).fetchItems(eq(testContentSource), eq(expectedDate), eq(null), eq(null));
-        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem);
+        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem, expectedDate);
         verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
     }
 
@@ -161,7 +161,7 @@ class OrchestratorServiceTest {
         mockedUser.verify(User::listAllActive, times(1));
         mockedTopic.verify(() -> Topic.findByUsers(eq(Collections.singletonList(testUser))), times(1));
         verify(contentItemFetcher, times(1)).fetchItems(eq(testContentSource), eq(pastDate), eq(null), eq(null));
-        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem);
+        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem, pastDate);
         verify(briefingService, times(1)).generateBriefing(testTopic, pastDate);
     }
 
@@ -179,7 +179,7 @@ class OrchestratorServiceTest {
         // Mock the dependencies that are called for each day
         when(contentItemFetcher.fetchItems(any(ContentSource.class), any(LocalDate.class), eq(null), eq(null)))
                 .thenReturn(Collections.singletonList(testContentItem));
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class)))
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
         when(briefingService.generateBriefing(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(null);
@@ -194,7 +194,7 @@ class OrchestratorServiceTest {
 
         // Verify fetchItems, summarizeAsync, generateBriefing are called for each day
         verify(contentItemFetcher, times((int) numOfDays)).fetchItems(eq(testContentSource), any(LocalDate.class), eq(null), eq(null));
-        verify(asyncSummarizationService, times((int) numOfDays)).summarizeAsync(testContentItem);
+        verify(asyncSummarizationService, times((int) numOfDays)).summarizeAsync(any(ContentItem.class), any(LocalDate.class));
         verify(briefingService, times((int) numOfDays)).generateBriefing(eq(testTopic), any(LocalDate.class));
     }
 

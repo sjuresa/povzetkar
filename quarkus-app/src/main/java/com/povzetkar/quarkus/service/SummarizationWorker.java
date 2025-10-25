@@ -6,6 +6,8 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
+import java.time.LocalDate;
+
 @ApplicationScoped
 public class SummarizationWorker {
 
@@ -18,13 +20,13 @@ public class SummarizationWorker {
         this.nullSummarizationStrategy = nullSummarizationStrategy;
     }
 
-    public boolean summarize(ContentItem item) {
+    public boolean summarize(ContentItem item, LocalDate orchestrationDate) {
         SummarizationStrategy strategy = strategies.stream()
                 .filter(s -> !(s instanceof NullSummarizationStrategy))
                 .filter(s -> s.supports(item))
                 .findFirst()
                 .orElse(nullSummarizationStrategy);
 
-        return strategy.summarize(item);
+        return strategy.summarize(item, orchestrationDate);
     }
 }

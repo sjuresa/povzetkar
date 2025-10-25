@@ -6,6 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
+import java.time.LocalDate;
+
 @ApplicationScoped
 public class AsyncSummarizationService {
 
@@ -18,7 +20,7 @@ public class AsyncSummarizationService {
         this.managedExecutor = managedExecutor;
     }
 
-    public Uni<Void> summarizeAsync(ContentItem item) {
-        return Uni.createFrom().completionStage(managedExecutor.runAsync(() -> worker.summarize(item)));
+    public Uni<Void> summarizeAsync(ContentItem item, LocalDate orchestrationDate) {
+        return Uni.createFrom().completionStage(managedExecutor.runAsync(() -> worker.summarize(item, orchestrationDate)));
     }
 }

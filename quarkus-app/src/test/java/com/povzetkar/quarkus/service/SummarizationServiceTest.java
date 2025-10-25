@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,38 +26,40 @@ class SummarizationServiceTest {
     SummarizationWorker worker;
 
     private YouTubeVideo mockVideo;
+    private LocalDate mockOrchestrationDate;
 
     @BeforeEach
     void setUp() {
         mockVideo = new YouTubeVideo();
         mockVideo.id = 1L;
+        mockOrchestrationDate = LocalDate.now();
     }
 
     @Test
     @DisplayName("summarizeVideo should delegate to worker and return its result")
     void testSummarizeVideo_DelegatesToWorker_Success() {
         // Arrange
-        when(worker.summarize(any(ContentItem.class))).thenReturn(true);
+        when(worker.summarize(any(ContentItem.class), any(LocalDate.class))).thenReturn(true);
 
         // Act
-        boolean result = summarizationService.summarizeVideo(mockVideo);
+        boolean result = summarizationService.summarizeVideo(mockVideo, mockOrchestrationDate);
 
         // Assert
         assertTrue(result);
-        verify(worker, times(1)).summarize(mockVideo);
+        verify(worker, times(1)).summarize(mockVideo, mockOrchestrationDate);
     }
 
     @Test
     @DisplayName("summarizeVideo should return false when worker fails")
     void testSummarizeVideo_DelegatesToWorker_Failure() {
         // Arrange
-        when(worker.summarize(any(ContentItem.class))).thenReturn(false);
+        when(worker.summarize(any(ContentItem.class), any(LocalDate.class))).thenReturn(false);
 
         // Act
-        boolean result = summarizationService.summarizeVideo(mockVideo);
+        boolean result = summarizationService.summarizeVideo(mockVideo, mockOrchestrationDate);
 
         // Assert
         assertFalse(result);
-        verify(worker, times(1)).summarize(mockVideo);
+        verify(worker, times(1)).summarize(mockVideo, mockOrchestrationDate);
     }
 }

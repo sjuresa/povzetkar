@@ -58,17 +58,17 @@ class BriefingTest {
 
         // Create two Summary entities, each linked to a unique ContentItem
         String summaryText1 = "Summary one for briefing.";
-        Summary summary1 = new Summary(summaryText1, contentItem1);
+        LocalDate briefingDate = LocalDate.now(); // Define briefingDate here
+        Summary summary1 = new Summary(summaryText1, contentItem1, briefingDate);
         summary1.persist();
 
         String summaryText2 = "Summary two for briefing.";
-        Summary summary2 = new Summary(summaryText2, contentItem2);
+        Summary summary2 = new Summary(summaryText2, contentItem2, briefingDate);
         summary2.persist();
 
         // Create a Briefing entity
         String title = "Test Briefing Title";
         String metaSummary = "This is the meta summary for the test briefing.";
-        LocalDate briefingDate = LocalDate.now();
 
         Briefing briefing = new Briefing(topic, title, metaSummary, briefingDate);
         briefing.summaries = new HashSet<>(Arrays.asList(summary1, summary2));
@@ -86,5 +86,6 @@ class BriefingTest {
         assertEquals(2, retrievedBriefing.summaries.size());
         assertTrue(retrievedBriefing.summaries.stream().anyMatch(s -> s.id.equals(summary1.id)));
         assertTrue(retrievedBriefing.summaries.stream().anyMatch(s -> s.id.equals(summary2.id)));
+        assertTrue(retrievedBriefing.summaries.stream().allMatch(s -> s.briefingDate.equals(briefingDate)));
     }
 }

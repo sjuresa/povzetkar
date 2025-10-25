@@ -73,11 +73,10 @@ class BriefingServiceTest {
             contentItem.rawContent = "raw content";
             contentItem.publishedAt = Instant.now();
 
-            Summary summary = new Summary("Summary text 1.", contentItem);
+            LocalDate briefingDate = LocalDate.now(); // Define briefingDate here
+            Summary summary = new Summary("Summary text 1.", contentItem, briefingDate);
             summary.id = 1L;
             List<Summary> summaries = List.of(summary);
-
-            LocalDate briefingDate = LocalDate.now();
 
             when(Summary.findByTopicAndDateRange(topic, briefingDate)).thenReturn(summaries);
             when(Summary.list("id in ?1", List.of(1L))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
@@ -113,7 +112,8 @@ class BriefingServiceTest {
 
             LocalDate briefingDate = LocalDate.now();
 
-            Summary summary = new Summary(); summary.id = 1L;
+            Summary summary = new Summary("Summary text", new ContentItem(), briefingDate); // Provide briefingDate
+            summary.id = 1L;
             List<Summary> summaries = List.of(summary);
             when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
             when(Summary.list("id in ?1", List.of(summary.id))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
@@ -149,7 +149,8 @@ class BriefingServiceTest {
 
             LocalDate briefingDate = LocalDate.now();
 
-            Summary summary = new Summary(); summary.id = 1L;
+            Summary summary = new Summary("Summary text", new ContentItem(), briefingDate); // Provide briefingDate
+            summary.id = 1L;
             List<Summary> summaries = List.of(summary);
             when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
             when(Summary.list("id in ?1", List.of(summary.id))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);

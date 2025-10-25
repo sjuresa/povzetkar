@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,17 +35,20 @@ class SummaryTest {
 
         // Create a Summary entity
         String summaryText = "This is a test summary.";
+        LocalDate briefingDate = LocalDate.now();
 
-        Summary summary = new Summary(summaryText, contentItem);
+        Summary summary = new Summary(summaryText, contentItem, briefingDate);
         summary.persist();
 
         assertNotNull(summary.id);
+        assertEquals(briefingDate, summary.briefingDate);
 
         // Retrieve the Summary and assert its properties
         Summary retrievedSummary = Summary.findById(summary.id);
         assertNotNull(retrievedSummary);
         assertEquals(summaryText, retrievedSummary.summaryText);
         assertEquals(contentItem.id, retrievedSummary.contentItem.id);
+        assertEquals(briefingDate, retrievedSummary.briefingDate);
     }
 
     @Test
@@ -68,12 +72,13 @@ class SummaryTest {
         contentItem.persist();
 
         // Persist the first Summary
-        Summary summary1 = new Summary("First summary.", contentItem);
+        LocalDate briefingDate = LocalDate.now();
+        Summary summary1 = new Summary("First summary.", contentItem, briefingDate);
         summary1.persist();
         assertNotNull(summary1.id);
 
         // Attempt to persist a second Summary for the same ContentItem
-        Summary summary2 = new Summary("Second summary.", contentItem);
+        Summary summary2 = new Summary("Second summary.", contentItem, briefingDate);
 
         // Expect a PersistenceException due to the unique constraint
         assertThrows(PersistenceException.class, summary2::persist);

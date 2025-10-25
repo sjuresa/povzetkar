@@ -21,6 +21,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,11 +42,13 @@ class YouTubeSummarizationStrategyTest {
     VideoSummaryService videoSummaryService;
 
     private YouTubeVideo mockVideo;
+    private LocalDate mockOrchestrationDate;
 
     @BeforeEach
     void setUp() {
         mockVideo = new YouTubeVideo();
         mockVideo.id = 1L;
+        mockOrchestrationDate = LocalDate.now();
     }
 
     private void mockTransactions(MockedStatic<QuarkusTransaction> tx) {
@@ -70,7 +73,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(new Summary());
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo);
+            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             assertTrue(result);
             PanacheMock.verify(Summary.class).findByContentId(1L);
@@ -91,7 +94,7 @@ class YouTubeSummarizationStrategyTest {
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo);
+            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
             PanacheMock.verify(ContentItem.class).update("processingStatus = ?1 where id = ?2", ProcessingStatus.RETRY_LATER, 1L);
@@ -114,7 +117,7 @@ class YouTubeSummarizationStrategyTest {
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo);
+            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
             PanacheMock.verify(ContentItem.class).update("processingStatus = ?1 where id = ?2", ProcessingStatus.FAILED, 1L);
@@ -137,7 +140,7 @@ class YouTubeSummarizationStrategyTest {
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo);
+            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             assertTrue(result);
             assertEquals(ProcessingStatus.COMPLETED, mockVideo.processingStatus);
@@ -168,7 +171,7 @@ class YouTubeSummarizationStrategyTest {
                     .when(runner).run(any(Runnable.class));
 
             // Act
-            boolean result = strategy.summarize(mockVideo);
+            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             // Assert
             assertTrue(result, "Should return true on persistence exception due to race condition");
@@ -203,7 +206,7 @@ class YouTubeSummarizationStrategyTest {
                     .when(runner).run(any(Runnable.class));
 
             // Act
-            boolean result = strategy.summarize(mockVideo);
+            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             // Assert
             assertFalse(result, "Should return false for generic persistence exception");
