@@ -34,7 +34,7 @@ public class YouTubeDataApiClient {
 
     public List<Channel> fetchChannels(List<String> channelIds) throws IOException {
         return youTubeService.channels()
-                .list(List.of("contentDetails"))
+                .list(List.of("contentDetails", "snippet", "statistics"))
                 .setId(channelIds)
                 .setKey(apiKey)
                 .execute()
