@@ -15,7 +15,6 @@ public class Summary extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Lob
     @Column(name = "summary_text", nullable = false)
     public String summaryText;
 
