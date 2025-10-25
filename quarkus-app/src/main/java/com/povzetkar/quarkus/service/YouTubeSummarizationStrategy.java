@@ -44,14 +44,14 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
         Content content = contentCreationService.createContentForVideo(video);
         if (content == null) {
-            QuarkusTransaction.requiringNew().run(() -> ContentItem.update(UPDATE_STATUS_QUERY, ProcessingStatus.RETRY_LATER, video.id));
+            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
             return false;
         }
 
         try {
             String summaryText = videoSummaryService.generateContentWithRetry(content, "video summary");
             if (summaryText == null) {
-                QuarkusTransaction.requiringNew().run(() -> ContentItem.update(UPDATE_STATUS_QUERY, ProcessingStatus.RETRY_LATER, video.id));
+                updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
                 return false;
             }
 
@@ -69,9 +69,15 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             return true; // Treat as success as the summary likely exists now.
         } catch (ApiException e) {
             logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);
-            QuarkusTransaction.requiringNew().run(() -> ContentItem.update(UPDATE_STATUS_QUERY, ProcessingStatus.FAILED, video.id));
+            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
             logger.error("Video will be marked as failed to avoid retries.");
             return false;
         }
+    }
+
+    private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status) {
+        QuarkusTransaction.requiringNew().run(() ->
+                ContentItem.update(UPDATE_STATUS_QUERY, status, videoId)
+        );
     }
 }
