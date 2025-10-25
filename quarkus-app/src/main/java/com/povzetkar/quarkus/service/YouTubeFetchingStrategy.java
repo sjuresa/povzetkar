@@ -53,6 +53,7 @@ public class YouTubeFetchingStrategy implements ContentFetchingStrategy {
                 for (YouTubeVideo video : fetchedVideos) {
                     if (!existingVideoIds.contains(video.videoId)) {
                         video.contentSource = source;
+                        video.rawContent = ""; // Set rawContent to empty string to satisfy NOT NULL constraint
                         newVideosToPersist.add(video);
                     }
                 }

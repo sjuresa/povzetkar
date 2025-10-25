@@ -4,37 +4,64 @@ import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.enterprise.inject.Instance;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class SummarizationWorkerTest {
 
+    private Instance<SummarizationStrategy> mockInstance;
+    private NullSummarizationStrategy mockNullSummarizationStrategy;
+    private SummarizationWorker worker;
+
+    @BeforeEach
+    void setUp() {
+        mockInstance = Mockito.mock(Instance.class);
+        mockNullSummarizationStrategy = Mockito.mock(NullSummarizationStrategy.class);
+        worker = new SummarizationWorker(mockInstance, mockNullSummarizationStrategy);
+    }
+
     @Test
-    void testSummarize_whenStrategyFound_delegates() {
+    void testSummarize_whenSpecificStrategyFound_delegates() {
         // Given
-        SummarizationStrategy mockStrategy = mock(SummarizationStrategy.class);
+        SummarizationStrategy mockSpecificStrategy = mock(SummarizationStrategy.class);
         ContentItem mockItem = new YouTubeVideo();
 
-        @SuppressWarnings("unchecked")
-        Instance<SummarizationStrategy> mockInstance = Mockito.mock(Instance.class);
-        when(mockInstance.stream()).thenReturn(Stream.of(mockStrategy));
-
-        SummarizationWorker localWorker = new SummarizationWorker(mockInstance);
-
-        when(mockStrategy.supports(mockItem)).thenReturn(true);
-        when(mockStrategy.summarize(mockItem)).thenReturn(true);
+        when(mockInstance.stream()).thenReturn(Stream.of(mockSpecificStrategy, mockNullSummarizationStrategy));
+        when(mockSpecificStrategy.supports(mockItem)).thenReturn(true);
+        when(mockSpecificStrategy.summarize(mockItem)).thenReturn(true);
 
         // When
-        boolean result = localWorker.summarize(mockItem);
+        boolean result = worker.summarize(mockItem);
 
         // Then
         assertTrue(result);
-        verify(mockStrategy).summarize(mockItem);
+        verify(mockSpecificStrategy).summarize(mockItem);
+        verify(mockNullSummarizationStrategy, never()).summarize(any());
+    }
+
+    @Test
+    void testSummarize_whenNoSpecificStrategyFound_delegatesToNullStrategy() {
+        // Given
+        ContentItem mockItem = new YouTubeVideo(); // Or any other ContentItem
+
+        when(mockInstance.stream()).thenReturn(Stream.of(mockNullSummarizationStrategy)); // Only null strategy available
+        when(mockNullSummarizationStrategy.supports(mockItem)).thenReturn(false); // Null strategy doesn't support specific item
+        when(mockNullSummarizationStrategy.summarize(mockItem)).thenReturn(false); // Null strategy returns false
+
+        // When
+        boolean result = worker.summarize(mockItem);
+
+        // Then
+        assertFalse(result); // Changed from assertTrue to assertFalse
+        verify(mockNullSummarizationStrategy).summarize(mockItem);
+        verify(mockNullSummarizationStrategy, times(1)).summarize(mockItem);
     }
 }

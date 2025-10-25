@@ -99,8 +99,8 @@ class YouTubeFetchingStrategyTest {
             List<YouTubeVideo> persistedVideos = captor.getValue();
 
             assertEquals(2, persistedVideos.size());
-            assertTrue(persistedVideos.stream().anyMatch(v -> "new123".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(120))));
-            assertTrue(persistedVideos.stream().anyMatch(v -> "new456".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(300))));
+            assertTrue(persistedVideos.stream().anyMatch(v -> "new123".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(120)) && "".equals(v.rawContent)));
+            assertTrue(persistedVideos.stream().anyMatch(v -> "new456".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(300)) && "".equals(v.rawContent)));
 
             assertEquals(2, result.size());
         }

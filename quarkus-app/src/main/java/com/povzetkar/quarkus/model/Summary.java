@@ -43,7 +43,7 @@ public class Summary extends PanacheEntityBase {
     }
 
     public static Summary findByContentId(Long id){
-        return find("content_item_id", id).firstResult();
+        return find("contentItem.id", id).firstResult();
     }
 
     public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
