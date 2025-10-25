@@ -182,7 +182,7 @@ To verify that the orchestrator is running and generating summaries and briefing
 2.  **Inspect Database for Summaries:**
     Connect to the database and query the `summary` table. You should see new entries corresponding to summarized content.
     ```sql
-    SELECT * FROM summary;
+    SELECT * FROM summaries;
     ```
 3.  **Inspect Database for Briefings:**
     Connect to the database and query the `briefing` table. You should see new entries for generated briefings.
