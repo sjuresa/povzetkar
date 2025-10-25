@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @ApplicationScoped
 public class OrchestratorService {
@@ -83,13 +83,14 @@ public class OrchestratorService {
         // 1. Fetch new content in parallel
         List<Uni<List<ContentItem>>> fetchTasks = topic.contentSources.stream()
                 .map(contentSource -> Uni.createFrom().completionStage(managedExecutor.supplyAsync(() ->
-                        contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null)
-                )))
+                                contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null)
+                        ))
+                        .onFailure().invoke(ex -> logger.error("Failed to fetch content for source: {}", contentSource.sourceIdentifier, ex))
+                        .onFailure().recoverWithItem(Collections.emptyList()))
                 .toList();
 
-        return Uni.join().all(fetchTasks).andCollectFailures()
+        return Uni.join().all(fetchTasks).andFailFast()
                 .onItem().transform(results -> results.stream()
-                        .filter(Objects::nonNull)  // Remove nulls from failed fetches
                         .flatMap(List::stream)
                         .toList())
                 .onItem().transformToUni(newContentItems -> {
