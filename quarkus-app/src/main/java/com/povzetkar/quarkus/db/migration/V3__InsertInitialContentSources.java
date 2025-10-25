@@ -52,9 +52,8 @@ public class V3__InsertInitialContentSources extends BaseJavaMigration {
 
     private long getOrCreateTopic(Context context, long userId, String topicName) throws SQLException {
         // This is a PostgreSQL-specific technique for an atomic "get-or-create" operation.
-        // The ON CONFLICT DO UPDATE SET name = topics.name clause performs a no-op update
-        // if the topic already exists, allowing the RETURNING id clause to always return the ID
-        // without a separate SELECT statement and avoiding potential race conditions.
+        // The ON CONFLICT DO UPDATE clause with a no-op update allows the RETURNING id clause
+        // to always return the ID without a separate SELECT statement, avoiding potential race conditions.
         String sql = "INSERT INTO topics (user_id, name) VALUES (?, ?) " +
                 "ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name " +
                 "RETURNING id";
