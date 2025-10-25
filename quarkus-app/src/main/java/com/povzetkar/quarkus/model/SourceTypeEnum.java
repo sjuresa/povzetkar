@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.model;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -15,9 +16,9 @@ public enum SourceTypeEnum {
     private static final Map<Integer, SourceTypeEnum> ID_MAP;
 
     static {
-        ID_MAP = Arrays.stream(values())
+        ID_MAP = Collections.unmodifiableMap(Arrays.stream(values())
                 .filter(sourceType -> sourceType != DEFAULT)
-                .collect(Collectors.toMap(SourceTypeEnum::getId, Function.identity()));
+                .collect(Collectors.toMap(SourceTypeEnum::getId, Function.identity())));
     }
 
     SourceTypeEnum(int id) {
