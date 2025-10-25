@@ -51,7 +51,8 @@ public class Summary extends PanacheEntityBase {
         java.time.Instant startOfDay = date.atStartOfDay().toInstant(ZoneOffset.UTC);
         java.time.Instant endOfDay = date.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
 
-        return find("select s from Summary s join s.contentItem.contentSource.topics t where t = ?1 and s.createdAt >= ?2 and s.createdAt < ?3",
+        return find("from Summary s where s.contentItem.contentSource.id in " +
+                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.createdAt >= ?2 and s.createdAt < ?3",
                 topic, startOfDay, endOfDay).list();
     }
 }
