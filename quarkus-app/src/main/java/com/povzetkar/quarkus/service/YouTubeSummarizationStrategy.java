@@ -7,6 +7,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 
 @ApplicationScoped
+@Priority(10)
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
