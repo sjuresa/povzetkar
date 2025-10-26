@@ -24,7 +24,6 @@ public class Briefing extends PanacheEntityBase {
     @Column(nullable = false)
     public String title;
 
-    @Lob
     @Column(name = "meta_summary", nullable = false)
     public String metaSummary;
 
