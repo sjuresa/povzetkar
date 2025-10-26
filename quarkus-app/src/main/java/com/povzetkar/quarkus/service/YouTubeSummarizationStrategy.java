@@ -20,7 +20,6 @@ import java.time.LocalDate;
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
-    private static final String UPDATE_STATUS_QUERY = "processingStatus = ?1 where id = ?2";
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;
@@ -86,7 +85,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status) {
         QuarkusTransaction.requiringNew().run(() ->
-                ContentItem.update(UPDATE_STATUS_QUERY, status, videoId)
+                ContentItem.updateProcessingStatus(videoId, status)
         );
     }
 }

@@ -26,7 +26,6 @@ import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -90,14 +89,13 @@ class YouTubeSummarizationStrategyTest {
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(null);
-            Mockito.when(ContentItem.update("processingStatus = ?1 where id = ?2", ProcessingStatus.RETRY_LATER, 1L)).thenReturn(1);
 
             mockTransactions(tx);
 
             boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
-            PanacheMock.verify(ContentItem.class).update("processingStatus = ?1 where id = ?2", ProcessingStatus.RETRY_LATER, 1L);
+            PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.RETRY_LATER);
         }
     }
 
@@ -113,14 +111,13 @@ class YouTubeSummarizationStrategyTest {
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             when(videoSummaryService.generateContentWithRetry(content, "video summary"))
                     .thenThrow(new ApiException(500, "AI Error", null));
-            Mockito.when(ContentItem.update("processingStatus = ?1 where id = ?2", ProcessingStatus.FAILED, 1L)).thenReturn(1);
 
             mockTransactions(tx);
 
             boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
-            PanacheMock.verify(ContentItem.class).update("processingStatus = ?1 where id = ?2", ProcessingStatus.FAILED, 1L);
+            PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.FAILED);
         }
     }
 
@@ -190,9 +187,6 @@ class YouTubeSummarizationStrategyTest {
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             when(videoSummaryService.generateContentWithRetry(content, "video summary")).thenReturn("Success");
 
-            // Mock the static ContentItem.update method to prevent nested PersistenceException
-            Mockito.when(ContentItem.update(anyString(), any(Object[].class))).thenReturn(1);
-
             TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
             when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
@@ -210,7 +204,7 @@ class YouTubeSummarizationStrategyTest {
 
             // Assert
             assertFalse(result, "Should return false for generic persistence exception");
-            PanacheMock.verify(ContentItem.class).update("processingStatus = ?1 where id = ?2", ProcessingStatus.FAILED, mockVideo.id);
+            PanacheMock.verify(ContentItem.class).updateProcessingStatus(mockVideo.id, ProcessingStatus.FAILED);
         }
     }
 }
