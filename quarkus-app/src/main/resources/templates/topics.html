@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Topics</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<h1>Topics by User</h1>
+{#for user in topicsByUser.keySet()}
+    <h2>{user.name}</h2>
+    <ul>
+        {#for topic in topicsByUser.get(user)}
+            <li><a href="/ui/topics/{topic.id}/briefings">{topic.name}</a></li>
+        {/for}
+    </ul>
+{/for}
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Briefings for {topic.name}</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<h1>Briefings for {topic.name}</h1>
+<ul>
+    {#for briefing in briefings}
+        <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate}</a></li>
+    {/for}
+</ul>
+</body>
+</html>
