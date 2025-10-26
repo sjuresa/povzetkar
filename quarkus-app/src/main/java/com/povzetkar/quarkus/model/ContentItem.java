@@ -43,4 +43,8 @@ public class ContentItem extends PanacheEntityBase {
             createdAt = Instant.now();
         }
     }
+
+    public static void updateProcessingStatus(Long id, ProcessingStatus status) {
+        update("processingStatus = ?1 where id = ?2", status, id);
+    }
 }

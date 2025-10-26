@@ -20,8 +20,9 @@ class UserTest {
     @Transactional
     void testPersistUserWithNullNameThrowsException() {
         User user = new User();
-        user.active = true; // Default value, but explicitly setting for clarity
-        user.name = null; // This should cause a PersistenceException
+        user.username = "testuser_nullname";
+        user.active = true;
+        user.name = null;
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user),
                 "Persisting a User with a null name should throw PersistenceException");
@@ -29,11 +30,27 @@ class UserTest {
 
     @Test
     @Transactional
+    void testPersistUserWithDuplicateUsernameThrowsException() {
+        User user1 = new User();
+        user1.username = "duplicate_user";
+        user1.name = "User One";
+        persistAndFlush(user1);
+
+        User user2 = new User();
+        user2.username = "duplicate_user";
+        user2.name = "User Two";
+
+        assertThrows(PersistenceException.class, () -> persistAndFlush(user2),
+                "Persisting a User with a duplicate username should throw PersistenceException");
+    }
+
+    @Test
+    @Transactional
     void testUserActiveDefaultValue() {
         User user = new User();
+        user.username = "testuser_active";
         user.name = "Test User";
-        em.persist(user);
-        em.flush();
+        persistAndFlush(user);
 
         User retrievedUser = em.find(User.class, user.id);
         assertNotNull(retrievedUser);
@@ -44,10 +61,10 @@ class UserTest {
     @Transactional
     void testPersistAndRetrieveUser() {
         User user = new User();
+        user.username = "testuser_retrieve";
         user.name = "Another Test User";
-        user.active = false; // Override default for this test
-        em.persist(user);
-        em.flush();
+        user.active = false;
+        persistAndFlush(user);
 
         User retrievedUser = em.find(User.class, user.id);
         assertNotNull(retrievedUser);
@@ -60,8 +77,9 @@ class UserTest {
     @Transactional
     void testUserHasTopics() {
         User user = new User();
+        user.username = "user_with_topics";
         user.name = "User With Topics";
-        em.persist(user);
+        persistAndFlush(user);
 
         Topic topic1 = new Topic();
         topic1.name = "Topic 1";
@@ -73,8 +91,8 @@ class UserTest {
         topic2.user = user;
         em.persist(topic2);
 
-        em.flush(); // Ensure all changes are flushed to the database
-        em.clear(); // Clear the persistence context to ensure retrieval from DB
+        em.flush();
+        em.clear();
 
         User retrievedUser = em.find(User.class, user.id);
         assertNotNull(retrievedUser);
@@ -87,7 +105,7 @@ class UserTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        // Explicitly delete all Topics before Users to avoid foreign key constraint violation
+        Briefing.deleteAll();
         Topic.deleteAll();
         User.deleteAll();
     }

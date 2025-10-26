@@ -1,7 +1,18 @@
 package com.povzetkar.quarkus.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "summaries")
@@ -11,24 +22,27 @@ public class Summary extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Lob
     @Column(name = "summary_text", nullable = false)
     public String summaryText;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "content_item_id", nullable = false)
     public ContentItem contentItem;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     public java.time.Instant createdAt;
 
+    @Column(name = "briefing_date", nullable = false)
+    public LocalDate briefingDate;
+
     // Default constructor for JPA
     public Summary() {
     }
 
-    public Summary(String summaryText, ContentItem contentItem) {
+    public Summary(String summaryText, ContentItem contentItem, LocalDate briefingDate) {
         this.summaryText = summaryText;
         this.contentItem = contentItem;
+        this.briefingDate = briefingDate;
     }
 
     @PrePersist
@@ -39,6 +53,12 @@ public class Summary extends PanacheEntityBase {
     }
 
     public static Summary findByContentId(Long id){
-        return find("content_item_id", id).firstResult();
+        return find("contentItem.id", id).firstResult();
+    }
+
+    public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
+        return find("from Summary s where s.contentItem.contentSource.id in " +
+                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2",
+                topic, date).list();
     }
 }

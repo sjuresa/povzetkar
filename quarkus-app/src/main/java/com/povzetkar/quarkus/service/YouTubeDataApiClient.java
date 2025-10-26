@@ -2,42 +2,79 @@ package com.povzetkar.quarkus.service;
 
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Channel;
-import com.google.api.services.youtube.model.ChannelListResponse;
+import com.google.api.services.youtube.model.PlaylistItemListResponse;
+import com.google.api.services.youtube.model.Video;
+import com.google.api.services.youtube.model.VideoListResponse;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class YouTubeDataApiClient {
 
-    private static final String PART_SNIPPET = "snippet";
-    private static final String PART_STATISTICS = "statistics";
+    private final YouTube youTubeService;
+    private final String apiKey;
+    private final ZoneId defaultZoneId;
 
-    private final YouTube youtubeService;
-    private final String youtubeApiKey;
-
-    public YouTubeDataApiClient(YouTube youtubeService, @ConfigProperty(name = "youtube.api.key") String youtubeApiKey) {
-        this.youtubeService = youtubeService;
-        this.youtubeApiKey = youtubeApiKey;
+    @Inject
+    public YouTubeDataApiClient(YouTube youTubeService, @ConfigProperty(name = "youtube.api.key") String apiKey, @ConfigProperty(name = "quarkus.default-zone-id", defaultValue = "UTC") ZoneId defaultZoneId) {
+        this.youTubeService = youTubeService;
+        this.apiKey = apiKey;
+        this.defaultZoneId = defaultZoneId;
     }
 
-    /**
-     * Fetches channel details from the YouTube Data API for a list of channel IDs.
-     *
-     * @param channelIds A list of YouTube channel IDs.
-     * @return A list of {@link Channel} objects.
-     * @throws IOException if the API call fails.
-     */
     public List<Channel> fetchChannels(List<String> channelIds) throws IOException {
-        YouTube.Channels.List request = youtubeService.channels()
-                .list(List.of(PART_SNIPPET, PART_STATISTICS))
-                .setKey(youtubeApiKey)
-                .setId(channelIds);
+        List<Channel> channels = youTubeService.channels()
+                .list(List.of("contentDetails", "snippet", "statistics"))
+                .setId(channelIds)
+                .setKey(apiKey)
+                .execute()
+                .getItems();
+        return Optional.ofNullable(channels).orElse(Collections.emptyList());
+    }
 
-        ChannelListResponse response = request.execute();
-        return (response != null && response.getItems() != null) ? response.getItems() : Collections.emptyList();
+    public PlaylistItemListResponse executePlaylistItemsRequest(String playlistId, String pageToken) throws IOException {
+        return executePlaylistItemsRequest(playlistId, pageToken, 50L);
+    }
+
+    public PlaylistItemListResponse executePlaylistItemsRequest(String playlistId, String pageToken, Long maxResults) throws IOException {
+        return youTubeService.playlistItems()
+                .list(List.of("snippet"))
+                .setPlaylistId(playlistId)
+                .setPageToken(pageToken)
+                .setMaxResults(maxResults)
+                .setKey(apiKey)
+                .execute();
+    }
+
+    public Map<String, Duration> fetchVideoDurations(List<String> videoIds) throws IOException {
+        VideoListResponse videoResponse = youTubeService.videos()
+                .list(List.of("contentDetails"))
+                .setId(videoIds)
+                .setKey(apiKey)
+                .execute();
+
+        List<Video> items = videoResponse.getItems();
+        if (items == null) {
+            return Collections.emptyMap();
+        }
+
+        return items.stream()
+                .collect(Collectors.toMap(Video::getId, v -> Duration.parse(v.getContentDetails().getDuration())));
+    }
+
+    public LocalDate getLocalDateInZone(Instant instant) {
+        return instant.atZone(defaultZoneId).toLocalDate();
     }
 }

@@ -53,7 +53,7 @@ class ContentSourceResourceTest {
     @BeforeEach
     @Transactional
     void setup() {
-        User user = createUser("Test User " + UUID.randomUUID());
+        User user = createUser("Test User " + UUID.randomUUID(), "test_user_" + UUID.randomUUID());
         this.testUserId = user.id;
 
         Topic topic = createTopic(user);
@@ -96,9 +96,10 @@ class ContentSourceResourceTest {
         }
     }
 
-    private User createUser(String name) {
+    private User createUser(String name, String username) {
         User user = new User();
         user.name = name;
+        user.username = username;
         em.persist(user);
         createdUserIds.add(user.id);
         return user;

@@ -8,6 +8,7 @@ CREATE TYPE processing_status_enum AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'R
 -- users
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     name VARCHAR(255) NOT NULL
 );
@@ -27,7 +28,7 @@ CREATE TABLE topics (
 
 -- source_types
 CREATE TABLE source_types (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL
 );
 
@@ -94,21 +95,29 @@ CREATE TABLE summaries (
     id BIGSERIAL PRIMARY KEY,
     content_item_id BIGINT NOT NULL,
     summary_text TEXT NOT NULL,
+    briefing_date DATE NOT NULL,
     embedding VECTOR(1536),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_content_item_summary
         FOREIGN KEY(content_item_id)
         REFERENCES content_items(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT uc_content_item_id UNIQUE (content_item_id)
 );
 
 -- briefings
 CREATE TABLE briefings (
     id BIGSERIAL PRIMARY KEY,
+    topic_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     meta_summary TEXT NOT NULL,
     briefing_date DATE NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_topic_briefing
+        FOREIGN KEY(topic_id)
+        REFERENCES topics(id)
+        ON DELETE CASCADE,
+    CONSTRAINT uc_topic_id_briefing_date UNIQUE (topic_id, briefing_date)
 );
 
 -- categories

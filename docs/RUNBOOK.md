@@ -1,10 +1,11 @@
 # Application Runbook
 
-**Version:** 1.2
+**Version:** 1.3
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                             |
 |---------|--------------------|--------------|---------------------------------------------------------------------|
+| 1.3     | October 25, 2025   | Povzetkar AI | Added instructions for Orchestrator triggering.                     |
 | 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                   |
 | 1.1     | September 17, 2025 | Povzetkar AI | Added instructions for verifying the pgvector extension.            |
 | 1.0     | August 16, 2025    | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project. |
@@ -125,3 +126,66 @@ The service is configured to periodically refresh content source details automat
 *   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
+
+### 8.2 Orchestrator and Briefing Service
+
+The `OrchestratorService` is responsible for the end-to-end process of fetching new content, summarizing it, and generating daily briefings for active users. This service runs on a schedule.
+
+#### 8.2.1 Scheduled Orchestration
+
+The orchestration process is configured to run periodically. By default, it runs daily at midnight.
+
+*   **Configuration Property:** `povzetkar.orchestrator.cron`
+*   **Location:** `quarkus-app/src/main/resources/application.properties`
+*   **Default Value:** `0 0 0 * * ?` (daily at midnight)
+
+    You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
+
+#### 8.2.2 Manual Orchestration
+
+To manually trigger the orchestration process for a specific date or a range of dates:
+
+*   **Endpoint:** `POST /api/v1/orchestrator/run`
+*   **Method:** `POST`
+*   **Query Parameters:**
+    *   `startDate` (Optional): The start date for orchestration in `YYYY-MM-DD` format. If omitted, defaults to the current date.
+    *   `endDate` (Optional): The end date for orchestration in `YYYY-MM-DD` format. If omitted, defaults to `startDate`.
+*   **Examples using curl:**
+    *   **Run for current date (default):**
+        ```bash
+        curl -X POST http://localhost:8080/api/v1/orchestrator/run
+        ```
+    *   **Run for a specific past date:**
+        ```bash
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=2025-09-15"
+        ```
+    *   **Run for a range of past dates:**
+        ```bash
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=2025-09-10&endDate=2025-09-15"
+        ```
+    *   **Error: Future date:**
+        ```bash
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=2025-10-01"
+        ```
+        (Will return HTTP 400 Bad Request)
+    *   **Error: Invalid date format:**
+        ```bash
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=01-01-2025"
+        ```
+        (Will return HTTP 400 Bad Request)
+
+#### 8.2.3 Verification
+
+To verify that the orchestrator is running and generating summaries and briefings:
+
+1.  **Check Application Logs:** Look for log entries from `OrchestratorService` indicating the start and end of orchestration runs, and any errors during content fetching or summarization.
+2.  **Inspect Database for Summaries:**
+    Connect to the database and query the `summary` table. You should see new entries corresponding to summarized content.
+    ```sql
+    SELECT * FROM summaries;
+    ```
+3.  **Inspect Database for Briefings:**
+    Connect to the database and query the `briefing` table. You should see new entries for generated briefings.
+    ```sql
+    SELECT * FROM briefings;
+    ```

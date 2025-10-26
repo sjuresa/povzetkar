@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
@@ -15,10 +16,14 @@ public class Briefing extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topic_id", nullable = false)
+    @JsonBackReference
+    public Topic topic;
+
     @Column(nullable = false)
     public String title;
 
-    @Lob
     @Column(name = "meta_summary", nullable = false)
     public String metaSummary;
 
@@ -38,7 +43,8 @@ public class Briefing extends PanacheEntityBase {
     public Briefing() {
     }
 
-    public Briefing(String title, String metaSummary, LocalDate briefingDate) {
+    public Briefing(Topic topic, String title, String metaSummary, LocalDate briefingDate) {
+        this.topic = topic;
         this.title = title;
         this.metaSummary = metaSummary;
         this.briefingDate = briefingDate;
