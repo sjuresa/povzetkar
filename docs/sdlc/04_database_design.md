@@ -1,11 +1,12 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.6
+**Version:** 1.7
 
 ## Revision History
 
 | Version | Date               | Author       | Changes                                                              |
 |---------|--------------------|--------------|----------------------------------------------------------------------|
+| 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                          |
 | 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments. |
 | 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.              |
 | 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant.                     |
@@ -84,6 +85,7 @@ erDiagram
         bigint id PK
         bigint content_item_id FK
         text summary_text
+        date briefing_date
         vector(1536) embedding "NOT NULL"
         timestamp created_at
     }
@@ -212,6 +214,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
+- `briefing_date` (date): The date for which the briefing is generated. `NOT NULL`
 - `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
