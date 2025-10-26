@@ -13,10 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
 
 @ApplicationScoped
 public class OrchestratorService {
@@ -53,10 +51,7 @@ public class OrchestratorService {
             throw new IllegalArgumentException("Start date cannot be after end date.");
         }
 
-        long numOfDays = ChronoUnit.DAYS.between(actualStartDate, actualEndDate) + 1;
-
-        List<Uni<Void>> dailyOrchestrations = IntStream.range(0, (int) numOfDays)
-                .mapToObj(actualStartDate::plusDays)
+        List<Uni<Void>> dailyOrchestrations = actualStartDate.datesUntil(actualEndDate.plusDays(1))
                 .map(this::executeOrchestrationForDate)
                 .toList();
 

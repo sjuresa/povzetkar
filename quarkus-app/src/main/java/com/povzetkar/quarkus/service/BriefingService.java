@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class BriefingService {
 
-    public static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
+    private static final String BRIEFING_TITLE_FORMAT = "Daily Briefing for %s";
     private final VideoSummaryService videoSummaryService;
     private static final Logger logger = LoggerFactory.getLogger(BriefingService.class);
 
