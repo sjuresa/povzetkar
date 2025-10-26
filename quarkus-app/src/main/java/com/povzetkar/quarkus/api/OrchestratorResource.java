@@ -33,8 +33,8 @@ public class OrchestratorResource {
 
         LocalDate finalStartDate, finalEndDate;
         try {
-            finalStartDate = Optional.ofNullable(startDateStr).filter(s -> !s.isEmpty()).map(LocalDate::parse).orElse(null);
-            finalEndDate = Optional.ofNullable(endDateStr).filter(s -> !s.isEmpty()).map(LocalDate::parse).orElse(null);
+            finalStartDate = Optional.ofNullable(startDateStr).filter(s -> !s.isBlank()).map(LocalDate::parse).orElse(null);
+            finalEndDate = Optional.ofNullable(endDateStr).filter(s -> !s.isBlank()).map(LocalDate::parse).orElse(null);
         } catch (DateTimeParseException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid date format. Please use YYYY-MM-DD.").build();
         }
