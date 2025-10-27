@@ -69,6 +69,7 @@ CREATE TABLE content_items (
     DTYPE VARCHAR(31) NOT NULL,
     content_source_id BIGINT NOT NULL,
     source_url VARCHAR(255) UNIQUE NOT NULL,
+    title VARCHAR(255),
     raw_content TEXT NOT NULL,
     published_at TIMESTAMPTZ NOT NULL,
     processing_status processing_status_enum NOT NULL DEFAULT 'PENDING',
@@ -76,7 +77,6 @@ CREATE TABLE content_items (
 
     -- YouTubeVideo specific columns (nullable)
     video_id VARCHAR(255),
-    title VARCHAR(255),
     author_name VARCHAR(255),
     channel_id VARCHAR(255),
     transcript TEXT,

@@ -19,9 +19,6 @@ public class YouTubeVideo extends ContentItem {
     @Column(name = "video_id", unique = true)
     public String videoId;
 
-    @Column
-    public String title;
-
     @Column(name = "author_name")
     public String authorName;
 
@@ -99,7 +96,6 @@ public class YouTubeVideo extends ContentItem {
         YouTubeVideo that = (YouTubeVideo) obj;
         return Objects.equals(id, that.id) &&
                 Objects.equals(videoId, that.videoId) &&
-                Objects.equals(title, that.title) &&
                 Objects.equals(sourceUrl, that.sourceUrl) &&
                 Objects.equals(authorName, that.authorName) &&
                 Objects.equals(channelId, that.channelId) &&
@@ -109,7 +105,7 @@ public class YouTubeVideo extends ContentItem {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, videoId, title, sourceUrl, authorName, channelId, publishedAt, duration);
+        return Objects.hash(id, videoId, sourceUrl, authorName, channelId, publishedAt, duration);
     }
 
     @Override
@@ -117,7 +113,6 @@ public class YouTubeVideo extends ContentItem {
         return "YouTubeVideo[" +
                 "id=" + id + ", " +
                 "videoId=" + videoId + ", " +
-                "title=" + title + ", " +
                 "url=" + sourceUrl + ", " +
                 "authorName=" + authorName + ", " +
                 "channelId=" + channelId + ", " +

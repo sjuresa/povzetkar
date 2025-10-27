@@ -18,8 +18,6 @@ Summarize the most common or impactful criticisms and limitations mentioned acro
 List the most significant predictions made or the most interesting open questions raised in today's content.
 ### 6. Sources Analyzed
 Conclude with a simple list of the titles of the content that was analyzed for this briefing in format [Video Title]([link to video]) and their authors, no date.
-### 7. Video Summaries
-Just copy/paste the whole content of the video summaries.
 
 ---
 

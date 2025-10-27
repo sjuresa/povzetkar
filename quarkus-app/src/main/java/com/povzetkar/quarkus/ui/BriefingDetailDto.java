@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Summary;
-import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.qute.RawString;
 
 import java.util.List;
@@ -29,7 +28,7 @@ public class BriefingDetailDto {
 
         public SummaryDto(Summary summary, RawString summaryTextHtml) {
             this.id = summary.id;
-            this.title = ((YouTubeVideo)summary.contentItem).title;
+            this.title = summary.contentItem.title;
             this.summaryTextHtml = summaryTextHtml;
         }
     }
