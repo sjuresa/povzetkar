@@ -32,4 +32,8 @@ public class User extends PanacheEntityBase {
     public static List<User> listAllActive() {
         return list("active", true);
     }
+
+    public static List<User> findAllWithTopics() {
+        return find("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.topics").list();
+    }
 }

@@ -42,9 +42,9 @@ public class BriefingWebResource {
     @GET
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance listTopics() {
-        List<User> users = User.listAll();
-        Map<User, List<Topic>> topicsByUser = users.stream()
-                .collect(Collectors.toMap(user -> user, user -> Topic.find("user", user).list()));
+        List<User> usersWithTopics = User.findAllWithTopics();
+        Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
+                .collect(Collectors.toMap(user -> user, user -> new java.util.ArrayList<>(user.topics)));
         return topics.data("topicsByUser", topicsByUser);
     }
 
