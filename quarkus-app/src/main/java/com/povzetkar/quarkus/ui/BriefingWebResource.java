@@ -11,6 +11,7 @@ import io.quarkus.qute.RawString;
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -52,7 +53,7 @@ public class BriefingWebResource {
     @Path("/topics/{topicId}/briefings")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance listBriefingsByTopic(@PathParam("topicId") Long topicId) {
-        Topic topic = Topic.findById(topicId);
+        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(NotFoundException::new);
         List<Briefing> briefings = Briefing.find("topic", topic).list();
         return briefingsByTopic.data("topic", topic).data("briefings", briefings);
     }
@@ -61,7 +62,7 @@ public class BriefingWebResource {
     @Path("/briefings/{briefingId}")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance showBriefing(@PathParam("briefingId") Long briefingId) {
-        Briefing briefing = Briefing.findById(briefingId);
+        Briefing briefing = Briefing.<Briefing>findByIdOptional(briefingId).orElseThrow(NotFoundException::new);
 
         RawString metaSummaryHtml = new RawString(htmlRenderer.render(markdownParser.parse(briefing.metaSummary)));
 
