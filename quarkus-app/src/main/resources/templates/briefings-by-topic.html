@@ -9,7 +9,7 @@
 <h1>Briefings for {topic.name}</h1>
 <ul>
     {#for briefing in briefings}
-        <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate}</a></li>
+        <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate.format('dd.MM.yyyy')}</a></li>
     {/for}
 </ul>
 </body>
