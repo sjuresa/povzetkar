@@ -64,7 +64,7 @@ public class BriefingWebResource {
     @Path("/briefings/{briefingId}")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance showBriefing(@PathParam("briefingId") Long briefingId) {
-        Briefing briefing = Briefing.<Briefing>findByIdOptional(briefingId).orElseThrow(NotFoundException::new);
+        Briefing briefing = Briefing.findByIdWithAssociations(briefingId).orElseThrow(NotFoundException::new);
 
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
 

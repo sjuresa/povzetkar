@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -55,5 +56,9 @@ public class Briefing extends PanacheEntityBase {
         if (createdAt == null) {
             createdAt = java.time.Instant.now();
         }
+    }
+
+    public static Optional<Briefing> findByIdWithAssociations(Long briefingId) {
+        return find("from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1", briefingId).firstResultOptional();
     }
 }
