@@ -18,19 +18,24 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
-import java.net.URI;
 import java.util.List;
 
 @ApplicationScoped
 @Path("/ui/topics")
 public class TopicResource {
 
-    public static final String BRIEFINGS = "/briefings";
-    public static final String UI_TOPICS = "/ui/topics/";
+    public static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
+    public static final String NOT_FOUND = " not found.";
+    public static final String TOPIC_WITH_ID = "Topic with id ";
     public static final String TOPIC = "topic";
+    @Context
+    UriInfo uriInfo;
+
     private final Template topicForm;
     private final Template briefingsByTopic;
 
@@ -51,43 +56,40 @@ public class TopicResource {
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response addTopic(@FormParam("userId") Long userId, @FormParam("name") String name) {
-        User user = User.findById(userId);
-        if (user != null) {
-            Topic topic = new Topic();
-            topic.user = user;
-            topic.name = name;
-            topic.persist();
-        }
-        return Response.seeOther(URI.create("/ui")).build();
+        User user = User.<User>findByIdOptional(userId).orElseThrow(() -> new NotFoundException("User with id " + userId + NOT_FOUND));
+        Topic topic = new Topic();
+        topic.user = user;
+        topic.name = name;
+        topic.persist();
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
     }
 
     @GET
     @Path("/{id}/edit")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance showEditForm(@PathParam("id") Long id) {
-        Topic topic = Topic.findById(id);
+        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND));
         return topicForm.data(TOPIC, topic);
     }
 
     @POST
-    @Path("/{id}")
+    @Path("/update/{id}") // Changed path
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response updateTopic(@PathParam("id") Long id, @FormParam("name") String name) {
-        Topic topic = Topic.findById(id);
-        if (topic != null) {
-            topic.name = name;
-            topic.persist();
-        }
-        return Response.seeOther(URI.create("/ui")).build();
+        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND));
+        topic.name = name;
+        topic.persist();
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
     }
 
     @POST
-    @Path("/{id}/delete")
+    @Path("/delete/{id}") // Changed path
     @Transactional
     public Response deleteTopic(@PathParam("id") Long id) {
-        Topic.deleteById(id);
-        return Response.seeOther(URI.create("/ui")).build();
+        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND));
+        topic.delete();
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
     }
 
     @GET
@@ -104,32 +106,28 @@ public class TopicResource {
     }
 
     @POST
-    @Path("/{topicId}/content-sources")
+    @Path("/add-content-source/{topicId}") // Changed path
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response addContentSourceToTopic(@PathParam("topicId") Long topicId, @FormParam("contentSourceId") Long contentSourceId) {
         if (contentSourceId == null) {
-            return Response.seeOther(URI.create(UI_TOPICS + topicId + BRIEFINGS)).build();
+            return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
         }
-        Topic topic = Topic.findById(topicId);
-        ContentSource contentSource = ContentSource.findById(contentSourceId);
-        if (topic != null && contentSource != null) {
-            topic.contentSources.add(contentSource);
-            topic.persist();
-        }
-        return Response.seeOther(URI.create(UI_TOPICS + topicId + BRIEFINGS)).build();
+        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + topicId + NOT_FOUND));
+        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> new NotFoundException("ContentSource with id " + contentSourceId + NOT_FOUND));
+        topic.contentSources.add(contentSource);
+        topic.persist();
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
     }
 
     @POST
-    @Path("/{topicId}/content-sources/{contentSourceId}/delete")
+    @Path("/remove-content-source/{topicId}/{contentSourceId}") // Changed path
     @Transactional
     public Response removeContentSourceFromTopic(@PathParam("topicId") Long topicId, @PathParam("contentSourceId") Long contentSourceId) {
-        Topic topic = Topic.findById(topicId);
-        ContentSource contentSource = ContentSource.findById(contentSourceId);
-        if (topic != null && contentSource != null) {
-            topic.contentSources.remove(contentSource);
-            topic.persist();
-        }
-        return Response.seeOther(URI.create(UI_TOPICS + topicId + BRIEFINGS)).build();
+        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> new NotFoundException("ContentSource with id " + contentSourceId + NOT_FOUND));
+        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + topicId + NOT_FOUND));
+        topic.contentSources.remove(contentSource);
+        topic.persist();
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
     }
 }

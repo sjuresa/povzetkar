@@ -7,37 +7,40 @@
 </head>
 <body>
 <h1>Briefings for {topic.name}</h1>
-<h2>Briefings</h2>
-<ul>
-    {#for briefing in briefings}
-        <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate.format('dd.MM.yyyy')}</a></li>
-    {/for}
-</ul>
-<hr>
+
 <h2>Content Sources</h2>
 <ul>
     {#for source in topic.contentSources}
-    <li>
-        {source.name}
-        <form action="/ui/topics/{topic.id}/content-sources/{source.id}/delete" method="post" style="display: inline;">
-            <button type="submit">[Remove]</button>
-        </form>
-    </li>
+        <li>
+            {source.name}
+            <form action="/ui/topics/remove-content-source/{topic.id}/{source.id}" method="post" style="display: inline;">
+                <button type="submit">[Remove]</button>
+            </form>
+        </li>
     {/for}
 </ul>
 
 <h3>Add Content Source</h3>
-<form action="/ui/topics/{topic.id}/content-sources" method="post">
+<form action="/ui/topics/add-content-source/{topic.id}" method="post">
     <select name="contentSourceId">
         {#for source in allContentSources}
-        {#if !topic.contentSources.contains(source)}
-        <option value="{source.id}">{source.name}</option>
-        {/if}
+            {#if !topic.contentSources.contains(source)}
+                <option value="{source.id}">{source.name}</option>
+            {/if}
         {/for}
     </select>
     <button type="submit">Add Existing</button>
 </form>
 <a href="/ui/content-sources/add?topicId={topic.id}">Create and Add New Content Source</a>
+
+<hr>
+
+<h2>Briefings</h2>
+<ul>
+    {#for briefing in briefings}
+        <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate}</a></li>
+    {/for}
+</ul>
 
 </body>
 </html>
