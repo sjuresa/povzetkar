@@ -46,6 +46,7 @@ public class BriefingWebResource {
     public TemplateInstance listTopics() {
         List<User> usersWithTopics = User.findAllWithTopics();
         Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
+                .filter(user -> !user.topics.isEmpty())
                 .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
                         .sorted(Comparator.comparing(topic -> topic.name))
                         .toList()));

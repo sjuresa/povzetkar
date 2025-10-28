@@ -59,6 +59,6 @@ public class Briefing extends PanacheEntityBase {
     }
 
     public static Optional<Briefing> findByIdWithAssociations(Long briefingId) {
-        return find("from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1", briefingId).firstResultOptional();
+        return find("select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1", briefingId).firstResultOptional();
     }
 }
