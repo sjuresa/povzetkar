@@ -8,11 +8,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class BriefingDetailDto {
-    public Long id;
-    public String topicName;
-    public LocalDate briefingDate;
-    public RawString metaSummaryHtml;
-    public List<SummaryDto> summaries;
+    public final Long id;
+    public final String topicName;
+    public final LocalDate briefingDate;
+    public final RawString metaSummaryHtml;
+    public final List<SummaryDto> summaries;
 
     public BriefingDetailDto(Briefing briefing, RawString metaSummaryHtml, List<SummaryDto> summaries) {
         this.id = briefing.id;
@@ -23,9 +23,9 @@ public class BriefingDetailDto {
     }
 
     public static class SummaryDto {
-        public Long id;
-        public String title;
-        public RawString summaryTextHtml;
+        public final Long id;
+        public final String title;
+        public final RawString summaryTextHtml;
 
         public SummaryDto(Summary summary, RawString summaryTextHtml) {
             this.id = summary.id;

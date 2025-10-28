@@ -53,7 +53,7 @@ class BriefingWebResourceTest {
         ContentSource testContentSource = new ContentSource();
         testContentSource.name = "Test Source";
         testContentSource.sourceIdentifier = "test-source-id"; // Corrected field name
-        testContentSource.sourceTypeId = 1; // Assuming 1 is the ID for YOUTUBE
+        testContentSource.sourceTypeId = com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId();
         testContentSource.persist();
 
         // Create test content item
@@ -90,8 +90,8 @@ class BriefingWebResourceTest {
         Briefing.deleteAll();
         Summary.deleteAll();
         ContentItem.deleteAll();
-        ContentSource.deleteAll();
         Topic.deleteAll();
+        ContentSource.deleteAll();
         User.deleteAll();
     }
 
