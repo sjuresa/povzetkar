@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Briefing for {briefing.topicName} on {briefing.formattedDate}</title>
+    <title>Briefing for {briefing.topicName} on {briefing.briefingDate.format('dd.MM.yyyy')}</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<p>{briefing.metaSummaryHtml}</p>
+<div>{briefing.metaSummaryHtml}</div>
 
 <h2>Included Summaries</h2>
 <ul>
     {#for summary in briefing.summaries}
         <li>
             <h3>{summary.title}</h3>
-            <p>{summary.summaryTextHtml}</p>
+            <div>{summary.summaryTextHtml}</div>
         </li>
     {/for}
 </ul>

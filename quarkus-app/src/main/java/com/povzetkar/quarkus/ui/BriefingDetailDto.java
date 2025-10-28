@@ -4,19 +4,20 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Summary;
 import io.quarkus.qute.RawString;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class BriefingDetailDto {
     public Long id;
     public String topicName;
-    public String formattedDate;
+    public LocalDate briefingDate;
     public RawString metaSummaryHtml;
     public List<SummaryDto> summaries;
 
     public BriefingDetailDto(Briefing briefing, RawString metaSummaryHtml, List<SummaryDto> summaries) {
         this.id = briefing.id;
         this.topicName = briefing.topic.name;
-        this.formattedDate = briefing.briefingDate.toString();
+        this.briefingDate = briefing.briefingDate;
         this.metaSummaryHtml = metaSummaryHtml;
         this.summaries = summaries;
     }

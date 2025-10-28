@@ -33,13 +33,8 @@ class BriefingWebResourceTest {
     @BeforeAll
     @Transactional
     static void setup() {
-        // Clear all data before each test (now before all tests)
-        Briefing.deleteAll();
-        Summary.deleteAll();
-        ContentItem.deleteAll();
-        ContentSource.deleteAll();
-        Topic.deleteAll();
         User.deleteAll();
+        ContentSource.deleteAll(); // If some are not tied to users
 
         // Create test user
         testUser = new User();
