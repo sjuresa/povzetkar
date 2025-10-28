@@ -49,6 +49,17 @@ public class ContentSourceResource {
                                      @FormParam("sourceIdentifier") String sourceIdentifier,
                                      @FormParam("sourceTypeId") Integer sourceTypeId,
                                      @FormParam("topicId") Long topicId) {
+
+        if (name == null || name.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Name cannot be blank.").build();
+        }
+        if (sourceIdentifier == null || sourceIdentifier.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Source Identifier cannot be blank.").build();
+        }
+        if (sourceTypeId == null || SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Source Type ID.").build();
+        }
+
         ContentSource contentSource = new ContentSource();
         contentSource.name = name;
         contentSource.sourceIdentifier = sourceIdentifier;

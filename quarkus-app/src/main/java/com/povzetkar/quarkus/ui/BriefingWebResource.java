@@ -10,6 +10,7 @@ import io.quarkus.qute.Location;
 import io.quarkus.qute.RawString;
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@ApplicationScoped
 @Path("/ui")
 public class BriefingWebResource {
 
