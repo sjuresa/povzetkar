@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{#if topic}Edit Topic{#else}Add Topic{/if}</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<h1>{#if topic}Edit Topic{#else}Add Topic{/if}</h1>
+
+<form action="/ui/topics{#if topic}/{topic.id}{/if}" method="post">
+    {#if !topic}
+        <div>
+            <label for="userId">User:</label>
+            <select id="userId" name="userId">
+                {#for user in users}
+                    <option value="{user.id}">{user.name}</option>
+                {/for}
+            </select>
+        </div>
+    {/if}
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="{topic.name ?: ''}" required>
+    </div>
+    <div>
+        <button type="submit">Save</button>
+    </div>
+</form>
+
+</body>
+</html>

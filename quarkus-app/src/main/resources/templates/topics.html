@@ -7,13 +7,21 @@
 </head>
 <body>
 <h1>Topics by User</h1>
+<a href="/ui/topics/add">Add New Topic</a>
+
 {#for entry in topicsByUser.entrySet()}
-<h2>{entry.key.name}</h2>
-<ul>
-    {#for topic in entry.value}
-    <li><a href="/ui/topics/{topic.id}/briefings">{topic.name}</a></li>
-    {/for}
-</ul>
+    <h2>{entry.key.name}</h2>
+    <ul>
+        {#for topic in entry.value}
+            <li>
+                <a href="/ui/topics/{topic.id}/briefings">{topic.name}</a>
+                <a href="/ui/topics/{topic.id}/edit">[Edit]</a>
+                <form action="/ui/topics/{topic.id}/delete" method="post" style="display: inline;">
+                    <button type="submit">[Delete]</button>
+                </form>
+            </li>
+        {/for}
+    </ul>
 {/for}
 </body>
 </html>

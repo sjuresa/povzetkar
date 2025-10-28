@@ -26,14 +26,12 @@ import java.util.stream.Collectors;
 public class BriefingWebResource {
 
     private final Template topics;
-    private final Template briefingsByTopic;
     private final Template briefingDetail;
     private final Parser markdownParser;
     private final HtmlRenderer htmlRenderer;
 
-    public BriefingWebResource(@Location("topics.html") Template topics, @Location("briefings-by-topic.html") Template briefingsByTopic, @Location("briefing-detail.html") Template briefingDetail) {
+    public BriefingWebResource(@Location("topics.html") Template topics, @Location("briefing-detail.html") Template briefingDetail) {
         this.topics = topics;
-        this.briefingsByTopic = briefingsByTopic;
         this.briefingDetail = briefingDetail;
 
         MutableDataSet options = new MutableDataSet();
@@ -51,15 +49,6 @@ public class BriefingWebResource {
                         .sorted(Comparator.comparing(topic -> topic.name))
                         .toList()));
         return topics.data("topicsByUser", topicsByUser);
-    }
-
-    @GET
-    @Path("/topics/{topicId}/briefings")
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance listBriefingsByTopic(@PathParam("topicId") Long topicId) {
-        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(NotFoundException::new);
-        List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
-        return briefingsByTopic.data("topic", topic).data("briefings", briefings);
     }
 
     @GET
