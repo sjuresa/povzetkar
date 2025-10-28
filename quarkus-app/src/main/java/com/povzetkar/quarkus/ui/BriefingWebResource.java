@@ -78,7 +78,7 @@ public class BriefingWebResource {
     }
 
     private RawString markdownToHtml(String markdown) {
-        if (markdown == null) {
+        if (markdown == null || markdown.isBlank()) {
             return new RawString("");
         }
         return new RawString(htmlRenderer.render(markdownParser.parse(markdown)));
