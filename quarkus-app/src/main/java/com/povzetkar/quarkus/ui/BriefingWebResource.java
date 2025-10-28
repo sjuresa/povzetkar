@@ -56,7 +56,7 @@ public class BriefingWebResource {
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance listBriefingsByTopic(@PathParam("topicId") Long topicId) {
         Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(NotFoundException::new);
-        List<Briefing> briefings = Briefing.find("topic", topic).list();
+        List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
         return briefingsByTopic.data("topic", topic).data("briefings", briefings);
     }
 
@@ -69,6 +69,7 @@ public class BriefingWebResource {
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
 
         List<BriefingDetailDto.SummaryDto> summaryDtos = briefing.summaries.stream()
+                .sorted(java.util.Comparator.comparing(summary -> summary.contentItem.publishedAt))
                 .map(summary -> new BriefingDetailDto.SummaryDto(summary, markdownToHtml(summary.summaryText)))
                 .toList();
 
