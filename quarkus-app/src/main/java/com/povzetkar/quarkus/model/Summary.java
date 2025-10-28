@@ -58,7 +58,7 @@ public class Summary extends PanacheEntityBase {
 
     public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
         return find("from Summary s where s.contentItem.contentSource.id in " +
-                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2",
+                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2 order by s.id",
                 topic, date).list();
     }
 }

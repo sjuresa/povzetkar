@@ -215,6 +215,13 @@ CREATE TABLE content_source_assessments (
         ON DELETE CASCADE
 );
 
+-- orchestration_locks
+CREATE TABLE orchestration_locks (
+    id BIGSERIAL PRIMARY KEY,
+    orchestration_date DATE UNIQUE NOT NULL,
+    locked_at TIMESTAMPTZ NOT NULL
+);
+
 -- Index Definitions
 CREATE INDEX idx_topics_on_user_id ON topics(user_id);
 CREATE INDEX idx_content_sources_on_source_type_id ON content_sources(source_type_id);
@@ -222,3 +229,4 @@ CREATE INDEX idx_content_items_on_content_source_id ON content_items(content_sou
 CREATE INDEX idx_content_items_on_processing_status ON content_items(processing_status);
 CREATE INDEX idx_summaries_on_content_item_id ON summaries(content_item_id);
 CREATE INDEX idx_content_source_assessments_on_content_source_id ON content_source_assessments(content_source_id);
+CREATE INDEX idx_orchestration_locks_on_orchestration_date ON orchestration_locks(orchestration_date);

@@ -25,13 +25,15 @@ public class OrchestratorService {
     private final AsyncSummarizationService asyncSummarizationService;
     private final BriefingService briefingService;
     private final ManagedExecutor managedExecutor;
+    private final OrchestrationLockService orchestrationLockService;
 
     @Inject
-    public OrchestratorService(ContentItemFetcher contentItemFetcher, AsyncSummarizationService asyncSummarizationService, BriefingService briefingService, ManagedExecutor managedExecutor) {
+    public OrchestratorService(ContentItemFetcher contentItemFetcher, AsyncSummarizationService asyncSummarizationService, BriefingService briefingService, ManagedExecutor managedExecutor, OrchestrationLockService orchestrationLockService) {
         this.contentItemFetcher = contentItemFetcher;
         this.asyncSummarizationService = asyncSummarizationService;
         this.briefingService = briefingService;
         this.managedExecutor = managedExecutor;
+        this.orchestrationLockService = orchestrationLockService;
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
@@ -64,21 +66,34 @@ public class OrchestratorService {
     private Uni<Void> executeOrchestrationForDate(LocalDate orchestrationDate) {
         logger.info("Orchestration started for date: {}.", orchestrationDate);
 
-        List<User> activeUsers = User.listAllActive();
-        if (activeUsers.isEmpty()) {
-            logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
+        try {
+            orchestrationLockService.acquireLock(orchestrationDate);
+        } catch (OrchestrationLockService.OrchestrationLockException e) {
+            logger.warn("Skipping orchestration for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
             return Uni.createFrom().voidItem();
         }
 
-        List<Topic> allTopics = Topic.findByUsers(activeUsers);
+        try {
+            List<User> activeUsers = User.listAllActive();
+            if (activeUsers.isEmpty()) {
+                logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
+                return Uni.createFrom().voidItem();
+            }
 
-        return Multi.createFrom().iterable(allTopics)
-                .onItem().transformToUni(topic -> processTopicUni(topic, orchestrationDate))
-                .merge()
-                .collect().asList()
-                .onItem().invoke(() -> logger.info("Orchestration finished for date: {}.", orchestrationDate))
-                .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
-                .replaceWithVoid();
+            List<Topic> allTopics = Topic.findByUsers(activeUsers);
+
+            return Multi.createFrom().iterable(allTopics)
+                    .onItem().transformToUni(topic -> processTopicUni(topic, orchestrationDate))
+                    .merge()
+                    .collect().asList()
+                    .onItem().invoke(() -> logger.info("Orchestration finished for date: {}.", orchestrationDate))
+                    .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
+                    .replaceWithVoid()
+                    .onTermination().invoke(() -> orchestrationLockService.releaseLock(orchestrationDate));
+        } catch (Exception e) {
+            orchestrationLockService.releaseLock(orchestrationDate);
+            throw e;
+        }
     }
 
     /**
