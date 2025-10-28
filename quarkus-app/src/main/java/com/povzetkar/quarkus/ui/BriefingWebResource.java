@@ -45,7 +45,9 @@ public class BriefingWebResource {
     public TemplateInstance listTopics() {
         List<User> usersWithTopics = User.findAllWithTopics();
         Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
-                .collect(Collectors.toMap(user -> user, user -> new java.util.ArrayList<>(user.topics)));
+                .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
+                        .sorted(java.util.Comparator.comparing(topic -> topic.name))
+                        .toList()));
         return topics.data("topicsByUser", topicsByUser);
     }
 
@@ -64,14 +66,21 @@ public class BriefingWebResource {
     public TemplateInstance showBriefing(@PathParam("briefingId") Long briefingId) {
         Briefing briefing = Briefing.<Briefing>findByIdOptional(briefingId).orElseThrow(NotFoundException::new);
 
-        RawString metaSummaryHtml = new RawString(htmlRenderer.render(markdownParser.parse(briefing.metaSummary)));
+        RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
 
         List<BriefingDetailDto.SummaryDto> summaryDtos = briefing.summaries.stream()
-                .map(summary -> new BriefingDetailDto.SummaryDto(summary, new RawString(htmlRenderer.render(markdownParser.parse(summary.summaryText)))))
+                .map(summary -> new BriefingDetailDto.SummaryDto(summary, markdownToHtml(summary.summaryText)))
                 .toList();
 
         BriefingDetailDto dto = new BriefingDetailDto(briefing, metaSummaryHtml, summaryDtos);
 
         return briefingDetail.data("briefing", dto);
+    }
+
+    private RawString markdownToHtml(String markdown) {
+        if (markdown == null) {
+            return new RawString("");
+        }
+        return new RawString(htmlRenderer.render(markdownParser.parse(markdown)));
     }
 }
