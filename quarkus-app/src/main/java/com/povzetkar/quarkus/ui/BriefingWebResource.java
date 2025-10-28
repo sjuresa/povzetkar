@@ -17,6 +17,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class BriefingWebResource {
         List<User> usersWithTopics = User.findAllWithTopics();
         Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
                 .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
-                        .sorted(java.util.Comparator.comparing(topic -> topic.name))
+                        .sorted(Comparator.comparing(topic -> topic.name))
                         .toList()));
         return topics.data("topicsByUser", topicsByUser);
     }
@@ -69,7 +70,7 @@ public class BriefingWebResource {
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
 
         List<BriefingDetailDto.SummaryDto> summaryDtos = briefing.summaries.stream()
-                .sorted(java.util.Comparator.comparing(summary -> summary.contentItem.publishedAt))
+                .sorted(Comparator.comparing(summary -> summary.contentItem.publishedAt))
                 .map(summary -> new BriefingDetailDto.SummaryDto(summary, markdownToHtml(summary.summaryText)))
                 .toList();
 
