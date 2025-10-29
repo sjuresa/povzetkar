@@ -92,7 +92,11 @@ public class OrchestratorService {
                     .replaceWithVoid()
                     .onTermination().invoke(() -> orchestrationLockService.releaseLock(orchestrationDate));
         } catch (Exception e) {
-            orchestrationLockService.releaseLock(orchestrationDate);
+            try {
+                orchestrationLockService.releaseLock(orchestrationDate);
+            } catch (Exception releaseEx) {
+                e.addSuppressed(releaseEx);
+            }
             throw e;
         }
     }
