@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -74,6 +75,6 @@ public class Briefing extends PanacheEntityBase {
     }
     @Override
     public int hashCode() {
-        return 31;
+        return Objects.hashCode(id);
     }
 }

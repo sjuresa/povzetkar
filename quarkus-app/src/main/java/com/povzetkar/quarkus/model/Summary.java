@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "summaries")
@@ -74,6 +75,6 @@ public class Summary extends PanacheEntityBase {
     }
     @Override
     public int hashCode() {
-        return 31;
+        return Objects.hashCode(id);
     }
 }
