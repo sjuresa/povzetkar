@@ -139,27 +139,37 @@ This mandate is a direct response to past failures where critical information-ga
 
 #### The Pre-Plan Gating Protocol
 
-This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" that explicitly verifies and confirms the completion of every mandatory step in the "Information Gathering" phase.
+This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" by verifying every item in the rubric below. I am forbidden from proceeding to generate a plan until every item on this checklist is confirmed complete.
 
-Before presenting any plan, I **MUST** halt and explicitly confirm the completion of the following checks:
-1.  **Task Definition:** Have I read and understood the `agent_logs/task.md` file as per Step 1 of the Mandatory Workflow?
-2.  **Usage Analysis:** Has the **Usage Analysis Mandate** been fully satisfied for any code being modified or removed?
-3.  **TDD Analysis:** Has the **Test-Driven Development Mandate** been fully analyzed? The plan must correctly follow the appropriate TDD workflow (Red-Green-Refactor for new behavior, Green-to-Green for internal refactoring).
-4.  **Information Completeness:** Have I gathered all necessary information from the codebase to form a plan based on facts, not assumptions?
-5.  **Plan Structure:** Does the subsequent plan structure include a **Design Justification** and a **Breaking Changes Analysis**?
+#### The Pre-Plan Rubric
 
-I am forbidden from proceeding to generate a plan until every item on this checklist is confirmed complete.
+This rubric must be used to verify the completeness of the planning phase before presenting the plan for approval.
+| Step | Check                                                                                                                                                           | Status |
+| :--- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: |
+| 1.1  | **Task Definition:** Have I read/created and confirmed my understanding of the `agent_logs/task.md` file?                                                         |   ☐    |
+| 1.2  | **Pre-Plan Check: Usage Analysis:** Has the **Usage Analysis Mandate** been satisfied for all code to be modified/removed? (`find_usages` must be run first).      |   ☐    |
+| 1.3  | **Pre-Plan Check: TDD:** Has the correct TDD workflow (Red-Green-Refactor or Green-to-Green) been identified?                                                      |   ☐    |
+| 1.4  | **Pre-Plan Check: Info Gathering:** Have I gathered all necessary facts from the codebase before planning?                                                        |   ☐    |
+| 1.5  | **Plan Presentation: Findings:** Does the plan present findings as a list of facts?                                                                             |   ☐    |
+| 1.6  | **Plan Presentation: Structure:** Does the plan include a "Detailed Plan," "Design Justification," and "Breaking Changes Analysis"?                                |   ☐    |
+| 1.7  | **Await Approval:** Have I stopped and awaited explicit user approval before any execution?                                                                     |   ☐    |
 
-#### Pre-Execution Checklist
+#### The Execution & Completion Rubric
 
-Before I execute any approved plan, I **must** internally verify and confirm the following:
-1.  **Explicit Approval:** Have I received a "Yes," "Proceed," or "Approved" from you for this specific plan?
-2.  **Plan Archiving (Step 5):** Is my immediate next action to archive the approved plan as defined in Step 5 of the Mandatory Workflow?
-3.  **Task Logging (Step 6):** Will my action after plan archiving be to initialize the task logs as defined in Step 6?
-4.  **Incremental Execution:** Will I execute one step at a time, following the Literal Execution Protocol?
-5.  **Verification Mandate Adherence:** Will I adhere to the **Verification Mandate** (see Section VI) by performing immediate verification after each file modification and final verification upon completing all planned modifications?
+This rubric must be used to verify the completeness of the execution and completion phases.
 
----
+| Step | Check                                                                                                                                                           | Status |
+| :--- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: |
+| 2.1  | **Pre-Execution Check: Approval:** Have I received explicit approval ("Yes," "Proceed," "Approved")?                                                              |   ☐    |
+| 2.2  | **Pre-Execution Check: Archiving & Logging:** Is my immediate next step to archive the plan (Step 5) and then initialize logs (Step 6)?                           |   ☐    |
+| 2.3  | **Execution Protocol: Announce-Act-Verify:** Is every action performed as a single, atomic step that is announced, executed, and verified?                         |   ☐    |
+| 2.4  | **Execution Protocol: Logging:** Is every successfully verified action immediately logged to the `execution.md` file?                                             |   ☐    |
+| 2.5  | **Verification: Immediate (Literal):** After every `write_file` or `replace_text`, do I immediately read the file back to confirm its contents?                    |   ☐    |
+| 2.6  | **Verification: Immediate (Syntactic):** After literal verification, do I immediately run `analyze_current_file` to check for syntax/compilation errors?            |   ☐    |
+| 3.1  | **Verification: Final Behavioral:** After all modifications, have I stopped and explicitly asked the user to run the test suite?                                  |   ☐    |
+| 3.2  | **Await Confirmation:** Have I awaited user confirmation that all tests are passing?                                                                            |   ☐    |
+| 3.3  | **Commit Message:** Does the proposed commit message follow the **Commit Message Mandate** (based on `git diff HEAD`, Conventional Commits)?                        |   ☐    |
+| 3.4  | **Final Hand-off:** Is my final output the question: "I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?" |   ☐    |
 
 # IV. Execution & Supporting Protocols
 
