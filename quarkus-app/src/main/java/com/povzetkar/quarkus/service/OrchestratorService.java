@@ -77,6 +77,7 @@ public class OrchestratorService {
             List<User> activeUsers = User.listAllActive();
             if (activeUsers.isEmpty()) {
                 logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
+                orchestrationLockService.releaseLock(orchestrationDate);
                 return Uni.createFrom().voidItem();
             }
 
