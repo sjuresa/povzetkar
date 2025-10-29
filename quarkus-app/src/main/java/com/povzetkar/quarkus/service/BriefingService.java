@@ -52,7 +52,6 @@ public class BriefingService {
 
             Briefing briefing;
             if (existingBriefingOptional.isPresent()) {
-                // Re-fetch the existing briefing within the new transaction to ensure it's managed
                 briefing = existingBriefingOptional.get(); // Already managed if fetched within this transaction
                 logger.info("Updating existing briefing for topic '{}' on {}.", topic.name, briefingDate);
                 briefing.metaSummary = metaSummary;

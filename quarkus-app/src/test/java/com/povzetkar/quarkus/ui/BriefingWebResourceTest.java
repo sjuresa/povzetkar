@@ -11,8 +11,8 @@ import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -30,9 +30,9 @@ class BriefingWebResourceTest {
     private static Briefing testBriefing;
     private static YouTubeVideo testContentItem;
 
-    @BeforeAll
+    @BeforeEach
     @Transactional
-    static void setup() {
+    void setup() {
         Briefing.deleteAll();
         Summary.deleteAll();
         ContentItem.deleteAll();
@@ -88,9 +88,9 @@ class BriefingWebResourceTest {
         testBriefing.persist();
     }
 
-    @AfterAll
+    @AfterEach
     @Transactional
-    static void cleanup() {
+    void cleanup() {
         Briefing.deleteAll();
         Summary.deleteAll();
         ContentItem.deleteAll();

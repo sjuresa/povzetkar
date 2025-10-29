@@ -7,8 +7,8 @@ import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.containsString;
@@ -19,9 +19,9 @@ class ContentSourceResourceTest {
 
     private static Topic testTopic;
 
-    @BeforeAll
+    @BeforeEach
     @Transactional
-    static void setup() {
+    void setup() {
         // Clear all data before each test
         ContentSource.deleteAll();
         Topic.deleteAll();
@@ -41,9 +41,9 @@ class ContentSourceResourceTest {
         testTopic.persist();
     }
 
-    @AfterAll
+    @AfterEach
     @Transactional
-    static void cleanup() {
+    void cleanup() {
         ContentSource.deleteAll();
         Topic.deleteAll();
         User.deleteAll();
