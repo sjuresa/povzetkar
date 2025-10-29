@@ -10,18 +10,12 @@ import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.FormParam;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,8 +24,6 @@ import java.util.List;
 public class TopicResource {
 
     private static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
-    private static final String NOT_FOUND = " not found.";
-    private static final String TOPIC_WITH_ID = "Topic with id ";
     private static final String TOPIC = "topic";
     @Context
     UriInfo uriInfo;
@@ -56,7 +48,7 @@ public class TopicResource {
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response addTopic(@FormParam("userId") Long userId, @FormParam("name") String name) {
-        User user = User.<User>findByIdOptional(userId).orElseThrow(() -> new NotFoundException("User with id " + userId + NOT_FOUND));
+        User user = User.<User>findByIdOptional(userId).orElseThrow(() -> notFound("User", userId));
         Topic topic = new Topic();
         topic.user = user;
         topic.name = name;
@@ -68,7 +60,7 @@ public class TopicResource {
     @Path("/{id}/edit")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance showEditForm(@PathParam("id") Long id) {
-        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND));
+        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
         return topicForm.data(TOPIC, topic);
     }
 
@@ -77,7 +69,7 @@ public class TopicResource {
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response updateTopic(@PathParam("id") Long id, @FormParam("name") String name) {
-        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND));
+        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
         topic.name = name;
         topic.persist();
         return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
@@ -87,7 +79,7 @@ public class TopicResource {
     @Path("/delete/{id}") // Changed path
     @Transactional
     public Response deleteTopic(@PathParam("id") Long id) {
-        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND));
+        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
         topic.delete();
         return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
     }
@@ -97,7 +89,7 @@ public class TopicResource {
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance listBriefingsByTopic(@PathParam("topicId") Long topicId) {
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
-        Topic topic = query.firstResultOptional().orElseThrow(NotFoundException::new);
+        Topic topic = query.firstResultOptional().orElseThrow(() -> topicNotFound(topicId));
         List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
         List<ContentSource> allContentSources = ContentSource.listAll();
         return briefingsByTopic.data(TOPIC, topic)
@@ -113,8 +105,8 @@ public class TopicResource {
         if (contentSourceId == null) {
             return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
         }
-        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + topicId + NOT_FOUND));
-        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> new NotFoundException("ContentSource with id " + contentSourceId + NOT_FOUND));
+        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> topicNotFound(topicId));
+        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> notFound("ContentSource", contentSourceId));
         topic.contentSources.add(contentSource);
         topic.persist();
         return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
@@ -124,10 +116,18 @@ public class TopicResource {
     @Path("/remove-content-source/{topicId}/{contentSourceId}") // Changed path
     @Transactional
     public Response removeContentSourceFromTopic(@PathParam("topicId") Long topicId, @PathParam("contentSourceId") Long contentSourceId) {
-        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> new NotFoundException("ContentSource with id " + contentSourceId + NOT_FOUND));
-        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + topicId + NOT_FOUND));
+        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> notFound("ContentSource", contentSourceId));
+        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> topicNotFound(topicId));
         topic.contentSources.remove(contentSource);
         topic.persist();
         return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
+    }
+
+    private @NotNull NotFoundException topicNotFound(Long id) {
+        return notFound("Topic", id);
+    }
+
+    private NotFoundException notFound(String entityName, Object id) {
+        return new NotFoundException(String.format("%s with id %s not found.", entityName, id));
     }
 }
