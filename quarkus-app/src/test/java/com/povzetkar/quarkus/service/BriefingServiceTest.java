@@ -35,6 +35,7 @@ class BriefingServiceTest {
     VideoSummaryService videoSummaryService;
 
     private Topic testTopic;
+    private ContentSource testContentSource;
 
     @BeforeEach
     @Transactional
@@ -56,7 +57,7 @@ class BriefingServiceTest {
         testTopic.user = testUser;
         testTopic.persist();
 
-        ContentSource testContentSource = new ContentSource();
+        testContentSource = new ContentSource();
         testContentSource.sourceIdentifier = "test_channel_id_" + UUID.randomUUID();
         testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         testContentSource.name = "Test Channel";
@@ -87,7 +88,7 @@ class BriefingServiceTest {
         contentItem.rawContent = "raw content";
         contentItem.publishedAt = Instant.now();
         contentItem.title = "Test Title";
-        contentItem.contentSource = (ContentSource) ContentSource.listAll().getFirst();
+        contentItem.contentSource = testContentSource;
         
         Summary summary = new Summary("Summary text 1.", contentItem, briefingDate);
 
