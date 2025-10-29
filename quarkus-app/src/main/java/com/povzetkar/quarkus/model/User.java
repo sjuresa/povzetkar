@@ -49,6 +49,6 @@ public class User extends PanacheEntityBase {
     }
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return 31;
     }
 }

@@ -74,9 +74,6 @@ public class Summary extends PanacheEntityBase {
     }
     @Override
     public int hashCode() {
-        // Using a constant for hashCode is a safe approach for JPA entities
-        // to avoid issues when an entity transitions from transient to persistent state
-        // inside a collection.
-        return getClass().hashCode();
+        return 31;
     }
 }
