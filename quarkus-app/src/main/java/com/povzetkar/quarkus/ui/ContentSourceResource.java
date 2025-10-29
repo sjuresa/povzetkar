@@ -69,7 +69,7 @@ public class ContentSourceResource {
                     .orElseThrow(() -> new jakarta.ws.rs.NotFoundException("Topic with id " + topicId + " not found."));
             topic.contentSources.add(contentSource);
             topic.persist();
-            Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, "listBriefingsByTopic").build(topicId)).build();
+            return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, "listBriefingsByTopic").build(topicId)).build();
         }
 
         return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
