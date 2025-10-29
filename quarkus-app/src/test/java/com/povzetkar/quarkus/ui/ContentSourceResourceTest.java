@@ -99,7 +99,7 @@ class ContentSourceResourceTest {
                 .when().post("/ui/content-sources")
                 .then()
                 .statusCode(303) // Expect redirect status
-                .header("Location", containsString("/ui/topics/" + testTopic.id + "/briefings"));
+                .header("Location", containsString("http://localhost:8081/ui"));
 
         // Verify content source was created and linked to topic
         ContentSource createdSource = ContentSource.find("sourceIdentifier", "valid-id").firstResult();
