@@ -97,7 +97,7 @@ public class OrchestratorService {
             } catch (Exception releaseEx) {
                 e.addSuppressed(releaseEx);
             }
-            throw e;
+            return Uni.createFrom().failure(e);
         }
     }
 

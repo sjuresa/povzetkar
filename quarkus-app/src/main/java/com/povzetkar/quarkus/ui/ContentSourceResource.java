@@ -17,6 +17,8 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.povzetkar.quarkus.ui.TopicResource.LIST_BRIEFINGS_BY_TOPIC;
+
 @ApplicationScoped
 @Path("/ui/content-sources")
 public class ContentSourceResource {
@@ -69,7 +71,7 @@ public class ContentSourceResource {
                     .orElseThrow(() -> new NotFoundException("Topic with id " + topicId + " not found."));
             topic.contentSources.add(contentSource);
             topic.persist();
-            return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, "listBriefingsByTopic").build(topicId)).build();
+            return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
         }
 
         return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();

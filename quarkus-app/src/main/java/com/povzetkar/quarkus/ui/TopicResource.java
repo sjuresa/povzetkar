@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Path("/ui/topics")
 public class TopicResource {
 
-    private static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
+    public static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
     private static final String TOPIC = "topic";
     @Context
     UriInfo uriInfo;
