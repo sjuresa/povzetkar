@@ -61,4 +61,22 @@ public class Summary extends PanacheEntityBase {
                         "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2 order by s.id",
                 topic, date).list();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Summary summary = (Summary) o;
+        if (id == null || summary.id == null) {
+            return false;
+        }
+        return id.equals(summary.id);
+    }
+    @Override
+    public int hashCode() {
+        // Using a constant for hashCode is a safe approach for JPA entities
+        // to avoid issues when an entity transitions from transient to persistent state
+        // inside a collection.
+        return getClass().hashCode();
+    }
 }

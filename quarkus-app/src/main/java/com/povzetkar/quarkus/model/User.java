@@ -36,4 +36,19 @@ public class User extends PanacheEntityBase {
     public static List<User> findAllWithTopics() {
         return find("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.topics").list();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        if (id == null || user.id == null) {
+            return false;
+        }
+        return id.equals(user.id);
+    }
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
