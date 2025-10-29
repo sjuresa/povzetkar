@@ -66,22 +66,19 @@ public class OrchestratorService {
     private Uni<Void> executeOrchestrationForDate(LocalDate orchestrationDate) {
         logger.info("Orchestration started for date: {}.", orchestrationDate);
 
-        try {
-            orchestrationLockService.acquireLock(orchestrationDate);
-        } catch (OrchestrationLockService.OrchestrationLockException e) {
-            logger.warn("Skipping orchestration for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
-            return Uni.createFrom().voidItem();
-        }
-
-        try {
+        return Uni.createFrom().deferred(() -> {
+            try {
+                orchestrationLockService.acquireLock(orchestrationDate);
+                return Uni.createFrom().voidItem();
+            } catch (OrchestrationLockService.OrchestrationLockException e) {
+                logger.warn("Skipping orchestration for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
+                return Uni.createFrom().voidItem();
+            }
+        })
+        .chain(() -> {
             List<User> activeUsers = User.listAllActive();
             if (activeUsers.isEmpty()) {
                 logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
-                try {
-                    orchestrationLockService.releaseLock(orchestrationDate);
-                } catch (Exception releaseEx) {
-                    logger.error("Failed to release lock for date {} after finding no active users.", orchestrationDate, releaseEx);
-                }
                 return Uni.createFrom().voidItem();
             }
 
@@ -93,16 +90,9 @@ public class OrchestratorService {
                     .collect().asList()
                     .onItem().invoke(() -> logger.info("Orchestration finished for date: {}.", orchestrationDate))
                     .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
-                    .replaceWithVoid()
-                    .onTermination().invoke(() -> orchestrationLockService.releaseLock(orchestrationDate));
-        } catch (Exception e) {
-            try {
-                orchestrationLockService.releaseLock(orchestrationDate);
-            } catch (Exception releaseEx) {
-                e.addSuppressed(releaseEx);
-            }
-            return Uni.createFrom().failure(e);
-        }
+                    .replaceWithVoid();
+        })
+        .onTermination().invoke(() -> orchestrationLockService.releaseLock(orchestrationDate));
     }
 
     /**
