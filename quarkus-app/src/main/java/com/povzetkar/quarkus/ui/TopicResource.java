@@ -99,15 +99,12 @@ public class TopicResource {
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
         Topic topic = query.firstResultOptional().orElseThrow(() -> topicNotFound(topicId));
         List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
-        List<ContentSource> allContentSources = ContentSource.listAll();
-
-        // Filter out already associated sources
         Set<Long> existingSourceIds = topic.contentSources.stream()
                 .map(cs -> cs.id)
                 .collect(Collectors.toSet());
-        List<ContentSource> availableContentSources = allContentSources.stream()
-                .filter(cs -> !existingSourceIds.contains(cs.id))
-                .toList();
+        List<ContentSource> availableContentSources = existingSourceIds.isEmpty()
+                ? ContentSource.listAll()
+                : ContentSource.list("id not in ?1", existingSourceIds);
 
         return briefingsByTopic.data(TOPIC, topic)
                 .data("briefings", briefings)
