@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.model.Topic;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +45,10 @@ public class BriefingService {
         String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.toString());
 
         return QuarkusTransaction.requiringNew().call(() -> {
-            // 4. Check if a briefing already exists for this topic and date within this transaction
-            Optional<Briefing> existingBriefingOptional = Briefing.find("topic.id = ?1 and briefingDate = ?2", topic.id, briefingDate).firstResultOptional();
+            // 4. Check if a briefing already exists for this topic and date, and lock the row to prevent race conditions.
+            Optional<Briefing> existingBriefingOptional = Briefing.find("topic.id = ?1 and briefingDate = ?2", topic.id, briefingDate)
+                    .withLock(LockModeType.PESSIMISTIC_WRITE)
+                    .firstResultOptional();
 
             Briefing briefing;
             if (existingBriefingOptional.isPresent()) {
