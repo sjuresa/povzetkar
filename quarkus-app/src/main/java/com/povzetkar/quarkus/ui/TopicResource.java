@@ -29,10 +29,10 @@ import java.util.List;
 @Path("/ui/topics")
 public class TopicResource {
 
-    public static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
-    public static final String NOT_FOUND = " not found.";
-    public static final String TOPIC_WITH_ID = "Topic with id ";
-    public static final String TOPIC = "topic";
+    private static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
+    private static final String NOT_FOUND = " not found.";
+    private static final String TOPIC_WITH_ID = "Topic with id ";
+    private static final String TOPIC = "topic";
     @Context
     UriInfo uriInfo;
 
