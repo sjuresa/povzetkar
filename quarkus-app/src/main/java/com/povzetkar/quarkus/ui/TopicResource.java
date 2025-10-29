@@ -50,6 +50,9 @@ public class TopicResource {
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response addTopic(@FormParam("userId") Long userId, @FormParam("name") String name) {
+        if (name == null || name.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Topic name cannot be blank.").build();
+        }
         User user = User.<User>findByIdOptional(userId).orElseThrow(() -> notFound("User", userId));
         Topic topic = new Topic();
         topic.user = user;
@@ -71,6 +74,9 @@ public class TopicResource {
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response updateTopic(@PathParam("id") Long id, @FormParam("name") String name) {
+        if (name == null || name.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Topic name cannot be blank.").build();
+        }
         Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
         topic.name = name;
         topic.persist();
