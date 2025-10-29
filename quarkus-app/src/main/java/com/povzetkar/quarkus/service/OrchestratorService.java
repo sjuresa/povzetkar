@@ -66,33 +66,36 @@ public class OrchestratorService {
     private Uni<Void> executeOrchestrationForDate(LocalDate orchestrationDate) {
         logger.info("Orchestration started for date: {}.", orchestrationDate);
 
+        try {
+            orchestrationLockService.acquireLock(orchestrationDate);
+        } catch (OrchestrationLockService.OrchestrationLockException e) {
+            logger.warn("Skipping orchestration for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
+            return Uni.createFrom().voidItem(); // Early exit, no lock to release by this path
+        }
+
+        // If we reach here, the lock was successfully acquired
         return Uni.createFrom().deferred(() -> {
-            try {
-                orchestrationLockService.acquireLock(orchestrationDate);
-                return Uni.createFrom().voidItem();
-            } catch (OrchestrationLockService.OrchestrationLockException e) {
-                logger.warn("Skipping orchestration for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
-                return Uni.createFrom().voidItem();
-            }
-        })
-        .chain(() -> {
-            List<User> activeUsers = User.listAllActive();
-            if (activeUsers.isEmpty()) {
-                logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
-                return Uni.createFrom().voidItem();
-            }
+                    List<User> activeUsers = User.listAllActive();
+                    if (activeUsers.isEmpty()) {
+                        logger.info("No active users found. Orchestration finished for date: {}.", orchestrationDate);
+                        return Uni.createFrom().voidItem();
+                    }
 
-            List<Topic> allTopics = Topic.findByUsers(activeUsers);
+                    List<Topic> allTopics = Topic.findByUsers(activeUsers);
 
-            return Multi.createFrom().iterable(allTopics)
-                    .onItem().transformToUni(topic -> processTopicUni(topic, orchestrationDate))
-                    .merge()
-                    .collect().asList()
-                    .onItem().invoke(() -> logger.info("Orchestration finished for date: {}.", orchestrationDate))
-                    .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
-                    .replaceWithVoid();
-        })
-        .onTermination().invoke(() -> orchestrationLockService.releaseLock(orchestrationDate));
+                    return Multi.createFrom().iterable(allTopics)
+                            .onItem().transformToUni(topic -> processTopicUni(topic, orchestrationDate))
+                            .merge()
+                            .collect().asList()
+                            .onItem().invoke(() -> logger.info("Orchestration finished for date: {}.", orchestrationDate))
+                            .onFailure().invoke(ex -> logger.error("Orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
+                            .replaceWithVoid();
+                })
+                .onTermination().invoke(() ->
+                        // This onTermination will only be called if the deferred Uni completed (successfully or with failure)
+                        // and the lock was initially acquired.
+                        orchestrationLockService.releaseLock(orchestrationDate)
+                );
     }
 
     /**
@@ -112,7 +115,7 @@ public class OrchestratorService {
      * <p><b>Error Handling Strategy:</b> The entire pipeline for a single topic is wrapped in its own failure recovery.
      * This ensures that the failure of one topic's processing does not halt the entire orchestration run for other topics.</p>
      *
-     * @param topic The topic to be processed.
+     * @param topic             The topic to be processed.
      * @param orchestrationDate The date for which the orchestration is running.
      * @return a {@link Uni} that completes when the topic processing is finished.
      */
