@@ -66,7 +66,7 @@ public class ContentSourceResource {
 
         if (topicId != null) {
             Topic topic = Topic.<Topic>findByIdOptional(topicId)
-                    .orElseThrow(() -> new jakarta.ws.rs.NotFoundException("Topic with id " + topicId + " not found."));
+                    .orElseThrow(() -> new NotFoundException("Topic with id " + topicId + " not found."));
             topic.contentSources.add(contentSource);
             topic.persist();
             return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, "listBriefingsByTopic").build(topicId)).build();
