@@ -47,6 +47,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Orchestrates summarization using GenAI APIs.
 4.  **Implement Simple UI:** Create a server-side rendered HTML interface for reviewing generated briefings.
 5.  **Refactor for Robustness:** Decouple briefing generation from content fetching and add resilience to handle transient errors, based on findings during the migration.
+6.  **Decommission Legacy App:** Completely remove the `legacy-app` module, finalizing the migration.
 
 ---
 
