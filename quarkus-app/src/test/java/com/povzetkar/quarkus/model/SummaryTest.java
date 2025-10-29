@@ -29,6 +29,7 @@ class SummaryTest {
         contentItem.contentSource = contentSource;
         contentItem.sourceUrl = "http://example.com/test_content_item";
         contentItem.rawContent = "This is the raw content for the test item.";
+        contentItem.title = "This is the title for the test item.";
         contentItem.publishedAt = Instant.now();
         contentItem.processingStatus = ProcessingStatus.COMPLETED;
         contentItem.persist();
@@ -67,6 +68,7 @@ class SummaryTest {
         contentItem.contentSource = contentSource;
         contentItem.sourceUrl = "http://example.com/test_content_item_duplicate";
         contentItem.rawContent = "This is the raw content for the test item duplicate.";
+        contentItem.title = "This is the title for the test item.";
         contentItem.publishedAt = Instant.now();
         contentItem.processingStatus = ProcessingStatus.COMPLETED;
         contentItem.persist();

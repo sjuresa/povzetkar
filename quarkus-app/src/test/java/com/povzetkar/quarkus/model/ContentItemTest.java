@@ -25,6 +25,7 @@ class ContentItemTest {
         contentItem.contentSource = contentSource;
         contentItem.sourceUrl = "http://example.com/test/" + UUID.randomUUID();
         contentItem.rawContent = "Some raw content";
+        contentItem.title = "This is the title for the test item.";
         contentItem.publishedAt = Instant.now();
         // processingStatus is not set, should default to PENDING
         // createdAt is not set, should be set by @PrePersist
@@ -48,6 +49,7 @@ class ContentItemTest {
         contentItem.contentSource = contentSource;
         contentItem.sourceUrl = "http://example.com/another/" + UUID.randomUUID();
         contentItem.rawContent = "More raw content";
+        contentItem.title = "This is the title for the test item.";
         contentItem.publishedAt = Instant.now();
         contentItem.processingStatus = ProcessingStatus.COMPLETED;
 

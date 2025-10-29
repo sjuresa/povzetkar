@@ -27,6 +27,9 @@ public class ContentItem extends PanacheEntityBase {
     @Column(name = "raw_content", columnDefinition = "TEXT", nullable = false)
     public String rawContent;
 
+    @Column(name = "title", nullable = false)
+    public String title;
+
     @Column(name = "published_at", nullable = false)
     public Instant publishedAt;
 

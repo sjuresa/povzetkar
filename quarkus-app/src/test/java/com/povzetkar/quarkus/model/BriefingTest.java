@@ -44,6 +44,7 @@ class BriefingTest {
         contentItem1.contentSource = contentSource;
         contentItem1.sourceUrl = "http://example.com/test_briefing_content_item_1";
         contentItem1.rawContent = "Raw content for briefing item 1.";
+        contentItem1.title = "This is the title for the test item.";
         contentItem1.publishedAt = Instant.now();
         contentItem1.processingStatus = ProcessingStatus.COMPLETED;
         contentItem1.persist();
@@ -52,6 +53,7 @@ class BriefingTest {
         contentItem2.contentSource = contentSource;
         contentItem2.sourceUrl = "http://example.com/test_briefing_content_item_2";
         contentItem2.rawContent = "Raw content for briefing item 2.";
+        contentItem2.title = "This is the title for the test item.";
         contentItem2.publishedAt = Instant.now();
         contentItem2.processingStatus = ProcessingStatus.COMPLETED;
         contentItem2.persist();

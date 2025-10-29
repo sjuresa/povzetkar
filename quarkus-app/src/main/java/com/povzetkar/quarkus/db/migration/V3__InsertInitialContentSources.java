@@ -10,19 +10,19 @@ import java.sql.SQLException;
 
 public class V3__InsertInitialContentSources extends BaseJavaMigration {
 
-    private static final String[] YOUTUBE_CHANNEL_IDS = {"UCSHZKyawb77ixDdsGog4iWA", "UCHnyfMqiRRG1u-2MsSQLbXA", "UCsXVk37bltHxD1rDPwtNM8Q"};
+    private static final String[] YOUTUBE_CHANNEL_IDS = {"UCr_DLep7UQ0B_IFhvTORu8A", "UC8XNl6AATTgd25MpIMA4S4A", "UCrqilwm_w0Jww188AyxBq7w"};
 
     @Override
     public void migrate(Context context) throws Exception {
         // 1. Insert a default user if one does not exist
-        long defaultUserId = getOrCreateUser(context, "default_user", "default_user");
+        long defaultUserId = getOrCreateUser(context, "Povzetkar", "Povzetkar AI");
 
         // 2. Insert sample YouTube channels (Content Sources)
         int youtubeSourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         insertContentSources(context, youtubeSourceTypeId, YOUTUBE_CHANNEL_IDS);
 
         // 3. Link these content sources to a default topic for the default user
-        long defaultTopicId = getOrCreateTopic(context, defaultUserId, "Default Topic");
+        long defaultTopicId = getOrCreateTopic(context, defaultUserId, "Kripto");
 
         // 4. Link content sources to the default topic
         linkContentSourcesToTopic(context, defaultTopicId, YOUTUBE_CHANNEL_IDS);

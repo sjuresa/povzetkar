@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.*;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -36,6 +37,9 @@ class OrchestrationIntegrationTest {
 
     @InjectMock
     VideoSummaryService videoSummaryService;
+
+    @Inject
+    OrchestrationLockService orchestrationLockService;
 
     @BeforeEach
     @Transactional
@@ -79,6 +83,7 @@ class OrchestrationIntegrationTest {
         Topic.deleteAll();
         ContentSource.deleteAll();
         User.deleteAll();
+        OrchestrationLock.deleteAll(); // Clean up locks as well
     }
 
     @Test
@@ -183,5 +188,83 @@ class OrchestrationIntegrationTest {
 
         assertEquals(0, Summary.listAll().size());
         assertEquals(0, Briefing.listAll().size());
+    }
+
+    @Test
+    @Transactional
+    void testOrchestrationFlow_briefingOverwrite() throws Exception {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+
+        // Mock createBriefingFromSummaries to return different values on successive calls
+        when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
+                .thenReturn("Initial Meta-summary")
+                .thenReturn("Updated Meta-summary");
+
+        // First run: create initial briefing
+        YouTubeVideo video1 = new YouTubeVideo(
+                "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
+                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(10));
+        when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
+                .thenReturn(List.of(video1));
+        when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
+        when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
+                .thenReturn("Initial Summary");
+
+        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+
+        assertEquals(1, Briefing.count());
+        Briefing initialBriefing = (Briefing) Briefing.listAll().getFirst();
+        assertEquals("Initial Meta-summary", initialBriefing.metaSummary);
+        assertEquals(1, initialBriefing.summaries.size());
+        assertEquals("Initial Summary", initialBriefing.summaries.iterator().next().summaryText);
+
+        // Second run: new content, should overwrite
+        YouTubeVideo video2 = new YouTubeVideo(
+                "video2_id", "Video 2 Title", "http://youtube.com/watch?v=video2_id",
+                "Author 2", "channel2_id", Instant.now(), Duration.ofMinutes(10));
+        when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
+                .thenReturn(List.of(video2));
+        when(youTubeTranscriptService.getTranscript("video2_id")).thenReturn("Transcript for video 2");
+        when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
+                .thenReturn("Updated Summary");
+
+        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+
+        // Assert that there's still only one briefing, but its content is updated
+        assertEquals(1, Briefing.count());
+        Briefing.getEntityManager().clear(); // Clear persistence context
+        Briefing updatedBriefing = Briefing.findById(initialBriefing.id);
+        assertEquals("Updated Meta-summary", updatedBriefing.metaSummary);
+        assertEquals(2, updatedBriefing.summaries.size()); // Expect 2 summaries now
+        // Verify both summaries are present
+        assertTrue(updatedBriefing.summaries.stream().anyMatch(s -> s.summaryText.equals("Initial Summary")));
+        assertTrue(updatedBriefing.summaries.stream().anyMatch(s -> s.summaryText.equals("Updated Summary")));
+    }
+
+    @Test
+    @Transactional
+    void testOrchestrationFlow_concurrentRunPrevention() {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+
+        // Acquire lock using the service in a separate, committed transaction
+        // to simulate a concurrent run that has already acquired the lock.
+        QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.acquireLock(orchestrationDate));
+
+        // When
+        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+
+        // Then
+        // Verify that no new content items, summaries, or briefings were created
+        assertEquals(0, ContentItem.count());
+        assertEquals(0, Summary.count());
+        assertEquals(0, Briefing.count());
+
+        // Verify that the lock is still present (not released by the skipped run)
+        assertEquals(1, OrchestrationLock.count());
+
+        // Manually release the lock for cleanup, as the orchestratorService skipped it.
+        QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.releaseLock(orchestrationDate));
     }
 }

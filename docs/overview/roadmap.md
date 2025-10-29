@@ -37,16 +37,17 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.6: Core Logic Migration & Automation
 
-**Goal:** Migrate the entire core workflow—fetching new videos, creating summaries, generating daily briefings, and publishing to Git—into the new Quarkus application. This version makes the application fully autonomous and delivers **full multi-topic support**, allowing separate processing and output for different content categories.
+**Goal:** Migrate the entire core workflow into the new Quarkus application, making it fully autonomous. This includes fetching new content, creating summaries, and generating briefings. This version replaces the legacy Git publishing with a foundational web UI for reviewing results and delivers **full multi-topic support**.
 
 ### Key Tasks & Implementation Steps:
 1.  **Extend Data Model:** Create `Summary` and `Briefing` JPA entities with appropriate relationships.
-2.  **Full Author/Channel Migration:** Migrate the remaining logic of `AuthorService`, including YouTube API calls for fetching channel details, into a Quarkus service.
+2.  **Full Content Source Migration:** Migrate the logic for fetching content source details into a Quarkus service.
 3.  **Implement Scheduled Orchestrator:** Create a `@Scheduled` service in Quarkus that periodically:
-    *   Fetches new videos for all channels.
+    *   Fetches new content for all sources across all active users and topics.
     *   Orchestrates summarization using GenAI APIs.
-    *   Generates daily `Briefing` entities.
-4.  **Git Integration:** Implement a service within Quarkus to handle committing and pushing the generated briefings to the Git repository.
+4.  **Implement Simple UI:** Create a server-side rendered HTML interface for reviewing generated briefings.
+5.  **Refactor for Robustness:** Decouple briefing generation from content fetching and add resilience to handle transient errors, based on findings during the migration.
+6.  **Decommission Legacy App:** Completely remove the `legacy-app` module, finalizing the migration.
 
 ---
 

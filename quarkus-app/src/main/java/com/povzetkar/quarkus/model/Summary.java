@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "summaries")
@@ -58,7 +59,22 @@ public class Summary extends PanacheEntityBase {
 
     public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
         return find("from Summary s where s.contentItem.contentSource.id in " +
-                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2",
+                        "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2 order by s.id",
                 topic, date).list();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Summary summary = (Summary) o;
+        if (id == null || summary.id == null) {
+            return false;
+        }
+        return id.equals(summary.id);
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }
