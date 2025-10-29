@@ -70,7 +70,7 @@ public class TopicResource {
     }
 
     @POST
-    @Path("/update/{id}") // Changed path
+    @Path("/update/{id}")
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response updateTopic(@PathParam("id") Long id, @FormParam("name") String name) {
@@ -84,7 +84,7 @@ public class TopicResource {
     }
 
     @POST
-    @Path("/delete/{id}") // Changed path
+    @Path("/delete/{id}")
     @Transactional
     public Response deleteTopic(@PathParam("id") Long id) {
         Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
@@ -108,11 +108,11 @@ public class TopicResource {
 
         return briefingsByTopic.data(TOPIC, topic)
                 .data("briefings", briefings)
-                .data("availableContentSources", availableContentSources); // Pass the filtered list
+                .data("availableContentSources", availableContentSources);
     }
 
     @POST
-    @Path("/add-content-source/{topicId}") // Changed path
+    @Path("/add-content-source/{topicId}")
     @Transactional
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response addContentSourceToTopic(@PathParam("topicId") Long topicId, @FormParam("contentSourceId") Long contentSourceId) {
@@ -127,7 +127,7 @@ public class TopicResource {
     }
 
     @POST
-    @Path("/remove-content-source/{topicId}/{contentSourceId}") // Changed path
+    @Path("/remove-content-source/{topicId}/{contentSourceId}")
     @Transactional
     public Response removeContentSourceFromTopic(@PathParam("topicId") Long topicId, @PathParam("contentSourceId") Long contentSourceId) {
         ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> notFound("ContentSource", contentSourceId));
