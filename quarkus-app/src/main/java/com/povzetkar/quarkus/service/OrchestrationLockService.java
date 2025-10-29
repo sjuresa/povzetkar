@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.OrchestrationLock;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.LockModeType;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,9 @@ import java.util.Optional;
 public class OrchestrationLockService {
 
     private static final Logger logger = LoggerFactory.getLogger(OrchestrationLockService.class);
-    private static final Duration LOCK_TIMEOUT = Duration.ofMinutes(10); // Adjust as needed
+
+    @ConfigProperty(name = "povzetkar.orchestration.lock-timeout", defaultValue = "PT10M")
+    Duration lockTimeout;
 
     public void acquireLock(LocalDate orchestrationDate) {
         QuarkusTransaction.requiringNew().run(() -> {
@@ -27,11 +30,11 @@ public class OrchestrationLockService {
             if (existingLock.isPresent()) {
                 OrchestrationLock lock = existingLock.get();
                 Duration timeSinceLock = Duration.between(lock.lockedAt, Instant.now());
-                if (timeSinceLock.compareTo(LOCK_TIMEOUT) < 0) {
+                if (timeSinceLock.compareTo(lockTimeout) < 0) {
                     throw new OrchestrationLockException("Orchestration already in progress for date: " + orchestrationDate);
                 }
                 // If the lock is old, we can assume the previous process crashed. We will update the lock.
-                logger.warn("Orchestration lock found for date {} but it is older than {}. Assuming previous run crashed and taking over the lock.", orchestrationDate, LOCK_TIMEOUT);
+                logger.warn("Orchestration lock found for date {} but it is older than {}. Assuming previous run crashed and taking over the lock.", orchestrationDate, lockTimeout);
                 lock.lockedAt = Instant.now();
                 lock.persist();
             } else {
