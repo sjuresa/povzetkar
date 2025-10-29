@@ -8,23 +8,21 @@ import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.FormParam;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
 @ApplicationScoped
 @Path("/ui/content-sources")
 public class ContentSourceResource {
+
+    @Context
+    UriInfo uriInfo;
 
     private final Template contentSourceForm;
 
@@ -67,14 +65,13 @@ public class ContentSourceResource {
         contentSource.persist();
 
         if (topicId != null) {
-            Topic topic = Topic.findById(topicId);
-            if (topic != null) {
-                topic.contentSources.add(contentSource);
-                topic.persist();
-                return Response.seeOther(URI.create("/ui/topics/" + topicId + "/briefings")).build();
-            }
+            Topic topic = Topic.<Topic>findByIdOptional(topicId)
+                    .orElseThrow(() -> new jakarta.ws.rs.NotFoundException("Topic with id " + topicId + " not found."));
+            topic.contentSources.add(contentSource);
+            topic.persist();
+            return Response.seeOther(uriInfo.getBaseUriBuilder().path("ui").path("topics").path(topicId.toString()).path("briefings").build()).build();
         }
 
-        return Response.seeOther(URI.create("/ui")).build();
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
     }
 }

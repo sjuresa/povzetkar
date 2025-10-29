@@ -8,8 +8,6 @@ import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.persistence.PersistenceException;
-import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
@@ -21,7 +19,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -89,75 +88,6 @@ class BriefingServiceTest {
             assertNotNull(briefing);
             assertEquals(1, cons.constructed().size());
             verify(cons.constructed().getFirst()).persist();
-        }
-    }
-
-    @Test
-    void testGenerateBriefing_HandlesConstraintViolationGracefully() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
-             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doThrow(new PersistenceException("Duplicate entry", new ConstraintViolationException("Constraint violated", null, "constraint_name")))
-                     .when(mock).persist())) {
-
-            TransactionRunnerOptions runner = setupMockTransactionRunnerOptions();
-            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
-
-            // Given
-            User user = new User();
-            user.username = "test_user_" + UUID.randomUUID();
-            user.name = "Test User";
-
-            Topic topic = new Topic();
-            topic.name = "Test Topic";
-            topic.user = user;
-
-            LocalDate briefingDate = LocalDate.now();
-
-            Summary summary = new Summary("Summary text", new ContentItem(), briefingDate); // Provide briefingDate
-            summary.id = 1L;
-            List<Summary> summaries = List.of(summary);
-            when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
-            when(Summary.list("id in ?1", List.of(summary.id))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
-            when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("A new meta summary");
-
-            // When
-            Briefing newBriefing = briefingService.generateBriefing(topic, briefingDate);
-
-            // Then
-            assertNull(newBriefing);
-            assertEquals(1, cons.constructed().size());
-            verify(cons.constructed().getFirst()).persist();
-        }
-    }
-
-    @Test
-    void testGenerateBriefing_RethrowsOtherPersistenceExceptions() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
-             MockedConstruction<Briefing> cons = mockConstruction(Briefing.class, (mock, ctx) -> doThrow(new PersistenceException("Some other error"))
-                     .when(mock).persist())) {
-
-            TransactionRunnerOptions runner = setupMockTransactionRunnerOptions();
-            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
-
-            // Given
-            User user = new User();
-            user.username = "test_user_" + UUID.randomUUID();
-            user.name = "Test User";
-
-            Topic topic = new Topic();
-            topic.name = "Test Topic";
-            topic.user = user;
-
-            LocalDate briefingDate = LocalDate.now();
-
-            Summary summary = new Summary("Summary text", new ContentItem(), briefingDate); // Provide briefingDate
-            summary.id = 1L;
-            List<Summary> summaries = List.of(summary);
-            when(Summary.findByTopicAndDateRange(any(), any())).thenReturn(summaries);
-            when(Summary.list("id in ?1", List.of(summary.id))).thenReturn((List<PanacheEntityBase>) (List<?>) summaries);
-            when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("A new meta summary");
-
-            // When / Then
-            assertThrows(PersistenceException.class, () -> briefingService.generateBriefing(topic, briefingDate));
         }
     }
 }

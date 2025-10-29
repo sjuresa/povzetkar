@@ -8,7 +8,7 @@
 <body>
 <h1>{#if topic}Edit Topic{#else}Add Topic{/if}</h1>
 
-<form action="/ui/topics{#if topic}/{topic.id}{/if}" method="post">
+<form action="{#if topic}/ui/topics/update/{topic.id}{#else}/ui/topics{/if}" method="post">
     {#if !topic}
         <div>
             <label for="userId">User:</label>
