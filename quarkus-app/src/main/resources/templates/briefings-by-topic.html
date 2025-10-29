@@ -23,10 +23,8 @@
 <h3>Add Content Source</h3>
 <form action="/ui/topics/add-content-source/{topic.id}" method="post">
     <select name="contentSourceId">
-        {#for source in allContentSources}
-            {#if !topic.contentSources.contains(source)}
-                <option value="{source.id}">{source.name}</option>
-            {/if}
+        {#for source in availableContentSources}
+            <option value="{source.id}">{source.name}</option>
         {/for}
     </select>
     <button type="submit">Add Existing</button>

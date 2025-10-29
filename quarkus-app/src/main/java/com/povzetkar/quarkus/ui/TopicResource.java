@@ -18,6 +18,8 @@ import jakarta.ws.rs.core.UriInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Path("/ui/topics")
@@ -92,9 +94,18 @@ public class TopicResource {
         Topic topic = query.firstResultOptional().orElseThrow(() -> topicNotFound(topicId));
         List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
         List<ContentSource> allContentSources = ContentSource.listAll();
+
+        // Filter out already associated sources
+        Set<Long> existingSourceIds = topic.contentSources.stream()
+                .map(cs -> cs.id)
+                .collect(Collectors.toSet());
+        List<ContentSource> availableContentSources = allContentSources.stream()
+                .filter(cs -> !existingSourceIds.contains(cs.id))
+                .toList();
+
         return briefingsByTopic.data(TOPIC, topic)
                 .data("briefings", briefings)
-                .data("allContentSources", allContentSources);
+                .data("availableContentSources", availableContentSources); // Pass the filtered list
     }
 
     @POST
