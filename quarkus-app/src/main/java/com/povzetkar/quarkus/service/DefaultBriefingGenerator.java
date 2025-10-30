@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
                 .collect(Collectors.joining("\n---\n"));
 
         // 3. Use the GenAI service to create a meta-summary from the collected summaries.
-        String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.toString());
+        String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")));
 
         return QuarkusTransaction.requiringNew().call(() -> {
             // 4. Check if a briefing already exists for this topic and date, and lock the row to prevent race conditions.
