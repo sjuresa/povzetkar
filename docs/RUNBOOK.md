@@ -87,7 +87,7 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 With the database running, you can start the Quarkus application in development mode:
 Run the quarkus:dev goal for the quarkus-app module:
 ```bash
-./mvnw quarkus:dev -pl quarkus-app
+./mvnw quarkus:dev
 ```
 
 **Access the Endpoint:**
@@ -97,7 +97,7 @@ Run the quarkus:dev goal for the quarkus-app module:
 ## 7. Running Tests
 To run the test suite:
 ```bash
-./mvnw test -pl quarkus-app
+./mvnw test
 ```
 
 ## 8. Application Usage
@@ -122,7 +122,7 @@ To manually trigger the enrichment process for all content sources that are miss
 The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
 
 *   **Configuration Property:** `quarkus.scheduler.enrich-content-sources.cron`
-*   **Location:** `quarkus-app/src/main/resources/application.properties`
+*   **Location:** `src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
@@ -136,7 +136,7 @@ The `OrchestratorService` is responsible for the end-to-end process of fetching 
 The orchestration process is configured to run periodically. By default, it runs daily at midnight.
 
 *   **Configuration Property:** `povzetkar.orchestrator.cron`
-*   **Location:** `quarkus-app/src/main/resources/application.properties`
+*   **Location:** `src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 * * ?` (daily at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
