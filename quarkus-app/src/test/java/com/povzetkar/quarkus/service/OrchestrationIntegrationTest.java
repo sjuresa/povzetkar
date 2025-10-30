@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 class OrchestrationIntegrationTest {
 
     @Inject
-    OrchestratorService orchestratorService;
+    OrchestrationManager orchestrationManager;
 
     @InjectMock
     YouTubeContentFetcherService youTubeContentFetcherService;
@@ -106,7 +106,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         // Verify external service calls
@@ -142,7 +142,7 @@ class OrchestrationIntegrationTest {
                 .thenReturn(Collections.emptyList()); // No new videos
 
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
@@ -174,7 +174,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
                 .thenReturn(null);
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
@@ -211,7 +211,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
                 .thenReturn("Initial Summary");
 
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         assertEquals(1, Briefing.count());
         Briefing initialBriefing = (Briefing) Briefing.listAll().getFirst();
@@ -229,7 +229,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
                 .thenReturn("Updated Summary");
 
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Assert that there's still only one briefing, but its content is updated
         assertEquals(1, Briefing.count());
@@ -253,7 +253,7 @@ class OrchestrationIntegrationTest {
         QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.acquireLock(orchestrationDate));
 
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         // Verify that no new content items, summaries, or briefings were created
