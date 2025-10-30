@@ -110,7 +110,7 @@ class OrchestrationManagerTest {
         orchestrationManager.runBriefingGenerationScheduled().await().indefinitely();
 
         // Then
-        PanacheMock.verify(Topic.class, times(1)).listAll();
+        PanacheMock.verify(Topic.class, times(1)).findByUsers(any(List.class));
         verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
     }
 
@@ -124,8 +124,8 @@ class OrchestrationManagerTest {
         orchestrationManager.runOrchestrationManually(null, null).await().indefinitely();
 
         // Then
-        PanacheMock.verify(User.class, times(1)).listAllActive();
-        PanacheMock.verify(Topic.class, times(1)).findByUsers(eq(Collections.singletonList(testUser)));
+        PanacheMock.verify(User.class, times(2)).listAllActive();
+        PanacheMock.verify(Topic.class, times(2)).findByUsers(eq(Collections.singletonList(testUser)));
         verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
         verify(topicProcessor, times(1)).processTopicUni(testTopic, expectedDate);
         verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
@@ -172,9 +172,9 @@ class OrchestrationManagerTest {
 
         // Then
         // Verify static methods are called once per day in the range
-        PanacheMock.verify(User.class, times((int) numOfDays)).listAllActive();
-        PanacheMock.verify(Topic.class, times((int) numOfDays)).findByUsers(eq(Collections.singletonList(testUser)));
-        PanacheMock.verify(Topic.class, times((int) numOfDays)).listAll();
+        PanacheMock.verify(User.class, times((int) numOfDays*2)).listAllActive();
+        PanacheMock.verify(Topic.class, times((int) numOfDays*2)).findByUsers(eq(Collections.singletonList(testUser)));
+        PanacheMock.verify(Topic.class, times((int) numOfDays*2)).findByUsers(any(List.class));
 
         // Verify acquireLock, processTopicUni, releaseLock are called for each day
         verify(orchestrationLockService, times((int) numOfDays)).acquireLock(any(LocalDate.class));
