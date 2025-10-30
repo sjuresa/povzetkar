@@ -124,13 +124,12 @@ public class OrchestrationManager {
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
                 .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
-                    try {
-                        logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
-                        briefingService.generateBriefing(topic, briefingDate);
-                    } catch (Exception e) {
-                        logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e);
-                    }
-                })))
+                            logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
+                            briefingService.generateBriefing(topic, briefingDate);
+                        }))
+                        .onFailure().invoke(e -> logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e))
+                        .onFailure().recoverWithNull()
+                        .replaceWithVoid())
                 .toList();
 
         return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()
