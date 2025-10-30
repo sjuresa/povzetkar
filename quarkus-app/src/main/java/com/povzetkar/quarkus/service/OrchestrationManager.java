@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @ApplicationScoped
 public class OrchestrationManager {
@@ -57,11 +56,13 @@ public class OrchestrationManager {
                 .toList();
 
         return Uni.combine().all().unis(dailyContentOrchestrations).discardItems()
-                .onItem().invoke(() -> {
+                .onItem().transformToUni(ignored -> {
                     logger.info("Manual content orchestration for date range {}-{} finished.", actualStartDate, actualEndDate);
                     logger.info("Proceeding to briefing generation for the same date range.");
-                    actualStartDate.datesUntil(actualEndDate.plusDays(1))
-                            .forEach(this::generateBriefingsForDate);
+                    List<Uni<Void>> dailyBriefingGenerations = actualStartDate.datesUntil(actualEndDate.plusDays(1))
+                            .map(this::generateBriefingsForDate)
+                            .toList();
+                    return Uni.join().all(dailyBriefingGenerations).andFailFast().replaceWithVoid();
                 })
                 .onFailure().invoke(ex -> logger.error("Manual orchestration for date range {}-{} failed unexpectedly", actualStartDate, actualEndDate, ex))
                 .replaceWithVoid();
@@ -104,35 +105,35 @@ public class OrchestrationManager {
     }
 
     @Scheduled(cron = "{povzetkar.briefing.cron}")
-    public void runBriefingGenerationScheduled() {
+    public Uni<Void> runBriefingGenerationScheduled() {
         LocalDate today = LocalDate.now();
         logger.info("Scheduled briefing generation triggered for date: {}.", today);
-        generateBriefingsForDate(today);
+        return generateBriefingsForDate(today);
     }
 
-    private void generateBriefingsForDate(LocalDate briefingDate) {
+    private Uni<Void> generateBriefingsForDate(LocalDate briefingDate) {
         logger.info("Starting parallel briefing generation for all topics on {}.", briefingDate);
         List<Topic> allTopics = Topic.listAll();
         if (allTopics.isEmpty()) {
             logger.info("No topics found. Skipping briefing generation.");
-            return;
+            return Uni.createFrom().voidItem();
         }
 
         logger.info("Found {} topics. Proceeding with briefing generation.", allTopics.size());
 
-        List<CompletableFuture<Void>> briefingTasks = allTopics.stream()
-                .map(topic -> managedExecutor.runAsync(() -> {
+        List<Uni<Void>> briefingTasks = allTopics.stream()
+                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
                     try {
                         logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
                         briefingService.generateBriefing(topic, briefingDate);
                     } catch (Exception e) {
                         logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e);
                     }
-                }))
+                })))
                 .toList();
 
-        CompletableFuture.allOf(briefingTasks.toArray(new CompletableFuture[0])).join();
-
-        logger.info("Finished parallel briefing generation for all topics on {}.", briefingDate);
+        return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()
+                .onItem().invoke(() -> logger.info("Finished parallel briefing generation for all topics on {}.", briefingDate))
+                .onFailure().invoke(ex -> logger.error("Parallel briefing generation for date {} failed unexpectedly", briefingDate, ex));
     }
 }

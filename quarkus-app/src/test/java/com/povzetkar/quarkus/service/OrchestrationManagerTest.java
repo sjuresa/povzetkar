@@ -50,7 +50,7 @@ class OrchestrationManagerTest {
         PanacheMock.mock(User.class);
         PanacheMock.mock(Topic.class);
 
-        // Mock the executor to run tasks immediately on the same thread
+        // Mock the executor to run tasks immediately on the same thread for runAsync
         doAnswer(invocation -> {
             Runnable runnable = invocation.getArgument(0);
             runnable.run();
@@ -82,6 +82,57 @@ class OrchestrationManagerTest {
     }
 
     @Test
+    void testRunOrchestrationScheduled() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        setupCommonMocks(expectedDate);
+
+        // When
+        orchestrationManager.runOrchestrationScheduled().await().indefinitely();
+
+        // Then
+        PanacheMock.verify(User.class, times(1)).listAllActive();
+        PanacheMock.verify(Topic.class, times(1)).findByUsers(eq(Collections.singletonList(testUser)));
+        verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
+        verify(topicProcessor, times(1)).processTopicUni(testTopic, expectedDate);
+        verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
+        // Briefing generation is a separate scheduled task, so it should not be called here
+        verify(briefingService, never()).generateBriefing(any(Topic.class), any(LocalDate.class));
+    }
+
+    @Test
+    void testRunBriefingGenerationScheduled() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        setupCommonMocks(expectedDate);
+
+        // When
+        orchestrationManager.runBriefingGenerationScheduled().await().indefinitely();
+
+        // Then
+        PanacheMock.verify(Topic.class, times(1)).listAll();
+        verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
+    }
+
+    @Test
+    void testRunOrchestrationManually_defaultCurrentDate() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        setupCommonMocks(expectedDate);
+
+        // When
+        orchestrationManager.runOrchestrationManually(null, null).await().indefinitely();
+
+        // Then
+        PanacheMock.verify(User.class, times(1)).listAllActive();
+        PanacheMock.verify(Topic.class, times(1)).findByUsers(eq(Collections.singletonList(testUser)));
+        verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
+        verify(topicProcessor, times(1)).processTopicUni(testTopic, expectedDate);
+        verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
+        verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
+    }
+
+    @Test
     void testRunOrchestrationManually_singlePastDate() {
         // Given
         LocalDate pastDate = LocalDate.now().minusDays(5);
@@ -104,13 +155,28 @@ class OrchestrationManagerTest {
         LocalDate endDate = LocalDate.now().minusDays(1);
         long numOfDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
-        setupCommonMocks(startDate);
-        setupCommonMocks(endDate);
+        // Mock static methods once per day in the range
+        Mockito.when(User.listAllActive()).thenReturn(Collections.singletonList(testUser));
+        Mockito.when(Topic.findByUsers(any(List.class))).thenReturn(Collections.singletonList(testTopic));
+        Mockito.when(Topic.listAll()).thenReturn(Collections.singletonList(testTopic));
+
+        // Mock the dependencies that are called for each day
+        doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
+        doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(briefingService.generateBriefing(any(Topic.class), any(LocalDate.class))).thenReturn(null);
 
         // When
         orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely();
 
         // Then
+        // Verify static methods are called once per day in the range
+        PanacheMock.verify(User.class, times((int) numOfDays)).listAllActive();
+        PanacheMock.verify(Topic.class, times((int) numOfDays)).findByUsers(eq(Collections.singletonList(testUser)));
+        PanacheMock.verify(Topic.class, times((int) numOfDays)).listAll();
+
+        // Verify acquireLock, processTopicUni, releaseLock are called for each day
         verify(orchestrationLockService, times((int) numOfDays)).acquireLock(any(LocalDate.class));
         verify(topicProcessor, times((int) numOfDays)).processTopicUni(eq(testTopic), any(LocalDate.class));
         verify(orchestrationLockService, times((int) numOfDays)).releaseLock(any(LocalDate.class));
@@ -123,7 +189,7 @@ class OrchestrationManagerTest {
         LocalDate futureDate = LocalDate.now().plusDays(1);
 
         // When / Then
-        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(futureDate, null));
+        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(futureDate, null).await().indefinitely(), "Orchestration cannot be run for future dates.");
     }
 
     @Test
@@ -133,7 +199,7 @@ class OrchestrationManagerTest {
         LocalDate endDate = LocalDate.now().minusDays(5);
 
         // When / Then
-        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(startDate, endDate));
+        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely(), "Start date cannot be after end date.");
     }
 
     @Test
