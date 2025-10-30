@@ -113,9 +113,10 @@ public class OrchestrationManager {
 
     private Uni<Void> generateBriefingsForDate(LocalDate briefingDate) {
         logger.info("Starting parallel briefing generation for all topics on {}.", briefingDate);
-        List<Topic> allTopics = Topic.listAll();
+        List<User> activeUsers = User.listAllActive();
+        List<Topic> allTopics = Topic.findByUsers(activeUsers);
         if (allTopics.isEmpty()) {
-            logger.info("No topics found. Skipping briefing generation.");
+            logger.info("No topics found for active users. Skipping briefing generation.");
             return Uni.createFrom().voidItem();
         }
 
