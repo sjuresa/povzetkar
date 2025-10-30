@@ -1,6 +1,6 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.service.OrchestratorService;
+import com.povzetkar.quarkus.service.OrchestrationManager;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -18,11 +18,11 @@ public class OrchestratorResource {
 
     private static final Logger logger = LoggerFactory.getLogger(OrchestratorResource.class);
 
-    private final OrchestratorService orchestratorService;
+    private final OrchestrationManager orchestrationManager;
 
     @Inject
-    public OrchestratorResource(OrchestratorService orchestratorService) {
-        this.orchestratorService = orchestratorService;
+    public OrchestratorResource(OrchestrationManager orchestrationManager) {
+        this.orchestrationManager = orchestrationManager;
     }
 
     @POST
@@ -41,7 +41,7 @@ public class OrchestratorResource {
         try {
             // The orchestration is intentionally not awaited here.
             // It runs in the background, and we immediately return a response to the client.
-            orchestratorService.runOrchestrationManually(finalStartDate, finalEndDate)
+            orchestrationManager.runOrchestrationManually(finalStartDate, finalEndDate)
                     .subscribe().with(
                             v -> logger.info("Manual orchestration process triggered via API has completed."),
                             failure -> logger.error("Manual orchestration process triggered via API failed during execution.", failure));

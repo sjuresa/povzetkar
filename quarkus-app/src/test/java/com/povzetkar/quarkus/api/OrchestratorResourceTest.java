@@ -1,6 +1,6 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.service.OrchestratorService;
+import com.povzetkar.quarkus.service.OrchestrationManager;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
@@ -19,11 +19,11 @@ import static org.mockito.Mockito.*;
 class OrchestratorResourceTest {
 
     @InjectMock
-    OrchestratorService orchestratorService;
+    OrchestrationManager orchestrationManager;
 
     @Test
     void testRunOrchestrationManually_noDates() {
-        Mockito.when(orchestratorService.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         given()
@@ -32,7 +32,7 @@ class OrchestratorResourceTest {
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestratorService, times(1)).runOrchestrationManually(null, null);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(null, null);
     }
 
     @Test
@@ -40,7 +40,7 @@ class OrchestratorResourceTest {
         LocalDate pastDate = LocalDate.now().minusDays(1);
         String pastDateStr = pastDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-        Mockito.when(orchestratorService.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         given()
@@ -50,7 +50,7 @@ class OrchestratorResourceTest {
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestratorService, times(1)).runOrchestrationManually(pastDate, null);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(pastDate, null);
     }
 
     @Test
@@ -60,7 +60,7 @@ class OrchestratorResourceTest {
         String startDateStr = startDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         String endDateStr = endDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-        Mockito.when(orchestratorService.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         given()
@@ -71,7 +71,7 @@ class OrchestratorResourceTest {
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestratorService, times(1)).runOrchestrationManually(startDate, endDate);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(startDate, endDate);
     }
 
     @Test
@@ -83,7 +83,7 @@ class OrchestratorResourceTest {
                 .statusCode(400)
                 .body(is("Invalid date format. Please use YYYY-MM-DD."));
 
-        verify(orchestratorService, times(0)).runOrchestrationManually(any(LocalDate.class), any(LocalDate.class));
+        verify(orchestrationManager, times(0)).runOrchestrationManually(any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
@@ -92,7 +92,7 @@ class OrchestratorResourceTest {
         String futureDateStr = futureDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
 
         doThrow(new IllegalArgumentException("Orchestration cannot be run for future dates."))
-                .when(orchestratorService).runOrchestrationManually(futureDate, null);
+                .when(orchestrationManager).runOrchestrationManually(futureDate, null);
 
         given()
                 .queryParam("startDate", futureDateStr)
@@ -101,6 +101,6 @@ class OrchestratorResourceTest {
                 .statusCode(400)
                 .body(is("Orchestration cannot be run for future dates."));
 
-        verify(orchestratorService, times(1)).runOrchestrationManually(futureDate, null);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(futureDate, null);
     }
 }

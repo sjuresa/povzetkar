@@ -1,0 +1,139 @@
+package com.povzetkar.quarkus.service;
+
+import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.model.User;
+import io.quarkus.scheduler.Scheduled;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@ApplicationScoped
+public class OrchestrationManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrchestrationManager.class);
+
+    private final OrchestrationLockService orchestrationLockService;
+    private final TopicProcessor topicProcessor;
+    private final BriefingService briefingService;
+    private final ManagedExecutor managedExecutor;
+
+    @Inject
+    public OrchestrationManager(OrchestrationLockService orchestrationLockService, TopicProcessor topicProcessor, BriefingService briefingService, ManagedExecutor managedExecutor) {
+        this.orchestrationLockService = orchestrationLockService;
+        this.topicProcessor = topicProcessor;
+        this.briefingService = briefingService;
+        this.managedExecutor = managedExecutor;
+    }
+
+    @Scheduled(cron = "{povzetkar.orchestrator.cron}")
+    public Uni<Void> runOrchestrationScheduled() {
+        logger.info("Scheduled content orchestration triggered.");
+        return executeContentOrchestrationForDate(LocalDate.now());
+    }
+
+    public Uni<Void> runOrchestrationManually(LocalDate startDate, LocalDate endDate) {
+        LocalDate actualStartDate = (startDate != null) ? startDate : LocalDate.now();
+        LocalDate actualEndDate = (endDate != null) ? endDate : actualStartDate;
+
+        if (actualStartDate.isAfter(LocalDate.now()) || actualEndDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Orchestration cannot be run for future dates.");
+        }
+        if (actualStartDate.isAfter(actualEndDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date.");
+        }
+
+        logger.info("Manual orchestration triggered for date range: {} to {}.", actualStartDate, actualEndDate);
+
+        List<Uni<Void>> dailyContentOrchestrations = actualStartDate.datesUntil(actualEndDate.plusDays(1))
+                .map(this::executeContentOrchestrationForDate)
+                .toList();
+
+        return Uni.combine().all().unis(dailyContentOrchestrations).discardItems()
+                .onItem().transformToUni(ignored -> {
+                    logger.info("Manual content orchestration for date range {}-{} finished.", actualStartDate, actualEndDate);
+                    logger.info("Proceeding to briefing generation for the same date range.");
+                    List<Uni<Void>> dailyBriefingGenerations = actualStartDate.datesUntil(actualEndDate.plusDays(1))
+                            .map(this::generateBriefingsForDate)
+                            .toList();
+                    return Uni.join().all(dailyBriefingGenerations).andFailFast().replaceWithVoid();
+                })
+                .onFailure().invoke(ex -> logger.error("Manual orchestration for date range {}-{} failed unexpectedly", actualStartDate, actualEndDate, ex))
+                .replaceWithVoid();
+    }
+
+    private Uni<Void> executeContentOrchestrationForDate(LocalDate orchestrationDate) {
+        logger.info("Content orchestration started for date: {}.", orchestrationDate);
+
+        try {
+            orchestrationLockService.acquireLock(orchestrationDate);
+        } catch (OrchestrationLockService.OrchestrationLockException e) {
+            logger.warn("Skipping content orchestration for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
+            return Uni.createFrom().voidItem(); // Early exit, no lock to release by this path
+        }
+
+        // If we reach here, the lock was successfully acquired
+        return Uni.createFrom().deferred(() -> {
+                    List<User> activeUsers = User.listAllActive();
+                    if (activeUsers.isEmpty()) {
+                        logger.info("No active users found. Content orchestration finished for date: {}.", orchestrationDate);
+                        return Uni.createFrom().voidItem();
+                    }
+                    logger.info("Found {} active users.", activeUsers.size());
+
+                    List<Topic> allTopics = Topic.findByUsers(activeUsers);
+                    logger.info("Found {} topics to process for date {}.", allTopics.size(), orchestrationDate);
+
+                    return Multi.createFrom().iterable(allTopics)
+                            .onItem().transformToUni(topic -> topicProcessor.processTopicUni(topic, orchestrationDate))
+                            .merge()
+                            .collect().asList()
+                            .onItem().invoke(() -> logger.info("Content orchestration finished for date: {}.", orchestrationDate))
+                            .onFailure().invoke(ex -> logger.error("Content orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
+                            .replaceWithVoid();
+                })
+                .onTermination().invoke(() -> {
+                        logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
+                        orchestrationLockService.releaseLock(orchestrationDate);
+                });
+    }
+
+    @Scheduled(cron = "{povzetkar.briefing.cron}")
+    public Uni<Void> runBriefingGenerationScheduled() {
+        LocalDate today = LocalDate.now();
+        logger.info("Scheduled briefing generation triggered for date: {}.", today);
+        return generateBriefingsForDate(today);
+    }
+
+    private Uni<Void> generateBriefingsForDate(LocalDate briefingDate) {
+        logger.info("Starting parallel briefing generation for all topics on {}.", briefingDate);
+        List<User> activeUsers = User.listAllActive();
+        List<Topic> allTopics = Topic.findByUsers(activeUsers);
+        if (allTopics.isEmpty()) {
+            logger.info("No topics found for active users. Skipping briefing generation.");
+            return Uni.createFrom().voidItem();
+        }
+
+        logger.info("Found {} topics. Proceeding with briefing generation.", allTopics.size());
+
+        List<Uni<Void>> briefingTasks = allTopics.stream()
+                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
+                            logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
+                            briefingService.generateBriefing(topic, briefingDate);
+                        }))
+                        .onFailure().invoke(e -> logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e))
+                        .onFailure().recoverWithNull()
+                        .replaceWithVoid())
+                .toList();
+
+        return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()
+                .onItem().invoke(() -> logger.info("Finished parallel briefing generation for all topics on {}.", briefingDate))
+                .onFailure().invoke(ex -> logger.error("Parallel briefing generation for date {} failed unexpectedly", briefingDate, ex));
+    }
+}

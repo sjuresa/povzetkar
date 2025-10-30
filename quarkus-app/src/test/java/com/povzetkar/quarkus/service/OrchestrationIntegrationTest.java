@@ -14,6 +14,7 @@ import org.mockito.Mockito;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.*;
 class OrchestrationIntegrationTest {
 
     @Inject
-    OrchestratorService orchestratorService;
+    OrchestrationManager orchestrationManager;
 
     @InjectMock
     YouTubeContentFetcherService youTubeContentFetcherService;
@@ -106,7 +107,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         // Verify external service calls
@@ -114,7 +115,7 @@ class OrchestrationIntegrationTest {
         verify(youTubeTranscriptService).getTranscript("video1_id");
         verify(youTubeTranscriptService, never()).getTranscript("video2_id"); // Not called for short videos
         verify(videoSummaryService).generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary"));
-        verify(videoSummaryService).createBriefingFromSummaries(anyString(), eq(orchestrationDate.toString()));
+        verify(videoSummaryService).createBriefingFromSummaries(anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))));
 
         // Verify database state
         List<ContentItem> contentItems = ContentItem.listAll();
@@ -142,7 +143,7 @@ class OrchestrationIntegrationTest {
                 .thenReturn(Collections.emptyList()); // No new videos
 
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
@@ -174,7 +175,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
                 .thenReturn(null);
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
@@ -211,7 +212,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
                 .thenReturn("Initial Summary");
 
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         assertEquals(1, Briefing.count());
         Briefing initialBriefing = (Briefing) Briefing.listAll().getFirst();
@@ -229,7 +230,7 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
                 .thenReturn("Updated Summary");
 
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Assert that there's still only one briefing, but its content is updated
         assertEquals(1, Briefing.count());
@@ -253,7 +254,7 @@ class OrchestrationIntegrationTest {
         QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.acquireLock(orchestrationDate));
 
         // When
-        orchestratorService.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
         // Verify that no new content items, summaries, or briefings were created
