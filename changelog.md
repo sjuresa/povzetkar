@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-10-31
+
+### Summary
+
+Version 0.6 represents a pivotal transformation, completing the migration of the entire core workflow into the new Quarkus application and rendering it fully autonomous. The legacy application has been decommissioned. Key achievements include the implementation of a multi-tenant data model with a new `User` entity, the migration of all summarization and briefing logic, and the introduction of a scheduled orchestrator to automate the end-to-end process. Additionally, a simple web UI for reviewing briefings has been added, and the overall architecture has been refactored for improved robustness and testability.
+
+### Added
+
+-   **Full Workflow Autonomy:** Migrated the entire workflow (content fetching, summarization, briefing generation) to the Quarkus application.
+-   **Multi-Tenancy:** Introduced a `User` entity, making the application multi-tenant aware. Topics are now unique per user.
+-   **Summarization & Briefing Logic:** Implemented `SummarizationService` and `BriefingService` in Quarkus, including all related entities (`Summary`, `Briefing`).
+-   **Scheduled Orchestration:** Created a scheduled `OrchestratorService` to automate the entire process, from fetching new content to generating final briefings.
+-   **Simple Briefing UI:** Added a basic server-side rendered HTML interface using Qute for reviewing briefings by user and topic.
+-   **Database Migrations:** Integrated Flyway for systematic and automated database schema management.
+
+### Refactored
+
+-   **Decoupled Orchestration:** Separated high-level orchestration from per-topic processing and decoupled briefing generation from content summarization to improve robustness.
+-   **Core Entities:** Refactored `Channel` to a more generic `ContentSource` entity for future flexibility.
+-   **Project Structure:** Simplified the project into a single-module Maven application, removing the legacy app module and all related code.
+
+### Chore
+
+-   **Database Setup:** Configured PostgreSQL to enable the `pgvector` extension in preparation for future embedding features.
+-   **Documentation:** Updated architecture and database design documents to reflect the new, fully autonomous application structure.
+
 ## [0.5.0] - 2025-09-08
 
 ### Summary

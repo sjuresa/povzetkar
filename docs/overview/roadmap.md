@@ -3,12 +3,12 @@
 **Version:** 1.3
 
 ## Revision History
-| Version | Date              | Author       | Changes                                                                                                                                                            |
-|---------|-------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.3     | September 3, 2025 | Povzetkar AI | Aligned v0.6 ingestion endpoint with topic-aware architecture.                                                                                                     |
-| 1.2     | September 1, 2025 | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
-| 1.1     | August 27, 2025   | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
-| 1.0     | August 15, 2025   | Povzetkar AI | Initial version of the roadmap.                                                                                                                                    |
+| Version | Date               | Author       | Changes                                                                                                                                                            |
+|---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.              |
+| 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
+| 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the roadmap.                                                                                                                                    |
 
 This document outlines the concrete steps for implementing the features described in the [`specification.md`](specification.md). It breaks down the high-level phases into actionable tasks.
 
@@ -17,6 +17,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.5: The Architectural Skeleton
 
 **Goal:** Establish the foundational Quarkus project structure, database, and core data model, including support for Topics. This version completes the **first concrete migration step** by delegating the file-based author/channel fetching from the legacy application to a new, database-backed API.
+**Status:** ✅ Completed
 
 ### Key Tasks:
 1.  **Project Transformation:**
@@ -34,106 +35,46 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.6: Database-Driven State Management
+## v0.6: Core Logic Migration & Automation
 
-**Goal:** Completely replace the file-based `processing_state.properties` with database logic. The application will now track its state robustly in PostgreSQL.
+**Goal:** Migrate the entire core workflow into the new Quarkus application, making it fully autonomous. This includes fetching new content, creating summaries, and generating briefings. This version replaces the legacy Git publishing with a foundational web UI for reviewing results and delivers **full multi-topic support**.
 
 ### Key Tasks & Implementation Steps:
-1.  **Implement Video Ingestion Service:**
-    *   Create a service in the Quarkus app that replicates the logic of `fetchAllNewVideos`.
-    *   This service will:
-        1.  Fetch all monitored channels from the `channels` table (created in v0.5).
-        2.  For each channel, query its own database to find the last processed video timestamp.
-        3.  Call the YouTube API to get all new videos since that timestamp.
-        4.  Persist these new videos as `ContentItem` records with a `PENDING` status.
-        5.  Return a consolidated and chronologically sorted list of new `ContentItem` DTOs.
-    *   Expose this logic via a single endpoint: `POST /api/v1/topics/{name}/ingestion/fetch-new`.
-2.  **Refactor Old Application to Delegate Video Fetching:**
-    *   Modify the `VideoSummarizationService.summarizeFromAuthors` method in the old application.
-    *   The call to the internal `fetchAllNewVideos` method will be replaced with a REST client call to the new `POST /api/v1/topics/{name}/ingestion/fetch-new` endpoint.
-    *   The rest of the method's logic (looping through the returned list, summarizing, etc.) remains unchanged for now.
-3.  **Testing:**
-    *   Write a `@QuarkusTest` integration test for the new ingestion endpoint. This test must mock the external YouTube API but use a real Testcontainer DB to verify the entire internal logic and the API response.
+1.  **Extend Data Model:** Create `Summary` and `Briefing` JPA entities with appropriate relationships.
+2.  **Full Content Source Migration:** Migrate the logic for fetching content source details into a Quarkus service.
+3.  **Implement Scheduled Orchestrator:** Create a `@Scheduled` service in Quarkus that periodically:
+    *   Fetches new content for all sources across all active users and topics.
+    *   Orchestrates summarization using GenAI APIs.
+4.  **Implement Simple UI:** Create a server-side rendered HTML interface for reviewing generated briefings.
+5.  **Refactor for Robustness:** Decouple briefing generation from content fetching and add resilience to handle transient errors, based on findings during the migration.
+6.  **Decommission Legacy App:** Completely remove the `legacy-app` module, finalizing the migration.
 
 ---
 
-## v0.7: Database-Backed Summarization
+## v0.7: Standalone Application Deployment
 
-**Goal:** Migrate the core summarization workflow to be fully database-centric. Summaries are now persisted in the database instead of `.md` files.
+**Goal:** Prepare and document the process for building and running the Quarkus application as a standalone executable (JAR or native binary), moving away from development mode (`mvn quarkus:dev`).
 
 ### Key Tasks & Implementation Steps:
-1.  **Implement Unified Processing Result API:**
-    *   Create the `Summary` JPA entity (as originally planned for this stage).
-    *   Create a new, unified endpoint: `PUT /api/v1/content-items/{id}/processing-result`.
-    *   This endpoint will accept a DTO (`ProcessingResultRequest`) containing two fields:
-        - `status`: An enum (`COMPLETED`, `FAILED`, or `RETRY_LATER`).
-        - `details`: A string containing either the full summary text (on success) or the error message (on failure).
-    *   The service logic will:
-        - If `status` is `COMPLETED`, create a new `Summary` record, link it to the `ContentItem`, and update the `ContentItem`'s status to `COMPLETED`.
-        - If `status` is `FAILED`, log the error from `details` and update the `ContentItem`'s status to `FAILED`.
-        - If `status` is `RETRY_LATER`, log the reason from `details` and update the `ContentItem`'s status to `RETRY_LATER`.
-2.  **Refactor Old Application to Use the New Result API:**
-    *   In the `VideoSummarizationService` loop, modify the logic to call the new unified endpoint:
-        - On successful summary generation, call the `PUT` endpoint with `status: COMPLETED` and the summary text.
-        - If a transcript is not available (`getContent` returns null), call the `PUT` endpoint with `status: RETRY_LATER` and a descriptive message.
-        - On a non-recoverable AI error, call the `PUT` endpoint with `status: FAILED` and the error message.
-    *   The logic for writing to `summaries_...md` and `failed_videos.log` will be removed.
-3.  **Testing:**
-    *   Write `@QuarkusTest` integration tests for the new unified endpoint.
-    *   One test must verify the "success" path (a `Summary` is created, `ContentItem` is `COMPLETED`).
-    *   Another test must verify the "failure" path (`ContentItem` is `FAILED`, no `Summary` is created).
-    *   A third test must verify the "retry" path (`ContentItem` is `RETRY_LATER`, no `Summary` is created).
+1.  **Build Configuration:** Configure the Maven `pom.xml` to produce a runnable JAR (`quarkus-app/quarkus-run.jar`).
+2.  **Containerization:** Create a `Dockerfile` to package the application into a container image for consistent and isolated deployments.
+3.  **Deployment Documentation:** Update `RUNBOOK.md` with clear instructions on how to build the container image and run the application using Docker or `docker-compose`.
+4.  **Configuration Management:** Ensure the application can be fully configured via environment variables passed to the Docker container, which is crucial for production environments.
 
 ---
 
-## v0.8: AI Logic Migration
+## v0.8: Production Hardening & UI Preparation
 
-**Goal:** Migrate the AI-driven summary generation logic into the new Quarkus application, making it fully self-contained.
+**Goal:** Stabilize the new autonomous application and prepare for a future user interface.
 
 ### Key Tasks & Implementation Steps:
-1.  **Implement Self-Contained Summarization Service:**
-    *   Create a `SummarizationService` in the Quarkus app that encapsulates transcript fetching and GenAI calls.
-    *   The service must include robust, internal error handling, updating the `ContentItem` status to `COMPLETED` or `FAILED` directly in the database.
-    *   Expose this logic via a new endpoint: `POST /api/v1/summarization/trigger/{contentItemId}`.
-2.  **Refactor Old Application to Delegate Summarization:**
-    *   Modify the summarization loop in the old application's `VideoSummarizationService`.
-    *   The direct call to the AI service (`videoSummary.generateContentWithRetry`) will be replaced with a REST client call to the new `POST /api/v1/summarization/trigger/{contentItemId}` endpoint for each video.
-    *   The `google-genai` and `youtube-transcript-api` dependencies will be removed from the old application's `pom.xml`.
-3.  **Testing:**
-    *   Write `@QuarkusTest` integration tests for the new `SummarizationService`. The tests must verify that the `ContentItem` status is correctly updated on success and various mocked failure scenarios.
+1.  **API for UI:** Create a comprehensive set of read-only REST endpoints for retrieving briefings, summaries, and channels to support a future GUI.
+2.  **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
+3.  **Security Hardening:** Conduct a basic security review and implement initial security measures.
 
 ---
 
-## v0.9: Database-Driven Reporting & Automation (Phase 1 Complete)
-
-**Goal:** Re-implement the briefing generation and documentation updates, sourcing all data from the database. This brings the application to feature parity with the original version, but on the new, robust architecture.
-
-### Key Tasks & Implementation Steps:
-1.  **Implement Reporting Service:**
-    *   Create a `ReportingService` in the Quarkus app. It will query the database for all necessary data (summaries, content items) and perform the Git operations to update documentation.
-    *   Expose this logic via a new endpoint: `POST /api/v1/reports/generate`.
-2.  **Establish New Trigger Mechanism:**
-    *   Create a Quarkus Scheduler (`@Scheduled`) method that orchestrates the entire workflow by calling the `POST /api/v1/topics/{name}/ingestion/fetch-new` and `POST /api/v1/reports/generate` endpoints in the correct sequence.
-3.  **Decommission Old Application:**
-    *   The entire old application's source code (`src/main/java/si/jumis/...`) and its Maven module will be deleted.
-    *   The project will now be a single-module, self-contained Quarkus application.
-4.  **Documentation:**
-    *   Update [`RUNBOOK.md`](../RUNBOOK.md) to reflect the new, fully automated execution process and remove references to the old application.
-
----
-## v1.0: Multi-Topic Support
-
-**Goal:** Introduce support for multiple topics or categories (e.g., AI, Programming, Politics). Each topic will have its own configurable list of channels and a dedicated output Git repository.
-
-### Key Tasks & Implementation Steps: 
-1.  **Implement Topic Configuration:** Create a mechanism to configure topics and their channels from `application.properties` and persist them.
-2.  **Refactor Core Workflow:** Modify the main scheduled job to iterate over each topic and execute the ingestion/reporting workflow in a parameterized way for each one, using topic-specific output repositories.
-
-## v1.5: Production Hardening
--   **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
--   **Security Hardening:** Conduct a basic security review and implement initial security measures.
-
-## v2.0: RAG & Conversational Interface (Phase 2) & User Experience
+## v0.9: RAG & Conversational Interface (Phase 2)
 
 **Goal:** Deliver the core "interactive report" feature by implementing the RAG pipeline and a user-facing API.
 
@@ -176,7 +117,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v3.0: Expansion & Advanced Analytics (Phase 3)
+## v1.0: Expansion & Advanced Analytics (Phase 3)
 
 **Goal:** Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.
 
@@ -202,6 +143,6 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v4.0: Content Creation & Refinement (Phase 4)
+## v1.1: Content Creation & Refinement (Phase 4)
 
 *(Details to be added as Phase 3 nears completion)*

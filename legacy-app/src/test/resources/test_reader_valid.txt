@@ -1,6 +1,0 @@
-# This is a comment and should be ignored.
-line1
-
-line2
-# another comment
-line3

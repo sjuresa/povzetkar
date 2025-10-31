@@ -9,6 +9,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres_test_db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
+          POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASS }}
+        ports:
+          - 5433:5432 # Map container port 5432 to host port 5433
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21
@@ -17,7 +27,31 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
+
     - name: Make mvnw executable
       run: chmod +x mvnw
+
+    - name: Install PostgreSQL client
+      run: sudo apt-get update && sudo apt-get -y install postgresql-client
+
+    - name: Wait for PostgreSQL
+      env:
+        PGHOST: localhost
+        PGPORT: 5433
+        PGUSER: ${{ secrets.TEST_DB_USER }}
+        PGPASSWORD: ${{ secrets.TEST_DB_PASS }}
+        PGDATABASE: ${{ secrets.TEST_DB_NAME }}
+      run: |
+        # Wait until the postgres service is ready
+        until pg_isready -q; do
+          echo "Waiting for database connection..."
+          sleep 2
+        done
+
     - name: Build and test with Maven
       run: ./mvnw verify
+      env:
+        TEST_DB_KIND: ${{ secrets.TEST_DB_KIND }}
+        TEST_JDBC_URL: jdbc:postgresql://localhost:5433/${{ secrets.TEST_DB_NAME }}
+        TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
+        TEST_DB_PASS: ${{ secrets.TEST_DB_PASS }}
