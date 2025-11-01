@@ -1,72 +1,93 @@
-# API Specification (OpenAPI) - Project Povzetkar
+# API Specification - Project Povzetkar
 
-**Version:** 1.0
-**Date:** August 15, 2025
+**Version:** 1.1
+
+## Revision History
+
+| Version | Date               | Author       | Changes                                                                                             |
+|---------|--------------------|--------------|-----------------------------------------------------------------------------------------------------|
+| 1.1     | November 1, 2025   | Povzetkar AI | Overhauled spec for v0.6. Removed Strangler Fig context and added endpoints for the new management UI. |
+| 1.0     | September 8, 2025  | Povzetkar AI | Initial version for the Strangler Fig migration API.                                                 |
 
 ## 1. Introduction
 
-This document provides a preliminary OpenAPI 3.0 specification for the user-facing REST API of the Povzetkar platform. It serves as the contract between the frontend client and the backend service.
+This document specifies the REST API for the Povzetkar application. The API provides endpoints for managing core resources and retrieving generated intelligence, primarily serving the application's web interface and preparing for future client applications.
 
-## 2. OpenAPI Specification (YAML)
+The API is versioned under the `/api/v1/` path.
 
-```yaml
-openapi: 3.0.3
-info:
-  title: Povzetkar API
-  version: 1.0.0
-  description: API for the Povzetkar project.
-paths:
-  /health:
-    get:
-      summary: Health Check
-      description: Checks if the service is up and running.
-      responses:
-        '200':
-          description: Service is healthy
-  /v1/chat:
-    post:
-      summary: Conversational RAG Endpoint
-      description: Sends a user message and receives a synthesized answer from the knowledge base.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                sessionId:
-                  type: string
-                  description: Unique identifier for the conversation session.
-                message:
-                  type: string
-                  description: The user's question or message.
-      responses:
-        '200':
-          description: Successful response with an answer.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  answer:
-                    type: string
-                  sources:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        url:
-                          type: string
-                        title:
-                          type: string
-  /v1/admin/sources/youtube-channels:
-    post:
-      summary: Add a YouTube Channel Source
-      description: (Admin) Adds a new YouTube channel to be monitored for content.
-      security:
-        - oAuth2: [admin]
-      requestBody:
-        # ...
-      responses:
-        '201':
-          description: Source created successfully.
+## 2. Authentication
+
+*(Future)* All endpoints will be secured. For server-to-server communication, API keys will be used. For user-facing applications, OAuth2/OIDC will be implemented. For the current simple web UI, authentication is not yet implemented.
+
+## 3. Endpoints
+
+### 3.1. Topic Management
+
+These endpoints are used by the web UI to manage topics.
+
+#### Get All Topics by User
+
+*   **Endpoint:** `GET /api/v1/users/{userId}/topics`
+*   **Description:** Retrieves a list of all topics belonging to a specific user.
+*   **URL Parameters:**
+    *   `userId` (long): The ID of the user.
+*   **Success Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 1,
+        "name": "Artificial Intelligence",
+        "contentSources": [
+          { "id": 101, "name": "Two Minute Papers" }
+        ]
+      }
+    ]
+    ```
+
+#### Add a New Topic
+
+*   **Endpoint:** `POST /api/v1/users/{userId}/topics`
+*   **Description:** Creates a new topic for a user.
+*   **Request Body:**
+    ```json
+    {
+      "name": "Quantum Computing"
+    }
+    ```
+*   **Success Response (201 Created):** Returns the newly created topic object.
+
+#### Update a Topic
+
+*   **Endpoint:** `PUT /api/v1/topics/{topicId}`
+*   **Description:** Updates the details of an existing topic.
+*   **Request Body:**
+    ```json
+    {
+      "name": "Quantum Mechanics"
+    }
+    ```
+*   **Success Response (200 OK):** Returns the updated topic object.
+
+#### Delete a Topic
+
+*   **Endpoint:** `DELETE /api/v1/topics/{topicId}`
+*   **Description:** Deletes a topic.
+*   **Success Response (204 No Content):**
+
+### 3.2. Briefing Retrieval
+
+#### Get Briefings for a Topic
+
+*   **Endpoint:** `GET /api/v1/topics/{topicId}/briefings`
+*   **Description:** Retrieves a list of all generated briefings for a specific topic, ordered by date descending.
+*   **Success Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 201,
+        "title": "Daily Briefing - Artificial Intelligence - 2025-10-31",
+        "briefingDate": "2025-10-31",
+        "metaSummary": "A meta-summary of today's key developments..."
+      }
+    ]
+    ```

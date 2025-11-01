@@ -1,11 +1,12 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.7
+**Version:** 1.8
 
 ## Revision History
 
 | Version | Date               | Author       | Changes                                                              |
 |---------|--------------------|--------------|----------------------------------------------------------------------|
+| 1.8     | November 1, 2025   | Povzetkar AI | Sync with V1 migration: added `users.username`, `orchestration_locks`, and `content_items` inheritance fields. Corrected `summaries.embedding` nullability. |
 | 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                          |
 | 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments. |
 | 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.              |
@@ -44,6 +45,7 @@ erDiagram
 
     USERS {
         bigint id PK
+        varchar username UK
         boolean active
         varchar name
     }
@@ -72,11 +74,16 @@ erDiagram
 
     CONTENT_ITEMS {
         bigint id PK
+        varchar DTYPE
         bigint content_source_id FK
         varchar source_url UK
+        varchar title
         text raw_content
         timestamp published_at
         processing_status_enum processing_status
+        varchar video_id
+        varchar author_name
+        varchar transcript
         integer duration_seconds
         timestamp created_at
     }
@@ -86,7 +93,7 @@ erDiagram
         bigint content_item_id FK
         text summary_text
         date briefing_date
-        vector(1536) embedding "NOT NULL"
+        vector(1536) embedding
         timestamp created_at
     }
     
@@ -149,6 +156,12 @@ erDiagram
         decimal bias_score
         text assessment_details
         timestamp created_at
+    }
+
+    ORCHESTRATION_LOCKS {
+        bigint id PK
+        date orchestration_date UK
+        timestamp locked_at
     }
 ```
 

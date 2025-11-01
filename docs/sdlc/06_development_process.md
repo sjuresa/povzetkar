@@ -1,7 +1,13 @@
 # Development & Onboarding Guide
 
-**Version:** 1.0
-**Date:** August 16, 2025
+**Version:** 1.1
+
+## Revision History
+
+| Version | Date               | Author       | Changes                                                              |
+|---------|--------------------|--------------|----------------------------------------------------------------------|
+| 1.1     | November 1, 2025   | Povzetkar AI | Added section on handling database migrations with Flyway.           |
+| 1.0     | August 16, 2025    | Povzetkar AI | Initial version of the development and onboarding guide.             |
 
 ## 1. Introduction
 
@@ -59,6 +65,13 @@ This project is committed to **Test-Driven Development (TDD)**.
 -   Every bug fix must include a regression test that fails before the fix and passes after.
 -   The goal is to maintain high test coverage to enable confident refactoring and continuous integration.
 
+### 3.5 Database Migrations (Flyway)
+Since version 0.6.0, the project uses **Flyway** to manage database schema evolution. This ensures that schema changes are versioned, automated, and consistent across all environments.
+
+**Rule:** Any change to a JPA entity that results in a DDL (Data Definition Language) change (e.g., adding a column, creating a table, adding a constraint) **must** be accompanied by a new SQL migration script.
+
+-   **Location:** Scripts must be placed in `src/main/resources/db/migration`.
+-   **Naming:** Scripts must follow the Flyway naming convention: `V<VERSION>__<DESCRIPTION>.sql` (e.g., `V2__add_user_email.sql`).
 
 ## 4. Release Management & Versioning
 
@@ -74,20 +87,20 @@ The steps are as follows:
 
 1.  **Finalize the Version Branch (e.g., `v0.5`):**
     *   Ensure all task branches for the version are merged.
-    *   Update [`CHANGELOG.md`](../../changelog.md): Change the `[Unreleased]` section to the new version number and date (e.g., `[0.5] - 2025-08-17`) and add a new `[Unreleased]` section at the top.
-    *   Update Project Version: In `pom.xml`, remove the `-SNAPSHOT` suffix from the `<version>` tag (e.g., change `<version>0.5-SNAPSHOT</version>` to `<version>0.5</version>`).
-    *   Commit these final changes to the version branch with a message like `chore(release): prepare for release v0.5`.
+    *   Update `CHANGELOG.md`](../../changelog.md): Change the `[Unreleased]` section to the new version number and date (e.g., `[0.5.0] - 2025-08-17`) and add a new `[Unreleased]` section at the top.
+    *   Update Project Version: In `pom.xml`, remove the `-SNAPSHOT` suffix from the `<version>` tag (e.g., change `<version>0.5.0-SNAPSHOT</version>` to `<version>0.5.0</version>`).
+    *   Commit these final changes to the version branch with a message like `chore(release): prepare for release v0.5.0`.
 
 2.  **Merge to `main` via Pull Request:**
-    *   Create a Pull Request from the version branch (e.g., `v0.5`) to `main`. The PR should be named "Release v0.5".
+    *   Create a Pull Request from the version branch (e.g., `v0.5`) to `main`. The PR should be named "Release v0.5.0".
     *   This PR serves as the final release candidate. After approval and passing all checks, merge it into `main`.
 
 3.  **Create and Push Git Tag:**
     *   On your local `main` branch, pull the latest changes.
-    *   Create an annotated Git tag: `git tag -a v0.5 -m "Release version 0.5"`
-    *   Push the tag to the remote repository: `git push origin v0.5`
+    *   Create an annotated Git tag: `git tag -a v0.5.0 -m "Release version 0.5.0"`
+    *   Push the tag to the remote repository: `git push origin v0.5.0`
 
 4.  **Prepare for Next Development Cycle:**
     *   Create a new version branch (e.g., `v0.6`) from the `main` branch.
-    *   On the new `v0.6` branch, update the `pom.xml` version to the next development snapshot (e.g., `<version>0.6-SNAPSHOT</version>`).
+    *   On the new `v0.6` branch, update the `pom.xml` version to the next development snapshot (e.g., `<version>0.6.0-SNAPSHOT</version>`).
     *   Commit and push this change to the new version branch to officially start the next development cycle.

@@ -11,7 +11,7 @@ This document analyzes how well key aspects of planning are covered in the proje
 
 ## 2. Wireframes and Prototypes
 -   **Coverage:** Not Covered.
--   **Description:** The current documentation does **not** contain explicit visual mockups like wireframes or prototypes. This is the only area that is not currently detailed, which is expected in the early stages when the focus is on architecture and backend systems.
+-   **Description:** The documentation does not contain formal visual mockups like wireframes. However, with version 0.6.0, a simple server-side rendered UI was implemented, which serves as a basic functional prototype. Formal wireframing is planned for a later stage (v0.9) to support a more advanced user interface.
 
 ## 3. Technical Architecture
 -   **Coverage:** Excellent.
@@ -31,4 +31,4 @@ This document analyzes how well key aspects of planning are covered in the proje
     -   **Tactical Planning:** `v0.5-tasks.md` breaks down a phase into concrete tasks, including time estimates.
 
 ## Conclusion
-The project planning is exceptionally well-covered in all key areas. The only missing component is visual prototypes, which is entirely acceptable at this stage of the project.
+The project planning is exceptionally well-covered in all key areas. The only missing component is formal visual prototypes (wireframes), which is acceptable given that a basic functional UI already exists.
