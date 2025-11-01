@@ -42,12 +42,12 @@ This document provides a comprehensive checklist for our development process. It
 *This phase is executed once all tasks for the current version are complete.*
 
 - [ ] **3.1. Finalize `CHANGELOG.md`:**
-    - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[0.6.0] - 2025-11-01`).
+    - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[0.7.0] - YYYY-MM-DD`).
     - [ ] Add a new, empty `[Unreleased]` section at the top.
-- [ ] **3.2. Finalize `pom.xml`:** Remove the `-SNAPSHOT` suffix from the project version.
-- [ ] **3.3. Create Release PR:** Create a Pull Request from the version branch (e.g., `v0.6`) to `main`.
+- [ ] **3.2. Finalize `pom.xml`:** Remove the `-SNAPSHOT` suffix from the project version (e.g., `0.7.0`).
+- [ ] **3.3. Create Release PR:** Create a Pull Request from the version branch (e.g., `v0.7`) to `main`.
 - [ ] **3.4. Merge to `main`:** After approval, merge the release PR into the `main` branch.
-- [ ] **3.5. Create Git Tag:** On the `main` branch, create and push an annotated Git tag (e.g., `git tag -a v0.6.0 -m "Release version 0.6.0"`).
+- [ ] **3.5. Create Git Tag:** On the `main` branch, create and push an annotated Git tag (e.g., `git tag -a v0.7.0 -m "Release version 0.7.0"`).
 
 ---
 
