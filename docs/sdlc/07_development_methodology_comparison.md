@@ -1,13 +1,14 @@
 # Development Methodology Comparison
 
-**Version:** 1.2
+**Version:** 1.3
 
 ## Revision History
-| Version | Date              | Author       | Changes                                           |
-|---------|-------------------|--------------|---------------------------------------------------|
-| 1.2     | September 9, 2025 | Povzetkar AI | Refined Section 7 to clarify the adoption status of new practices. |
-| 1.1     | September 1, 2025 | Povzetkar AI | Added section on adopted practices for improvement.            |
-| 1.0     | September 1, 2025 | Povzetkar AI | Initial version of the methodology comparison.    |
+| Version | Date               | Author       | Changes                                                                                                                                |
+|---------|--------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| 1.3     | November 1, 2025   | Povzetkar AI | Integrated adopted practices (Retrospectives, Value Stream Focus) into the core methodology. Section 7 now only contains proposed improvements. |
+| 1.2     | September 9, 2025  | Povzetkar AI | Refined Section 7 to clarify the adoption status of new practices.                                                                     |
+| 1.1     | September 1, 2025  | Povzetkar AI | Added section on adopted practices for improvement.                                                                                    |
+| 1.0     | September 1, 2025  | Povzetkar AI | Initial version of the methodology comparison.                                                                                         |
 
 ## 1. Introduction
 
@@ -24,7 +25,7 @@ Scrum is a framework for developing complex products, emphasizing iterative prog
 ### Similarities to Scrum
 
 *   **Product Backlog:** Our `roadmap.md` serves the exact purpose of a Product Backlog. It is a prioritized list of high-level features and architectural goals for the entire project.
-*   **Sprint Backlog:** For each version (e.g., v0.5, v0.6), the corresponding `vX.Y-tasks.md` file acts as a Sprint Backlog. It is a detailed plan of work selected from the roadmap that we commit to completing in the current development cycle.
+*   **Sprint Backlog:** For each version (e.g., v0.5, v0.6), the corresponding `docs/versions/vX.Y-tasks.md` file acts as a Sprint Backlog. It is a detailed plan of work selected from the roadmap that we commit to completing in the current development cycle.
 *   **Increment:** Each successfully completed version is a valuable, potentially shippable increment of the product.
 *   **Roles:**
     *   You act as the **Product Owner**: You define the vision (`roadmap.md`), prioritize features, and provide feedback and approval.
@@ -33,7 +34,7 @@ Scrum is a framework for developing complex products, emphasizing iterative prog
 ### Differences from Scrum
 
 *   **No Fixed Time-Boxes (Sprints):** We do not operate in fixed-length Sprints. A version is complete when the tasks defined in its `*-tasks.md` file are done. This provides flexibility.
-*   **No Formal Ceremonies:** We do not have formal, synchronous meetings like Daily Scrums, Sprint Reviews, or Sprint Retrospectives. Our entire interaction is an asynchronous, continuous feedback loop.
+*   **Asynchronous Ceremonies:** We do not have formal, synchronous meetings like Daily Scrums or Sprint Reviews. However, we have adopted an asynchronous version of the **Sprint Retrospective**. After each version is complete, we create a `docs/retrospectives/vX.Y-retrospective.md` file to reflect on the process and define actionable improvements.
 
 ---
 
@@ -79,9 +80,10 @@ Extreme Programming is a highly disciplined methodology focused on technical pra
 Lean is less of a methodology and more of a guiding philosophy. Our process aligns well with its core principles.
 
 *   **Eliminate Waste:** Our decision to simplify the v0.5 migration script to a direct database write instead of building a throwaway API is a perfect example of eliminating waste (in this case, unnecessary, temporary code).
-*   **Amplify Learning:** The creation of `*-planning-process.md` documents is a direct implementation of this principle. We are documenting our decisions and learnings to inform future work.
+*   **Amplify Learning:** The creation of `docs/versions/*-planning-process.md` documents is a direct implementation of this principle. We are documenting our decisions and learnings to inform future work.
 *   **Decide as Late as Possible:** We have a high-level `roadmap.md` but make detailed, binding decisions only for the immediate version we are working on. This allows us to adapt as we learn more.
 *   **Build Integrity In:** Our strict adherence to TDD and automated verification steps ensures that quality is built into the process from the beginning, not added as an afterthought.
+*   **See the Whole:** During the planning phase for each new version (in `docs/versions/*-planning-process.md`), we explicitly consider how the planned tasks contribute to the overall project goals defined in `roadmap.md`. This ensures we maintain a long-term architectural vision and avoid local optimizations that harm the overall system.
 
 ---
 
@@ -98,21 +100,21 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 
 ---
 
-## 7. Adopted Practices for Continuous Improvement
+## 7. Proposed Practices for Continuous Improvement
 
-To formalize our commitment to continuous improvement (Kaizen), we are adopting the following practices into our workflow. This section documents the practices we have committed to integrating to make our process more robust and reflective.
+To formalize our commitment to continuous improvement (Kaizen), this section documents practices we could adopt to make our process even more robust.
 
-### 7.1. Version Retrospectives (from Scrum)
-
-*   **What it is:** A brief, formal review at the end of each version cycle to reflect on what went well, what could be improved, and what we will change.
-*   **Our Implementation:** After each version is complete (e.g., v0.5), and before planning the next, we will create a `docs/retrospectives/vX.Y-retrospective.md` file. This file will document our findings and define a concrete, actionable improvement for the next version. This formalizes our learning process.
-
-### 7.2. Spike Tasks (from Extreme Programming)
+### 7.1. Spike Tasks (from Extreme Programming)
 
 *   **What it is:** Time-boxed, research-oriented tasks designed to reduce technical uncertainty before committing to implementation. The deliverable is knowledge and a recommendation, not production code.
-*   **Our Implementation:** For features with significant technical unknowns (e.g., integrating a new library, evaluating an API), we will create a dedicated "Spike" task in the relevant version plan. This will de-risk future development and lead to more accurate time estimates.
+*   **Proposed Implementation:** For features with significant technical unknowns (e.g., integrating a new library, evaluating an API), we could create a dedicated "Spike" task in the relevant version plan. This would de-risk future development and lead to more accurate time estimates.
 
-### 7.3. "See the Whole" Value Stream Focus (from Lean)
+### 7.2. Definition of Done (DoD) (from Scrum/Kanban)
 
-*   **What it is:** A mindset focused on optimizing the entire flow of value from idea to delivery, rather than just individual tasks.
-*   **Our Implementation:** During the planning phase for each new version (`*-planning-process.md`), we will explicitly ask how the planned tasks contribute to the overall project goals defined in `roadmap.md` and whether they create any downstream impediments. This ensures we maintain a long-term architectural vision and avoid local optimizations that harm the overall system.
+*   **What it is:** An explicit checklist of criteria that a task must meet to be considered "done." This goes beyond just "code is written" and ensures quality is built in.
+*   **Proposed Implementation:** We could define a formal DoD that includes criteria such as:
+    1.  Code is written and implements the required functionality.
+    2.  Unit and integration tests are written and passing.
+    3.  All relevant documentation (e.g., `README.md`, `docs/overview/specification.md`) has been updated.
+    4.  The final commit message is approved.
+        This would make the completion of a task less ambiguous and ensure all aspects of quality are consistently addressed.

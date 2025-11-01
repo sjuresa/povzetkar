@@ -1,11 +1,11 @@
-# Application Runbook
+# Povzetkar Runbook
 
-**Version:** 1.3
+**Version:** 1.4
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                             |
 |---------|--------------------|--------------|---------------------------------------------------------------------|
-| 1.3     | October 25, 2025   | Povzetkar AI | Added instructions for Orchestrator triggering.                     |
+| 1.4     | November 1, 2025   | Povzetkar AI | Updated for v0.6: removed legacy app, simplified run instructions.  |
 | 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                   |
 | 1.1     | September 17, 2025 | Povzetkar AI | Added instructions for verifying the pgvector extension.            |
 | 1.0     | August 16, 2025    | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project. |
@@ -13,7 +13,7 @@
 ## 1. Introduction
 
 This document provides all the necessary instructions for setting up the local development environment, running the application, and executing tests.
-
+It is the primary technical guide for developers working on the project.
 ## 2. Prerequisites
 - **Java:** JDK 21 or later.
 - **Maven:** Version 3.8.x or later.
@@ -24,29 +24,30 @@ This document provides all the necessary instructions for setting up the local d
 ## 3. Local Environment Setup
 The entire local environment is managed by Docker Compose.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd <repository-directory-name>
-    ```
+1.  **Create the Environment File:**
+The application requires a `.env` file in the project root for database credentials and API keys. The
+`docker-compose.yml` uses these to configure the PostgreSQL container, and the Quarkus application is configured to use
+them for its database connection.
 
-2.  **Create the Environment File:**
-    The Docker Compose setup relies on a `.env` file for database credentials. Create this file by copying the provided template.
+```properties
+# For the PostgreSQL container (development)
+DB_USER=povzetkar
+DB_PASS=povzetkar
+DB_NAME=povzetkar
+# For the PostgreSQL container (testing)
+TEST_DB_USER=povzetkar_test
+TEST_DB_PASS=povzetkar_test
+TEST_DB_NAME=povzetkar_test
+# For the Quarkus application
+YOUTUBE_API_KEY=your_youtube_api_key_here
+GOOGLE_API_KEYS=your_google_api_keys_here
+```
 
-    *   **On Windows (Command Prompt or PowerShell):**
-        ```shell
-        copy .env.example .env
-        ```
-    *   **On Linux or macOS:**
-        ```shell
-        cp .env.example .env
-        ```
-
-3.  **Start the environment for the first time:**
-    This command will create the Docker volumes and run the initial database scripts.
-    ```bash
-    docker compose up -d
-    ```
+2. **Start the Database:**
+   This command starts the PostgreSQL database in a Docker container.
+   ```bash
+   docker compose up -d
+   ```
 
 ## 4. Resetting the Local Database
 
@@ -85,7 +86,6 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 ## 6. Running the Application
 
 With the database running, you can start the Quarkus application in development mode:
-Run the quarkus:dev goal for the quarkus-app module:
 ```bash
 ./mvnw quarkus:dev
 ```

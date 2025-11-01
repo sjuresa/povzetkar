@@ -1,11 +1,12 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.7
+**Version:** 1.8
 
 ## Revision History
 
 | Version | Date               | Author       | Changes                                                              |
 |---------|--------------------|--------------|----------------------------------------------------------------------|
+| 1.8     | November 1, 2025   | Povzetkar AI | Sync with V1 migration: added `users.username`, `orchestration_locks`, and `content_items` inheritance fields. Corrected `summaries.embedding` nullability. |
 | 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                          |
 | 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments. |
 | 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.              |
@@ -44,6 +45,7 @@ erDiagram
 
     USERS {
         bigint id PK
+        varchar username UK
         boolean active
         varchar name
     }
@@ -72,11 +74,17 @@ erDiagram
 
     CONTENT_ITEMS {
         bigint id PK
+        varchar DTYPE
         bigint content_source_id FK
         varchar source_url UK
+        varchar title
         text raw_content
         timestamp published_at
         processing_status_enum processing_status
+        varchar video_id
+        varchar author_name
+        varchar channel_id
+        varchar transcript
         integer duration_seconds
         timestamp created_at
     }
@@ -86,7 +94,7 @@ erDiagram
         bigint content_item_id FK
         text summary_text
         date briefing_date
-        vector(1536) embedding "NOT NULL"
+        vector(1536) embedding
         timestamp created_at
     }
     
@@ -150,6 +158,12 @@ erDiagram
         text assessment_details
         timestamp created_at
     }
+
+    ORCHESTRATION_LOCKS {
+        bigint id PK
+        date orchestration_date UK
+        timestamp locked_at
+    }
 ```
 
 ## 3 Custom Data Types
@@ -170,6 +184,7 @@ A type to represent the processing state of a content item.
 ### `users`
 Stores user accounts that own topics and other resources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
+- `username` (varchar, unique): The unique login identifier for the user. `NOT NULL`
 - `active` (boolean): Whether the user account is active. `NOT NULL DEFAULT TRUE`
 - `name` (varchar): The name of the user. `NOT NULL`
 
@@ -201,11 +216,17 @@ This table facilitates the many-to-many relationship between `topics` and `conte
 ### `content_items`
 Stores raw ingested content from various sources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
+- `DTYPE` (varchar): A discriminator column used by JPA for inheritance (e.g., 'YouTubeVideo'). `NOT NULL`
 - `content_source_id` (FK, bigint): References `content_sources.id`. `NOT NULL`
 - `source_url` (varchar, unique): The canonical URL of the content. `NOT NULL`
-- `raw_content` (text): The full transcript or article text. `NOT NULL`
+- `title` (varchar): The title of the content item. `NOT NULL`
+- `raw_content` (text): The primary textual content of an item, such as an article body. For video items, this field must be an empty string, as the transcript is stored in the dedicated `transcript` field. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
 - `processing_status` (processing_status_enum): The current state of the item. `NOT NULL DEFAULT 'PENDING'`
+- `video_id` (varchar, unique): The platform-specific ID for a video. `NULL`. A `CHECK` constraint ensures this is `NOT NULL` for items with `DTYPE = 'YouTubeVideo'`.
+- `author_name` (varchar): The name of the video's author. `NULL`
+- `channel_id` (varchar): The ID of the video's channel. `NULL`
+- `transcript` (text): The full transcript of the video. `NULL`
 - `duration_seconds` (integer): Duration for video/audio content. `NULL`
 - `created_at` (timestamp): When the item was ingested. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
@@ -215,7 +236,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
 - `briefing_date` (date): The date for which the briefing is generated. `NOT NULL`
-- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
+- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `briefings`
@@ -282,3 +303,9 @@ Stores historical records of bias assessments for content sources.
 - `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL CHECK (bias_score >= -1.0 AND bias_score <= 1.0)`
 - `assessment_details` (text): A detailed, AI-generated explanation for the given score. `NOT NULL`
 - `created_at` (timestamp): When the assessment was performed. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+
+### `orchestration_locks`
+A simple locking mechanism to ensure that the daily orchestration process runs only once per day.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `orchestration_date` (date, unique): The date for which the lock is held. `NOT NULL`
+- `locked_at` (timestamp): When the lock was acquired. `NOT NULL`
