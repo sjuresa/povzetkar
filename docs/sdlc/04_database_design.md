@@ -83,6 +83,7 @@ erDiagram
         processing_status_enum processing_status
         varchar video_id
         varchar author_name
+        varchar channel_id
         varchar transcript
         integer duration_seconds
         timestamp created_at
