@@ -22,7 +22,7 @@ graph TD
         Orchestrator --> ContentFetcher[Content Fetching]
         Orchestrator --> Summarizer[SummarizationService]
         Orchestrator --> BriefingGen[BriefingService]
-API --> Orchestrator
+API --> BriefingGen
     end
 
     subgraph "External Systems"

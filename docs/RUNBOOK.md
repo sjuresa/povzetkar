@@ -26,7 +26,7 @@ The entire local environment is managed by Docker Compose.
 
 1.  **Create the Environment File:**
     The application requires a `.env` file in the project root for database credentials and API keys.
-    ```
+    ```properties
     QUARKUS_DATASOURCE_USERNAME=povzetkar
     QUARKUS_DATASOURCE_PASSWORD=povzetkar
     YOUTUBE_API_KEY=your_youtube_api_key_here

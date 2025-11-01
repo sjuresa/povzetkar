@@ -55,8 +55,8 @@ graph TD
 
 2.  **OrchestratorService**: The central coordinator. It manages the end-to-end process:
     *   Invokes the **Content Fetching** logic to find new items.
-    *   Invokes the `SummarizationService` for each new item.
-    *   Invokes the `BriefingService` once summaries for a given day are ready.
+    *   Invokes the **SummarizationService** for each new item.
+    *   Invokes the **BriefingService** once summaries for a given day are ready.
 
 3.  **Content Fetching**: A set of services responsible for interacting with third-party APIs (like YouTube) to retrieve new content items and storing them in the database.
 
