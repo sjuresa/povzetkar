@@ -24,18 +24,25 @@ It is the primary technical guide for developers working on the project.
 ## 3. Local Environment Setup
 The entire local environment is managed by Docker Compose.
 
-1.  **Create the Environment File:**
-    The application requires a `.env` file in the project root for database credentials and API keys.
-    ```properties
-    QUARKUS_DATASOURCE_USERNAME=povzetkar
-    QUARKUS_DATASOURCE_PASSWORD=povzetkar
-    YOUTUBE_API_KEY=your_youtube_api_key_here
-    ```
-2.  **Start the Database:**
-    This command starts the PostgreSQL database in a Docker container.
-    ```bash
-    docker compose up -d
-    ```
+.  **Create the Environment File:**
+The application requires a `.env` file in the project root for database credentials and API keys. The
+`docker-compose.yml` uses these to configure the PostgreSQL container, and the Quarkus application is configured to use
+them for its database connection.
+
+```properties
+# For the PostgreSQL container
+DB_USER=povzetkar
+DB_PASS=povzetkar
+DB_NAME=povzetkar
+# For the Quarkus application
+YOUTUBE_API_KEY=your_youtube_api_key_here
+```
+
+2. **Start the Database:**
+   This command starts the PostgreSQL database in a Docker container.
+   ```bash
+   docker compose up -d
+   ```
 
 ## 4. Resetting the Local Database
 
