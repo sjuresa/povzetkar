@@ -30,10 +30,14 @@ The application requires a `.env` file in the project root for database credenti
 them for its database connection.
 
 ```properties
-# For the PostgreSQL container
+# For the PostgreSQL container (development)
 DB_USER=povzetkar
 DB_PASS=povzetkar
 DB_NAME=povzetkar
+# For the PostgreSQL container (testing)
+TEST_DB_USER=povzetkar_test
+TEST_DB_PASS=povzetkar_test
+TEST_DB_NAME=povzetkar_test
 # For the Quarkus application
 YOUTUBE_API_KEY=your_youtube_api_key_here
 ```
