@@ -1,10 +1,11 @@
 # Project Povzetkar: Development Roadmap
 
-**Version:** 1.3
+**Version:** 1.4
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                            |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                   |
 | 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.              |
 | 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
 | 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
@@ -38,6 +39,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.6: Core Logic Migration & Automation
 
 **Goal:** Migrate the entire core workflow into the new Quarkus application, making it fully autonomous. This includes fetching new content, creating summaries, and generating briefings. This version replaces the legacy Git publishing with a foundational web UI for reviewing results and delivers **full multi-topic support**.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Extend Data Model:** Create `Summary` and `Briefing` JPA entities with appropriate relationships.
@@ -48,6 +50,17 @@ This document outlines the concrete steps for implementing the features describe
 4.  **Implement Simple UI:** Create a server-side rendered HTML interface for reviewing generated briefings.
 5.  **Refactor for Robustness:** Decouple briefing generation from content fetching and add resilience to handle transient errors, based on findings during the migration.
 6.  **Decommission Legacy App:** Completely remove the `legacy-app` module, finalizing the migration.
+
+---
+
+## v0.6.1: UI/UX Refinement
+
+**Goal:** Radically improve the UI/UX by integrating a modern CSS framework like **Bootstrap**, making the interface clean, responsive, and professional.
+
+### Key Tasks & Implementation Steps:
+1.  **Integrate Bootstrap:** Add the Bootstrap CSS (and optional JS) to the project, likely via a CDN link in the main Qute template, to make it available to all pages.
+2.  **Refactor Templates with Bootstrap:** Systematically refactor the existing HTML templates to use Bootstrap's grid system (`container`, `row`, `col`) and components (`card`, `nav`, `btn`, `list-group`).
+3.  **Ensure Responsiveness:** Verify that the new layout is fully responsive and usable on both desktop and mobile devices.
 
 ---
 
@@ -63,18 +76,31 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.8: Production Hardening & UI Preparation
+## v0.8: User Management & Security
 
-**Goal:** Stabilize the new autonomous application and prepare for a future user interface.
+**Goal:** Implement a robust user management, authentication, and authorization system to secure the application and its APIs, preparing it for multi-user production environments.
 
 ### Key Tasks & Implementation Steps:
-1.  **API for UI:** Create a comprehensive set of read-only REST endpoints for retrieving briefings, summaries, and channels to support a future GUI.
-2.  **Monitoring & Logging:** Define and implement a production monitoring and logging strategy (e.g., Prometheus metrics, structured JSON logging).
-3.  **Security Hardening:** Conduct a basic security review and implement initial security measures.
+1.  **Authentication:** Implement user registration and login endpoints using a secure mechanism (e.g., JWT tokens).
+2.  **Authorization:** Integrate Quarkus Security to protect all relevant API endpoints. Define and enforce user roles (e.g., `USER`, `ADMIN`).
+3.  **Secure UI:** Modify the web interface to be multi-tenant, ensuring users can only see their own topics and briefings after logging in.
+4.  **User Management:** Provide basic administrative capabilities for managing users.
 
 ---
 
-## v0.9: RAG & Conversational Interface (Phase 2)
+## v0.9: Production Hardening
+
+**Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
+
+### Key Tasks & Implementation Steps:
+1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards. Configure Alertmanager for critical failure notifications.
+2.  **Secrets Management:** Integrate a secrets management solution (e.g., HashiCorp Vault) to handle API keys and database credentials securely, removing them from `.env` files in production.
+3.  **Backup & Recovery:** Establish and document an automated database backup and recovery process.
+4.  **Dependency Scanning:** Integrate an automated dependency vulnerability scanner (e.g., Snyk, Dependabot) into the CI pipeline.
+
+---
+
+## v1.0: RAG & Conversational Interface
 
 **Goal:** Deliver the core "interactive report" feature by implementing the RAG pipeline and a user-facing API.
 
@@ -100,12 +126,7 @@ This document outlines the concrete steps for implementing the features describe
         3.  Inject the retrieved summaries as context into a new prompt for the LLM.
         4.  Send the augmented prompt to the LLM and return its final, context-aware answer to the client.
 
-4.  **Develop a Simple Frontend Client:**
-    *   Create a basic web-based frontend (e.g., using plain HTML/JavaScript or a simple Angular app).
-    *   The frontend will have a simple chat input field and a display area for the conversation.
-    *   It will make asynchronous calls to the `/api/v1/chat` endpoint and display the returned answers.
-
-5.  **User Experience Planning:**
+4.  **User Experience Planning for Advanced UI:**
     *   **ADR for Frontend:** Create an Architectural Decision Record for the choice of frontend framework.
     *   **Wireframes:** Develop basic wireframes for the user interface.
     *   **User Feedback:** Establish a process for gathering user feedback and creating initial user guides.
@@ -117,7 +138,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v1.0: Expansion & Advanced Analytics (Phase 3)
+## v1.1: Expansion & Advanced Analytics
 
 **Goal:** Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.
 
@@ -143,6 +164,6 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v1.1: Content Creation & Refinement (Phase 4)
+## v1.2: Content Creation & Refinement
 
 *(Details to be added as Phase 3 nears completion)*
