@@ -184,6 +184,7 @@ A type to represent the processing state of a content item.
 ### `users`
 Stores user accounts that own topics and other resources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
+- `username` (varchar, unique): The unique login identifier for the user. `NOT NULL`
 - `active` (boolean): Whether the user account is active. `NOT NULL DEFAULT TRUE`
 - `name` (varchar): The name of the user. `NOT NULL`
 
@@ -215,11 +216,17 @@ This table facilitates the many-to-many relationship between `topics` and `conte
 ### `content_items`
 Stores raw ingested content from various sources.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
+- `DTYPE` (varchar): A discriminator column used by JPA for inheritance (e.g., 'YouTubeVideo'). `NOT NULL`
 - `content_source_id` (FK, bigint): References `content_sources.id`. `NOT NULL`
 - `source_url` (varchar, unique): The canonical URL of the content. `NOT NULL`
+- `title` (varchar): The title of the content item. `NOT NULL`
 - `raw_content` (text): The full transcript or article text. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
 - `processing_status` (processing_status_enum): The current state of the item. `NOT NULL DEFAULT 'PENDING'`
+- `video_id` (varchar, unique): The platform-specific ID for a video. `NULL`
+- `author_name` (varchar): The name of the video's author. `NULL`
+- `channel_id` (varchar): The ID of the video's channel. `NULL`
+- `transcript` (text): The full transcript of the video. `NULL`
 - `duration_seconds` (integer): Duration for video/audio content. `NULL`
 - `created_at` (timestamp): When the item was ingested. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
@@ -229,7 +236,7 @@ Stores the AI-generated summaries and their vector embeddings.
 - `content_item_id` (FK, bigint): References `content_items.id`. `NOT NULL`
 - `summary_text` (text): The generated summary in Markdown format. `NOT NULL`
 - `briefing_date` (date): The date for which the briefing is generated. `NOT NULL`
-- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NOT NULL`
+- `embedding` (vector(1536)): The vector representation of the summary text. An index of type IVFFlat or HNSW should be created on this column for fast similarity searches. `NULL`
 - `created_at` (timestamp): When the summary was generated. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `briefings`
@@ -296,3 +303,9 @@ Stores historical records of bias assessments for content sources.
 - `bias_score` (decimal): A numerical score representing the detected bias (e.g., from -1.0 for negative to 1.0 for positive). `NOT NULL CHECK (bias_score >= -1.0 AND bias_score <= 1.0)`
 - `assessment_details` (text): A detailed, AI-generated explanation for the given score. `NOT NULL`
 - `created_at` (timestamp): When the assessment was performed. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+
+### `orchestration_locks`
+A simple locking mechanism to ensure that the daily orchestration process runs only once per day.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `orchestration_date` (date, unique): The date for which the lock is held. `NOT NULL`
+- `locked_at` (timestamp): When the lock was acquired. `NOT NULL`
