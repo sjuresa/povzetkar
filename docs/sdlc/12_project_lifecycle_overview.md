@@ -24,16 +24,12 @@ This document outlines the high-level lifecycle of the Povzetkar project. It des
 *This phase covers the development of a single, concrete version of the software.*
 
 - **Activity:** Execute the end-to-end process of planning, developing, testing, and releasing a software version.
-- **Artifact:** The process is detailed in `11_development_checklist.md`.
-
+- **Artifact:** The process is detailed in `docs/sdlc/11_development_checklist.md`.
 ---
-
 ## Phase 3: Periodic Strategic Review
-
 *This phase ensures the project remains aligned with its strategic goals and that the development process is effective.*
-
 - **Activity:** Review the project's long-term roadmap and the effectiveness of the development methodology.
 - **Artifacts:**
-    - Review and update `roadmap.md`.
-    - Review and potentially update `07_development_methodology_comparison.md` and `AGENT.md`.
+    - Review and update `docs/overview/roadmap.md`.
+    - Review and potentially update `docs/sdlc/07_development_methodology_comparison.md` and `AGENT.md`.
 - **Frequency:** Periodically (e.g., quarterly, after major milestones).
