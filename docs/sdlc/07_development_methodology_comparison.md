@@ -115,6 +115,6 @@ To formalize our commitment to continuous improvement (Kaizen), this section doc
 *   **Proposed Implementation:** We could define a formal DoD that includes criteria such as:
     1.  Code is written and implements the required functionality.
     2.  Unit and integration tests are written and passing.
-    3.  All relevant documentation (`README.md`, `specification.md`, etc.) has been updated.
+    3.  All relevant documentation (e.g., `README.md`, `docs/overview/specification.md`) has been updated.
     4.  The final commit message is approved.
         This would make the completion of a task less ambiguous and ensure all aspects of quality are consistently addressed.
