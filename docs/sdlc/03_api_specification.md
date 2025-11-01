@@ -1,12 +1,11 @@
 # API Specification - Project Povzetkar
 
-**Version:** 1.2
+**Version:** 1.1
 
 ## Revision History
 
 | Version | Date               | Author       | Changes                                                                                             |
 |---------|--------------------|--------------|-----------------------------------------------------------------------------------------------------|
-| 1.2     | November 1, 2025   | Povzetkar AI | Refactored the specification to use the OpenAPI 3.0 standard for better tooling and clarity.        |
 | 1.1     | November 1, 2025   | Povzetkar AI | Overhauled spec for v0.6. Removed Strangler Fig context and added endpoints for the new management UI. |
 | 1.0     | September 8, 2025  | Povzetkar AI | Initial version for the Strangler Fig migration API.                                                 |
 
@@ -121,6 +120,52 @@ paths:
         '204':
           description: "Topic deleted successfully."
 
+  /api/v1/topics/{topicId}/content-sources:
+    post:
+      summary: "Add a Content Source to a Topic"
+      description: "Creates and associates a new content source with a specific topic."
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewContentSource'
+      responses:
+        '201':
+          description: "Content source created and associated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSource'
+
+  /api/v1/topics/{topicId}/content-sources/{contentSourceId}:
+    delete:
+      summary: "Remove a Content Source from a Topic"
+      description: "Deletes a content source, disassociating it from the topic."
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: contentSourceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: "Content source deleted successfully."
+
   /api/v1/topics/{topicId}/briefings:
     get:
       summary: "Get Briefings for a Topic"
@@ -164,6 +209,27 @@ components:
           format: int64
         name:
           type: string
+        sourceId:
+          type: string
+          description: "The unique identifier for the source on its platform (e.g., YouTube channel ID)."
+        sourceType:
+          type: string
+          enum: [YOUTUBE]
+          description: "The type of the content source."
+    NewContentSource:
+      type: object
+      required:
+        - name
+        - sourceId
+        - sourceType
+      properties:
+        name:
+          type: string
+        sourceId:
+          type: string
+        sourceType:
+          type: string
+          enum: [YOUTUBE]
     Briefing:
       type: object
       properties:

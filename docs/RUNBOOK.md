@@ -24,7 +24,7 @@ It is the primary technical guide for developers working on the project.
 ## 3. Local Environment Setup
 The entire local environment is managed by Docker Compose.
 
-.  **Create the Environment File:**
+1.  **Create the Environment File:**
 The application requires a `.env` file in the project root for database credentials and API keys. The
 `docker-compose.yml` uses these to configure the PostgreSQL container, and the Quarkus application is configured to use
 them for its database connection.
