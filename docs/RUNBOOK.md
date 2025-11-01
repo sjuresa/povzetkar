@@ -40,6 +40,7 @@ TEST_DB_PASS=povzetkar_test
 TEST_DB_NAME=povzetkar_test
 # For the Quarkus application
 YOUTUBE_API_KEY=your_youtube_api_key_here
+GOOGLE_API_KEYS=your_google_api_keys_here
 ```
 
 2. **Start the Database:**

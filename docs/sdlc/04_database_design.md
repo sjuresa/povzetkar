@@ -223,7 +223,7 @@ Stores raw ingested content from various sources.
 - `raw_content` (text): The primary textual content of an item, such as an article body. For video items, this field must be an empty string, as the transcript is stored in the dedicated `transcript` field. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
 - `processing_status` (processing_status_enum): The current state of the item. `NOT NULL DEFAULT 'PENDING'`
-- `video_id` (varchar, unique): The platform-specific ID for a video. `NULL`
+- `video_id` (varchar, unique): The platform-specific ID for a video. `NULL`. A `CHECK` constraint ensures this is `NOT NULL` for items with `DTYPE = 'YouTubeVideo'`.
 - `author_name` (varchar): The name of the video's author. `NULL`
 - `channel_id` (varchar): The ID of the video's channel. `NULL`
 - `transcript` (text): The full transcript of the video. `NULL`

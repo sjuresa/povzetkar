@@ -45,9 +45,9 @@ graph TD
     User --> UI
     UI --> API
     API --> BriefingGen
-    Orchestrator -- schedules --> ContentFetcher
-    Orchestrator -- schedules --> Summarizer
-    Orchestrator -- schedules --> BriefingGen
+    Orchestrator --> ContentFetcher
+    Orchestrator --> Summarizer
+    Orchestrator --> BriefingGen
     ContentFetcher --> ExtAPI
     ContentFetcher --> DB
     Summarizer --> GenAI
