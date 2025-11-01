@@ -220,7 +220,7 @@ Stores raw ingested content from various sources.
 - `content_source_id` (FK, bigint): References `content_sources.id`. `NOT NULL`
 - `source_url` (varchar, unique): The canonical URL of the content. `NOT NULL`
 - `title` (varchar): The title of the content item. `NOT NULL`
-- `raw_content` (text): The primary textual content of an item, such as an article body. For videos where a dedicated `transcript` is available, this field must contain an empty string. `NOT NULL`
+- `raw_content` (text): The primary textual content of an item, such as an article body. For video items, this field must be an empty string, as the transcript is stored in the dedicated `transcript` field. `NOT NULL`
 - `published_at` (timestamp): The original publication date of the content. `NOT NULL`
 - `processing_status` (processing_status_enum): The current state of the item. `NOT NULL DEFAULT 'PENDING'`
 - `video_id` (varchar, unique): The platform-specific ID for a video. `NULL`
