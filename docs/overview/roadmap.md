@@ -53,14 +53,19 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.6.1: UI/UX Refinement
+## v0.6.1: Foundational UI/UX Refinement
 
-**Goal:** Radically improve the UI/UX by integrating a modern CSS framework like **Bootstrap**, making the interface clean, responsive, and professional.
+**Goal:** Substantially improve the usability and visual appeal of the server-side rendered UI with minimal, non-locking investment. The focus is on creating a clean, responsive, and navigable baseline experience without committing to a heavy framework, leaving future options open (e.g., a full SPA).
 
 ### Key Tasks & Implementation Steps:
-1.  **Integrate Bootstrap:** Add the Bootstrap CSS (and optional JS) to the project, likely via a CDN link in the main Qute template, to make it available to all pages.
-2.  **Refactor Templates with Bootstrap:** Systematically refactor the existing HTML templates to use Bootstrap's grid system (`container`, `row`, `col`) and components (`card`, `nav`, `btn`, `list-group`).
-3.  **Ensure Responsiveness:** Verify that the new layout is fully responsive and usable on both desktop and mobile devices.
+1.  **Implement a Master Layout:** Create a main Qute template (`main.html`) that defines a consistent page structure, including a header with a global navigation bar and a content area. Refactor all existing pages to extend this master layout.
+2.  **Integrate a "Class-less" CSS Framework:** Instead of a heavy framework like Bootstrap, integrate a lightweight, "class-less" framework like **Pico.css** via a CDN. This will automatically style standard HTML elements for a clean, modern look with almost no changes to the HTML structure.
+3.  **Improve Navigability:** Implement "breadcrumb" navigation within the master layout to help users understand their location within the application (e.g., `Home > Topics > My Topic`).
+4.  **Semantic HTML Refactoring:** Review and refactor the existing HTML templates to use semantic HTML5 elements where appropriate (e.g., `<nav>`, `<header>`, `<footer>`, `<main>`, `<section>`, `<article>`). This improves accessibility and prepares the codebase for any future UI framework. 
+5.  **Enhance User Actions:** Add simple JavaScript confirmations for destructive actions like "Delete" or "Remove" to prevent accidental data loss.
+6.  **Verify Responsiveness:** Ensure the new layout is functional and readable on both desktop and mobile devices, leveraging the built-in responsiveness of the chosen CSS framework.
+7.  **Implement User Feedback (Flash Messages):** Add a mechanism for displaying temporary, session-based "flash messages" for user feedback (e.g., "Topic successfully created," "Source removed"). This component should be part of the master layout.
+8.  **Improve Form Usability:** Enhance forms to provide clearer validation feedback and preserve user input upon submission failure.
 
 ---
 
@@ -161,6 +166,7 @@ This document outlines the concrete steps for implementing the features describe
 
 4.  **Production Quality Testing:**
     *   **Performance Testing:** Conduct initial load tests on the RAG API to identify performance bottlenecks.
+    *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows, following the architectural decision made in v1.0.
 
 ---
 
