@@ -1,27 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Topics</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-<h1>Topics by User</h1>
-<a href="/ui/topics/add">Add New Topic</a>
+{#include 'main.html'}
+{#title}Topics{/title}
+{#content}
+    <h1>Topics by User</h1>
+    <form action="/ui/topics/add" method="get">
+        <button type="submit">Add New Topic</button>
+    </form>
 
-{#for entry in topicsByUser.entrySet()}
-    <h2>{entry.key.name}</h2>
-    <ul>
-        {#for topic in entry.value}
-            <li>
-                <a href="/ui/topics/{topic.id}/briefings">{topic.name}</a>
-                <a href="/ui/topics/{topic.id}/edit">[Edit]</a>
-                <form action="/ui/topics/delete/{topic.id}" method="post" style="display: inline;">
-                    <button type="submit">[Delete]</button>
-                </form>
-            </li>
-        {/for}
-    </ul>
-{/for}
-</body>
-</html>
+    {#for entry in topicsByUser.entrySet()}
+        <h2>{entry.key.name}</h2>
+        <ul>
+            {#for topic in entry.value}
+                <li>
+                    <a href="/ui/topics/{topic.id}/briefings">{topic.name}</a>
+                    <a href="/ui/topics/{topic.id}/edit">[Edit]</a>
+                    <form action="/ui/topics/delete/{topic.id}" method="post">
+                        <button type="submit" class="secondary outline">[Delete]</button>
+                    </form>
+                </li>
+            {/for}
+        </ul>
+    {/for}
+{/content}
