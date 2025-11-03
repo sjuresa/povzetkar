@@ -1,13 +1,14 @@
 # Development & Onboarding Guide
 
-**Version:** 1.1
+**Version:** 1.2
 
 ## Revision History
 
-| Version | Date               | Author       | Changes                                                              |
-|---------|--------------------|--------------|----------------------------------------------------------------------|
-| 1.1     | November 1, 2025   | Povzetkar AI | Added section on handling database migrations with Flyway.           |
-| 1.0     | August 16, 2025    | Povzetkar AI | Initial version of the development and onboarding guide.             |
+| Version | Date             | Author       | Changes                                                              |
+|---------|------------------|--------------|----------------------------------------------------------------------|
+| 1.2     | November 3, 2025 | Povzetkar AI | Added rule for lowercase commit message descriptions.                |
+| 1.1     | November 1, 2025 | Povzetkar AI | Added section on handling database migrations with Flyway.           |
+| 1.0     | August 16, 2025  | Povzetkar AI | Initial version of the development and onboarding guide.             |
 
 ## 1. Introduction
 
@@ -42,6 +43,7 @@ We follow the Conventional Commits specification. This helps create an explicit 
 -   **`refactor:`** A code change that neither fixes a bug nor adds a feature.
 -   **`test:`** Adding missing tests or correcting existing tests.
 -   **`chore:`** Changes to the build process or auxiliary tools.
+-   **Style:** The description following the type/scope **must** begin with a lowercase letter (e.g., `feat(api): add new user endpoint`).
 
 ### 3.3 Pull Request (PR) Process
 The PR process is used for two distinct merge events:
