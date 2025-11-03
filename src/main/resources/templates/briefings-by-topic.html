@@ -1,48 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Briefings for {topic.name}</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-<h1>Briefings for {topic.name}</h1>
+{#include 'main.html'}
+{#title}Briefings for {topic.name}{/title}
+{#content}
+    <h1>Briefings for {topic.name}</h1>
 
-<h2>Content Sources</h2>
-<ul>
-    {#for source in topic.contentSources}
-        <li>
-            {source.name}
-            <form action="/ui/topics/remove-content-source/{topic.id}/{source.id}" method="post" style="display: inline;">
-                <button type="submit">[Remove]</button>
-            </form>
-        </li>
-    {/for}
-</ul>
-
-<h3>Add Content Source</h3>
-{#if availableContentSources.size > 0}
-<form action="/ui/topics/add-content-source/{topic.id}" method="post">
-    <select name="contentSourceId">
-        {#for source in availableContentSources}
-        <option value="{source.id}">{source.name}</option>
+    <h2>Content Sources</h2>
+    <form action="/ui/content-sources/add" method="get" style="display: inline;">
+        <input type="hidden" name="topicId" value="{topic.id}">
+        <button type="submit">Create and Add New Content Source</button>
+    </form>
+    <ul>
+        {#for source in topic.contentSources}
+            <li>
+                {source.name}
+                <form action="/ui/topics/remove-content-source/{topic.id}/{source.id}" method="post" style="display: inline;">
+                    <button type="submit" class="secondary outline">[Remove]</button>
+                </form>
+            </li>
         {/for}
-    </select>
-    <button type="submit">Add Existing</button>
-</form>
-{#else}
-<p>No available content sources to add.</p>
-{/if}
-<a href="/ui/content-sources/add?topicId={topic.id}">Create and Add New Content Source</a>
+    </ul>
 
-<hr>
+    <h3>Add Existing Content Source</h3>
+    {#if availableContentSources.size > 0}
+        <form action="/ui/topics/add-content-source/{topic.id}" method="post">
+            <label for="contentSourceId">Select Content Source:</label>
+            <select id="contentSourceId" name="contentSourceId">
+                {#for source in availableContentSources}
+                    <option value="{source.id}">{source.name}</option>
+                {/for}
+            </select>
+            <button type="submit">Add Existing</button>
+        </form>
+    {#else}
+        <p>No available content sources to add.</p>
+    {/if}
 
-<h2>Briefings</h2>
-<ul>
-    {#for briefing in briefings}
-    <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate.format('dd.MM.yyyy')}</a></li>
-    {/for}
-</ul>
+    <hr>
 
-</body>
-</html>
+    <h2>Briefings</h2>
+    <ul>
+        {#for briefing in briefings}
+            <li><a href="/ui/briefings/{briefing.id}">{briefing.briefingDate.format('dd.MM.yyyy')}</a></li>
+        {/for}
+    </ul>
+{#end}
