@@ -4,7 +4,7 @@
     <h1>Briefings for {topic.name}</h1>
 
     <h2>Content Sources</h2>
-    <form action="/ui/content-sources/add" method="get" style="display: inline;">
+    <form action="/ui/content-sources/add" method="get">
         <input type="hidden" name="topicId" value="{topic.id}">
         <button type="submit">Create and Add New Content Source</button>
     </form>
@@ -12,7 +12,7 @@
         {#for source in topic.contentSources}
             <li>
                 {source.name}
-                <form action="/ui/topics/remove-content-source/{topic.id}/{source.id}" method="post" style="display: inline;">
+                <form action="/ui/topics/remove-content-source/{topic.id}/{source.id}" method="post">
                     <button type="submit" class="secondary outline">[Remove]</button>
                 </form>
             </li>
