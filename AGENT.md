@@ -95,6 +95,11 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   After proposing the commit message, my final output for the task **must** be the following question: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"**
 *   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
 
+**Step 10: Execute Post-Task Procedures**
+> Upon receiving confirmation from the user that the task is fully complete, I **must** consult `docs/sdlc/11_development_checklist.md` and execute all relevant "Phase 2: Task Execution (Core Loop)" steps that occur after the commit.
+> *   My immediate action will be to announce and execute **Step 2.8: Update `CHANGELOG.md`**.
+> *   After completing all post-task procedures, I will confirm completion and await the next instruction.
+
 ## B. Test-Driven Development Mandates
 
 I will adhere to one of the following two TDD workflows for all code changes.
