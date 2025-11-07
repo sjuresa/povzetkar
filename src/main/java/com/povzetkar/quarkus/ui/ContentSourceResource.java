@@ -58,7 +58,13 @@ public class ContentSourceResource {
             context.response().setStatusCode(400).end("Source Identifier cannot be blank.");
             return;
         }
-        Integer sourceTypeId = Integer.parseInt(sourceTypeIdStr);
+        int sourceTypeId;
+        try {
+            sourceTypeId = Integer.parseInt(sourceTypeIdStr);
+        } catch (NumberFormatException | NullPointerException e) {
+            context.response().setStatusCode(400).end("Invalid Source Type ID format.");
+            return;
+        }
         if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
             context.response().setStatusCode(400).end("Invalid Source Type ID.");
             return;

@@ -16,8 +16,6 @@ import jakarta.ws.rs.NotFoundException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TopicResource {
@@ -80,7 +78,13 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
-        Long id = Long.parseLong(context.pathParam("id"));
+        Long id;
+        try {
+            id = Long.parseLong(context.pathParam("id"));
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid topic ID format.");
+            return;
+        }
         String name = context.request().getFormAttribute("name");
         if (name == null || name.isBlank()) {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
@@ -109,16 +113,9 @@ public class TopicResource {
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
         Topic topic = query.firstResultOptional().orElseThrow(() -> topicNotFound(topicId));
         List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
-        Set<Long> existingSourceIds = topic.contentSources.stream()
-                .map(cs -> cs.id)
-                .collect(Collectors.toSet());
-        List<ContentSource> availableContentSources = existingSourceIds.isEmpty()
-                ? ContentSource.listAll()
-                : ContentSource.list("id not in ?1", existingSourceIds);
 
         context.response().end(briefingsByTopic.data(TOPIC, topic)
-                .data("briefings", briefings)
-                .data("availableContentSources", availableContentSources).render());
+                .data("briefings", briefings).render());
     }
 
     @Route(path = "/ui/topics/:topicId/add-source/:contentSourceId", methods = Route.HttpMethod.POST)
