@@ -77,7 +77,13 @@ public class ContentSourceResource {
         contentSource.persist();
 
         if (topicIdStr != null && !topicIdStr.isBlank()) {
-            Long topicId = Long.parseLong(topicIdStr);
+            Long topicId;
+            try {
+                topicId = Long.parseLong(topicIdStr);
+            } catch (NumberFormatException e) {
+                context.response().setStatusCode(400).end("Invalid topic ID format.");
+                return;
+            }
             Topic topic = Topic.<Topic>findByIdOptional(topicId)
                     .orElseThrow(() -> new NotFoundException("Topic with id " + topicId + " not found."));
             topic.contentSources.add(contentSource);
