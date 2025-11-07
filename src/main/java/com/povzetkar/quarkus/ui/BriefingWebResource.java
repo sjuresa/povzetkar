@@ -55,7 +55,13 @@ public class BriefingWebResource {
     @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
     @Blocking
     public void showBriefing(RoutingContext context) {
-        Long briefingId = Long.parseLong(context.pathParam("briefingId"));
+        long briefingId;
+        try {
+            briefingId = Long.parseLong(context.pathParam("briefingId"));
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid briefing ID format.");
+            return;
+        }
         Briefing briefing = Briefing.findByIdWithAssociations(briefingId).orElseThrow(NotFoundException::new);
 
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
