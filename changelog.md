@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Implemented a master layout using Pico.css to provide a consistent and modern UI across the application.
+- Refactored UI resources to use Quarkus Web-Routes for better separation of concerns and to resolve static asset serving conflicts.
+- Implemented a searchable page for selecting content sources, improving scalability and user experience.
+- Added JavaScript confirmation dialogs for destructive actions to prevent accidental data loss.
+
+### Changed
+
+- Replaced the content source dropdown with a link to a searchable page.
+- Made the content source search case-insensitive.
+
+### Fixed
+
+- Corrected a bug where the main page would not refresh after deleting a topic.
+- Resolved a 404 error when adding a content source to a topic.
+- Fixed a bug where deleting a content source or topic would not show a confirmation dialog.
 
 ## [0.6.0] - 2025-10-31
 
@@ -193,7 +207,7 @@ This version marks a major architectural milestone by establishing the foundatio
 - Expanded and improved test coverage for summarization workflows, file handling, and documentation updates.
 - Updated tests to use direct path handling for file operations.
 
-## [01] - 2025-07-18
+## [0.1] - 2025-07-18
 
 ### New Features
 - Initial release of a Java application for summarizing YouTube videos using AI, with support for multiple workflows including author-based, URL-based, and transcript-based summarization.

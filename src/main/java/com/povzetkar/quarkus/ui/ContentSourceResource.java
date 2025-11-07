@@ -27,7 +27,14 @@ public class ContentSourceResource {
     @Route(path = "/ui/content-sources/add", methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        Long topicId = Long.parseLong(context.request().getParam("topicId"));
+        String topicIdStr = context.request().getParam("topicId");
+        long topicId;
+        try {
+            topicId = Long.parseLong(topicIdStr);
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid or missing topicId parameter.");
+            return;
+        }
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
                 .filter(st -> st != SourceTypeEnum.DEFAULT)
                 .toList();
@@ -52,7 +59,7 @@ public class ContentSourceResource {
             return;
         }
         Integer sourceTypeId = Integer.parseInt(sourceTypeIdStr);
-        if (sourceTypeId == null || SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
+        if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
             context.response().setStatusCode(400).end("Invalid Source Type ID.");
             return;
         }

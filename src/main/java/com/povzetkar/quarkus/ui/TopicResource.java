@@ -54,7 +54,13 @@ public class TopicResource {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
             return;
         }
-        User user = User.<User>findByIdOptional(Long.parseLong(userId)).orElseThrow(() -> notFound("User", userId));
+        User user;
+        try {
+            user = User.<User>findByIdOptional(Long.parseLong(userId)).orElseThrow(() -> notFound("User", userId));
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid userId format.");
+            return;
+        }
         Topic topic = new Topic();
         topic.user = user;
         topic.name = name;

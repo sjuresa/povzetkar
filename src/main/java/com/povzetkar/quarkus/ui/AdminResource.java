@@ -5,8 +5,10 @@ import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.jetbrains.annotations.Blocking;
 
 @ApplicationScoped
+@Blocking
 public class AdminResource {
 
     private final Template admin;

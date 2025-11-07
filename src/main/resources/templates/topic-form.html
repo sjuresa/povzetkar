@@ -1,4 +1,4 @@
-{#include 'main.html'}
+{#include main.html}
 {#title}{#if topic}Edit Topic{#else}Add Topic{/if}{/title}
 {#content}
     <h1>{#if topic}Edit Topic{#else}Add Topic{/if}</h1>
@@ -19,9 +19,6 @@
             <div>
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name" value="{topic.name ?: ''}" required placeholder="e.g., My New Topic">
-                {#if errors.name}
-                    <span class="error-message">{errors.name}</span>
-                {/if}
             </div>
         </fieldset>
         <div>
