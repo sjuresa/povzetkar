@@ -9,3 +9,7 @@
 .icon-add {
     color: var(--pico-success);
 }
+
+.form-inline {
+    display: inline;
+}

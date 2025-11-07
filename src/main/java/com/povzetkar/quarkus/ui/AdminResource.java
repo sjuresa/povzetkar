@@ -3,9 +3,9 @@ package com.povzetkar.quarkus.ui;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
+import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jetbrains.annotations.Blocking;
 
 @ApplicationScoped
 @Blocking
