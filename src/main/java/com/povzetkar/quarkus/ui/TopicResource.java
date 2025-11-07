@@ -35,6 +35,15 @@ public class TopicResource {
         this.selectContentSource = selectContentSource;
     }
 
+    private Long getLongPathParam(RoutingContext context, String paramName, String errorMessage) {
+        try {
+            return Long.parseLong(context.pathParam(paramName));
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+    }
+
     @Route(path = "/ui/topics/add", methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
@@ -69,11 +78,8 @@ public class TopicResource {
     @Route(path = "/ui/topics/:id/edit", methods = Route.HttpMethod.GET)
     @Blocking
     public void showEditForm(RoutingContext context) {
-        Long id;
-        try {
-            id = Long.parseLong(context.pathParam("id"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid topic ID format.");
+        Long id = getLongPathParam(context, "id", "Invalid topic ID format.");
+        if (id == null) {
             return;
         }
         Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
@@ -84,11 +90,8 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
-        Long id;
-        try {
-            id = Long.parseLong(context.pathParam("id"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid topic ID format.");
+        Long id = getLongPathParam(context, "id", "Invalid topic ID format.");
+        if (id == null) {
             return;
         }
         String name = context.request().getFormAttribute("name");
@@ -106,11 +109,8 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void deleteTopic(RoutingContext context) {
-        Long id;
-        try {
-            id = Long.parseLong(context.pathParam("id"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid topic ID format.");
+        Long id = getLongPathParam(context, "id", "Invalid topic ID format.");
+        if (id == null) {
             return;
         }
         Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
@@ -121,11 +121,8 @@ public class TopicResource {
     @Route(path = "/ui/topics/:topicId/briefings", methods = Route.HttpMethod.GET)
     @Blocking
     public void listBriefingsByTopic(RoutingContext context) {
-        Long topicId;
-        try {
-            topicId = Long.parseLong(context.pathParam("topicId"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid topic ID format.");
+        Long topicId = getLongPathParam(context, "topicId", "Invalid topic ID format.");
+        if (topicId == null) {
             return;
         }
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
@@ -140,13 +137,12 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addContentSourceToTopic(RoutingContext context) {
-        Long topicId;
-        Long contentSourceId;
-        try {
-            topicId = Long.parseLong(context.pathParam("topicId"));
-            contentSourceId = Long.parseLong(context.pathParam("contentSourceId"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid ID format in URL.");
+        Long topicId = getLongPathParam(context, "topicId", "Invalid topic ID format.");
+        if (topicId == null) {
+            return;
+        }
+        Long contentSourceId = getLongPathParam(context, "contentSourceId", "Invalid content source ID format.");
+        if (contentSourceId == null) {
             return;
         }
         Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> topicNotFound(topicId));
@@ -161,13 +157,12 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void removeContentSourceFromTopic(RoutingContext context) {
-        Long topicId;
-        Long contentSourceId;
-        try {
-            topicId = Long.parseLong(context.pathParam("topicId"));
-            contentSourceId = Long.parseLong(context.pathParam("contentSourceId"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid ID format in URL.");
+        Long topicId = getLongPathParam(context, "topicId", "Invalid topic ID format.");
+        if (topicId == null) {
+            return;
+        }
+        Long contentSourceId = getLongPathParam(context, "contentSourceId", "Invalid content source ID format.");
+        if (contentSourceId == null) {
             return;
         }
         ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> notFound("ContentSource", contentSourceId));
@@ -181,11 +176,8 @@ public class TopicResource {
     @Route(path = "/ui/topics/:topicId/select-source", methods = Route.HttpMethod.GET)
     @Blocking
     public void selectContentSource(RoutingContext context) {
-        Long topicId;
-        try {
-            topicId = Long.parseLong(context.pathParam("topicId"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid topic ID format.");
+        Long topicId = getLongPathParam(context, "topicId", "Invalid topic ID format.");
+        if (topicId == null) {
             return;
         }
         String query = context.request().getParam("query");
