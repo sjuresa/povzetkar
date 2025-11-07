@@ -9,14 +9,11 @@ import com.vladsch.flexmark.util.data.MutableDataSet;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.RawString;
 import io.quarkus.qute.Template;
-import io.quarkus.qute.TemplateInstance;
+import io.quarkus.vertx.web.Route;
+import io.smallrye.common.annotation.Blocking;
+import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
 
 import java.util.Comparator;
 import java.util.List;
@@ -24,7 +21,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
-@Path("/ui")
 public class BriefingWebResource {
 
     private final Template topics;
@@ -41,22 +37,25 @@ public class BriefingWebResource {
         this.htmlRenderer = HtmlRenderer.builder(options).build();
     }
 
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance listTopics() {
+    @Route(path = "/ui", methods = Route.HttpMethod.GET)
+    @Blocking
+    public void listTopics(RoutingContext context) {
         List<User> usersWithTopics = User.findAllWithTopics();
         Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
                 .filter(user -> !user.topics.isEmpty())
                 .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
                         .sorted(Comparator.comparing(topic -> topic.name))
                         .toList()));
-        return topics.data("topicsByUser", topicsByUser);
+        context.response()
+                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                .putHeader("Pragma", "no-cache")
+                .end(topics.data("topicsByUser", topicsByUser).render());
     }
 
-    @GET
-    @Path("/briefings/{briefingId}")
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance showBriefing(@PathParam("briefingId") Long briefingId) {
+    @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
+    @Blocking
+    public void showBriefing(RoutingContext context) {
+        Long briefingId = Long.parseLong(context.pathParam("briefingId"));
         Briefing briefing = Briefing.findByIdWithAssociations(briefingId).orElseThrow(NotFoundException::new);
 
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
@@ -68,7 +67,7 @@ public class BriefingWebResource {
 
         BriefingDetailDto dto = new BriefingDetailDto(briefing, metaSummaryHtml, summaryDtos);
 
-        return briefingDetail.data("briefing", dto);
+        context.response().end(briefingDetail.data("briefing", dto).render());
     }
 
     private RawString markdownToHtml(String markdown) {

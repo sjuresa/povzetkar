@@ -1,0 +1,28 @@
+{#include 'main.html'}
+{#title}Select Content Source{/title}
+{#content}
+    <h1>Select Content Source for {topic.name}</h1>
+
+    <form action="/ui/topics/{topic.id}/select-source" method="get">
+        <label for="searchQuery">Search:</label>
+        <input type="text" id="searchQuery" name="query" placeholder="Search content sources..." value="{query ?: ''}">
+        <button type="submit">Search</button>
+    </form>
+    <div>
+    {#if contentSources}
+        <h2>Available Content Sources</h2>
+        <ul>
+            {#for source in contentSources}
+                <li>
+                    {source.name}
+                    <form action="/ui/topics/{topic.id}/add-source/{source.id}" method="post" style="display:inline;">
+                        <button type="submit">Add</button>
+                    </form>
+                </li>
+            {/for}
+        </ul>
+    {#else}
+        <p>No content sources found.</p>
+    {/if}
+    </div>
+{/content}

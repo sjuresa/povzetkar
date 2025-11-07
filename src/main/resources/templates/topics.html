@@ -13,7 +13,7 @@
                 <li>
                     <a href="/ui/topics/{topic.id}/briefings">{topic.name}</a>
                     <a href="/ui/topics/{topic.id}/edit">[Edit]</a>
-                    <form action="/ui/topics/delete/{topic.id}" method="post">
+                    <form action="/ui/topics/delete/{topic.id}" method="post" onsubmit="return confirmAction(event, 'Are you sure you want to delete this topic?');">
                         <button type="submit" class="secondary outline">[Delete]</button>
                     </form>
                 </li>

@@ -12,27 +12,14 @@
         {#for source in topic.contentSources}
             <li>
                 {source.name}
-                <form action="/ui/topics/remove-content-source/{topic.id}/{source.id}" method="post">
+                <form action="/ui/topics/{topic.id}/remove-source/{source.id}" method="post" onsubmit="return confirmAction(event, 'Are you sure you want to remove this content source?');">
                     <button type="submit" class="secondary outline">[Remove]</button>
                 </form>
             </li>
         {/for}
     </ul>
 
-    <h3>Add Existing Content Source</h3>
-    {#if availableContentSources.size > 0}
-        <form action="/ui/topics/add-content-source/{topic.id}" method="post">
-            <label for="contentSourceId">Select Content Source:</label>
-            <select id="contentSourceId" name="contentSourceId">
-                {#for source in availableContentSources}
-                    <option value="{source.id}">{source.name}</option>
-                {/for}
-            </select>
-            <button type="submit">Add Existing</button>
-        </form>
-    {#else}
-        <p>No available content sources to add.</p>
-    {/if}
+    <a href="/ui/topics/{topic.id}/select-source" role="button">Add Existing Content Source</a>
 
     <hr>
 
