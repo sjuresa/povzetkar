@@ -2,10 +2,6 @@
     margin-left: 0.5rem;
 }
 
-.icon-edit {
-    color: var(--pico-primary);
-}
-
 .icon-delete {
     color: var(--pico-del-color);
 }
