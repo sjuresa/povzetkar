@@ -10,10 +10,10 @@ import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -84,11 +84,15 @@ public class ContentSourceResource {
                 context.response().setStatusCode(400).end("Invalid topic ID format.");
                 return;
             }
-            Topic topic = Topic.<Topic>findByIdOptional(topicId)
-                    .orElseThrow(() -> new NotFoundException("Topic with id " + topicId + " not found."));
-            topic.contentSources.add(contentSource);
-            topic.persist();
-            context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+            Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+            topicOptional.ifPresentOrElse(
+                    topic -> {
+                        topic.contentSources.add(contentSource);
+                        topic.persist();
+                        context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+                    },
+                    () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+            );
             return;
         }
 

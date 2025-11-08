@@ -48,7 +48,6 @@ public class BriefingWebResource {
                         .toList()));
         context.response()
                 .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
-                .putHeader("Pragma", "no-cache")
                 .end(topics.data("topicsByUser", topicsByUser).render());
     }
 

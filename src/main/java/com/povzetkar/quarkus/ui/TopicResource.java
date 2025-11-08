@@ -12,22 +12,19 @@ import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 public class TopicResource {
 
-    public static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
     private static final String TOPIC = "topic";
-
     private final Template topicForm;
     private final Template briefingsByTopic;
     private final Template selectContentSource;
 
-    public TopicResource(@Location("topic-form.html") Template topicForm, 
+    public TopicResource(@Location("topic-form.html") Template topicForm,
                          @Location("briefings-by-topic.html") Template briefingsByTopic,
                          @Location("select-content-source.html") Template selectContentSource) {
         this.topicForm = topicForm;
@@ -55,24 +52,31 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addTopic(RoutingContext context) {
-        String userId = context.request().getFormAttribute("userId");
+        String userIdStr = context.request().getFormAttribute("userId");
         String name = context.request().getFormAttribute("name");
         if (name == null || name.isBlank()) {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
             return;
         }
-        User user;
+        Long userId;
         try {
-            user = User.<User>findByIdOptional(Long.parseLong(userId)).orElseThrow(() -> notFound("User", userId));
+            userId = Long.parseLong(userIdStr);
         } catch (NumberFormatException | NullPointerException e) {
             context.response().setStatusCode(400).end("Invalid or missing userId format.");
             return;
         }
-        Topic topic = new Topic();
-        topic.user = user;
-        topic.name = name;
-        topic.persist();
-        context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+
+        Optional<User> userOptional = User.findByIdOptional(userId);
+        userOptional.ifPresentOrElse(
+                user -> {
+                    Topic topic = new Topic();
+                    topic.user = user;
+                    topic.name = name;
+                    topic.persist();
+                    context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+                },
+                () -> context.response().setStatusCode(404).end(String.format("User with id %d not found.", userId))
+        );
     }
 
     @Route(path = "/ui/topics/:id/edit", methods = Route.HttpMethod.GET)
@@ -82,8 +86,10 @@ public class TopicResource {
         if (id == null) {
             return;
         }
-        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
-        context.response().end(topicForm.data(TOPIC, topic).render());
+        Topic.findByIdOptional(id).ifPresentOrElse(
+                topic -> context.response().end(topicForm.data(TOPIC, topic).render()),
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", id))
+        );
     }
 
     @Route(path = "/ui/topics/update/:id", methods = Route.HttpMethod.POST)
@@ -99,10 +105,14 @@ public class TopicResource {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
             return;
         }
-        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
-        topic.name = name;
-        topic.persist();
-        context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+        Topic.<Topic>findByIdOptional(id).ifPresentOrElse(
+                topic -> {
+                    topic.name = name;
+                    topic.persist();
+                    context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+                },
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", id))
+        );
     }
 
     @Route(path = "/ui/topics/delete/:id", methods = Route.HttpMethod.POST)
@@ -113,9 +123,13 @@ public class TopicResource {
         if (id == null) {
             return;
         }
-        Topic topic = Topic.<Topic>findByIdOptional(id).orElseThrow(() -> topicNotFound(id));
-        topic.delete();
-        context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+        Topic.<Topic>findByIdOptional(id).ifPresentOrElse(
+                topic -> {
+                    topic.delete();
+                    context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+                },
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", id))
+        );
     }
 
     @Route(path = "/ui/topics/:topicId/briefings", methods = Route.HttpMethod.GET)
@@ -126,14 +140,16 @@ public class TopicResource {
             return;
         }
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
-        Topic topic = query.firstResultOptional().orElseThrow(() -> topicNotFound(topicId));
-        List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
-
-        context.response()
-                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
-                .putHeader("Pragma", "no-cache")
-                .end(briefingsByTopic.data(TOPIC, topic)
-                        .data("briefings", briefings).render());
+        query.firstResultOptional().ifPresentOrElse(
+                topic -> {
+                    List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
+                    context.response()
+                            .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                            .end(briefingsByTopic.data(TOPIC, topic)
+                                    .data("briefings", briefings).render());
+                },
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+        );
     }
 
     @Route(path = "/ui/topics/:topicId/add-source/:contentSourceId", methods = Route.HttpMethod.POST)
@@ -148,12 +164,18 @@ public class TopicResource {
         if (contentSourceId == null) {
             return;
         }
-        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> topicNotFound(topicId));
-        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> notFound("ContentSource", contentSourceId));
-        topic.contentSources.add(contentSource);
-        contentSource.topics.add(topic);
-        topic.persist();
-        context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
+                topic -> ContentSource.<ContentSource>findByIdOptional(contentSourceId).ifPresentOrElse(
+                        contentSource -> {
+                            topic.contentSources.add(contentSource);
+                            contentSource.topics.add(topic);
+                            topic.persist();
+                            context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+                        },
+                        () -> context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId))
+                ),
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+        );
     }
 
     @Route(path = "/ui/topics/:topicId/remove-source/:contentSourceId", methods = Route.HttpMethod.POST)
@@ -168,12 +190,18 @@ public class TopicResource {
         if (contentSourceId == null) {
             return;
         }
-        ContentSource contentSource = ContentSource.<ContentSource>findByIdOptional(contentSourceId).orElseThrow(() -> notFound("ContentSource", contentSourceId));
-        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> topicNotFound(topicId));
-        topic.contentSources.remove(contentSource);
-        contentSource.topics.remove(topic);
-        topic.persist();
-        context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
+                topic -> ContentSource.<ContentSource>findByIdOptional(contentSourceId).ifPresentOrElse(
+                        contentSource -> {
+                            topic.contentSources.remove(contentSource);
+                            contentSource.topics.remove(topic);
+                            topic.persist();
+                            context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+                        },
+                        () -> context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId))
+                ),
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+        );
     }
 
     @Route(path = "/ui/topics/:topicId/select-source", methods = Route.HttpMethod.GET)
@@ -184,21 +212,17 @@ public class TopicResource {
             return;
         }
         String query = context.request().getParam("query");
-        Topic topic = Topic.<Topic>findByIdOptional(topicId).orElseThrow(() -> topicNotFound(topicId));
-        List<ContentSource> contentSources;
-        if (query != null && !query.isBlank()) {
-            contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
-        } else {
-            contentSources = ContentSource.listAll();
-        }
-        context.response().end(selectContentSource.data(TOPIC, topic).data("contentSources", contentSources).data("query", query).render());
-    }
-
-    private @NotNull NotFoundException topicNotFound(Long id) {
-        return notFound("Topic", id);
-    }
-
-    private NotFoundException notFound(String entityName, Object id) {
-        return new NotFoundException(String.format("%s with id %s not found.", entityName, id));
+        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
+                topic -> {
+                    List<ContentSource> contentSources;
+                    if (query != null && !query.isBlank()) {
+                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
+                    } else {
+                        contentSources = ContentSource.listAll();
+                    }
+                    context.response().end(selectContentSource.data(TOPIC, topic).data("contentSources", contentSources).data("query", query).render());
+                },
+                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+        );
     }
 }
