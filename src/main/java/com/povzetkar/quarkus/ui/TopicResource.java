@@ -19,7 +19,9 @@ import java.util.Optional;
 @ApplicationScoped
 public class TopicResource {
 
+    public static final String LIST_BRIEFINGS_BY_TOPIC = "listBriefingsByTopic";
     private static final String TOPIC = "topic";
+
     private final Template topicForm;
     private final Template briefingsByTopic;
     private final Template selectContentSource;
@@ -145,6 +147,7 @@ public class TopicResource {
                     List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
                     context.response()
                             .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                            .putHeader("Pragma", "no-cache")
                             .end(briefingsByTopic.data(TOPIC, topic)
                                     .data("briefings", briefings).render());
                 },
@@ -164,18 +167,26 @@ public class TopicResource {
         if (contentSourceId == null) {
             return;
         }
-        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
-                topic -> ContentSource.<ContentSource>findByIdOptional(contentSourceId).ifPresentOrElse(
-                        contentSource -> {
-                            topic.contentSources.add(contentSource);
-                            contentSource.topics.add(topic);
-                            topic.persist();
-                            context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
-                        },
-                        () -> context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId))
-                ),
-                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
-        );
+
+        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId));
+            return;
+        }
+
+        Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
+        if (contentSourceOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId));
+            return;
+        }
+
+        Topic topic = topicOptional.get();
+        ContentSource contentSource = contentSourceOptional.get();
+
+        topic.contentSources.add(contentSource);
+        contentSource.topics.add(topic);
+        topic.persist();
+        context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
     }
 
     @Route(path = "/ui/topics/:topicId/remove-source/:contentSourceId", methods = Route.HttpMethod.POST)
@@ -190,18 +201,26 @@ public class TopicResource {
         if (contentSourceId == null) {
             return;
         }
-        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
-                topic -> ContentSource.<ContentSource>findByIdOptional(contentSourceId).ifPresentOrElse(
-                        contentSource -> {
-                            topic.contentSources.remove(contentSource);
-                            contentSource.topics.remove(topic);
-                            topic.persist();
-                            context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
-                        },
-                        () -> context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId))
-                ),
-                () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
-        );
+
+        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId));
+            return;
+        }
+
+        Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
+        if (contentSourceOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId));
+            return;
+        }
+
+        Topic topic = topicOptional.get();
+        ContentSource contentSource = contentSourceOptional.get();
+
+        topic.contentSources.remove(contentSource);
+        contentSource.topics.remove(topic);
+        topic.persist();
+        context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
     }
 
     @Route(path = "/ui/topics/:topicId/select-source", methods = Route.HttpMethod.GET)
