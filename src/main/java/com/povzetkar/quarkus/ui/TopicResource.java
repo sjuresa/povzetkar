@@ -41,6 +41,8 @@ public class TopicResource {
     private static final String PARAM_CONTENT_SOURCE_ID = "contentSourceId";
     private static final String INVALID_CONTENT_SOURCE_ID_FORMAT = "Invalid content source ID format.";
     private static final String CONTENT_SOURCE_NOT_FOUND_MSG = "ContentSource with id %d not found.";
+    private static final String PARAM_USER_ID = "userId";
+    private static final String INVALID_USER_ID_FORMAT = "Invalid userId format.";
 
 
     private final Template topicForm;
@@ -64,6 +66,20 @@ public class TopicResource {
         }
     }
 
+    private Long parseLongFormAttribute(RoutingContext context, String attributeName, String errorMessage) {
+        String attributeValue = context.request().getFormAttribute(attributeName);
+        if (attributeValue == null || attributeValue.isBlank()) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+        try {
+            return Long.parseLong(attributeValue);
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+    }
+
     @Route(path = TOPIC_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
@@ -75,21 +91,13 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addTopic(RoutingContext context) {
-        String userIdStr = context.request().getFormAttribute("userId");
         String name = context.request().getFormAttribute("name");
         if (name == null || name.isBlank()) {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
             return;
         }
-        Long userId;
-        if (userIdStr == null || userIdStr.isBlank()) {
-            context.response().setStatusCode(400).end("Missing userId.");
-            return;
-        }
-        try {
-            userId = Long.parseLong(userIdStr);
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid userId format.");
+        Long userId = parseLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT);
+        if (userId == null) {
             return;
         }
 
