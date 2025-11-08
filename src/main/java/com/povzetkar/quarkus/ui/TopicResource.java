@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.ui;
 
-import com.povzetkar.quarkus.exception.NotFoundAppException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
@@ -16,6 +15,9 @@ import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+
+import static com.povzetkar.quarkus.util.WebUtils.getLongFormAttribute;
+import static com.povzetkar.quarkus.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class TopicResource {
@@ -57,27 +59,15 @@ public class TopicResource {
         this.selectContentSource = selectContentSource;
     }
 
-    public static Long getLongPathParam(RoutingContext context, String paramName, String errorMessage) {
-        try {
-            return Long.parseLong(context.pathParam(paramName));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
+    private Optional<Topic> getTopicOrHandleNotFound(RoutingContext context, Long topicId) {
+        if (topicId == null) { // getLongPathParam already handled 400 response
+            return Optional.empty();
         }
-    }
-
-    private Long parseLongFormAttribute(RoutingContext context, String attributeName, String errorMessage) {
-        String attributeValue = context.request().getFormAttribute(attributeName);
-        if (attributeValue == null || attributeValue.isBlank()) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
+        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
         }
-        try {
-            return Long.parseLong(attributeValue);
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
-        }
+        return topicOptional;
     }
 
     @Route(path = TOPIC_ADD_PATH, methods = Route.HttpMethod.GET)
@@ -96,7 +86,7 @@ public class TopicResource {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
             return;
         }
-        Long userId = parseLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT);
+        Long userId = getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT);
         if (userId == null) {
             return;
         }
@@ -118,12 +108,8 @@ public class TopicResource {
     @Blocking
     public void showEditForm(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
-        if (id == null) {
-            return;
-        }
-        Topic.findByIdOptional(id).ifPresentOrElse(
-                topic -> context.response().end(topicForm.data(TOPIC, topic).render()),
-                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+        getTopicOrHandleNotFound(context, id).ifPresent(topic ->
+                context.response().end(topicForm.data(TOPIC, topic).render())
         );
     }
 
@@ -140,14 +126,11 @@ public class TopicResource {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
             return;
         }
-        Topic.<Topic>findByIdOptional(id).ifPresentOrElse(
-                topic -> {
-                    topic.name = name;
-                    topic.persist();
-                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
-                },
-                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
-        );
+        getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
+            topic.name = name;
+            topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
+        });
     }
 
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
@@ -158,13 +141,10 @@ public class TopicResource {
         if (id == null) {
             return;
         }
-        Topic.<Topic>findByIdOptional(id).ifPresentOrElse(
-                topic -> {
-                    topic.delete();
-                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
-                },
-                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
-        );
+        getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
+            topic.delete();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
+        });
     }
 
     @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
@@ -193,22 +173,24 @@ public class TopicResource {
 
     private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) {
+        if (topicId == null) { // getLongPathParam already handled 400 response
             return Optional.empty();
         }
         Long contentSourceId = getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT);
-        if (contentSourceId == null) {
+        if (contentSourceId == null) { // getLongPathParam already handled 400 response
             return Optional.empty();
         }
 
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
-            throw new NotFoundAppException(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            return Optional.empty();
         }
 
         Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
         if (contentSourceOptional.isEmpty()) {
-            throw new NotFoundAppException(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
+            context.response().setStatusCode(404).end(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
+            return Optional.empty();
         }
 
         return Optional.of(new TopicAndContentSource(topicOptional.get(), contentSourceOptional.get()));
@@ -218,53 +200,39 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addContentSourceToTopic(RoutingContext context) {
-        try {
-            findTopicAndContentSource(context).ifPresent(pair -> {
-                pair.topic.contentSources.add(pair.contentSource);
-                pair.contentSource.topics.add(pair.topic);
-                pair.topic.persist();
-                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-            });
-        } catch (NotFoundAppException e) {
-            context.response().setStatusCode(404).end(e.getMessage());
-        }
+        findTopicAndContentSource(context).ifPresent(pair -> {
+            pair.topic.contentSources.add(pair.contentSource);
+            pair.contentSource.topics.add(pair.topic);
+            pair.topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+        });
     }
 
     @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void removeContentSourceFromTopic(RoutingContext context) {
-        try {
-            findTopicAndContentSource(context).ifPresent(pair -> {
-                pair.topic.contentSources.remove(pair.contentSource);
-                pair.contentSource.topics.remove(pair.topic);
-                pair.topic.persist();
-                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-            });
-        } catch (NotFoundAppException e) {
-            context.response().setStatusCode(404).end(e.getMessage());
-        }
+        findTopicAndContentSource(context).ifPresent(pair -> {
+            pair.topic.contentSources.remove(pair.contentSource);
+            pair.contentSource.topics.remove(pair.topic);
+            pair.topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+        });
     }
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void selectContentSource(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) {
-            return;
-        }
-        String query = context.request().getParam("query");
-        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
-                topic -> {
-                    List<ContentSource> contentSources;
-                    if (query != null && !query.isBlank()) {
-                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
-                    } else {
-                        contentSources = ContentSource.listAll();
-                    }
-                    context.response().end(selectContentSource.data(TOPIC, topic).data("contentSources", contentSources).data("query", query).render());
-                },
-                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
-        );
+        getTopicOrHandleNotFound(context, topicId).ifPresent(topic -> {
+            String query = context.request().getParam("query");
+            List<ContentSource> contentSources;
+            if (query != null && !query.isBlank()) {
+                contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
+            } else {
+                contentSources = ContentSource.listAll();
+            }
+            context.response().end(selectContentSource.data(TOPIC, topic).data("contentSources", contentSources).data("query", query).render());
+        });
     }
 }

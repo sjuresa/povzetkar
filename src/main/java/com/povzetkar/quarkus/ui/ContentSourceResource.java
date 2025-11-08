@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
+import static com.povzetkar.quarkus.util.WebUtils.getLongFormAttribute;
+import static com.povzetkar.quarkus.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -34,24 +36,10 @@ public class ContentSourceResource {
         this.contentSourceForm = contentSourceForm;
     }
 
-    private Long parseLongParam(RoutingContext context, String paramValue, String errorMessage) {
-        if (paramValue == null || paramValue.isBlank()) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
-        }
-        try {
-            return Long.parseLong(paramValue);
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
-        }
-    }
-
     @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        String topicIdStr = context.request().getParam(PARAM_TOPIC_ID);
-        Long topicId = parseLongParam(context, topicIdStr, INVALID_OR_MISSING_TOPIC_ID_PARAM);
+        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM);
         if (topicId == null) {
             return;
         }
@@ -101,7 +89,7 @@ public class ContentSourceResource {
         contentSource.persist();
 
         if (topicIdStr != null && !topicIdStr.isBlank()) {
-            Long topicId = parseLongParam(context, topicIdStr, INVALID_TOPIC_ID_FORMAT);
+            Long topicId = getLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
             if (topicId == null) {
                 return;
             }
