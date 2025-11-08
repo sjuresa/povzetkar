@@ -1,0 +1,15 @@
+.icon-link {
+    margin-left: 0.5rem;
+}
+
+.icon-delete {
+    color: var(--pico-del-color);
+}
+
+.icon-add {
+    color: var(--pico-success);
+}
+
+.form-inline {
+    display: inline;
+}

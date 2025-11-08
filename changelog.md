@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Implemented a master layout using Pico.css to provide a consistent and modern UI across the application.
+- Refactored UI resources to use Quarkus Web-Routes for better separation of concerns and to resolve static asset serving conflicts.
+- Implemented a searchable page for selecting content sources, improving scalability and user experience.
+- Added JavaScript confirmation dialogs for destructive actions to prevent accidental data loss.
+
+### Changed
+
+- Replaced the content source dropdown with a link to a searchable page.
+- Made the content source search case-insensitive.
+
+### Fixed
+
+- Corrected a bug where the main page would not refresh after deleting a topic.
+- Resolved a 404 error when adding a content source to a topic.
+- Fixed a bug where deleting a content source or topic would not show a confirmation dialog.
+
 ## [0.6.0] - 2025-10-31
 
 ### Summary

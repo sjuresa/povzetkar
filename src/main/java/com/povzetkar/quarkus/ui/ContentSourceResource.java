@@ -5,26 +5,34 @@ import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Topic;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
-import io.quarkus.qute.TemplateInstance;
+import io.quarkus.vertx.web.Route;
+import io.smallrye.common.annotation.Blocking;
+import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
-import static com.povzetkar.quarkus.ui.TopicResource.LIST_BRIEFINGS_BY_TOPIC;
+import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
+import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
+import static com.povzetkar.quarkus.util.WebUtils.getIntegerFormAttribute;
+import static com.povzetkar.quarkus.util.WebUtils.getLongQueryParam;
+import static com.povzetkar.quarkus.util.WebUtils.getOptionalLongFormAttribute;
 
 @ApplicationScoped
-@Path("/ui/content-sources")
 public class ContentSourceResource {
 
-    @Context
-    UriInfo uriInfo;
+    public static final String CONTENT_SOURCES_PATH = UI_BASE_PATH + "/content-sources";
+    public static final String CONTENT_SOURCES_ADD_PATH = CONTENT_SOURCES_PATH + "/add";
+    private static final String PARAM_TOPIC_ID = "topicId";
+    private static final String INVALID_OR_MISSING_TOPIC_ID_PARAM = "Invalid or missing topicId parameter.";
+    private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
+    private static final String PARAM_SOURCE_TYPE_ID = "sourceTypeId";
+    private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
+    private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
+
 
     private final Template contentSourceForm;
 
@@ -32,32 +40,41 @@ public class ContentSourceResource {
         this.contentSourceForm = contentSourceForm;
     }
 
-    @GET
-    @Path("/add")
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance showAddForm(@QueryParam("topicId") Long topicId) {
+    @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
+    @Blocking
+    public void showAddForm(RoutingContext context) {
+        Long topicId = getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM);
+        if (topicId == null) {
+            return;
+        }
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
                 .filter(st -> st != SourceTypeEnum.DEFAULT)
                 .toList();
-        return contentSourceForm.data("topicId", topicId).data("sourceTypes", sourceTypes);
+        context.response().end(contentSourceForm.data(PARAM_TOPIC_ID, topicId).data("sourceTypes", sourceTypes).render());
     }
 
-    @POST
+    @Route(path = CONTENT_SOURCES_PATH, methods = Route.HttpMethod.POST)
     @Transactional
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public Response addContentSource(@FormParam("name") String name,
-                                     @FormParam("sourceIdentifier") String sourceIdentifier,
-                                     @FormParam("sourceTypeId") Integer sourceTypeId,
-                                     @FormParam("topicId") Long topicId) {
+    @Blocking
+    public void addContentSource(RoutingContext context) {
+        String name = context.request().getFormAttribute("name");
+        String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
 
         if (name == null || name.isBlank()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Name cannot be blank.").build();
+            context.response().setStatusCode(400).end("Name cannot be blank.");
+            return;
         }
         if (sourceIdentifier == null || sourceIdentifier.isBlank()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Source Identifier cannot be blank.").build();
+            context.response().setStatusCode(400).end("Source Identifier cannot be blank.");
+            return;
         }
-        if (sourceTypeId == null || SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Source Type ID.").build();
+        Integer sourceTypeId = getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT);
+        if (sourceTypeId == null) {
+            return;
+        }
+        if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
+            context.response().setStatusCode(400).end(INVALID_SOURCE_TYPE_ID);
+            return;
         }
 
         ContentSource contentSource = new ContentSource();
@@ -66,14 +83,21 @@ public class ContentSourceResource {
         contentSource.sourceTypeId = sourceTypeId;
         contentSource.persist();
 
-        if (topicId != null) {
-            Topic topic = Topic.<Topic>findByIdOptional(topicId)
-                    .orElseThrow(() -> new NotFoundException("Topic with id " + topicId + " not found."));
-            topic.contentSources.add(contentSource);
-            topic.persist();
-            return Response.seeOther(uriInfo.getBaseUriBuilder().path(TopicResource.class).path(TopicResource.class, LIST_BRIEFINGS_BY_TOPIC).build(topicId)).build();
+        Optional<Long> topicIdOptional = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
+        if (topicIdOptional.isPresent()) {
+            Long topicId = topicIdOptional.get();
+            Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+            topicOptional.ifPresentOrElse(
+                    topic -> {
+                        topic.contentSources.add(contentSource);
+                        topic.persist();
+                        context.response().setStatusCode(303).putHeader("Location", TOPICS_PATH + "/" + topicId + "/briefings").end();
+                    },
+                    () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+            );
+            return;
         }
 
-        return Response.seeOther(uriInfo.getBaseUriBuilder().path("/ui").build()).build();
+        context.response().setStatusCode(303).putHeader("Location", UI_BASE_PATH).end();
     }
 }

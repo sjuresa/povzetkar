@@ -26,7 +26,6 @@
         <byte-buddy.version>1.17.6</byte-buddy.version>
         <commons.codec.version>1.13</commons.codec.version>
         <assertj.version>3.26.3</assertj.version>
-        <jgit.version>7.3.0.202506031305-r</jgit.version>
         <youtube-transcript-api.version>0.4.0</youtube-transcript-api.version>
 
         <!-- Quarkus Specific Properties -->
@@ -123,11 +122,6 @@
                 <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
-            <dependency>
-                <groupId>org.eclipse.jgit</groupId>
-                <artifactId>org.eclipse.jgit</artifactId>
-                <version>${jgit.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -138,7 +132,11 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-reactive-qute</artifactId>
+            <artifactId>quarkus-vertx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-reactive-routes</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

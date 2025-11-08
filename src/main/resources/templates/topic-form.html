@@ -1,23 +1,26 @@
-{#include 'main.html'}
+{#include main.html}
 {#title}{#if topic}Edit Topic{#else}Add Topic{/if}{/title}
 {#content}
     <h1>{#if topic}Edit Topic{#else}Add Topic{/if}</h1>
 
     <form action="{#if topic}/ui/topics/update/{topic.id}{#else}/ui/topics{/if}" method="post">
-        {#if !topic}
+        <fieldset>
+            <legend>Topic Details</legend>
+            {#if !topic}
+                <div>
+                    <label for="userId">User:</label>
+                    <select id="userId" name="userId">
+                        {#for user in users}
+                            <option value="{user.id}">{user.name}</option>
+                        {/for}
+                    </select>
+                </div>
+            {/if}
             <div>
-                <label for="userId">User:</label>
-                <select id="userId" name="userId">
-                    {#for user in users}
-                        <option value="{user.id}">{user.name}</option>
-                    {/for}
-                </select>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" value="{topic.name ?: ''}" required placeholder="e.g., My New Topic">
             </div>
-        {/if}
-        <div>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="{topic.name ?: ''}" required>
-        </div>
+        </fieldset>
         <div>
             <button type="submit">Save</button>
         </div>

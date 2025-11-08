@@ -2,15 +2,13 @@ package com.povzetkar.quarkus.ui;
 
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
-import io.quarkus.qute.TemplateInstance;
+import io.quarkus.vertx.web.Route;
+import io.smallrye.common.annotation.Blocking;
+import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
 
 @ApplicationScoped
-@Path("/ui/admin")
+@Blocking
 public class AdminResource {
 
     private final Template admin;
@@ -19,9 +17,8 @@ public class AdminResource {
         this.admin = admin;
     }
 
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance getAdminPage() {
-        return admin.instance();
+    @Route(path = "/ui/admin", methods = Route.HttpMethod.GET)
+    public void getAdminPage(RoutingContext context) {
+        context.response().end(admin.instance().render());
     }
 }
