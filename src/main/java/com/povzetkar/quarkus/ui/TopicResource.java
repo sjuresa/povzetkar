@@ -24,6 +24,8 @@ public class TopicResource {
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
     private static final String PARAM_TOPIC_ID = "topicId";
+    private static final String FIND_TOPIC_WITH_SOURCES_BY_ID_QUERY = "from Topic t left join fetch t.contentSources where t.id = ?1";
+
 
     private final Template topicForm;
     private final Template briefingsByTopic;
@@ -144,7 +146,7 @@ public class TopicResource {
         if (topicId == null) {
             return;
         }
-        PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
+        PanacheQuery<Topic> query = Topic.find(FIND_TOPIC_WITH_SOURCES_BY_ID_QUERY, topicId);
         query.firstResultOptional().ifPresentOrElse(
                 topic -> {
                     List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
@@ -171,22 +173,25 @@ public class TopicResource {
             return;
         }
 
-        PanacheQuery<Topic> topicQuery = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
-        topicQuery.firstResultOptional().ifPresentOrElse(
-                topic -> {
-                    PanacheQuery<ContentSource> contentSourceQuery = ContentSource.find("from ContentSource cs left join fetch cs.topics where cs.id = ?1", contentSourceId);
-                    contentSourceQuery.firstResultOptional().ifPresentOrElse(
-                            contentSource -> {
-                                topic.contentSources.add(contentSource);
-                                contentSource.topics.add(topic);
-                                topic.persist();
-                                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui/topics/" + topicId + "/briefings").end();
-                            },
-                            () -> context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId))
-                    );
-                },
-                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
-        );
+        Optional<Topic> topicOptional = Topic.<Topic>findByIdOptional(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            return;
+        }
+
+        Optional<ContentSource> contentSourceOptional = ContentSource.<ContentSource>findByIdOptional(contentSourceId);
+        if (contentSourceOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId));
+            return;
+        }
+
+        Topic topic = topicOptional.get();
+        ContentSource contentSource = contentSourceOptional.get();
+
+        topic.contentSources.add(contentSource);
+        contentSource.topics.add(topic);
+        topic.persist();
+        context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui/topics/" + topicId + "/briefings").end();
     }
 
     @Route(path = "/ui/topics/:topicId/remove-source/:contentSourceId", methods = Route.HttpMethod.POST)
@@ -202,13 +207,13 @@ public class TopicResource {
             return;
         }
 
-        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        Optional<Topic> topicOptional = Topic.<Topic>findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
             return;
         }
 
-        Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
+        Optional<ContentSource> contentSourceOptional = ContentSource.<ContentSource>findByIdOptional(contentSourceId);
         if (contentSourceOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId));
             return;

@@ -1,0 +1,23 @@
+/*
+  On screens LARGER than mobile (Pico's default breakpoint: 576px),
+  apply all custom button styles.
+*/
+@media (min-width: 576px) {
+  /* 1. Apply smaller size to ALL button types */
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"] {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* 2. Make form buttons auto-width */
+  form button,
+  form input[type="submit"],
+  form input[type="button"],
+  form input[type="reset"] {
+    width: auto !important;
+  }
+}
