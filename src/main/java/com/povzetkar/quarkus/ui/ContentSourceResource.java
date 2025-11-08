@@ -24,6 +24,9 @@ public class ContentSourceResource {
     public static final String CONTENT_SOURCES_PATH = UI_BASE_PATH + "/content-sources";
     public static final String CONTENT_SOURCES_ADD_PATH = CONTENT_SOURCES_PATH + "/add";
     private static final String PARAM_TOPIC_ID = "topicId";
+    private static final String INVALID_OR_MISSING_TOPIC_ID_PARAM = "Invalid or missing topicId parameter.";
+    private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
+
 
     private final Template contentSourceForm;
 
@@ -31,19 +34,25 @@ public class ContentSourceResource {
         this.contentSourceForm = contentSourceForm;
     }
 
+    private Long parseLongParam(RoutingContext context, String paramValue, String errorMessage) {
+        if (paramValue == null || paramValue.isBlank()) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+        try {
+            return Long.parseLong(paramValue);
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+    }
+
     @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
         String topicIdStr = context.request().getParam(PARAM_TOPIC_ID);
-        long topicId;
-        if (topicIdStr == null) {
-            context.response().setStatusCode(400).end("Missing topicId parameter.");
-            return;
-        }
-        try {
-            topicId = Long.parseLong(topicIdStr);
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid topicId format.");
+        Long topicId = parseLongParam(context, topicIdStr, INVALID_OR_MISSING_TOPIC_ID_PARAM);
+        if (topicId == null) {
             return;
         }
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
@@ -92,11 +101,8 @@ public class ContentSourceResource {
         contentSource.persist();
 
         if (topicIdStr != null && !topicIdStr.isBlank()) {
-            Long topicId;
-            try {
-                topicId = Long.parseLong(topicIdStr);
-            } catch (NumberFormatException e) {
-                context.response().setStatusCode(400).end("Invalid topic ID format.");
+            Long topicId = parseLongParam(context, topicIdStr, INVALID_TOPIC_ID_FORMAT);
+            if (topicId == null) {
                 return;
             }
             Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);

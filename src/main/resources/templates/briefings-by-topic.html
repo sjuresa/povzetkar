@@ -29,13 +29,17 @@
                     </li>
                 {/for}
             </ul>
+            <div>
                 <form action="/ui/topics/{topic.id}/select-source" method="get" class="form-inline">
                     <button type="submit">Add Existing Content Source</button>
-                </form><br>
+                </form>
+            </div>
+            <div>
                 <form action="/ui/content-sources/add" method="get" class="form-inline">
                     <input type="hidden" name="topicId" value="{topic.id}">
                     <button type="submit">Create and Add New Content Source</button>
                 </form>
+            </div>
         </div>
     </div>
 {/content}
