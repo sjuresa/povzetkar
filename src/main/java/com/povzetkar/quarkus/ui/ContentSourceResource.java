@@ -19,6 +19,7 @@ import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
 import static com.povzetkar.quarkus.util.WebUtils.getIntegerFormAttribute;
 import static com.povzetkar.quarkus.util.WebUtils.getLongFormAttribute;
+import static com.povzetkar.quarkus.util.WebUtils.getLongQueryParam;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -42,16 +43,8 @@ public class ContentSourceResource {
     @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        String topicIdStr = context.request().getParam(PARAM_TOPIC_ID);
-        if (topicIdStr == null || topicIdStr.isBlank()) {
-            context.response().setStatusCode(400).end(INVALID_OR_MISSING_TOPIC_ID_PARAM);
-            return;
-        }
-        long topicId;
-        try {
-            topicId = Long.parseLong(topicIdStr);
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(INVALID_TOPIC_ID_FORMAT);
+        Long topicId = getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM);
+        if (topicId == null) {
             return;
         }
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())

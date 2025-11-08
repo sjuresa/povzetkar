@@ -49,4 +49,18 @@ public class WebUtils {
             return null;
         }
     }
+
+    public static Long getLongQueryParam(RoutingContext context, String paramName, String errorMessage) {
+        String paramValue = context.request().getParam(paramName);
+        if (paramValue == null || paramValue.isBlank()) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+        try {
+            return Long.parseLong(paramValue);
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
+    }
 }

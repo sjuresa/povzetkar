@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.ui;
 
-import com.povzetkar.quarkus.exception.NotFoundAppException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
@@ -184,12 +183,14 @@ public class TopicResource {
 
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
-            throw new NotFoundAppException(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            return Optional.empty();
         }
 
         Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
         if (contentSourceOptional.isEmpty()) {
-            throw new NotFoundAppException(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
+            context.response().setStatusCode(404).end(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
+            return Optional.empty();
         }
 
         return Optional.of(new TopicAndContentSource(topicOptional.get(), contentSourceOptional.get()));
@@ -199,32 +200,24 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addContentSourceToTopic(RoutingContext context) {
-        try {
-            findTopicAndContentSource(context).ifPresent(pair -> {
-                pair.topic.contentSources.add(pair.contentSource);
-                pair.contentSource.topics.add(pair.topic);
-                pair.topic.persist();
-                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-            });
-        } catch (NotFoundAppException e) {
-            context.response().setStatusCode(404).end(e.getMessage());
-        }
+        findTopicAndContentSource(context).ifPresent(pair -> {
+            pair.topic.contentSources.add(pair.contentSource);
+            pair.contentSource.topics.add(pair.topic);
+            pair.topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+        });
     }
 
     @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void removeContentSourceFromTopic(RoutingContext context) {
-        try {
-            findTopicAndContentSource(context).ifPresent(pair -> {
-                pair.topic.contentSources.remove(pair.contentSource);
-                pair.contentSource.topics.remove(pair.topic);
-                pair.topic.persist();
-                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-            });
-        } catch (NotFoundAppException e) {
-            context.response().setStatusCode(404).end(e.getMessage());
-        }
+        findTopicAndContentSource(context).ifPresent(pair -> {
+            pair.topic.contentSources.remove(pair.contentSource);
+            pair.contentSource.topics.remove(pair.topic);
+            pair.topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+        });
     }
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
