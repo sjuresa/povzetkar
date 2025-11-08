@@ -118,9 +118,6 @@ public class TopicResource {
     @Blocking
     public void updateTopic(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
-        if (id == null) {
-            return;
-        }
         String name = context.request().getFormAttribute("name");
         if (name == null || name.isBlank()) {
             context.response().setStatusCode(400).end("Topic name cannot be blank.");
@@ -138,9 +135,6 @@ public class TopicResource {
     @Blocking
     public void deleteTopic(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
-        if (id == null) {
-            return;
-        }
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
             topic.delete();
             context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();

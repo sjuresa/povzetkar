@@ -18,7 +18,6 @@ import java.util.Optional;
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
 import static com.povzetkar.quarkus.util.WebUtils.getIntegerFormAttribute;
-import static com.povzetkar.quarkus.util.WebUtils.getLongFormAttribute;
 import static com.povzetkar.quarkus.util.WebUtils.getLongQueryParam;
 
 @ApplicationScoped
@@ -85,8 +84,11 @@ public class ContentSourceResource {
         contentSource.persist();
 
         if (topicIdStr != null && !topicIdStr.isBlank()) {
-            Long topicId = getLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-            if (topicId == null) {
+            Long topicId;
+            try {
+                topicId = Long.parseLong(topicIdStr);
+            } catch (NumberFormatException e) {
+                context.response().setStatusCode(400).end(INVALID_TOPIC_ID_FORMAT);
                 return;
             }
             Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
