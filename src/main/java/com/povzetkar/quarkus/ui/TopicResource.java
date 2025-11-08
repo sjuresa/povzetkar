@@ -239,7 +239,8 @@ public class TopicResource {
                 topic -> {
                     List<ContentSource> contentSources;
                     if (query != null && !query.isBlank()) {
-                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
+                        String sanitizedQuery = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + sanitizedQuery + "%").list();
                     } else {
                         contentSources = ContentSource.listAll();
                     }

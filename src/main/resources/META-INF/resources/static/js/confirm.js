@@ -8,4 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  for (const link of document.querySelectorAll('.submit-form-on-click')) {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      link.closest('form').submit();
+    });
+  }
 });
