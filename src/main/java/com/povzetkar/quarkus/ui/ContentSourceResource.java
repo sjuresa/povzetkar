@@ -76,6 +76,10 @@ public class ContentSourceResource {
         }
         try {
             sourceTypeId = Integer.parseInt(sourceTypeIdStr);
+            if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
+                context.response().setStatusCode(400).end("Invalid Source Type ID.");
+                return;
+            }
         } catch (NumberFormatException e) {
             context.response().setStatusCode(400).end("Invalid Source Type ID format.");
             return;
