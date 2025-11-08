@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.exception.NotFoundAppException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
@@ -81,14 +82,10 @@ public class TopicResource {
             return;
         }
         Long userId;
-        if (userIdStr == null || userIdStr.isBlank()) {
-            context.response().setStatusCode(400).end("User ID is required.");
-            return;
-        }
         try {
             userId = Long.parseLong(userIdStr);
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid userId format.");
+        } catch (NumberFormatException | NullPointerException e) {
+            context.response().setStatusCode(400).end("Invalid or missing userId format.");
             return;
         }
 
@@ -194,14 +191,12 @@ public class TopicResource {
 
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
-            return Optional.empty();
+            throw new NotFoundAppException(String.format(TOPIC_NOT_FOUND_MSG, topicId));
         }
 
         Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
         if (contentSourceOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
-            return Optional.empty();
+            throw new NotFoundAppException(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
         }
 
         return Optional.of(new TopicAndContentSource(topicOptional.get(), contentSourceOptional.get()));
@@ -211,24 +206,32 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addContentSourceToTopic(RoutingContext context) {
-        findTopicAndContentSource(context).ifPresent(pair -> {
-            pair.topic.contentSources.add(pair.contentSource);
-            pair.contentSource.topics.add(pair.topic);
-            pair.topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-        });
+        try {
+            findTopicAndContentSource(context).ifPresent(pair -> {
+                pair.topic.contentSources.add(pair.contentSource);
+                pair.contentSource.topics.add(pair.topic);
+                pair.topic.persist();
+                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+            });
+        } catch (NotFoundAppException e) {
+            context.response().setStatusCode(404).end(e.getMessage());
+        }
     }
 
     @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void removeContentSourceFromTopic(RoutingContext context) {
-        findTopicAndContentSource(context).ifPresent(pair -> {
-            pair.topic.contentSources.remove(pair.contentSource);
-            pair.contentSource.topics.remove(pair.topic);
-            pair.topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-        });
+        try {
+            findTopicAndContentSource(context).ifPresent(pair -> {
+                pair.topic.contentSources.remove(pair.contentSource);
+                pair.contentSource.topics.remove(pair.topic);
+                pair.topic.persist();
+                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+            });
+        } catch (NotFoundAppException e) {
+            context.response().setStatusCode(404).end(e.getMessage());
+        }
     }
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
@@ -243,8 +246,7 @@ public class TopicResource {
                 topic -> {
                     List<ContentSource> contentSources;
                     if (query != null && !query.isBlank()) {
-                        String sanitizedQuery = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + sanitizedQuery + "%").list();
+                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
                     } else {
                         contentSources = ContentSource.listAll();
                     }
