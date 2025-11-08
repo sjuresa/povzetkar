@@ -36,10 +36,14 @@ public class ContentSourceResource {
     public void showAddForm(RoutingContext context) {
         String topicIdStr = context.request().getParam(PARAM_TOPIC_ID);
         long topicId;
+        if (topicIdStr == null) {
+            context.response().setStatusCode(400).end("Missing topicId parameter.");
+            return;
+        }
         try {
             topicId = Long.parseLong(topicIdStr);
-        } catch (NumberFormatException | NullPointerException e) {
-            context.response().setStatusCode(400).end("Invalid or missing topicId parameter.");
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid topicId format.");
             return;
         }
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
@@ -66,14 +70,14 @@ public class ContentSourceResource {
             return;
         }
         int sourceTypeId;
-        try {
-            sourceTypeId = Integer.parseInt(sourceTypeIdStr);
-        } catch (NumberFormatException | NullPointerException e) {
-            context.response().setStatusCode(400).end("Invalid Source Type ID format.");
+        if (sourceTypeIdStr == null || sourceTypeIdStr.isBlank()) {
+            context.response().setStatusCode(400).end("Source Type ID is required.");
             return;
         }
-        if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
-            context.response().setStatusCode(400).end("Invalid Source Type ID.");
+        try {
+            sourceTypeId = Integer.parseInt(sourceTypeIdStr);
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid Source Type ID format.");
             return;
         }
 

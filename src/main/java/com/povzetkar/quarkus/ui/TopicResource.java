@@ -81,10 +81,14 @@ public class TopicResource {
             return;
         }
         Long userId;
+        if (userIdStr == null || userIdStr.isBlank()) {
+            context.response().setStatusCode(400).end("User ID is required.");
+            return;
+        }
         try {
             userId = Long.parseLong(userIdStr);
-        } catch (NumberFormatException | NullPointerException e) {
-            context.response().setStatusCode(400).end("Invalid or missing userId format.");
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end("Invalid userId format.");
             return;
         }
 

@@ -29,10 +29,13 @@
                     </li>
                 {/for}
             </ul>
-            <div class="grid">
-                <button onclick="window.location.href='/ui/topics/{topic.id}/select-source'">Add Existing Content Source</button>
-                <button onclick="window.location.href='/ui/content-sources/add?topicId={topic.id}'">Create and Add New Content Source</button>
-            </div>
+                <form action="/ui/topics/{topic.id}/select-source" method="get" class="form-inline">
+                    <button type="submit">Add Existing Content Source</button>
+                </form><br>
+                <form action="/ui/content-sources/add" method="get" class="form-inline">
+                    <input type="hidden" name="topicId" value="{topic.id}">
+                    <button type="submit">Create and Add New Content Source</button>
+                </form>
         </div>
     </div>
 {/content}
