@@ -19,6 +19,7 @@ import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
 import static com.povzetkar.quarkus.util.WebUtils.getIntegerFormAttribute;
 import static com.povzetkar.quarkus.util.WebUtils.getLongQueryParam;
+import static com.povzetkar.quarkus.util.WebUtils.getOptionalLongFormAttribute;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -58,7 +59,6 @@ public class ContentSourceResource {
     public void addContentSource(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
-        String topicIdStr = context.request().getFormAttribute(PARAM_TOPIC_ID);
 
         if (name == null || name.isBlank()) {
             context.response().setStatusCode(400).end("Name cannot be blank.");
@@ -83,14 +83,9 @@ public class ContentSourceResource {
         contentSource.sourceTypeId = sourceTypeId;
         contentSource.persist();
 
-        if (topicIdStr != null && !topicIdStr.isBlank()) {
-            Long topicId;
-            try {
-                topicId = Long.parseLong(topicIdStr);
-            } catch (NumberFormatException e) {
-                context.response().setStatusCode(400).end(INVALID_TOPIC_ID_FORMAT);
-                return;
-            }
+        Optional<Long> topicIdOptional = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
+        if (topicIdOptional.isPresent()) {
+            Long topicId = topicIdOptional.get();
             Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
             topicOptional.ifPresentOrElse(
                     topic -> {

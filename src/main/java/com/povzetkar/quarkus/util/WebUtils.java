@@ -2,6 +2,8 @@ package com.povzetkar.quarkus.util;
 
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.Optional;
+
 public class WebUtils {
 
     private WebUtils() {
@@ -61,6 +63,19 @@ public class WebUtils {
         } catch (NumberFormatException e) {
             context.response().setStatusCode(400).end(errorMessage);
             return null;
+        }
+    }
+
+    public static Optional<Long> getOptionalLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage) {
+        String attributeValue = context.request().getFormAttribute(attributeName);
+        if (attributeValue == null || attributeValue.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.parseLong(attributeValue));
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end(formatErrorMessage);
+            return Optional.empty();
         }
     }
 }
