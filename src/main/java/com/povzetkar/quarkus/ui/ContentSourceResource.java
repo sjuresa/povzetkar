@@ -31,7 +31,7 @@ public class ContentSourceResource {
         long topicId;
         try {
             topicId = Long.parseLong(topicIdStr);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException | NullPointerException e) {
             context.response().setStatusCode(400).end("Invalid or missing topicId parameter.");
             return;
         }

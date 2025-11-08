@@ -64,8 +64,8 @@ public class TopicResource {
         User user;
         try {
             user = User.<User>findByIdOptional(Long.parseLong(userId)).orElseThrow(() -> notFound("User", userId));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid userId format.");
+        } catch (NumberFormatException | NullPointerException e) {
+            context.response().setStatusCode(400).end("Invalid or missing userId format.");
             return;
         }
         Topic topic = new Topic();
@@ -129,8 +129,11 @@ public class TopicResource {
         Topic topic = query.firstResultOptional().orElseThrow(() -> topicNotFound(topicId));
         List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
 
-        context.response().end(briefingsByTopic.data(TOPIC, topic)
-                .data("briefings", briefings).render());
+        context.response()
+                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                .putHeader("Pragma", "no-cache")
+                .end(briefingsByTopic.data(TOPIC, topic)
+                        .data("briefings", briefings).render());
     }
 
     @Route(path = "/ui/topics/:topicId/add-source/:contentSourceId", methods = Route.HttpMethod.POST)
