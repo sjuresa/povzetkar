@@ -15,8 +15,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
+import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
+
 @ApplicationScoped
 public class ContentSourceResource {
+
+    public static final String CONTENT_SOURCES_PATH = UI_BASE_PATH + "/content-sources";
+    public static final String CONTENT_SOURCES_ADD_PATH = CONTENT_SOURCES_PATH + "/add";
+    private static final String PARAM_TOPIC_ID = "topicId";
 
     private final Template contentSourceForm;
 
@@ -24,10 +31,10 @@ public class ContentSourceResource {
         this.contentSourceForm = contentSourceForm;
     }
 
-    @Route(path = "/ui/content-sources/add", methods = Route.HttpMethod.GET)
+    @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        String topicIdStr = context.request().getParam("topicId");
+        String topicIdStr = context.request().getParam(PARAM_TOPIC_ID);
         long topicId;
         try {
             topicId = Long.parseLong(topicIdStr);
@@ -38,17 +45,17 @@ public class ContentSourceResource {
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
                 .filter(st -> st != SourceTypeEnum.DEFAULT)
                 .toList();
-        context.response().end(contentSourceForm.data("topicId", topicId).data("sourceTypes", sourceTypes).render());
+        context.response().end(contentSourceForm.data(PARAM_TOPIC_ID, topicId).data("sourceTypes", sourceTypes).render());
     }
 
-    @Route(path = "/ui/content-sources", methods = Route.HttpMethod.POST)
+    @Route(path = CONTENT_SOURCES_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void addContentSource(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
         String sourceTypeIdStr = context.request().getFormAttribute("sourceTypeId");
-        String topicIdStr = context.request().getFormAttribute("topicId");
+        String topicIdStr = context.request().getFormAttribute(PARAM_TOPIC_ID);
 
         if (name == null || name.isBlank()) {
             context.response().setStatusCode(400).end("Name cannot be blank.");
@@ -89,13 +96,13 @@ public class ContentSourceResource {
                     topic -> {
                         topic.contentSources.add(contentSource);
                         topic.persist();
-                        context.response().setStatusCode(303).putHeader("Location", "/ui/topics/" + topicId + "/briefings").end();
+                        context.response().setStatusCode(303).putHeader("Location", TOPICS_PATH + "/" + topicId + "/briefings").end();
                     },
                     () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
             );
             return;
         }
 
-        context.response().setStatusCode(303).putHeader("Location", "/ui").end();
+        context.response().setStatusCode(303).putHeader("Location", UI_BASE_PATH).end();
     }
 }

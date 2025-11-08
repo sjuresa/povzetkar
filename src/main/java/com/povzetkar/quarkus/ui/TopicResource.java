@@ -15,18 +15,28 @@ import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 @ApplicationScoped
 public class TopicResource {
 
+    // UI Paths
+    public static final String UI_BASE_PATH = "/ui";
+    public static final String TOPICS_PATH = UI_BASE_PATH + "/topics";
+    public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add";
+    public static final String TOPIC_EDIT_PATH = TOPICS_PATH + "/:id/edit";
+    public static final String TOPIC_UPDATE_PATH = TOPICS_PATH + "/update/:id";
+    public static final String TOPIC_DELETE_PATH = TOPICS_PATH + "/delete/:id";
+    public static final String TOPIC_BRIEFINGS_PATH = TOPICS_PATH + "/:topicId/briefings";
+    public static final String TOPIC_ADD_SOURCE_PATH = TOPICS_PATH + "/:topicId/add-source/:contentSourceId";
+    public static final String TOPIC_REMOVE_SOURCE_PATH = TOPICS_PATH + "/:topicId/remove-source/:contentSourceId";
+    public static final String TOPIC_SELECT_SOURCE_PATH = TOPICS_PATH + "/:topicId/select-source";
+
+    // Template and Message Constants
     private static final String TOPIC = "topic";
     private static final String HEADER_LOCATION = "Location";
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
     private static final String PARAM_TOPIC_ID = "topicId";
-    private static final String FIND_TOPIC_WITH_SOURCES_BY_ID_QUERY = "from Topic t left join fetch t.contentSources where t.id = ?1";
-
 
     private final Template topicForm;
     private final Template briefingsByTopic;
@@ -49,14 +59,14 @@ public class TopicResource {
         }
     }
 
-    @Route(path = "/ui/topics/add", methods = Route.HttpMethod.GET)
+    @Route(path = TOPIC_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
         List<User> users = User.listAll();
         context.response().end(topicForm.data("users", users).data(TOPIC, null).render());
     }
 
-    @Route(path = "/ui/topics", methods = Route.HttpMethod.POST)
+    @Route(path = TOPICS_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void addTopic(RoutingContext context) {
@@ -81,13 +91,13 @@ public class TopicResource {
                     topic.user = user;
                     topic.name = name;
                     topic.persist();
-                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui").end();
+                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
                 },
                 () -> context.response().setStatusCode(404).end(String.format("User with id %d not found.", userId))
         );
     }
 
-    @Route(path = "/ui/topics/:id/edit", methods = Route.HttpMethod.GET)
+    @Route(path = TOPIC_EDIT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showEditForm(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
@@ -100,7 +110,7 @@ public class TopicResource {
         );
     }
 
-    @Route(path = "/ui/topics/update/:id", methods = Route.HttpMethod.POST)
+    @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
@@ -117,13 +127,13 @@ public class TopicResource {
                 topic -> {
                     topic.name = name;
                     topic.persist();
-                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui").end();
+                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
                 },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
 
-    @Route(path = "/ui/topics/delete/:id", methods = Route.HttpMethod.POST)
+    @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void deleteTopic(RoutingContext context) {
@@ -131,23 +141,23 @@ public class TopicResource {
         if (id == null) {
             return;
         }
-        Topic.findByIdOptional(id).ifPresentOrElse(
+        Topic.<Topic>findByIdOptional(id).ifPresentOrElse(
                 topic -> {
                     topic.delete();
-                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui").end();
+                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
                 },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
 
-    @Route(path = "/ui/topics/:topicId/briefings", methods = Route.HttpMethod.GET)
+    @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void listBriefingsByTopic(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
         if (topicId == null) {
             return;
         }
-        PanacheQuery<Topic> query = Topic.find(FIND_TOPIC_WITH_SOURCES_BY_ID_QUERY, topicId);
+        PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
         query.firstResultOptional().ifPresentOrElse(
                 topic -> {
                     List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
@@ -161,28 +171,10 @@ public class TopicResource {
         );
     }
 
-    public void addContentSourceToTopic(RoutingContext context) {
-        withTopicAndContentSource(context, (topic, contentSource) -> {
-            topic.contentSources.add(contentSource);
-            contentSource.topics.add(topic);
-            topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui/topics/" + topic.id + "/briefings").end();
-        });
-    }
-
-    @Route(path = "/ui/topics/:topicId/remove-source/:contentSourceId", methods = Route.HttpMethod.POST)
+    @Route(path = TOPIC_ADD_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
-    public void removeContentSourceFromTopic(RoutingContext context) {
-        withTopicAndContentSource(context, (topic, contentSource) -> {
-            topic.contentSources.remove(contentSource);
-            contentSource.topics.remove(topic);
-            topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, "/ui/topics/" + topic.id + "/briefings").end();
-        });
-    }
-
-    private void withTopicAndContentSource(RoutingContext context, BiConsumer<Topic, ContentSource> action) {
+    public void addContentSourceToTopic(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
         if (topicId == null) {
             return;
@@ -192,22 +184,62 @@ public class TopicResource {
             return;
         }
 
-        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        Optional<Topic> topicOptional = Topic.<Topic>findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
             return;
         }
 
-        Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
+        Optional<ContentSource> contentSourceOptional = ContentSource.<ContentSource>findByIdOptional(contentSourceId);
         if (contentSourceOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId));
             return;
         }
 
-        action.accept(topicOptional.get(), contentSourceOptional.get());
+        Topic topic = topicOptional.get();
+        ContentSource contentSource = contentSourceOptional.get();
+
+        topic.contentSources.add(contentSource);
+        contentSource.topics.add(topic);
+        topic.persist();
+        context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + topicId + "/briefings").end();
     }
 
-    @Route(path = "/ui/topics/:topicId/select-source", methods = Route.HttpMethod.GET)
+    @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
+    @Transactional
+    @Blocking
+    public void removeContentSourceFromTopic(RoutingContext context) {
+        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
+        if (topicId == null) {
+            return;
+        }
+        Long contentSourceId = getLongPathParam(context, "contentSourceId", "Invalid content source ID format.");
+        if (contentSourceId == null) {
+            return;
+        }
+
+        Optional<Topic> topicOptional = Topic.<Topic>findByIdOptional(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            return;
+        }
+
+        Optional<ContentSource> contentSourceOptional = ContentSource.<ContentSource>findByIdOptional(contentSourceId);
+        if (contentSourceOptional.isEmpty()) {
+            context.response().setStatusCode(44).end(String.format("ContentSource with id %d not found.", contentSourceId));
+            return;
+        }
+
+        Topic topic = topicOptional.get();
+        ContentSource contentSource = contentSourceOptional.get();
+
+        topic.contentSources.remove(contentSource);
+        contentSource.topics.remove(topic);
+        topic.persist();
+        context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + topicId + "/briefings").end();
+    }
+
+    @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void selectContentSource(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
@@ -215,7 +247,7 @@ public class TopicResource {
             return;
         }
         String query = context.request().getParam("query");
-        Topic.findByIdOptional(topicId).ifPresentOrElse(
+        Topic.<Topic>findByIdOptional(topicId).ifPresentOrElse(
                 topic -> {
                     List<ContentSource> contentSources;
                     if (query != null && !query.isBlank()) {
