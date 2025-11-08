@@ -37,6 +37,10 @@ public class TopicResource {
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
     private static final String PARAM_TOPIC_ID = "topicId";
+    private static final String PARAM_CONTENT_SOURCE_ID = "contentSourceId";
+    private static final String INVALID_CONTENT_SOURCE_ID_FORMAT = "Invalid content source ID format.";
+    private static final String CONTENT_SOURCE_NOT_FOUND_MSG = "ContentSource with id %d not found.";
+
 
     private final Template topicForm;
     private final Template briefingsByTopic;
@@ -171,72 +175,56 @@ public class TopicResource {
         );
     }
 
+    private record TopicAndContentSource(Topic topic, ContentSource contentSource) {
+    }
+
+    private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
+        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
+        if (topicId == null) {
+            return Optional.empty();
+        }
+        Long contentSourceId = getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT);
+        if (contentSourceId == null) {
+            return Optional.empty();
+        }
+
+        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+            return Optional.empty();
+        }
+
+        Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
+        if (contentSourceOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
+            return Optional.empty();
+        }
+
+        return Optional.of(new TopicAndContentSource(topicOptional.get(), contentSourceOptional.get()));
+    }
+
     @Route(path = TOPIC_ADD_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void addContentSourceToTopic(RoutingContext context) {
-        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) {
-            return;
-        }
-        Long contentSourceId = getLongPathParam(context, "contentSourceId", "Invalid content source ID format.");
-        if (contentSourceId == null) {
-            return;
-        }
-
-        Optional<Topic> topicOptional = Topic.<Topic>findByIdOptional(topicId);
-        if (topicOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
-            return;
-        }
-
-        Optional<ContentSource> contentSourceOptional = ContentSource.<ContentSource>findByIdOptional(contentSourceId);
-        if (contentSourceOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format("ContentSource with id %d not found.", contentSourceId));
-            return;
-        }
-
-        Topic topic = topicOptional.get();
-        ContentSource contentSource = contentSourceOptional.get();
-
-        topic.contentSources.add(contentSource);
-        contentSource.topics.add(topic);
-        topic.persist();
-        context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + topicId + "/briefings").end();
+        findTopicAndContentSource(context).ifPresent(pair -> {
+            pair.topic.contentSources.add(pair.contentSource);
+            pair.contentSource.topics.add(pair.topic);
+            pair.topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+        });
     }
 
     @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void removeContentSourceFromTopic(RoutingContext context) {
-        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) {
-            return;
-        }
-        Long contentSourceId = getLongPathParam(context, "contentSourceId", "Invalid content source ID format.");
-        if (contentSourceId == null) {
-            return;
-        }
-
-        Optional<Topic> topicOptional = Topic.<Topic>findByIdOptional(topicId);
-        if (topicOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
-            return;
-        }
-
-        Optional<ContentSource> contentSourceOptional = ContentSource.<ContentSource>findByIdOptional(contentSourceId);
-        if (contentSourceOptional.isEmpty()) {
-            context.response().setStatusCode(44).end(String.format("ContentSource with id %d not found.", contentSourceId));
-            return;
-        }
-
-        Topic topic = topicOptional.get();
-        ContentSource contentSource = contentSourceOptional.get();
-
-        topic.contentSources.remove(contentSource);
-        contentSource.topics.remove(topic);
-        topic.persist();
-        context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + topicId + "/briefings").end();
+        findTopicAndContentSource(context).ifPresent(pair -> {
+            pair.topic.contentSources.remove(pair.contentSource);
+            pair.contentSource.topics.remove(pair.topic);
+            pair.topic.persist();
+            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+        });
     }
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)

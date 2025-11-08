@@ -13,11 +13,11 @@ import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.NotFoundException;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -61,7 +61,12 @@ public class BriefingWebResource {
             context.response().setStatusCode(400).end("Invalid briefing ID format.");
             return;
         }
-        Briefing briefing = Briefing.findByIdWithAssociations(briefingId).orElseThrow(NotFoundException::new);
+        Optional<Briefing> briefingOptional = Briefing.findByIdWithAssociations(briefingId);
+        if (briefingOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format("Briefing with id %d not found.", briefingId));
+            return;
+        }
+        Briefing briefing = briefingOptional.get();
 
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
 
