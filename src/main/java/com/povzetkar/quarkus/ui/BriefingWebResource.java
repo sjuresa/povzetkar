@@ -20,8 +20,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.povzetkar.quarkus.ui.TopicResource.getLongPathParam;
+
 @ApplicationScoped
 public class BriefingWebResource {
+
+    private static final String INVALID_BRIEFING_ID_FORMAT = "Invalid briefing ID format.";
+    private static final String BRIEFING_NOT_FOUND_MSG = "Briefing with id %d not found.";
 
     private final Template topics;
     private final Template briefingDetail;
@@ -54,16 +59,13 @@ public class BriefingWebResource {
     @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
     @Blocking
     public void showBriefing(RoutingContext context) {
-        long briefingId;
-        try {
-            briefingId = Long.parseLong(context.pathParam("briefingId"));
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid briefing ID format.");
+        Long briefingId = getLongPathParam(context, "briefingId", INVALID_BRIEFING_ID_FORMAT);
+        if (briefingId == null) {
             return;
         }
         Optional<Briefing> briefingOptional = Briefing.findByIdWithAssociations(briefingId);
         if (briefingOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format("Briefing with id %d not found.", briefingId));
+            context.response().setStatusCode(404).end(String.format(BRIEFING_NOT_FOUND_MSG, briefingId));
             return;
         }
         Briefing briefing = briefingOptional.get();

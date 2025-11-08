@@ -54,7 +54,7 @@ public class TopicResource {
         this.selectContentSource = selectContentSource;
     }
 
-    private Long getLongPathParam(RoutingContext context, String paramName, String errorMessage) {
+    public static Long getLongPathParam(RoutingContext context, String paramName, String errorMessage) {
         try {
             return Long.parseLong(context.pathParam(paramName));
         } catch (NumberFormatException e) {
