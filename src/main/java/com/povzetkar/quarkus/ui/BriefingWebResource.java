@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.povzetkar.quarkus.ui.TopicResource.getLongPathParam;
+import static com.povzetkar.quarkus.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class BriefingWebResource {

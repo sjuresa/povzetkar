@@ -9,8 +9,13 @@ public class WebUtils {
     }
 
     public static Long getLongPathParam(RoutingContext context, String paramName, String errorMessage) {
+        String paramValue = context.pathParam(paramName);
+        if (paramValue == null) {
+            context.response().setStatusCode(400).end(errorMessage);
+            return null;
+        }
         try {
-            return Long.parseLong(context.pathParam(paramName));
+            return Long.parseLong(paramValue);
         } catch (NumberFormatException e) {
             context.response().setStatusCode(400).end(errorMessage);
             return null;
