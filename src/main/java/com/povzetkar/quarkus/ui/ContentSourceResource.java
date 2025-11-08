@@ -19,6 +19,7 @@ import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
 import static com.povzetkar.quarkus.util.WebUtils.getLongFormAttribute;
 import static com.povzetkar.quarkus.util.WebUtils.getLongPathParam;
+import static com.povzetkar.quarkus.util.WebUtils.getIntegerFormAttribute;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -28,6 +29,9 @@ public class ContentSourceResource {
     private static final String PARAM_TOPIC_ID = "topicId";
     private static final String INVALID_OR_MISSING_TOPIC_ID_PARAM = "Invalid or missing topicId parameter.";
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
+    private static final String PARAM_SOURCE_TYPE_ID = "sourceTypeId";
+    private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
+    private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
 
 
     private final Template contentSourceForm;
@@ -55,7 +59,6 @@ public class ContentSourceResource {
     public void addContentSource(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
-        String sourceTypeIdStr = context.request().getFormAttribute("sourceTypeId");
         String topicIdStr = context.request().getFormAttribute(PARAM_TOPIC_ID);
 
         if (name == null || name.isBlank()) {
@@ -66,19 +69,12 @@ public class ContentSourceResource {
             context.response().setStatusCode(400).end("Source Identifier cannot be blank.");
             return;
         }
-        int sourceTypeId;
-        if (sourceTypeIdStr == null || sourceTypeIdStr.isBlank()) {
-            context.response().setStatusCode(400).end("Source Type ID is required.");
+        Integer sourceTypeId = getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT);
+        if (sourceTypeId == null) {
             return;
         }
-        try {
-            sourceTypeId = Integer.parseInt(sourceTypeIdStr);
-            if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
-                context.response().setStatusCode(400).end("Invalid Source Type ID.");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end("Invalid Source Type ID format.");
+        if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
+            context.response().setStatusCode(400).end(INVALID_SOURCE_TYPE_ID);
             return;
         }
 

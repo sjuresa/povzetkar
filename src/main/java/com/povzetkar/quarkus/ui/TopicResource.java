@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.exception.NotFoundAppException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
@@ -173,24 +174,22 @@ public class TopicResource {
 
     private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) { // getLongPathParam already handled 400 response
-            return Optional.empty();
+        if (topicId == null) {
+            return Optional.empty(); // getLongPathParam already handled 400 response
         }
         Long contentSourceId = getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT);
-        if (contentSourceId == null) { // getLongPathParam already handled 400 response
-            return Optional.empty();
+        if (contentSourceId == null) {
+            return Optional.empty(); // getLongPathParam already handled 400 response
         }
 
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
-            return Optional.empty();
+            throw new NotFoundAppException(String.format(TOPIC_NOT_FOUND_MSG, topicId));
         }
 
         Optional<ContentSource> contentSourceOptional = ContentSource.findByIdOptional(contentSourceId);
         if (contentSourceOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
-            return Optional.empty();
+            throw new NotFoundAppException(String.format(CONTENT_SOURCE_NOT_FOUND_MSG, contentSourceId));
         }
 
         return Optional.of(new TopicAndContentSource(topicOptional.get(), contentSourceOptional.get()));
@@ -200,24 +199,32 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addContentSourceToTopic(RoutingContext context) {
-        findTopicAndContentSource(context).ifPresent(pair -> {
-            pair.topic.contentSources.add(pair.contentSource);
-            pair.contentSource.topics.add(pair.topic);
-            pair.topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-        });
+        try {
+            findTopicAndContentSource(context).ifPresent(pair -> {
+                pair.topic.contentSources.add(pair.contentSource);
+                pair.contentSource.topics.add(pair.topic);
+                pair.topic.persist();
+                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+            });
+        } catch (NotFoundAppException e) {
+            context.response().setStatusCode(404).end(e.getMessage());
+        }
     }
 
     @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
     public void removeContentSourceFromTopic(RoutingContext context) {
-        findTopicAndContentSource(context).ifPresent(pair -> {
-            pair.topic.contentSources.remove(pair.contentSource);
-            pair.contentSource.topics.remove(pair.topic);
-            pair.topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
-        });
+        try {
+            findTopicAndContentSource(context).ifPresent(pair -> {
+                pair.topic.contentSources.remove(pair.contentSource);
+                pair.contentSource.topics.remove(pair.topic);
+                pair.topic.persist();
+                context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+            });
+        } catch (NotFoundAppException e) {
+            context.response().setStatusCode(404).end(e.getMessage());
+        }
     }
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)

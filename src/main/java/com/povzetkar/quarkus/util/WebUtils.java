@@ -17,16 +17,30 @@ public class WebUtils {
         }
     }
 
-    public static Long getLongFormAttribute(RoutingContext context, String attributeName, String errorMessage) {
+    public static Long getLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
-            context.response().setStatusCode(400).end(errorMessage);
+            context.response().setStatusCode(400).end(String.format("Form attribute '%s' is required.", attributeName));
             return null;
         }
         try {
             return Long.parseLong(attributeValue);
         } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(errorMessage);
+            context.response().setStatusCode(400).end(formatErrorMessage);
+            return null;
+        }
+    }
+
+    public static Integer getIntegerFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage) {
+        String attributeValue = context.request().getFormAttribute(attributeName);
+        if (attributeValue == null || attributeValue.isBlank()) {
+            context.response().setStatusCode(400).end(String.format("Form attribute '%s' is required.", attributeName));
+            return null;
+        }
+        try {
+            return Integer.parseInt(attributeValue);
+        } catch (NumberFormatException e) {
+            context.response().setStatusCode(400).end(formatErrorMessage);
             return null;
         }
     }
