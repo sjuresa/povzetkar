@@ -9,21 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Implemented a master layout using Pico.css to provide a consistent and modern UI across the application.
-- Refactored UI resources to use Quarkus Web-Routes for better separation of concerns and to resolve static asset serving conflicts.
-- Implemented a searchable page for selecting content sources, improving scalability and user experience.
-- Added JavaScript confirmation dialogs for destructive actions to prevent accidental data loss.
+- **Admin UI Page:** Created a new administrative UI page (`/ui/admin`) with enhanced features for triggering system actions and monitoring.
+    - Semantic HTML5 elements and improved form structures for better accessibility.
+    - Backend endpoints (`/ui/admin/enrich-sources`, `/ui/admin/run-orchestration`) in `AdminResource.java` to trigger system-level actions.
+    - Success and error flash messages for user feedback.
+    - Configurable date/time format (`povzetkar.ui.datetime.format`) applied consistently across all displayed timestamps.
+    - Tables to display: Pending Content Items, Recent Content Items with Summaries, Recent Briefings, and Failed Content Items.
+    - Row numbers to all tables.
+    - Executive summary as a tooltip on desktop, and a Pico.css modal on mobile, for summary titles.
+    - Links from summary titles to a new summary detail page.
+- **Summary Detail Page:** Created a new `/ui/summaries/{id}` page (`SummaryResource.java` and `summary-detail.html`) to display individual summaries, converting Markdown content to HTML using `flexmark`.
 
 ### Changed
 
 - Replaced the content source dropdown with a link to a searchable page.
 - Made the content source search case-insensitive.
+- Updated `ContentSource` entity's `subscriberCount` from `long` to `int`.
+- Modified `ContentSourceDetailService.ContentSourceDetails` record to use `int` for `subscriberCount`.
+- Modified `YouTubeDetailEnrichmentStrategy` to use `intValue()` for `subscriberCount`.
 
 ### Fixed
 
 - Corrected a bug where the main page would not refresh after deleting a topic.
 - Resolved a 404 error when adding a content source to a topic.
 - Fixed a bug where deleting a content source or topic would not show a confirmation dialog.
+- Fixed Qute rendering errors related to date formatting by implementing helper methods in model classes (`ContentItem`, `Briefing`, `Summary`) and using correct Qute syntax.
+- Fixed `BlockingOperationNotAllowedException` by annotating blocking UI resource methods (`getAdminPage`, `enrichSources`, `runOrchestration`) with `@Blocking`.
+- Corrected mobile executive summary display from a transparent overlay to a Pico.css modal, with improved positioning and readability.
+
+### Documentation
+
+- Updated `docs/RUNBOOK.md` with a new section under "Application Usage" explaining how to use the new Admin UI page.
 
 ## [0.6.0] - 2025-10-31
 

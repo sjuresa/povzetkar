@@ -6,6 +6,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "content_items")
@@ -49,5 +51,13 @@ public class ContentItem extends PanacheEntityBase {
 
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {
         update("processingStatus = ?1 where id = ?2", status, id);
+    }
+
+    public String formattedCreatedAt(String format) {
+        if (createdAt == null || format == null || format.isBlank()) {
+            return "N/A";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+        return createdAt.atZone(ZoneId.of("UTC")).format(formatter);
     }
 }

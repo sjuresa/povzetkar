@@ -22,7 +22,7 @@ public class ContentSourceDetailService {
     }
 
     // A record to hold the fetched content source details
-    public record ContentSourceDetails(String name, String description, Long subscriberCount) {}
+    public record ContentSourceDetails(String name, String description, int subscriberCount) {}
 
     /**
      * Fetches details for a given channel ID from the appropriate source API.

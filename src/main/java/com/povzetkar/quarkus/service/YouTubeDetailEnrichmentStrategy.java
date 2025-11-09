@@ -108,9 +108,9 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     private ContentSourceDetailService.ContentSourceDetails extractContentSourceDetails(Channel channel) {
         String name = channel.getSnippet().getTitle();
         String description = channel.getSnippet().getDescription();
-        long subscriberCount = 0L;
+        int subscriberCount = 0;
         if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
-            subscriberCount = channel.getStatistics().getSubscriberCount().longValue();
+            subscriberCount = channel.getStatistics().getSubscriberCount().intValue();
         }
         return new ContentSourceDetailService.ContentSourceDetails(name, description, subscriberCount);
     }

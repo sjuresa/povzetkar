@@ -21,3 +21,47 @@
     width: auto !important;
   }
 }
+
+/* Custom styles for flash messages */
+.alert-success {
+  background-color: #d4edda; /* Light green */
+  color: #155724; /* Dark green */
+  border: 1px solid #c3e6cb;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.25rem;
+}
+
+.alert-danger {
+  background-color: #f8d7da; /* Light red */
+  color: #721c24; /* Dark red */
+  border: 1px solid #f5c6cb;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.25rem;
+}
+
+/* Make the Pico.css dialog narrower */
+dialog article {
+  max-width: 400px;
+}
+
+/* Position the dialog to the left and vertically centered */
+dialog {
+  top: var(--pico-dialog-top);
+  bottom: var(--pico-dialog-bottom);
+  margin-top: var(--pico-dialog-margin-y); /* Use Pico's default vertical margin */
+  margin-bottom: var(--pico-dialog-margin-y); /* Use Pico's default vertical margin */
+
+  /* Override horizontal centering with flexbox */
+  justify-content: flex-start !important;
+  
+  /* Explicitly center vertically using align-items */
+  align-items: center !important;
+
+  /* Ensure left alignment and reset transform */
+  left: 0 !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  transform: none !important;
+}

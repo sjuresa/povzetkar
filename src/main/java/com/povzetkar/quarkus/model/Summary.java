@@ -12,8 +12,12 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "summaries")
@@ -35,6 +39,8 @@ public class Summary extends PanacheEntityBase {
 
     @Column(name = "briefing_date", nullable = false)
     public LocalDate briefingDate;
+
+    private static final Pattern EXECUTIVE_SUMMARY_PATTERN = Pattern.compile("### Executive Summary\\s*\\n(.*?)\\n\\s*###", Pattern.DOTALL);
 
     // Default constructor for JPA
     public Summary() {
@@ -61,6 +67,25 @@ public class Summary extends PanacheEntityBase {
         return find("from Summary s where s.contentItem.contentSource.id in " +
                         "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2 order by s.id",
                 topic, date).list();
+    }
+
+    public String formattedCreatedAt(String format) {
+        if (createdAt == null || format == null || format.isBlank()) {
+            return "N/A";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+        return createdAt.atZone(ZoneId.of("UTC")).format(formatter);
+    }
+
+    public String getExecutiveSummary() {
+        if (summaryText == null || summaryText.isEmpty()) {
+            return "";
+        }
+        Matcher matcher = EXECUTIVE_SUMMARY_PATTERN.matcher(summaryText);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+        return "";
     }
 
     @Override
