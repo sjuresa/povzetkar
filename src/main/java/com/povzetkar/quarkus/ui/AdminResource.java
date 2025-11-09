@@ -160,11 +160,8 @@ public class AdminResource {
                 return;
             }
 
-            orchestrationManager.runOrchestrationManually(startDate, endDate)
-                    .subscribe().with(
-                            success -> redirectBack(context, SUCCESS_MESSAGE_KEY, "Orchestration process started successfully."),
-                            failure -> redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + failure.getMessage())
-                    );
+            orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely();
+            redirectBack(context, SUCCESS_MESSAGE_KEY, "Orchestration process started successfully.");
 
         } catch (DateTimeParseException e) {
             LOG.error("Invalid date format provided for orchestration: {}", e.getMessage(), e);
