@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Qute rendering errors related to date formatting by implementing helper methods in model classes (`ContentItem`, `Briefing`, `Summary`) and using correct Qute syntax.
 - Fixed `BlockingOperationNotAllowedException` by annotating blocking UI resource methods (`getAdminPage`, `enrichSources`, `runOrchestration`) with `@Blocking`.
 - Corrected mobile executive summary display from a transparent overlay to a Pico.css modal, with improved positioning and readability.
+- Added logging to catch blocks in `AdminResource.java` to prevent exception swallowing and improve debuggability.
 
 ### Refactored
 

@@ -21,6 +21,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -31,6 +33,8 @@ import java.util.Map;
 @ApplicationScoped
 @Blocking
 public class AdminResource {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AdminResource.class);
 
     private static final String SUCCESS_MESSAGE_KEY = "successMessage";
     private static final String ERROR_MESSAGE_KEY = "errorMessage";
@@ -121,6 +125,7 @@ public class AdminResource {
             contentSourceDetailService.enrichContentSources();
             redirectBack(context, SUCCESS_MESSAGE_KEY, "Content sources enrichment started successfully.");
         } catch (Exception e) {
+            LOG.error("Failed to enrich content sources: {}", e.getMessage(), e);
             redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start content sources enrichment: " + e.getMessage());
         }
     }
@@ -163,8 +168,10 @@ public class AdminResource {
                     );
 
         } catch (DateTimeParseException e) {
+            LOG.error("Invalid date format provided for orchestration: {}", e.getMessage(), e);
             redirectBack(context, ERROR_MESSAGE_KEY, "Invalid date format. Please use YYYY-MM-DD.");
         } catch (Exception e) {
+            LOG.error("Failed to start orchestration process: {}", e.getMessage(), e);
             redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + e.getMessage());
         }
     }
