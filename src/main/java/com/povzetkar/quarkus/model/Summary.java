@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.model;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,12 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -21,7 +17,7 @@ import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "summaries")
-public class Summary extends PanacheEntityBase {
+public class Summary extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,9 +29,6 @@ public class Summary extends PanacheEntityBase {
     @OneToOne
     @JoinColumn(name = "content_item_id", nullable = false)
     public ContentItem contentItem;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    public java.time.Instant createdAt;
 
     @Column(name = "briefing_date", nullable = false)
     public LocalDate briefingDate;
@@ -52,13 +45,6 @@ public class Summary extends PanacheEntityBase {
         this.briefingDate = briefingDate;
     }
 
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) {
-            createdAt = java.time.Instant.now();
-        }
-    }
-
     public static Summary findByContentId(Long id){
         return find("contentItem.id", id).firstResult();
     }
@@ -67,14 +53,6 @@ public class Summary extends PanacheEntityBase {
         return find("from Summary s where s.contentItem.contentSource.id in " +
                         "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2 order by s.id",
                 topic, date).list();
-    }
-
-    public String formattedCreatedAt(String format) {
-        if (createdAt == null || format == null || format.isBlank()) {
-            return "N/A";
-        }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-        return createdAt.atZone(ZoneId.of("UTC")).format(formatter);
     }
 
     public String getExecutiveSummary() {

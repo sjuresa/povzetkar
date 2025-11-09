@@ -1,12 +1,9 @@
 package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,7 +13,7 @@ import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "briefings")
-public class Briefing extends PanacheEntityBase {
+public class Briefing extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,9 +32,6 @@ public class Briefing extends PanacheEntityBase {
 
     @Column(name = "briefing_date", nullable = false)
     public LocalDate briefingDate;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    public java.time.Instant createdAt;
 
     @ManyToMany
     @JoinTable(name = "briefing_summaries",
@@ -58,23 +52,8 @@ public class Briefing extends PanacheEntityBase {
         this.briefingDate = briefingDate;
     }
 
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) {
-            createdAt = java.time.Instant.now();
-        }
-    }
-
     public static Optional<Briefing> findByIdWithAssociations(Long briefingId) {
         return find("select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1", briefingId).firstResultOptional();
-    }
-
-    public String formattedCreatedAt(String format) {
-        if (createdAt == null || format == null || format.isBlank()) {
-            return "N/A";
-        }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-        return createdAt.atZone(ZoneId.of("UTC")).format(formatter);
     }
 
     public String getExecutiveSummary() {
@@ -87,7 +66,6 @@ public class Briefing extends PanacheEntityBase {
         }
         return "";
     }
-
 
     @Override
     public boolean equals(Object o) {

@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `BlockingOperationNotAllowedException` by annotating blocking UI resource methods (`getAdminPage`, `enrichSources`, `runOrchestration`) with `@Blocking`.
 - Corrected mobile executive summary display from a transparent overlay to a Pico.css modal, with improved positioning and readability.
 
+### Refactored
+
+- Centralized `createdAt` field and `formattedCreatedAt` method into `BaseAuditableEntity` to adhere to DRY principle. `Briefing`, `ContentItem`, and `Summary` now extend this base class.
+
 ### Documentation
 
 - Updated `docs/RUNBOOK.md` with a new section under "Application Usage" explaining how to use the new Admin UI page.
