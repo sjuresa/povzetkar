@@ -43,6 +43,8 @@ public class AdminResource {
 
     @ConfigProperty(name = "povzetkar.ui.datetime.format")
     String dateTimeFormat;
+    @ConfigProperty(name = "povzetkar.ui.date.format")
+    String dateFormat;
     @ConfigProperty(name = "povzetkar.ui.admin.page-size")
     int pageSize;
 
@@ -75,6 +77,7 @@ public class AdminResource {
         data.put(SUCCESS_MESSAGE_KEY, successMessage);
         data.put(ERROR_MESSAGE_KEY, errorMessage);
         data.put("dateTimeFormat", dateTimeFormat);
+        data.put("dateFormat", dateFormat);
 
         // Fetch pending content items
         List<ContentItem> pendingContentItems = ContentItem.find(

@@ -8,7 +8,7 @@
             <h2>Briefings</h2>
             <ul>
                 {#for briefing in briefings}
-                <li><a href="/ui/briefings/{briefing.id}"  title="{briefing.getExecutiveSummary()}">{briefing.briefingDate.format('dd.MM.yyyy')}</a></li>
+                <li><a href="/ui/briefings/{briefing.id}"  title="{briefing.getExecutiveSummary()}">{briefing.briefingDate.format(dateFormat)}</a></li>
                 {/for}
             </ul>
         </div>

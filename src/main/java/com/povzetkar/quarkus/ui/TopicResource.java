@@ -12,6 +12,7 @@ import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +47,8 @@ public class TopicResource {
     private static final String PARAM_USER_ID = "userId";
     private static final String INVALID_USER_ID_FORMAT = "Invalid userId format.";
 
+    @ConfigProperty(name = "povzetkar.ui.date.format")
+    String dateFormat;
 
     private final Template topicForm;
     private final Template briefingsByTopic;
@@ -156,7 +159,9 @@ public class TopicResource {
                             .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
                             .putHeader("Pragma", "no-cache")
                             .end(briefingsByTopic.data(TOPIC, topic)
-                                    .data("briefings", briefings).render());
+                                    .data("briefings", briefings)
+                                    .data("dateFormat", dateFormat)
+                                    .render());
                 },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
         );
