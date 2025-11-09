@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.povzetkar.quarkus.util.TextUtils;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -8,7 +9,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Entity
@@ -57,14 +57,7 @@ public class Briefing extends BaseAuditableEntity {
     }
 
     public String getExecutiveSummary() {
-        if (metaSummary == null || metaSummary.isEmpty()) {
-            return "";
-        }
-        Matcher matcher = EXECUTIVE_SUMMARY_PATTERN.matcher(metaSummary);
-        if (matcher.find()) {
-            return matcher.group(1).trim();
-        }
-        return "";
+        return TextUtils.extractSection(metaSummary, EXECUTIVE_SUMMARY_PATTERN);
     }
 
     @Override

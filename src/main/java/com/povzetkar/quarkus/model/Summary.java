@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.model;
 
+import com.povzetkar.quarkus.util.TextUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,7 +13,6 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Entity
@@ -56,14 +56,7 @@ public class Summary extends BaseAuditableEntity {
     }
 
     public String getExecutiveSummary() {
-        if (summaryText == null || summaryText.isEmpty()) {
-            return "";
-        }
-        Matcher matcher = EXECUTIVE_SUMMARY_PATTERN.matcher(summaryText);
-        if (matcher.find()) {
-            return matcher.group(1).trim();
-        }
-        return "";
+        return TextUtils.extractSection(summaryText, EXECUTIVE_SUMMARY_PATTERN);
     }
 
     @Override

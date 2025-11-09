@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactored `getExecutiveSummary` logic in `Briefing.java` and `Summary.java` into `TextUtils.extractSection` to reduce code duplication and improve maintainability.
 - Replaced the content source dropdown with a link to a searchable page.
 - Made the content source search case-insensitive.
 - Updated `ContentSource` entity's `subscriberCount` from `long` to `int`.
