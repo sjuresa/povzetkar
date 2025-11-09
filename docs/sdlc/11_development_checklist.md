@@ -32,9 +32,9 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **2.3. User Approves Plan:** The plan is reviewed and explicitly approved.
 - [ ] **2.4. Agent Executes Plan:** The agent executes the plan step-by-step, including all necessary code changes and documentation updates.
 - [ ] **2.5. User Verifies Tests:** After code modifications, the user runs the test suite and confirms that all tests are passing.
-- [ ] **2.6. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
-- [ ] **2.7. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
-- [ ] **2.8. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
+- [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
+- [ ] **2.7. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
+- [ ] **2.8. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
 
 - [ ] **2.9. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
     - **Assess the issue:**

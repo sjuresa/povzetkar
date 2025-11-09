@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.model;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -11,7 +10,7 @@ import java.time.Instant;
 @Table(name = "content_items")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn
-public class ContentItem extends PanacheEntityBase {
+public class ContentItem extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,16 +35,6 @@ public class ContentItem extends PanacheEntityBase {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "processing_status", nullable = false)
     public ProcessingStatus processingStatus = ProcessingStatus.PENDING;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    public Instant createdAt;
-
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
 
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {
         update("processingStatus = ?1 where id = ?2", status, id);

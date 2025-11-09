@@ -67,7 +67,7 @@ class OrchestrationIntegrationTest {
         testContentSource.sourceIdentifier = "test_channel_id_" + UUID.randomUUID();
         testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         testContentSource.name = "Test Channel";
-        testContentSource.subscriberCount = 1000L;
+        testContentSource.subscriberCount = 1000;
         testContentSource.persist();
 
         // Establish the ManyToMany relationship from the owning side (Topic)

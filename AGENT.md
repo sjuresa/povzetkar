@@ -88,17 +88,13 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will now execute the approved plan step-by-step.
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
-**Step 9: Propose Commit Message and Await Final Confirmation**
-*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
+**Step 9: Update `CHANGELOG.md`, Propose Commit Message and Await Final Confirmation**
+*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.8: Update `CHANGELOG.md`**.
+*   After updating `CHANGELOG.md`, I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
 *   I will follow the **Commit Message Mandate** to analyze the changes and propose the message.
 *   Before proposing the commit message, I will verify that the task meets all criteria defined in the "Definition of Done" section of the current `*-planning-process.md` document.
 *   After proposing the commit message, my final output for the task **must** be the following question: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"**
 *   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
-
-**Step 10: Execute Post-Task Procedures**
-> Upon receiving confirmation from the user that the task is fully complete, I **must** consult `docs/sdlc/11_development_checklist.md` and execute all relevant "Phase 2: Task Execution (Core Loop)" steps that occur after the commit.
-> *   My immediate action will be to announce and execute **Step 2.8: Update `CHANGELOG.md`**.
-> *   After completing all post-task procedures, I will confirm completion and await the next instruction.
 
 ## B. Test-Driven Development Mandates
 

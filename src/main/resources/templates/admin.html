@@ -1,7 +1,204 @@
 {#include main.html}
 {#title}Admin Actions{/title}
 {#content}
-    <h1>Admin Actions</h1>
-    <p>This is the admin page.</p>
+    <header>
+        <h1>Admin Actions</h1>
+        <p>This page allows administrators to trigger system-level actions.</p>
+    </header>
+
+    {#if successMessage}
+        <div class="alert alert-success" role="alert">
+            {successMessage}
+        </div>
+    {/if}
+    {#if errorMessage}
+        <div class="alert alert-danger" role="alert">
+            {errorMessage}
+        </div>
+    {/if}
+
+    {#if pendingContentItems}
+    <section id="pending-content-items">
+        <h2>Pending Content Items</h2>
+        {#if pendingContentItems.size() > 0}
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Created At</th>
+                        <th scope="col">Source URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#for contentItem in pendingContentItems}
+                        <tr>
+                            <td>{contentItem_count}</td>
+                            <td>{contentItem.id}</td>
+                            <td>{contentItem.title}</td>
+                            <td>{contentItem.processingStatus}</td>
+                            <td>{contentItem.formattedCreatedAt(dateTimeFormat)}</td>
+                            <td><a href="{contentItem.sourceUrl}" target="_blank">{contentItem.sourceUrl}</a></td>
+                        </tr>
+                    {/for}
+                </tbody>
+            </table>
+        {#else}
+            <p>No content items currently pending processing.</p>
+        {/if}
+    </section>
+    {/if}
+
+    <section id="content-source-enrichment">
+        <h2>Content Source Enrichment</h2>
+        <p>Manually trigger the process to enrich content sources.</p>
+        <form action="/ui/admin/enrich-sources" method="post">
+            <button type="submit" onclick="return confirm('Are you sure you want to enrich content sources?');">Run Content Source Enrichment</button>
+        </form>
+    </section>
+
+    <section id="orchestration-service">
+        <h2>Orchestration Service</h2>
+        <p>Manually trigger the main orchestration process, optionally for a specific date range.</p>
+        <form action="/ui/admin/run-orchestration" method="post">
+            <fieldset>
+                <legend>Run Orchestration</legend>
+                <label for="start-date">Start Date (optional):</label>
+                <input type="date" id="start-date" name="startDate">
+
+                <label for="end-date">End Date (optional):</label>
+                <input type="date" id="end-date" name="endDate">
+
+                <button type="submit" onclick="return confirm('Are you sure you want to run orchestration?');">Run Orchestration</button>
+            </fieldset>
+        </form>
+    </section>
+
+    <section id="recent-content-items-with-summaries">
+        <h2>Recent Content Items with Summaries</h2>
+        {#if recentSummaries.size() > 0}
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Duration</th>
+                        <th scope="col">Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#for summary in recentSummaries}
+                        <tr>
+                            <td>{summary_count}</td>
+                            <td>{summary.contentItem.id}</td>
+                            <td>
+                                <a href="/ui/summaries/{summary.id}" target="_blank" title="{summary.getExecutiveSummary()}" data-summary-url="/ui/summaries/{summary.id}" data-executive-summary="{summary.getExecutiveSummary()}">
+                                    {summary.contentItem.title}
+                                    {#if summary.contentItem.authorName}
+                                        <br><small>by {summary.contentItem.authorName}</small>
+                                    {/if}
+                                </a>
+                            </td>
+                            <td>{summary.contentItem.processingStatus}</td>
+                            <td>
+                                {#if summary.contentItem.duration}
+                                    {summary.contentItem.formattedDuration()}
+                                {#else}
+                                    N/A
+                                {/if}
+                            </td>
+                            <td>{summary.formattedCreatedAt(dateTimeFormat)}</td>
+                        </tr>
+                    {/for}
+                </tbody>
+            </table>
+        {#else}
+            <p>No recent content items with summaries found.</p>
+        {/if}
+    </section>
+
+
+    <section id="recent-briefings">
+        <h2>Recent Briefings</h2>
+        {#if recentBriefings.size() > 0}
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Created At</th>
+                        <th scope="col">Briefing Date</th>
+                        <th scope="col">Topic Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#for briefing in recentBriefings}
+                        <tr>
+                            <td>{briefing_count}</td>
+                            <td>{briefing.id}</td>
+                            <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
+                            <td>{briefing.briefingDate.format(dateFormat)}</td>
+                            <td>{briefing.topic.name}</td>
+                        </tr>
+                    {/for}
+                </tbody>
+            </table>
+        {#else}
+            <p>No recent briefings found.</p>
+        {/if}
+    </section>
+
+
+    {#if failedContentItems}
+    <section id="failed-content-items">
+        <h2>Failed Content Items</h2>
+        {#if failedContentItems.size() > 0}
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Created At</th>
+                        <th scope="col">Source URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#for contentItem in failedContentItems}
+                        <tr>
+                            <td>{contentItem_count}</td>
+                            <td>{contentItem.id}</td>
+                            <td>{contentItem.title}</td>
+                            <td>{contentItem.processingStatus}</td>
+                            <td>{contentItem.formattedCreatedAt(dateTimeFormat)}</td>
+                            <td><a href="{contentItem.sourceUrl}" target="_blank">{contentItem.sourceUrl}</a></td>
+                        </tr>
+                    {/for}
+                </tbody>
+            </table>
+        {#else}
+            <p>No failed content items found.</p>
+        {/if}
+    </section>
+    {/if}
+
+    <!-- Pico.css Modal for Executive Summary on Mobile -->
+    <dialog id="executive-summary-modal">
+        <article>
+            <header>
+                <a href="#close" aria-label="Close" class="close" data-target="executive-summary-modal" onclick="event.preventDefault(); document.getElementById('executive-summary-modal').close();"></a>
+                <h3>Executive Summary</h3>
+            </header>
+            <p id="modal-executive-summary-content"></p>
+            <footer>
+                <a href="#" role="button" id="modal-view-full-summary-button">View Full Summary</a>
+            </footer>
+        </article>
+    </dialog>
 {/content}
 {/include}
