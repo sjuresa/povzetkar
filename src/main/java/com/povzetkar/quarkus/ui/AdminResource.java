@@ -62,11 +62,10 @@ public class AdminResource {
     }
 
     public void init(@Observes Router router, Vertx vertx) {
-        // 1️⃣ Enables reading form data, JSON bodies, etc.
-        router.route().order(-1).handler(BodyHandler.create());
-
-        // 2️⃣ Enables sessions globally
-        router.route().order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+        // Enables reading form data, JSON bodies, etc.
+        router.route("/ui/*").order(-1).handler(BodyHandler.create());
+        // Enables sessions for UI routes
+        router.route("/ui/*").order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     }
 
     private void redirectBack(RoutingContext context, String key, String message) {
