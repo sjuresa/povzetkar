@@ -11,8 +11,14 @@ import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -26,12 +32,19 @@ import java.util.Map;
 @Blocking
 public class AdminResource {
 
+    private static final String SUCCESS_MESSAGE_KEY = "successMessage";
+    private static final String ERROR_MESSAGE_KEY = "errorMessage";
+    private static final String LOCATION_HEADER = "Location";
+    private static final String ADMIN_REDIRECT_PATH = "/ui/admin";
+
     private final Template admin;
     private final ContentSourceDetailService contentSourceDetailService;
     private final OrchestrationManager orchestrationManager;
 
     @ConfigProperty(name = "povzetkar.ui.datetime.format")
     String dateTimeFormat;
+    @ConfigProperty(name = "povzetkar.ui.admin.page-size")
+    int pageSize;
 
     @Inject
     public AdminResource(@Location("admin.html") Template admin,
@@ -42,38 +55,48 @@ public class AdminResource {
         this.orchestrationManager = orchestrationManager;
     }
 
-    @Route(path = "/ui/admin", methods = Route.HttpMethod.GET)
+    public void init(@Observes Router router, Vertx vertx) {
+        // 1️⃣ Enables reading form data, JSON bodies, etc.
+        router.route().order(-1).handler(BodyHandler.create());
+
+        // 2️⃣ Enables sessions globally
+        router.route().order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+    }
+
+    @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void getAdminPage(RoutingContext context) {
-        String successMessage = context.request().getParam("success");
-        String errorMessage = context.request().getParam("error");
+        String successMessage = context.session().get(SUCCESS_MESSAGE_KEY);
+        String errorMessage = context.session().get(ERROR_MESSAGE_KEY);
+        context.session().remove(SUCCESS_MESSAGE_KEY);
+        context.session().remove(ERROR_MESSAGE_KEY);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("successMessage", successMessage);
-        data.put("errorMessage", errorMessage);
+        data.put(SUCCESS_MESSAGE_KEY, successMessage);
+        data.put(ERROR_MESSAGE_KEY, errorMessage);
         data.put("dateTimeFormat", dateTimeFormat);
 
         // Fetch pending content items
         List<ContentItem> pendingContentItems = ContentItem.find(
                 "processingStatus = ?1 ORDER BY createdAt DESC", ProcessingStatus.PENDING
-        ).page(0, 25).list();
+        ).page(0, pageSize).list();
         data.put("pendingContentItems", pendingContentItems);
 
         // Fetch recent summaries with their content items
         List<Summary> recentSummaries = Summary.find(
                 "SELECT s FROM Summary s JOIN FETCH s.contentItem ORDER BY s.createdAt DESC"
-        ).page(0, 25).list();
+        ).page(0, pageSize).list();
         data.put("recentSummaries", recentSummaries);
 
         // Fetch recent briefings
-        List<Briefing> recentBriefings = Briefing.findAll(Sort.by("createdAt", Sort.Direction.Descending)).page(0, 25).list();
+        List<Briefing> recentBriefings = Briefing.findAll(Sort.by("createdAt", Sort.Direction.Descending)).page(0, pageSize).list();
         data.put("recentBriefings", recentBriefings);
 
         // Fetch failed content items
         List<ContentItem> failedContentItems = ContentItem.find(
                 "processingStatus = ?1 OR processingStatus = ?2 ORDER BY createdAt DESC",
                 ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER
-        ).page(0, 25).list();
+        ).page(0, pageSize).list();
         data.put("failedContentItems", failedContentItems);
 
 
@@ -85,13 +108,15 @@ public class AdminResource {
     public void enrichSources(RoutingContext context) {
         try {
             contentSourceDetailService.enrichContentSources();
+            context.session().put(SUCCESS_MESSAGE_KEY, "Content sources enrichment started successfully.");
             context.response()
-                    .putHeader("Location", "/ui/admin?success=Content sources enrichment started successfully.")
+                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
                     .setStatusCode(303)
                     .end();
         } catch (Exception e) {
+            context.session().put(ERROR_MESSAGE_KEY, "Failed to start content sources enrichment: " + e.getMessage());
             context.response()
-                    .putHeader("Location", "/ui/admin?error=Failed to start content sources enrichment: " + e.getMessage())
+                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
                     .setStatusCode(303)
                     .end();
         }
@@ -124,8 +149,9 @@ public class AdminResource {
             }
 
             if (errorMessage != null) {
+                context.session().put(ERROR_MESSAGE_KEY, errorMessage);
                 context.response()
-                        .putHeader("Location", "/ui/admin?error=" + errorMessage)
+                        .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
                         .setStatusCode(303)
                         .end();
                 return;
@@ -133,24 +159,32 @@ public class AdminResource {
 
             orchestrationManager.runOrchestrationManually(startDate, endDate)
                     .subscribe().with(
-                            success -> context.response()
-                                    .putHeader("Location", "/ui/admin?success=Orchestration process started successfully.")
-                                    .setStatusCode(303)
-                                    .end(),
-                            failure -> context.response()
-                                    .putHeader("Location", "/ui/admin?error=Failed to start orchestration process: " + failure.getMessage())
-                                    .setStatusCode(303)
-                                    .end()
+                            success -> {
+                                context.session().put(SUCCESS_MESSAGE_KEY, "Orchestration process started successfully.");
+                                context.response()
+                                        .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
+                                        .setStatusCode(303)
+                                        .end();
+                            },
+                            failure -> {
+                                context.session().put(ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + failure.getMessage());
+                                context.response()
+                                        .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
+                                        .setStatusCode(303)
+                                        .end();
+                            }
                     );
 
         } catch (DateTimeParseException e) {
+            context.session().put(ERROR_MESSAGE_KEY, "Invalid date format. Please use YYYY-MM-DD.");
             context.response()
-                    .putHeader("Location", "/ui/admin?error=Invalid date format. Please use YYYY-MM-DD.")
+                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
                     .setStatusCode(303)
                     .end();
         } catch (Exception e) {
+            context.session().put(ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + e.getMessage());
             context.response()
-                    .putHeader("Location", "/ui/admin?error=Failed to start orchestration process: " + e.getMessage())
+                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
                     .setStatusCode(303)
                     .end();
         }
