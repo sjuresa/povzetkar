@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactored
 
 - Centralized `createdAt` field and `formattedCreatedAt` method into `BaseAuditableEntity` to adhere to DRY principle. `Briefing`, `ContentItem`, and `Summary` now extend this base class.
+- Extracted duplicate redirect logic in `AdminResource.java` into a private helper method `redirectBack` to improve maintainability and adhere to the DRY principle.
 
 ### Documentation
 

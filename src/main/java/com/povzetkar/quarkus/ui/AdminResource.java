@@ -65,6 +65,14 @@ public class AdminResource {
         router.route().order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     }
 
+    private void redirectBack(RoutingContext context, String key, String message) {
+        context.session().put(key, message);
+        context.response()
+                .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
+                .setStatusCode(303)
+                .end();
+    }
+
     @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void getAdminPage(RoutingContext context) {
@@ -111,17 +119,9 @@ public class AdminResource {
     public void enrichSources(RoutingContext context) {
         try {
             contentSourceDetailService.enrichContentSources();
-            context.session().put(SUCCESS_MESSAGE_KEY, "Content sources enrichment started successfully.");
-            context.response()
-                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                    .setStatusCode(303)
-                    .end();
+            redirectBack(context, SUCCESS_MESSAGE_KEY, "Content sources enrichment started successfully.");
         } catch (Exception e) {
-            context.session().put(ERROR_MESSAGE_KEY, "Failed to start content sources enrichment: " + e.getMessage());
-            context.response()
-                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                    .setStatusCode(303)
-                    .end();
+            redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start content sources enrichment: " + e.getMessage());
         }
     }
 
@@ -152,44 +152,20 @@ public class AdminResource {
             }
 
             if (errorMessage != null) {
-                context.session().put(ERROR_MESSAGE_KEY, errorMessage);
-                context.response()
-                        .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                        .setStatusCode(303)
-                        .end();
+                redirectBack(context, ERROR_MESSAGE_KEY, errorMessage);
                 return;
             }
 
             orchestrationManager.runOrchestrationManually(startDate, endDate)
                     .subscribe().with(
-                            success -> {
-                                context.session().put(SUCCESS_MESSAGE_KEY, "Orchestration process started successfully.");
-                                context.response()
-                                        .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                                        .setStatusCode(303)
-                                        .end();
-                            },
-                            failure -> {
-                                context.session().put(ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + failure.getMessage());
-                                context.response()
-                                        .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                                        .setStatusCode(303)
-                                        .end();
-                            }
+                            success -> redirectBack(context, SUCCESS_MESSAGE_KEY, "Orchestration process started successfully."),
+                            failure -> redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + failure.getMessage())
                     );
 
         } catch (DateTimeParseException e) {
-            context.session().put(ERROR_MESSAGE_KEY, "Invalid date format. Please use YYYY-MM-DD.");
-            context.response()
-                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                    .setStatusCode(303)
-                    .end();
+            redirectBack(context, ERROR_MESSAGE_KEY, "Invalid date format. Please use YYYY-MM-DD.");
         } catch (Exception e) {
-            context.session().put(ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + e.getMessage());
-            context.response()
-                    .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                    .setStatusCode(303)
-                    .end();
+            redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + e.getMessage());
         }
     }
 }
