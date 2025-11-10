@@ -36,6 +36,8 @@ public class ViewUtils {
     public void handleRedirect(RoutingContext context, String path) {
         context.response()
                 .putHeader(LOCATION_HEADER, path)
+                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                .putHeader("Pragma", "no-cache") // For HTTP 1.0 compatibility
                 .setStatusCode(303)
                 .end();
     }

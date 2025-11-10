@@ -1,17 +1,17 @@
 {#include main.html}
-{#title}{#if topic}Edit Topic{#else}Add Topic{/if}{/title}
+{#title}{#if topic && topic.id}Edit Topic{#else}Add Topic{/if}{/title}
 {#content}
-    <h1>{#if topic}Edit Topic{#else}Add Topic{/if}</h1>
+    <h1>{#if topic && topic.id}Edit Topic{#else}Add Topic{/if}</h1>
 
-    <form action="{#if topic}/ui/topics/update/{topic.id}{#else}/ui/topics{/if}" method="post">
+    <form action="{#if topic && topic.id}/ui/topics/update/{topic.id}{#else}/ui/topics{/if}" method="post">
         <fieldset>
             <legend>Topic Details</legend>
-            {#if !topic}
+            {#if !topic || !topic.id}
                 <div>
                     <label for="userId">User:</label>
                     <select id="userId" name="userId">
                         {#for user in users}
-                            <option value="{user.id}">{user.name}</option>
+                            <option value="{user.id}" {#if topic && topic.user && topic.user.id == user.id}selected{/if}>{user.name}</option>
                         {/for}
                     </select>
                 </div>

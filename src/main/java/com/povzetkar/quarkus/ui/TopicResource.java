@@ -87,6 +87,24 @@ public class TopicResource {
         return topicOptional;
     }
 
+    private void renderAddForm(RoutingContext context, String name, Long userId) {
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        data.put("users", User.listAll());
+        // Create a dummy topic to hold the submitted name for re-population
+        Topic submittedTopic = new Topic();
+        submittedTopic.name = name;
+        if (userId != null) {
+            submittedTopic.user = User.findById(userId);
+        }
+        data.put(TOPIC_KEY, submittedTopic);
+        data.put(BREADCRUMBS_KEY, List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                new Breadcrumb("Add Topic", TOPIC_ADD_PATH)
+        ));
+        context.response().end(topicForm.instance().data(data).render());
+    }
+
     private void renderEditForm(RoutingContext context, Topic topic) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
         data.put(TOPIC_KEY, topic);
@@ -122,15 +140,7 @@ public class TopicResource {
     @Route(path = TOPIC_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        Map<String, Object> data = viewUtils.createTemplateData(context);
-        data.put("users", User.listAll());
-        data.put(TOPIC_KEY, null);
-        data.put(BREADCRUMBS_KEY, List.of(
-                ViewUtils.HOME_BREADCRUMB,
-                new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                new Breadcrumb("Add Topic", TOPIC_ADD_PATH)
-        ));
-        context.response().end(topicForm.instance().data(data).render());
+        renderAddForm(context, null, null); // Fresh form
     }
 
     @Route(path = TOPICS_PATH, methods = Route.HttpMethod.POST)
@@ -138,17 +148,18 @@ public class TopicResource {
     @Blocking
     public void addTopic(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
+        Optional<Long> userIdOptional = WebUtils.getValidatedLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, USER_ID_REQUIRED_MSG, viewUtils);
+        Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
+
         if (name == null || name.isBlank()) {
             viewUtils.setErrorMessage(context, "Topic name cannot be blank.");
-            showAddForm(context);
+            renderAddForm(context, name, userId); // Re-render with submitted values
             return;
         }
-        Optional<Long> userIdOptional = WebUtils.getValidatedLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, USER_ID_REQUIRED_MSG, viewUtils);
         if (userIdOptional.isEmpty()) {
-            showAddForm(context);
+            renderAddForm(context, name, userId); // Re-render with submitted values
             return;
         }
-        Long userId = userIdOptional.get();
 
         Optional<User> userOptional = User.findByIdOptional(userId);
         userOptional.ifPresentOrElse(
@@ -160,7 +171,10 @@ public class TopicResource {
                     viewUtils.setSuccessMessage(context, "Topic created successfully.");
                     viewUtils.handleRedirect(context, TOPICS_PATH);
                 },
-                () -> context.response().setStatusCode(404).end(String.format("User with id %d not found.", userId))
+                () -> {
+                    viewUtils.setErrorMessage(context, String.format("User with id %d not found.", userId));
+                    renderAddForm(context, name, userId); // Re-render with submitted values
+                }
         );
     }
 
@@ -186,7 +200,7 @@ public class TopicResource {
             topic.name = name;
             topic.persist();
             viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString()));
+            viewUtils.handleRedirect(context, TOPICS_PATH);
         });
     }
 
