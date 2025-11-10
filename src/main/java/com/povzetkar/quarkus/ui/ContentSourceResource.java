@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
+import com.povzetkar.quarkus.ui.util.WebUtils;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
@@ -20,7 +21,8 @@ import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
-import static com.povzetkar.quarkus.ui.util.WebUtils.*;
+import static com.povzetkar.quarkus.ui.util.WebUtils.getLongQueryParam;
+import static com.povzetkar.quarkus.ui.util.WebUtils.getOptionalLongFormAttribute;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -33,6 +35,7 @@ public class ContentSourceResource {
     private static final String PARAM_SOURCE_TYPE_ID = "sourceTypeId";
     private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
     private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
+    private static final String SOURCE_TYPE_ID_REQUIRED_MSG = "Form attribute 'sourceTypeId' is required.";
 
     private final ViewUtils viewUtils;
 
@@ -83,20 +86,13 @@ public class ContentSourceResource {
             showAddForm(context);
             return;
         }
-        int sourceTypeId;
-        String sourceTypeIdStr = context.request().getFormAttribute(PARAM_SOURCE_TYPE_ID);
-        if (sourceTypeIdStr == null || sourceTypeIdStr.isBlank()) {
-            viewUtils.setErrorMessage(context, String.format("Form attribute '%s' is required.", PARAM_SOURCE_TYPE_ID));
+        Optional<Integer> sourceTypeIdOptional = WebUtils.getValidatedIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, SOURCE_TYPE_ID_REQUIRED_MSG, viewUtils);
+        if (sourceTypeIdOptional.isEmpty()) {
             showAddForm(context);
             return;
         }
-        try {
-            sourceTypeId = Integer.parseInt(sourceTypeIdStr);
-        } catch (NumberFormatException e) {
-            viewUtils.setErrorMessage(context, INVALID_SOURCE_TYPE_ID_FORMAT);
-            showAddForm(context);
-            return;
-        }
+        int sourceTypeId = sourceTypeIdOptional.get();
+
         if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
             viewUtils.setErrorMessage(context, INVALID_SOURCE_TYPE_ID);
             showAddForm(context);

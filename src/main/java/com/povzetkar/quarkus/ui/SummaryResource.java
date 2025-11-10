@@ -71,13 +71,17 @@ public class SummaryResource {
         Map<String, Object> data = viewUtils.createTemplateData(context);
         data.put("summary", summary);
         data.put("summaryHtml", summaryHtml);
+        data.put("breadcrumbs", buildSummaryBreadcrumbs(context, briefingOptional.orElse(null)));
 
+        context.response().end(summaryDetail.instance().data(data).render());
+    }
+
+    private List<Breadcrumb> buildSummaryBreadcrumbs(RoutingContext context, Briefing briefing) {
         List<Breadcrumb> breadcrumbs = new ArrayList<>();
         breadcrumbs.add(ViewUtils.HOME_BREADCRUMB);
         breadcrumbs.add(new Breadcrumb("Topics", TOPICS_PATH));
 
-        if (briefingOptional.isPresent()) {
-            Briefing briefing = briefingOptional.get();
+        if (briefing != null) {
             breadcrumbs.add(new Breadcrumb(briefing.topic.name, TopicResource.TOPIC_BRIEFINGS_PATH.replace(":topicId", briefing.topic.id.toString())));
             breadcrumbs.add(new Breadcrumb("Briefing " + briefing.briefingDate.format(dateFormatter), "/ui/briefings/" + briefing.id));
             breadcrumbs.add(new Breadcrumb("Summary", context.request().uri()));
@@ -85,9 +89,7 @@ public class SummaryResource {
             // If no briefing, simplify the breadcrumb to avoid arbitrary topic selection
             breadcrumbs.add(new Breadcrumb("Summary", context.request().uri()));
         }
-        data.put("breadcrumbs", breadcrumbs);
-
-        context.response().end(summaryDetail.instance().data(data).render());
+        return breadcrumbs;
     }
 
     private RawString markdownToHtml(String markdown) {

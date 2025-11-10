@@ -73,5 +73,5 @@ footer {
 
 [aria-label="breadcrumb"] li + li::before {
     content: '>';
-    margin-right: var(--pico-spacing);
+    margin-left: -0.75em; /* Reduced spacing */
 }

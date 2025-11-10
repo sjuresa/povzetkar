@@ -43,18 +43,8 @@ public class ViewUtils {
     public Map<String, Object> createTemplateData(RoutingContext context) {
         Map<String, Object> data = new HashMap<>();
 
-        String successMessage = context.session().get(SUCCESS_MESSAGE_KEY);
-        String errorMessage = context.session().get(ERROR_MESSAGE_KEY);
-
-        data.put(SUCCESS_MESSAGE_KEY, successMessage);
-        data.put(ERROR_MESSAGE_KEY, errorMessage);
-
-        if (successMessage != null) {
-            context.session().remove(SUCCESS_MESSAGE_KEY);
-        }
-        if (errorMessage != null) {
-            context.session().remove(ERROR_MESSAGE_KEY);
-        }
+        data.put(SUCCESS_MESSAGE_KEY, context.session().remove(SUCCESS_MESSAGE_KEY));
+        data.put(ERROR_MESSAGE_KEY, context.session().remove(ERROR_MESSAGE_KEY));
 
         data.put("version", appDetails.getVersion());
         return data;

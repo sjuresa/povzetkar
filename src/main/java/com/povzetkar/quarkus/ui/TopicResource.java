@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
+import com.povzetkar.quarkus.ui.util.WebUtils;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
@@ -51,6 +52,7 @@ public class TopicResource {
     private static final String CONTENT_SOURCE_NOT_FOUND_MSG = "ContentSource with id %d not found.";
     private static final String PARAM_USER_ID = "userId";
     private static final String INVALID_USER_ID_FORMAT = "Invalid userId format.";
+    private static final String USER_ID_REQUIRED_MSG = "Form attribute 'userId' is required.";
 
     private final ViewUtils viewUtils;
 
@@ -129,20 +131,12 @@ public class TopicResource {
             showAddForm(context);
             return;
         }
-        String userIdStr = context.request().getFormAttribute(PARAM_USER_ID);
-        Long userId;
-        if (userIdStr == null || userIdStr.isBlank()) {
-            viewUtils.setErrorMessage(context, String.format("Form attribute '%s' is required.", PARAM_USER_ID));
+        Optional<Long> userIdOptional = WebUtils.getValidatedLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, USER_ID_REQUIRED_MSG, viewUtils);
+        if (userIdOptional.isEmpty()) {
             showAddForm(context);
             return;
         }
-        try {
-            userId = Long.parseLong(userIdStr);
-        } catch (NumberFormatException e) {
-            viewUtils.setErrorMessage(context, INVALID_USER_ID_FORMAT);
-            showAddForm(context);
-            return;
-        }
+        Long userId = userIdOptional.get();
 
         Optional<User> userOptional = User.findByIdOptional(userId);
         userOptional.ifPresentOrElse(

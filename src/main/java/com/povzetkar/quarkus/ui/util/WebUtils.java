@@ -78,4 +78,32 @@ public class WebUtils {
             return Optional.empty();
         }
     }
+
+    public static Optional<Long> getValidatedLongFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, ViewUtils viewUtils) {
+        String paramValueStr = context.request().getFormAttribute(paramName);
+        if (paramValueStr == null || paramValueStr.isBlank()) {
+            viewUtils.setErrorMessage(context, requiredMessage);
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.parseLong(paramValueStr));
+        } catch (NumberFormatException e) {
+            viewUtils.setErrorMessage(context, invalidFormatMessage);
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Integer> getValidatedIntegerFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, ViewUtils viewUtils) {
+        String paramValueStr = context.request().getFormAttribute(paramName);
+        if (paramValueStr == null || paramValueStr.isBlank()) {
+            viewUtils.setErrorMessage(context, requiredMessage);
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Integer.parseInt(paramValueStr));
+        } catch (NumberFormatException e) {
+            viewUtils.setErrorMessage(context, invalidFormatMessage);
+            return Optional.empty();
+        }
+    }
 }

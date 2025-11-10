@@ -1,53 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{#insert title}My Application{/}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
-    <link rel="stylesheet" href="/static/css/app.css">
-    <link rel="stylesheet" href="/static/css/custom.css">
-</head>
-<body>
-    <header class="container">
-        <nav>
-            {#if breadcrumbs}
-            <ul aria-label="breadcrumb">
-                {#for item in breadcrumbs}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{#insert title}My Application{/}</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+        <link rel="stylesheet" href="/static/css/app.css">
+        <link rel="stylesheet" href="/static/css/custom.css">
+    </head>
+    <body>
+        <header class="container">
+            <nav>
+                {#if breadcrumbs}
+                <ul aria-label="breadcrumb">
+                    {#for item in breadcrumbs}
                     <li>
                         {#if item_hasNext}
-                            <a href="{item.url}">{item.label}</a>
+                        <a href="{item.url}">{item.label}</a>
                         {#else}
-                            {item.label}
+                        <span aria-current="page">{item.label}</span>
                         {/if}
                     </li>
-                {/for}
-            </ul>
+                    {/for}
+                </ul>
+                {/if}
+                <ul>
+                    <li><a href="/ui/topics">Topics</a></li>
+                    <li><a href="/ui/admin">Admin</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main class="container">
+            {#if successMessage}
+            <div class="alert alert-success" role="alert">
+                {successMessage}
+            </div>
             {/if}
-            <ul>
-                <li><a href="/ui/topics">Topics</a></li>
-                <li><a href="/ui/admin">Admin</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main class="container">
-        {#if successMessage}
-        <div class="alert alert-success" role="alert">
-            {successMessage}
-        </div>
-        {/if}
-        {#if errorMessage}
-        <div class="alert alert-danger" role="alert">
-            {errorMessage}
-        </div>
-        {/if}
+            {#if errorMessage}
+            <div class="alert alert-danger" role="alert">
+                {errorMessage}
+            </div>
+            {/if}
 
-        {#insert content}{/}
-    </main>
-    <footer class="container">
-        <small>&copy; 2025 Povzetkar - v{version}</small>
-    </footer>
-    <script src="/static/js/confirm.js"></script>
-    <script src="/static/js/app.js"></script>
-</body>
+            {#insert content}{/}
+        </main>
+        <footer class="container">
+            <small>&copy; 2025 Povzetkar - v{version}</small>
+        </footer>
+        <script src="/static/js/confirm.js"></script>
+        <script src="/static/js/app.js"></script>
+    </body>
 </html>
