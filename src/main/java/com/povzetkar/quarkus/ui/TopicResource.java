@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.povzetkar.quarkus.ui.util.WebUtils.getLongPathParam;
-
 @ApplicationScoped
 public class TopicResource {
 
@@ -52,7 +50,6 @@ public class TopicResource {
     private static final String CONTENT_SOURCE_NOT_FOUND_MSG = "ContentSource with id %d not found.";
     private static final String PARAM_USER_ID = "userId";
     private static final String INVALID_USER_ID_FORMAT = "Invalid userId format.";
-    private static final String USER_ID_REQUIRED_MSG = "Form attribute 'userId' is required.";
 
     private final ViewUtils viewUtils;
 
@@ -148,7 +145,7 @@ public class TopicResource {
     @Blocking
     public void addTopic(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
-        Optional<Long> userIdOptional = WebUtils.getValidatedLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, USER_ID_REQUIRED_MSG, msg -> viewUtils.setErrorMessage(context, msg));
+        Optional<Long> userIdOptional = WebUtils.getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, msg -> viewUtils.setErrorMessage(context, msg));
         Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
         if (name == null || name.isBlank()) {
@@ -181,7 +178,11 @@ public class TopicResource {
     @Route(path = TOPIC_EDIT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showEditForm(RoutingContext context) {
-        Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (idOptional.isEmpty()) {
+            return;
+        }
+        Long id = idOptional.get();
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> renderEditForm(context, topic));
     }
 
@@ -189,7 +190,11 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
-        Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (idOptional.isEmpty()) {
+            return;
+        }
+        Long id = idOptional.get();
         String name = context.request().getFormAttribute("name");
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
             if (name == null || name.isBlank()) {
@@ -208,7 +213,11 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void deleteTopic(RoutingContext context) {
-        Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (idOptional.isEmpty()) {
+            return;
+        }
+        Long id = idOptional.get();
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
             topic.delete();
             viewUtils.setSuccessMessage(context, "Topic '" + topic.name + "' deleted successfully.");
@@ -219,8 +228,11 @@ public class TopicResource {
     @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void listBriefingsByTopic(RoutingContext context) {
-        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) return;
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (topicIdOptional.isEmpty()) {
+            return;
+        }
+        Long topicId = topicIdOptional.get();
 
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
         query.firstResultOptional().ifPresentOrElse(
@@ -246,10 +258,17 @@ public class TopicResource {
     private record TopicAndContentSource(Topic topic, ContentSource contentSource) {}
 
     private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
-        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) return Optional.empty();
-        Long contentSourceId = getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT);
-        if (contentSourceId == null) return Optional.empty();
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (topicIdOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        Long topicId = topicIdOptional.get();
+
+        Optional<Long> contentSourceIdOptional = WebUtils.getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (contentSourceIdOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        Long contentSourceId = contentSourceIdOptional.get();
 
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
@@ -295,7 +314,11 @@ public class TopicResource {
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void selectContentSource(RoutingContext context) {
-        Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (topicIdOptional.isEmpty()) {
+            return;
+        }
+        Long topicId = topicIdOptional.get();
         getTopicOrHandleNotFound(context, topicId).ifPresent(topic -> {
             Map<String, Object> data = viewUtils.createTemplateData(context);
             String query = context.request().getParam("query");

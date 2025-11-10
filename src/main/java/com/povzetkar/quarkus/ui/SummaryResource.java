@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
+import com.povzetkar.quarkus.ui.util.WebUtils;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -23,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
-import static com.povzetkar.quarkus.ui.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class SummaryResource {
@@ -52,10 +52,11 @@ public class SummaryResource {
     @Route(path = "/ui/summaries/:summaryId", methods = Route.HttpMethod.GET)
     @Blocking
     public void showSummary(RoutingContext context) {
-        Long summaryId = getLongPathParam(context, "summaryId", INVALID_SUMMARY_ID_FORMAT);
-        if (summaryId == null) {
+        Optional<Long> summaryIdOptional = WebUtils.getLongPathParam(context, "summaryId", INVALID_SUMMARY_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (summaryIdOptional.isEmpty()) {
             return;
         }
+        Long summaryId = summaryIdOptional.get();
 
         Optional<Summary> summaryOptional = Summary.find("from Summary s join fetch s.contentItem ci join fetch ci.contentSource cs where s.id = ?1", summaryId).firstResultOptional();
         if (summaryOptional.isEmpty()) {

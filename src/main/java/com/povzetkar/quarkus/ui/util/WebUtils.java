@@ -11,63 +11,63 @@ public class WebUtils {
         // Private constructor to prevent instantiation
     }
 
-    public static Long getLongPathParam(RoutingContext context, String paramName, String errorMessage) {
+    public static Optional<Long> getLongPathParam(RoutingContext context, String paramName, String errorMessage, Consumer<String> errorHandler) {
         String paramValue = context.pathParam(paramName);
         if (paramValue == null) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
+            errorHandler.accept(errorMessage);
+            return Optional.empty();
         }
         try {
-            return Long.parseLong(paramValue);
+            return Optional.of(Long.parseLong(paramValue));
         } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
+            errorHandler.accept(errorMessage);
+            return Optional.empty();
         }
     }
 
-    public static Long getLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage) {
+    public static Optional<Long> getLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage, Consumer<String> errorHandler) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
-            context.response().setStatusCode(400).end(String.format("Form attribute '%s' is required.", attributeName));
-            return null;
+            errorHandler.accept(String.format("Form attribute '%s' is required.", attributeName));
+            return Optional.empty();
         }
         try {
-            return Long.parseLong(attributeValue);
+            return Optional.of(Long.parseLong(attributeValue));
         } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(formatErrorMessage);
-            return null;
+            errorHandler.accept(formatErrorMessage);
+            return Optional.empty();
         }
     }
 
-    public static Integer getIntegerFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage) {
+    public static Optional<Integer> getIntegerFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage, Consumer<String> errorHandler) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
-            context.response().setStatusCode(400).end(String.format("Form attribute '%s' is required.", attributeName));
-            return null;
+            errorHandler.accept(String.format("Form attribute '%s' is required.", attributeName));
+            return Optional.empty();
         }
         try {
-            return Integer.parseInt(attributeValue);
+            return Optional.of(Integer.parseInt(attributeValue));
         } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(formatErrorMessage);
-            return null;
+            errorHandler.accept(formatErrorMessage);
+            return Optional.empty();
         }
     }
 
-    public static Long getLongQueryParam(RoutingContext context, String paramName, String errorMessage) {
+    public static Optional<Long> getLongQueryParam(RoutingContext context, String paramName, String errorMessage, Consumer<String> errorHandler) {
         String paramValue = context.request().getParam(paramName);
         if (paramValue == null || paramValue.isBlank()) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
+            errorHandler.accept(errorMessage);
+            return Optional.empty();
         }
         try {
-            return Long.parseLong(paramValue);
+            return Optional.of(Long.parseLong(paramValue));
         } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(errorMessage);
-            return null;
+            errorHandler.accept(errorMessage);
+            return Optional.empty();
         }
     }
 
-    public static Optional<Long> getOptionalLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage) {
+    public static Optional<Long> getOptionalLongFormAttribute(RoutingContext context, String attributeName) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
             return Optional.empty();
@@ -75,35 +75,7 @@ public class WebUtils {
         try {
             return Optional.of(Long.parseLong(attributeValue));
         } catch (NumberFormatException e) {
-            context.response().setStatusCode(400).end(formatErrorMessage);
-            return Optional.empty();
-        }
-    }
-
-    public static Optional<Long> getValidatedLongFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, Consumer<String> errorHandler) {
-        String paramValueStr = context.request().getFormAttribute(paramName);
-        if (paramValueStr == null || paramValueStr.isBlank()) {
-            errorHandler.accept(requiredMessage);
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(Long.parseLong(paramValueStr));
-        } catch (NumberFormatException e) {
-            errorHandler.accept(invalidFormatMessage);
-            return Optional.empty();
-        }
-    }
-
-    public static Optional<Integer> getValidatedIntegerFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, Consumer<String> errorHandler) {
-        String paramValueStr = context.request().getFormAttribute(paramName);
-        if (paramValueStr == null || paramValueStr.isBlank()) {
-            errorHandler.accept(requiredMessage);
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(Integer.parseInt(paramValueStr));
-        } catch (NumberFormatException e) {
-            errorHandler.accept(invalidFormatMessage);
+            // This method does not use an errorHandler, so it will not set an error message
             return Optional.empty();
         }
     }

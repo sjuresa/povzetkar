@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
-import static com.povzetkar.quarkus.ui.util.WebUtils.getLongQueryParam;
 import static com.povzetkar.quarkus.ui.util.WebUtils.getOptionalLongFormAttribute;
 
 @ApplicationScoped
@@ -31,11 +30,9 @@ public class ContentSourceResource {
     public static final String CONTENT_SOURCES_ADD_PATH = CONTENT_SOURCES_PATH + "/add";
     private static final String PARAM_TOPIC_ID = "topicId";
     private static final String INVALID_OR_MISSING_TOPIC_ID_PARAM = "Invalid or missing topicId parameter.";
-    private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String PARAM_SOURCE_TYPE_ID = "sourceTypeId";
     private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
     private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
-    private static final String SOURCE_TYPE_ID_REQUIRED_MSG = "Form attribute 'sourceTypeId' is required.";
 
     private final ViewUtils viewUtils;
 
@@ -69,11 +66,11 @@ public class ContentSourceResource {
     @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        Long topicId = getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM);
-        if (topicId == null) {
+        Optional<Long> topicIdOptional = WebUtils.getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM, msg -> context.response().setStatusCode(400).end(msg));
+        if (topicIdOptional.isEmpty()) {
             return;
         }
-        renderAddFormWithData(context, topicId, null, null, null); // Fresh form
+        renderAddFormWithData(context, topicIdOptional.get(), null, null, null); // Fresh form
     }
 
     @Route(path = CONTENT_SOURCES_PATH, methods = Route.HttpMethod.POST)
@@ -82,7 +79,7 @@ public class ContentSourceResource {
     public void addContentSource(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
-        Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT).orElse(null); // Always get topicId for re-rendering
+        Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID).orElse(null); // Always get topicId for re-rendering
 
         if (name == null || name.isBlank()) {
             viewUtils.setErrorMessage(context, "Name cannot be blank.");
@@ -94,7 +91,7 @@ public class ContentSourceResource {
             renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
             return;
         }
-        Optional<Integer> sourceTypeIdOptional = WebUtils.getValidatedIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, SOURCE_TYPE_ID_REQUIRED_MSG, msg -> viewUtils.setErrorMessage(context, msg));
+        Optional<Integer> sourceTypeIdOptional = WebUtils.getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, msg -> viewUtils.setErrorMessage(context, msg));
         if (sourceTypeIdOptional.isEmpty()) {
             renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
             return;
@@ -113,9 +110,9 @@ public class ContentSourceResource {
         contentSource.sourceTypeId = sourceTypeId;
         contentSource.persist();
 
-        Optional<Long> topicIdOptional = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicIdOptional.isPresent()) {
-            Long currentTopicId = topicIdOptional.get();
+        Optional<Long> topicIdOptionalFromForm = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID);
+        if (topicIdOptionalFromForm.isPresent()) {
+            Long currentTopicId = topicIdOptionalFromForm.get();
             Optional<Topic> topicOptional = Topic.findByIdOptional(currentTopicId);
             topicOptional.ifPresentOrElse(
                     topic -> {

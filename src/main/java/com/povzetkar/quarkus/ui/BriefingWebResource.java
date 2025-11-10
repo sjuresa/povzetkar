@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.ui;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
+import com.povzetkar.quarkus.ui.util.WebUtils;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
-import static com.povzetkar.quarkus.ui.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class BriefingWebResource {
@@ -46,10 +46,12 @@ public class BriefingWebResource {
     @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
     @Blocking
     public void showBriefing(RoutingContext context) {
-        Long briefingId = getLongPathParam(context, "briefingId", INVALID_BRIEFING_ID_FORMAT);
-        if (briefingId == null) {
+        Optional<Long> briefingIdOptional = WebUtils.getLongPathParam(context, "briefingId", INVALID_BRIEFING_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (briefingIdOptional.isEmpty()) {
             return;
         }
+        Long briefingId = briefingIdOptional.get();
+
         Optional<Briefing> briefingOptional = Briefing.findByIdWithAssociations(briefingId);
         if (briefingOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format(BRIEFING_NOT_FOUND_MSG, briefingId));
