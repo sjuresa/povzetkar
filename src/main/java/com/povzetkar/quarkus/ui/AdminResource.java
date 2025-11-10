@@ -8,7 +8,6 @@ import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import com.povzetkar.quarkus.service.OrchestrationManager;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
-import io.quarkus.panache.common.Sort;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
@@ -86,7 +85,7 @@ public class AdminResource {
         ).page(0, pageSize).list();
         data.put("recentSummaries", recentSummaries);
 
-        List<Briefing> recentBriefings = Briefing.findAll(Sort.by("createdAt", Sort.Direction.Descending)).page(0, pageSize).list();
+        List<Briefing> recentBriefings = Briefing.find("FROM Briefing b JOIN FETCH b.topic ORDER BY b.createdAt DESC").page(0, pageSize).list();
         data.put("recentBriefings", recentBriefings);
 
         List<ContentItem> failedContentItems = ContentItem.find(

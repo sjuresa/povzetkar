@@ -87,6 +87,18 @@ public class TopicResource {
         return topicOptional;
     }
 
+    private void renderEditForm(RoutingContext context, Topic topic) {
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        data.put(TOPIC_KEY, topic);
+        data.put(BREADCRUMBS_KEY, List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                new Breadcrumb(topic.name, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString())),
+                new Breadcrumb("Edit", context.request().uri())
+        ));
+        context.response().end(topicForm.instance().data(data).render());
+    }
+
     @Route(path = TOPICS_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void getTopics(RoutingContext context) {
@@ -156,17 +168,7 @@ public class TopicResource {
     @Blocking
     public void showEditForm(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
-        getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
-            Map<String, Object> data = viewUtils.createTemplateData(context);
-            data.put(TOPIC_KEY, topic);
-            data.put(BREADCRUMBS_KEY, List.of(
-                    ViewUtils.HOME_BREADCRUMB,
-                    new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                    new Breadcrumb(topic.name, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString())),
-                    new Breadcrumb("Edit", context.request().uri())
-            ));
-            context.response().end(topicForm.instance().data(data).render());
-        });
+        getTopicOrHandleNotFound(context, id).ifPresent(topic -> renderEditForm(context, topic));
     }
 
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
@@ -178,7 +180,7 @@ public class TopicResource {
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
             if (name == null || name.isBlank()) {
                 viewUtils.setErrorMessage(context, "Topic name cannot be blank.");
-                showEditForm(context);
+                renderEditForm(context, topic); // Call helper with existing topic
                 return;
             }
             topic.name = name;

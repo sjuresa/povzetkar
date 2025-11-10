@@ -46,13 +46,7 @@ public class ContentSourceResource {
         this.viewUtils = viewUtils;
     }
 
-    @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
-    @Blocking
-    public void showAddForm(RoutingContext context) {
-        Long topicId = getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM);
-        if (topicId == null) {
-            return;
-        }
+    private void renderAddForm(RoutingContext context, Long topicId) {
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
                 .filter(st -> st != SourceTypeEnum.DEFAULT)
                 .toList();
@@ -69,6 +63,16 @@ public class ContentSourceResource {
         context.response().end(contentSourceForm.instance().data(data).render());
     }
 
+    @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
+    @Blocking
+    public void showAddForm(RoutingContext context) {
+        Long topicId = getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM);
+        if (topicId == null) {
+            return;
+        }
+        renderAddForm(context, topicId);
+    }
+
     @Route(path = CONTENT_SOURCES_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
@@ -78,24 +82,32 @@ public class ContentSourceResource {
 
         if (name == null || name.isBlank()) {
             viewUtils.setErrorMessage(context, "Name cannot be blank.");
-            showAddForm(context);
+            // Need to get topicId from form attribute for re-rendering
+            Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT).orElse(null);
+            renderAddForm(context, topicId);
             return;
         }
         if (sourceIdentifier == null || sourceIdentifier.isBlank()) {
             viewUtils.setErrorMessage(context, "Source Identifier cannot be blank.");
-            showAddForm(context);
+            // Need to get topicId from form attribute for re-rendering
+            Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT).orElse(null);
+            renderAddForm(context, topicId);
             return;
         }
         Optional<Integer> sourceTypeIdOptional = WebUtils.getValidatedIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, SOURCE_TYPE_ID_REQUIRED_MSG, viewUtils);
         if (sourceTypeIdOptional.isEmpty()) {
-            showAddForm(context);
+            // Need to get topicId from form attribute for re-rendering
+            Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT).orElse(null);
+            renderAddForm(context, topicId);
             return;
         }
         int sourceTypeId = sourceTypeIdOptional.get();
 
         if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
             viewUtils.setErrorMessage(context, INVALID_SOURCE_TYPE_ID);
-            showAddForm(context);
+            // Need to get topicId from form attribute for re-rendering
+            Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT).orElse(null);
+            renderAddForm(context, topicId);
             return;
         }
 
@@ -118,7 +130,9 @@ public class ContentSourceResource {
                     },
                     () -> {
                         viewUtils.setErrorMessage(context, String.format("Topic with id %d not found.", topicId));
-                        showAddForm(context);
+                        // Need to get topicId from form attribute for re-rendering
+                        Long currentTopicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT).orElse(null);
+                        renderAddForm(context, currentTopicId);
                     }
             );
             return;
