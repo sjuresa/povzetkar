@@ -148,7 +148,7 @@ public class TopicResource {
     @Blocking
     public void addTopic(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
-        Optional<Long> userIdOptional = WebUtils.getValidatedLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, USER_ID_REQUIRED_MSG, viewUtils);
+        Optional<Long> userIdOptional = WebUtils.getValidatedLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, USER_ID_REQUIRED_MSG, msg -> viewUtils.setErrorMessage(context, msg));
         Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
         if (name == null || name.isBlank()) {
@@ -200,7 +200,7 @@ public class TopicResource {
             topic.name = name;
             topic.persist();
             viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-            viewUtils.handleRedirect(context, TOPICS_PATH);
+            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString()));
         });
     }
 

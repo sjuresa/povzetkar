@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.ui.util;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class WebUtils {
 
@@ -79,30 +80,30 @@ public class WebUtils {
         }
     }
 
-    public static Optional<Long> getValidatedLongFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, ViewUtils viewUtils) {
+    public static Optional<Long> getValidatedLongFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, Consumer<String> errorHandler) {
         String paramValueStr = context.request().getFormAttribute(paramName);
         if (paramValueStr == null || paramValueStr.isBlank()) {
-            viewUtils.setErrorMessage(context, requiredMessage);
+            errorHandler.accept(requiredMessage);
             return Optional.empty();
         }
         try {
             return Optional.of(Long.parseLong(paramValueStr));
         } catch (NumberFormatException e) {
-            viewUtils.setErrorMessage(context, invalidFormatMessage);
+            errorHandler.accept(invalidFormatMessage);
             return Optional.empty();
         }
     }
 
-    public static Optional<Integer> getValidatedIntegerFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, ViewUtils viewUtils) {
+    public static Optional<Integer> getValidatedIntegerFormAttribute(RoutingContext context, String paramName, String invalidFormatMessage, String requiredMessage, Consumer<String> errorHandler) {
         String paramValueStr = context.request().getFormAttribute(paramName);
         if (paramValueStr == null || paramValueStr.isBlank()) {
-            viewUtils.setErrorMessage(context, requiredMessage);
+            errorHandler.accept(requiredMessage);
             return Optional.empty();
         }
         try {
             return Optional.of(Integer.parseInt(paramValueStr));
         } catch (NumberFormatException e) {
-            viewUtils.setErrorMessage(context, invalidFormatMessage);
+            errorHandler.accept(invalidFormatMessage);
             return Optional.empty();
         }
     }

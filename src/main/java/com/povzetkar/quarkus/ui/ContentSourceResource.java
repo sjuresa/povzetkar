@@ -94,7 +94,7 @@ public class ContentSourceResource {
             renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
             return;
         }
-        Optional<Integer> sourceTypeIdOptional = WebUtils.getValidatedIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, SOURCE_TYPE_ID_REQUIRED_MSG, viewUtils);
+        Optional<Integer> sourceTypeIdOptional = WebUtils.getValidatedIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, SOURCE_TYPE_ID_REQUIRED_MSG, msg -> viewUtils.setErrorMessage(context, msg));
         if (sourceTypeIdOptional.isEmpty()) {
             renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
             return;
