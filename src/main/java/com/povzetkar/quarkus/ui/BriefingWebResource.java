@@ -73,7 +73,7 @@ public class BriefingWebResource {
         data.put("breadcrumbs", List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb("Topics", TOPICS_PATH),
-                new Breadcrumb(briefing.topic.name, TopicResource.TOPIC_BRIEFINGS_PATH.replace(":topicId", briefing.topic.id.toString())),
+                new Breadcrumb(briefing.topic.name, TopicResource.TOPIC_BRIEFINGS_PATH.replace(TopicResource.TOPIC_ID_PATH_PARAM, briefing.topic.id.toString())),
                 new Breadcrumb("Briefing", context.request().uri())
         ));
 

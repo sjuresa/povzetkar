@@ -40,7 +40,7 @@ public class TopicResource {
     private static final String TOPIC_KEY = "topic";
     private static final String BREADCRUMBS_KEY = "breadcrumbs";
     private static final String TOPICS_LABEL = "Topics";
-    private static final String TOPIC_ID_PATH_PARAM = ":topicId";
+    public static final String TOPIC_ID_PATH_PARAM = ":topicId";
 
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";

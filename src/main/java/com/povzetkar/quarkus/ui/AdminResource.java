@@ -12,14 +12,8 @@ import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.SessionHandler;
-import io.vertx.ext.web.sstore.LocalSessionStore;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -60,11 +54,6 @@ public class AdminResource {
         this.contentSourceDetailService = contentSourceDetailService;
         this.orchestrationManager = orchestrationManager;
         this.viewUtils = viewUtils;
-    }
-
-    public void init(@Observes Router router, Vertx vertx) {
-        router.route("/ui/*").order(-1).handler(BodyHandler.create());
-        router.route("/ui/*").order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     }
 
     private void redirectBack(RoutingContext context, boolean success, String message) {
