@@ -6,8 +6,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class AppDetails {
 
-    @ConfigProperty(name = "quarkus.application.version")
-    String version;
+    private final String version;
+
+    public AppDetails(@ConfigProperty(name = "quarkus.application.version") String version) {
+        this.version = version;
+    }
 
     public String getVersion() {
         return version;
