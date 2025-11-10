@@ -70,3 +70,8 @@ dialog {
 footer {
     text-align: center;
 }
+
+[aria-label="breadcrumb"] li + li::before {
+    content: '>';
+    margin-right: var(--pico-spacing);
+}

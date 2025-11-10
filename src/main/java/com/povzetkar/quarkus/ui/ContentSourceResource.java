@@ -83,8 +83,17 @@ public class ContentSourceResource {
             showAddForm(context);
             return;
         }
-        Integer sourceTypeId = getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT);
-        if (sourceTypeId == null) {
+        int sourceTypeId;
+        String sourceTypeIdStr = context.request().getFormAttribute(PARAM_SOURCE_TYPE_ID);
+        if (sourceTypeIdStr == null || sourceTypeIdStr.isBlank()) {
+            viewUtils.setErrorMessage(context, String.format("Form attribute '%s' is required.", PARAM_SOURCE_TYPE_ID));
+            showAddForm(context);
+            return;
+        }
+        try {
+            sourceTypeId = Integer.parseInt(sourceTypeIdStr);
+        } catch (NumberFormatException e) {
+            viewUtils.setErrorMessage(context, INVALID_SOURCE_TYPE_ID_FORMAT);
             showAddForm(context);
             return;
         }

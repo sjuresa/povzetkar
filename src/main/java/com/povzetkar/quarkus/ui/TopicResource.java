@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.povzetkar.quarkus.ui.util.WebUtils.getLongFormAttribute;
 import static com.povzetkar.quarkus.ui.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
@@ -130,8 +129,20 @@ public class TopicResource {
             showAddForm(context);
             return;
         }
-        Long userId = getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT);
-        if (userId == null) return;
+        String userIdStr = context.request().getFormAttribute(PARAM_USER_ID);
+        Long userId;
+        if (userIdStr == null || userIdStr.isBlank()) {
+            viewUtils.setErrorMessage(context, String.format("Form attribute '%s' is required.", PARAM_USER_ID));
+            showAddForm(context);
+            return;
+        }
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            viewUtils.setErrorMessage(context, INVALID_USER_ID_FORMAT);
+            showAddForm(context);
+            return;
+        }
 
         Optional<User> userOptional = User.findByIdOptional(userId);
         userOptional.ifPresentOrElse(

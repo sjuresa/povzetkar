@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Summary;
-import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.vladsch.flexmark.html.HtmlRenderer;
@@ -83,11 +82,7 @@ public class SummaryResource {
             breadcrumbs.add(new Breadcrumb("Briefing " + briefing.briefingDate.format(dateFormatter), "/ui/briefings/" + briefing.id));
             breadcrumbs.add(new Breadcrumb("Summary", context.request().uri()));
         } else {
-            // If no briefing, try to find a topic from the content source
-            if (!summary.contentItem.contentSource.topics.isEmpty()) {
-                Topic topic = summary.contentItem.contentSource.topics.iterator().next(); // Get the first topic
-                breadcrumbs.add(new Breadcrumb(topic.name, TopicResource.TOPIC_BRIEFINGS_PATH.replace(":topicId", topic.id.toString())));
-            }
+            // If no briefing, simplify the breadcrumb to avoid arbitrary topic selection
             breadcrumbs.add(new Breadcrumb("Summary", context.request().uri()));
         }
         data.put("breadcrumbs", breadcrumbs);
