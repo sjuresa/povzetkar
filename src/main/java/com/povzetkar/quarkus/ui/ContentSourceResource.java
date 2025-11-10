@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
-import static com.povzetkar.quarkus.ui.util.WebUtils.getOptionalLongFormAttribute;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -33,6 +32,8 @@ public class ContentSourceResource {
     private static final String PARAM_SOURCE_TYPE_ID = "sourceTypeId";
     private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
     private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
+    private static final String TOPIC_ID_REQUIRED_MSG = "Topic ID is required to add a content source.";
+
 
     private final ViewUtils viewUtils;
 
@@ -79,7 +80,15 @@ public class ContentSourceResource {
     public void addContentSource(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
-        Long topicId = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID).orElse(null); // Always get topicId for re-rendering
+        Long topicId;
+
+        try {
+            topicId = WebUtils.getOptionalLongFormAttribute(context, PARAM_TOPIC_ID).orElse(null);
+        } catch (IllegalArgumentException e) {
+            viewUtils.setErrorMessage(context, String.format("Invalid format for topic ID: %s", e.getMessage()));
+            renderAddFormWithData(context, null, name, sourceIdentifier, null); // Cannot determine topicId, so pass null
+            return;
+        }
 
         if (name == null || name.isBlank()) {
             viewUtils.setErrorMessage(context, "Name cannot be blank.");
@@ -110,11 +119,16 @@ public class ContentSourceResource {
         contentSource.sourceTypeId = sourceTypeId;
         contentSource.persist();
 
-        Optional<Long> topicIdOptionalFromForm = getOptionalLongFormAttribute(context, PARAM_TOPIC_ID);
-        if (topicIdOptionalFromForm.isPresent()) {
-            Long currentTopicId = topicIdOptionalFromForm.get();
-            Optional<Topic> topicOptional = Topic.findByIdOptional(currentTopicId);
-            topicOptional.ifPresentOrElse(
+        Optional<Long> topicIdOptionalFromForm = Optional.ofNullable(topicId);
+        if (topicIdOptionalFromForm.isEmpty()) { // topicId is required for this UI flow
+            viewUtils.setErrorMessage(context, TOPIC_ID_REQUIRED_MSG);
+            renderAddFormWithData(context, null, name, sourceIdentifier, sourceTypeId);
+            return;
+        }
+
+        Long currentTopicId = topicIdOptionalFromForm.get();
+        Optional<Topic> topicOptional = Topic.findByIdOptional(currentTopicId);
+        topicOptional.ifPresentOrElse(
                     topic -> {
                         topic.contentSources.add(contentSource);
                         topic.persist();
@@ -126,10 +140,5 @@ public class ContentSourceResource {
                         renderAddFormWithData(context, currentTopicId, name, sourceIdentifier, sourceTypeId);
                     }
             );
-            return;
-        }
-
-        viewUtils.setSuccessMessage(context, "Content Source created successfully.");
-        viewUtils.handleRedirect(context, UI_BASE_PATH);
     }
 }

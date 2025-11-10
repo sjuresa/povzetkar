@@ -75,8 +75,7 @@ public class WebUtils {
         try {
             return Optional.of(Long.parseLong(attributeValue));
         } catch (NumberFormatException e) {
-            // This method does not use an errorHandler, so it will not set an error message
-            return Optional.empty();
+            throw new IllegalArgumentException("Invalid number format for optional form attribute '" + attributeName + "'.", e);
         }
     }
 }
