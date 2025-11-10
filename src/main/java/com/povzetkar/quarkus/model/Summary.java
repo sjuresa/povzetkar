@@ -1,6 +1,6 @@
 package com.povzetkar.quarkus.model;
 
-import com.povzetkar.quarkus.util.TextUtils;
+import com.povzetkar.quarkus.ui.util.TextUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

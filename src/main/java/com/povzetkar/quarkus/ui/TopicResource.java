@@ -4,6 +4,8 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.ViewUtils;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
@@ -14,16 +16,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static com.povzetkar.quarkus.util.WebUtils.getLongFormAttribute;
-import static com.povzetkar.quarkus.util.WebUtils.getLongPathParam;
+import static com.povzetkar.quarkus.ui.util.WebUtils.getLongFormAttribute;
+import static com.povzetkar.quarkus.ui.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class TopicResource {
 
-    // UI Paths
     public static final String UI_BASE_PATH = "/ui";
     public static final String TOPICS_PATH = UI_BASE_PATH + "/topics";
     public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add";
@@ -35,9 +39,11 @@ public class TopicResource {
     public static final String TOPIC_REMOVE_SOURCE_PATH = TOPICS_PATH + "/:topicId/remove-source/:contentSourceId";
     public static final String TOPIC_SELECT_SOURCE_PATH = TOPICS_PATH + "/:topicId/select-source";
 
-    // Template and Message Constants
-    private static final String TOPIC = "topic";
-    private static final String HEADER_LOCATION = "Location";
+    private static final String TOPIC_KEY = "topic";
+    private static final String BREADCRUMBS_KEY = "breadcrumbs";
+    private static final String TOPICS_LABEL = "Topics";
+    private static final String TOPIC_ID_PATH_PARAM = ":topicId";
+
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
     private static final String PARAM_TOPIC_ID = "topicId";
@@ -47,23 +53,30 @@ public class TopicResource {
     private static final String PARAM_USER_ID = "userId";
     private static final String INVALID_USER_ID_FORMAT = "Invalid userId format.";
 
+    private final ViewUtils viewUtils;
+
     @ConfigProperty(name = "povzetkar.ui.date.format")
     String dateFormat;
 
+    private final Template topics;
     private final Template topicForm;
     private final Template briefingsByTopic;
     private final Template selectContentSource;
 
-    public TopicResource(@Location("topic-form.html") Template topicForm,
+    public TopicResource(@Location("topics.html") Template topics,
+                         @Location("topic-form.html") Template topicForm,
                          @Location("briefings-by-topic.html") Template briefingsByTopic,
-                         @Location("select-content-source.html") Template selectContentSource) {
+                         @Location("select-content-source.html") Template selectContentSource,
+                         ViewUtils viewUtils) {
+        this.topics = topics;
         this.topicForm = topicForm;
         this.briefingsByTopic = briefingsByTopic;
         this.selectContentSource = selectContentSource;
+        this.viewUtils = viewUtils;
     }
 
     private Optional<Topic> getTopicOrHandleNotFound(RoutingContext context, Long topicId) {
-        if (topicId == null) { // getLongPathParam already handled 400 response
+        if (topicId == null) {
             return Optional.empty();
         }
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
@@ -73,11 +86,38 @@ public class TopicResource {
         return topicOptional;
     }
 
+    @Route(path = TOPICS_PATH, methods = Route.HttpMethod.GET)
+    @Blocking
+    public void getTopics(RoutingContext context) {
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        List<User> usersWithTopics = User.findAllWithTopics();
+        Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
+                .filter(user -> !user.topics.isEmpty())
+                .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
+                        .sorted(Comparator.comparing(topic -> topic.name))
+                        .toList()));
+        data.put("topicsByUser", topicsByUser);
+        data.put(BREADCRUMBS_KEY, List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb(TOPICS_LABEL, TOPICS_PATH)
+        ));
+        context.response()
+                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                .end(topics.instance().data(data).render());
+    }
+
     @Route(path = TOPIC_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        List<User> users = User.listAll();
-        context.response().end(topicForm.data("users", users).data(TOPIC, null).render());
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        data.put("users", User.listAll());
+        data.put(TOPIC_KEY, null);
+        data.put(BREADCRUMBS_KEY, List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                new Breadcrumb("Add Topic", TOPIC_ADD_PATH)
+        ));
+        context.response().end(topicForm.instance().data(data).render());
     }
 
     @Route(path = TOPICS_PATH, methods = Route.HttpMethod.POST)
@@ -86,13 +126,12 @@ public class TopicResource {
     public void addTopic(RoutingContext context) {
         String name = context.request().getFormAttribute("name");
         if (name == null || name.isBlank()) {
-            context.response().setStatusCode(400).end("Topic name cannot be blank.");
+            viewUtils.setErrorMessage(context, "Topic name cannot be blank.");
+            showAddForm(context);
             return;
         }
         Long userId = getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT);
-        if (userId == null) {
-            return;
-        }
+        if (userId == null) return;
 
         Optional<User> userOptional = User.findByIdOptional(userId);
         userOptional.ifPresentOrElse(
@@ -101,7 +140,8 @@ public class TopicResource {
                     topic.user = user;
                     topic.name = name;
                     topic.persist();
-                    context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
+                    viewUtils.setSuccessMessage(context, "Topic created successfully.");
+                    viewUtils.handleRedirect(context, TOPICS_PATH);
                 },
                 () -> context.response().setStatusCode(404).end(String.format("User with id %d not found.", userId))
         );
@@ -111,9 +151,17 @@ public class TopicResource {
     @Blocking
     public void showEditForm(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
-        getTopicOrHandleNotFound(context, id).ifPresent(topic ->
-                context.response().end(topicForm.data(TOPIC, topic).render())
-        );
+        getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
+            Map<String, Object> data = viewUtils.createTemplateData(context);
+            data.put(TOPIC_KEY, topic);
+            data.put(BREADCRUMBS_KEY, List.of(
+                    ViewUtils.HOME_BREADCRUMB,
+                    new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                    new Breadcrumb(topic.name, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString())),
+                    new Breadcrumb("Edit", context.request().uri())
+            ));
+            context.response().end(topicForm.instance().data(data).render());
+        });
     }
 
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
@@ -122,14 +170,16 @@ public class TopicResource {
     public void updateTopic(RoutingContext context) {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
         String name = context.request().getFormAttribute("name");
-        if (name == null || name.isBlank()) {
-            context.response().setStatusCode(400).end("Topic name cannot be blank.");
-            return;
-        }
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
+            if (name == null || name.isBlank()) {
+                viewUtils.setErrorMessage(context, "Topic name cannot be blank.");
+                showEditForm(context);
+                return;
+            }
             topic.name = name;
             topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
+            viewUtils.setSuccessMessage(context, "Topic updated successfully.");
+            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString()));
         });
     }
 
@@ -140,7 +190,8 @@ public class TopicResource {
         Long id = getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT);
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
             topic.delete();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, UI_BASE_PATH).end();
+            viewUtils.setSuccessMessage(context, "Topic '" + topic.name + "' deleted successfully.");
+            viewUtils.handleRedirect(context, TOPICS_PATH);
         });
     }
 
@@ -148,37 +199,36 @@ public class TopicResource {
     @Blocking
     public void listBriefingsByTopic(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) {
-            return;
-        }
+        if (topicId == null) return;
+
         PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
         query.firstResultOptional().ifPresentOrElse(
                 topic -> {
-                    List<Briefing> briefings = Briefing.find("topic = ?1 order by briefingDate desc", topic).list();
+                    Map<String, Object> data = viewUtils.createTemplateData(context);
+                    data.put(TOPIC_KEY, topic);
+                    data.put("briefings", Briefing.find("topic = ?1 order by briefingDate desc", topic).list());
+                    data.put("dateFormat", dateFormat);
+                    data.put(BREADCRUMBS_KEY, List.of(
+                            ViewUtils.HOME_BREADCRUMB,
+                            new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                            new Breadcrumb(topic.name, context.request().uri())
+                    ));
                     context.response()
                             .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
                             .putHeader("Pragma", "no-cache")
-                            .end(briefingsByTopic.data(TOPIC, topic)
-                                    .data("briefings", briefings)
-                                    .data("dateFormat", dateFormat)
-                                    .render());
+                            .end(briefingsByTopic.instance().data(data).render());
                 },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
         );
     }
 
-    private record TopicAndContentSource(Topic topic, ContentSource contentSource) {
-    }
+    private record TopicAndContentSource(Topic topic, ContentSource contentSource) {}
 
     private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
-        if (topicId == null) {
-            return Optional.empty(); // getLongPathParam already handled 400 response
-        }
+        if (topicId == null) return Optional.empty();
         Long contentSourceId = getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT);
-        if (contentSourceId == null) {
-            return Optional.empty(); // getLongPathParam already handled 400 response
-        }
+        if (contentSourceId == null) return Optional.empty();
 
         Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         if (topicOptional.isEmpty()) {
@@ -203,7 +253,8 @@ public class TopicResource {
             pair.topic.contentSources.add(pair.contentSource);
             pair.contentSource.topics.add(pair.topic);
             pair.topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+            viewUtils.setSuccessMessage(context, "Content source added to topic.");
+            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, pair.topic.id.toString()));
         });
     }
 
@@ -215,7 +266,8 @@ public class TopicResource {
             pair.topic.contentSources.remove(pair.contentSource);
             pair.contentSource.topics.remove(pair.topic);
             pair.topic.persist();
-            context.response().setStatusCode(303).putHeader(HEADER_LOCATION, TOPICS_PATH + "/" + pair.topic.id + "/briefings").end();
+            viewUtils.setSuccessMessage(context, "Content source removed from topic.");
+            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, pair.topic.id.toString()));
         });
     }
 
@@ -224,6 +276,7 @@ public class TopicResource {
     public void selectContentSource(RoutingContext context) {
         Long topicId = getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT);
         getTopicOrHandleNotFound(context, topicId).ifPresent(topic -> {
+            Map<String, Object> data = viewUtils.createTemplateData(context);
             String query = context.request().getParam("query");
             List<ContentSource> contentSources;
             if (query != null && !query.isBlank()) {
@@ -231,7 +284,16 @@ public class TopicResource {
             } else {
                 contentSources = ContentSource.listAll();
             }
-            context.response().end(selectContentSource.data(TOPIC, topic).data("contentSources", contentSources).data("query", query).render());
+            data.put(TOPIC_KEY, topic);
+            data.put("contentSources", contentSources);
+            data.put("query", query);
+            data.put(BREADCRUMBS_KEY, List.of(
+                    ViewUtils.HOME_BREADCRUMB,
+                    new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                    new Breadcrumb(topic.name, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString())),
+                    new Breadcrumb("Select Source", context.request().uri())
+            ));
+            context.response().end(selectContentSource.instance().data(data).render());
         });
     }
 }

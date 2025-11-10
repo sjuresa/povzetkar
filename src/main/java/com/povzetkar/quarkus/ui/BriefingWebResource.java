@@ -1,8 +1,8 @@
 package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.model.Briefing;
-import com.povzetkar.quarkus.model.Topic;
-import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -18,9 +18,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static com.povzetkar.quarkus.util.WebUtils.getLongPathParam;
+import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
+import static com.povzetkar.quarkus.ui.util.WebUtils.getLongPathParam;
 
 @ApplicationScoped
 public class BriefingWebResource {
@@ -28,32 +28,19 @@ public class BriefingWebResource {
     private static final String INVALID_BRIEFING_ID_FORMAT = "Invalid briefing ID format.";
     private static final String BRIEFING_NOT_FOUND_MSG = "Briefing with id %d not found.";
 
-    private final Template topics;
+    private final ViewUtils viewUtils;
+
     private final Template briefingDetail;
     private final Parser markdownParser;
     private final HtmlRenderer htmlRenderer;
 
-    public BriefingWebResource(@Location("topics.html") Template topics, @Location("briefing-detail.html") Template briefingDetail) {
-        this.topics = topics;
+    public BriefingWebResource(@Location("briefing-detail.html") Template briefingDetail, ViewUtils viewUtils) {
         this.briefingDetail = briefingDetail;
+        this.viewUtils = viewUtils;
 
         MutableDataSet options = new MutableDataSet();
         this.markdownParser = Parser.builder(options).build();
         this.htmlRenderer = HtmlRenderer.builder(options).build();
-    }
-
-    @Route(path = "/ui", methods = Route.HttpMethod.GET)
-    @Blocking
-    public void listTopics(RoutingContext context) {
-        List<User> usersWithTopics = User.findAllWithTopics();
-        Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
-                .filter(user -> !user.topics.isEmpty())
-                .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
-                        .sorted(Comparator.comparing(topic -> topic.name))
-                        .toList()));
-        context.response()
-                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
-                .end(topics.data("topicsByUser", topicsByUser).render());
     }
 
     @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
@@ -79,7 +66,16 @@ public class BriefingWebResource {
 
         BriefingDetailDto dto = new BriefingDetailDto(briefing, metaSummaryHtml, summaryDtos);
 
-        context.response().end(briefingDetail.data("briefing", dto).render());
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        data.put("briefing", dto);
+        data.put("breadcrumbs", List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb("Topics", TOPICS_PATH),
+                new Breadcrumb(briefing.topic.name, TopicResource.TOPIC_BRIEFINGS_PATH.replace(":topicId", briefing.topic.id.toString())),
+                new Breadcrumb("Briefing", context.request().uri())
+        ));
+
+        context.response().end(briefingDetail.instance().data(data).render());
     }
 
     private RawString markdownToHtml(String markdown) {

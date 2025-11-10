@@ -1,7 +1,7 @@
 package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.povzetkar.quarkus.util.TextUtils;
+import com.povzetkar.quarkus.ui.util.TextUtils;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;

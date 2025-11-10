@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Breadcrumb Navigation:** Implemented dynamic breadcrumb navigation in the master layout (`main.html`) to enhance user orientation.
+    - Centralized "Povzetkar" home breadcrumb in `ViewUtils` for DRY principle adherence.
+    - Breadcrumbs dynamically adjust based on the current page and its context (e.g., topic, briefing, summary).
+    - Added a visual separator ('>') between breadcrumb elements.
+- **Flash Messages:** Integrated a session-based flash message system for user feedback on actions (success/error).
+    - Consolidated flash message handling in `ViewUtils` for consistent usage across resources.
+    - Flash messages are rendered in `main.html` and automatically cleared after display.
+- **Dedicated Home Page:** Created a new home page (`home.html` and `HomeResource.java`) at `/ui` to serve as the application's landing page.
+- **Footer Version Display:** Added dynamic display of the application version (from `pom.xml`) to the footer in `main.html`.
 - **Admin UI Page:** Created a new administrative UI page (`/ui/admin`) with enhanced features for triggering system actions and monitoring.
     - Semantic HTML5 elements and improved form structures for better accessibility.
     - Backend endpoints (`/ui/admin/enrich-sources`, `/ui/admin/run-orchestration`) in `AdminResource.java` to trigger system-level actions.
@@ -28,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `ContentSource` entity's `subscriberCount` from `long` to `int`.
 - Modified `ContentSourceDetailService.ContentSourceDetails` record to use `int` for `subscriberCount`.
 - Modified `YouTubeDetailEnrichmentStrategy` to use `intValue()` for `subscriberCount`.
+- **UI Navigation:** Moved the main topics listing to `/ui/topics` from `/ui` to provide a dedicated home page.
 
 ### Fixed
 
@@ -38,11 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `BlockingOperationNotAllowedException` by annotating blocking UI resource methods (`getAdminPage`, `enrichSources`, `runOrchestration`) with `@Blocking`.
 - Corrected mobile executive summary display from a transparent overlay to a Pico.css modal, with improved positioning and readability.
 - Added logging to catch blocks in `AdminResource.java` to prevent exception swallowing and improve debuggability.
+- **Breadcrumb Logic:** Corrected breadcrumb generation for summary pages to handle cases where a briefing might not yet exist, and removed redundant date information from briefing breadcrumbs.
 
 ### Refactored
 
 - Centralized `createdAt` field and `formattedCreatedAt` method into `BaseAuditableEntity` to adhere to DRY principle. `Briefing`, `ContentItem`, and `Summary` now extend this base class.
 - Extracted duplicate redirect logic in `AdminResource.java` into a private helper method `redirectBack` to improve maintainability and adhere to the DRY principle.
+- **UI Utilities:** Refactored `ViewUtils` to be an `@ApplicationScoped` bean, allowing dependency injection and centralizing common UI helper methods.
 
 ### Documentation
 

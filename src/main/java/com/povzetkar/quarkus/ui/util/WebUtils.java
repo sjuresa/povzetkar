@@ -1,4 +1,4 @@
-package com.povzetkar.quarkus.util;
+package com.povzetkar.quarkus.ui.util;
 
 import io.vertx.ext.web.RoutingContext;
 

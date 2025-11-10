@@ -6,17 +6,6 @@
         <p>This page allows administrators to trigger system-level actions.</p>
     </header>
 
-    {#if successMessage}
-        <div class="alert alert-success" role="alert">
-            {successMessage}
-        </div>
-    {/if}
-    {#if errorMessage}
-        <div class="alert alert-danger" role="alert">
-            {errorMessage}
-        </div>
-    {/if}
-
     {#if pendingContentItems}
     <section id="pending-content-items">
         <h2>Pending Content Items</h2>

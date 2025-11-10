@@ -3,6 +3,8 @@ package com.povzetkar.quarkus.ui;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.ViewUtils;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
@@ -13,13 +15,12 @@ import jakarta.transaction.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
-import static com.povzetkar.quarkus.util.WebUtils.getIntegerFormAttribute;
-import static com.povzetkar.quarkus.util.WebUtils.getLongQueryParam;
-import static com.povzetkar.quarkus.util.WebUtils.getOptionalLongFormAttribute;
+import static com.povzetkar.quarkus.ui.util.WebUtils.*;
 
 @ApplicationScoped
 public class ContentSourceResource {
@@ -33,11 +34,13 @@ public class ContentSourceResource {
     private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
     private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
 
+    private final ViewUtils viewUtils;
 
     private final Template contentSourceForm;
 
-    public ContentSourceResource(@Location("content-source-form.html") Template contentSourceForm) {
+    public ContentSourceResource(@Location("content-source-form.html") Template contentSourceForm, ViewUtils viewUtils) {
         this.contentSourceForm = contentSourceForm;
+        this.viewUtils = viewUtils;
     }
 
     @Route(path = CONTENT_SOURCES_ADD_PATH, methods = Route.HttpMethod.GET)
@@ -50,7 +53,17 @@ public class ContentSourceResource {
         List<SourceTypeEnum> sourceTypes = Arrays.stream(SourceTypeEnum.values())
                 .filter(st -> st != SourceTypeEnum.DEFAULT)
                 .toList();
-        context.response().end(contentSourceForm.data(PARAM_TOPIC_ID, topicId).data("sourceTypes", sourceTypes).render());
+
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        data.put(PARAM_TOPIC_ID, topicId);
+        data.put("sourceTypes", sourceTypes);
+        data.put("breadcrumbs", List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb("Topics", TOPICS_PATH),
+                new Breadcrumb("Add Content Source", context.request().uri())
+        ));
+
+        context.response().end(contentSourceForm.instance().data(data).render());
     }
 
     @Route(path = CONTENT_SOURCES_PATH, methods = Route.HttpMethod.POST)
@@ -61,19 +74,23 @@ public class ContentSourceResource {
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
 
         if (name == null || name.isBlank()) {
-            context.response().setStatusCode(400).end("Name cannot be blank.");
+            viewUtils.setErrorMessage(context, "Name cannot be blank.");
+            showAddForm(context);
             return;
         }
         if (sourceIdentifier == null || sourceIdentifier.isBlank()) {
-            context.response().setStatusCode(400).end("Source Identifier cannot be blank.");
+            viewUtils.setErrorMessage(context, "Source Identifier cannot be blank.");
+            showAddForm(context);
             return;
         }
         Integer sourceTypeId = getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT);
         if (sourceTypeId == null) {
+            showAddForm(context);
             return;
         }
         if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
-            context.response().setStatusCode(400).end(INVALID_SOURCE_TYPE_ID);
+            viewUtils.setErrorMessage(context, INVALID_SOURCE_TYPE_ID);
+            showAddForm(context);
             return;
         }
 
@@ -91,13 +108,18 @@ public class ContentSourceResource {
                     topic -> {
                         topic.contentSources.add(contentSource);
                         topic.persist();
-                        context.response().setStatusCode(303).putHeader("Location", TOPICS_PATH + "/" + topicId + "/briefings").end();
+                        viewUtils.setSuccessMessage(context, "Content Source created and added to topic.");
+                        viewUtils.handleRedirect(context, TOPICS_PATH + "/" + topicId + "/briefings");
                     },
-                    () -> context.response().setStatusCode(404).end(String.format("Topic with id %d not found.", topicId))
+                    () -> {
+                        viewUtils.setErrorMessage(context, String.format("Topic with id %d not found.", topicId));
+                        showAddForm(context);
+                    }
             );
             return;
         }
 
-        context.response().setStatusCode(303).putHeader("Location", UI_BASE_PATH).end();
+        viewUtils.setSuccessMessage(context, "Content Source created successfully.");
+        viewUtils.handleRedirect(context, UI_BASE_PATH);
     }
 }
