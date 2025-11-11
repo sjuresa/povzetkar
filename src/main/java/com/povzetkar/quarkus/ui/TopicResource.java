@@ -42,7 +42,6 @@ public class TopicResource {
     private static final String BREADCRUMBS_KEY = "breadcrumbs";
     private static final String TOPICS_LABEL = "Topics";
     private static final String PARAM_ID = "id";
-    private static final String ID_PATH_PARAM = ":id";
     public static final String TOPIC_ID_PATH_PARAM = ":topicId";
 
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
@@ -77,33 +76,6 @@ public class TopicResource {
 
     public static String topicBriefingsPath(long topicId) {
         return TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
-    }
-
-    public static String topicEditPath(long topicId) {
-        return TOPIC_EDIT_PATH.replace(ID_PATH_PARAM, String.valueOf(topicId));
-    }
-
-    public static String topicSelectSourcePath(long topicId) {
-        return TOPIC_SELECT_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
-    }
-
-    public static String topicAddSourcePath(long topicId, long contentSourceId) {
-        return TOPIC_ADD_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId)).replace(":" + PARAM_CONTENT_SOURCE_ID, String.valueOf(contentSourceId));
-    }
-
-    public static String topicRemoveSourcePath(long topicId, long contentSourceId) {
-        return TOPIC_REMOVE_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId)).replace(":" + PARAM_CONTENT_SOURCE_ID, String.valueOf(contentSourceId));
-    }
-
-    private Optional<Topic> getTopicOrHandleNotFound(RoutingContext context, Long topicId) {
-        if (topicId == null) {
-            return Optional.empty();
-        }
-        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
-        if (topicOptional.isEmpty()) {
-            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
-        }
-        return topicOptional;
     }
 
     private void renderAddForm(RoutingContext context, String name, Long userId) {
@@ -205,7 +177,10 @@ public class TopicResource {
             return;
         }
         Long id = idOptional.get();
-        getTopicOrHandleNotFound(context, id).ifPresent(topic -> renderEditForm(context, topic));
+        Topic.findByIdOptional(id).ifPresentOrElse(
+            topic -> renderEditForm(context, (Topic) topic),
+            () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+        );
     }
 
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
@@ -222,17 +197,19 @@ public class TopicResource {
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
 
-        getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
+        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
             if (validator.hasErrors()) {
                 viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-                renderEditForm(context, topic); // Call helper with existing topic
+                renderEditForm(context, (Topic) topic); // Call helper with existing topic
                 return;
             }
-            topic.name = name;
+            ((Topic) topic).name = name;
             topic.persist();
             viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-            viewUtils.handleRedirect(context, topicBriefingsPath(topic.id));
-        });
+            viewUtils.handleRedirect(context, topicBriefingsPath(((Topic) topic).id));
+        },
+        () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+        );
     }
 
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
@@ -244,11 +221,13 @@ public class TopicResource {
             return;
         }
         Long id = idOptional.get();
-        getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
+        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
             topic.delete();
-            viewUtils.setSuccessMessage(context, "Topic '" + topic.name + "' deleted successfully.");
+            viewUtils.setSuccessMessage(context, "Topic '" + ((Topic) topic).name + "' deleted successfully.");
             viewUtils.handleRedirect(context, TOPICS_PATH);
-        });
+        },
+        () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+        );
     }
 
     @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
@@ -345,7 +324,7 @@ public class TopicResource {
             return;
         }
         Long topicId = topicIdOptional.get();
-        getTopicOrHandleNotFound(context, topicId).ifPresent(topic -> {
+        Topic.findByIdOptional(topicId).ifPresentOrElse(topic -> {
             Map<String, Object> data = viewUtils.createTemplateData(context);
             String query = context.request().getParam("query");
             List<ContentSource> contentSources;
@@ -360,10 +339,12 @@ public class TopicResource {
             data.put(BREADCRUMBS_KEY, List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                    new Breadcrumb(topic.name, topicBriefingsPath(topic.id)),
+                    new Breadcrumb(((Topic) topic).name, topicBriefingsPath(((Topic) topic).id)),
                     new Breadcrumb("Select Source", context.request().uri())
             ));
             context.response().end(selectContentSource.instance().data(data).render());
-        });
+        },
+        () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
+        );
     }
 }
