@@ -83,13 +83,13 @@ public class ContentSourceResource {
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
 
         Optional<Long> topicIdOptional = WebUtils.getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, "Invalid format for topic ID.", validator::addError);
-        validator.addErrorIfEmpty(topicIdOptional, "Topic ID is required.");
+        validator.validateNotNull(topicIdOptional.orElse(null), "Topic ID is required.");
 
         validator.validateNotBlank(name, "Name cannot be blank.");
         validator.validateNotBlank(sourceIdentifier, "Source Identifier cannot be blank.");
 
         Optional<Integer> sourceTypeIdOptional = WebUtils.getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, validator::addError);
-        validator.addErrorIfEmpty(sourceTypeIdOptional, INVALID_SOURCE_TYPE_ID);
+        validator.validateNotNull(sourceTypeIdOptional.orElse(null), INVALID_SOURCE_TYPE_ID);
 
         Integer sourceTypeIdForRender = sourceTypeIdOptional.orElse(null); // Value for re-rendering, null if validation failed
         if (sourceTypeIdForRender != null && SourceTypeEnum.fromId(sourceTypeIdForRender) == SourceTypeEnum.DEFAULT) {

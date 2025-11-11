@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.ui.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class FormValidator {
     private final List<String> errors = new ArrayList<>();
@@ -17,8 +16,8 @@ public class FormValidator {
         }
     }
 
-    public <T> void addErrorIfEmpty(Optional<T> optionalValue, String errorMessage) {
-        if (optionalValue.isEmpty()) {
+    public void validateNotNull(Object value, String errorMessage) {
+        if (value == null) {
             addError(errorMessage);
         }
     }
