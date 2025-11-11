@@ -168,7 +168,7 @@ public class TopicResource {
     public void addTopic(RoutingContext context) {
         FormValidator validator = new FormValidator();
         String name = context.request().getFormAttribute("name");
-        Optional<Long> userIdOptional = WebUtils.getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, msg -> viewUtils.setErrorMessage(context, msg));
+        Optional<Long> userIdOptional = WebUtils.getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, validator::addError);
         Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
