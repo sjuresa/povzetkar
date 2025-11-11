@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
 public class TopicResource {
 
     public static final String UI_BASE_PATH = "/ui";
-    public static final String TOPICS_PATH = UI_BASE_PATH + "/topics";
-    public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add";
-    public static final String TOPIC_EDIT_PATH = TOPICS_PATH + "/:id/edit";
-    public static final String TOPIC_UPDATE_PATH = TOPICS_PATH + "/update/:id";
-    public static final String TOPIC_DELETE_PATH = TOPICS_PATH + "/delete/:id";
+    public static final String TOPICS_PATH = UI_BASE_PATH + "/topics"; // /ui/topics
+    public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add"; // /ui/topics/add
+    public static final String TOPIC_EDIT_PATH = TOPICS_PATH + "/:id/edit"; // /ui/topics/:id/edit
+    public static final String TOPIC_UPDATE_PATH = TOPICS_PATH + "/update/:id"; // /ui/topics/update/:id
+    public static final String TOPIC_DELETE_PATH = TOPICS_PATH + "/delete/:id"; // /ui/topics/delete/:id
     public static final String TOPIC_BRIEFINGS_PATH = TOPICS_PATH + "/:topicId/briefings";
     public static final String TOPIC_ADD_SOURCE_PATH = TOPICS_PATH + "/:topicId/add-source/:contentSourceId";
     public static final String TOPIC_REMOVE_SOURCE_PATH = TOPICS_PATH + "/:topicId/remove-source/:contentSourceId";
@@ -41,11 +41,12 @@ public class TopicResource {
     private static final String TOPIC_KEY = "topic";
     private static final String BREADCRUMBS_KEY = "breadcrumbs";
     private static final String TOPICS_LABEL = "Topics";
+    private static final String PARAM_ID = "id";
+    private static final String ID_PATH_PARAM = ":id";
     public static final String TOPIC_ID_PATH_PARAM = ":topicId";
 
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
     private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
-    private static final String PARAM_TOPIC_ID = "topicId";
     private static final String PARAM_CONTENT_SOURCE_ID = "contentSourceId";
     private static final String INVALID_CONTENT_SOURCE_ID_FORMAT = "Invalid content source ID format.";
     private static final String CONTENT_SOURCE_NOT_FOUND_MSG = "ContentSource with id %d not found.";
@@ -72,6 +73,26 @@ public class TopicResource {
         this.briefingsByTopic = briefingsByTopic;
         this.selectContentSource = selectContentSource;
         this.viewUtils = viewUtils;
+    }
+
+    public static String topicBriefingsPath(long topicId) {
+        return TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
+    }
+
+    public static String topicEditPath(long topicId) {
+        return TOPIC_EDIT_PATH.replace(ID_PATH_PARAM, String.valueOf(topicId));
+    }
+
+    public static String topicSelectSourcePath(long topicId) {
+        return TOPIC_SELECT_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
+    }
+
+    public static String topicAddSourcePath(long topicId, long contentSourceId) {
+        return TOPIC_ADD_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId)).replace(":" + PARAM_CONTENT_SOURCE_ID, String.valueOf(contentSourceId));
+    }
+
+    public static String topicRemoveSourcePath(long topicId, long contentSourceId) {
+        return TOPIC_REMOVE_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId)).replace(":" + PARAM_CONTENT_SOURCE_ID, String.valueOf(contentSourceId));
     }
 
     private Optional<Topic> getTopicOrHandleNotFound(RoutingContext context, Long topicId) {
@@ -109,7 +130,7 @@ public class TopicResource {
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                new Breadcrumb(topic.name, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString())),
+                new Breadcrumb(topic.name, topicBriefingsPath(topic.id)),
                 new Breadcrumb("Edit", context.request().uri())
         ));
         context.response().end(topicForm.instance().data(data).render());
@@ -180,7 +201,7 @@ public class TopicResource {
     @Route(path = TOPIC_EDIT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showEditForm(RoutingContext context) {
-        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
             return;
         }
@@ -193,7 +214,7 @@ public class TopicResource {
     @Blocking
     public void updateTopic(RoutingContext context) {
         FormValidator validator = new FormValidator();
-        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
             return;
         }
@@ -211,7 +232,7 @@ public class TopicResource {
             topic.name = name;
             topic.persist();
             viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString()));
+            viewUtils.handleRedirect(context, topicBriefingsPath(topic.id));
         });
     }
 
@@ -219,7 +240,7 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void deleteTopic(RoutingContext context) {
-        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
             return;
         }
@@ -234,7 +255,7 @@ public class TopicResource {
     @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void listBriefingsByTopic(RoutingContext context) {
-        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, "topicId", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
             return;
         }
@@ -264,7 +285,7 @@ public class TopicResource {
     private record TopicAndContentSource(Topic topic, ContentSource contentSource) {}
 
     private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
-        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, "topicId", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -300,7 +321,7 @@ public class TopicResource {
             pair.contentSource.topics.add(pair.topic);
             pair.topic.persist();
             viewUtils.setSuccessMessage(context, "Content source added to topic.");
-            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, pair.topic.id.toString()));
+            viewUtils.handleRedirect(context, topicBriefingsPath(pair.topic.id));
         });
     }
 
@@ -313,14 +334,14 @@ public class TopicResource {
             pair.contentSource.topics.remove(pair.topic);
             pair.topic.persist();
             viewUtils.setSuccessMessage(context, "Content source removed from topic.");
-            viewUtils.handleRedirect(context, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, pair.topic.id.toString()));
+            viewUtils.handleRedirect(context, topicBriefingsPath(pair.topic.id));
         });
     }
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void selectContentSource(RoutingContext context) {
-        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, "topicId", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
             return;
         }
@@ -340,7 +361,7 @@ public class TopicResource {
             data.put(BREADCRUMBS_KEY, List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                    new Breadcrumb(topic.name, TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, topic.id.toString())),
+                    new Breadcrumb(topic.name, topicBriefingsPath(topic.id)),
                     new Breadcrumb("Select Source", context.request().uri())
             ));
             context.response().end(selectContentSource.instance().data(data).render());

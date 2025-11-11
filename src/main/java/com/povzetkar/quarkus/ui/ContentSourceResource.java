@@ -125,7 +125,7 @@ public class ContentSourceResource {
                         topic.contentSources.add(contentSource);
                         topic.persist();
                         viewUtils.setSuccessMessage(context, "Content Source created and added to topic.");
-                        viewUtils.handleRedirect(context, TOPICS_PATH + "/" + topicId + "/briefings");
+                        viewUtils.handleRedirect(context, TopicResource.topicBriefingsPath(topicId));
                     },
                     () -> {
                         viewUtils.setErrorMessage(context, String.format("Topic with id %d not found.", topicId));
