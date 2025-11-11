@@ -82,14 +82,7 @@ public class ContentSourceResource {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
 
-        // Validate topicId (handle potential IllegalArgumentException from WebUtils)
-        Optional<Long> topicIdOptional;
-        try {
-            topicIdOptional = WebUtils.getOptionalLongFormAttribute(context, PARAM_TOPIC_ID);
-        } catch (IllegalArgumentException e) {
-            viewUtils.setErrorMessage(context, String.format("Invalid format for topic ID: %s", e.getMessage()));
-            topicIdOptional = Optional.empty(); // Ensure it's empty if parsing failed
-        }
+        Optional<Long> topicIdOptional = WebUtils.getOptionalLongFormAttribute(context, PARAM_TOPIC_ID, "Invalid format for topic ID.", validator::addError);
         validator.addErrorIfEmpty(topicIdOptional, "Topic ID is required.");
 
         validator.validateNotBlank(name, "Name cannot be blank.");

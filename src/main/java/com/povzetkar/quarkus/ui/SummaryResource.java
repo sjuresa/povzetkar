@@ -83,7 +83,7 @@ public class SummaryResource {
         breadcrumbs.add(new Breadcrumb("Topics", TOPICS_PATH));
 
         if (briefing != null) {
-            breadcrumbs.add(new Breadcrumb(briefing.topic.name, TopicResource.TOPIC_BRIEFINGS_PATH.replace(TopicResource.TOPIC_ID_PATH_PARAM, briefing.topic.id.toString())));
+            breadcrumbs.add(new Breadcrumb(briefing.topic.name, TopicResource.topicBriefingsPath(briefing.topic.id)));
             breadcrumbs.add(new Breadcrumb("Briefing " + briefing.briefingDate.format(dateFormatter), "/ui/briefings/" + briefing.id));
             breadcrumbs.add(new Breadcrumb("Summary", context.request().uri()));
         } else {

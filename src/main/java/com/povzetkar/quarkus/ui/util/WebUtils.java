@@ -67,7 +67,7 @@ public class WebUtils {
         }
     }
 
-    public static Optional<Long> getOptionalLongFormAttribute(RoutingContext context, String attributeName) {
+    public static Optional<Long> getOptionalLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage, Consumer<String> errorHandler) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
             return Optional.empty();
@@ -75,7 +75,8 @@ public class WebUtils {
         try {
             return Optional.of(Long.parseLong(attributeValue));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid number format for optional form attribute '" + attributeName + "'.", e);
+            errorHandler.accept(formatErrorMessage);
+            return Optional.empty();
         }
     }
 }
