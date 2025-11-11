@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.FormValidator;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.povzetkar.quarkus.ui.util.WebUtils;
 import io.quarkus.qute.Location;
@@ -30,9 +31,8 @@ public class ContentSourceResource {
     private static final String PARAM_TOPIC_ID = "topicId";
     private static final String INVALID_OR_MISSING_TOPIC_ID_PARAM = "Invalid or missing topicId parameter.";
     private static final String PARAM_SOURCE_TYPE_ID = "sourceTypeId";
-    private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid Source Type ID format.";
-    private static final String INVALID_SOURCE_TYPE_ID = "Invalid Source Type ID.";
-    private static final String TOPIC_ID_REQUIRED_MSG = "Topic ID is required to add a content source.";
+    private static final String INVALID_SOURCE_TYPE_ID_FORMAT = "Invalid format for Source Type ID.";
+    private static final String INVALID_SOURCE_TYPE_ID = "A valid source type must be selected.";
 
 
     private final ViewUtils viewUtils;
@@ -78,66 +78,58 @@ public class ContentSourceResource {
     @Transactional
     @Blocking
     public void addContentSource(RoutingContext context) {
+        FormValidator validator = new FormValidator();
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
-        Long topicId;
 
+        // Validate topicId (handle potential IllegalArgumentException from WebUtils)
+        Optional<Long> topicIdOptional;
         try {
-            topicId = WebUtils.getOptionalLongFormAttribute(context, PARAM_TOPIC_ID).orElse(null);
+            topicIdOptional = WebUtils.getOptionalLongFormAttribute(context, PARAM_TOPIC_ID);
         } catch (IllegalArgumentException e) {
             viewUtils.setErrorMessage(context, String.format("Invalid format for topic ID: %s", e.getMessage()));
-            renderAddFormWithData(context, null, name, sourceIdentifier, null); // Cannot determine topicId, so pass null
+            topicIdOptional = Optional.empty(); // Ensure it's empty if parsing failed
+        }
+        validator.addErrorIfEmpty(topicIdOptional, "Topic ID is required.");
+
+        validator.validateNotBlank(name, "Name cannot be blank.");
+        validator.validateNotBlank(sourceIdentifier, "Source Identifier cannot be blank.");
+
+        Optional<Integer> sourceTypeIdOptional = WebUtils.getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, validator::addError);
+        validator.addErrorIfEmpty(sourceTypeIdOptional, INVALID_SOURCE_TYPE_ID);
+
+        Integer sourceTypeIdForRender = sourceTypeIdOptional.orElse(null); // Value for re-rendering, null if validation failed
+        if (sourceTypeIdForRender != null && SourceTypeEnum.fromId(sourceTypeIdForRender) == SourceTypeEnum.DEFAULT) {
+            validator.addError(INVALID_SOURCE_TYPE_ID);
+        }
+
+        if (validator.hasErrors()) {
+            viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
+            renderAddFormWithData(context, topicIdOptional.orElse(null), name, sourceIdentifier, sourceTypeIdForRender);
             return;
         }
 
-        if (name == null || name.isBlank()) {
-            viewUtils.setErrorMessage(context, "Name cannot be blank.");
-            renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
-            return;
-        }
-        if (sourceIdentifier == null || sourceIdentifier.isBlank()) {
-            viewUtils.setErrorMessage(context, "Source Identifier cannot be blank.");
-            renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
-            return;
-        }
-        Optional<Integer> sourceTypeIdOptional = WebUtils.getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, msg -> viewUtils.setErrorMessage(context, msg));
-        if (sourceTypeIdOptional.isEmpty()) {
-            renderAddFormWithData(context, topicId, name, sourceIdentifier, null);
-            return;
-        }
-        int sourceTypeId = sourceTypeIdOptional.get();
-
-        if (SourceTypeEnum.fromId(sourceTypeId) == SourceTypeEnum.DEFAULT) {
-            viewUtils.setErrorMessage(context, INVALID_SOURCE_TYPE_ID);
-            renderAddFormWithData(context, topicId, name, sourceIdentifier, sourceTypeId);
-            return;
-        }
+        // All validations passed, it's safe to get the values
+        Long topicId = topicIdOptional.get();
+        Integer sourceTypeId = sourceTypeIdOptional.get();
 
         ContentSource contentSource = new ContentSource();
         contentSource.name = name;
         contentSource.sourceIdentifier = sourceIdentifier;
         contentSource.sourceTypeId = sourceTypeId;
-        contentSource.persist();
 
-        Optional<Long> topicIdOptionalFromForm = Optional.ofNullable(topicId);
-        if (topicIdOptionalFromForm.isEmpty()) { // topicId is required for this UI flow
-            viewUtils.setErrorMessage(context, TOPIC_ID_REQUIRED_MSG);
-            renderAddFormWithData(context, null, name, sourceIdentifier, sourceTypeId);
-            return;
-        }
-
-        Long currentTopicId = topicIdOptionalFromForm.get();
-        Optional<Topic> topicOptional = Topic.findByIdOptional(currentTopicId);
+        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
         topicOptional.ifPresentOrElse(
                     topic -> {
+                        contentSource.persist();
                         topic.contentSources.add(contentSource);
                         topic.persist();
                         viewUtils.setSuccessMessage(context, "Content Source created and added to topic.");
-                        viewUtils.handleRedirect(context, TOPICS_PATH + "/" + currentTopicId + "/briefings");
+                        viewUtils.handleRedirect(context, TOPICS_PATH + "/" + topicId + "/briefings");
                     },
                     () -> {
-                        viewUtils.setErrorMessage(context, String.format("Topic with id %d not found.", currentTopicId));
-                        renderAddFormWithData(context, currentTopicId, name, sourceIdentifier, sourceTypeId);
+                        viewUtils.setErrorMessage(context, String.format("Topic with id %d not found.", topicId));
+                        renderAddFormWithData(context, topicId, name, sourceIdentifier, sourceTypeId);
                     }
             );
     }

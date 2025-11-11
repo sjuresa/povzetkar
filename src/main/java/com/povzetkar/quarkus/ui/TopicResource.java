@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.ui.util.FormValidator;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.povzetkar.quarkus.ui.util.WebUtils;
@@ -144,20 +145,21 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addTopic(RoutingContext context) {
+        FormValidator validator = new FormValidator();
         String name = context.request().getFormAttribute("name");
         Optional<Long> userIdOptional = WebUtils.getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, msg -> viewUtils.setErrorMessage(context, msg));
         Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
-        if (name == null || name.isBlank()) {
-            viewUtils.setErrorMessage(context, "Topic name cannot be blank.");
-            renderAddForm(context, name, userId); // Re-render with submitted values
-            return;
-        }
-        if (userIdOptional.isEmpty()) {
+        validator.validateNotBlank(name, "Topic name cannot be blank.");
+        validator.addErrorIfEmpty(userIdOptional, "A user must be selected.");
+
+        if (validator.hasErrors()) {
+            viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
             renderAddForm(context, name, userId); // Re-render with submitted values
             return;
         }
 
+        // Validation passed, it's safe to get the user ID
         Optional<User> userOptional = User.findByIdOptional(userId);
         userOptional.ifPresentOrElse(
                 user -> {
@@ -190,15 +192,19 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
+        FormValidator validator = new FormValidator();
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
             return;
         }
         Long id = idOptional.get();
         String name = context.request().getFormAttribute("name");
+
+        validator.validateNotBlank(name, "Topic name cannot be blank.");
+
         getTopicOrHandleNotFound(context, id).ifPresent(topic -> {
-            if (name == null || name.isBlank()) {
-                viewUtils.setErrorMessage(context, "Topic name cannot be blank.");
+            if (validator.hasErrors()) {
+                viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
                 renderEditForm(context, topic); // Call helper with existing topic
                 return;
             }
