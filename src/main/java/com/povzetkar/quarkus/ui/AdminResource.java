@@ -12,8 +12,14 @@ import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -32,6 +38,8 @@ public class AdminResource {
     private static final Logger LOG = LoggerFactory.getLogger(AdminResource.class);
 
     private static final String ADMIN_REDIRECT_PATH = "/ui/admin";
+    private static final String TAB_PARAM = "tab";
+    private static final String HISTORY_TAB = "history";
 
     private final ViewUtils viewUtils;
     private final Template admin;
@@ -56,6 +64,11 @@ public class AdminResource {
         this.viewUtils = viewUtils;
     }
 
+    public void init(@Observes Router router, Vertx vertx) {
+        router.route("/ui/*").order(-1).handler(BodyHandler.create());
+        router.route("/ui/*").order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+    }
+
     private void redirectBack(RoutingContext context, boolean success, String message) {
         if (success) {
             viewUtils.setSuccessMessage(context, message);
@@ -75,6 +88,13 @@ public class AdminResource {
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb("Admin", ADMIN_REDIRECT_PATH)
         ));
+
+        String activeTab = context.request().getParam(TAB_PARAM);
+        if (HISTORY_TAB.equals(activeTab)) {
+            data.put("activeTab", HISTORY_TAB);
+        } else {
+            data.put("activeTab", "actions"); // Default to actions tab
+        }
 
         List<ContentItem> pendingContentItems = ContentItem.find(
                 "processingStatus = ?1 ORDER BY createdAt DESC", ProcessingStatus.PENDING

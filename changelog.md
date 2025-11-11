@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Executive summary as a tooltip on desktop, and a Pico.css modal on mobile, for summary titles.
     - Links from summary titles to a new summary detail page.
 - **Summary Detail Page:** Created a new `/ui/summaries/{id}` page (`SummaryResource.java` and `summary-detail.html`) to display individual summaries, converting Markdown content to HTML using `flexmark`.
+- **Admin Page Tabs:** Implemented a tabbed interface on the admin page to separate "Actions" from "History", improving usability.
 
 ### Changed
 
