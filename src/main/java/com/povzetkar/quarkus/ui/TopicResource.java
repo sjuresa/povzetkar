@@ -172,7 +172,6 @@ public class TopicResource {
         Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
-        validator.addErrorIfEmpty(userIdOptional, "A user must be selected.");
 
         if (validator.hasErrors()) {
             viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
