@@ -17,8 +17,6 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
@@ -29,7 +27,6 @@ import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TopicResource {
-    private static final Logger logger = LoggerFactory.getLogger(TopicResource.class);
     public static final String UI_BASE_PATH = "/ui";
     public static final String TOPICS_PATH = UI_BASE_PATH + "/topics"; // /ui/topics
     public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add"; // /ui/topics/add
@@ -143,7 +140,6 @@ public class TopicResource {
     @Transactional
     @Blocking
     public void addTopic(RoutingContext context) {
-        logger.info("Adding topic");
         FormValidator validator = new FormValidator();
         String name = context.request().getFormAttribute("name");
         Optional<Long> userIdOptional = WebUtils.getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, validator::addError);
@@ -158,21 +154,18 @@ public class TopicResource {
             return;
         }
 
-        logger.info("Validation passed.");
         // Validation passed, it's safe to get the user ID
-        Optional<User> userOptional = User.find("id", userId).firstResultOptional();
+        Optional<User> userOptional = User.findByIdOptional(userId);
         userOptional.ifPresentOrElse(
                 user -> {
                     Topic topic = new Topic();
                     topic.user = user;
                     topic.name = name;
                     topic.persist();
-                    logger.info("Topic created successfully.");
                     viewUtils.setSuccessMessage(context, "Topic created successfully.");
                     viewUtils.handleRedirect(context, TOPICS_PATH);
                 },
                 () -> {
-                    logger.info("User not found.");
                     viewUtils.setErrorMessage(context, String.format("User with id %d not found.", userId));
                     renderAddForm(context, name, userId); // Re-render with submitted values
                 }

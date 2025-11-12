@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.service;
 import com.povzetkar.quarkus.model.*;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@QuarkusTest
 class OrchestrationIntegrationTest {
 
     @ConfigProperty(name = "transcript.threshold.minutes")

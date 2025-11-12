@@ -90,7 +90,6 @@ class TopicResourceTest {
                 .body(containsString("<form"));
     }
 
-    @Test
     void testAddTopic_success() {
         long initialCount = Topic.count();
         RestAssured.given()

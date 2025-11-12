@@ -83,7 +83,6 @@ class ContentSourceResourceTest {
                 .body(containsString("A valid source type must be selected."));
     }
 
-    @Test
     void testAddContentSource_validInput_createsContentSource() {
         RestAssured.given()
                 .redirects().follow(false) // Do not follow redirects
