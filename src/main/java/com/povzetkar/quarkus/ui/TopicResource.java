@@ -198,18 +198,19 @@ public class TopicResource {
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
 
-        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
-            if (validator.hasErrors()) {
-                viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-                renderEditForm(context, (Topic) topic); // Call helper with existing topic
-                return;
-            }
-            ((Topic) topic).name = name;
-            topic.persist();
-            viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-            viewUtils.handleRedirect(context, topicBriefingsPath(((Topic) topic).id));
-        },
-        () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+        Topic.findByIdOptional(id).ifPresentOrElse(topicBase -> {
+                    Topic topic = (Topic) topicBase;
+                    if (validator.hasErrors()) {
+                        viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
+                        renderEditForm(context, topic); // Use the typed local variable
+                        return;
+                    }
+                    topic.name = name;
+                    topic.persist();
+                    viewUtils.setSuccessMessage(context, "Topic updated successfully.");
+                    viewUtils.handleRedirect(context, topicBriefingsPath(topic.id));
+                },
+                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
 
