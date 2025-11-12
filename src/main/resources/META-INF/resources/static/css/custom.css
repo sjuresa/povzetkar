@@ -32,6 +32,7 @@
   border-radius: 0.25rem;
 }
 
+/* Custom styles for flash messages */
 .alert-danger {
   background-color: #f8d7da; /* Light red */
   color: #721c24; /* Dark red */
@@ -64,4 +65,13 @@ dialog {
   margin-left: 0 !important;
   margin-right: auto !important;
   transform: none !important;
+}
+
+footer {
+    text-align: center;
+}
+
+[aria-label="breadcrumb"] li + li::before {
+    content: '>';
+    margin-left: -0.75em; /* Reduced spacing */
 }

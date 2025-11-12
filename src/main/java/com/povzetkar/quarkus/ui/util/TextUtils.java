@@ -1,4 +1,4 @@
-package com.povzetkar.quarkus.util;
+package com.povzetkar.quarkus.ui.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

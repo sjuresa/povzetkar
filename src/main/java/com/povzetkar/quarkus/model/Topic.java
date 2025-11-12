@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -50,5 +51,9 @@ public class Topic extends PanacheEntityBase {
 
     public static List<Topic> findByUsers(List<User> users) {
         return find("select distinct t from Topic t left join fetch t.contentSources where t.user in ?1", users).list();
+    }
+
+    public static Optional<Topic> findByIdWithContentSources(Long id) {
+        return find("SELECT t FROM Topic t LEFT JOIN FETCH t.contentSources WHERE t.id = ?1", id).firstResultOptional();
     }
 }

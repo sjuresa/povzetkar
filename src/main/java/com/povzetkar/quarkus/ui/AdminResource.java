@@ -6,19 +6,14 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import com.povzetkar.quarkus.service.OrchestrationManager;
-import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.ViewUtils;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.SessionHandler;
-import io.vertx.ext.web.sstore.LocalSessionStore;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -26,9 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ApplicationScoped
 @Blocking
@@ -36,11 +31,11 @@ public class AdminResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminResource.class);
 
-    private static final String SUCCESS_MESSAGE_KEY = "successMessage";
-    private static final String ERROR_MESSAGE_KEY = "errorMessage";
-    private static final String LOCATION_HEADER = "Location";
     private static final String ADMIN_REDIRECT_PATH = "/ui/admin";
+    private static final String TAB_PARAM = "tab";
+    private static final String HISTORY_TAB = "history";
 
+    private final ViewUtils viewUtils;
     private final Template admin;
     private final ContentSourceDetailService contentSourceDetailService;
     private final OrchestrationManager orchestrationManager;
@@ -55,64 +50,60 @@ public class AdminResource {
     @Inject
     public AdminResource(@Location("admin.html") Template admin,
                          ContentSourceDetailService contentSourceDetailService,
-                         OrchestrationManager orchestrationManager) {
+                         OrchestrationManager orchestrationManager,
+                         ViewUtils viewUtils) {
         this.admin = admin;
         this.contentSourceDetailService = contentSourceDetailService;
         this.orchestrationManager = orchestrationManager;
+        this.viewUtils = viewUtils;
     }
 
-    public void init(@Observes Router router, Vertx vertx) {
-        // Enables reading form data, JSON bodies, etc.
-        router.route("/ui/*").order(-1).handler(BodyHandler.create());
-        // Enables sessions for UI routes
-        router.route("/ui/*").order(0).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-    }
 
-    private void redirectBack(RoutingContext context, String key, String message) {
-        context.session().put(key, message);
-        context.response()
-                .putHeader(LOCATION_HEADER, ADMIN_REDIRECT_PATH)
-                .setStatusCode(303)
-                .end();
+    private void redirectBack(RoutingContext context, boolean success, String message) {
+        if (success) {
+            viewUtils.setSuccessMessage(context, message);
+        } else {
+            viewUtils.setErrorMessage(context, message);
+        }
+        viewUtils.handleRedirect(context, ADMIN_REDIRECT_PATH);
     }
 
     @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void getAdminPage(RoutingContext context) {
-        String successMessage = context.session().get(SUCCESS_MESSAGE_KEY);
-        String errorMessage = context.session().get(ERROR_MESSAGE_KEY);
-        context.session().remove(SUCCESS_MESSAGE_KEY);
-        context.session().remove(ERROR_MESSAGE_KEY);
-
-        Map<String, Object> data = new HashMap<>();
-        data.put(SUCCESS_MESSAGE_KEY, successMessage);
-        data.put(ERROR_MESSAGE_KEY, errorMessage);
+        Map<String, Object> data = viewUtils.createTemplateData(context);
         data.put("dateTimeFormat", dateTimeFormat);
         data.put("dateFormat", dateFormat);
+        data.put("breadcrumbs", List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb("Admin", ADMIN_REDIRECT_PATH)
+        ));
 
-        // Fetch pending content items
+        String activeTab = context.request().getParam(TAB_PARAM);
+        if (HISTORY_TAB.equals(activeTab)) {
+            data.put("activeTab", HISTORY_TAB);
+        } else {
+            data.put("activeTab", "actions"); // Default to actions tab
+        }
+
         List<ContentItem> pendingContentItems = ContentItem.find(
                 "processingStatus = ?1 ORDER BY createdAt DESC", ProcessingStatus.PENDING
         ).page(0, pageSize).list();
         data.put("pendingContentItems", pendingContentItems);
 
-        // Fetch recent summaries with their content items
         List<Summary> recentSummaries = Summary.find(
                 "SELECT s FROM Summary s JOIN FETCH s.contentItem ORDER BY s.createdAt DESC"
         ).page(0, pageSize).list();
         data.put("recentSummaries", recentSummaries);
 
-        // Fetch recent briefings
-        List<Briefing> recentBriefings = Briefing.findAll(Sort.by("createdAt", Sort.Direction.Descending)).page(0, pageSize).list();
+        List<Briefing> recentBriefings = Briefing.find("FROM Briefing b JOIN FETCH b.topic ORDER BY b.createdAt DESC").page(0, pageSize).list();
         data.put("recentBriefings", recentBriefings);
 
-        // Fetch failed content items
         List<ContentItem> failedContentItems = ContentItem.find(
                 "processingStatus = ?1 OR processingStatus = ?2 ORDER BY createdAt DESC",
                 ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER
         ).page(0, pageSize).list();
         data.put("failedContentItems", failedContentItems);
-
 
         context.response().end(admin.instance().data(data).render());
     }
@@ -122,29 +113,29 @@ public class AdminResource {
     public void enrichSources(RoutingContext context) {
         try {
             contentSourceDetailService.enrichContentSources();
-            redirectBack(context, SUCCESS_MESSAGE_KEY, "Content sources enrichment started successfully.");
+            redirectBack(context, true, "Content sources enrichment started successfully.");
         } catch (Exception e) {
             LOG.error("Failed to enrich content sources: {}", e.getMessage(), e);
-            redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start content sources enrichment: " + e.getMessage());
+            redirectBack(context, false, "Failed to start content sources enrichment: " + e.getMessage());
         }
     }
 
     @Route(path = "/ui/admin/run-orchestration", methods = Route.HttpMethod.POST)
     @Blocking
     public void runOrchestration(RoutingContext context) {
-        String startDateParam = context.request().getParam("startDate");
-        String endDateParam = context.request().getParam("endDate");
+        Optional<String> startDateParamOptional = Optional.ofNullable(context.request().getParam("startDate"));
+        Optional<String> endDateParamOptional = Optional.ofNullable(context.request().getParam("endDate"));
 
         LocalDate startDate = null;
         LocalDate endDate = null;
         String errorMessage = null;
 
         try {
-            if (startDateParam != null && !startDateParam.isEmpty()) {
-                startDate = LocalDate.parse(startDateParam);
+            if (startDateParamOptional.isPresent() && !startDateParamOptional.get().isBlank()) {
+                startDate = LocalDate.parse(startDateParamOptional.get());
             }
-            if (endDateParam != null && !endDateParam.isEmpty()) {
-                endDate = LocalDate.parse(endDateParam);
+            if (endDateParamOptional.isPresent() && !endDateParamOptional.get().isBlank()) {
+                endDate = LocalDate.parse(endDateParamOptional.get());
             }
 
             if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
@@ -156,19 +147,19 @@ public class AdminResource {
             }
 
             if (errorMessage != null) {
-                redirectBack(context, ERROR_MESSAGE_KEY, errorMessage);
+                redirectBack(context, false, errorMessage);
                 return;
             }
 
             orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely();
-            redirectBack(context, SUCCESS_MESSAGE_KEY, "Orchestration process started successfully.");
+            redirectBack(context, true, "Orchestration process started successfully.");
 
         } catch (DateTimeParseException e) {
             LOG.error("Invalid date format provided for orchestration: {}", e.getMessage(), e);
-            redirectBack(context, ERROR_MESSAGE_KEY, "Invalid date format. Please use YYYY-MM-DD.");
+            redirectBack(context, false, "Invalid date format. Please use YYYY-MM-DD.");
         } catch (Exception e) {
             LOG.error("Failed to start orchestration process: {}", e.getMessage(), e);
-            redirectBack(context, ERROR_MESSAGE_KEY, "Failed to start orchestration process: " + e.getMessage());
+            redirectBack(context, false, "Failed to start orchestration process: " + e.getMessage());
         }
     }
 }

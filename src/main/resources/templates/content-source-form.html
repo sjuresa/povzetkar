@@ -9,17 +9,17 @@
             <legend>Content Source Details</legend>
             <div>
                 <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required placeholder="e.g., My Content Source">
+                <input type="text" id="name" name="name" value="{name ?: ''}" required placeholder="e.g., My Content Source">
             </div>
             <div>
                 <label for="sourceIdentifier">Source Identifier:</label>
-                <input type="text" id="sourceIdentifier" name="sourceIdentifier" required placeholder="e.g., unique-source-id">
+                <input type="text" id="sourceIdentifier" name="sourceIdentifier" value="{sourceIdentifier ?: ''}" required placeholder="e.g., unique-source-id">
             </div>
             <div>
                 <label for="sourceTypeId">Source Type:</label>
                 <select id="sourceTypeId" name="sourceTypeId" required>
                     {#for sourceType in sourceTypes}
-                        <option value="{sourceType.id}">{sourceType.name}</option>
+                        <option value="{sourceType.id}" {#if sourceTypeId && sourceTypeId == sourceType.id}selected{/if}>{sourceType.name}</option>
                     {/for}
                 </select>
             </div>

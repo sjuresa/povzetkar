@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Breadcrumb Navigation:** Implemented dynamic breadcrumb navigation in the master layout (`main.html`) to enhance user orientation.
+    - Centralized "Povzetkar" home breadcrumb in `ViewUtils` for DRY principle adherence.
+    - Breadcrumbs dynamically adjust based on the current page and its context (e.g., topic, briefing, summary).
+    - Added a visual separator ('>') between breadcrumb elements using Pico.css's native `::before` pseudo-element.
+- **Flash Messages:** Integrated a session-based flash message system for user feedback on actions (success/error).
+    - Consolidated flash message handling in `ViewUtils` for consistent usage across resources.
+    - Flash messages are rendered in `main.html` and automatically cleared after display.
+- **Dedicated Home Page:** Created a new home page (`home.html` and `HomeResource.java`) at `/ui` to serve as the application's landing page.
+- **Footer Version Display:** Added dynamic display of the application version (from `pom.xml`) to the footer in `main.html`.
 - **Admin UI Page:** Created a new administrative UI page (`/ui/admin`) with enhanced features for triggering system actions and monitoring.
     - Semantic HTML5 elements and improved form structures for better accessibility.
     - Backend endpoints (`/ui/admin/enrich-sources`, `/ui/admin/run-orchestration`) in `AdminResource.java` to trigger system-level actions.
@@ -19,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Executive summary as a tooltip on desktop, and a Pico.css modal on mobile, for summary titles.
     - Links from summary titles to a new summary detail page.
 - **Summary Detail Page:** Created a new `/ui/summaries/{id}` page (`SummaryResource.java` and `summary-detail.html`) to display individual summaries, converting Markdown content to HTML using `flexmark`.
+- **Admin Page Tabs:** Implemented a tabbed interface on the admin page to separate "Actions" from "History", improving usability.
 
 ### Changed
 
@@ -28,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `ContentSource` entity's `subscriberCount` from `long` to `int`.
 - Modified `ContentSourceDetailService.ContentSourceDetails` record to use `int` for `subscriberCount`.
 - Modified `YouTubeDetailEnrichmentStrategy` to use `intValue()` for `subscriberCount`.
+- **UI Navigation:** Moved the main topics listing to `/ui/topics` from `/ui` to provide a dedicated home page.
+- **Content Source Selection UX:** Improved the user experience for adding content sources to a topic.
+    - Filtered out content sources already associated with a topic from the available selection list.
+    - Modified the "add content source" action to redirect back to the selection page, allowing users to add multiple sources continuously.
 
 ### Fixed
 
@@ -38,11 +52,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `BlockingOperationNotAllowedException` by annotating blocking UI resource methods (`getAdminPage`, `enrichSources`, `runOrchestration`) with `@Blocking`.
 - Corrected mobile executive summary display from a transparent overlay to a Pico.css modal, with improved positioning and readability.
 - Added logging to catch blocks in `AdminResource.java` to prevent exception swallowing and improve debuggability.
+- **Breadcrumb Logic:** Corrected breadcrumb generation for summary pages to handle cases where a briefing might not yet exist, and removed redundant date information from briefing breadcrumbs.
+- **Form Repopulation:** Ensured submitted form values are re-populated on validation failure for topic creation/update forms.
+- **Page Refresh:** Implemented cache-control headers on redirects to force page refreshes after POST operations.
 
 ### Refactored
 
 - Centralized `createdAt` field and `formattedCreatedAt` method into `BaseAuditableEntity` to adhere to DRY principle. `Briefing`, `ContentItem`, and `Summary` now extend this base class.
 - Extracted duplicate redirect logic in `AdminResource.java` into a private helper method `redirectBack` to improve maintainability and adhere to the DRY principle.
+- **UI Utilities:** Refactored `ViewUtils` to be an `@ApplicationScoped` bean, allowing dependency injection and centralizing common UI helper methods.
+- **Form Validation:** Extracted common form parameter validation logic into reusable `WebUtils` methods.
+- **Code Duplication:** Consolidated UI-related utility classes (`WebUtils`, `Breadcrumb`, `ViewUtils`) into `com.povzetkar.quarkus.ui.util` package.
+- **Readability:** Extracted breadcrumb building logic in `SummaryResource` into a private helper method.
+- **Efficiency:** Extracted form rendering logic in `TopicResource` and `ContentSourceResource` into private helper methods to avoid redundant database queries and ensure correct parameter passing on re-render.
+- **Constructor Injection:** Refactored all UI resource classes (`AdminResource`, `BriefingWebResource`, `ContentSourceResource`, `HomeResource`, `SummaryResource`, `TopicResource`) and `ViewUtils` to use constructor injection for dependencies, addressing SonarQube/IDE warnings.
 
 ### Documentation
 
@@ -163,7 +186,6 @@ This version marks a major architectural milestone by establishing the foundatio
 
 ### Chores
 - Enabled JUnit parameterized tests via added dependency.
-
 
 ## [0.4] - 2025-08-16
 
