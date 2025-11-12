@@ -144,6 +144,7 @@ public class TopicResource {
         Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
+        validator.validateNotNull(userId, "User is required.");
 
         if (validator.hasErrors()) {
             viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
@@ -222,11 +223,12 @@ public class TopicResource {
         }
         Long id = idOptional.get();
         Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
-            topic.delete();
-            viewUtils.setSuccessMessage(context, "Topic '" + ((Topic) topic).name + "' deleted successfully.");
-            viewUtils.handleRedirect(context, TOPICS_PATH);
-        },
-        () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+                    String topicName = ((Topic)topic).name;
+                    topic.delete();
+                    viewUtils.setSuccessMessage(context, "Topic '" + topicName + "' deleted successfully.");
+                    viewUtils.handleRedirect(context, TOPICS_PATH);
+                },
+                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
 

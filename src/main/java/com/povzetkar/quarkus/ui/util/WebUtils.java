@@ -28,7 +28,6 @@ public class WebUtils {
     public static Optional<Long> getLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage, Consumer<String> errorHandler) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
-            errorHandler.accept(String.format("Form attribute '%s' is required.", attributeName));
             return Optional.empty();
         }
         try {
@@ -42,7 +41,6 @@ public class WebUtils {
     public static Optional<Integer> getIntegerFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage, Consumer<String> errorHandler) {
         String attributeValue = context.request().getFormAttribute(attributeName);
         if (attributeValue == null || attributeValue.isBlank()) {
-            errorHandler.accept(String.format("Form attribute '%s' is required.", attributeName));
             return Optional.empty();
         }
         try {
@@ -63,19 +61,6 @@ public class WebUtils {
             return Optional.of(Long.parseLong(paramValue));
         } catch (NumberFormatException e) {
             errorHandler.accept(errorMessage);
-            return Optional.empty();
-        }
-    }
-
-    public static Optional<Long> getOptionalLongFormAttribute(RoutingContext context, String attributeName, String formatErrorMessage, Consumer<String> errorHandler) {
-        String attributeValue = context.request().getFormAttribute(attributeName);
-        if (attributeValue == null || attributeValue.isBlank()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(Long.parseLong(attributeValue));
-        } catch (NumberFormatException e) {
-            errorHandler.accept(formatErrorMessage);
             return Optional.empty();
         }
     }
