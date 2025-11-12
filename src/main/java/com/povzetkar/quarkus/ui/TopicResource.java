@@ -42,6 +42,7 @@ public class TopicResource {
     private static final String BREADCRUMBS_KEY = "breadcrumbs";
     private static final String TOPICS_LABEL = "Topics";
     private static final String PARAM_ID = "id";
+    private static final String PARAM_TOPIC_ID = "topicId";
     public static final String TOPIC_ID_PATH_PARAM = ":topicId";
 
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
@@ -185,7 +186,6 @@ public class TopicResource {
     }
 
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
-    @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
         FormValidator validator = new FormValidator();
@@ -198,20 +198,29 @@ public class TopicResource {
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
 
-        Topic.findByIdOptional(id).ifPresentOrElse(topicBase -> {
-                    Topic topic = (Topic) topicBase;
-                    if (validator.hasErrors()) {
-                        viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-                        renderEditForm(context, topic); // Use the typed local variable
-                        return;
-                    }
-                    topic.name = name;
-                    topic.persist();
-                    viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-                    viewUtils.handleRedirect(context, topicBriefingsPath(topic.id));
-                },
-                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
-        );
+        if (validator.hasErrors()) {
+            Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
+                viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
+                ((Topic) topic).name = name; // Set the invalid name for re-rendering
+                renderEditForm(context, (Topic) topic);
+            }, () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id)));
+            return;
+        }
+
+        persistTopicUpdate(id, name);
+        viewUtils.setSuccessMessage(context, "Topic updated successfully.");
+        viewUtils.handleRedirect(context, topicBriefingsPath(id));
+    }
+
+    @Transactional
+    void persistTopicUpdate(Long id, String name) {
+        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
+            ((Topic) topic).name = name;
+            topic.persist();
+        }, () -> {
+            // This case should ideally not be reached if validation is done before calling
+            throw new IllegalStateException(String.format(TOPIC_NOT_FOUND_MSG, id));
+        });
     }
 
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
@@ -236,7 +245,7 @@ public class TopicResource {
     @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void listBriefingsByTopic(RoutingContext context) {
-        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, "topicId", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
             return;
         }
@@ -266,7 +275,7 @@ public class TopicResource {
     private record TopicAndContentSource(Topic topic, ContentSource contentSource) {}
 
     private Optional<TopicAndContentSource> findTopicAndContentSource(RoutingContext context) {
-        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, "topicId", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -322,7 +331,7 @@ public class TopicResource {
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void selectContentSource(RoutingContext context) {
-        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, "topicId", INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
             return;
         }
