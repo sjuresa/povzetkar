@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -188,28 +189,39 @@ public class TopicResource {
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
     @Blocking
     public void updateTopic(RoutingContext context) {
-        FormValidator validator = new FormValidator();
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
             return;
         }
         Long id = idOptional.get();
-        String name = context.request().getFormAttribute("name");
 
+        Optional<Topic> topicOptional = Topic.findByIdOptional(id);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id));
+            return;
+        }
+        Topic topic = topicOptional.get();
+
+        FormValidator validator = new FormValidator();
+        String name = context.request().getFormAttribute("name");
         validator.validateNotBlank(name, "Topic name cannot be blank.");
 
         if (validator.hasErrors()) {
-            Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
-                viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-                ((Topic) topic).name = name; // Set the invalid name for re-rendering
-                renderEditForm(context, (Topic) topic);
-            }, () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id)));
+            viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
+            topic.name = name; // Set the invalid name for re-rendering
+            renderEditForm(context, topic);
             return;
         }
 
-        persistTopicUpdate(id, name);
+        persistTopicUpdate(topic, name);
         viewUtils.setSuccessMessage(context, "Topic updated successfully.");
         viewUtils.handleRedirect(context, topicBriefingsPath(id));
+    }
+
+    @Transactional
+    void persistTopicUpdate(Topic topic, String name) {
+        topic.name = name;
+        topic.persist();
     }
 
     @Transactional
@@ -311,7 +323,7 @@ public class TopicResource {
             pair.contentSource.topics.add(pair.topic);
             pair.topic.persist();
             viewUtils.setSuccessMessage(context, "Content source added to topic.");
-            viewUtils.handleRedirect(context, topicBriefingsPath(pair.topic.id));
+            viewUtils.handleRedirect(context, TOPIC_SELECT_SOURCE_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(pair.topic.id)));
         });
     }
 
@@ -336,7 +348,7 @@ public class TopicResource {
             return;
         }
         Long topicId = topicIdOptional.get();
-        Topic.findByIdOptional(topicId).ifPresentOrElse(topic -> {
+        Topic.findByIdWithContentSources(topicId).ifPresentOrElse(topic -> { // Use the new method
             Map<String, Object> data = viewUtils.createTemplateData(context);
             String query = context.request().getParam("query");
             List<ContentSource> contentSources;
@@ -345,13 +357,22 @@ public class TopicResource {
             } else {
                 contentSources = ContentSource.listAll();
             }
+
+            // Filter out content sources already associated with the topic
+            Set<Long> existingSourceIds = topic.contentSources.stream()
+                                            .map(cs -> cs.id)
+                                            .collect(Collectors.toSet());
+            List<ContentSource> filteredContentSources = contentSources.stream()
+                                                        .filter(cs -> !existingSourceIds.contains(cs.id))
+                                                        .toList();
+
             data.put(TOPIC_KEY, topic);
-            data.put("contentSources", contentSources);
+            data.put("contentSources", filteredContentSources); // Pass the filtered list
             data.put("query", query);
             data.put(BREADCRUMBS_KEY, List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                    new Breadcrumb(((Topic) topic).name, topicBriefingsPath(((Topic) topic).id)),
+                    new Breadcrumb((topic).name, topicBriefingsPath((topic).id)),
                     new Breadcrumb("Select Source", context.request().uri())
             ));
             context.response().end(selectContentSource.instance().data(data).render());

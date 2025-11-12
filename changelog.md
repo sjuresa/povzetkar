@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified `ContentSourceDetailService.ContentSourceDetails` record to use `int` for `subscriberCount`.
 - Modified `YouTubeDetailEnrichmentStrategy` to use `intValue()` for `subscriberCount`.
 - **UI Navigation:** Moved the main topics listing to `/ui/topics` from `/ui` to provide a dedicated home page.
+- **Content Source Selection UX:** Improved the user experience for adding content sources to a topic.
+    - Filtered out content sources already associated with a topic from the available selection list.
+    - Modified the "add content source" action to redirect back to the selection page, allowing users to add multiple sources continuously.
 
 ### Fixed
 
@@ -183,7 +186,6 @@ This version marks a major architectural milestone by establishing the foundatio
 
 ### Chores
 - Enabled JUnit parameterized tests via added dependency.
-
 
 ## [0.4] - 2025-08-16
 
