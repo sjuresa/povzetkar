@@ -71,6 +71,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `docs/RUNBOOK.md` with a new section under "Application Usage" explaining how to use the new Admin UI page.
 
+### Tests
+
+- **UI Backend Integration Tests:** Added new tests.
+
 ## [0.6.0] - 2025-10-31
 
 ### Summary

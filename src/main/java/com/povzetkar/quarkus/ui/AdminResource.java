@@ -105,7 +105,9 @@ public class AdminResource {
         ).page(0, pageSize).list();
         data.put("failedContentItems", failedContentItems);
 
-        context.response().end(admin.instance().data(data).render());
+        context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
+                .end(admin.instance().data(data).render());
     }
 
     @Route(path = "/ui/admin/enrich-sources", methods = Route.HttpMethod.POST)
