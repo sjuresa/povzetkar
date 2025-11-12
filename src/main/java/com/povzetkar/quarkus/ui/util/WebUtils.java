@@ -13,7 +13,7 @@ public class WebUtils {
 
     public static Optional<Long> getLongPathParam(RoutingContext context, String paramName, String errorMessage, Consumer<String> errorHandler) {
         String paramValue = context.pathParam(paramName);
-        if (paramValue == null) {
+        if (paramValue == null || paramValue.isBlank()) {
             errorHandler.accept(errorMessage);
             return Optional.empty();
         }
