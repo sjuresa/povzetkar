@@ -41,20 +41,72 @@ This API provides programmatic access to trigger core system processes.
 
 ---
 
-### 4.2. UI Support Endpoints
+### 4.2. Content Source API
 
-These endpoints are used by the server-side rendered UI to handle form submissions.
+This API provides full CRUD (Create, Read, Update, Delete) functionality for managing `ContentSource` entities.
 
-#### `POST /ui/content-sources`
-*   **Description:** Handles the creation of a new `ContentSource` and associates it with a `Topic`. This endpoint is triggered by submitting the "Add Content Source" form.
+#### `GET /api/v1/content-sources`
+*   **Description:** Retrieves a list of all content sources in the system.
 *   **Status:** `Implemented`
 *   **Source:** `ContentSourceResource.java`
-*   **Request Body (Form Data):**
-    *   `topicId` (long, required): The ID of the topic to which the source will be added.
-    *   `name` (string, required): The name for the new content source.
-    *   `sourceIdentifier` (string, required): The unique identifier for the source (e.g., YouTube channel ID).
-    *   `sourceTypeId` (int, required): The ID corresponding to the type of source (e.g., YouTube).
-*   **Success Response (302 Found):**
-    *   On successful creation, the user is redirected back to the topic detail page (`/ui/topics/{id}`). A success flash message is set.
-*   **Error Response (200 OK with re-rendered form):**
-    *   If form validation fails (e.g., blank fields), the "Add Content Source" form is re-rendered with error messages and the user's submitted values preserved.
+*   **Success Response (200 OK):** A JSON array of `ContentSource` objects.
+
+#### `GET /api/v1/content-sources/{id}`
+*   **Description:** Retrieves a single `ContentSource` by its ID.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **Success Response (200 OK):** A single `ContentSource` JSON object.
+*   **Error Response (404 Not Found):** If no `ContentSource` with the given ID exists.
+
+#### `POST /api/v1/content-sources`
+*   **Description:** Creates a new `ContentSource`.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **Request Body:** A `ContentSource` JSON object.
+*   **Success Response (201 Created):** The newly created `ContentSource` object.
+*   **Error Response (409 Conflict):** If a `ContentSource` with the same `sourceIdentifier` and `sourceTypeId` already exists.
+
+#### `PUT /api/v1/content-sources/{id}`
+*   **Description:** Updates an existing `ContentSource`.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **Request Body:** A `ContentSource` JSON object with the updated fields.
+*   **Success Response (200 OK):** The updated `ContentSource` object.
+*   **Error Responses:**
+    *   **404 Not Found:** If no `ContentSource` with the given ID exists.
+    *   **409 Conflict:** If the update would result in a duplicate `sourceIdentifier` and `sourceTypeId`.
+
+#### `DELETE /api/v1/content-sources/{id}`
+*   **Description:** Deletes a `ContentSource` by its ID.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **Success Response (204 No Content):** Indicates successful deletion.
+*   **Error Response (404 Not Found):** If no `ContentSource` with the given ID exists.
+
+#### `GET /api/v1/users/{userId}/topics/{topicName}/content-sources`
+*   **Description:** Retrieves a paginated list of content sources associated with a specific topic for a given user.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **Query Parameters:**
+    *   `page` (int, optional, default: 0): The page number to retrieve.
+    *   `size` (int, optional, default: 10): The number of items per page.
+*   **Success Response (200 OK):** A JSON array of `ContentSource` objects for the requested page.
+*   **Error Response (404 Not Found):** If the specified topic is not found for the given user.
+
+#### `POST /api/v1/content-sources/enrich`
+*   **Description:** Triggers an asynchronous background process to enrich all existing content sources with additional details (like subscriber counts, descriptions) from their respective platforms.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **Success Response (202 Accepted):**
+    *   Indicates that the enrichment process has been successfully started.
+    *   **Body:** `Content sources enrichment started.`
+
+#### `GET /api/v1/content-sources/details/{sourceTypeId}/{identifier}`
+*   **Description:** Fetches live details for a potential content source directly from its platform (e.g., YouTube) without persisting it. Useful for previewing before creation.
+*   **Status:** `Implemented`
+*   **Source:** `ContentSourceResource.java`
+*   **URL Parameters:**
+    *   `sourceTypeId` (int, required): The ID of the source type (e.g., 1 for YouTube).
+    *   `identifier` (string, required): The platform-specific identifier (e.g., a YouTube channel ID).
+*   **Success Response (200 OK):** A JSON object containing the fetched details.
+*   **Error Response (404 Not Found):** If details for the given identifier cannot be found on the platform.
