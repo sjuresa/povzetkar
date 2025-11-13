@@ -30,6 +30,8 @@ public class HomeResource {
     public void getHomePage(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
         data.put("breadcrumbs", List.of(ViewUtils.HOME_BREADCRUMB));
-        context.response().end(home.instance().data(data).render());
+        context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
+                .end(home.instance().data(data).render());
     }
 }

@@ -1,7 +1,10 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
@@ -12,25 +15,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
 class ContentSourceResourceTest {
 
-    private static Topic testTopic;
+    private Topic testTopic;
 
     @BeforeEach
     @Transactional
     void setup() {
-        // Clear all data before each test
-        ContentSource.deleteAll();
-        Topic.deleteAll();
-        User.deleteAll();
-
-        // Create test user
-        User testUser = new User();
+        tearDown();
+        // Data creation only
+        var testUser = new User();
         testUser.name = "testuser";
-        testUser.username = "testuser";
+        testUser.username = "cs_resource_test_user";
         testUser.active = true;
         testUser.persist();
 
@@ -43,9 +41,13 @@ class ContentSourceResourceTest {
 
     @AfterEach
     @Transactional
-    void cleanup() {
-        ContentSource.deleteAll();
+    void tearDown() {
+        // Cleanup only
+        Briefing.deleteAll();
+        Summary.deleteAll();
+        ContentItem.deleteAll();
         Topic.deleteAll();
+        ContentSource.deleteAll();
         User.deleteAll();
     }
 
@@ -58,8 +60,8 @@ class ContentSourceResourceTest {
                 .formParam("topicId", testTopic.id)
                 .when().post("/ui/content-sources")
                 .then()
-                .statusCode(400)
-                .body(is("Name cannot be blank."));
+                .statusCode(200)
+                .body(containsString("Name cannot be blank."));
     }
 
     @Test
@@ -71,8 +73,8 @@ class ContentSourceResourceTest {
                 .formParam("topicId", testTopic.id)
                 .when().post("/ui/content-sources")
                 .then()
-                .statusCode(400)
-                .body(is("Source Identifier cannot be blank."));
+                .statusCode(200)
+                .body(containsString("Source Identifier cannot be blank."));
     }
 
     @Test
@@ -84,8 +86,8 @@ class ContentSourceResourceTest {
                 .formParam("topicId", testTopic.id)
                 .when().post("/ui/content-sources")
                 .then()
-                .statusCode(400)
-                .body(is("Invalid Source Type ID."));
+                .statusCode(200)
+                .body(containsString("A valid source type must be selected."));
     }
 
     @Test
@@ -99,7 +101,7 @@ class ContentSourceResourceTest {
                 .when().post("/ui/content-sources")
                 .then()
                 .statusCode(303) // Expect redirect status
-                .header("Location", containsString("http://localhost:8081/ui"));
+                .header("Location", containsString("/ui/topics/" + testTopic.id + "/briefings"));
 
         // Verify content source was created and linked to topic
         ContentSource createdSource = ContentSource.find("sourceIdentifier", "valid-id").firstResult();
@@ -113,21 +115,42 @@ class ContentSourceResourceTest {
     }
 
     @Test
-    void testAddContentSource_validInputNoTopic_createsContentSource() {
+    void testAddContentSource_missingTopicId_returnsError() {
         RestAssured.given()
-                .redirects().follow(false) // Do not follow redirects
                 .formParam("name", "Another Valid Source")
                 .formParam("sourceIdentifier", "another-valid-id")
                 .formParam("sourceTypeId", SourceTypeEnum.YOUTUBE.getId())
+                // No topicId
                 .when().post("/ui/content-sources")
                 .then()
-                .statusCode(303) // Expect redirect status
-                .header("Location", containsString("/ui"));
+                .statusCode(200)
+                .body(containsString("Topic ID is required."));
+    }
 
-        // Verify content source was created
-        ContentSource createdSource = ContentSource.find("sourceIdentifier", "another-valid-id").firstResult();
-        assert createdSource != null;
-        assert createdSource.name.equals("Another Valid Source");
-        assert createdSource.sourceTypeId == SourceTypeEnum.YOUTUBE.getId();
+    @Test
+    void testAddContentSource_invalidTopicIdFormat_returnsError() {
+        RestAssured.given()
+                .formParam("name", "Test Source")
+                .formParam("sourceIdentifier", "test-id")
+                .formParam("sourceTypeId", SourceTypeEnum.YOUTUBE.getId())
+                .formParam("topicId", "not-a-number")
+                .when().post("/ui/content-sources")
+                .then()
+                .statusCode(200)
+                .body(containsString("Invalid format for topic ID."));
+    }
+
+    @Test
+    void testAddContentSource_nonExistentTopicId_returnsError() {
+        long nonExistentTopicId = 99999L;
+        RestAssured.given()
+                .formParam("name", "Test Source")
+                .formParam("sourceIdentifier", "test-id")
+                .formParam("sourceTypeId", SourceTypeEnum.YOUTUBE.getId())
+                .formParam("topicId", nonExistentTopicId)
+                .when().post("/ui/content-sources")
+                .then()
+                .statusCode(200)
+                .body(containsString(String.format("Topic with id %d not found.", nonExistentTopicId)));
     }
 }

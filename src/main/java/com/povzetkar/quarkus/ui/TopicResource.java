@@ -4,8 +4,8 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
-import com.povzetkar.quarkus.ui.util.FormValidator;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.FormValidator;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.povzetkar.quarkus.ui.util.WebUtils;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TopicResource {
-
     public static final String UI_BASE_PATH = "/ui";
     public static final String TOPICS_PATH = UI_BASE_PATH + "/topics"; // /ui/topics
     public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add"; // /ui/topics/add
@@ -126,6 +125,7 @@ public class TopicResource {
                 new Breadcrumb(TOPICS_LABEL, TOPICS_PATH)
         ));
         context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
                 .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
                 .end(topics.instance().data(data).render());
     }
@@ -224,17 +224,6 @@ public class TopicResource {
         topic.persist();
     }
 
-    @Transactional
-    void persistTopicUpdate(Long id, String name) {
-        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
-            ((Topic) topic).name = name;
-            topic.persist();
-        }, () -> {
-            // This case should ideally not be reached if validation is done before calling
-            throw new IllegalStateException(String.format(TOPIC_NOT_FOUND_MSG, id));
-        });
-    }
-
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
@@ -276,6 +265,7 @@ public class TopicResource {
                             new Breadcrumb(topic.name, context.request().uri())
                     ));
                     context.response()
+                            .putHeader("Content-Type", "text/html; charset=utf-8")
                             .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
                             .putHeader("Pragma", "no-cache")
                             .end(briefingsByTopic.instance().data(data).render());

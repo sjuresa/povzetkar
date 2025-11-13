@@ -16,7 +16,7 @@
         <section id="content-source-enrichment">
             <h2>Content Source Enrichment</h2>
             <p>Manually trigger the process to enrich content sources.</p>
-            <form action="/ui/admin/enrich-sources" method="post">
+            <form id="enrichSourcesForm" action="/api/v1/content-sources/enrich" method="post">
                 <button type="submit" onclick="return confirm('Are you sure you want to enrich content sources?');">Run Content Source Enrichment</button>
             </form>
         </section>
@@ -24,7 +24,7 @@
         <section id="orchestration-service">
             <h2>Orchestration Service</h2>
             <p>Manually trigger the main orchestration process, optionally for a specific date range.</p>
-            <form action="/ui/admin/run-orchestration" method="post">
+            <form id="orchestrationForm" action="/api/v1/orchestrator/run" method="post">
                 <fieldset>
                     <legend>Run Orchestration</legend>
                     <label for="start-date">Start Date (optional):</label>
@@ -200,5 +200,6 @@
             </footer>
         </article>
     </dialog>
+    <script src="/static/js/admin.js"></script>
 {/content}
 {/include}

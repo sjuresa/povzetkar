@@ -7,69 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.6.1] - 2025-11-13
 
-- **Breadcrumb Navigation:** Implemented dynamic breadcrumb navigation in the master layout (`main.html`) to enhance user orientation.
-    - Centralized "Povzetkar" home breadcrumb in `ViewUtils` for DRY principle adherence.
-    - Breadcrumbs dynamically adjust based on the current page and its context (e.g., topic, briefing, summary).
-    - Added a visual separator ('>') between breadcrumb elements using Pico.css's native `::before` pseudo-element.
-- **Flash Messages:** Integrated a session-based flash message system for user feedback on actions (success/error).
-    - Consolidated flash message handling in `ViewUtils` for consistent usage across resources.
-    - Flash messages are rendered in `main.html` and automatically cleared after display.
-- **Dedicated Home Page:** Created a new home page (`home.html` and `HomeResource.java`) at `/ui` to serve as the application's landing page.
-- **Footer Version Display:** Added dynamic display of the application version (from `pom.xml`) to the footer in `main.html`.
-- **Admin UI Page:** Created a new administrative UI page (`/ui/admin`) with enhanced features for triggering system actions and monitoring.
-    - Semantic HTML5 elements and improved form structures for better accessibility.
-    - Backend endpoints (`/ui/admin/enrich-sources`, `/ui/admin/run-orchestration`) in `AdminResource.java` to trigger system-level actions.
-    - Success and error flash messages for user feedback.
-    - Configurable date/time format (`povzetkar.ui.datetime.format`) applied consistently across all displayed timestamps.
-    - Tables to display: Pending Content Items, Recent Content Items with Summaries, Recent Briefings, and Failed Content Items.
-    - Row numbers to all tables.
-    - Executive summary as a tooltip on desktop, and a Pico.css modal on mobile, for summary titles.
-    - Links from summary titles to a new summary detail page.
-- **Summary Detail Page:** Created a new `/ui/summaries/{id}` page (`SummaryResource.java` and `summary-detail.html`) to display individual summaries, converting Markdown content to HTML using `flexmark`.
-- **Admin Page Tabs:** Implemented a tabbed interface on the admin page to separate "Actions" from "History", improving usability.
+### Summary
 
-### Changed
-
-- Refactored `getExecutiveSummary` logic in `Briefing.java` and `Summary.java` into `TextUtils.extractSection` to reduce code duplication and improve maintainability.
-- Replaced the content source dropdown with a link to a searchable page.
-- Made the content source search case-insensitive.
-- Updated `ContentSource` entity's `subscriberCount` from `long` to `int`.
-- Modified `ContentSourceDetailService.ContentSourceDetails` record to use `int` for `subscriberCount`.
-- Modified `YouTubeDetailEnrichmentStrategy` to use `intValue()` for `subscriberCount`.
-- **UI Navigation:** Moved the main topics listing to `/ui/topics` from `/ui` to provide a dedicated home page.
-- **Content Source Selection UX:** Improved the user experience for adding content sources to a topic.
-    - Filtered out content sources already associated with a topic from the available selection list.
-    - Modified the "add content source" action to redirect back to the selection page, allowing users to add multiple sources continuously.
+Version 0.6.1 introduces a comprehensive UI/UX refinement, transforming the basic HTML interface into a clean, responsive, and navigable application. This release establishes a foundational user experience with a consistent master layout, modern styling via Pico.css, and improved user feedback mechanisms. A key highlight is the new Admin UI, which provides a powerful interface for system monitoring and manual triggering of core application processes like content enrichment and orchestration.
 
 ### Fixed
 
-- Corrected a bug where the main page would not refresh after deleting a topic.
-- Resolved a 404 error when adding a content source to a topic.
-- Fixed a bug where deleting a content source or topic would not show a confirmation dialog.
-- Fixed Qute rendering errors related to date formatting by implementing helper methods in model classes (`ContentItem`, `Briefing`, `Summary`) and using correct Qute syntax.
-- Fixed `BlockingOperationNotAllowedException` by annotating blocking UI resource methods (`getAdminPage`, `enrichSources`, `runOrchestration`) with `@Blocking`.
-- Corrected mobile executive summary display from a transparent overlay to a Pico.css modal, with improved positioning and readability.
-- Added logging to catch blocks in `AdminResource.java` to prevent exception swallowing and improve debuggability.
-- **Breadcrumb Logic:** Corrected breadcrumb generation for summary pages to handle cases where a briefing might not yet exist, and removed redundant date information from briefing breadcrumbs.
-- **Form Repopulation:** Ensured submitted form values are re-populated on validation failure for topic creation/update forms.
-- **Page Refresh:** Implemented cache-control headers on redirects to force page refreshes after POST operations.
+- **UI Responsiveness & Stability:** Corrected mobile display issues, fixed page refresh bugs after form submissions, and resolved various Qute rendering errors.
+- **Error Handling:** Prevented `BlockingOperationNotAllowedException` in UI resources and added logging to catch blocks to improve debuggability.
+- **Navigation & Links:** Fixed 404 errors when adding content sources and corrected breadcrumb generation logic for edge cases.
+- **User Actions:** Ensured confirmation dialogs appear correctly for all destructive actions.
+- **API Data Handling:** Added a null check in `YouTubeDetailEnrichmentStrategy` to prevent `NullPointerException` for malformed API responses.
+
+### Added
+
+- **Foundational UI/UX:** Implemented a master layout (`main.html`), integrated the "class-less" Pico.css framework, and refactored all pages to use semantic HTML5.
+- **Improved Navigation:** Added dynamic breadcrumb navigation and a dedicated home page (`/ui`).
+- **User Feedback:** Integrated a session-based flash message system for success/error feedback and ensured form values are repopulated on validation failure.
+- **Admin UI Page (`/ui/admin`):**
+    - Created a powerful dashboard with a tabbed interface for "Actions" and "History".
+    - Implemented AJAX-driven forms to trigger backend orchestration and enrichment services.
+    - Added monitoring tables for pending, recent, and failed content items and briefings.
+    - Included user-friendly features like tooltips/modals for executive summaries and links to a new summary detail page.
+- **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
+- **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
 
 ### Refactored
 
-- Centralized `createdAt` field and `formattedCreatedAt` method into `BaseAuditableEntity` to adhere to DRY principle. `Briefing`, `ContentItem`, and `Summary` now extend this base class.
-- Extracted duplicate redirect logic in `AdminResource.java` into a private helper method `redirectBack` to improve maintainability and adhere to the DRY principle.
-- **UI Utilities:** Refactored `ViewUtils` to be an `@ApplicationScoped` bean, allowing dependency injection and centralizing common UI helper methods.
-- **Form Validation:** Extracted common form parameter validation logic into reusable `WebUtils` methods.
-- **Code Duplication:** Consolidated UI-related utility classes (`WebUtils`, `Breadcrumb`, `ViewUtils`) into `com.povzetkar.quarkus.ui.util` package.
-- **Readability:** Extracted breadcrumb building logic in `SummaryResource` into a private helper method.
-- **Efficiency:** Extracted form rendering logic in `TopicResource` and `ContentSourceResource` into private helper methods to avoid redundant database queries and ensure correct parameter passing on re-render.
-- **Constructor Injection:** Refactored all UI resource classes (`AdminResource`, `BriefingWebResource`, `ContentSourceResource`, `HomeResource`, `SummaryResource`, `TopicResource`) and `ViewUtils` to use constructor injection for dependencies, addressing SonarQube/IDE warnings.
+- **Code Consolidation (DRY):**
+    - Centralized `createdAt` logic into a `BaseAuditableEntity`.
+    - Extracted `getExecutiveSummary` logic into a reusable `TextUtils.extractSection` method.
+    - Consolidated UI helper methods into an injectable `ViewUtils` bean and a `WebUtils` class.
+    - Grouped all UI utility classes into a new `com.povzetkar.quarkus.ui.util` package.
+- **Dependency Injection:** Refactored all UI resource classes to consistently use constructor injection.
+- **Data Type Correction:** Changed `subscriberCount` from `long` to `int` across relevant entities and services to align with API data types.
 
 ### Documentation
 
 - Updated `docs/RUNBOOK.md` with a new section under "Application Usage" explaining how to use the new Admin UI page.
+
+### Tests
+
+- **UI Backend Integration Tests:** Added new integration tests for the Admin UI page and its backing API endpoints.
 
 ## [0.6.0] - 2025-10-31
 

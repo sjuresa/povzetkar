@@ -77,7 +77,9 @@ public class BriefingWebResource {
                 new Breadcrumb("Briefing", context.request().uri())
         ));
 
-        context.response().end(briefingDetail.instance().data(data).render());
+        context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
+                .end(briefingDetail.instance().data(data).render());
     }
 
     private RawString markdownToHtml(String markdown) {

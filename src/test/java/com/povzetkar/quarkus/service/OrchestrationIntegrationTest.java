@@ -6,6 +6,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,6 +26,9 @@ import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class OrchestrationIntegrationTest {
+
+    @ConfigProperty(name = "transcript.threshold.minutes")
+    int transcriptThresholdMinutes;
 
     @Inject
     OrchestrationManager orchestrationManager;
@@ -53,7 +56,7 @@ class OrchestrationIntegrationTest {
 
     void setupTestData() {
         User testUser = new User();
-        testUser.username = "test_user_" + UUID.randomUUID();
+        testUser.username = "orchestration_test_user";
         testUser.name = "Test User";
         testUser.active = true;
         testUser.persist();
@@ -64,7 +67,7 @@ class OrchestrationIntegrationTest {
         testTopic.persist();
 
         ContentSource testContentSource = new ContentSource();
-        testContentSource.sourceIdentifier = "test_channel_id_" + UUID.randomUUID();
+        testContentSource.sourceIdentifier = "orchestration_test_channel_id";
         testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         testContentSource.name = "Test Channel";
         testContentSource.subscriberCount = 1000;
@@ -95,7 +98,7 @@ class OrchestrationIntegrationTest {
 
         YouTubeVideo longVideo = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
-                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(10));
+                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
 
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(longVideo)); // The service filters out short videos, so the mock should too.
@@ -163,7 +166,7 @@ class OrchestrationIntegrationTest {
 
         YouTubeVideo videoToProcess = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
-                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(10));
+                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
 
         List<YouTubeVideo> fetchedVideos = List.of(videoToProcess);
 
@@ -205,7 +208,7 @@ class OrchestrationIntegrationTest {
         // First run: create initial briefing
         YouTubeVideo video1 = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
-                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(10));
+                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(video1));
         when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
@@ -223,7 +226,7 @@ class OrchestrationIntegrationTest {
         // Second run: new content, should overwrite
         YouTubeVideo video2 = new YouTubeVideo(
                 "video2_id", "Video 2 Title", "http://youtube.com/watch?v=video2_id",
-                "Author 2", "channel2_id", Instant.now(), Duration.ofMinutes(10));
+                "Author 2", "channel2_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(video2));
         when(youTubeTranscriptService.getTranscript("video2_id")).thenReturn("Transcript for video 2");

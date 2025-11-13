@@ -74,7 +74,9 @@ public class SummaryResource {
         data.put("summaryHtml", summaryHtml);
         data.put("breadcrumbs", buildSummaryBreadcrumbs(context, briefingOptional.orElse(null)));
 
-        context.response().end(summaryDetail.instance().data(data).render());
+        context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
+                .end(summaryDetail.instance().data(data).render());
     }
 
     private List<Breadcrumb> buildSummaryBreadcrumbs(RoutingContext context, Briefing briefing) {
