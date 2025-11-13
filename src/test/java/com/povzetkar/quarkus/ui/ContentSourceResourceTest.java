@@ -25,7 +25,7 @@ class ContentSourceResourceTest {
         // Data creation only
         var testUser = new User();
         testUser.name = "testuser";
-        testUser.username = "testuser";
+        testUser.username = "cs_resource_test_user";
         testUser.active = true;
         testUser.persist();
 

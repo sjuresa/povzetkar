@@ -33,7 +33,7 @@ class TopicResourceTest {
 
         testUser = new User();
         testUser.name = "Test User";
-        testUser.username = "testuser";
+        testUser.username = "topic_resource_test_user";
         testUser.active = true;
         testUser.persist();
 
