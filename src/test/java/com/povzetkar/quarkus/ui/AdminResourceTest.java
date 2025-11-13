@@ -29,7 +29,7 @@ class AdminResourceTest {
     void testEnrichSourcesAjaxCall() {
         RestAssured.given()
                 .contentType(ContentType.JSON) // Specify Content-Type as application/json
-                .when().post("/api/v1/content-sources/enrich")
+                .body("{}").when().post("/api/v1/content-sources/enrich")
                 .then()
                 .statusCode(202) // Accepted
                 .body(containsString("Content sources enrichment started.")); // Expected response from JAX-RS
@@ -39,7 +39,7 @@ class AdminResourceTest {
     void testRunOrchestrationAjaxCall() {
         RestAssured.given()
                 .contentType(ContentType.JSON) // Specify Content-Type as application/json
-                .when().post("/api/v1/orchestrator/run")
+                .body("{}").when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202) // Accepted
                 .body(containsString("Orchestration process started.")); // Expected response from JAX-RS
@@ -51,7 +51,7 @@ class AdminResourceTest {
                 .contentType(ContentType.JSON) // Specify Content-Type as application/json
                 .queryParam("startDate", "2023-01-01")
                 .queryParam("endDate", "2023-01-01")
-                .when().post("/api/v1/orchestrator/run")
+                .body("{}").when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202) // Accepted
                 .body(containsString("Orchestration process started.")); // Expected response from JAX-RS
@@ -62,7 +62,7 @@ class AdminResourceTest {
         RestAssured.given()
                 .contentType(ContentType.JSON) // Specify Content-Type as application/json
                 .queryParam("startDate", "invalid-date")
-                .when().post("/api/v1/orchestrator/run")
+                .body("{}").when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(400) // Bad Request
                 .body(containsString("Invalid date format. Please use YYYY-MM-DD."));
