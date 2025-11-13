@@ -57,11 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const mainElement = document.querySelector('main.container');
         if (!mainElement) return;
 
-        // Remove existing flash messages
-        for (const el of document.querySelectorAll('.alert-success, .alert-danger')) {
-            el.remove();
-        }
-
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type}`;
         alertDiv.setAttribute('role', 'alert');

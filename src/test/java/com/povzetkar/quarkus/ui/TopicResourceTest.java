@@ -30,7 +30,7 @@ class TopicResourceTest {
     @BeforeEach
     @Transactional
     void setup() {
-        cleanup();
+        tearDown();
 
         testUser = new User();
         testUser.name = "Test User";
@@ -53,7 +53,7 @@ class TopicResourceTest {
 
     @AfterEach
     @Transactional
-    void cleanup() {
+    void tearDown() {
         Briefing.deleteAll();
         Summary.deleteAll();
         ContentItem.deleteAll();

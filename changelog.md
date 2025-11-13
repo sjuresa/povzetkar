@@ -168,7 +168,6 @@ This version marks a major architectural milestone by establishing the foundatio
 ### Chores
 - Enabled JUnit parameterized tests via added dependency.
 
-
 ## [0.4] - 2025-08-16
 
 ### New Features
