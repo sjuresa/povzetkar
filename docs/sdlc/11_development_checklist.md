@@ -30,6 +30,7 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **2.1. Define Task:** The task is clearly defined in `agent_logs/task.md`, including the `## Documentation` section specifying context and required updates.
 - [ ] **2.2. Agent Proposes Plan:** The AI agent follows `AGENT.md` to gather information and present a detailed plan for approval.
 - [ ] **2.3. User Approves Plan:** The plan is reviewed and explicitly approved.
+- [ ] **2.3a. Pre-Execution Gate:** Confirm that an explicit approval for the plan has been received. **Execution is forbidden without this approval.**
 - [ ] **2.4. Agent Executes Plan:** The agent executes the plan step-by-step, including all necessary code changes and documentation updates.
 - [ ] **2.5. User Verifies Tests:** After code modifications, the user runs the test suite and confirms that all tests are passing.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
