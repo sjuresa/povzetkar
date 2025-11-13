@@ -65,7 +65,6 @@ This document outlines the concrete steps for implementing the features describe
 4.  **Scalability:** Replaced the content source dropdown with a scalable, searchable page.
 5.  **Code Quality:** Performed significant refactoring to centralize common logic (auditing, UI utils) and enforce consistent dependency injection patterns.
 6.  **Implement User Feedback (Flash Messages):** Add a mechanism for displaying temporary, session-based "flash messages" for user feedback (e.g., "Topic successfully created," "Source removed"). This component should be part of the master layout.
-7**Implement User Feedback (Flash Messages):** Add a mechanism for displaying temporary, session-based "flash messages" for user feedback (e.g., "Topic successfully created," "Source removed"). This component should be part of the master layout.
 
 
 ---
