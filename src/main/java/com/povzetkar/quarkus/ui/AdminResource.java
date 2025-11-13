@@ -14,17 +14,12 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
 public class AdminResource {
-
-    static {
-        LoggerFactory.getLogger(AdminResource.class);
-    }
 
     private static final String ADMIN_REDIRECT_PATH = "/ui/admin";
     private static final String TAB_PARAM = "tab";

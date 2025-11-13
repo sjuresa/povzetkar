@@ -228,7 +228,8 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json' // JAX-RS expects JSON by default, even for query params
-                            }
+                            },
+                            body: '{}'
                         });
 
                         const responseBody = await response.text(); // Get response as text to handle non-JSON errors
@@ -255,7 +256,8 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
-                            }
+                            },
+                            body: '{}'
                         });
 
                         const responseBody = await response.text();
