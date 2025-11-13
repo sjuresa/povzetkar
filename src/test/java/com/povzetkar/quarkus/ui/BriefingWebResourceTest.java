@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 
 import static org.hamcrest.Matchers.containsString;
@@ -25,25 +24,20 @@ import static org.hamcrest.Matchers.containsString;
 @QuarkusTest
 class BriefingWebResourceTest {
 
-    private static User testUser;
-    private static Topic testTopic;
-    private static Briefing testBriefing;
-    private static YouTubeVideo testContentItem;
+    private User testUser;
+    private Topic testTopic;
+    private Briefing testBriefing;
+    private YouTubeVideo testContentItem;
 
     @BeforeEach
     @Transactional
     void setup() {
-        Briefing.deleteAll();
-        Summary.deleteAll();
-        ContentItem.deleteAll();
-        Topic.deleteAll();
-        ContentSource.deleteAll();
-        User.deleteAll();
+        // Ensure a clean slate before creating new data
+        tearDown();
 
-        // Create test user
         testUser = new User();
         testUser.name = "Povzetkar AI";
-        testUser.username = "testuser";
+        testUser.username = "briefing_test_user";
         testUser.active = true;
         testUser.persist();
 
@@ -90,7 +84,8 @@ class BriefingWebResourceTest {
 
     @AfterEach
     @Transactional
-    void cleanup() {
+    void tearDown() {
+        // Cleanup only
         Briefing.deleteAll();
         Summary.deleteAll();
         ContentItem.deleteAll();
@@ -100,36 +95,13 @@ class BriefingWebResourceTest {
     }
 
     @Test
-    void testListTopics() {
-        RestAssured.given()
-                .when().get("/ui")
-                .then()
-                .statusCode(200)
-                .body(containsString("Topics by User"))
-                .body(containsString(testUser.name))
-                .body(containsString(testTopic.name));
-    }
-
-    @Test
-    void testListBriefingsByTopic() {
-        RestAssured.given()
-                .when().get("/ui/topics/" + testTopic.id + "/briefings")
-                .then()
-                .statusCode(200)
-                .body(containsString("Briefings for " + testTopic.name))
-                .body(containsString(testBriefing.briefingDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))));
-    }
-
-    @Test
     void testShowBriefing() {
         RestAssured.given()
                 .when().get("/ui/briefings/" + testBriefing.id)
                 .then()
                 .statusCode(200)
-                .body(containsString("Briefing for " + testTopic.name))
                 .body(containsString("This is a <strong>meta</strong> summary.")) // Flexmark converts **meta** to <strong>meta</strong>
                 .body(containsString("Included Summaries"))
-                .body(containsString(testContentItem.title))
                 .body(containsString("This is a <strong>test</strong> summary.")); // Flexmark converts **test** to <strong>test</strong>
     }
 

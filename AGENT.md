@@ -80,13 +80,19 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will create a permanent record of the task by copying the content of `agent_logs/task.md` to a new file named `agent_logs/<task id> <task title>.md`.
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
-**Step 7: Execute Plan and Log Progress**
+**Step 7: Handle Unplanned Discoveries**
+*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `11_development_checklist.md` (step `2.9. Handle Unplanned Discoveries`).
+*   I will assess its criticality and alignment with the current version's goals and either propose an immediate plan update or log it in the appropriate backlog file (e.g., `docs/backlog/ui-improvements.md`).
+
+**Step 8: Execute Plan and Log Progress**
 *   I will now execute the approved plan step-by-step.
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
-**Step 8: Propose Commit Message and Await Final Confirmation**
-*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
+**Step 9: Update `CHANGELOG.md`, Propose Commit Message and Await Final Confirmation**
+*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.8: Update `CHANGELOG.md`**.
+*   After updating `CHANGELOG.md`, I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
 *   I will follow the **Commit Message Mandate** to analyze the changes and propose the message.
+*   Before proposing the commit message, I will verify that the task meets all criteria defined in the "Definition of Done" section of the current `*-planning-process.md` document.
 *   After proposing the commit message, my final output for the task **must** be the following question: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"**
 *   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
 
@@ -149,6 +155,7 @@ This rubric must be used to verify the completeness of the planning phase before
 | 1.1  | **Task Definition:** Have I read/created and confirmed my understanding of the `agent_logs/task.md` file?                                                         |   ☐    |
 | 1.2  | **Pre-Plan Check: Usage Analysis:** Has the **Usage Analysis Mandate** been satisfied for all code to be modified/removed? (`find_usages` must be run first).      |   ☐    |
 | 1.3  | **Pre-Plan Check: TDD:** Has the correct TDD workflow (Red-Green-Refactor or Green-to-Green) been identified?                                                      |   ☐    |
+| 1.3a | **Pre-Plan Check: Testing Strategy:** For any new UI or complex feature, has the question "How will we test this?" been asked and the strategy documented?         |   ☐    |
 | 1.4  | **Pre-Plan Check: Info Gathering:** Have I gathered all necessary facts from the codebase before planning?                                                        |   ☐    |
 | 1.5  | **Plan Presentation: Findings:** Does the plan present findings as a list of facts?                                                                             |   ☐    |
 | 1.6  | **Plan Presentation: Structure:** Does the plan include a "Detailed Plan," "Design Justification," and "Breaking Changes Analysis"?                                |   ☐    |
@@ -171,7 +178,27 @@ This rubric must be used to verify the completeness of the execution and complet
 | 3.3  | **Commit Message:** Does the proposed commit message follow the **Commit Message Mandate** (based on `git diff HEAD`, Conventional Commits)?                        |   ☐    |
 | 3.4  | **Final Hand-off:** Is my final output the question: "I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?" |   ☐    |
 
-# IV. Execution & Supporting Protocols
+---
+
+# IV. Information Gathering & Context
+
+To ensure my proposals are well-informed and aligned with the project's current state, I will always start by gathering context from the project's documentation. My primary sources of information are:
+
+-   **Strategic & Process Documents:**
+    -   `docs/overview/roadmap.md`: For long-term vision and goals.
+    -   `docs/sdlc/11_development_checklist.md`: For the step-by-step process of any given phase.
+    -   `docs/sdlc/07_development_methodology_comparison.md`: To understand our agreed-upon agile hybrid methodology.
+-   **Version-Specific Documents:**
+    -   `docs/versions/vX.Y-planning-process.md`: For the rationale and strategic decisions of the current version.
+    -   `docs/versions/vX.Y-tasks.md`: For the specific, agreed-upon tasks for the current version.
+-   **Backlog & Technical Guides:**
+    -   `docs/backlog/`: To be aware of non-critical issues and ideas for the future.
+    -   `docs/RUNBOOK.md`: For technical setup and operational procedures.
+-   **The Code Itself:** The relevant source code and existing tests are the ultimate source of truth for implementation details.
+
+---
+
+# V. Execution & Supporting Protocols
 
 ## A. Technical Execution Protocol
 
@@ -182,10 +209,10 @@ This rubric must be used to verify the completeness of the execution and complet
 5.  **Choosing the Right File Modification Tool:**
     *   I will use `write_file` for substantial changes, creating new files, or when the desired state of the entire file is clear.
     *   I will use `replace_text` for smaller, more targeted modifications where preserving the surrounding context is essential and less risky than rewriting the whole file.
-6.  **Adherence to the Verification Mandate:** After every `write_file` or `replace_text` operation, I must immediately follow the **Immediate File-Level Verification** protocol (see Section VI) to ensure the change was successful and introduced no errors before proceeding.
+6.  **Adherence to the Verification Mandate:** After every `write_file` or `replace_text` operation, I must immediately follow the **Immediate File-Level Verification** protocol (see Section VII) to ensure the change was successful and introduced no errors before proceeding.
 
 7. Handling 'Identical Content' Write Errors
-When a `write_file` operation returns an "Error: new text is identical to the file's current contents", I will not automatically consider this a successful operation. Instead, I will perform the following verification:
+   When a `write_file` operation returns an "Error: new text is identical to the file's current contents", I will not automatically consider this a successful operation. Instead, I will perform the following verification:
     *   **Action:** Immediately after receiving this error, I will read the file back using `read_file`.
     *   **Goal:** Compare the content read from the file with the content I intended to write.
     *   **Outcome:**
@@ -270,7 +297,7 @@ By adhering to this literal, mechanical execution, I ensure maximum transparency
 
 ---
 
-# V. Failure Handling Protocols
+# VI. Failure Handling Protocols
 
 ## The "No Apologies" Protocol: Fail Fast, Learn Faster
 
@@ -296,7 +323,7 @@ This protocol is the supreme directive for handling a rejected *execution* step 
 
 ---
 
-# VI. The Unbreakable Vow: Verification & Adherence
+# VII. The Unbreakable Vow: Verification & Adherence
 
 My past failures were not just technical errors; they were failures of process and diligence. This final section contains the most important rules I must follow to earn my title as an expert developer assistant through flawless execution.
 

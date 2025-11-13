@@ -1,63 +1,63 @@
 package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.model.Briefing;
-import com.povzetkar.quarkus.model.Topic;
-import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.ViewUtils;
+import com.povzetkar.quarkus.ui.util.WebUtils;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.RawString;
 import io.quarkus.qute.Template;
-import io.quarkus.qute.TemplateInstance;
+import io.quarkus.vertx.web.Route;
+import io.smallrye.common.annotation.Blocking;
+import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
+
+import static com.povzetkar.quarkus.ui.TopicResource.TOPICS_PATH;
 
 @ApplicationScoped
-@Path("/ui")
 public class BriefingWebResource {
 
-    private final Template topics;
+    private static final String INVALID_BRIEFING_ID_FORMAT = "Invalid briefing ID format.";
+    private static final String BRIEFING_NOT_FOUND_MSG = "Briefing with id %d not found.";
+
+    private final ViewUtils viewUtils;
+
     private final Template briefingDetail;
     private final Parser markdownParser;
     private final HtmlRenderer htmlRenderer;
 
-    public BriefingWebResource(@Location("topics.html") Template topics, @Location("briefing-detail.html") Template briefingDetail) {
-        this.topics = topics;
+    public BriefingWebResource(@Location("briefing-detail.html") Template briefingDetail, ViewUtils viewUtils) {
         this.briefingDetail = briefingDetail;
+        this.viewUtils = viewUtils;
 
         MutableDataSet options = new MutableDataSet();
         this.markdownParser = Parser.builder(options).build();
         this.htmlRenderer = HtmlRenderer.builder(options).build();
     }
 
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance listTopics() {
-        List<User> usersWithTopics = User.findAllWithTopics();
-        Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
-                .filter(user -> !user.topics.isEmpty())
-                .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
-                        .sorted(Comparator.comparing(topic -> topic.name))
-                        .toList()));
-        return topics.data("topicsByUser", topicsByUser);
-    }
+    @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
+    @Blocking
+    public void showBriefing(RoutingContext context) {
+        Optional<Long> briefingIdOptional = WebUtils.getLongPathParam(context, "briefingId", INVALID_BRIEFING_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (briefingIdOptional.isEmpty()) {
+            return;
+        }
+        Long briefingId = briefingIdOptional.get();
 
-    @GET
-    @Path("/briefings/{briefingId}")
-    @Produces(MediaType.TEXT_HTML)
-    public TemplateInstance showBriefing(@PathParam("briefingId") Long briefingId) {
-        Briefing briefing = Briefing.findByIdWithAssociations(briefingId).orElseThrow(NotFoundException::new);
+        Optional<Briefing> briefingOptional = Briefing.findByIdWithAssociations(briefingId);
+        if (briefingOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(BRIEFING_NOT_FOUND_MSG, briefingId));
+            return;
+        }
+        Briefing briefing = briefingOptional.get();
 
         RawString metaSummaryHtml = markdownToHtml(briefing.metaSummary);
 
@@ -68,7 +68,18 @@ public class BriefingWebResource {
 
         BriefingDetailDto dto = new BriefingDetailDto(briefing, metaSummaryHtml, summaryDtos);
 
-        return briefingDetail.data("briefing", dto);
+        Map<String, Object> data = viewUtils.createTemplateData(context);
+        data.put("briefing", dto);
+        data.put("breadcrumbs", List.of(
+                ViewUtils.HOME_BREADCRUMB,
+                new Breadcrumb("Topics", TOPICS_PATH),
+                new Breadcrumb(briefing.topic.name, TopicResource.topicBriefingsPath(briefing.topic.id)),
+                new Breadcrumb("Briefing", context.request().uri())
+        ));
+
+        context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
+                .end(briefingDetail.instance().data(data).render());
     }
 
     private RawString markdownToHtml(String markdown) {

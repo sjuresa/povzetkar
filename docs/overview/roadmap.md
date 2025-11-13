@@ -53,14 +53,18 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.6.1: UI/UX Refinement
+## v0.6.1: Foundational UI/UX Refinement
 
-**Goal:** Radically improve the UI/UX by integrating a modern CSS framework like **Bootstrap**, making the interface clean, responsive, and professional.
+**Goal:** Substantially improve the usability and visual appeal of the server-side rendered UI. This release establishes a clean, responsive, and navigable baseline experience, including a powerful Admin UI for system monitoring and management.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
-1.  **Integrate Bootstrap:** Add the Bootstrap CSS (and optional JS) to the project, likely via a CDN link in the main Qute template, to make it available to all pages.
-2.  **Refactor Templates with Bootstrap:** Systematically refactor the existing HTML templates to use Bootstrap's grid system (`container`, `row`, `col`) and components (`card`, `nav`, `btn`, `list-group`).
-3.  **Ensure Responsiveness:** Verify that the new layout is fully responsive and usable on both desktop and mobile devices.
+1.  **UI Foundation:** Implemented a master layout, integrated Pico.css, and refactored all pages to use semantic HTML.
+2.  **Improved UX:** Added breadcrumbs, flash messages for user feedback, and confirmation dialogs for actions.
+3.  **Admin UI:** Created a new `/ui/admin` page with a tabbed interface to trigger system actions (enrichment, orchestration) and monitor history (pending, recent, failed items).
+4.  **Scalability:** Replaced the content source dropdown with a scalable, searchable page.
+5.  **Code Quality:** Performed significant refactoring to centralize common logic (auditing, UI utils) and enforce consistent dependency injection patterns.
+
 
 ---
 
@@ -161,6 +165,7 @@ This document outlines the concrete steps for implementing the features describe
 
 4.  **Production Quality Testing:**
     *   **Performance Testing:** Conduct initial load tests on the RAG API to identify performance bottlenecks.
+    *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows, following the architectural decision made in v1.0.
 
 ---
 

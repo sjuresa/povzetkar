@@ -1,21 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Briefing for {briefing.topicName} on {briefing.briefingDate.format('dd.MM.yyyy')}</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-<div>{briefing.metaSummaryHtml}</div>
+{#include main.html}
+{#title}Briefing for {briefing.topicName} on {briefing.briefingDate.format('dd.MM.yyyy')}{/title}
+{#content}
+    <div>{briefing.metaSummaryHtml}</div>
 
-<h2>Included Summaries</h2>
-<ul>
-    {#for summary in briefing.summaries}
-        <li>
-            <h3>{summary.title}</h3>
-            <div>{summary.summaryTextHtml}</div>
-        </li>
-    {/for}
-</ul>
-</body>
-</html>
+    <h2>Included Summaries</h2>
+    <ul>
+        {#for summary in briefing.summaries}
+            <li>
+                <div>{summary.summaryTextHtml}</div>
+            </li>
+        {/for}
+    </ul>
+{/content}

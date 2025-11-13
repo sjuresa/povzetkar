@@ -40,7 +40,7 @@ public class ContentSource extends PanacheEntityBase {
     public String description;
 
     @Column(name = "subscriber_count", nullable = false)
-    public long subscriberCount = 0;
+    public int subscriberCount = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;

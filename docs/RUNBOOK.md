@@ -189,3 +189,44 @@ To verify that the orchestrator is running and generating summaries and briefing
     ```sql
     SELECT * FROM briefings;
     ```
+
+### 8.3 Admin UI Page
+
+The Admin UI page (`/ui/admin`) provides a user-friendly interface to trigger system-level actions and monitor the status of content processing and briefing generation.
+
+#### 8.3.1 Accessing the Admin UI
+
+*   **URL:** `http://localhost:8080/ui/admin`
+
+#### 8.3.2 Triggering Content Source Enrichment
+
+This section allows you to manually initiate the process of enriching content sources.
+
+*   **Action:** Click the "Run Content Source Enrichment" button.
+*   **Confirmation:** A `window.confirm()` dialog will appear. Confirm to proceed.
+*   **Feedback:** You will be redirected back to the Admin UI page with a success or error message.
+
+#### 8.3.3 Triggering Orchestration
+
+This section allows you to manually trigger the main orchestration process, optionally for a specific date range.
+
+*   **Date Parameters:**
+    *   **Start Date (optional):** Select a start date using the date picker. If left empty, it defaults to the current date.
+    *   **End Date (optional):** Select an end date. If left empty, it defaults to the Start Date.
+*   **Action:** Click the "Run Orchestration" button.
+*   **Confirmation:** A `window.confirm()` dialog will appear. Confirm to proceed.
+*   **Validation:** The system validates that:
+    *   End Date is not before Start Date.
+    *   Neither Start Date nor End Date are in the future.
+*   **Feedback:** You will be redirected back to the Admin UI page with a success or error message.
+
+#### 8.3.4 Monitoring History
+
+The Admin UI page displays several tables for monitoring the application's activity:
+
+*   **Pending Content Items:** Shows content items that are awaiting processing.
+*   **Recent Content Items with Summaries:** Displays the last 25 content items that have been summarized, including their processing status, creation date, and a link to the original source. On desktop, hovering over the title shows an executive summary tooltip. On mobile, tapping the title opens a modal with the executive summary.
+*   **Recent Briefings:** Shows the last 25 generated briefings, including their creation date, briefing date, and associated topic.
+*   **Failed Content Items:** Lists content items whose processing status is `FAILED` or `RETRY_LATER`, indicating issues that may require attention.
+
+All tables include a '#' column for row numbering and display dates in the configurable format `dd.MM.yyyy HH:mm:ss`.

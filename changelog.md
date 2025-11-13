@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.6.1] - 2025-11-13
+
+### Summary
+
+Version 0.6.1 introduces a comprehensive UI/UX refinement, transforming the basic HTML interface into a clean, responsive, and navigable application. This release establishes a foundational user experience with a consistent master layout, modern styling via Pico.css, and improved user feedback mechanisms. A key highlight is the new Admin UI, which provides a powerful interface for system monitoring and manual triggering of core application processes like content enrichment and orchestration.
+
+### Fixed
+
+- **UI Responsiveness & Stability:** Corrected mobile display issues, fixed page refresh bugs after form submissions, and resolved various Qute rendering errors.
+- **Error Handling:** Prevented `BlockingOperationNotAllowedException` in UI resources and added logging to catch blocks to improve debuggability.
+- **Navigation & Links:** Fixed 404 errors when adding content sources and corrected breadcrumb generation logic for edge cases.
+- **User Actions:** Ensured confirmation dialogs appear correctly for all destructive actions.
+- **API Data Handling:** Added a null check in `YouTubeDetailEnrichmentStrategy` to prevent `NullPointerException` for malformed API responses.
+
+### Added
+
+- **Foundational UI/UX:** Implemented a master layout (`main.html`), integrated the "class-less" Pico.css framework, and refactored all pages to use semantic HTML5.
+- **Improved Navigation:** Added dynamic breadcrumb navigation and a dedicated home page (`/ui`).
+- **User Feedback:** Integrated a session-based flash message system for success/error feedback and ensured form values are repopulated on validation failure.
+- **Admin UI Page (`/ui/admin`):**
+    - Created a powerful dashboard with a tabbed interface for "Actions" and "History".
+    - Implemented AJAX-driven forms to trigger backend orchestration and enrichment services.
+    - Added monitoring tables for pending, recent, and failed content items and briefings.
+    - Included user-friendly features like tooltips/modals for executive summaries and links to a new summary detail page.
+- **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
+- **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
+
+### Refactored
+
+- **Code Consolidation (DRY):**
+    - Centralized `createdAt` logic into a `BaseAuditableEntity`.
+    - Extracted `getExecutiveSummary` logic into a reusable `TextUtils.extractSection` method.
+    - Consolidated UI helper methods into an injectable `ViewUtils` bean and a `WebUtils` class.
+    - Grouped all UI utility classes into a new `com.povzetkar.quarkus.ui.util` package.
+- **Dependency Injection:** Refactored all UI resource classes to consistently use constructor injection.
+- **Data Type Correction:** Changed `subscriberCount` from `long` to `int` across relevant entities and services to align with API data types.
+
+### Documentation
+
+- Updated `docs/RUNBOOK.md` with a new section under "Application Usage" explaining how to use the new Admin UI page.
+
+### Tests
+
+- **UI Backend Integration Tests:** Added new integration tests for the Admin UI page and its backing API endpoints.
+
 ## [0.6.0] - 2025-10-31
 
 ### Summary
@@ -120,7 +167,6 @@ This version marks a major architectural milestone by establishing the foundatio
 
 ### Chores
 - Enabled JUnit parameterized tests via added dependency.
-
 
 ## [0.4] - 2025-08-16
 
