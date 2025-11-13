@@ -16,10 +16,12 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.1. Review Previous Retrospective:** Read the `docs/retrospectives/vX.Y-retrospective.md` from the previous version to ensure all action items are considered for the new cycle.
 - [ ] **1.2. Define High-Level Goals:** Review the `roadmap.md` and agree on the primary objectives for the new version.
 - [ ] **1.3. Define Testing Strategy:** For any new functionality (especially with a UI component), ask "How will we test this in a way that is proportional to the investment?". The decision must be documented in the `planning-process.md`.
-- [ ] **1.4. Document Planning Process:** Create a `docs/versions/vX.Y-planning-process.md` file to log the decisions and rationale behind the plan, including the testing strategy.
-- [ ] **1.5. Create Task Breakdown:** Create a new `docs/versions/vX.Y-tasks.md` file, breaking down the high-level goals into concrete, actionable tasks.
+- [ ] **1.4. Identify Spike Tasks:** Review goals for high technical uncertainty. If any exist, create a dedicated "Spike" task to de-risk future development.
+- [ ] **1.5. Document Planning Process:** Create a `docs/versions/vX.Y-planning-process.md` file to log the decisions and rationale behind the plan, including the testing strategy.
+- [ ] **1.6. Create Task Breakdown:** Create a new `docs/versions/vX.Y-tasks.md` file, breaking down the high-level goals into concrete, actionable tasks.
     - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in the v0.6 retrospective.
-- [ ] **1.6. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
+    - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined to explicitly outline the test scenarios.
+- [ ] **1.7. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
 
 ---
 

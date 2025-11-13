@@ -31,6 +31,7 @@ Scrum is a framework for developing complex products, emphasizing iterative prog
     *   You act as the **Product Owner**: You define the vision (`roadmap.md`), prioritize features, and provide feedback and approval.
     *   I act as the **Development Team**: I execute the plan and deliver the increment. I also embody some aspects of a **Scrum Master** by enforcing the process defined in `AGENT.md`.
 
+*   **Definition of Done (DoD):** As of v0.6.1, we have formally adopted a DoD. This is an explicit checklist that a task must meet to be considered complete, ensuring quality and consistency.
 ### Differences from Scrum
 
 *   **No Fixed Time-Boxes (Sprints):** We do not operate in fixed-length Sprints. A version is complete when the tasks defined in its `*-tasks.md` file are done. This provides flexibility.
@@ -67,6 +68,7 @@ Extreme Programming is a highly disciplined methodology focused on technical pra
 *   **Simple Design:** We actively strive to find the simplest solution that works, as demonstrated by our discussions to simplify the v0.5 migration plan. We avoid over-engineering.
 *   **Refactoring:** We continuously refactor the code and even the documentation to improve clarity and maintainability.
 *   **Small Releases:** Our version-based increments (v0.5, v0.6) are analogous to XP's concept of small, frequent releases that deliver value.
+*   **Spike Tasks:** For features with significant technical unknowns (e.g., analyzing performance under load), we create dedicated, time-boxed "Spike" tasks. The deliverable is knowledge and a documented recommendation, which de-risks future development.
 
 ### Differences from XP
 
@@ -101,20 +103,3 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 ---
 
 ## 7. Proposed Practices for Continuous Improvement
-
-To formalize our commitment to continuous improvement (Kaizen), this section documents practices we could adopt to make our process even more robust.
-
-### 7.1. Spike Tasks (from Extreme Programming)
-
-*   **What it is:** Time-boxed, research-oriented tasks designed to reduce technical uncertainty before committing to implementation. The deliverable is knowledge and a recommendation, not production code.
-*   **Proposed Implementation:** For features with significant technical unknowns (e.g., integrating a new library, evaluating an API), we could create a dedicated "Spike" task in the relevant version plan. This would de-risk future development and lead to more accurate time estimates.
-
-### 7.2. Definition of Done (DoD) (from Scrum/Kanban)
-
-*   **What it is:** An explicit checklist of criteria that a task must meet to be considered "done." This goes beyond just "code is written" and ensures quality is built in.
-*   **Proposed Implementation:** We could define a formal DoD that includes criteria such as:
-    1.  Code is written and implements the required functionality.
-    2.  Unit and integration tests are written and passing.
-    3.  All relevant documentation (e.g., `README.md`, `docs/overview/specification.md`) has been updated.
-    4.  The final commit message is approved.
-        This would make the completion of a task less ambiguous and ensure all aspects of quality are consistently addressed.
