@@ -21,6 +21,7 @@ class ContentSourceResourceTest {
     @BeforeEach
     @Transactional
     void setup() {
+        tearDown();
         // Data creation only
         var testUser = new User();
         testUser.name = "testuser";
