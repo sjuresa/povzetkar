@@ -16,7 +16,7 @@
         <section id="content-source-enrichment">
             <h2>Content Source Enrichment</h2>
             <p>Manually trigger the process to enrich content sources.</p>
-            <form action="/ui/admin/enrich-sources" method="post">
+            <form id="enrichSourcesForm" action="/api/v1/content-sources/enrich" method="post">
                 <button type="submit" onclick="return confirm('Are you sure you want to enrich content sources?');">Run Content Source Enrichment</button>
             </form>
         </section>
@@ -24,7 +24,7 @@
         <section id="orchestration-service">
             <h2>Orchestration Service</h2>
             <p>Manually trigger the main orchestration process, optionally for a specific date range.</p>
-            <form action="/ui/admin/run-orchestration" method="post">
+            <form id="orchestrationForm" action="/api/v1/orchestrator/run" method="post">
                 <fieldset>
                     <legend>Run Orchestration</legend>
                     <label for="start-date">Start Date (optional):</label>
@@ -200,5 +200,99 @@
             </footer>
         </article>
     </dialog>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const orchestrationForm = document.getElementById('orchestrationForm');
+            if (orchestrationForm) {
+                orchestrationForm.addEventListener('submit', async (event) => {
+                    event.preventDefault(); // Prevent default form submission
+
+                    const formData = new FormData(orchestrationForm);
+                    const startDate = formData.get('startDate');
+                    const endDate = formData.get('endDate');
+
+                    let url = orchestrationForm.action;
+                    const params = new URLSearchParams();
+                    if (startDate) {
+                        params.append('startDate', startDate);
+                    }
+                    if (endDate) {
+                        params.append('endDate', endDate);
+                    }
+                    if (params.toString()) {
+                        url += '?' + params.toString();
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json' // JAX-RS expects JSON by default, even for query params
+                            }
+                        });
+
+                        const responseBody = await response.text(); // Get response as text to handle non-JSON errors
+
+                        if (response.ok) {
+                            displayFlashMessage(responseBody || 'Orchestration process started successfully.', 'success');
+                        } else {
+                            displayFlashMessage(responseBody || 'Failed to start orchestration process.', 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Error during orchestration AJAX call:', error);
+                        displayFlashMessage('An unexpected error occurred: ' + error.message, 'danger');
+                    }
+                });
+            }
+
+            const enrichSourcesForm = document.getElementById('enrichSourcesForm');
+            if (enrichSourcesForm) {
+                enrichSourcesForm.addEventListener('submit', async (event) => {
+                    event.preventDefault(); // Prevent default form submission
+
+                    try {
+                        const response = await fetch(enrichSourcesForm.action, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const responseBody = await response.text();
+
+                        if (response.ok) {
+                            displayFlashMessage(responseBody || 'Content sources enrichment started successfully.', 'success');
+                        } else {
+                            displayFlashMessage(responseBody || 'Failed to start content sources enrichment.', 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Error during enrich sources AJAX call:', error);
+                        displayFlashMessage('An unexpected error occurred: ' + error.message, 'danger');
+                    }
+                });
+            }
+
+            function displayFlashMessage(message, type) {
+                const mainElement = document.querySelector('main.container');
+                if (!mainElement) return;
+
+                // Remove existing flash messages
+                document.querySelectorAll('.alert-success, .alert-danger').forEach(el => el.remove());
+
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-'+type;
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.textContent = message;
+
+                // Insert before the first child of main, or at the beginning of main
+                mainElement.prepend(alertDiv);
+
+                // Optional: Auto-remove message after a few seconds
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        });
+    </script>
 {/content}
 {/include}

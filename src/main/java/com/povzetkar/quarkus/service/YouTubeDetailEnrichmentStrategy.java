@@ -77,6 +77,10 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
         try {
             Map<String, Channel> channelMap = fetchChannelsInBatch(channelIds);
+            if (channelMap == null || channelMap.isEmpty()) {
+                logger.info("Nothing to enrich.");
+                return;
+            }
 
             for (ContentSource source : batch) {
                 Channel channel = channelMap.get(source.sourceIdentifier);

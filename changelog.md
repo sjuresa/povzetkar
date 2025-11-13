@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breadcrumb Logic:** Corrected breadcrumb generation for summary pages to handle cases where a briefing might not yet exist, and removed redundant date information from briefing breadcrumbs.
 - **Form Repopulation:** Ensured submitted form values are re-populated on validation failure for topic creation/update forms.
 - **Page Refresh:** Implemented cache-control headers on redirects to force page refreshes after POST operations.
+- **YouTube API Handling:** Added a null check in `YouTubeDetailEnrichmentStrategy` to prevent `NullPointerException` when the YouTube API returns a list with null items.
 
 ### Refactored
 
@@ -66,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Readability:** Extracted breadcrumb building logic in `SummaryResource` into a private helper method.
 - **Efficiency:** Extracted form rendering logic in `TopicResource` and `ContentSourceResource` into private helper methods to avoid redundant database queries and ensure correct parameter passing on re-render.
 - **Constructor Injection:** Refactored all UI resource classes (`AdminResource`, `BriefingWebResource`, `ContentSourceResource`, `HomeResource`, `SummaryResource`, `TopicResource`) and `ViewUtils` to use constructor injection for dependencies, addressing SonarQube/IDE warnings.
+- **Admin Actions:** Converted "Run Orchestration" and "Enrich Sources" actions to use AJAX calls to JAX-RS endpoints, decoupling them from the UI's reactive flow and fixing blocking/redirect issues.
 
 ### Documentation
 
@@ -190,6 +192,7 @@ This version marks a major architectural milestone by establishing the foundatio
 
 ### Chores
 - Enabled JUnit parameterized tests via added dependency.
+
 
 ## [0.4] - 2025-08-16
 
