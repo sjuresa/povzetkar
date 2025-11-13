@@ -1,6 +1,9 @@
 package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
@@ -27,9 +30,7 @@ class TopicResourceTest {
     @BeforeEach
     @Transactional
     void setup() {
-        Briefing.deleteAll();
-        Topic.deleteAll();
-        User.deleteAll();
+        cleanup();
 
         testUser = new User();
         testUser.name = "Test User";
@@ -54,7 +55,10 @@ class TopicResourceTest {
     @Transactional
     void cleanup() {
         Briefing.deleteAll();
+        Summary.deleteAll();
+        ContentItem.deleteAll();
         Topic.deleteAll();
+        ContentSource.deleteAll();
         User.deleteAll();
     }
 

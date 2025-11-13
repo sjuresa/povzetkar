@@ -29,12 +29,7 @@ class SummaryResourceTest {
     @Transactional
     void setup() {
         // Clean up to ensure isolation
-        Summary.deleteAll();
-        ContentItem.deleteAll();
-        Briefing.deleteAll();
-        Topic.deleteAll();
-        ContentSource.deleteAll();
-        User.deleteAll();
+        tearDown();
 
         User user = new User();
         user.username = "test";
