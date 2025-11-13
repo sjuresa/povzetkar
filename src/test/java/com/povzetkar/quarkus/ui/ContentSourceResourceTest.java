@@ -43,9 +43,6 @@ class ContentSourceResourceTest {
     @Transactional
     void tearDown() {
         // Cleanup only
-        ContentSource.deleteAll();
-        Topic.deleteAll();
-        User.deleteAll();
         Briefing.deleteAll();
         Summary.deleteAll();
         ContentItem.deleteAll();
