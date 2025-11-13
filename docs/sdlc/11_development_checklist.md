@@ -42,7 +42,7 @@ This document provides a comprehensive checklist for our development process. It
         2.  Is the solution **minimal, low-risk, and aligned** with the current version's goals (e.g., "non-locking investment" for v0.6.1)?
     - **Decide:**
         -   If **both** answers are YES: Pause, discuss, and agree to update the current version's task plan (`*-tasks.md`) to include the fix.
-        -   If **either** answer is NO: Do not let it derail the current task. Log the issue in the appropriate backlog file (e.g., `docs/backlog/ui-improvements.md`) for future planning.
+        -   If **either** answer is NO: Do not let it derail the current task. Log the issue in the appropriate backlog file (e.g., `docs/backlog/improvements.md`) for future planning.
 
 ---
 
