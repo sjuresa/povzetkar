@@ -103,3 +103,13 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 ---
 
 ## 7. Proposed Practices for Continuous Improvement
+
+### 7.1. Architectural Decision Records (ADRs)
+
+*   **What it is:** A short, text-based document that describes a significant architectural decision made in the project. It captures the context of the decision, the different options considered, and the consequences of the chosen option.
+*   **Proposed Implementation:** For major architectural choices (e.g., selecting a frontend framework, choosing a secrets management solution), we would create a new ADR file in a `docs/adr/` directory. This practice is already planned for v1.0 and would formalize our decision-making process.
+
+### 7.2. Automated Dependency Vulnerability Scanning
+
+*   **What it is:** Integrating an automated tool (like Snyk or GitHub's Dependabot) into the CI/CD pipeline to continuously scan project dependencies for known security vulnerabilities.
+*   **Proposed Implementation:** As part of our "Production Hardening" phase (v0.9), we would configure Dependabot to automatically create Pull Requests to update vulnerable dependencies. This moves security from a manual check to a proactive, automated process.
