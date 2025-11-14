@@ -11,6 +11,7 @@ import io.restassured.RestAssured;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -94,6 +95,7 @@ class TopicResourceTest {
                 .body(containsString("<form"));
     }
 
+    @Disabled("until Base UI Test Class is implemented")
     @Test
     void testAddTopic_success() {
         long initialCount = Topic.count();
