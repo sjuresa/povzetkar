@@ -99,4 +99,6 @@ This API provides full CRUD (Create, Read, Update, Delete) functionality for man
     *   `sourceTypeId` (int, required): The ID of the source type (e.g., 1 for YouTube).
     *   `identifier` (string, required): The platform-specific identifier (e.g., a YouTube channel ID).
 *   **Success Response (200 OK):** A JSON object containing the fetched details.
-*   **Error Response (404 Not Found):** If details for the given identifier cannot be found on the platform.
+*   **Error Responses:**
+    *   **400 Bad Request:** Returned if the `sourceTypeId` is invalid or not supported.
+    *   **404 Not Found:** If details for the given identifier cannot be found on the platform.
