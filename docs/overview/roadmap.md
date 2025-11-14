@@ -68,6 +68,22 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
+## v0.6.2: Orchestration Hardening & Reliability
+
+**Goal:** Increase the robustness and reliability of the core orchestration and briefing generation processes. This version focuses on bug fixing, handling edge cases, and proactively addressing potential performance bottlenecks.
+**Status:** 🚧 In Progress
+
+### Key Tasks & Implementation Steps:
+1.  **Orchestration Robustness:** Implement logic to re-process items with `RETRY_LATER` status and handle transient errors during briefing generation.
+2.  **Briefing Flexibility:** Decouple briefing generation from content fetching to allow creating briefings from existing summaries (e.g., for new topics).
+3.  **GenAI Pool Analysis (Spike):** Conduct a load-test analysis of the `GenAiPool` to understand its behavior under concurrent load and prevent future quota issues.
+4.  **Test Suite Improvement:** Implement a `BaseUITest` class to standardize test setup and prevent test flakiness, as identified in the v0.6.1 retrospective.
+5.  **Enhanced User Features:** Add the ability to generate briefings for custom date ranges (e.g., weekly).
+6.  **API Stability:** Implement rate limiting for external transcription APIs to prevent quota exhaustion.
+
+
+---
+
 ## v0.7: Standalone Application Deployment
 
 **Goal:** Prepare and document the process for building and running the Quarkus application as a standalone executable (JAR or native binary), moving away from development mode (`mvn quarkus:dev`).

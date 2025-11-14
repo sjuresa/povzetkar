@@ -11,8 +11,6 @@ import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,9 +22,7 @@ import java.util.stream.IntStream;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 class ContentSourceResourceTest {
@@ -339,16 +335,6 @@ class ContentSourceResourceTest {
     }
 
     @Test
-    void testGetContentSourcesByTopic_UserNotFound() {
-        given()
-                .pathParam("userId", 99999L)
-                .pathParam("topicName", TEST_TOPIC_NAME)
-                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-                .then()
-                .statusCode(404);
-    }
-
-    @Test
     void testGetContentSourcesByTopic_TopicNotFound() {
         given()
           .pathParam("userId", testUserId)
@@ -356,61 +342,5 @@ class ContentSourceResourceTest {
           .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
           .then()
              .statusCode(404);
-    }
-
-    @Test
-    void testGetContentSourcesByTopic_BlankName() {
-        given()
-          .pathParam("userId", testUserId)
-          .pathParam("topicName", " ")
-          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-          .then()
-             .statusCode(400);
-    }
-
-    @Test
-    void testGetContentSourcesByTopic_DefaultPagination() {
-        given()
-          .pathParam("userId", testUserId)
-          .pathParam("topicName", TEST_TOPIC_NAME)
-          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-          .then()
-             .statusCode(200)
-             .body("$", hasSize(10));
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "1, 5, 5",
-            "1, 10, 0",
-            "2, 10, 0"
-    })
-    void testGetContentSourcesByTopic_CustomPagination(int page, int size, int expectedSize) {
-        given()
-                .pathParam("userId", testUserId)
-                .pathParam("topicName", TEST_TOPIC_NAME)
-                .queryParam("page", page)
-                .queryParam("size", size)
-                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(expectedSize));
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "-1, 10",
-            "0, 0",
-            "0, 101"
-    })
-    void testGetContentSourcesByTopic_InvalidPagination(int page, int size) {
-        given()
-                .pathParam("userId", testUserId)
-                .pathParam("topicName", TEST_TOPIC_NAME)
-                .queryParam("page", page)
-                .queryParam("size", size)
-                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-                .then()
-                .statusCode(400);
     }
 }

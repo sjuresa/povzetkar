@@ -15,9 +15,9 @@ This document analyzes how well different types of testing are covered in the pr
 -   **Description:** Integration tests are a central part of the development plan. The `roadmap.md` explicitly includes writing `@QuarkusTest` tests for almost every version to verify component interaction with the database.
 
 ## 3. UI/UX Testing
--   **Coverage:** Minimally Covered.
--   **Document:** `changelog.md` (v0.6.0)
--   **Description:** With version 0.6.0, a simple server-side rendered UI for reviewing briefings was introduced. However, there is currently no formal plan or implementation for automated UI/UX testing (e.g., using frameworks like Selenium or Playwright). This remains an area for future improvement.
+-   **Coverage:** Good.
+-   **Document:** `docs/versions/v0.6.1-planning-process.md`
+-   **Description:** With version 0.6.1, we adopted a pragmatic, proportional testing strategy for the server-side rendered UI. Instead of a heavy E2E framework, we use a combination of: 1) **Backend integration tests** (`@QuarkusTest`) to verify that UI endpoints return the correct HTML structure, and 2) A **formalized manual test plan** to ensure user flows and responsiveness are consistently verified.
 
 ## 4. Performance Tests
 -   **Coverage:** Not Covered.
