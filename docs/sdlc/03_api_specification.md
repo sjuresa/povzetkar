@@ -83,16 +83,6 @@ This API provides full CRUD (Create, Read, Update, Delete) functionality for man
 *   **Success Response (204 No Content):** Indicates successful deletion.
 *   **Error Response (404 Not Found):** If no `ContentSource` with the given ID exists.
 
-#### `GET /api/v1/users/{userId}/topics/{topicName}/content-sources`
-*   **Description:** Retrieves a paginated list of content sources associated with a specific topic for a given user.
-*   **Status:** `Implemented`
-*   **Source:** `ContentSourceResource.java`
-*   **Query Parameters:**
-    *   `page` (int, optional, default: 0): The page number to retrieve.
-    *   `size` (int, optional, default: 10): The number of items per page.
-*   **Success Response (200 OK):** A JSON array of `ContentSource` objects for the requested page.
-*   **Error Response (404 Not Found):** If the specified topic is not found for the given user.
-
 #### `POST /api/v1/content-sources/enrich`
 *   **Description:** Triggers an asynchronous background process to enrich all existing content sources with additional details (like subscriber counts, descriptions) from their respective platforms.
 *   **Status:** `Implemented`

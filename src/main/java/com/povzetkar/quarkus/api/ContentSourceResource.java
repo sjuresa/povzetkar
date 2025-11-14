@@ -2,16 +2,11 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
-import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
-import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -94,23 +89,6 @@ public class ContentSourceResource {
             throw new NotFoundException("ContentSource with id " + id + " not found");
         }
         return Response.noContent().build();
-    }
-
-    @GET
-    @Path("/users/{userId}/topics/{topicName}/content-sources")
-    public List<ContentSource> getContentSourcesByTopic(
-            @PathParam("userId") Long userId,
-            @PathParam("topicName") @NotBlank String topicName,
-            @QueryParam("page") @DefaultValue("0") @Min(0) int page,
-            @QueryParam("size") @DefaultValue("10") @Min(1) @Max(100) int size) {
-
-        Topic topic = Topic.<Topic>find("user.id = ?1 and name = ?2", userId, topicName).firstResultOptional()
-                .orElseThrow(() -> new NotFoundException("Topic '" + topicName + "' not found for user with id " + userId));
-
-        Page panachePage = io.quarkus.panache.common.Page.of(page, size);
-        return ContentSource.find("select cs from ContentSource cs join cs.topics t where t = ?1 order by cs.name", topic)
-                .page(panachePage)
-                .list();
     }
 
     @POST
