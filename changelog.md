@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Orchestration Robustness**: Implemented retry logic for `ContentItem`s with `RETRY_LATER` status, allowing the system to re-process items that previously failed due to transient errors.
+- **Locking Mechanism Enhancement**: Ensured the orchestration lock is respected under all conditions, including taking over stale locks from crashed previous runs.
+- **Briefing Generation Flexibility**: Implemented a robust, idempotent briefing generation process. The system now automatically creates or regenerates a briefing for a given day if it doesn't exist or if it doesn't include all available content summaries for that day. This removes the need for a separate status field on the `Briefing` entity.
+
+### Fixed
+- **Test Stability**: Resolved issues in `OrchestrationManagerTest` related to transaction boundaries and entity visibility, ensuring test data is correctly persisted and retrieved across different transaction contexts.
+- **Transactional Race Conditions**: Added a pessimistic write lock when querying for an existing briefing in `OrchestrationManager` to prevent race conditions during concurrent briefing generation.
+- **Blocking Code in Reactive Pipeline**: Replaced blocking `Thread.sleep()` in `GenAiPool` with non-blocking reactive delays, eliminating transaction timeouts and Arjuna warnings.
+- **Data Inconsistency in Briefing Updates**: Ensured that when an existing briefing is updated, its associated summaries are completely replaced with the new set, guaranteeing data consistency.
+
 ## [0.6.1] - 2025-11-13
 
 ### Summary

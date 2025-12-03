@@ -1,6 +1,8 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
@@ -31,13 +33,15 @@ public class OrchestrationManager {
     private final TopicProcessor topicProcessor;
     private final BriefingService briefingService;
     private final ManagedExecutor managedExecutor;
+    private final AsyncSummarizationService asyncSummarizationService; // Injected
 
     @Inject
-    public OrchestrationManager(OrchestrationLockService orchestrationLockService, TopicProcessor topicProcessor, BriefingService briefingService, ManagedExecutor managedExecutor) {
+    public OrchestrationManager(OrchestrationLockService orchestrationLockService, TopicProcessor topicProcessor, BriefingService briefingService, ManagedExecutor managedExecutor, AsyncSummarizationService asyncSummarizationService) {
         this.orchestrationLockService = orchestrationLockService;
         this.topicProcessor = topicProcessor;
         this.briefingService = briefingService;
         this.managedExecutor = managedExecutor;
+        this.asyncSummarizationService = asyncSummarizationService; // Assigned
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
@@ -87,7 +91,8 @@ public class OrchestrationManager {
         }
 
         // If we reach here, the lock was successfully acquired
-        return Uni.createFrom().deferred(() -> {
+        return processRetryLaterItems(orchestrationDate) // Process RETRY_LATER items first
+                .chain(() -> Uni.createFrom().deferred(() -> { // Then proceed with normal orchestration
                     List<User> activeUsers = User.listAllActive();
                     if (activeUsers.isEmpty()) {
                         logger.info("No active users found. Content orchestration finished for date: {}.", orchestrationDate);
@@ -105,11 +110,29 @@ public class OrchestrationManager {
                             .onItem().invoke(() -> logger.info("Content orchestration finished for date: {}.", orchestrationDate))
                             .onFailure().invoke(ex -> logger.error("Content orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
                             .replaceWithVoid();
-                })
+                }))
                 .onTermination().invoke(() -> {
-                        logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
-                        orchestrationLockService.releaseLock(orchestrationDate);
+                    logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
+                    orchestrationLockService.releaseLock(orchestrationDate);
                 });
+    }
+
+    private Uni<Void> processRetryLaterItems(LocalDate orchestrationDate) {
+        logger.info("Checking for content items to retry...");
+        List<ContentItem> itemsToRetry = ContentItem.list("processingStatus", ProcessingStatus.RETRY_LATER);
+        if (itemsToRetry.isEmpty()) {
+            logger.info("No items to retry.");
+            return Uni.createFrom().voidItem();
+        }
+        logger.info("Found {} items to retry. Starting re-processing.", itemsToRetry.size());
+
+        List<Uni<Void>> retryTasks = itemsToRetry.stream()
+                .map(item -> asyncSummarizationService.summarizeAsync(item, orchestrationDate)
+                        .onFailure().invoke(ex -> logger.error("Failed to re-process content item with id: {}", item.id, ex))
+                        .onFailure().recoverWithNull())
+                .toList();
+
+        return Uni.combine().all().unis(retryTasks).discardItems();
     }
 
     @Scheduled(cron = "{povzetkar.briefing.cron}")

@@ -29,6 +29,7 @@ This section breaks down the system's functionality into user-centric stories.
 *   **(Future)** **As an Administrator, I want to** add a list of websites, blogs, and Reddit communities so the system can ingest articles and posts.
 *   **(Implemented)** **As a System, I want to** automatically fetch new content from all configured sources on a periodic basis.
 *   **(Implemented)** **As a System, I want to** generate a concise, accurate summary for every new piece of content.
+*   **(New)** **As a System, I want to** automatically re-process content that failed due to transient errors so that the system can self-heal and ensure data completeness.
 *   **(Future)** **As a System, I want to** generate vector embeddings for all content and summaries to enable semantic search.
 
 ### 3.2. Analysis & Reporting
