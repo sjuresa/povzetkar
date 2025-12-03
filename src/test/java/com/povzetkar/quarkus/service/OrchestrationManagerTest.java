@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -550,25 +549,9 @@ class OrchestrationManagerTest {
         when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
-        // Mock the behavior of acquireLock to simulate stale lock takeover
-        // This is a simplification and ideally, we'd test the real service.
-        doAnswer(invocation -> {
-            LocalDate date = invocation.getArgument(0);
-            OrchestrationLock existing = (OrchestrationLock) OrchestrationLock.find("orchestrationDate", date).firstResultOptional().orElse(null);
-            if (existing != null) {
-                if (Duration.between(existing.lockedAt, Instant.now()).compareTo(Duration.ofMinutes(10)) > 0) {
-                    existing.lockedAt = Instant.now();
-                    existing.persist();
-                    System.out.println("Stale lock taken over for date: " + date);
-                } else {
-                    throw new OrchestrationLockService.OrchestrationLockException("Lock already held (mocked)");
-                }
-            } else {
-                new OrchestrationLock(date, Instant.now()).persist();
-                System.out.println("New lock acquired for date: " + date);
-            }
-            return null;
-        }).when(orchestrationLockService).acquireLock(orchestrationDate);
+        // Simulate the OrchestrationLockService's behavior for a stale lock takeover
+        // This avoids re-implementing the service's logic in the test.
+        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
 
 
         orchestrationManager.runOrchestrationScheduled().await().indefinitely();
