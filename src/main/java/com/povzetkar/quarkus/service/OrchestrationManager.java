@@ -1,18 +1,26 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class OrchestrationManager {
@@ -123,13 +131,33 @@ public class OrchestrationManager {
         logger.info("Found {} topics. Proceeding with briefing generation.", allTopics.size());
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
-                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
-                            logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
-                            briefingService.generateBriefing(topic, briefingDate);
-                        }))
-                        .onFailure().invoke(e -> logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e))
-                        .onFailure().recoverWithNull()
-                        .replaceWithVoid())
+                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> QuarkusTransaction.requiringNew().run(() -> {
+                    logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
+
+                    List<Summary> availableSummaries = briefingService.getSummariesForBriefing(topic, briefingDate);
+                    Optional<Briefing> existingBriefingOptional = Briefing.find("topic = ?1 and briefingDate = ?2", topic, briefingDate)
+                            .withLock(LockModeType.PESSIMISTIC_WRITE) // Acquire pessimistic write lock
+                            .firstResultOptional();
+
+                    Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
+                    Set<Long> existingBriefingSummaryIds = existingBriefingOptional
+                            .map(briefing -> {
+                                Hibernate.initialize(briefing.summaries); // Eagerly fetch summaries
+                                return briefing.summaries.stream().map(s -> s.id).collect(Collectors.toSet());
+                            })
+                            .orElse(java.util.Collections.emptySet());
+
+                    if (!availableSummaryIds.equals(existingBriefingSummaryIds)) {
+                        logger.info("Briefing for topic '{}' on {} needs to be regenerated.", topic.name, briefingDate);
+                        existingBriefingOptional.ifPresent(Briefing::delete); // Delete existing briefing if summaries don't match
+                        briefingService.generateBriefing(topic, briefingDate, availableSummaries);
+                    } else {
+                        logger.info("Briefing for topic '{}' on {} is up-to-date. Skipping generation.", topic.name, briefingDate);
+                    }
+                })))
+                .onFailure().invoke(e -> logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e))
+                .onFailure().recoverWithNull()
+                .replaceWithVoid())
                 .toList();
 
         return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()

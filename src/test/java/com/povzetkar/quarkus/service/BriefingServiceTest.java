@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,7 +101,7 @@ class BriefingServiceTest {
         when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("Meta-summary from GenAI");
 
         // When
-        Briefing briefing = briefingService.generateBriefing(testTopic, briefingDate);
+        Briefing briefing = briefingService.generateBriefing(testTopic, briefingDate, List.of(summary));
 
         // Then
         assertNotNull(briefing);

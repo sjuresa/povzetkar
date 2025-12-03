@@ -199,6 +199,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_briefingOverwrite() throws Exception {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
+        Topic testTopic = Topic.find("name", "Default Topic").firstResult(); // Retrieve the persisted topic
 
         // Mock createBriefingFromSummaries to return different values on successive calls
         when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
@@ -223,22 +224,32 @@ class OrchestrationIntegrationTest {
         assertEquals(1, initialBriefing.summaries.size());
         assertEquals("Initial Summary", initialBriefing.summaries.iterator().next().summaryText);
 
-        // Second run: new content, should overwrite
-        YouTubeVideo video2 = new YouTubeVideo(
-                "video2_id", "Video 2 Title", "http://youtube.com/watch?v=video2_id",
-                "Author 2", "channel2_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
+        // Second run: new content is available, should overwrite
+        // Manually persist a new ContentItem and Summary to simulate new content
+        QuarkusTransaction.requiringNew().run(() -> {
+            ContentItem contentItem2 = new ContentItem();
+            contentItem2.sourceUrl = "http://youtube.com/watch?v=video2_id";
+            contentItem2.rawContent = "raw content 2";
+            contentItem2.publishedAt = Instant.now();
+            contentItem2.title = "Video 2 Title";
+            contentItem2.contentSource = ContentSource.find("sourceIdentifier", "orchestration_test_channel_id").firstResult();
+            contentItem2.processingStatus = ProcessingStatus.COMPLETED;
+            contentItem2.persist();
+
+            Summary summary2 = new Summary("Updated Summary", contentItem2, orchestrationDate);
+            summary2.persist();
+        });
+
+        // Ensure the fetcher returns no *new* videos to process, so we only test the briefing generation
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
-                .thenReturn(List.of(video2));
-        when(youTubeTranscriptService.getTranscript("video2_id")).thenReturn("Transcript for video 2");
-        when(videoSummaryService.generateContentWithRetry(any(com.google.genai.types.Content.class), eq("video summary")))
-                .thenReturn("Updated Summary");
+                .thenReturn(Collections.emptyList());
 
         orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Assert that there's still only one briefing, but its content is updated
         assertEquals(1, Briefing.count());
         Briefing.getEntityManager().clear(); // Clear persistence context
-        Briefing updatedBriefing = Briefing.findById(initialBriefing.id);
+        Briefing updatedBriefing = Briefing.findByTopicAndDate(testTopic, orchestrationDate).orElseThrow();
         assertEquals("Updated Meta-summary", updatedBriefing.metaSummary);
         assertEquals(2, updatedBriefing.summaries.size()); // Expect 2 summaries now
         // Verify both summaries are present
