@@ -25,5 +25,8 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Centralized Date/Time Formatting Service:** Create a dedicated service for date/time formatting to avoid adding helper methods to every model class.
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
 *   **Standardize UI Test Setup:** Prioritize the creation of a `BaseUITest` class to encapsulate the database cleanup and setup logic. This will make the test suite more robust and prevent future state pollution issues.
+*   **Standardize Integration Test Patterns:** Develop a clear, documented strategy for integration tests (`@QuarkusTest`). This should define when to use `@TestTransaction` vs. manual transaction management (`QuarkusTransaction.requiringNew()`) and establish a consistent pattern for setting up test data to avoid transactional visibility issues.
+*   **Refactor Blocking Code in Reactive Chains:** Conduct a code review to identify and refactor any remaining instances of blocking code (like `Thread.sleep()`) within reactive pipelines. Replace them with non-blocking Mutiny operators to prevent thread starvation and transaction timeouts.
+*   **Create a Testing Guide:** Document best practices for Quarkus integration testing, including transactional patterns, mocking strategies for Panache entities vs. external services, and how to handle reactive code. This will help prevent the kind of trial-and-error debugging experienced during the v0.6.2 development cycle.
 
 ### Orchestration & Briefing Generation

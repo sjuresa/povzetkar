@@ -58,6 +58,7 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
             briefing = existingBriefingOptional.get(); // Already managed if fetched within this transaction
             logger.info("Updating existing briefing for topic '{}' on {}.", topic.name, briefingDate);
             briefing.metaSummary = metaSummary;
+            briefing.summaries.clear(); // Clear existing summaries
         } else {
             logger.info("Creating new briefing for topic '{}' on {}.", topic.name, briefingDate);
             briefing = new Briefing(topic, String.format(BRIEFING_TITLE_FORMAT, briefingDate), metaSummary, briefingDate);

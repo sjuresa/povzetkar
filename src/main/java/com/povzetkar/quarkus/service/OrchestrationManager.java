@@ -10,6 +10,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -130,11 +131,13 @@ public class OrchestrationManager {
         logger.info("Found {} topics. Proceeding with briefing generation.", allTopics.size());
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
-                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> QuarkusTransaction.run(() -> {
+                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> QuarkusTransaction.requiringNew().run(() -> {
                     logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
 
                     List<Summary> availableSummaries = briefingService.getSummariesForBriefing(topic, briefingDate);
-                    Optional<Briefing> existingBriefingOptional = Briefing.findByTopicAndDate(topic, briefingDate);
+                    Optional<Briefing> existingBriefingOptional = Briefing.find("topic = ?1 and briefingDate = ?2", topic, briefingDate)
+                            .withLock(LockModeType.PESSIMISTIC_WRITE) // Acquire pessimistic write lock
+                            .firstResultOptional();
 
                     Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
                     Set<Long> existingBriefingSummaryIds = existingBriefingOptional
