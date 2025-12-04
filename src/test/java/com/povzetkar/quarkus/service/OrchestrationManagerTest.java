@@ -24,6 +24,7 @@ import org.mockito.Mockito;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,10 +51,13 @@ class OrchestrationManagerTest {
     @InjectMock
     ManagedExecutor managedExecutor;
 
+    @InjectMock
+    AsyncSummarizationService asyncSummarizationService;
+
     @BeforeEach
     @Transactional
     void setUp() {
-        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService);
+        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService, asyncSummarizationService);
         
         // Clean up database before each test to ensure isolation
         tearDown();
@@ -120,6 +124,8 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // When
         orchestrationManager.runOrchestrationScheduled().await().indefinitely();
@@ -214,6 +220,8 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
         when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
@@ -271,6 +279,8 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(pastDate);
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
         when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
@@ -333,6 +343,8 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
+        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
         when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
@@ -385,7 +397,8 @@ class OrchestrationManagerTest {
         Topic topic = setupTopic(user);
         topic.persist();
         ContentSource contentSource = setupContentSource();
-        contentSource.persist();
+        contentSource.persist(); // Persist contentSource in the main transaction
+        contentSource.flush(); // Ensure contentSource is flushed
         topic.contentSources.add(contentSource);
         topic.persist();
 
@@ -403,5 +416,111 @@ class OrchestrationManagerTest {
         verify(orchestrationLockService, times(1)).acquireLock(orchestrationDate);
         verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
         verify(orchestrationLockService, never()).releaseLock(orchestrationDate);
+    }
+
+    @Test
+    @Transactional
+    void testRunOrchestration_ReprocessesRetryLaterItems() {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+        
+        // Persist User in a separate transaction to ensure it's committed and visible
+        User user = QuarkusTransaction.requiringNew().call(() -> {
+            User u = setupUser();
+            u.persist();
+            return u;
+        });
+
+        // Persist Topic and ContentSource in separate transactions to ensure they are committed and visible
+        Topic topic = QuarkusTransaction.requiringNew().call(() -> {
+            // Re-fetch user within this new transaction context
+            User managedUser = User.findById(user.id);
+            if (managedUser == null) {
+                throw new IllegalStateException("Managed User not found in new transaction context: " + user.id);
+            }
+            Topic t = setupTopic(managedUser);
+            t.persist();
+            return t;
+        });
+
+        ContentSource contentSource = QuarkusTransaction.requiringNew().call(() -> {
+            ContentSource cs = setupContentSource();
+            cs.persist();
+            return cs;
+        });
+        
+        // Re-fetch topic and contentSource to ensure they are managed in the current transaction
+        // and create effectively final variables for use in lambdas
+        final Topic finalTopic = Topic.findById(topic.id);
+        final ContentSource finalContentSource = ContentSource.findById(contentSource.id);
+
+        finalTopic.contentSources.add(finalContentSource);
+        finalTopic.persist();
+        finalTopic.flush(); // Flush topic to ensure relationship is persisted
+
+        // Persist retryItem in a separate transaction to ensure it's committed and visible
+        ContentItem retryItem = QuarkusTransaction.requiringNew().call(() -> {
+            // Use the effectively final contentSource
+            ContentSource managedContentSource = ContentSource.findById(finalContentSource.id);
+            if (managedContentSource == null) {
+                throw new IllegalStateException("Managed ContentSource not found in new transaction context: " + finalContentSource.id);
+            }
+
+            ContentItem item = new ContentItem();
+            item.sourceUrl = "http://example.com/retry";
+            item.rawContent = "raw content for retry";
+            item.title = "Retry Item Title";
+            item.publishedAt = Instant.now();
+            item.contentSource = managedContentSource; // Use the managed content source
+            item.processingStatus = ProcessingStatus.RETRY_LATER;
+            item.persist();
+            return item;
+        });
+
+        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
+        doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
+        
+        // Mock topicProcessor.processTopicUni to return a completed Uni
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        
+        // Mock asyncSummarizationService to simulate successful reprocessing
+        doAnswer(invocation -> {
+            ContentItem item = invocation.getArgument(0);
+            LocalDate date = invocation.getArgument(1);
+
+            QuarkusTransaction.requiringNew().run(() -> {
+                // Re-load the ContentItem to ensure it's managed within this new transaction
+                ContentItem managedItem = ContentItem.findById(item.id);
+                if (managedItem == null) {
+                    throw new IllegalStateException("ContentItem not found in new transaction context: " + item.id);
+                }
+
+                // Simulate updating ContentItem status
+                ContentItem.updateProcessingStatus(managedItem.id, ProcessingStatus.COMPLETED);
+                // Simulate creating a Summary
+                Summary summary = new Summary("Generated Summary for " + managedItem.title, managedItem, date);
+                summary.persist();
+            });
+            return Uni.createFrom().voidItem();
+        }).when(asyncSummarizationService).summarizeAsync(any(ContentItem.class), any(LocalDate.class));
+
+        // When
+        orchestrationManager.runOrchestrationScheduled().await().indefinitely();
+
+        // Then
+        // Clear the persistence context to ensure we load the latest state from the database
+        ContentItem.getEntityManager().clear();
+
+        verify(asyncSummarizationService, times(1)).summarizeAsync(retryItem, orchestrationDate);
+
+        // Verify ContentItem status
+        ContentItem updatedRetryItem = ContentItem.findById(retryItem.id);
+        assertEquals(ProcessingStatus.COMPLETED, updatedRetryItem.processingStatus);
+
+        // Verify Summary creation
+        List<Summary> summaries = Summary.list("contentItem", updatedRetryItem);
+        assertEquals(1, summaries.size());
+        assertEquals("Generated Summary for " + updatedRetryItem.title, summaries.getFirst().summaryText);
     }
 }

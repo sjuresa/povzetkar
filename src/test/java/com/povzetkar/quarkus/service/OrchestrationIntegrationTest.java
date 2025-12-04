@@ -16,11 +16,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -281,5 +281,33 @@ class OrchestrationIntegrationTest {
 
         // Manually release the lock for cleanup, as the orchestratorService skipped it.
         QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.releaseLock(orchestrationDate));
+    }
+
+    @Test
+    @Transactional
+    void testOrchestration_takesOverStaleLock() throws Exception {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+        Instant staleLockTime = Instant.now().minus(15, ChronoUnit.MINUTES);
+
+        // Create a stale lock in a separate transaction
+        QuarkusTransaction.requiringNew().run(() -> {
+            OrchestrationLock staleLock = new OrchestrationLock(orchestrationDate, staleLockTime);
+            staleLock.persist();
+        });
+
+        // Mock the external fetcher to confirm orchestration proceeds
+        when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
+                .thenReturn(Collections.emptyList());
+
+        // When
+        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+
+        // Then
+        // Verify that the orchestration proceeded by checking the mock interaction
+        verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
+
+        // Verify that the lock was released after the successful run
+        assertEquals(0, OrchestrationLock.count());
     }
 }

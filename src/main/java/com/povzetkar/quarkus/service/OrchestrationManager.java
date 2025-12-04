@@ -1,6 +1,8 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
@@ -12,11 +14,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.LockModeType;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,13 +33,15 @@ public class OrchestrationManager {
     private final TopicProcessor topicProcessor;
     private final BriefingService briefingService;
     private final ManagedExecutor managedExecutor;
+    private final AsyncSummarizationService asyncSummarizationService; // Injected
 
     @Inject
-    public OrchestrationManager(OrchestrationLockService orchestrationLockService, TopicProcessor topicProcessor, BriefingService briefingService, ManagedExecutor managedExecutor) {
+    public OrchestrationManager(OrchestrationLockService orchestrationLockService, TopicProcessor topicProcessor, BriefingService briefingService, ManagedExecutor managedExecutor, AsyncSummarizationService asyncSummarizationService) {
         this.orchestrationLockService = orchestrationLockService;
         this.topicProcessor = topicProcessor;
         this.briefingService = briefingService;
         this.managedExecutor = managedExecutor;
+        this.asyncSummarizationService = asyncSummarizationService; // Assigned
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
@@ -87,7 +91,8 @@ public class OrchestrationManager {
         }
 
         // If we reach here, the lock was successfully acquired
-        return Uni.createFrom().deferred(() -> {
+        return processRetryLaterItems(orchestrationDate) // Process RETRY_LATER items first
+                .chain(() -> Uni.createFrom().deferred(() -> { // Then proceed with normal orchestration
                     List<User> activeUsers = User.listAllActive();
                     if (activeUsers.isEmpty()) {
                         logger.info("No active users found. Content orchestration finished for date: {}.", orchestrationDate);
@@ -105,10 +110,44 @@ public class OrchestrationManager {
                             .onItem().invoke(() -> logger.info("Content orchestration finished for date: {}.", orchestrationDate))
                             .onFailure().invoke(ex -> logger.error("Content orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
                             .replaceWithVoid();
-                })
+                }))
                 .onTermination().invoke(() -> {
-                        logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
-                        orchestrationLockService.releaseLock(orchestrationDate);
+                    logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
+                    orchestrationLockService.releaseLock(orchestrationDate);
+                });
+    }
+
+    private Uni<Void> processRetryLaterItems(LocalDate orchestrationDate) {
+        logger.info("Checking for content items to retry for date: {}.", orchestrationDate);
+        return processRetryPage(orchestrationDate, 0);
+    }
+
+    private Uni<Void> processRetryPage(LocalDate orchestrationDate, int pageIndex) {
+        final int BATCH_SIZE = 100; // Consider making this configurable
+        return Uni.createFrom().item(() -> ContentItem.find("processingStatus = ?1 and publishedAt >= ?2 and publishedAt < ?3",
+                                ProcessingStatus.RETRY_LATER,
+                                orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(), // Start of the day in UTC
+                                orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()) // Start of next day in UTC
+                        .page(pageIndex, BATCH_SIZE)
+                        .list())
+                .chain(itemsToRetry -> {
+                    if (itemsToRetry.isEmpty()) {
+                        if (pageIndex == 0) {
+                            logger.info("No items to retry for date: {}.", orchestrationDate);
+                        }
+                        return Uni.createFrom().voidItem();
+                    }
+
+                    logger.info("Found {} items to retry on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
+
+                    List<Uni<Void>> retryTasks = itemsToRetry.stream()
+                            .map(item -> asyncSummarizationService.summarizeAsync((ContentItem) item, orchestrationDate)
+                                    .onFailure().invoke(ex -> logger.error("Failed to re-process content item with id: {}", ((ContentItem) item).id, ex))
+                                    .onFailure().recoverWithNull())
+                            .toList();
+
+                    return Uni.combine().all().unis(retryTasks).discardItems()
+                            .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1)); // Recurse for the next page
                 });
     }
 
@@ -142,8 +181,8 @@ public class OrchestrationManager {
                     Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
                     Set<Long> existingBriefingSummaryIds = existingBriefingOptional
                             .map(briefing -> {
-                                Hibernate.initialize(briefing.summaries); // Eagerly fetch summaries
-                                return briefing.summaries.stream().map(s -> s.id).collect(Collectors.toSet());
+                                // Safely access briefing.summaries, handling potential null or uninitialized collection
+                                return Optional.ofNullable(briefing.summaries).orElseGet(java.util.Collections::emptySet).stream().map(s -> s.id).collect(Collectors.toSet());
                             })
                             .orElse(java.util.Collections.emptySet());
 
