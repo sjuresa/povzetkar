@@ -57,26 +57,29 @@ public class GenAiPool implements AutoCloseable {
     public GenAiClient getGenAiClient() {
         GenAiClient selectedClient;
         long timeSinceLastUse;
+        long actualAcquisitionTime;
 
         synchronized (this) {
             selectedClient = selectClient();
             long now = timeProvider.nanoTime();
             timeSinceLastUse = now - selectedClient.lastUsedTimestamp;
-            selectedClient.lastUsedTimestamp = now;
-        }
 
-        logger.info("Using {}. Time since last use: {} s.", selectedClient.name, TimeUnit.NANOSECONDS.toSeconds(timeSinceLastUse));
-
-        if (timeSinceLastUse < coolDownPeriod) {
-            long waitTimeNs = coolDownPeriod - timeSinceLastUse;
-            long millis = TimeUnit.NANOSECONDS.toMillis(waitTimeNs);
-            logger.info("Waiting for {} seconds.", millis / 1000.0);
-            try {
-                sleeper.sleep(millis);
-            } catch (InterruptedException e) {
-                logger.warn("Sleep timer was interrupted.", e);
-                Thread.currentThread().interrupt();
+            if (timeSinceLastUse < coolDownPeriod) {
+                long waitTimeNs = coolDownPeriod - timeSinceLastUse;
+                long millis = TimeUnit.NANOSECONDS.toMillis(waitTimeNs);
+                logger.info("Waiting for {} seconds.", millis / 1000.0);
+                try {
+                    sleeper.sleep(millis);
+                } catch (InterruptedException e) {
+                    logger.warn("Sleep timer was interrupted.", e);
+                    Thread.currentThread().interrupt();
+                }
+                actualAcquisitionTime = timeProvider.nanoTime(); // Time after sleep
+            } else {
+                actualAcquisitionTime = now; // No sleep needed, acquire now
             }
+            selectedClient.lastUsedTimestamp = actualAcquisitionTime; // Update timestamp after cooldown
+            logger.info("Using {}. Time since last use: {} s.", selectedClient.name, TimeUnit.NANOSECONDS.toSeconds(timeSinceLastUse));
         }
         return selectedClient;
     }
