@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blocking Code in Reactive Pipeline**: Replaced blocking `Thread.sleep()` in `GenAiPool` with non-blocking reactive delays, eliminating transaction timeouts and Arjuna warnings.
 - **Data Inconsistency in Briefing Updates**: Ensured that when an existing briefing is updated, its associated summaries are completely replaced with the new set, guaranteeing data consistency.
 
+### Documentation
+- **GenAiPool Concurrency Analysis**: Documented findings from a spike test on `GenAiPool` concurrency behavior, including cooldown verification, `Sleeper.sleep` impact, and recommendations for a non-blocking approach.
+
 ## [0.6.1] - 2025-11-13
 
 ### Summary
