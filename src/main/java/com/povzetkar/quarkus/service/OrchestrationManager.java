@@ -22,7 +22,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -119,40 +118,37 @@ public class OrchestrationManager {
     }
 
     private Uni<Void> processRetryLaterItems(LocalDate orchestrationDate) {
-        final int BATCH_SIZE = 100; // Consider making this configurable
         logger.info("Checking for content items to retry for date: {}.", orchestrationDate);
+        return processRetryPage(orchestrationDate, 0);
+    }
 
-        Function<Integer, Uni<Void>> pageProcessor = new Function<>() {
-            @Override
-            public Uni<Void> apply(Integer pageIndex) {
-                List<ContentItem> itemsToRetry = ContentItem.find("processingStatus = ?1 and publishedAt >= ?2 and publishedAt < ?3",
+    private Uni<Void> processRetryPage(LocalDate orchestrationDate, int pageIndex) {
+        final int BATCH_SIZE = 100; // Consider making this configurable
+        return Uni.createFrom().item(() -> ContentItem.find("processingStatus = ?1 and publishedAt >= ?2 and publishedAt < ?3",
                                 ProcessingStatus.RETRY_LATER,
                                 orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(), // Start of the day in UTC
                                 orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()) // Start of next day in UTC
                         .page(pageIndex, BATCH_SIZE)
-                        .list();
-
-                if (itemsToRetry.isEmpty()) {
-                    if (pageIndex == 0) {
-                        logger.info("No items to retry for date: {}.", orchestrationDate);
+                        .list())
+                .chain(itemsToRetry -> {
+                    if (itemsToRetry.isEmpty()) {
+                        if (pageIndex == 0) {
+                            logger.info("No items to retry for date: {}.", orchestrationDate);
+                        }
+                        return Uni.createFrom().voidItem();
                     }
-                    return Uni.createFrom().voidItem();
-                }
 
-                logger.info("Found {} items to retry on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
+                    logger.info("Found {} items to retry on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
 
-                List<Uni<Void>> retryTasks = itemsToRetry.stream()
-                        .map(item -> asyncSummarizationService.summarizeAsync(item, orchestrationDate)
-                                .onFailure().invoke(ex -> logger.error("Failed to re-process content item with id: {}", item.id, ex))
-                                .onFailure().recoverWithNull())
-                        .toList();
+                    List<Uni<Void>> retryTasks = itemsToRetry.stream()
+                            .map(item -> asyncSummarizationService.summarizeAsync((ContentItem) item, orchestrationDate)
+                                    .onFailure().invoke(ex -> logger.error("Failed to re-process content item with id: {}", ((ContentItem) item).id, ex))
+                                    .onFailure().recoverWithNull())
+                            .toList();
 
-                return Uni.combine().all().unis(retryTasks).discardItems()
-                        .chain(() -> this.apply(pageIndex + 1)); // Recurse for the next page
-            }
-        };
-
-        return pageProcessor.apply(0);
+                    return Uni.combine().all().unis(retryTasks).discardItems()
+                            .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1)); // Recurse for the next page
+                });
     }
 
     @Scheduled(cron = "{povzetkar.briefing.cron}")

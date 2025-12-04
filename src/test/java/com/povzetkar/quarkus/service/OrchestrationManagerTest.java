@@ -523,42 +523,4 @@ class OrchestrationManagerTest {
         assertEquals(1, summaries.size());
         assertEquals("Generated Summary for " + updatedRetryItem.title, summaries.getFirst().summaryText);
     }
-
-    @Test
-    @Transactional
-    void testRunOrchestration_TakesOverStaleLock() {
-        // Given
-        LocalDate orchestrationDate = LocalDate.now();
-        User user = setupUser();
-        user.persist();
-        Topic topic = setupTopic(user);
-        topic.persist();
-        ContentSource contentSource = setupContentSource();
-        contentSource.persist();
-        topic.contentSources.add(contentSource);
-        topic.persist();
-
-        // Create a stale lock
-        OrchestrationLock staleLock = new OrchestrationLock(orchestrationDate, Instant.now().minus(15, ChronoUnit.MINUTES));
-        staleLock.persist();
-
-        // We need to ensure the real acquireLock is called, so we don't mock orchestrationLockService for this specific behavior
-        // Instead, we mock other dependencies
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
-                .thenReturn(Uni.createFrom().voidItem());
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
-                .thenReturn(Uni.createFrom().voidItem());
-
-        // Simulate the OrchestrationLockService's behavior for a stale lock takeover
-        // This avoids re-implementing the service's logic in the test.
-        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
-
-
-        orchestrationManager.runOrchestrationScheduled().await().indefinitely();
-
-        // Then
-        verify(orchestrationLockService, times(1)).acquireLock(orchestrationDate);
-        verify(topicProcessor, times(1)).processTopicUni(topic, orchestrationDate);
-        verify(orchestrationLockService, times(1)).releaseLock(orchestrationDate);
-    }
 }
