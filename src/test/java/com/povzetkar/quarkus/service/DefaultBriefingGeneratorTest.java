@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.*;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
@@ -17,10 +18,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class DefaultBriefingGeneratorTest {
@@ -32,7 +33,6 @@ class DefaultBriefingGeneratorTest {
     VideoSummaryService videoSummaryService;
 
     private Topic testTopic;
-    private User testUser;
     private ContentSource testContentSource;
     private LocalDate testDate;
 
@@ -42,7 +42,7 @@ class DefaultBriefingGeneratorTest {
         // Clean up database before each test to ensure isolation
         tearDown();
 
-        testUser = new User();
+        User testUser = new User();
         testUser.username = "test_user";
         testUser.name = "Test User";
         testUser.active = true;
@@ -101,7 +101,7 @@ class DefaultBriefingGeneratorTest {
 
         // Then
         assertEquals(1, actualSummaries.size());
-        assertEquals(summary.id, actualSummaries.get(0).id);
+        assertEquals(summary.id, actualSummaries.getFirst().id);
     }
 
     @Test
@@ -111,7 +111,7 @@ class DefaultBriefingGeneratorTest {
         Topic managedTopic = Topic.findById(testTopic.id);
 
         // When
-        Briefing briefing = defaultBriefingGenerator.generateBriefing(managedTopic, testDate, Collections.emptyList());
+        Briefing briefing = defaultBriefingGenerator.generateBriefing(managedTopic, testDate, Collections.emptyList(), "some-meta-summary");
 
         // Then
         assertNull(briefing);
@@ -141,17 +141,18 @@ class DefaultBriefingGeneratorTest {
         existingBriefing.summaries.add(summary1);
         existingBriefing.persistAndFlush();
 
-        when(videoSummaryService.createBriefingFromSummaries(anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")))))
-                .thenReturn("Updated Meta-summary Text");
+        String updatedMetaSummary = "Updated Meta-summary Text";
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), anyString()))
+                .thenReturn(updatedMetaSummary);
 
         // When
-        Briefing briefing = defaultBriefingGenerator.generateBriefing(managedTopic, testDate, List.of(summary1));
+        Briefing briefing = defaultBriefingGenerator.generateBriefing(managedTopic, testDate, List.of(summary1), updatedMetaSummary);
 
         // Then
         assertNotNull(briefing);
         assertEquals(1, Briefing.count());
         assertEquals(existingBriefing.id, briefing.id);
-        assertEquals("Updated Meta-summary Text", briefing.metaSummary);
+        assertEquals(updatedMetaSummary, briefing.metaSummary);
     }
 
     @Test
@@ -173,16 +174,17 @@ class DefaultBriefingGeneratorTest {
         summary1.persist();
         List<Summary> summaries = List.of(summary1);
 
-        when(videoSummaryService.createBriefingFromSummaries(anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")))))
-                .thenReturn("Meta-summary Text");
+        String metaSummary = "Meta-summary Text";
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), anyString()))
+                .thenReturn(metaSummary);
 
         // When
-        Briefing briefing = defaultBriefingGenerator.generateBriefing(managedTopic, testDate, summaries);
+        Briefing briefing = defaultBriefingGenerator.generateBriefing(managedTopic, testDate, summaries, metaSummary);
 
         // Then
         assertNotNull(briefing);
         assertEquals(1, Briefing.count());
-        assertEquals("Meta-summary Text", briefing.metaSummary);
+        assertEquals(metaSummary, briefing.metaSummary);
         assertEquals(1, briefing.summaries.size());
         assertEquals(summary1.id, briefing.summaries.iterator().next().id);
     }

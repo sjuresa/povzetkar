@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -52,12 +53,12 @@ class OrchestrationManagerTest {
     ManagedExecutor managedExecutor;
 
     @InjectMock
-    AsyncSummarizationService asyncSummarizationService;
+    JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
 
     @BeforeEach
     @Transactional
     void setUp() {
-        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService, asyncSummarizationService);
+        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService, justInTimeSummarizationScheduler);
         
         // Clean up database before each test to ensure isolation
         tearDown();
@@ -68,6 +69,9 @@ class OrchestrationManagerTest {
             runnable.run();
             return CompletableFuture.completedFuture(null);
         }).when(managedExecutor).runAsync(any(Runnable.class));
+
+        // Add the missing mock that was causing NPEs
+        when(videoSummaryService.acquireClient()).thenReturn(mock(GenAiClient.class));
     }
 
     @AfterEach
@@ -124,7 +128,7 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // When
@@ -170,7 +174,7 @@ class OrchestrationManagerTest {
         });
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -220,11 +224,11 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -279,11 +283,11 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(pastDate);
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -343,11 +347,11 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -439,7 +443,7 @@ class OrchestrationManagerTest {
                 throw new IllegalStateException("Managed User not found in new transaction context: " + user.id);
             }
             Topic t = setupTopic(managedUser);
-            t.persist();
+t.persist();
             return t;
         });
 
@@ -484,26 +488,23 @@ class OrchestrationManagerTest {
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
         
-        // Mock asyncSummarizationService to simulate successful reprocessing
-        doAnswer(invocation -> {
-            ContentItem item = invocation.getArgument(0);
-            LocalDate date = invocation.getArgument(1);
-
-            QuarkusTransaction.requiringNew().run(() -> {
-                // Re-load the ContentItem to ensure it's managed within this new transaction
-                ContentItem managedItem = ContentItem.findById(item.id);
-                if (managedItem == null) {
-                    throw new IllegalStateException("ContentItem not found in new transaction context: " + item.id);
-                }
-
-                // Simulate updating ContentItem status
-                ContentItem.updateProcessingStatus(managedItem.id, ProcessingStatus.COMPLETED);
-                // Simulate creating a Summary
-                Summary summary = new Summary("Generated Summary for " + managedItem.title, managedItem, date);
-                summary.persist();
-            });
-            return Uni.createFrom().voidItem();
-        }).when(asyncSummarizationService).summarizeAsync(any(ContentItem.class), any(LocalDate.class));
+        // Mock the scheduler to simulate successful reprocessing
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenAnswer(invocation -> {
+                    List<ContentItem> items = invocation.getArgument(0);
+                    LocalDate date = invocation.getArgument(1);
+                    QuarkusTransaction.requiringNew().run(() -> {
+                        for (ContentItem item : items) {
+                            ContentItem managedItem = ContentItem.findById(item.id);
+                            if (managedItem != null) {
+                                ContentItem.updateProcessingStatus(managedItem.id, ProcessingStatus.COMPLETED);
+                                Summary summary = new Summary("Generated Summary for " + managedItem.title, managedItem, date);
+                                summary.persist();
+                            }
+                        }
+                    });
+                    return Uni.createFrom().voidItem();
+                });
 
         // When
         orchestrationManager.runOrchestrationScheduled().await().indefinitely();
@@ -512,7 +513,7 @@ class OrchestrationManagerTest {
         // Clear the persistence context to ensure we load the latest state from the database
         ContentItem.getEntityManager().clear();
 
-        verify(asyncSummarizationService, times(1)).summarizeAsync(retryItem, orchestrationDate);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(retryItem), orchestrationDate);
 
         // Verify ContentItem status
         ContentItem updatedRetryItem = ContentItem.findById(retryItem.id);

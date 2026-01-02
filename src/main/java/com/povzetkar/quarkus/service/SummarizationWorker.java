@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -17,12 +18,12 @@ public class SummarizationWorker {
         this.strategies = strategies;
     }
 
-    public boolean summarize(ContentItem item, LocalDate orchestrationDate) {
+    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
         SummarizationStrategy strategy = strategies.stream()
                 .filter(s -> s.supports(item))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No summarization strategy found for content item: " + item.getClass().getName()));
 
-        return strategy.summarize(item, orchestrationDate);
+        return strategy.summarize(client, item, orchestrationDate);
     }
 }

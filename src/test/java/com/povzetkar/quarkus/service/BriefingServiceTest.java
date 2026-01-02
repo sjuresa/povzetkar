@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
@@ -98,16 +100,17 @@ class BriefingServiceTest {
             summary.persist();
         });
 
-        when(videoSummaryService.createBriefingFromSummaries(any(), any())).thenReturn("Meta-summary from GenAI");
+        String mockMetaSummary = "Meta-summary from GenAI";
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString())).thenReturn(mockMetaSummary);
 
         // When
-        Briefing briefing = briefingService.generateBriefing(testTopic, briefingDate, List.of(summary));
+        Briefing briefing = briefingService.generateBriefing(testTopic, briefingDate, List.of(summary), mockMetaSummary);
 
         // Then
         assertNotNull(briefing);
         assertEquals(1, Briefing.count());
         Briefing createdBriefing = (Briefing) Briefing.listAll().getFirst();
-        assertEquals("Meta-summary from GenAI", createdBriefing.metaSummary);
+        assertEquals(mockMetaSummary, createdBriefing.metaSummary);
         assertEquals(1, createdBriefing.summaries.size());
         assertEquals(summary.id, createdBriefing.summaries.iterator().next().id);
     }

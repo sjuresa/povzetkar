@@ -19,13 +19,15 @@ public class TopicProcessor {
     private static final Logger logger = LoggerFactory.getLogger(TopicProcessor.class);
 
     private final ContentItemFetcher contentItemFetcher;
-    private final AsyncSummarizationService asyncSummarizationService;
+    private final JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
     private final ManagedExecutor managedExecutor;
 
     @Inject
-    public TopicProcessor(ContentItemFetcher contentItemFetcher, AsyncSummarizationService asyncSummarizationService, ManagedExecutor managedExecutor) {
+    public TopicProcessor(ContentItemFetcher contentItemFetcher,
+                          JustInTimeSummarizationScheduler justInTimeSummarizationScheduler,
+                          ManagedExecutor managedExecutor) {
         this.contentItemFetcher = contentItemFetcher;
-        this.asyncSummarizationService = asyncSummarizationService;
+        this.justInTimeSummarizationScheduler = justInTimeSummarizationScheduler;
         this.managedExecutor = managedExecutor;
     }
 
@@ -55,15 +57,8 @@ public class TopicProcessor {
 
                     logger.info("Found {} new content items for topic '{}'. Starting summarization.", newContentItems.size(), topic.name);
 
-                    // 2. Summarize in parallel
-                    List<Uni<Void>> summarizationTasks = newContentItems.stream()
-                            .map(item -> asyncSummarizationService.summarizeAsync(item, orchestrationDate)
-                                    .onFailure().invoke(ex -> logger.error("Failed to summarize content item with id: {}", item.id, ex))
-                                    .onFailure().recoverWithNull())
-                            .toList();
-
-                    // Wait for all summarizations to complete
-                    return Uni.combine().all().unis(summarizationTasks).discardItems();
+                    // 2. Summarize using the just-in-time scheduler
+                    return justInTimeSummarizationScheduler.schedule(newContentItems, orchestrationDate);
                 })
                 .onItem().invoke(() -> logger.info("Finished content processing for topic '{}' on {}.", topic.name, orchestrationDate))
                 .onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration for date {}.", topic.name, orchestrationDate, ex))

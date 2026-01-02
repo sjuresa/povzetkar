@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service;
 
 import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
@@ -38,7 +39,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
     }
 
     @Override
-    public boolean summarize(ContentItem item, LocalDate orchestrationDate) {
+    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
         YouTubeVideo video = (YouTubeVideo) item;
 
         boolean alreadySummarized = QuarkusTransaction.requiringNew().call(() -> Summary.findByContentId(video.id) != null);
@@ -53,8 +54,12 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         }
 
         try {
-            String summaryText = videoSummaryService.generateContentWithRetry(content, "video summary");
+            logger.info("Generating summary for video: {} (ID: {})", video.title, video.id);
+            String callDescription = String.format("video summary for '%s' (ID: %d)", video.title, video.id);
+            String summaryText = videoSummaryService.generateContent(client, content, callDescription);
+            
             if (summaryText == null) {
+                logger.warn("Received null summary for video: {} (ID: {}). Marking as RETRY_LATER.", video.title, video.id);
                 updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
                 return false;
             }
@@ -67,6 +72,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                     attachedItem.processingStatus = ProcessingStatus.COMPLETED;
                 }
             });
+            logger.info("Successfully generated and persisted summary for video: {} (ID: {})", video.title, video.id);
             return true;
         } catch (PersistenceException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
@@ -78,9 +84,13 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 return false;
             }
         } catch (ApiException e) {
-            logger.error("Failed to create summary for video: {}.", video.sourceUrl, e);
-            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
-            logger.error("Video will be marked as failed to avoid retries.");
+            if (e.code() == 429) {
+                logger.warn("Rate limit exceeded (429) for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", video.title, video.id, e.getMessage());
+                updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
+            } else {
+                logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
+                updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
+            }
             return false;
         }
     }

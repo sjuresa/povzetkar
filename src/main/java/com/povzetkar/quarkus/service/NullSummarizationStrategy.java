@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import jakarta.annotation.Priority;
@@ -16,7 +17,7 @@ public class NullSummarizationStrategy implements SummarizationStrategy {
     private static final Logger logger = LoggerFactory.getLogger(NullSummarizationStrategy.class);
 
     @Override
-    public boolean summarize(ContentItem item, LocalDate orchestrationDate) {
+    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
         logger.warn("No specific summarization strategy found for content item type: {}. Marking as FAILED.", item.getClass().getName());
         item.processingStatus = ProcessingStatus.FAILED;
         return false;
