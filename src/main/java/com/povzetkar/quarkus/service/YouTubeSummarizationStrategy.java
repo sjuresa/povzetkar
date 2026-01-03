@@ -58,12 +58,6 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             String callDescription = String.format("video summary for '%s' (ID: %d)", video.title, video.id);
             String summaryText = videoSummaryService.generateContent(client, content, callDescription);
             
-            if (summaryText == null) {
-                logger.warn("Received null summary for video: {} (ID: {}). Marking as RETRY_LATER.", video.title, video.id);
-                updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
-                return false;
-            }
-
             QuarkusTransaction.requiringNew().run(() -> {
                 ContentItem attachedItem = ContentItem.findById(video.id);
                 if (attachedItem != null) {
