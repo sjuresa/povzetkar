@@ -11,12 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Orchestration Robustness**: Implemented retry logic for `ContentItem`s with `RETRY_LATER` status, allowing the system to re-process items that previously failed due to transient errors.
 - **Locking Mechanism Enhancement**: Ensured the orchestration lock is respected under all conditions, including taking over stale locks from crashed previous runs.
 - **Briefing Generation Flexibility**: Implemented a robust, idempotent briefing generation process. The system now automatically creates or regenerates a briefing for a given day if it doesn't exist or if it doesn't include all available content summaries for that day. This removes the need for a separate status field on the `Briefing` entity.
+- **Just-in-Time Scheduling**: Implemented a pipelined execution model for content summarization. This ensures that a new summarization task is only scheduled after the previous one has successfully acquired a `GenAiClient`, preventing thread exhaustion and blocking while waiting for rate limits.
+- **Enhanced Logging**: Improved logging for AI API calls, including specific details about the video or briefing being processed, duration, and failure reasons. Added logging for briefing generation statistics (number of summaries and character count).
 
 ### Fixed
 - **Test Stability**: Resolved issues in `OrchestrationManagerTest` related to transaction boundaries and entity visibility, ensuring test data is correctly persisted and retrieved across different transaction contexts.
 - **Transactional Race Conditions**: Added a pessimistic write lock when querying for an existing briefing in `OrchestrationManager` to prevent race conditions during concurrent briefing generation.
 - **Blocking Code in Reactive Pipeline**: Replaced blocking `Thread.sleep()` in `GenAiPool` with non-blocking reactive delays, eliminating transaction timeouts and Arjuna warnings.
 - **Data Inconsistency in Briefing Updates**: Ensured that when an existing briefing is updated, its associated summaries are completely replaced with the new set, guaranteeing data consistency.
+- **Transaction Timeouts**: Resolved `TransactionRequiredException` and transaction timeouts by moving the blocking AI call for briefing generation outside of the JTA transaction boundary.
+- **Rate Limit Handling**: Improved handling of 429 Rate Limit errors by parsing the "Retry-After" header (or message) to dynamically wait before retrying, or correctly marking the item as `RETRY_LATER` without infinite loops.
 
 ### Documentation
 - **GenAiPool Concurrency Analysis**: Documented findings from a spike test on `GenAiPool` concurrency behavior, including cooldown verification, `Sleeper.sleep` impact, and recommendations for a non-blocking approach.
