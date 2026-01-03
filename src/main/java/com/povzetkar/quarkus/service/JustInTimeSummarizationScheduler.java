@@ -62,6 +62,7 @@ public class JustInTimeSummarizationScheduler {
         ContentItem currentItem = items.get(index);
 
         managedExecutor.execute(() -> {
+            boolean nextScheduled = false;
             try {
                 // 1. Block and acquire the client.
                 logger.debug("Acquiring client for item #{}...", index);
@@ -70,6 +71,7 @@ public class JustInTimeSummarizationScheduler {
 
                 // 2. Immediately trigger the scheduling of the next item.
                 scheduleNext(items, index + 1, date, latch);
+                nextScheduled = true;
 
                 // 3. Perform the actual, potentially long-running work.
                 logger.debug("Starting summarization for item #{}.", index);
@@ -78,8 +80,10 @@ public class JustInTimeSummarizationScheduler {
 
             } catch (Exception e) {
                 logger.error("An unexpected error occurred during the scheduled summarization of item id: {}", currentItem.id, e);
-                // Still schedule the next item to keep the process going.
-                scheduleNext(items, index + 1, date, latch);
+                // If the next task was not scheduled due to an error (e.g., in acquireClient), schedule it now.
+                if (!nextScheduled) {
+                    scheduleNext(items, index + 1, date, latch);
+                }
             } finally {
                 latch.countDown(); // Signal that this task has completed its flow.
             }
