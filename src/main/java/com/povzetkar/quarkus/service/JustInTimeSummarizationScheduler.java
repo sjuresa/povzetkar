@@ -79,6 +79,9 @@ public class JustInTimeSummarizationScheduler {
                 logger.debug("Summarization task finished for item #{}.", index);
 
             } catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
                 logger.error("An unexpected error occurred during the scheduled summarization of item id: {}", currentItem.id, e);
                 // If the next task was not scheduled due to an error (e.g., in acquireClient), schedule it now.
                 if (!nextScheduled) {

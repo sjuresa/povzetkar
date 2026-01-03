@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.google.genai.errors.ApiException;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.*;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -25,7 +26,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.*;    
 
 @QuarkusTest
 class OrchestrationIntegrationTest {
@@ -173,7 +174,7 @@ class OrchestrationIntegrationTest {
         when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
 
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString()))
-                .thenReturn(null);
+                .thenThrow(new ApiException(429, "Rate limit exceeded", null));
         // When
         orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 

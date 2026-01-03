@@ -83,10 +83,8 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
             briefing = new Briefing(topic, String.format(BRIEFING_TITLE_FORMAT, briefingDate), metaSummary, briefingDate);
             briefing.persist();
         }
-
         List<Long> summaryIds = summaries.stream().map(s -> s.id).toList();
         briefing.summaries.addAll(Summary.list("id in ?1", summaryIds));
-        
         logger.info("Briefing generated for topic '{}' on {} with {} summaries.", topic.name, briefingDate, briefing.summaries.size());
 
         return briefing;

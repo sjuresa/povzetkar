@@ -443,7 +443,7 @@ class OrchestrationManagerTest {
                 throw new IllegalStateException("Managed User not found in new transaction context: " + user.id);
             }
             Topic t = setupTopic(managedUser);
-t.persist();
+            t.persist();
             return t;
         });
 
