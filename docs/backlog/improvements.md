@@ -28,7 +28,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
     - The difference between `@TestTransaction` and programmatic transaction control (e.g., `QuarkusTransaction.run()`, `QuarkusTransaction.requiringNew()`).
     - Visibility rules between test transactions and application transactions, ensuring assertions in the test thread can see data committed by the application thread.
     - A recommended pattern for setting up and tearing down test data to guarantee test isolation.
-        - The findings should be documented in a new `docs/analysis/transactional_test_patterns.md` file.
+    - The findings should be documented in a new `docs/analysis/transactional_test_patterns.md` file.
 *   **Refactor Blocking Code in Reactive Chains [Partially Complete]:** A significant portion of this was completed in v0.6.2 with the introduction of the `JustInTimeSummarizationScheduler` and the refactoring of the briefing generation flow to move blocking AI calls out of JTA transactions. A full code review should still be conducted to identify any other remaining instances.
 *   **Create a Testing Guide:** Document best practices for Quarkus integration testing, including transactional patterns, mocking strategies for Panache entities vs. external services, and how to handle reactive code. This will help prevent the kind of trial-and-error debugging experienced during the v0.6.2 development cycle.
 *   **Improve Test Suite Resilience to Logging Changes:** The test suite proved brittle to changes in logging messages. Mocks that rely on specific string formats for `callDescription` should be updated to use `anyString()` to avoid test failures from minor logging improvements.
