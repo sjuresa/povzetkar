@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
@@ -51,38 +52,46 @@ public class JustInTimeSummarizationScheduler {
 
         ContentItem currentItem = items.get(index);
 
-        managedExecutor.execute(() -> {
-            boolean nextScheduled = false;
-            try {
-                // 1. Block and acquire the client.
-                logger.debug("Acquiring client for item #{}...", index);
-                GenAiClient client = videoSummaryService.acquireClient();
-                logger.debug("Client acquired for item #{}.", index);
+        try {
+            managedExecutor.execute(() -> {
+                boolean nextScheduled = false;
+                try {
+                    // 1. Block and acquire the client.
+                    logger.debug("Acquiring client for item #{}...", index);
+                    GenAiClient client = videoSummaryService.acquireClient();
+                    logger.debug("Client acquired for item #{}.", index);
 
-                // 2. Immediately trigger the scheduling of the next item.
-                // Set flag before the call to prevent infinite recursion on RejectedExecutionException.
-                nextScheduled = true;
-                scheduleNext(items, index + 1, date, latch, emitter);
-
-                // 3. Perform the actual, potentially long-running work.
-                logger.debug("Starting summarization for item #{}.", index);
-                summarizationWorker.summarize(client, currentItem, date);
-                logger.debug("Summarization task finished for item #{}.", index);
-
-            } catch (Exception e) {
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-                logger.error("An unexpected error occurred during the scheduled summarization of item id: {}", currentItem.id, e);
-                // If the next task was not scheduled due to an error (e.g., in acquireClient or scheduleNext itself), schedule it now.
-                if (!nextScheduled) {
+                    // 2. Immediately trigger the scheduling of the next item.
+                    nextScheduled = true;
                     scheduleNext(items, index + 1, date, latch, emitter);
+
+                    // 3. Perform the actual, potentially long-running work.
+                    logger.debug("Starting summarization for item #{}.", index);
+                    summarizationWorker.summarize(client, currentItem, date);
+                    logger.debug("Summarization task finished for item #{}.", index);
+
+                } catch (Exception e) {
+                    if (e instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                    logger.error("An unexpected error occurred during the scheduled summarization of item id: {}", currentItem.id, e);
+                    if (!nextScheduled) {
+                        scheduleNext(items, index + 1, date, latch, emitter);
+                    }
+                } finally {
+                    if (latch.decrementAndGet() == 0) {
+                        emitter.complete(null);
+                    }
                 }
-            } finally {
-                if (latch.decrementAndGet() == 0) {
-                    emitter.complete(null);
-                }
+            });
+        } catch (RejectedExecutionException e) {
+            int remainingTasks = items.size() - index;
+            logger.error("Executor saturated. Dropping {} summarization tasks.", remainingTasks, e);
+            // Decrement the latch for all dropped tasks to prevent the Uni from hanging.
+            int finalCount = latch.addAndGet(-remainingTasks);
+            if (finalCount == 0) {
+                emitter.complete(null);
             }
-        });
+        }
     }
 }
