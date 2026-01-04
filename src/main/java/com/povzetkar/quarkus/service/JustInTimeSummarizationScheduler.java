@@ -54,7 +54,6 @@ public class JustInTimeSummarizationScheduler {
 
         try {
             managedExecutor.execute(() -> {
-                boolean nextScheduled = false;
                 try {
                     // 1. Block and acquire the client.
                     logger.debug("Acquiring client for item #{}...", index);
@@ -62,22 +61,26 @@ public class JustInTimeSummarizationScheduler {
                     logger.debug("Client acquired for item #{}.", index);
 
                     // 2. Immediately trigger the scheduling of the next item.
-                    nextScheduled = true;
                     scheduleNext(items, index + 1, date, latch, emitter);
 
-                    // 3. Perform the actual, potentially long-running work.
-                    logger.debug("Starting summarization for item #{}.", index);
-                    summarizationWorker.summarize(client, currentItem, date);
-                    logger.debug("Summarization task finished for item #{}.", index);
-
+                    // 3. Perform the actual, potentially long-running work in its own try-catch.
+                    try {
+                        logger.debug("Starting summarization for item #{}.", index);
+                        summarizationWorker.summarize(client, currentItem, date);
+                        logger.debug("Summarization task finished for item #{}.", index);
+                    } catch (Exception e) {
+                        if (e instanceof InterruptedException) {
+                            Thread.currentThread().interrupt();
+                        }
+                        logger.error("An error occurred during the summarization of item id: {}", currentItem.id, e);
+                    }
                 } catch (Exception e) {
+                    // This block catches errors from acquireClient() or scheduleNext().
+                    // If client acquisition or scheduling the next task fails, the chain is broken.
                     if (e instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
                     }
-                    logger.error("An unexpected error occurred during the scheduled summarization of item id: {}", currentItem.id, e);
-                    if (!nextScheduled) {
-                        scheduleNext(items, index + 1, date, latch, emitter);
-                    }
+                    logger.error("Failed to acquire client or schedule next task for item id: {}. Aborting this task and breaking the chain.", currentItem.id, e);
                 } finally {
                     if (latch.decrementAndGet() == 0) {
                         emitter.complete(null);
