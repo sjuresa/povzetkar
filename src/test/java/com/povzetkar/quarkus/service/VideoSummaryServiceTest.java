@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.service;
 import com.google.genai.Models;
 import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
+import com.google.genai.types.CountTokensResponse;
 import com.google.genai.types.GenerateContentResponse;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
@@ -17,11 +18,12 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyList;
 
 @QuarkusTest
 class VideoSummaryServiceTest {
@@ -32,29 +34,30 @@ class VideoSummaryServiceTest {
     @InjectMock
     GenAiPool mockGenAiPool;
 
-    // Mocks for chained calls, not beans
     GenAiClient mockGenAiClient;
     Models mockModels;
     GenerateContentResponse mockResponse;
+    CountTokensResponse mockCountTokensResponse;
 
     @BeforeEach
     void setUp() {
-        // Initialize mocks for non-bean objects
         mockGenAiClient = Mockito.mock(GenAiClient.class);
         mockModels = Mockito.mock(Models.class);
         mockResponse = Mockito.mock(GenerateContentResponse.class);
+        mockCountTokensResponse = Mockito.mock(CountTokensResponse.class);
 
-        // Mock the chain of calls
         when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
         when(mockGenAiClient.getModels()).thenReturn(mockModels);
+        when(mockModels.countTokens(anyString(), anyList(), eq(null))).thenReturn(mockCountTokensResponse);
+        when(mockCountTokensResponse.totalTokens()).thenReturn(Optional.of(100));
     }
 
     @Test
     @DisplayName("createBriefingFromSummaries should call Gemini API and return response text")
     void createBriefingFromSummaries_success() {
-        // Arrange
         String rawSummaries = "Summary 1\n---\nSummary 2";
         String date = "2025-07-17";
+        String topicName = "AI";
         String expectedBriefing = "This is the briefing.";
         ArgumentCaptor<Content> contentCaptor = ArgumentCaptor.forClass(Content.class);
 
@@ -62,10 +65,8 @@ class VideoSummaryServiceTest {
         when(mockModels.generateContent(anyString(), contentCaptor.capture(), eq(null)))
                 .thenReturn(mockResponse);
 
-        // Act
-        String result = videoSummaryService.createBriefingFromSummaries(rawSummaries, date);
+        String result = videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName);
 
-        // Assert
         assertEquals(expectedBriefing, result);
         String capturedPrompt = contentCaptor.getValue().toString();
         assertTrue(capturedPrompt.contains(rawSummaries));
@@ -82,66 +83,27 @@ class VideoSummaryServiceTest {
             "'' , ''"
     })
     @DisplayName("Should clean AI response by trimming whitespace and separators")
-    void generateContentWithRetry_shouldCleanAiResponse(String rawResponse, String expectedCleanedResponse) {
-        // Arrange
+    void generateContent_shouldCleanAiResponse(String rawResponse, String expectedCleanedResponse) {
         when(mockResponse.text()).thenReturn(rawResponse);
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenReturn(mockResponse);
 
-        // Act
-        String result = videoSummaryService.createBriefingFromSummaries("some summary", "2025-07-17");
+        String result = videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call");
 
-        // Assert
         assertEquals(expectedCleanedResponse, result);
     }
 
     @Test
-    @DisplayName("generateContentWithRetry should retry on retriable error and succeed on second attempt")
-    void generateContentWithRetry_shouldRetryOnRetriableError() {
-        // Arrange
-        ApiException rateLimitException = new ApiException(429, "429 Rate limit exceeded", null);
-        when(mockResponse.text()).thenReturn("Success after retry");
-
-        when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
-                .thenThrow(rateLimitException) // First call fails
-                .thenReturn(mockResponse);   // Second call succeeds
-
-        // Act
-        String result = videoSummaryService.createBriefingFromSummaries("some summary", "2025-07-17");
-
-        // Assert
-        assertEquals("Success after retry", result);
-        // Verify the API was called twice
-        verify(mockModels, times(2)).generateContent(anyString(), any(Content.class), eq(null));
-    }
-
-    @Test
-    @DisplayName("generateContentWithRetry should throw exception after exhausting all retries")
-    void generateContentWithRetry_shouldThrowAfterMaxRetries() {
-        // Arrange
+    @DisplayName("generateContent should throw exception immediately on error")
+    void generateContent_shouldThrowExceptionImmediately() {
         ApiException rateLimitException = new ApiException(429, "429 Rate limit exceeded", null);
 
-        // Make it fail every time
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
                 .thenThrow(rateLimitException);
 
-        // Act & Assert
-        ApiException thrown = assertThrows(ApiException.class, () -> videoSummaryService.createBriefingFromSummaries("some summary", "2025-07-17"));
+        ApiException thrown = assertThrows(ApiException.class, () ->
+                videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call"));
 
         assertEquals(rateLimitException, thrown);
-        // The number of attempts is now configurable. The test default is 3.
-        verify(mockModels, times(3)).generateContent(anyString(), any(Content.class), eq(null));
-    }
-
-    @Test
-    @DisplayName("generateContentWithRetry should not retry on a non-retriable error")
-    void generateContentWithRetry_shouldNotRetryOnNonRetriableError() {
-        // Arrange
-        ApiException otherException = new ApiException(400, "400 Bad Request", null);
-        when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenThrow(otherException);
-
-        // Act & Assert
-        assertThrows(ApiException.class, () -> videoSummaryService.createBriefingFromSummaries("some summary", "2025-07-17"));
-
         // Verify it was only called once
         verify(mockModels, times(1)).generateContent(anyString(), any(Content.class), eq(null));
     }

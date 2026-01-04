@@ -23,7 +23,11 @@ public class BriefingService {
         return briefingGenerator.getSummariesForBriefing(topic, briefingDate);
     }
 
-    public Briefing generateBriefing(Topic topic, LocalDate briefingDate, List<Summary> summaries) {
-        return briefingGenerator.generateBriefing(topic, briefingDate, summaries);
+    public String getMetaSummaryFromAI(Topic topic, List<Summary> summaries, LocalDate briefingDate) {
+        return briefingGenerator.getMetaSummaryFromAI(topic, summaries, briefingDate);
+    }
+
+    public Briefing generateBriefing(Topic topic, LocalDate briefingDate, List<Summary> summaries, String metaSummary) {
+        return briefingGenerator.generateBriefing(topic, briefingDate, summaries, metaSummary);
     }
 }

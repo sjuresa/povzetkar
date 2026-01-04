@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
@@ -33,42 +34,59 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
         return QuarkusTransaction.requiringNew().call(() -> Summary.findByTopicAndDateRange(topic, briefingDate));
     }
 
-    @Override
-    public Briefing generateBriefing(Topic topic, LocalDate briefingDate, List<Summary> summaries) {
-        if (summaries.isEmpty()) {
-            logger.info("No summaries provided for topic '{}' on {}. Skipping briefing generation.", topic.name, briefingDate);
+    /**
+     * Generates a meta-summary from a list of summaries using a blocking AI call.
+     * This method is intentionally non-transactional.
+     */
+    public String getMetaSummaryFromAI(Topic topic, List<Summary> summaries, LocalDate briefingDate) {
+        if (summaries == null || summaries.isEmpty()) {
             return null;
         }
-
-        // 2. Format these Summary entities into a single rawSummaries string.
         String rawSummaries = summaries.stream()
                 .map(s -> s.summaryText)
                 .collect(Collectors.joining("\n---\n"));
 
-        // 3. Use the GenAI service to create a meta-summary from the collected summaries.
-        String metaSummary = videoSummaryService.createBriefingFromSummaries(rawSummaries, briefingDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")));
+        logger.info("Generating meta-summary for topic '{}' on {} from {} summaries ({} characters).",
+                topic.name, briefingDate, summaries.size(), rawSummaries.length());
 
-        // 4. Check if a briefing already exists for this topic and date, and lock the row to prevent race conditions.
+        // Acquire client and make the blocking call here, outside any transaction.
+        GenAiClient client = videoSummaryService.acquireClient();
+        return videoSummaryService.createBriefingFromSummaries(client, rawSummaries, briefingDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")), topic.name);
+    }
+
+    /**
+     * Creates or updates a briefing in the database with a pre-generated meta-summary.
+     * This method is designed to be called within a transaction.
+     */
+    public Briefing generateBriefing(Topic topic, LocalDate briefingDate, List<Summary> summaries, String metaSummary) {
+        if (summaries.isEmpty()) {
+            logger.info("No summaries provided for topic '{}' on {}. Skipping briefing generation.", topic.name, briefingDate);
+            return null;
+        }
+        if (metaSummary == null || metaSummary.isBlank()) {
+            logger.warn("Meta-summary is blank for topic '{}' on {}. Skipping briefing generation.", topic.name, briefingDate);
+            return null;
+        }
+
         Optional<Briefing> existingBriefingOptional = Briefing.find("topic.id = ?1 and briefingDate = ?2", topic.id, briefingDate)
                 .withLock(LockModeType.PESSIMISTIC_WRITE)
                 .firstResultOptional();
 
         Briefing briefing;
         if (existingBriefingOptional.isPresent()) {
-            briefing = existingBriefingOptional.get(); // Already managed if fetched within this transaction
+            briefing = existingBriefingOptional.get();
             logger.info("Updating existing briefing for topic '{}' on {}.", topic.name, briefingDate);
             briefing.metaSummary = metaSummary;
-            briefing.summaries.clear(); // Clear existing summaries
+            briefing.summaries.clear();
         } else {
             logger.info("Creating new briefing for topic '{}' on {}.", topic.name, briefingDate);
             briefing = new Briefing(topic, String.format(BRIEFING_TITLE_FORMAT, briefingDate), metaSummary, briefingDate);
             briefing.persist();
         }
-
-        // The summaries are detached after the first transaction. We re-query them to attach to the new persistence context.
         List<Long> summaryIds = summaries.stream().map(s -> s.id).toList();
         briefing.summaries.addAll(Summary.list("id in ?1", summaryIds));
-        // No persist() needed here for existing briefings, changes will be flushed automatically.
+        logger.info("Briefing generated for topic '{}' on {} with {} summaries.", topic.name, briefingDate, briefing.summaries.size());
+
         return briefing;
     }
 }

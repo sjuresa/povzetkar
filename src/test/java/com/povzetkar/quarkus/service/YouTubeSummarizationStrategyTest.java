@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service;
 
 import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
@@ -42,12 +43,15 @@ class YouTubeSummarizationStrategyTest {
 
     private YouTubeVideo mockVideo;
     private LocalDate mockOrchestrationDate;
+    private GenAiClient mockClient;
 
     @BeforeEach
     void setUp() {
         mockVideo = new YouTubeVideo();
         mockVideo.id = 1L;
+        mockVideo.title = "Test Video"; // Ensure title is set for logging
         mockOrchestrationDate = LocalDate.now();
+        mockClient = mock(GenAiClient.class);
     }
 
     private void mockTransactions(MockedStatic<QuarkusTransaction> tx) {
@@ -72,7 +76,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(new Summary());
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertTrue(result);
             PanacheMock.verify(Summary.class).findByContentId(1L);
@@ -92,7 +96,7 @@ class YouTubeSummarizationStrategyTest {
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
             PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.RETRY_LATER);
@@ -109,12 +113,13 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
-            when(videoSummaryService.generateContentWithRetry(content, "video summary"))
+            // Use anyString() to match the dynamic call description
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString()))
                     .thenThrow(new ApiException(500, "AI Error", null));
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
             PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.FAILED);
@@ -133,11 +138,12 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
-            when(videoSummaryService.generateContentWithRetry(content, "video summary")).thenReturn("Success");
+            // Use anyString() to match the dynamic call description
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString())).thenReturn("Success");
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertTrue(result);
             assertEquals(ProcessingStatus.COMPLETED, mockVideo.processingStatus);
@@ -157,7 +163,8 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
-            when(videoSummaryService.generateContentWithRetry(content, "video summary")).thenReturn("Success");
+            // Use anyString() to match the dynamic call description
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString())).thenReturn("Success");
 
             TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
@@ -168,7 +175,7 @@ class YouTubeSummarizationStrategyTest {
                     .when(runner).run(any(Runnable.class));
 
             // Act
-            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             // Assert
             assertTrue(result, "Should return true on persistence exception due to race condition");
@@ -185,7 +192,8 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
-            when(videoSummaryService.generateContentWithRetry(content, "video summary")).thenReturn("Success");
+            // Use anyString() to match the dynamic call description
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString())).thenReturn("Success");
 
             TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
@@ -200,7 +208,7 @@ class YouTubeSummarizationStrategyTest {
                     .when(runner).run(any(Runnable.class));
 
             // Act
-            boolean result = strategy.summarize(mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             // Assert
             assertFalse(result, "Should return false for generic persistence exception");

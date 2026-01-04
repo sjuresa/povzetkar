@@ -36,7 +36,7 @@ class TopicProcessorTest {
     ContentItemFetcher contentItemFetcher;
 
     @InjectMock
-    AsyncSummarizationService asyncSummarizationService;
+    JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
 
     @InjectMock
     ManagedExecutor managedExecutor;
@@ -51,7 +51,7 @@ class TopicProcessorTest {
 
     @BeforeEach
     void setUp() {
-        Mockito.reset(contentItemFetcher, asyncSummarizationService, managedExecutor);
+        Mockito.reset(contentItemFetcher, justInTimeSummarizationScheduler, managedExecutor);
         mockedUser = Mockito.mockStatic(User.class);
         mockedTopic = Mockito.mockStatic(Topic.class);
 
@@ -103,7 +103,7 @@ class TopicProcessorTest {
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(orchestrationDate), eq(null), eq(null)))
                 .thenReturn(Collections.singletonList(testContentItem));
-        when(asyncSummarizationService.summarizeAsync(any(ContentItem.class), eq(orchestrationDate)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(orchestrationDate)))
                 .thenReturn(Uni.createFrom().voidItem());
     }
 
@@ -118,7 +118,7 @@ class TopicProcessorTest {
 
         // Then
         verify(contentItemFetcher, times(1)).fetchItems(testContentSource, expectedDate, null, null);
-        verify(asyncSummarizationService, times(1)).summarizeAsync(testContentItem, expectedDate);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate);
     }
 
     @Test
@@ -136,6 +136,6 @@ class TopicProcessorTest {
 
         // Then
         verify(contentItemFetcher, times(1)).fetchItems(testContentSource, expectedDate, null, null);
-        verifyNoInteractions(asyncSummarizationService);
+        verifyNoInteractions(justInTimeSummarizationScheduler);
     }
 }
