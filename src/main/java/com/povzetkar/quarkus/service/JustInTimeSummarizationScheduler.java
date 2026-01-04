@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.service;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.subscription.UniEmitter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
 public class JustInTimeSummarizationScheduler {
@@ -38,23 +39,12 @@ public class JustInTimeSummarizationScheduler {
         logger.info("Scheduling {} items for summarization with just-in-time client acquisition.", items.size());
 
         return Uni.createFrom().emitter(emitter -> {
-            final CountDownLatch latch = new CountDownLatch(items.size());
-            scheduleNext(items, 0, date, latch);
-
-            // Asynchronously wait for all tasks to complete before completing the Uni
-            managedExecutor.execute(() -> {
-                try {
-                    latch.await();
-                    emitter.complete(null);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    emitter.fail(e);
-                }
-            });
+            final AtomicInteger latch = new AtomicInteger(items.size());
+            scheduleNext(items, 0, date, latch, emitter);
         });
     }
 
-    private void scheduleNext(List<ContentItem> items, int index, LocalDate date, CountDownLatch latch) {
+    private void scheduleNext(List<ContentItem> items, int index, LocalDate date, AtomicInteger latch, UniEmitter<? super Void> emitter) {
         if (index >= items.size()) {
             return;
         }
@@ -70,8 +60,9 @@ public class JustInTimeSummarizationScheduler {
                 logger.debug("Client acquired for item #{}.", index);
 
                 // 2. Immediately trigger the scheduling of the next item.
-                scheduleNext(items, index + 1, date, latch);
+                // Set flag before the call to prevent infinite recursion on RejectedExecutionException.
                 nextScheduled = true;
+                scheduleNext(items, index + 1, date, latch, emitter);
 
                 // 3. Perform the actual, potentially long-running work.
                 logger.debug("Starting summarization for item #{}.", index);
@@ -83,12 +74,14 @@ public class JustInTimeSummarizationScheduler {
                     Thread.currentThread().interrupt();
                 }
                 logger.error("An unexpected error occurred during the scheduled summarization of item id: {}", currentItem.id, e);
-                // If the next task was not scheduled due to an error (e.g., in acquireClient), schedule it now.
+                // If the next task was not scheduled due to an error (e.g., in acquireClient or scheduleNext itself), schedule it now.
                 if (!nextScheduled) {
-                    scheduleNext(items, index + 1, date, latch);
+                    scheduleNext(items, index + 1, date, latch, emitter);
                 }
             } finally {
-                latch.countDown(); // Signal that this task has completed its flow.
+                if (latch.decrementAndGet() == 0) {
+                    emitter.complete(null);
+                }
             }
         });
     }
