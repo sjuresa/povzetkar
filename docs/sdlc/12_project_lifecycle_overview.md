@@ -1,7 +1,12 @@
 # Project Lifecycle Overview
 
-**Version:** 1.0
-**Date:** November 1, 2025
+**Version:** 1.1
+
+## Revision History
+| Version | Date             | Author       | Changes                                                                                               |
+|---------|------------------|--------------|-------------------------------------------------------------------------------------------------------|
+| 1.1     | January 6, 2026  | Povzetkar AI | Added documentation health check to strategic review phase.                                           |
+| 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                                                      |
 
 ## 1. Introduction
 
@@ -30,8 +35,9 @@ This document outlines the high-level lifecycle of the Povzetkar project. It des
 
 ## Phase 3: Periodic Strategic Review
 *This phase ensures the project remains aligned with its strategic goals and that the development process is effective.*
-- **Activity:** Review the project's long-term roadmap and the effectiveness of the development methodology.
+- **Activity:** Review the project's long-term roadmap, the effectiveness of the development methodology, and the overall health of the project documentation.
 - **Artifacts:**
     - Review and update `docs/overview/roadmap.md`.
     - Review and potentially update `docs/sdlc/07_development_methodology_comparison.md` and `AGENT.md`.
+    - Assess key documentation for staleness, guided by the prompts in the "Post-Version Review" phase of `11_development_checklist.md`, to ensure the post-version update process is effective.
 - **Frequency:** Periodically (e.g., quarterly, after major milestones).

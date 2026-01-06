@@ -1,7 +1,12 @@
 # Development Process Checklist
 
-**Version:** 1.0
-**Date:** November 1, 2025
+**Version:** 1.1
+
+## Revision History
+| Version | Date             | Author       | Changes                                                                       |
+|---------|------------------|--------------|-------------------------------------------------------------------------------|
+| 1.1     | January 6, 2026  | Povzetkar AI | Updated checklist based on v0.6.2 retrospective: added code review steps, post-version documentation updates, and specific prompts. |
+| 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                              |
 
 ## 1. Introduction
 
@@ -35,6 +40,10 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **2.3a. Pre-Execution Gate:** Confirm that an explicit approval for the plan has been received. **Execution is forbidden without this approval.**
 - [ ] **2.4. Agent Executes Plan:** The agent executes the plan step-by-step, including all necessary code changes and documentation updates.
 - [ ] **2.5. User Verifies Tests:** After code modifications, the user runs the test suite and confirms that all tests are passing.
+    - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
+    - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
+    - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
+    - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
 - [ ] **2.7. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
 - [ ] **2.8. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
@@ -68,3 +77,7 @@ This document provides a comprehensive checklist for our development process. It
 *This phase is executed immediately after a version has been released.*
 
 - [ ] **4.1. Conduct Retrospective:** Create a new `docs/retrospectives/vX.Y-retrospective.md` file to document what went well, what could be improved, and define action items for the next cycle.
+- [ ] **4.2. Update Project Documentation:** Execute the following prompts to ensure documentation consistency:
+    - [ ] **General Refresh:** "We are in the planning phase for the next version. Before that, please review the documents for the previous version (`docs/versions/vX.Y-planning-process.md`, `docs/versions/vX.Y-tasks.md`, `docs/retrospectives/vX.Y-retrospective.md`) and check if the project documentation in `docs/` needs to be refreshed based on this (specifically in directories: `docs/analysis`, `docs/overview`, `docs/sdlc`). Today is [Current Date]."
+    - [ ] **Agent Protocol Check:** "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
+    - [ ] **Methodology Update:** "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
