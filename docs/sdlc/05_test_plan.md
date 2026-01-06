@@ -32,7 +32,7 @@ Testing will cover all major components of the system:
 ### 3.2. Integration Testing
 - **Objective:** To verify the interaction between different components of the system.
 - **Tools:** Quarkus Test Framework (`@QuarkusTest`), Testcontainers (for PostgreSQL and RabbitMQ).
-- **Strategy:** Avoid mocking internal services or Panache entities. Tests should verify the state of the database as the observable outcome. Mock only true external boundaries (e.g., YouTube API, AI Service).
+- **Strategy:** Do not mock internal services or Panache entities. Tests must verify the state of the database as the observable outcome and mock only true external boundaries (e.g., YouTube API, AI Service).
 - **Scope:**
     - **API Tests:** Testing REST endpoints by making real HTTP requests to the running application and asserting the responses.
     - **Persistence Tests:** Verifying that data is correctly written to and read from a real (containerized) PostgreSQL database.
