@@ -427,55 +427,27 @@ class OrchestrationManagerTest {
     void testRunOrchestration_ReprocessesRetryLaterItems() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        
-        // Persist User in a separate transaction to ensure it's committed and visible
-        User user = QuarkusTransaction.requiringNew().call(() -> {
-            User u = setupUser();
-            u.persist();
-            return u;
-        });
 
-        // Persist Topic and ContentSource in separate transactions to ensure they are committed and visible
-        Topic topic = QuarkusTransaction.requiringNew().call(() -> {
-            // Re-fetch user within this new transaction context
-            User managedUser = User.findById(user.id);
-            if (managedUser == null) {
-                throw new IllegalStateException("Managed User not found in new transaction context: " + user.id);
-            }
-            Topic t = setupTopic(managedUser);
-            t.persist();
-            return t;
-        });
+        // Setup all test data within a single new transaction to ensure it's committed and visible
+        // to the transactions started by the application code under test.
+        final ContentItem retryItem = QuarkusTransaction.requiringNew().call(() -> {
+            User user = setupUser();
+            user.persist();
 
-        ContentSource contentSource = QuarkusTransaction.requiringNew().call(() -> {
-            ContentSource cs = setupContentSource();
-            cs.persist();
-            return cs;
-        });
-        
-        // Re-fetch topic and contentSource to ensure they are managed in the current transaction
-        // and create effectively final variables for use in lambdas
-        final Topic finalTopic = Topic.findById(topic.id);
-        final ContentSource finalContentSource = ContentSource.findById(contentSource.id);
+            Topic topic = setupTopic(user);
+            topic.persist();
 
-        finalTopic.contentSources.add(finalContentSource);
-        finalTopic.persist();
-        finalTopic.flush(); // Flush topic to ensure relationship is persisted
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
 
-        // Persist retryItem in a separate transaction to ensure it's committed and visible
-        ContentItem retryItem = QuarkusTransaction.requiringNew().call(() -> {
-            // Use the effectively final contentSource
-            ContentSource managedContentSource = ContentSource.findById(finalContentSource.id);
-            if (managedContentSource == null) {
-                throw new IllegalStateException("Managed ContentSource not found in new transaction context: " + finalContentSource.id);
-            }
+            topic.contentSources.add(contentSource);
 
             ContentItem item = new ContentItem();
             item.sourceUrl = "http://example.com/retry";
             item.rawContent = "raw content for retry";
             item.title = "Retry Item Title";
             item.publishedAt = Instant.now();
-            item.contentSource = managedContentSource; // Use the managed content source
+            item.contentSource = contentSource;
             item.processingStatus = ProcessingStatus.RETRY_LATER;
             item.persist();
             return item;
@@ -483,11 +455,11 @@ class OrchestrationManagerTest {
 
         doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
         doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
-        
+
         // Mock topicProcessor.processTopicUni to return a completed Uni
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        
+
         // Mock the scheduler to simulate successful reprocessing
         when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
                 .thenAnswer(invocation -> {
