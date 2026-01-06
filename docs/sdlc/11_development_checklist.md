@@ -40,7 +40,7 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **2.3a. Pre-Execution Gate:** Confirm that an explicit approval for the plan has been received. **Execution is forbidden without this approval.**
 - [ ] **2.4. Agent Executes Plan:** The agent executes the plan step-by-step, including all necessary code changes and documentation updates.
 - [ ] **2.5. User Verifies Tests:** After code modifications, the user runs the test suite and confirms that all tests are passing.
-    - [ ] **Code Review Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
+    - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
     - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
     - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
     - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
