@@ -1,7 +1,12 @@
 # Project Lifecycle Overview
 
 **Version:** 1.1
-**Date:** November 1, 2025
+
+## Revision History
+| Version | Date             | Author       | Changes                                                                                               |
+|---------|------------------|--------------|-------------------------------------------------------------------------------------------------------|
+| 1.1     | January 6, 2026  | Povzetkar AI | Added documentation health check to strategic review phase.                                           |
+| 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                                                      |
 
 ## 1. Introduction
 
