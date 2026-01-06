@@ -24,11 +24,12 @@ This section breaks down the system's functionality into user-centric stories.
 
 ### 3.1. Data Ingestion & Processing
 
-*   **(Implemented)** **As an Administrator, I want to** configure a list of content sources (e.g., YouTube channels) for a user's topic so that the system automatically monitors them for new content.
+*   **(Implemented)** **As an Administrator, I want to** configure a list of content sources (e.g., YouTube channels) for a topic so that the system automatically monitors them for new content.
 *   **(Future)** **As an Administrator, I want to** define keyword searches for YouTube so that the system finds relevant new videos on specific topics.
 *   **(Future)** **As an Administrator, I want to** add a list of websites, blogs, and Reddit communities so the system can ingest articles and posts.
 *   **(Implemented)** **As a System, I want to** automatically fetch new content from all configured sources on a periodic basis.
 *   **(Implemented)** **As a System, I want to** generate a concise, accurate summary for every new piece of content.
+*   **(New)** **As a System, I want to** automatically re-process content that failed due to transient errors so that the system can self-heal and ensure data completeness.
 *   **(Future)** **As a System, I want to** generate vector embeddings for all content and summaries to enable semantic search.
 
 ### 3.2. Analysis & Reporting
@@ -53,5 +54,6 @@ This section breaks down the system's functionality into user-centric stories.
 
 ### 3.5. User Interface & Management
 
-*   **(Implemented)** **As a User, I want to** navigate a simple web interface to select a user and a topic to view the latest briefings.
-*   **(Implemented)** **As an Administrator, I want to** be able to add, edit, and delete topics through the web interface.
+*   **(Implemented)** **As a User, I want to** navigate a simple web interface to select a topic to view the latest briefings.
+*   **(Implemented)** **As an Administrator, I want to** add, edit, and delete topics and manage their associated content sources through the web interface.
+*   **(Implemented)** **As an Administrator, I want to** use a simple web interface to trigger system-level actions like content enrichment and orchestration.

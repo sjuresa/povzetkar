@@ -1,7 +1,12 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ProcessingStatus;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -12,7 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class OrchestrationManager {
@@ -23,13 +32,19 @@ public class OrchestrationManager {
     private final TopicProcessor topicProcessor;
     private final BriefingService briefingService;
     private final ManagedExecutor managedExecutor;
+    private final JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
 
     @Inject
-    public OrchestrationManager(OrchestrationLockService orchestrationLockService, TopicProcessor topicProcessor, BriefingService briefingService, ManagedExecutor managedExecutor) {
+    public OrchestrationManager(OrchestrationLockService orchestrationLockService,
+                                TopicProcessor topicProcessor,
+                                BriefingService briefingService,
+                                ManagedExecutor managedExecutor,
+                                JustInTimeSummarizationScheduler justInTimeSummarizationScheduler) {
         this.orchestrationLockService = orchestrationLockService;
         this.topicProcessor = topicProcessor;
         this.briefingService = briefingService;
         this.managedExecutor = managedExecutor;
+        this.justInTimeSummarizationScheduler = justInTimeSummarizationScheduler;
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
@@ -78,8 +93,8 @@ public class OrchestrationManager {
             return Uni.createFrom().voidItem(); // Early exit, no lock to release by this path
         }
 
-        // If we reach here, the lock was successfully acquired
-        return Uni.createFrom().deferred(() -> {
+        return processRetryLaterItems(orchestrationDate)
+                .chain(() -> Uni.createFrom().deferred(() -> {
                     List<User> activeUsers = User.listAllActive();
                     if (activeUsers.isEmpty()) {
                         logger.info("No active users found. Content orchestration finished for date: {}.", orchestrationDate);
@@ -97,10 +112,38 @@ public class OrchestrationManager {
                             .onItem().invoke(() -> logger.info("Content orchestration finished for date: {}.", orchestrationDate))
                             .onFailure().invoke(ex -> logger.error("Content orchestration failed unexpectedly for date: {}", orchestrationDate, ex))
                             .replaceWithVoid();
-                })
+                }))
                 .onTermination().invoke(() -> {
-                        logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
-                        orchestrationLockService.releaseLock(orchestrationDate);
+                    logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
+                    orchestrationLockService.releaseLock(orchestrationDate);
+                });
+    }
+
+    private Uni<Void> processRetryLaterItems(LocalDate orchestrationDate) {
+        logger.info("Checking for content items to retry for date: {}.", orchestrationDate);
+        return processRetryPage(orchestrationDate, 0);
+    }
+
+    private Uni<Void> processRetryPage(LocalDate orchestrationDate, int pageIndex) {
+        final int BATCH_SIZE = 100;
+        return Uni.createFrom().item(() -> ContentItem.<ContentItem>find("processingStatus = ?1 and publishedAt >= ?2 and publishedAt < ?3",
+                                ProcessingStatus.RETRY_LATER,
+                                orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                                orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
+                        .page(pageIndex, BATCH_SIZE)
+                        .list())
+                .chain(itemsToRetry -> {
+                    if (itemsToRetry.isEmpty()) {
+                        if (pageIndex == 0) {
+                            logger.info("No items to retry for date: {}.", orchestrationDate);
+                        }
+                        return Uni.createFrom().voidItem();
+                    }
+
+                    logger.info("Found {} items to retry on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
+
+                    return justInTimeSummarizationScheduler.schedule(itemsToRetry, orchestrationDate)
+                            .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1));
                 });
     }
 
@@ -124,12 +167,33 @@ public class OrchestrationManager {
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
                 .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
-                            logger.debug("Attempting to generate briefing for topic '{}' on {}.", topic.name, briefingDate);
-                            briefingService.generateBriefing(topic, briefingDate);
-                        }))
-                        .onFailure().invoke(e -> logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e))
-                        .onFailure().recoverWithNull()
-                        .replaceWithVoid())
+                    try {
+                        // Step 1: Read data in a transaction
+                        List<Summary> availableSummaries = briefingService.getSummariesForBriefing(topic, briefingDate);
+                        Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
+
+                        Set<Long> existingBriefingSummaryIds = QuarkusTransaction.requiringNew().call(() ->
+                                Briefing.findByTopicAndDate(topic, briefingDate)
+                                        .map(briefing -> briefing.summaries.stream().map(summary -> summary.id).collect(Collectors.toSet()))
+                                        .orElse(Collections.emptySet())
+                        );
+
+                        if (availableSummaryIds.equals(existingBriefingSummaryIds)) {
+                            logger.info("Briefing for topic '{}' on {} is up-to-date. Skipping generation.", topic.name, briefingDate);
+                            return;
+                        }
+
+                        // Step 2: Perform blocking AI call outside of any transaction
+                        logger.info("Briefing for topic '{}' on {} needs to be regenerated. Generating meta-summary.", topic.name, briefingDate);
+                        String metaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
+
+                        // Step 3: Write data in a new transaction
+                        QuarkusTransaction.requiringNew().run(() -> briefingService.generateBriefing(topic, briefingDate, availableSummaries, metaSummary));
+
+                    } catch (Exception e) {
+                        logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e);
+                    }
+                })))
                 .toList();
 
         return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()

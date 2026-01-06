@@ -5,7 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.2] - 2026-01-04
+
+### Summary
+
+Version 0.6.2 focuses on **hardening the core orchestration engine**. It introduces a robust, idempotent briefing generation process, a just-in-time scheduling mechanism to prevent thread exhaustion, and improved handling of transient errors and rate limits. This release also addresses several concurrency race conditions and improves logging visibility, significantly increasing the system's reliability under load.
+
+### Added
+- **Orchestration Robustness:** Implemented retry logic for `ContentItem`s with `RETRY_LATER` status and improved lock handling to automatically recover from crashed runs.
+- **Idempotent Briefing Generation:** Decoupled briefing generation from content fetching, allowing the system to automatically self-heal and regenerate briefings without manual intervention.
+- **Just-in-Time Scheduling:** Implemented a pipelined execution model for content summarization. This ensures that a new summarization task is only scheduled after the previous one has successfully acquired a `GenAiClient`, preventing thread exhaustion.
+- **Enhanced Observability:** Added detailed logging for AI API calls (duration, failure reasons) and briefing generation statistics.
+
+### Fixed
+- **Concurrency & Stability:** Resolved transactional race conditions during briefing generation using pessimistic locking and fixed transaction boundaries to prevent timeouts.
+- **Performance:** Eliminated blocking calls in the reactive pipeline and optimized the `GenAiPool` to prevent thread starvation.
+- **Rate Limit Handling:** Improved handling of HTTP 429 errors to respect `Retry-After` headers dynamically.
+- **Test Stability:** Fixed transaction boundary issues in integration tests to ensure consistent execution.
+
+### Documentation
+- **Concurrency Analysis:** Added findings from the GenAiPool spike test regarding concurrency behavior and blocking calls.
 
 ## [0.6.1] - 2025-11-13
 

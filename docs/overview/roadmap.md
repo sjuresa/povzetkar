@@ -1,10 +1,11 @@
 # Project Povzetkar: Development Roadmap
 
-**Version:** 1.4
+**Version:** 1.5
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                            |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                               |
 | 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                   |
 | 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.              |
 | 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
@@ -64,6 +65,22 @@ This document outlines the concrete steps for implementing the features describe
 3.  **Admin UI:** Created a new `/ui/admin` page with a tabbed interface to trigger system actions (enrichment, orchestration) and monitor history (pending, recent, failed items).
 4.  **Scalability:** Replaced the content source dropdown with a scalable, searchable page.
 5.  **Code Quality:** Performed significant refactoring to centralize common logic (auditing, UI utils) and enforce consistent dependency injection patterns.
+
+
+---
+
+## v0.6.2: Orchestration Hardening & Reliability
+
+**Goal:** Increase the robustness and reliability of the core orchestration and briefing generation processes. This version focuses on bug fixing, handling edge cases, and proactively addressing potential performance bottlenecks.
+**Status:** ✅ Completed
+
+### Key Tasks & Implementation Steps:
+1.  **Orchestration Robustness:** Implement logic to re-process items with `RETRY_LATER` status and handle transient errors during briefing generation.
+2.  **Briefing Flexibility:** Decouple briefing generation from content fetching to allow creating briefings from existing summaries (e.g., for new topics).
+3.  **GenAI Pool Analysis (Spike):** Conduct a load-test analysis of the `GenAiPool` to understand its behavior under concurrent load and prevent future quota issues.
+4.  **Test Suite Improvement:** Implement a `BaseUITest` class to standardize test setup. *(Failed - Moved to Backlog for further analysis)*.
+5.  **Enhanced User Features:** Add the ability to generate briefings for custom date ranges. *(Deferred)*.
+6.  **API Stability:** Implement rate limiting for external transcription APIs. *(Deferred)*.
 
 
 ---

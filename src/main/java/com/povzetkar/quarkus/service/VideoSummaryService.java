@@ -12,59 +12,68 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+
 @ApplicationScoped
 public class VideoSummaryService {
     private static final Logger logger = LoggerFactory.getLogger(VideoSummaryService.class);
 
     private final GenAiPool genAiPool;
     private final String flashModelName;
-    private final int maxApiAttempts;
 
     public VideoSummaryService(GenAiPool genAiPool,
-                               @ConfigProperty(name = "gemini.model.name") String flashModelName,
-                               @ConfigProperty(name = "gemini.max.api.attempts") int maxApiAttempts) {
+                               @ConfigProperty(name = "gemini.model.name") String flashModelName) {
         this.genAiPool = genAiPool;
         this.flashModelName = flashModelName;
-        this.maxApiAttempts = maxApiAttempts;
+    }
+
+    /**
+     * Acquires a GenAiClient from the pool. This is a blocking operation.
+     *
+     * @return An available GenAiClient.
+     */
+    public GenAiClient acquireClient() {
+        return genAiPool.getGenAiClient();
     }
 
     /**
      * Creates a daily briefing by sending a pre-formatted block of summaries to the AI.
      *
+     * @param client       The pre-acquired client to use for the API call.
      * @param rawSummaries A single string containing all summaries, separated by '---'.
      * @param date         The date for the briefing title.
+     * @param topicName    The name of the topic for the briefing.
      * @return The AI-generated briefing as a Markdown string.
      */
-    public String createBriefingFromSummaries(String rawSummaries, String date) {
+    public String createBriefingFromSummaries(GenAiClient client, String rawSummaries, String date, String topicName) {
         String finalPrompt = Prompts.SUMMARIES_SUMMARY_PROMPT.formatted(date, rawSummaries);
-
         Content content = Content.fromParts(Part.fromText(finalPrompt));
-
-        return generateContentWithRetry(content, "daily briefing");
+        return generateContent(client, content, "daily briefing for topic '" + topicName + "' on " + date);
     }
 
     /**
-     * Calls the Gemini API to generate content, with built-in retry logic for rate-limiting errors.
+     * Calls the Gemini API to generate content using a provided client.
+     * This method does NOT implement retry logic. It is the caller's responsibility to handle failures.
      *
-     * @param content   The content to send to the model.
+     * @param client          The pre-acquired client to use for the API call.
+     * @param content         The content to send to the model.
      * @param callDescription A short description of the call for logging purposes.
      * @return The cleaned, string response from the API.
-     * @throws ApiException if a non-retriable error occurs or retries are exhausted.
+     * @throws ApiException if an error occurs.
      */
-    public String generateContentWithRetry(Content content, String callDescription) {
+    public String generateContent(GenAiClient client, Content content, String callDescription) {
         long startTime = System.nanoTime();
+        logger.info("Starting API call for: {}", callDescription);
 
-        for (int attempt = 1; attempt <= maxApiAttempts; attempt++) {
-            try {
-                GenAiClient client = genAiPool.getGenAiClient();
-                GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
-                logApiCallDuration(startTime, callDescription);
-                return cleanAiResponse(response.text());
-            } catch (ApiException e) {
-                handleApiError(e, attempt);
-            }
+        try {
+            logger.info("Token count:{}", client.getModels().countTokens(flashModelName, Collections.singletonList(content), null).totalTokens().orElse(0));
+            GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
+            logApiCallDuration(startTime, callDescription);
+            return cleanAiResponse(response.text());
+        } catch (ApiException e) {
+            logApiCallFailure(startTime, callDescription, e);
+            throw e;
         }
-        return null;
     }
 
     /**
@@ -88,27 +97,6 @@ public class VideoSummaryService {
         return cleanedText;
     }
 
-
-    /**
-     * Handles exceptions from the Gemini API call, deciding whether to retry or rethrow.
-     */
-    private void handleApiError(ApiException e, int attempt) {
-        if (isRetriable(e) && attempt < maxApiAttempts) {
-            logger.warn("API call failed with retriable error on attempt {}: {}.", attempt, e.getMessage());
-        } else {
-            logger.error("API call failed on attempt {} and will not be retried.", attempt);
-            throw e;
-        }
-    }
-
-    /**
-     * Checks if a ApiException is due to a retriable error like rate limiting (429), server overload (503)
-     *  or an internal error (500).
-     */
-    private boolean isRetriable(ApiException e) {
-        return e.code() == 429 || e.code() == 503 || e.code() == 500;
-    }
-
     /**
      * Logs the duration of a successful API call.
      */
@@ -116,7 +104,16 @@ public class VideoSummaryService {
         if (logger.isInfoEnabled()) {
             long endTime = System.nanoTime();
             double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-            logger.info(String.format("API call for %s finished in %.2f seconds.", callDescription, durationSeconds));
+            logger.info(String.format("API call for %s finished successfully in %.2f seconds.", callDescription, durationSeconds));
         }
+    }
+
+    /**
+     * Logs the duration and reason of a failed API call.
+     */
+    private void logApiCallFailure(long startTime, String callDescription, ApiException e) {
+        long endTime = System.nanoTime();
+        double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+        logger.error("API call for {} failed after {} seconds. Error code: {}. Message: {}", callDescription, durationSeconds, e.code(), e.getMessage());
     }
 }

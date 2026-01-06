@@ -1,26 +1,37 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
+import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.OrchestrationLock;
+import com.povzetkar.quarkus.model.ProcessingStatus;
+import com.povzetkar.quarkus.model.SourceTypeEnum;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
-import io.quarkus.panache.mock.PanacheMock;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -36,19 +47,21 @@ class OrchestrationManagerTest {
     TopicProcessor topicProcessor;
 
     @InjectMock
-    BriefingService briefingService;
+    VideoSummaryService videoSummaryService;
 
     @InjectMock
     ManagedExecutor managedExecutor;
 
-    private User testUser;
-    private Topic testTopic;
+    @InjectMock
+    JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
 
     @BeforeEach
+    @Transactional
     void setUp() {
-        Mockito.reset(orchestrationLockService, topicProcessor, briefingService, managedExecutor);
-        PanacheMock.mock(User.class);
-        PanacheMock.mock(Topic.class);
+        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService, justInTimeSummarizationScheduler);
+        
+        // Clean up database before each test to ensure isolation
+        tearDown();
 
         // Mock the executor to run tasks immediately on the same thread for runAsync
         doAnswer(invocation -> {
@@ -57,130 +70,306 @@ class OrchestrationManagerTest {
             return CompletableFuture.completedFuture(null);
         }).when(managedExecutor).runAsync(any(Runnable.class));
 
-        testUser = new User();
-        testUser.id = 1L;
-        testUser.name = "Test User";
-        testUser.active = true;
-
-        testTopic = new Topic();
-        testTopic.id = 1L;
-        testTopic.name = "Test Topic";
-        testTopic.user = testUser;
-
-        testUser.topics.add(testTopic);
+        // Add the missing mock that was causing NPEs
+        when(videoSummaryService.acquireClient()).thenReturn(mock(GenAiClient.class));
     }
 
-    private void setupCommonMocks(LocalDate orchestrationDate) {
-        Mockito.when(User.listAllActive()).thenReturn(Collections.singletonList(testUser));
-        Mockito.when(Topic.findByUsers(any(List.class))).thenReturn(Collections.singletonList(testTopic));
-        Mockito.when(Topic.listAll()).thenReturn(Collections.singletonList(testTopic));
-        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
-        doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
-                .thenReturn(Uni.createFrom().voidItem());
-        when(briefingService.generateBriefing(any(Topic.class), any(LocalDate.class))).thenReturn(null);
+    @AfterEach
+    @Transactional
+    void tearDown() {
+        Briefing.deleteAll();
+        Summary.deleteAll();
+        ContentItem.deleteAll();
+        Topic.deleteAll();
+        ContentSource.deleteAll();
+        User.deleteAll();
+        OrchestrationLock.deleteAll();
+    }
+
+    private User setupUser() {
+        User user = new User();
+        user.username = "test_user";
+        user.name = "Test User";
+        user.active = true;
+        return user;
+    }
+
+    private Topic setupTopic(User user) {
+        Topic topic = new Topic();
+        topic.name = "Test Topic";
+        topic.user = user;
+        return topic;
+    }
+
+    private ContentSource setupContentSource() {
+        ContentSource contentSource = new ContentSource();
+        contentSource.sourceIdentifier = "test_source";
+        contentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+        contentSource.name = "Test Channel";
+        return contentSource;
     }
 
     @Test
+    @Transactional
     void testRunOrchestrationScheduled() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        setupCommonMocks(expectedDate);
+        User user = setupUser();
+        user.persist();
+        Topic topic = setupTopic(user);
+        topic.persist();
+        ContentSource contentSource = setupContentSource();
+        contentSource.persist();
+        topic.contentSources.add(contentSource);
+        topic.persist();
+        
+        // Mock external service calls
+        doNothing().when(orchestrationLockService).acquireLock(expectedDate);
+        doNothing().when(orchestrationLockService).releaseLock(expectedDate);
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // When
         orchestrationManager.runOrchestrationScheduled().await().indefinitely();
 
         // Then
-        PanacheMock.verify(User.class, times(1)).listAllActive();
-        PanacheMock.verify(Topic.class, times(1)).findByUsers(eq(Collections.singletonList(testUser)));
+        // Verify real database interactions
+        assertEquals(0, Briefing.count()); // No briefing should be generated by this scheduled task
+        
+        // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
-        verify(topicProcessor, times(1)).processTopicUni(testTopic, expectedDate);
+        verify(topicProcessor, times(1)).processTopicUni(topic, expectedDate);
         verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
-        // Briefing generation is a separate scheduled task, so it should not be called here
-        verify(briefingService, never()).generateBriefing(any(Topic.class), any(LocalDate.class));
     }
 
     @Test
-    void testRunBriefingGenerationScheduled() {
+    void testRunBriefingGenerationScheduled() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
-        setupCommonMocks(expectedDate);
+        
+        // Setup entities within a transaction
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+            topic.persist();
+
+            ContentItem contentItem = new ContentItem();
+            contentItem.sourceUrl = "http://example.com/1";
+            contentItem.rawContent = "raw content";
+            contentItem.title = "Test Content Item Title";
+            contentItem.publishedAt = Instant.now();
+            contentItem.contentSource = contentSource;
+            contentItem.processingStatus = ProcessingStatus.COMPLETED;
+            contentItem.persist();
+
+            Summary summary = new Summary("Test Summary", contentItem, expectedDate);
+            summary.persist();
+        });
+
+        // Mock VideoSummaryService for DefaultBriefingGenerator
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+                .thenReturn("Generated Meta-summary");
 
         // When
         orchestrationManager.runBriefingGenerationScheduled().await().indefinitely();
 
         // Then
-        PanacheMock.verify(Topic.class, times(1)).findByUsers(any(List.class));
-        verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
+        // Verify real database interactions
+        assertEquals(1, Briefing.count());
+        Briefing createdBriefing = (Briefing) Briefing.listAll().getFirst();
+        assertEquals(expectedDate, createdBriefing.briefingDate);
+        assertEquals(1, createdBriefing.summaries.size());
+        Summary persistedSummary = (Summary) Summary.listAll().getFirst();
+        assertEquals(persistedSummary.id, createdBriefing.summaries.iterator().next().id);
     }
 
     @Test
-    void testRunOrchestrationManually_defaultCurrentDate() {
+    void testRunOrchestrationManually_defaultCurrentDate() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
-        setupCommonMocks(expectedDate);
+        
+        // Setup entities within a transaction
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+            topic.persist();
+
+            ContentItem contentItem = new ContentItem();
+            contentItem.sourceUrl = "http://example.com/1";
+            contentItem.rawContent = "raw content";
+            contentItem.title = "Test Content Item Title";
+            contentItem.publishedAt = Instant.now();
+            contentItem.contentSource = contentSource;
+            contentItem.processingStatus = ProcessingStatus.COMPLETED;
+            contentItem.persist();
+
+            Summary summary = new Summary("Test Summary", contentItem, expectedDate);
+            summary.persist();
+        });
+
+        // Mock external service calls
+        doNothing().when(orchestrationLockService).acquireLock(expectedDate);
+        doNothing().when(orchestrationLockService).releaseLock(expectedDate);
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
+
+        // Mock VideoSummaryService for DefaultBriefingGenerator
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+                .thenReturn("Generated Meta-summary");
 
         // When
         orchestrationManager.runOrchestrationManually(null, null).await().indefinitely();
 
         // Then
-        PanacheMock.verify(User.class, times(2)).listAllActive();
-        PanacheMock.verify(Topic.class, times(2)).findByUsers(eq(Collections.singletonList(testUser)));
+        // Verify real database interactions
+        assertEquals(1, Briefing.count());
+        Briefing createdBriefing = (Briefing) Briefing.listAll().getFirst();
+        assertEquals(expectedDate, createdBriefing.briefingDate);
+        assertEquals(1, createdBriefing.summaries.size());
+        Summary persistedSummary = (Summary) Summary.listAll().getFirst();
+        assertEquals(persistedSummary.id, createdBriefing.summaries.iterator().next().id);
+
+        // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
-        verify(topicProcessor, times(1)).processTopicUni(testTopic, expectedDate);
+        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(expectedDate));
         verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
-        verify(briefingService, times(1)).generateBriefing(testTopic, expectedDate);
     }
 
     @Test
-    void testRunOrchestrationManually_singlePastDate() {
+    void testRunOrchestrationManually_singlePastDate() { // Removed @Transactional
         // Given
         LocalDate pastDate = LocalDate.now().minusDays(5);
-        setupCommonMocks(pastDate);
+        
+        // Setup entities within a transaction
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+            topic.persist();
+
+            ContentItem contentItem = new ContentItem();
+            contentItem.sourceUrl = "http://example.com/1";
+            contentItem.rawContent = "raw content";
+            contentItem.title = "Test Content Item Title";
+            contentItem.publishedAt = Instant.now();
+            contentItem.contentSource = contentSource;
+            contentItem.processingStatus = ProcessingStatus.COMPLETED;
+            contentItem.persist();
+
+            Summary summary = new Summary("Test Summary", contentItem, pastDate);
+            summary.persist();
+        });
+
+        // Mock external service calls
+        doNothing().when(orchestrationLockService).acquireLock(pastDate);
+        doNothing().when(orchestrationLockService).releaseLock(pastDate);
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
+
+        // Mock VideoSummaryService for DefaultBriefingGenerator
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+                .thenReturn("Generated Meta-summary");
 
         // When
         orchestrationManager.runOrchestrationManually(pastDate, null).await().indefinitely();
 
         // Then
+        // Verify real database interactions
+        assertEquals(1, Briefing.count());
+        Briefing createdBriefing = (Briefing) Briefing.listAll().getFirst();
+        assertEquals(pastDate, createdBriefing.briefingDate);
+        assertEquals(1, createdBriefing.summaries.size());
+        Summary persistedSummary = (Summary) Summary.listAll().getFirst();
+        assertEquals(persistedSummary.id, createdBriefing.summaries.iterator().next().id);
+
+        // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(pastDate);
-        verify(topicProcessor, times(1)).processTopicUni(testTopic, pastDate);
+        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(pastDate));
         verify(orchestrationLockService, times(1)).releaseLock(pastDate);
-        verify(briefingService, times(1)).generateBriefing(testTopic, pastDate);
     }
 
     @Test
-    void testRunOrchestrationManually_dateRange() {
+    void testRunOrchestrationManually_dateRange() { // Removed @Transactional
         // Given
         LocalDate startDate = LocalDate.now().minusDays(3);
         LocalDate endDate = LocalDate.now().minusDays(1);
         long numOfDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        
+        // Setup entities within a transaction
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+            topic.persist();
 
-        // Mock static methods once per day in the range
-        Mockito.when(User.listAllActive()).thenReturn(Collections.singletonList(testUser));
-        Mockito.when(Topic.findByUsers(any(List.class))).thenReturn(Collections.singletonList(testTopic));
-        Mockito.when(Topic.listAll()).thenReturn(Collections.singletonList(testTopic));
+            // Create summaries for each day in the range
+            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                ContentItem contentItem = new ContentItem();
+                contentItem.sourceUrl = "http://example.com/" + date.getDayOfMonth();
+                contentItem.rawContent = "raw content " + date.getDayOfMonth();
+                contentItem.title = "Test Content Item Title " + date.getDayOfMonth();
+                contentItem.publishedAt = Instant.now();
+                contentItem.contentSource = contentSource;
+                contentItem.processingStatus = ProcessingStatus.COMPLETED;
+                contentItem.persist();
 
-        // Mock the dependencies that are called for each day
+                Summary summary = new Summary("Test Summary " + date.getDayOfMonth(), contentItem, date);
+                summary.persist();
+            }
+        });
+
+        // Mock external service calls for each day in the range
         doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
         doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
         when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(briefingService.generateBriefing(any(Topic.class), any(LocalDate.class))).thenReturn(null);
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
+
+        // Mock VideoSummaryService for DefaultBriefingGenerator
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+                .thenReturn("Generated Meta-summary");
 
         // When
         orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely();
 
         // Then
-        // Verify static methods are called once per day in the range
-        PanacheMock.verify(User.class, times((int) numOfDays*2)).listAllActive();
-        PanacheMock.verify(Topic.class, times((int) numOfDays*2)).findByUsers(eq(Collections.singletonList(testUser)));
-        PanacheMock.verify(Topic.class, times((int) numOfDays*2)).findByUsers(any(List.class));
+        // Verify real database interactions
+        assertEquals(numOfDays, Briefing.count());
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            Briefing briefing = Briefing.findByTopicAndDate((Topic) Topic.listAll().getFirst(), date).orElseThrow();
+            assertEquals(date, briefing.briefingDate);
+            assertEquals(1, briefing.summaries.size());
+        }
 
-        // Verify acquireLock, processTopicUni, releaseLock are called for each day
+        // Verify external service calls
         verify(orchestrationLockService, times((int) numOfDays)).acquireLock(any(LocalDate.class));
-        verify(topicProcessor, times((int) numOfDays)).processTopicUni(eq(testTopic), any(LocalDate.class));
+        verify(topicProcessor, times((int) numOfDays)).processTopicUni(any(Topic.class), any(LocalDate.class));
         verify(orchestrationLockService, times((int) numOfDays)).releaseLock(any(LocalDate.class));
-        verify(briefingService, times((int) numOfDays)).generateBriefing(eq(testTopic), any(LocalDate.class));
     }
 
     @Test
@@ -203,9 +392,20 @@ class OrchestrationManagerTest {
     }
 
     @Test
+    @Transactional
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
+        User user = setupUser();
+        user.persist();
+        Topic topic = setupTopic(user);
+        topic.persist();
+        ContentSource contentSource = setupContentSource();
+        contentSource.persist(); // Persist contentSource in the main transaction
+        contentSource.flush(); // Ensure contentSource is flushed
+        topic.contentSources.add(contentSource);
+        topic.persist();
+
         doThrow(new OrchestrationLockService.OrchestrationLockException("Lock already held"))
                 .when(orchestrationLockService).acquireLock(orchestrationDate);
 
@@ -213,9 +413,87 @@ class OrchestrationManagerTest {
         orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
 
         // Then
+        // Verify real database interactions
+        assertEquals(0, Briefing.count()); // No briefing should be generated
+
+        // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(orchestrationDate);
         verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
         verify(orchestrationLockService, never()).releaseLock(orchestrationDate);
-        verify(briefingService, never()).generateBriefing(any(Topic.class), any(LocalDate.class));
+    }
+
+    @Test
+    @Transactional
+    void testRunOrchestration_ReprocessesRetryLaterItems() {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+
+        // Setup all test data within a single new transaction to ensure it's committed and visible
+        // to the transactions started by the application code under test.
+        final ContentItem retryItem = QuarkusTransaction.requiringNew().call(() -> {
+            User user = setupUser();
+            user.persist();
+
+            Topic topic = setupTopic(user);
+            topic.persist();
+
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+
+            topic.contentSources.add(contentSource);
+
+            ContentItem item = new ContentItem();
+            item.sourceUrl = "http://example.com/retry";
+            item.rawContent = "raw content for retry";
+            item.title = "Retry Item Title";
+            item.publishedAt = Instant.now();
+            item.contentSource = contentSource;
+            item.processingStatus = ProcessingStatus.RETRY_LATER;
+            item.persist();
+            return item;
+        });
+
+        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
+        doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
+
+        // Mock topicProcessor.processTopicUni to return a completed Uni
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        // Mock the scheduler to simulate successful reprocessing
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenAnswer(invocation -> {
+                    List<ContentItem> items = invocation.getArgument(0);
+                    LocalDate date = invocation.getArgument(1);
+                    QuarkusTransaction.requiringNew().run(() -> {
+                        for (ContentItem item : items) {
+                            ContentItem managedItem = ContentItem.findById(item.id);
+                            if (managedItem != null) {
+                                ContentItem.updateProcessingStatus(managedItem.id, ProcessingStatus.COMPLETED);
+                                Summary summary = new Summary("Generated Summary for " + managedItem.title, managedItem, date);
+                                summary.persist();
+                            }
+                        }
+                    });
+                    return Uni.createFrom().voidItem();
+                });
+
+        // When
+        orchestrationManager.runOrchestrationScheduled().await().indefinitely();
+
+        // Then
+        // Clear the persistence context to ensure we load the latest state from the database
+        ContentItem.getEntityManager().clear();
+
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(retryItem), orchestrationDate);
+
+        // Verify ContentItem status
+        ContentItem updatedRetryItem = ContentItem.findById(retryItem.id);
+        assertEquals(ProcessingStatus.COMPLETED, updatedRetryItem.processingStatus);
+
+        // Verify Summary creation
+        List<Summary> summaries = Summary.list("contentItem", updatedRetryItem);
+        assertEquals(1, summaries.size());
+        assertEquals("Generated Summary for " + updatedRetryItem.title, summaries.getFirst().summaryText);
     }
 }

@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.test.junit.QuarkusTest;
@@ -13,6 +14,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -21,12 +23,14 @@ class SummarizationWorkerTest {
     private Instance<SummarizationStrategy> mockInstance;
     private SummarizationWorker worker;
     private LocalDate mockOrchestrationDate;
+    private GenAiClient mockClient;
 
     @BeforeEach
     void setUp() {
         mockInstance = Mockito.mock(Instance.class);
         worker = new SummarizationWorker(mockInstance);
         mockOrchestrationDate = LocalDate.now();
+        mockClient = mock(GenAiClient.class);
     }
 
     @Test
@@ -37,14 +41,14 @@ class SummarizationWorkerTest {
 
         when(mockInstance.stream()).thenReturn(Stream.of(mockStrategy));
         when(mockStrategy.supports(mockItem)).thenReturn(true);
-        when(mockStrategy.summarize(mockItem, mockOrchestrationDate)).thenReturn(true);
+        when(mockStrategy.summarize(any(GenAiClient.class), eq(mockItem), eq(mockOrchestrationDate))).thenReturn(true);
 
         // When
-        boolean result = worker.summarize(mockItem, mockOrchestrationDate);
+        boolean result = worker.summarize(mockClient, mockItem, mockOrchestrationDate);
 
         // Then
         assertTrue(result);
-        verify(mockStrategy).summarize(mockItem, mockOrchestrationDate);
+        verify(mockStrategy).summarize(mockClient, mockItem, mockOrchestrationDate);
     }
 
     @Test
@@ -55,6 +59,6 @@ class SummarizationWorkerTest {
         when(mockInstance.stream()).thenReturn(Stream.empty());
 
         // When / Then
-        assertThrows(IllegalStateException.class, () -> worker.summarize(mockItem, mockOrchestrationDate));
+        assertThrows(IllegalStateException.class, () -> worker.summarize(mockClient, mockItem, mockOrchestrationDate));
     }
 }

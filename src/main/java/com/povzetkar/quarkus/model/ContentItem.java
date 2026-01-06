@@ -5,6 +5,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.Objects; // Import for Objects.equals and Objects.hash
 
 @Entity
 @Table(name = "content_items")
@@ -38,5 +39,18 @@ public class ContentItem extends BaseAuditableEntity {
 
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {
         update("processingStatus = ?1 where id = ?2", status, id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ContentItem that = (ContentItem) o;
+        return Objects.equals(sourceUrl, that.sourceUrl);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceUrl);
     }
 }
