@@ -46,13 +46,11 @@ public class ContentItem extends BaseAuditableEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ContentItem that = (ContentItem) o;
-        // Use id for equality check, especially important for JPA entities
-        return id != null && Objects.equals(id, that.id);
+        return Objects.equals(sourceUrl, that.sourceUrl);
     }
 
     @Override
     public int hashCode() {
-        // Use id for hashCode, consistent with equals
-        return Objects.hash(id);
+        return Objects.hash(sourceUrl);
     }
 }
