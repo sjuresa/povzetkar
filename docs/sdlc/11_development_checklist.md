@@ -42,7 +42,7 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **2.5. User Verifies Tests:** After code modifications, the user runs the test suite and confirms that all tests are passing.
     - [ ] **Code Review Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
     - [ ] **Code Review Check:** Ensure JPA entities have `equals()` and `hashCode()` based on the primary key.
-    - [ ] **Code Review Check:** Verify that integration tests do not mock internal services/entities unnecessarily.
+    - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
     - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
 - [ ] **2.7. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.

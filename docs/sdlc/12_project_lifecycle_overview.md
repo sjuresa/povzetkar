@@ -39,5 +39,5 @@ This document outlines the high-level lifecycle of the Povzetkar project. It des
 - **Artifacts:**
     - Review and update `docs/overview/roadmap.md`.
     - Review and potentially update `docs/sdlc/07_development_methodology_comparison.md` and `AGENT.md`.
-    - Assess key documentation (`DEVELOPMENT_ANALYSIS.md`, `06_development_process.md`, etc.) for staleness to ensure the post-version update process is effective.
+    - Assess key documentation for staleness, guided by the prompts in the "Post-Version Review" phase of `11_development_checklist.md`, to ensure the post-version update process is effective.
 - **Frequency:** Periodically (e.g., quarterly, after major milestones).
