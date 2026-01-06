@@ -1,7 +1,12 @@
 # Test Plan - Project Povzetkar
 
-**Version:** 1.0
-**Date:** August 15, 2025
+**Version:** 1.1
+
+## Revision History
+| Version | Date             | Author       | Changes                                                                       |
+|---------|------------------|--------------|-------------------------------------------------------------------------------|
+| 1.1     | January 6, 2026  | Povzetkar AI | Refined integration testing strategy to discourage internal mocking.          |
+| 1.0     | August 15, 2025  | Povzetkar AI | Initial version.                                                              |
 
 ## 1. Introduction
 
@@ -27,6 +32,7 @@ Testing will cover all major components of the system:
 ### 3.2. Integration Testing
 - **Objective:** To verify the interaction between different components of the system.
 - **Tools:** Quarkus Test Framework (`@QuarkusTest`), Testcontainers (for PostgreSQL and RabbitMQ).
+- **Strategy:** Avoid mocking internal services or Panache entities. Tests should verify the state of the database as the observable outcome. Mock only true external boundaries (e.g., YouTube API, AI Service).
 - **Scope:**
     - **API Tests:** Testing REST endpoints by making real HTTP requests to the running application and asserting the responses.
     - **Persistence Tests:** Verifying that data is correctly written to and read from a real (containerized) PostgreSQL database.

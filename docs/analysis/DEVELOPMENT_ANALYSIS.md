@@ -40,3 +40,7 @@ This document analyzes how well the key aspects of the development process itsel
 ## 8. Future Opportunities
 -   **Monitoring & Logging:** A formal strategy for logging in a production environment will be needed.
 -   **Security:** A more detailed security plan will be required (secrets management, authentication, authorization, etc.).
+
+## 9. Testing Documentation
+-   **Coverage:** Poor.
+-   **Description:** While the `Test Plan` exists, specific patterns for transactional integration testing and mocking in Quarkus are not well documented, leading to development friction. A comprehensive "Testing Guide" is required (Action Item from v0.6.2).

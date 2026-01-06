@@ -132,6 +132,13 @@ Before any plan to modify or remove existing code is presented for approval, a m
 
 For any change that introduces new, publicly accessible behavior (e.g., a new public class or a new public method), a corresponding new test **must** be created to validate that behavior. The plan is incomplete until it explicitly accounts for this new test.
 
+### The Quality Assurance Mandate
+
+To prevent recurring defects identified in retrospectives, every plan and code change must explicitly verify:
+1.  **Reactive Purity:** No blocking calls (e.g., `Thread.sleep`, JDBC without reactive drivers) inside reactive pipelines (`Uni`, `Multi`).
+2.  **JPA Identity:** All JPA entities must implement `equals()` and `hashCode()` based on their primary key (or business key), never the default object identity.
+3.  **Integration Test Integrity:** Integration tests (`@QuarkusTest`) must not mock internal services or Panache entities; they must verify side effects (DB state) or mock only external boundaries.
+
 ### Code Refactoring Checklist
 
 To prevent incomplete analysis, any plan involving code modification or refactoring is incomplete until it explicitly addresses the following three areas.

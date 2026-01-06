@@ -1,10 +1,11 @@
 # Development Methodology Comparison
 
-**Version:** 1.3
+**Version:** 1.4
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                |
 |---------|--------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| 1.4     | January 6, 2026    | Povzetkar AI | Added "Codified Testing Patterns" to proposed improvements based on v0.6.2 retrospective.                                              |
 | 1.3     | November 1, 2025   | Povzetkar AI | Integrated adopted practices (Retrospectives, Value Stream Focus) into the core methodology. Section 7 now only contains proposed improvements. |
 | 1.2     | September 9, 2025  | Povzetkar AI | Refined Section 7 to clarify the adoption status of new practices.                                                                     |
 | 1.1     | September 1, 2025  | Povzetkar AI | Added section on adopted practices for improvement.                                                                                    |
@@ -113,3 +114,9 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 
 *   **What it is:** Integrating an automated tool (like Snyk or GitHub's Dependabot) into the CI/CD pipeline to continuously scan project dependencies for known security vulnerabilities.
 *   **Proposed Implementation:** As part of our "Production Hardening" phase (v0.9), we would configure Dependabot to automatically create Pull Requests to update vulnerable dependencies. This moves security from a manual check to a proactive, automated process.
+
+### 7.3. Codified Testing Patterns & Guide
+
+*   **What it is:** A centralized repository of approved and verified testing patterns for the specific technology stack (Quarkus, Panache, Mutiny).
+*   **Context:** The v0.6.2 retrospective highlighted that "Strict TDD" causes significant friction when developers lack specific knowledge of framework integration (e.g., Quarkus transactions).
+*   **Proposed Implementation:** Create a `docs/guides/testing.md` artifact. Before enforcing TDD on complex new features, a "Spike" task must first validate and document the testing pattern in this guide.
