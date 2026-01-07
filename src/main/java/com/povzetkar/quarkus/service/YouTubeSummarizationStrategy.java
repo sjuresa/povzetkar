@@ -17,12 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @ApplicationScoped
 @Priority(10)
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
+    public static final Set<Integer> RETRIABLE_API_ERROR_CODES = Set.of(429, 500, 503);
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;
@@ -80,7 +82,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 return false;
             }
         } catch (ApiException e) {
-            if (java.util.Set.of(429, 500, 503).contains(e.code())) {
+            if (RETRIABLE_API_ERROR_CODES.contains(e.code())) {
                 logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
                 updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
             } else {
