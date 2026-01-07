@@ -122,7 +122,7 @@ class YouTubeSummarizationStrategyTest {
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
-            PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.FAILED);
+            PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.RETRY_LATER);
         }
     }
 
