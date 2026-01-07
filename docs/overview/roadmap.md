@@ -89,7 +89,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.7: Operational Excellence & Technical Modernization
 
-**Goal:** Mature the platform from a "working prototype" to a robust, observable, and manageable system. This version focuses on operational tools (Topic management, Logging), recovering from failure modes (PENDING state), and updating to **Quarkus 3.27 LTS**.
+**Goal:** Mature the platform from a "working prototype" to a robust, observable, and manageable system. This version focuses on operational tools (Topic management, Logging), recovering from failure modes (PENDING state), and updating to **Quarkus 3.27.x LTS**.
 
 ### Key Tasks & Implementation Steps:
 1.  **Technical Update:** Update the project to Quarkus 3.27 LTS.
