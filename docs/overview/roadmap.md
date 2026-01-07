@@ -92,7 +92,7 @@ This document outlines the concrete steps for implementing the features describe
 **Goal:** Mature the platform from a "working prototype" to a robust, observable, and manageable system. This version focuses on operational tools (Topic management, Logging), recovering from failure modes (PENDING state), and updating to **Quarkus 3.27.x LTS**.
 
 ### Key Tasks & Implementation Steps:
-1.  **Technical Update:** Update the project to Quarkus 3.27 LTS.
+1.  **Technical Update:** Update the project to Quarkus 3.27.x LTS.
 2.  **Orchestration Resilience:** Handle `PENDING` items left from crashes and improve logging with metadata (duration, URL).
 3.  **Topic Management:** Add ability to enable/disable topics and trigger orchestration for specific topics.
 4.  **Admin UI Improvements:** Enhance history table with duration, dates, and direct links.
