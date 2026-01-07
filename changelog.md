@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Summary
 
-Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.30.6 LTS. This ensures the platform is built on a secure, stable, and modern foundation.
+Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.27.1 LTS. This ensures the platform is built on a secure, stable, and modern foundation.
 
 ### Changed
-- **Framework Upgrade:** Updated Quarkus from 3.15.6 to 3.30.6 LTS.
+- **Framework Upgrade:** Updated Quarkus from 3.15.6 to 3.27.1 LTS.
 - **Dependencies:** Migrated `quarkus-resteasy-reactive-jackson` to `quarkus-rest-jackson` and aligned JUnit/Mockito versions with the Quarkus BOM.
 
 ## [0.6.2] - 2026-01-04
