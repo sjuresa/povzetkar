@@ -1,10 +1,11 @@
 # Development Process Checklist
 
-**Version:** 1.1
+**Version:** 1.2
 
 ## Revision History
 | Version | Date             | Author       | Changes                                                                       |
 |---------|------------------|--------------|-------------------------------------------------------------------------------|
+| 1.2     | January 7, 2026  | Povzetkar AI | Added initialization of retrospective draft to Phase 1.                       |
 | 1.1     | January 6, 2026  | Povzetkar AI | Updated checklist based on v0.6.2 retrospective: added code review steps, post-version documentation updates, and specific prompts. |
 | 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                              |
 
@@ -27,6 +28,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in the v0.6 retrospective.
     - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined to explicitly outline the test scenarios.
 - [ ] **1.7. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
+- [ ] **1.8. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
 
 ---
 
