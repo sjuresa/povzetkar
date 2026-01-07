@@ -24,7 +24,7 @@ import java.util.Set;
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
-    public static final Set<Integer> RETRIABLE_API_ERROR_CODES = Set.of(429, 500, 503);
+    private static final Set<Integer> RETRIABLE_API_ERROR_CODES = Set.of(429, 500, 503);
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;

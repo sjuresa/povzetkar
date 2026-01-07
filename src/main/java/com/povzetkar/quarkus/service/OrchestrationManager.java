@@ -121,28 +121,28 @@ public class OrchestrationManager {
 
     private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate) {
         logger.info("Checking for content items to retry or pending from previous runs for date: {}.", orchestrationDate);
-        return processRetryPage(orchestrationDate, 0);
+        return processPendingAndRetryItemsByPage(orchestrationDate, 0);
     }
 
-    private Uni<Void> processRetryPage(LocalDate orchestrationDate, int pageIndex) {
+    private Uni<Void> processPendingAndRetryItemsByPage(LocalDate orchestrationDate, int pageIndex) {
         final int BATCH_SIZE = 100;
         return Uni.createFrom().item(() -> ContentItem.<ContentItem>find("processingStatus in ?1 and publishedAt >= ?2 and publishedAt < ?3",
                         java.util.Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
                         orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
                         orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
                 .page(pageIndex, BATCH_SIZE)
-                .list()).chain(itemsToRetry -> {
-            if (itemsToRetry.isEmpty()) {
+                .list()).chain(itemsToProcess -> {
+            if (itemsToProcess.isEmpty()) {
                 if (pageIndex == 0) {
                     logger.info("No items to retry or pending for date: {}.", orchestrationDate);
                 }
                 return Uni.createFrom().voidItem();
             }
 
-            logger.info("Found {} items to retry/pending on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
+            logger.info("Found {} items to retry/pending on page {} for date {}. Starting re-processing.", itemsToProcess.size(), pageIndex, orchestrationDate);
 
-            return justInTimeSummarizationScheduler.schedule(itemsToRetry, orchestrationDate)
-                    .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1));
+            return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate)
+                    .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, pageIndex + 1));
         });
     }
 
