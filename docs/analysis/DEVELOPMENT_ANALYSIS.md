@@ -17,6 +17,7 @@ This document analyzes how well the key aspects of the development process itsel
 -   **Coverage:** Excellent.
 -   **Documents:** [`docs/overview/specification.md`](../overview/specification.md), [`docs/overview/roadmap.md`](../overview/roadmap.md)
 -   **Description:** The architecture (Quarkus) and technologies are clearly defined, and the `roadmap.md` translates this into a concrete, executable plan for setting up the "architectural skeleton".
+-   **Current Framework Version:** Quarkus 3.30.6
 
 ## 4. Database Setup
 -   **Coverage:** Excellent.

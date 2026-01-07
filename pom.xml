@@ -20,7 +20,6 @@
         <google.youtube.version>v3-rev20250714-2.0.0</google.youtube.version>
         <slf4j.version>2.0.13</slf4j.version>
         <logback.version>1.5.18</logback.version>
-        <junit.version>5.10.2</junit.version>
         <mockito.version>5.18.0</mockito.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
         <byte-buddy.version>1.17.6</byte-buddy.version>
@@ -31,7 +30,7 @@
         <!-- Quarkus Specific Properties -->
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.15.6</quarkus.platform.version>
+        <quarkus.platform.version>3.30.6</quarkus.platform.version>
         <flexmark-all.version>0.64.8</flexmark-all.version>
 
         <!-- Centralized Plugin Versions -->
@@ -81,24 +80,6 @@
                 <version>${logback.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>${junit.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-params</artifactId>
-                <version>${junit.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
@@ -140,7 +121,7 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+            <artifactId>quarkus-rest-jackson</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -5,11 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-07
+
+### Summary
+
+Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.30.6 LTS. This ensures the platform is built on a secure, stable, and modern foundation.
+
+### Changed
+- **Framework Upgrade:** Updated Quarkus from 3.15.6 to 3.30.6 LTS.
+- **Dependencies:** Migrated `quarkus-resteasy-reactive-jackson` to `quarkus-rest-jackson` and aligned JUnit/Mockito versions with the Quarkus BOM.
+
 ## [0.6.2] - 2026-01-04
 
 ### Summary
 
-Version 0.6.2 focuses on **hardening the core orchestration engine**. It introduces a robust, idempotent briefing generation process, a just-in-time scheduling mechanism to prevent thread exhaustion, and improved handling of transient errors and rate limits. This release also addresses several concurrency race conditions and improves logging visibility, significantly increasing the system's reliability under load.
+Version 0.6.2 focuses on **hardening the core orchestration engine**. It introduces a robust, idempotent briefing generation process, a just-in-time scheduling mechanism to prevent thread exhaustion, and improved handling of transient errors and rate limits. This release also addresses several concurrency race conditions and improved logging visibility, significantly increasing the system's reliability under load.
 
 ### Added
 - **Orchestration Robustness:** Implemented retry logic for `ContentItem`s with `RETRY_LATER` status and improved lock handling to automatically recover from crashed runs.
@@ -265,4 +275,4 @@ This version marks a major architectural milestone by establishing the foundatio
 - Detailed logging configuration for runtime diagnostics.
 
 ### Documentation
-- Added prompt templates and resource files for authors, videos, and summaries.
+- Added prompt templates for resources files for authors, videos, and summaries.
