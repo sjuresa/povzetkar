@@ -127,23 +127,23 @@ public class OrchestrationManager {
     private Uni<Void> processRetryPage(LocalDate orchestrationDate, int pageIndex) {
         final int BATCH_SIZE = 100;
         return Uni.createFrom().item(() -> ContentItem.<ContentItem>find("processingStatus in ?1 and publishedAt >= ?2 and publishedAt < ?3",
-                                java.util.Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
-                                orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
-                                orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())                        .page(pageIndex, BATCH_SIZE)
-                        .list())
-                .chain(itemsToRetry -> {
-                    if (itemsToRetry.isEmpty()) {
-                        if (pageIndex == 0) {
-                            logger.info("No items to retry or pending for date: {}.", orchestrationDate);
-                        }
-                        return Uni.createFrom().voidItem();
-                    }
+                        java.util.Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
+                        orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                        orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
+                .page(pageIndex, BATCH_SIZE)
+                .list()).chain(itemsToRetry -> {
+            if (itemsToRetry.isEmpty()) {
+                if (pageIndex == 0) {
+                    logger.info("No items to retry or pending for date: {}.", orchestrationDate);
+                }
+                return Uni.createFrom().voidItem();
+            }
 
-                    logger.info("Found {} items to retry/pending on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
+            logger.info("Found {} items to retry/pending on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
 
-                    return justInTimeSummarizationScheduler.schedule(itemsToRetry, orchestrationDate)
-                            .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1));
-                });
+            return justInTimeSummarizationScheduler.schedule(itemsToRetry, orchestrationDate)
+                    .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1));
+        });
     }
 
     @Scheduled(cron = "{povzetkar.briefing.cron}")
