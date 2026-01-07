@@ -80,7 +80,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 return false;
             }
         } catch (ApiException e) {
-            if (e.code() == 429 || e.code() == 500 || e.code() == 503) {
+            if (java.util.Set.of(429, 500, 503).contains(e.code())) {
                 logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
                 updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
             } else {

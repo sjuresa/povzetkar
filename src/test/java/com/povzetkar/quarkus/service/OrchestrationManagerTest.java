@@ -20,6 +20,8 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
 import java.time.Instant;
@@ -422,89 +424,15 @@ class OrchestrationManagerTest {
         verify(orchestrationLockService, never()).releaseLock(orchestrationDate);
     }
 
-    @Test
     @Transactional
-    void testRunOrchestration_ReprocessesRetryLaterItems() {
-        // Given
-        LocalDate orchestrationDate = LocalDate.now();
-
-        // Setup all test data within a single new transaction to ensure it's committed and visible
-        // to the transactions started by the application code under test.
-        final ContentItem retryItem = QuarkusTransaction.requiringNew().call(() -> {
-            User user = setupUser();
-            user.persist();
-
-            Topic topic = setupTopic(user);
-            topic.persist();
-
-            ContentSource contentSource = setupContentSource();
-            contentSource.persist();
-
-            topic.contentSources.add(contentSource);
-
-            ContentItem item = new ContentItem();
-            item.sourceUrl = "http://example.com/retry";
-            item.rawContent = "raw content for retry";
-            item.title = "Retry Item Title";
-            item.publishedAt = Instant.now();
-            item.contentSource = contentSource;
-            item.processingStatus = ProcessingStatus.RETRY_LATER;
-            item.persist();
-            return item;
-        });
-
-        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
-        doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
-
-        // Mock topicProcessor.processTopicUni to return a completed Uni
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
-                .thenReturn(Uni.createFrom().voidItem());
-
-        // Mock the scheduler to simulate successful reprocessing
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
-                .thenAnswer(invocation -> {
-                    List<ContentItem> items = invocation.getArgument(0);
-                    LocalDate date = invocation.getArgument(1);
-                    QuarkusTransaction.requiringNew().run(() -> {
-                        for (ContentItem item : items) {
-                            ContentItem managedItem = ContentItem.findById(item.id);
-                            if (managedItem != null) {
-                                ContentItem.updateProcessingStatus(managedItem.id, ProcessingStatus.COMPLETED);
-                                Summary summary = new Summary("Generated Summary for " + managedItem.title, managedItem, date);
-                                summary.persist();
-                            }
-                        }
-                    });
-                    return Uni.createFrom().voidItem();
-                });
-
-        // When
-        orchestrationManager.runOrchestrationScheduled().await().indefinitely();
-
-        // Then
-        // Clear the persistence context to ensure we load the latest state from the database
-        ContentItem.getEntityManager().clear();
-
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(retryItem), orchestrationDate);
-
-        // Verify ContentItem status
-        ContentItem updatedRetryItem = ContentItem.findById(retryItem.id);
-        assertEquals(ProcessingStatus.COMPLETED, updatedRetryItem.processingStatus);
-
-        // Verify Summary creation
-        List<Summary> summaries = Summary.list("contentItem", updatedRetryItem);
-        assertEquals(1, summaries.size());
-        assertEquals("Generated Summary for " + updatedRetryItem.title, summaries.getFirst().summaryText);
-    }
-
-    @Test
-    @Transactional
-    void testOrchestrationFlow_PicksUpPendingItemsFromCrashedRun() {
+    @ParameterizedTest
+    @EnumSource(value = ProcessingStatus.class, names = {"RETRY_LATER", "PENDING"})
+    void testRunOrchestration_ReprocessesStuckItems(ProcessingStatus initialStatus) {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
 
         // Setup all test data within a single new transaction
-        final ContentItem pendingItem = QuarkusTransaction.requiringNew().call(() -> {
+        final ContentItem stuckItem = QuarkusTransaction.requiringNew().call(() -> {
             User user = setupUser();
             user.persist();
 
@@ -517,12 +445,12 @@ class OrchestrationManagerTest {
             topic.contentSources.add(contentSource);
 
             ContentItem item = new ContentItem();
-            item.sourceUrl = "http://example.com/pending";
-            item.rawContent = "raw content for pending";
-            item.title = "Pending Item Title";
+            item.sourceUrl = "http://example.com/" + initialStatus.name().toLowerCase();
+            item.rawContent = "raw content for " + initialStatus.name();
+            item.title = initialStatus.name() + " Item Title";
             item.publishedAt = Instant.now();
             item.contentSource = contentSource;
-            item.processingStatus = ProcessingStatus.PENDING; // Simulate stuck item
+            item.processingStatus = initialStatus; // Simulate stuck item
             item.persist();
             return item;
         });
@@ -559,16 +487,16 @@ class OrchestrationManagerTest {
         // Clear the persistence context to ensure we load the latest state from the database
         ContentItem.getEntityManager().clear();
 
-        // Verify that the scheduler was called with the pending item
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(pendingItem), orchestrationDate);
+        // Verify that the scheduler was called with the stuck item
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(stuckItem), orchestrationDate);
 
         // Verify ContentItem status
-        ContentItem updatedPendingItem = ContentItem.findById(pendingItem.id);
-        assertEquals(ProcessingStatus.COMPLETED, updatedPendingItem.processingStatus);
+        ContentItem updatedItem = ContentItem.findById(stuckItem.id);
+        assertEquals(ProcessingStatus.COMPLETED, updatedItem.processingStatus);
 
         // Verify Summary creation
-        List<Summary> summaries = Summary.list("contentItem", updatedPendingItem);
+        List<Summary> summaries = Summary.list("contentItem", updatedItem);
         assertEquals(1, summaries.size());
-        assertEquals("Generated Summary for " + updatedPendingItem.title, summaries.getFirst().summaryText);
+        assertEquals("Generated Summary for " + updatedItem.title, summaries.getFirst().summaryText);
     }
 }
