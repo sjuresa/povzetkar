@@ -275,4 +275,4 @@ This version marks a major architectural milestone by establishing the foundatio
 - Detailed logging configuration for runtime diagnostics.
 
 ### Documentation
-- Added prompt templates for resources files for authors, videos, and summaries.
+- Added prompt templates and resource files for authors, videos, and summaries.
