@@ -127,7 +127,7 @@ public class OrchestrationManager {
     private Uni<Void> processPendingAndRetryItemsByPage(LocalDate orchestrationDate, int pageIndex) {
         final int BATCH_SIZE = 100;
         return Uni.createFrom().item(() -> ContentItem.<ContentItem>find("processingStatus in ?1 and publishedAt >= ?2 and publishedAt < ?3",
-                        java.util.Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
+                        Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
                         orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
                         orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
                 .page(pageIndex, BATCH_SIZE)
