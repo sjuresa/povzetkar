@@ -54,7 +54,9 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         }
 
         try {
-            logger.info("Generating summary for video: {} (ID: {})", video.title, video.id);
+            if (logger.isInfoEnabled()) {
+                logger.info("Generating summary for video: {} (ID: {}, Duration: {}, URL: {})", video.title, video.id, video.formattedDuration(), video.sourceUrl);
+            }
             String callDescription = String.format("video summary for '%s' (ID: %d)", video.title, video.id);
             String summaryText = videoSummaryService.generateContent(client, content, callDescription);
             
@@ -78,8 +80,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 return false;
             }
         } catch (ApiException e) {
-            if (e.code() == 429) {
-                logger.warn("Rate limit exceeded (429) for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", video.title, video.id, e.getMessage());
+            if (e.code() == 429 || e.code() == 500 || e.code() == 503) {
+                logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
                 updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
             } else {
                 logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);

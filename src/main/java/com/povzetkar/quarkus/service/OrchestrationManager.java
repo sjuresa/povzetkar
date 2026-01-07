@@ -93,7 +93,7 @@ public class OrchestrationManager {
             return Uni.createFrom().voidItem(); // Early exit, no lock to release by this path
         }
 
-        return processRetryLaterItems(orchestrationDate)
+        return processPendingAndRetryItems(orchestrationDate)
                 .chain(() -> Uni.createFrom().deferred(() -> {
                     List<User> activeUsers = User.listAllActive();
                     if (activeUsers.isEmpty()) {
@@ -119,15 +119,16 @@ public class OrchestrationManager {
                 });
     }
 
-    private Uni<Void> processRetryLaterItems(LocalDate orchestrationDate) {
-        logger.info("Checking for content items to retry for date: {}.", orchestrationDate);
+    private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate) {
+        logger.info("Checking for content items to retry or pending from previous runs for date: {}.", orchestrationDate);
         return processRetryPage(orchestrationDate, 0);
     }
 
     private Uni<Void> processRetryPage(LocalDate orchestrationDate, int pageIndex) {
         final int BATCH_SIZE = 100;
-        return Uni.createFrom().item(() -> ContentItem.<ContentItem>find("processingStatus = ?1 and publishedAt >= ?2 and publishedAt < ?3",
+        return Uni.createFrom().item(() -> ContentItem.<ContentItem>find("processingStatus in (?1, ?2) and publishedAt >= ?3 and publishedAt < ?4",
                                 ProcessingStatus.RETRY_LATER,
+                                ProcessingStatus.PENDING,
                                 orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
                                 orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
                         .page(pageIndex, BATCH_SIZE)
@@ -135,12 +136,12 @@ public class OrchestrationManager {
                 .chain(itemsToRetry -> {
                     if (itemsToRetry.isEmpty()) {
                         if (pageIndex == 0) {
-                            logger.info("No items to retry for date: {}.", orchestrationDate);
+                            logger.info("No items to retry or pending for date: {}.", orchestrationDate);
                         }
                         return Uni.createFrom().voidItem();
                     }
 
-                    logger.info("Found {} items to retry on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
+                    logger.info("Found {} items to retry/pending on page {} for date {}. Starting re-processing.", itemsToRetry.size(), pageIndex, orchestrationDate);
 
                     return justInTimeSummarizationScheduler.schedule(itemsToRetry, orchestrationDate)
                             .chain(() -> processRetryPage(orchestrationDate, pageIndex + 1));
