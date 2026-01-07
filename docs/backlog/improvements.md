@@ -1,7 +1,5 @@
 # Improvement Backlog
 
-**Version:** 1.2
-
 This document serves as a backlog for non-critical improvements, ideas, and minor issues that are discovered during development.
 
 Items listed here are candidates for inclusion in future development cycles. Each item should be reviewed and prioritized during the planning phase of a new version.
@@ -12,7 +10,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### UI/UX
 
-*   **Admin Page UI Refinements:** Further refine the admin page UI, potentially by adding more detailed statistics, filtering/sorting options for the history tables, or a more sophisticated layout for actions.
 *   **Changelog/Roadmap in UI:** Add a new section to the UI to display the `CHANGELOG.md` and `docs/overview/roadmap.md` files, providing greater transparency to users.
 *   **Centralized Breadcrumb Management:** Explore a more automated or centralized way to manage breadcrumbs, potentially using annotations or a filter, to reduce boilerplate code in JAX-RS resources.
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
@@ -24,11 +21,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 *   **Centralized Date/Time Formatting Service:** Create a dedicated service for date/time formatting to avoid adding helper methods to every model class.
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
-*   **Spike: Define Canonical Pattern for Quarkus Transactional Testing:** The attempt to create a `BaseUITest` class (POV-78) failed due to a lack of clarity on the correct transactional pattern for tests that assert database changes made via an HTTP request. A dedicated spike is required to research, document, and establish a definitive guide on the idiomatic Quarkus approach to prevent future trial-and-error. This should cover:
-    - The difference between `@TestTransaction` and programmatic transaction control (e.g., `QuarkusTransaction.run()`, `QuarkusTransaction.requiringNew()`).
-    - Visibility rules between test transactions and application transactions, ensuring assertions in the test thread can see data committed by the application thread.
-    - A recommended pattern for setting up and tearing down test data to guarantee test isolation.
-    - The findings should be documented in a new `docs/analysis/transactional_test_patterns.md` file.
 *   **Refactor Blocking Code in Reactive Chains [Partially Complete]:** A significant portion of this was completed in v0.6.2 with the introduction of the `JustInTimeSummarizationScheduler`. A full code review should still be conducted to identify any other remaining instances of blocking code in reactive pipelines.
 *   **Create a Testing Guide:** Document best practices for Quarkus integration testing, including transactional patterns, mocking strategies for Panache entities vs. external services, and how to handle reactive code. This will help prevent the kind of trial-and-error debugging experienced during the v0.6.2 development cycle.
 *   **Improve Test Suite Resilience to Logging Changes:** The test suite proved brittle to changes in logging messages. Mocks that rely on specific string formats for `callDescription` should be updated to use `anyString()` to avoid test failures from minor logging improvements.

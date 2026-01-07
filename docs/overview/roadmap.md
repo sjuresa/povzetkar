@@ -1,16 +1,17 @@
 # Project Povzetkar: Development Roadmap
 
-**Version:** 1.5
+**Version:** 1.6
 
 ## Revision History
-| Version | Date               | Author       | Changes                                                                                                                                                            |
-|---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                               |
-| 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                   |
-| 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.              |
-| 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                 |
-| 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses. |
-| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the roadmap.                                                                                                                                    |
+| Version | Date               | Author       | Changes                                                                                                                                                                  |
+|---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.6     | January 7, 2026    | Povzetkar AI | Redefined v0.7 scope to "Operational Excellence & Technical Modernization" based on planning. Shifted subsequent versions. Created new v0.9 for Advanced GenAI features. |
+| 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                                     |
+| 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                      |
+| 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.                    |
+| 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                       |
+| 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses.       |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the roadmap.                                                                                                                                          |
 
 This document outlines the concrete steps for implementing the features described in the [`specification.md`](specification.md). It breaks down the high-level phases into actionable tasks.
 
@@ -85,7 +86,19 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.7: Standalone Application Deployment
+## v0.7: Operational Excellence & Technical Modernization
+
+**Goal:** Mature the platform from a "working prototype" to a robust, observable, and manageable system. This version focuses on operational tools (Topic management, Logging), recovering from failure modes (PENDING state), and updating to **Quarkus 3.27.x LTS**.
+
+### Key Tasks & Implementation Steps:
+1.  **Technical Update:** Update the project to Quarkus 3.27.x LTS.
+2.  **Orchestration Resilience:** Handle `PENDING` items left from crashes and improve logging with metadata (duration, URL).
+3.  **Topic Management:** Add ability to enable/disable topics and trigger orchestration for specific topics.
+4.  **Admin UI Improvements:** Enhance history table with duration, dates, and direct links.
+
+---
+
+## v0.8: Standalone Application Deployment
 
 **Goal:** Prepare and document the process for building and running the Quarkus application as a standalone executable (JAR or native binary), moving away from development mode (`mvn quarkus:dev`).
 
@@ -97,7 +110,18 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.8: User Management & Security
+## v0.9: Advanced Content Capabilities
+
+**Goal:** Implement advanced AI features that were deferred from v0.7 to prioritize deployment. This includes sophisticated rate limiting and handling large data volumes for briefings.
+
+### Key Tasks & Implementation Steps:
+1.  **Advanced Rate Limiting:** Implement Daily Quotas and TPM limits for GenAI.
+2.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods to handle context window limits.
+3.  **Spikes:** Execute research tasks for Transactional Testing patterns and Agent Context (MCP).
+
+---
+
+## v0.10: User Management & Security
 
 **Goal:** Implement a robust user management, authentication, and authorization system to secure the application and its APIs, preparing it for multi-user production environments.
 
@@ -109,7 +133,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.9: Production Hardening
+## v0.11: Production Hardening
 
 **Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
 

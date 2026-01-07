@@ -229,6 +229,8 @@ To ensure my proposals are well-informed and aligned with the project's current 
             2.  Immediately halt.
             3.  Report the discrepancy and await further instructions.
 
+8.  **Ensure Trailing Newline:** For consistency and to prevent issues with some command-line tools, I must ensure that all files end with a single newline character when creating or overwriting them using `write_file`.
+
 ## B. Context & Commit Protocols
 
 ### The Plan Execution and Context-Stack Protocol
