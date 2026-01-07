@@ -28,7 +28,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in the v0.6 retrospective.
     - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined to explicitly outline the test scenarios.
 - [ ] **1.7. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
-- [ ] **1.8. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
+- [ ] **1.8. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
 
 ---
 
