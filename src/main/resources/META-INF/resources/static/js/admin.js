@@ -1,15 +1,11 @@
 function buildOrchestrationUrl(form) {
     const formData = new FormData(form);
     const params = new URLSearchParams();
-    const fields = ['startDate', 'endDate', 'processPending', 'summarize', 'createBriefing'];
-
-    fields.forEach(field => {
-        const value = formData.get(field);
+    for (const [name, value] of formData.entries()) {
         if (value) {
-            params.append(field, value);
+            params.append(name, value);
         }
-    });
-
+    }
     const queryString = params.toString();
     return queryString ? `${form.action}?${queryString}` : form.action;
 }

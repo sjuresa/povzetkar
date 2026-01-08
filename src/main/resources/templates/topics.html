@@ -7,7 +7,7 @@
 <ul>
     {#for topic in entry.value}
     <li>
-        <a href="/ui/topics/{topic.id}/briefings" style="{topic.enabled ? '' : 'text-decoration: line-through; color: gray;'}">{topic.name}</a>
+        <a href="/ui/topics/{topic.id}/briefings" class="{#if !topic.enabled}disabled-topic{/if}">{topic.name}</a>
         <a href="/ui/topics/{topic.id}/edit" class="icon-link icon-add" data-tooltip="Edit Topic">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-pencil"
                  viewBox="0 0 16 16">

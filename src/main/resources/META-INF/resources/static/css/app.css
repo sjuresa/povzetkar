@@ -13,3 +13,8 @@
 .form-inline {
     display: inline;
 }
+
+.disabled-topic {
+    text-decoration: line-through;
+    color: gray;
+}
