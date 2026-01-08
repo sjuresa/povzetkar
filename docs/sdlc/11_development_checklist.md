@@ -5,6 +5,7 @@
 ## Revision History
 | Version | Date             | Author       | Changes                                                                       |
 |---------|------------------|--------------|-------------------------------------------------------------------------------|
+| 1.3     | January 7, 2026  | Povzetkar AI | Added step 2.7 for continuous retrospective and backlog updates during task execution. |
 | 1.2     | January 7, 2026  | Povzetkar AI | Added initialization of retrospective draft to Phase 1.                       |
 | 1.1     | January 6, 2026  | Povzetkar AI | Updated checklist based on v0.6.2 retrospective: added code review steps, post-version documentation updates, and specific prompts. |
 | 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                              |
@@ -47,16 +48,19 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
     - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
-- [ ] **2.7. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
-- [ ] **2.8. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
+- [ ] **2.7. Update Retrospective & Backlog:**
+    - [ ] Append observations from this task to the current `docs/retrospectives/vX.Y-retrospective.md` (do not create a new file).
+    - [ ] Log any non-critical improvements discovered to `docs/backlog/improvements.md`.
+- [ ] **2.8. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
+- [ ] **2.9. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
 
-- [ ] **2.9. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
+- [ ] **2.10. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
     - **Assess the issue:**
         1.  Is it a **critical usability blocker** that prevents core functionality?
         2.  Is the solution **minimal, low-risk, and aligned** with the current version's goals (e.g., "non-locking investment" for v0.6.1)?
     - **Decide:**
         -   If **both** answers are YES: Pause, discuss, and agree to update the current version's task plan (`*-tasks.md`) to include the fix.
-        -   If **either** answer is NO: Do not let it derail the current task. Log the issue in the appropriate backlog file (e.g., `docs/backlog/improvements.md`) for future planning.
+        -   If **either** answer is NO: Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
 
 ---
 
