@@ -14,8 +14,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Centralized Breadcrumb Management:** Explore a more automated or centralized way to manage breadcrumbs, potentially using annotations or a filter, to reduce boilerplate code in JAX-RS resources.
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
-*   **AJAX Form Submissions:** Refactor UI forms (e.g., Admin page actions) to use asynchronous JavaScript (AJAX) calls to `/api` endpoints instead of traditional form POSTs. This will prevent full-page reloads and improve user experience.
-*   **User-Facing Content Source Detail Page:** Create a dedicated, user-facing page for each `ContentSource` that lists all associated `ContentItem`s. This provides a focused view of all content from a specific source.
+*   **Standardize AJAX Form Submissions:** The custom JavaScript for the orchestration form is brittle. Refactor it into a more generic, reusable helper function or library to handle all AJAX-based form submissions consistently. This will make the client-side logic more robust and easier to maintain.
 
 ### Backend & Architecture
 
@@ -28,3 +27,5 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Standardize Entity Processing Logs:** Instead of ad-hoc improvements, define a standard logging format for key processing steps (e.g., summarization, enrichment). This format should consistently include key identifiers like Entity Type, ID, URL, and Duration to ensure uniform observability across the system.
 
 ### Orchestration & Briefing Generation
+
+*   **Use a Request Object for Orchestration:** The `OrchestrationManager.runOrchestrationManually` method signature is growing (currently 5 parameters). Refactor this to accept a dedicated `OrchestrationRequest` data object to improve readability and make it easier to add more granular options in the future without breaking the method signature.
