@@ -81,7 +81,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Handle Unplanned Discoveries**
-*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `11_development_checklist.md` (step `2.9. Handle Unplanned Discoveries`).
+*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `11_development_checklist.md` (step `2.10. Handle Unplanned Discoveries`).
 *   I will assess its criticality and alignment with the current version's goals and either propose an immediate plan update or log it in `docs/backlog/improvements.md` for future planning.
 
 **Step 8: Execute Plan and Log Progress**
@@ -89,7 +89,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
 **Step 9: Update `CHANGELOG.md`, Update Retrospective, Propose Commit Message and Await Final Confirmation**
-*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.8: Update `CHANGELOG.md`**.
+*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.
 *   **Update Retrospective:** I will then update the current version's retrospective file (e.g., `docs/retrospectives/vX.Y-retrospective.md`). I will append any relevant observations, friction points, or learnings from this task to the "What Went Well", "What Didn't Go Well", or "What Have We Learned" sections. I will **not** create a new file.
 *   **Capture Improvements:** I will verify if any non-critical improvements or refactoring opportunities were identified during execution and ensure they are logged in `docs/backlog/improvements.md`.
 *   After updating `CHANGELOG.md`, I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
