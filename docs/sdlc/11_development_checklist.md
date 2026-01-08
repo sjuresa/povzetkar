@@ -1,7 +1,5 @@
 # Development Process Checklist
 
-**Version:** 1.2
-
 ## Revision History
 | Version | Date             | Author       | Changes                                                                       |
 |---------|------------------|--------------|-------------------------------------------------------------------------------|
