@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -23,7 +24,7 @@ class OrchestratorResourceTest {
 
     @Test
     void testRunOrchestrationManually_noDates() {
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
                 .thenReturn(Uni.createFrom().voidItem());
 
         given()
@@ -32,7 +33,7 @@ class OrchestratorResourceTest {
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(null, null);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(null, null, false, false, false);
     }
 
     @Test
@@ -40,7 +41,7 @@ class OrchestratorResourceTest {
         LocalDate pastDate = LocalDate.now().minusDays(1);
         String pastDateStr = pastDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
                 .thenReturn(Uni.createFrom().voidItem());
 
         given()
@@ -50,7 +51,7 @@ class OrchestratorResourceTest {
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(pastDate, null);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(pastDate, null, false, false, false);
     }
 
     @Test
@@ -60,7 +61,7 @@ class OrchestratorResourceTest {
         String startDateStr = startDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         String endDateStr = endDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(LocalDate.class), any(LocalDate.class)))
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
                 .thenReturn(Uni.createFrom().voidItem());
 
         given()
@@ -71,7 +72,7 @@ class OrchestratorResourceTest {
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(startDate, endDate);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(startDate, endDate, false, false, false);
     }
 
     @Test
@@ -83,7 +84,7 @@ class OrchestratorResourceTest {
                 .statusCode(400)
                 .body(is("Invalid date format. Please use YYYY-MM-DD."));
 
-        verify(orchestrationManager, times(0)).runOrchestrationManually(any(LocalDate.class), any(LocalDate.class));
+        verify(orchestrationManager, times(0)).runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
     }
 
     @Test
@@ -92,7 +93,7 @@ class OrchestratorResourceTest {
         String futureDateStr = futureDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
 
         doThrow(new IllegalArgumentException("Orchestration cannot be run for future dates."))
-                .when(orchestrationManager).runOrchestrationManually(futureDate, null);
+                .when(orchestrationManager).runOrchestrationManually(futureDate, null, false, false, false);
 
         given()
                 .queryParam("startDate", futureDateStr)
@@ -101,6 +102,27 @@ class OrchestratorResourceTest {
                 .statusCode(400)
                 .body(is("Orchestration cannot be run for future dates."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(futureDate, null);
+        verify(orchestrationManager, times(1)).runOrchestrationManually(futureDate, null, false, false, false);
+    }
+
+    @Test
+    void testRunOrchestrationManually_granularOptions() {
+        LocalDate startDate = LocalDate.now().minusDays(1);
+        String startDateStr = startDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        given()
+                .queryParam("startDate", startDateStr)
+                .queryParam("processPending", true)
+                .queryParam("summarize", false)
+                .queryParam("createBriefing", true)
+                .when().post("/api/v1/orchestrator/run")
+                .then()
+                .statusCode(202)
+                .body(is("Orchestration process started."));
+
+        verify(orchestrationManager, times(1)).runOrchestrationManually(startDate, null, true, false, true);
     }
 }

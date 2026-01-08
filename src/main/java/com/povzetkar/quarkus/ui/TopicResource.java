@@ -33,6 +33,7 @@ public class TopicResource {
     public static final String TOPIC_EDIT_PATH = TOPICS_PATH + "/:id/edit"; // /ui/topics/:id/edit
     public static final String TOPIC_UPDATE_PATH = TOPICS_PATH + "/update/:id"; // /ui/topics/update/:id
     public static final String TOPIC_DELETE_PATH = TOPICS_PATH + "/delete/:id"; // /ui/topics/delete/:id
+    public static final String TOPIC_TOGGLE_ENABLED_PATH = TOPICS_PATH + "/:id/toggle-enabled"; // /ui/topics/:id/toggle-enabled
     public static final String TOPIC_BRIEFINGS_PATH = TOPICS_PATH + "/:topicId/briefings";
     public static final String TOPIC_ADD_SOURCE_PATH = TOPICS_PATH + "/:topicId/add-source/:contentSourceId";
     public static final String TOPIC_REMOVE_SOURCE_PATH = TOPICS_PATH + "/:topicId/remove-source/:contentSourceId";
@@ -237,6 +238,27 @@ public class TopicResource {
                     String topicName = ((Topic)topic).name;
                     topic.delete();
                     viewUtils.setSuccessMessage(context, "Topic '" + topicName + "' deleted successfully.");
+                    viewUtils.handleRedirect(context, TOPICS_PATH);
+                },
+                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+        );
+    }
+
+    @Route(path = TOPIC_TOGGLE_ENABLED_PATH, methods = Route.HttpMethod.POST)
+    @Transactional
+    @Blocking
+    public void toggleTopicEnabled(RoutingContext context) {
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        if (idOptional.isEmpty()) {
+            return;
+        }
+        Long id = idOptional.get();
+        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
+                    Topic t = (Topic) topic;
+                    t.enabled = !t.enabled;
+                    t.persist();
+                    String status = t.enabled ? "enabled" : "disabled";
+                    viewUtils.setSuccessMessage(context, "Topic '" + t.name + "' " + status + " successfully.");
                     viewUtils.handleRedirect(context, TOPICS_PATH);
                 },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))

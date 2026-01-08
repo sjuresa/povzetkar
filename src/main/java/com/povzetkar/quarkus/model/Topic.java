@@ -42,6 +42,9 @@ public class Topic extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
 
+    @Column(nullable = false)
+    public boolean enabled = true;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
@@ -49,8 +52,8 @@ public class Topic extends PanacheEntityBase {
         }
     }
 
-    public static List<Topic> findByUsers(List<User> users) {
-        return find("select distinct t from Topic t left join fetch t.contentSources where t.user in ?1", users).list();
+    public static List<Topic> findEnabledByUsers(List<User> users) {
+        return find("select distinct t from Topic t left join fetch t.contentSources where t.enabled = true and t.user in ?1", users).list();
     }
 
     public static Optional<Topic> findByIdWithContentSources(Long id) {

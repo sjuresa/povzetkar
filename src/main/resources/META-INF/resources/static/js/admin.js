@@ -1,20 +1,28 @@
+function buildOrchestrationUrl(form) {
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    const fields = ['startDate', 'endDate', 'processPending', 'summarize', 'createBriefing'];
+
+    fields.forEach(field => {
+        const value = formData.get(field);
+        if (value) {
+            params.append(field, value);
+        }
+    });
+
+    const queryString = params.toString();
+    return queryString ? `${form.action}?${queryString}` : form.action;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+
     async function handleAjaxFormSubmit(event, { successMessage, errorMessage, errorLogMessage }) {
         event.preventDefault();
         const form = event.target;
         let url = form.action;
 
-        // Special handling for orchestration form with query params
         if (form.id === 'orchestrationForm') {
-            const formData = new FormData(form);
-            const params = new URLSearchParams();
-            const startDate = formData.get('startDate');
-            const endDate = formData.get('endDate');
-            if (startDate) params.append('startDate', startDate);
-            if (endDate) params.append('endDate', endDate);
-            if (params.toString()) {
-                url += '?' + params.toString();
-            }
+            url = buildOrchestrationUrl(form);
         }
 
         try {
@@ -62,10 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         alertDiv.setAttribute('role', 'alert');
         alertDiv.textContent = message;
 
-        // Insert before the first child of main, or at the beginning of main
         mainElement.prepend(alertDiv);
 
-        // Optional: Auto-remove message after a few seconds
         setTimeout(() => {
             alertDiv.remove();
         }, 5000);

@@ -33,6 +33,19 @@
                     <label for="end-date">End Date (optional):</label>
                     <input type="date" id="end-date" name="endDate">
 
+                    <label>
+                        <input type="checkbox" name="processPending" value="true" checked>
+                        Process Retry/Pending Items
+                    </label>
+                    <label>
+                        <input type="checkbox" name="summarize" value="true" checked>
+                        Generate Summaries
+                    </label>
+                    <label>
+                        <input type="checkbox" name="createBriefing" value="true" checked>
+                        Generate Briefings
+                    </label>
+
                     <button type="submit" onclick="return confirm('Are you sure you want to run orchestration?');">Run Orchestration</button>
                 </fieldset>
             </form>
