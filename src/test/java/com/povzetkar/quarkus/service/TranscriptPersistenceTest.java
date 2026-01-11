@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -77,6 +78,7 @@ class TranscriptPersistenceTest {
     @AfterEach
     @Transactional
     void tearDown() {
+        Summary.deleteAll();
         ContentItem.deleteAll();
         ContentSource.deleteAll();
         Topic.deleteAll();
