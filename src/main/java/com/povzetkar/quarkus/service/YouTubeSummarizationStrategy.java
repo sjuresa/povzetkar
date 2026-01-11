@@ -80,16 +80,14 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private void persistSummary(YouTubeVideo video, String summaryText, LocalDate orchestrationDate) {
         QuarkusTransaction.requiringNew().run(() -> {
-            ContentItem attachedItem = ContentItem.findById(video.id);
-            if (attachedItem != null) {
+            YouTubeVideo attachedVideo = YouTubeVideo.findById(video.id);
+            if (attachedVideo != null) {
                 // Explicitly copy the transcript from the detached object to the managed entity
-                if (attachedItem instanceof YouTubeVideo attachedVideo) {
-                    attachedVideo.transcript = video.transcript;
-                }
+                attachedVideo.transcript = video.transcript;
 
-                Summary summary = new Summary(summaryText, attachedItem, orchestrationDate);
+                Summary summary = new Summary(summaryText, attachedVideo, orchestrationDate);
                 summary.persist();
-                attachedItem.processingStatus = ProcessingStatus.COMPLETED;
+                attachedVideo.processingStatus = ProcessingStatus.COMPLETED;
             }
         });
     }
