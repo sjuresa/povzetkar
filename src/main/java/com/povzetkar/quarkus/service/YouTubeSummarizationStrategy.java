@@ -56,7 +56,12 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
         try {
             String summaryText = generateSummary(client, video, content);
-            persistSummary(video, summaryText, orchestrationDate);
+            boolean persisted = persistSummary(video, summaryText, orchestrationDate);
+            if (!persisted) {
+                logger.error("Failed to persist summary for video: {} (ID: {}). Entity not found.", video.title, video.id);
+                updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
+                return false;
+            }
             logger.info("Successfully generated and persisted summary for video: {} (ID: {})", video.title, video.id);
             return true;
         } catch (PersistenceException e) {
@@ -78,8 +83,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         return videoSummaryService.generateContent(client, content, callDescription);
     }
 
-    private void persistSummary(YouTubeVideo video, String summaryText, LocalDate orchestrationDate) {
-        QuarkusTransaction.requiringNew().run(() -> {
+    private boolean persistSummary(YouTubeVideo video, String summaryText, LocalDate orchestrationDate) {
+        return QuarkusTransaction.requiringNew().call(() -> {
             YouTubeVideo attachedVideo = YouTubeVideo.findById(video.id);
             if (attachedVideo != null) {
                 // Explicitly copy the transcript from the detached object to the managed entity
@@ -88,7 +93,9 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 Summary summary = new Summary(summaryText, attachedVideo, orchestrationDate);
                 summary.persist();
                 attachedVideo.processingStatus = ProcessingStatus.COMPLETED;
+                return true;
             }
+            return false;
         });
     }
 
