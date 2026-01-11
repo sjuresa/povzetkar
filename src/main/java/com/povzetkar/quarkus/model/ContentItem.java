@@ -37,6 +37,12 @@ public class ContentItem extends BaseAuditableEntity {
     @Column(name = "processing_status", nullable = false)
     public ProcessingStatus processingStatus = ProcessingStatus.PENDING;
 
+    @Column(name = "error_code")
+    public String errorCode;
+
+    @Column(name = "error_message", columnDefinition = "TEXT")
+    public String errorMessage;
+
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {
         update("processingStatus = ?1 where id = ?2", status, id);
     }
