@@ -88,6 +88,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 Summary summary = new Summary(summaryText, attachedVideo, orchestrationDate);
                 summary.persist();
                 attachedVideo.processingStatus = ProcessingStatus.COMPLETED;
+            } else {
+                logger.warn("Could not find YouTubeVideo with id {} to persist summary. It may have been deleted mid-process.", video.id);
             }
         });
     }
