@@ -114,14 +114,17 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         if (e.code() == 429) {
             error = ContentProcessingError.RATE_LIMIT_EXCEEDED;
             status = ProcessingStatus.RETRY_LATER;
-            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
         } else if (e.code() >= 500) {
             error = ContentProcessingError.UPSTREAM_SERVICE_ERROR;
             status = ProcessingStatus.RETRY_LATER;
-            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
         } else {
             error = ContentProcessingError.UNKNOWN_ERROR;
             status = ProcessingStatus.FAILED;
+        }
+
+        if (status == ProcessingStatus.RETRY_LATER) {
+            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
+        } else {
             logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
         }
         
