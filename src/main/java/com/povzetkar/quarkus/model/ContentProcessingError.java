@@ -1,9 +1,19 @@
 package com.povzetkar.quarkus.model;
 
 public enum ContentProcessingError {
-    TRANSCRIPT_UNAVAILABLE,
-    RATE_LIMIT_EXCEEDED,
-    UPSTREAM_SERVICE_ERROR,
-    CONTENT_PARSING_ERROR,
-    UNKNOWN_ERROR
+    TRANSCRIPT_UNAVAILABLE(true),
+    RATE_LIMIT_EXCEEDED(true),
+    UPSTREAM_SERVICE_ERROR(true),
+    CONTENT_PARSING_ERROR(false),
+    UNKNOWN_ERROR(false);
+
+    private final boolean retriable;
+
+    ContentProcessingError(boolean retriable) {
+        this.retriable = retriable;
+    }
+
+    public boolean isRetriable() {
+        return retriable;
+    }
 }
