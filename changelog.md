@@ -17,11 +17,14 @@ Version 0.7.0 focuses on **Operational Excellence**, starting with a major frame
 - **Granular Orchestration:** The manual orchestration trigger now supports independent execution of "Process Retry/Pending Items," "Summarization," and "Briefing Generation" via API parameters and UI checkboxes.
 - **Orchestration Resilience:** The orchestrator now automatically recovers `PENDING` items from crashed runs by treating them as `RETRY_LATER` items when a new lock is acquired.
 - **Enhanced Logging:** Content processing logs now include Video ID, Duration, and URL for better observability and debugging.
+- **Smart Retry:** Implemented logic to check for existing transcripts in the database before attempting to fetch them again, optimizing resource usage and reducing API calls.
+- **Error Handling:** Introduced specific error codes (`TRANSCRIPT_UNAVAILABLE`, `RATE_LIMIT_EXCEEDED`, etc.) for better categorization of failures.
 
 ### Changed
 - **Framework Upgrade:** Updated Quarkus from 3.15.6 to 3.27.1 LTS.
 - **Dependencies:** Migrated `quarkus-resteasy-reactive-jackson` to `quarkus-rest-jackson` and aligned JUnit/Mockito versions with the Quarkus BOM.
 - **Database Schema:** Added an `enabled` column to the `topics` table via a `V4__AddEnabledToTopics.sql` Flyway migration script.
+- **Refactored Error Handling:** Consolidated API error handling logic in `YouTubeSummarizationStrategy` to ensure consistent status updates and logging.
 
 ### Fixed
 - **Transcript Persistence:** Fixed a critical bug where transcripts were not being saved to the database during summarization. The fix ensures that the transcript fetched during processing is explicitly copied to the managed entity before persistence.

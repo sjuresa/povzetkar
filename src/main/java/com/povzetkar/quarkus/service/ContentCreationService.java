@@ -24,6 +24,12 @@ public class ContentCreationService {
     }
 
     public Content createContentForVideo(YouTubeVideo video) {
+        if (video.transcript != null && !video.transcript.isBlank()) {
+            logger.info("Using existing transcript for video {}.", video.sourceUrl);
+            Part textPart = createVideoSummaryTextPart(video, video.transcript);
+            return Content.fromParts(textPart);
+        }
+
         if (video.duration.toMinutes() < transcriptThresholdMinutes) {
             Part textPart = createVideoSummaryTextPart(video, "");
             return Content.fromParts(textPart, Part.fromUri(video.sourceUrl, "video/mp4"));

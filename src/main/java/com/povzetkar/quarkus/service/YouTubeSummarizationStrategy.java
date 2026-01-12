@@ -4,6 +4,7 @@ import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -17,14 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 @ApplicationScoped
 @Priority(10)
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
-    private static final Set<Integer> RETRIABLE_API_ERROR_CODES = Set.of(429, 500, 503);
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;
@@ -50,7 +49,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
         Content content = contentCreationService.createContentForVideo(video);
         if (content == null) {
-            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
+            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript could not be retrieved.");
             return false;
         }
 
@@ -88,6 +87,9 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 Summary summary = new Summary(summaryText, attachedVideo, orchestrationDate);
                 summary.persist();
                 attachedVideo.processingStatus = ProcessingStatus.COMPLETED;
+                // Clear any previous errors on success
+                attachedVideo.errorCode = null;
+                attachedVideo.errorMessage = null;
             } else {
                 logger.warn("Could not find YouTubeVideo with id {} to persist summary. It may have been deleted mid-process.", video.id);
             }
@@ -100,25 +102,44 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             return true; // Treat as success as the summary likely exists now.
         } else {
             logger.error("Persistence error while creating summary for video: {}.", video.sourceUrl, e);
-            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
+            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED, ContentProcessingError.UNKNOWN_ERROR, e.getMessage());
             return false;
         }
     }
 
     private boolean handleApiException(YouTubeVideo video, ApiException e) {
-        if (RETRIABLE_API_ERROR_CODES.contains(e.code())) {
+        ContentProcessingError error;
+
+        if (e.code() == 429) {
+            error = ContentProcessingError.RATE_LIMIT_EXCEEDED;
+        } else if (e.code() >= 500) {
+            error = ContentProcessingError.UPSTREAM_SERVICE_ERROR;
+        } else {
+            error = ContentProcessingError.UNKNOWN_ERROR;
+        }
+
+        ProcessingStatus status = error.isRetriable() ? ProcessingStatus.RETRY_LATER : ProcessingStatus.FAILED;
+
+        if (error.isRetriable()) {
             logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
-            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
         } else {
             logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
-            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
         }
+        
+        updateStatusInNewTransaction(video.id, status, error, e.getMessage());
         return false;
     }
 
-    private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status) {
-        QuarkusTransaction.requiringNew().run(() ->
-                ContentItem.updateProcessingStatus(videoId, status)
-        );
+    private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status, ContentProcessingError errorCode, String errorMessage) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            ContentItem item = ContentItem.findById(videoId);
+            if (item != null) {
+                item.processingStatus = status;
+                if (errorCode != null) {
+                    item.errorCode = errorCode.name();
+                    item.errorMessage = errorMessage;
+                }
+            }
+        });
     }
 }

@@ -25,6 +25,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
     *   **Addendum (v0.7.0):** The guide must include a section on dependency management for test libraries. It should emphasize letting the Quarkus BOM manage versions for `JUnit`, `Mockito`, etc., to prevent classpath conflicts (`NoSuchMethodError`) during framework upgrades.
 *   **Improve Test Suite Resilience to Logging Changes:** The test suite proved brittle to changes in logging messages. Mocks that rely on specific string formats for `callDescription` should be updated to use `anyString()` to avoid test failures from minor logging improvements.
 *   **Standardize Entity Processing Logs:** Instead of ad-hoc improvements, define a standard logging format for key processing steps (e.g., summarization, enrichment). This format should consistently include key identifiers like Entity Type, ID, URL, and Duration to ensure uniform observability across the system.
+*   **Standardize Exception Message Assertions in Tests:** Create a helper or wrapper for `ApiException` (and other external exceptions) to extract clean error messages, or standardize error message assertions in tests to handle variable message formats (e.g., including status codes) more robustly.
 
 ### Orchestration & Briefing Generation
 
