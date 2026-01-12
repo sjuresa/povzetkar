@@ -113,7 +113,6 @@ class TranscriptPersistenceTest {
         YouTubeVideo persistedVideo = YouTubeVideo.findById(testVideo.id);
         assertNotNull(persistedVideo);
         assertEquals(expectedTranscript, persistedVideo.transcript, "Transcript should be persisted to the database");
-        assertEquals(expectedTranscript, persistedVideo.transcript, "Transcript should be persisted to the database");
         assertEquals(com.povzetkar.quarkus.model.ProcessingStatus.COMPLETED, persistedVideo.processingStatus, "Processing status should be COMPLETED");
     }
 }
