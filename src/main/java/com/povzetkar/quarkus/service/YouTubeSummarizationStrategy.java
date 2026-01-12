@@ -48,13 +48,13 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             return true;
         }
 
-        Content content = contentCreationService.createContentForVideo(video);
-        if (content == null) {
-            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
-            return false;
-        }
-
         try {
+            Content content = contentCreationService.createContentForVideo(video);
+            if (content == null) {
+                updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
+                return false;
+            }
+
             String summaryText = generateSummary(client, video, content);
             boolean persisted = persistSummary(video, summaryText, orchestrationDate);
             if (!persisted) {
@@ -68,6 +68,10 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             return handlePersistenceException(video, e);
         } catch (ApiException e) {
             return handleApiException(video, e);
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred during summarization for video: {} (ID: {})", video.title, video.id, e);
+            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
+            return false;
         }
     }
 
