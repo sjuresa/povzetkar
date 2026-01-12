@@ -110,7 +110,7 @@ class TranscriptPersistenceTest {
 
         // Assert
         // Verify the database state
-        YouTubeVideo persistedVideo = ContentItem.findById(testVideo.id);
+        YouTubeVideo persistedVideo = YouTubeVideo.findById(testVideo.id);
         assertNotNull(persistedVideo);
         assertEquals(expectedTranscript, persistedVideo.transcript, "Transcript should be persisted to the database");
     }
