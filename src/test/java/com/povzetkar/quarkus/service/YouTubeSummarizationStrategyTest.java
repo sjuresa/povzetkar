@@ -132,10 +132,10 @@ class YouTubeSummarizationStrategyTest {
              MockedConstruction<Summary> cons = mockConstruction(Summary.class, (mock, ctx) -> doNothing().when(mock).persist())) {
 
             PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
+            PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo instead of ContentItem
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
@@ -157,10 +157,10 @@ class YouTubeSummarizationStrategyTest {
     void testSummarize_handlesPersistenceExceptionOnRaceCondition() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
             PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
+            PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
@@ -186,10 +186,11 @@ class YouTubeSummarizationStrategyTest {
     void testSummarize_handlesOtherPersistenceExceptionAsFailure() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
             PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
+            PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo
+            PanacheMock.mock(ContentItem.class); // Still need to mock ContentItem for updateProcessingStatus
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description

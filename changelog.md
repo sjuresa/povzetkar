@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.27.1 LTS. This ensures the platform is built on a secure, stable, and modern foundation. This release also introduces significant improvements to administrative control, allowing for granular orchestration and fine-grained topic management.
 
 ### Added
+- **Backend Persistence:** Added `error_code` and `error_message` columns to the `content_items` table to support better error tracking and observability.
 - **Topic Management:** Added the ability to enable or disable individual topics. Disabled topics are now skipped by the orchestration process.
 - **Granular Orchestration:** The manual orchestration trigger now supports independent execution of "Process Retry/Pending Items," "Summarization," and "Briefing Generation" via API parameters and UI checkboxes.
 - **Orchestration Resilience:** The orchestrator now automatically recovers `PENDING` items from crashed runs by treating them as `RETRY_LATER` items when a new lock is acquired.
@@ -21,6 +22,9 @@ Version 0.7.0 focuses on **Operational Excellence**, starting with a major frame
 - **Framework Upgrade:** Updated Quarkus from 3.15.6 to 3.27.1 LTS.
 - **Dependencies:** Migrated `quarkus-resteasy-reactive-jackson` to `quarkus-rest-jackson` and aligned JUnit/Mockito versions with the Quarkus BOM.
 - **Database Schema:** Added an `enabled` column to the `topics` table via a `V4__AddEnabledToTopics.sql` Flyway migration script.
+
+### Fixed
+- **Transcript Persistence:** Fixed a critical bug where transcripts were not being saved to the database during summarization. The fix ensures that the transcript fetched during processing is explicitly copied to the managed entity before persistence.
 
 ## [0.6.2] - 2026-01-04
 
