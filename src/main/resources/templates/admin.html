@@ -7,11 +7,11 @@
     </header>
 
     <div role="tablist">
-        <a href="/ui/admin" role="tab" aria-selected="{activeTab.equals('actions')}">Actions</a>
-        <a href="/ui/admin?tab=history" role="tab" aria-selected="{activeTab.equals('history')}">History</a>
+        <a href="/ui/admin" role="tab" aria-selected="{activeTab == 'actions' ? 'true' : 'false'}">Actions</a>
+        <a href="/ui/admin?tab=history" role="tab" aria-selected="{activeTab == 'history' ? 'true' : 'false'}">History</a>
     </div>
 
-    {#if activeTab.equals('actions')}
+    {#if activeTab == 'actions'}
     <div role="tabpanel">
         <section id="content-source-enrichment">
             <h2>Content Source Enrichment</h2>
@@ -53,32 +53,50 @@
     </div>
     {/if}
 
-    {#if activeTab.equals('history')}
+    {#if activeTab == 'history'}
     <div role="tabpanel">
         {#if pendingContentItems}
         <section id="pending-content-items">
             <h2>Pending Content Items</h2>
             {#if pendingContentItems.size() > 0}
-                <table role="grid">
+                <table>
                     <thead>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
+                            <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Published At</th>
                             <th scope="col">Created At</th>
-                            <th scope="col">Source URL</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {#for contentItem in pendingContentItems}
+                        {#for item in pendingContentItems}
                             <tr>
-                                <td>{contentItem_count}</td>
-                                <td>{contentItem.id}</td>
-                                <td>{contentItem.title}</td>
-                                <td>{contentItem.processingStatus}</td>
-                                <td>{contentItem.formattedCreatedAt(dateTimeFormat)}</td>
-                                <td><a href="{contentItem.sourceUrl}" target="_blank">{contentItem.sourceUrl}</a></td>
+                                <td>{item_count}</td>
+                                <td>{item.id}</td>
+                                <td>{item.contentSource.topics.iterator().next().name}</td>
+                                <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
+                                <td id="pending-transcript-status-{item.id}">
+                                    {#if item.transcript}
+                                        <i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>
+                                    {#else}
+                                        <i class="fas fa-times-circle" style="color: red;" title="Transcript missing"></i>
+                                    {/if}
+                                </td>
+                                <td>{item.processingStatus}</td>
+                                <td>{item.formattedPublishedAt}</td>
+                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{item.formattedDuration}</td>
+                                <td>
+                                    {#if !item.transcript}
+                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    {/if}
+                                </td>
                             </tr>
                         {/for}
                     </tbody>
@@ -92,15 +110,19 @@
         <section id="recent-content-items-with-summaries">
             <h2>Recent Content Items with Summaries</h2>
             {#if recentSummaries.size() > 0}
-                <table role="grid">
+                <table>
                     <thead>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
+                            <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
-                            <th scope="col">Duration</th>
+                            <th scope="col">Published At</th>
                             <th scope="col">Created At</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Summary</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,23 +130,20 @@
                             <tr>
                                 <td>{summary_count}</td>
                                 <td>{summary.contentItem.id}</td>
-                                <td>
-                                    <a href="/ui/summaries/{summary.id}" target="_blank" title="{summary.getExecutiveSummary()}" data-summary-url="/ui/summaries/{summary.id}" data-executive-summary="{summary.getExecutiveSummary()}">
-                                        {summary.contentItem.title}
-                                        {#if summary.contentItem.authorName}
-                                            <br><small>by {summary.contentItem.authorName}</small>
-                                        {/if}
-                                    </a>
-                                </td>
-                                <td>{summary.contentItem.processingStatus}</td>
-                                <td>
-                                    {#if summary.contentItem.duration}
-                                        {summary.contentItem.formattedDuration()}
+                                <td>{summary.contentItem.contentSource.topics.iterator().next().name}</td>
+                                <td><a href="{summary.contentItem.sourceUrl}" target="_blank">{summary.contentItem.title}</a></td>
+                                <td id="summary-transcript-status-{summary.contentItem.id}">
+                                    {#if summary.contentItem.transcript}
+                                        <i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>
                                     {#else}
-                                        N/A
+                                        <i class="fas fa-times-circle" style="color: red;" title="Transcript missing"></i>
                                     {/if}
                                 </td>
-                                <td>{summary.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{summary.contentItem.processingStatus}</td>
+                                <td>{summary.contentItem.formattedPublishedAt}</td>
+                                <td>{summary.contentItem.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{summary.contentItem.formattedDuration}</td>
+                                <td><a href="/ui/summaries/{summary.id}" target="_blank">View Summary</a></td>
                             </tr>
                         {/for}
                     </tbody>
@@ -137,14 +156,15 @@
         <section id="recent-briefings">
             <h2>Recent Briefings</h2>
             {#if recentBriefings.size() > 0}
-                <table role="grid">
+                <table>
                     <thead>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
-                            <th scope="col">Created At</th>
-                            <th scope="col">Briefing Date</th>
                             <th scope="col">Topic Name</th>
+                            <th scope="col">Briefing Date</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -152,9 +172,10 @@
                             <tr>
                                 <td>{briefing_count}</td>
                                 <td>{briefing.id}</td>
-                                <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
-                                <td>{briefing.briefingDate.format(dateFormat)}</td>
                                 <td>{briefing.topic.name}</td>
+                                <td>{briefing.briefingDate.format(dateFormat)}</td>
+                                <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td><a href="/ui/briefings/{briefing.id}" target="_blank">View Briefing</a></td>
                             </tr>
                         {/for}
                     </tbody>
@@ -168,26 +189,44 @@
         <section id="failed-content-items">
             <h2>Failed Content Items</h2>
             {#if failedContentItems.size() > 0}
-                <table role="grid">
+                <table>
                     <thead>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
+                            <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Published At</th>
+                            <th scope="col">Duration</th>
                             <th scope="col">Created At</th>
-                            <th scope="col">Source URL</th>
+                            <th scope="col">Error</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {#for contentItem in failedContentItems}
+                        {#for item in failedContentItems}
                             <tr>
-                                <td>{contentItem_count}</td>
-                                <td>{contentItem.id}</td>
-                                <td>{contentItem.title}</td>
-                                <td>{contentItem.processingStatus}</td>
-                                <td>{contentItem.formattedCreatedAt(dateTimeFormat)}</td>
-                                <td><a href="{contentItem.sourceUrl}" target="_blank">{contentItem.sourceUrl}</a></td>
+                                <td>{item_count}</td>
+                                <td>{item.id}</td>
+                                <td>{item.contentSource.topics.iterator().next().name}</td>
+                                <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
+                                <td id="failed-transcript-status-{item.id}">
+                                    {#if item.transcript}
+                                        <i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>
+                                    {#else}
+                                        <i class="fas fa-times-circle" style="color: red;" title="Transcript missing"></i>
+                                    {/if}
+                                </td>
+                                <td>{item.processingStatus}</td>
+                                <td>{item.formattedPublishedAt}</td>
+                                <td>{item.formattedDuration}</td>
+                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td title="{item.errorMessage}">{item.errorCode}</td>
+                                <td>
+                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                </td>
                             </tr>
                         {/for}
                     </tbody>
@@ -204,12 +243,12 @@
     <dialog id="executive-summary-modal">
         <article>
             <header>
-                <a href="#close" aria-label="Close" class="close" data-target="executive-summary-modal" onclick="event.preventDefault(); document.getElementById('executive-summary-modal').close();"></a>
+                <button aria-label="Close" class="close" data-target="executive-summary-modal" onclick="document.getElementById('executive-summary-modal').close();"></button>
                 <h3>Executive Summary</h3>
             </header>
             <p id="modal-executive-summary-content"></p>
             <footer>
-                <a href="#" role="button" id="modal-view-full-summary-button">View Full Summary</a>
+                <button id="modal-view-full-summary-button">View Full Summary</button>
             </footer>
         </article>
     </dialog>

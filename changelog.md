@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.27.1 LTS. This ensures the platform is built on a secure, stable, and modern foundation. This release also introduces significant improvements to administrative control, allowing for granular orchestration and fine-grained topic management.
 
 ### Added
+- **Admin UI Enhancements:** The Admin UI has been updated to provide greater visibility and control. Tables for pending, failed, and recent items now display the associated Topic, transcript availability, creation and publication dates, and video duration. Failed items now show detailed error codes and messages.
+- **Manual Transcript Fetching:** Added a "Fetch Transcript" button to the Admin UI for pending and failed items, allowing administrators to manually trigger transcript retrieval via a new `POST /api/v1/admin/content-items/{id}/fetch-transcript` endpoint.
 - **Backend Persistence:** Added `error_code` and `error_message` columns to the `content_items` table to support better error tracking and observability.
 - **Topic Management:** Added the ability to enable or disable individual topics. Disabled topics are now skipped by the orchestration process.
 - **Granular Orchestration:** The manual orchestration trigger now supports independent execution of "Process Retry/Pending Items," "Summarization," and "Briefing Generation" via API parameters and UI checkboxes.
