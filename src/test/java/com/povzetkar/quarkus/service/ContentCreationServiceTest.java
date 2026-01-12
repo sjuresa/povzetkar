@@ -16,6 +16,9 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,6 +54,27 @@ class ContentCreationServiceTest {
             Part videoPart = parts.get(1);
             assertThat(videoPart.fileData()).isPresent();
             assertThat(videoPart.fileData().get().fileUri()).hasValue("url");
+        }
+
+        @Test
+        @DisplayName("should use existing transcript without fetching if available")
+        void shouldUseExistingTranscriptWithoutFetching() {
+            // Arrange
+            YouTubeVideo videoWithTranscript = new YouTubeVideo("videoWithTranscript", "Video With Transcript", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
+            videoWithTranscript.transcript = "Existing transcript";
+
+            // Act
+            Content content = contentCreationService.createContentForVideo(videoWithTranscript);
+
+            // Assert
+            assertThat(content.parts()).isPresent();
+            List<Part> parts = content.parts().get();
+            assertThat(parts).hasSize(1);
+            Part textPart = parts.getFirst();
+            assertThat(textPart.text()).isPresent();
+            assertThat(textPart.text().get()).contains("Existing transcript");
+            
+            verify(transcriptService, never()).getTranscript(any());
         }
 
         @Test
