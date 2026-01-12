@@ -18,14 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 @ApplicationScoped
 @Priority(10)
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
-    private static final Set<Integer> RETRIABLE_API_ERROR_CODES = Set.of(429, 500, 503);
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;
@@ -116,17 +114,14 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         if (e.code() == 429) {
             error = ContentProcessingError.RATE_LIMIT_EXCEEDED;
             status = ProcessingStatus.RETRY_LATER;
+            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
         } else if (e.code() >= 500) {
             error = ContentProcessingError.UPSTREAM_SERVICE_ERROR;
             status = ProcessingStatus.RETRY_LATER;
+            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
         } else {
             error = ContentProcessingError.UNKNOWN_ERROR;
             status = ProcessingStatus.FAILED;
-        }
-
-        if (RETRIABLE_API_ERROR_CODES.contains(e.code())) {
-            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
-        } else {
             logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
         }
         

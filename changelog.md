@@ -24,6 +24,7 @@ Version 0.7.0 focuses on **Operational Excellence**, starting with a major frame
 - **Framework Upgrade:** Updated Quarkus from 3.15.6 to 3.27.1 LTS.
 - **Dependencies:** Migrated `quarkus-resteasy-reactive-jackson` to `quarkus-rest-jackson` and aligned JUnit/Mockito versions with the Quarkus BOM.
 - **Database Schema:** Added an `enabled` column to the `topics` table via a `V4__AddEnabledToTopics.sql` Flyway migration script.
+- **Refactored Error Handling:** Consolidated API error handling logic in `YouTubeSummarizationStrategy` to ensure consistent status updates and logging.
 
 ### Fixed
 - **Transcript Persistence:** Fixed a critical bug where transcripts were not being saved to the database during summarization. The fix ensures that the transcript fetched during processing is explicitly copied to the managed entity before persistence.
