@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
 import java.util.Optional;
@@ -55,9 +56,8 @@ public class ContentItemService {
                 Log.warnf("Transcript unavailable for video ID %s.", video.videoId);
                 return FetchTranscriptResult.TRANSCRIPT_UNAVAILABLE;
             }
-        } catch (Exception e) {
-            updateVideoAsFailed(video, "TRANSCRIPT_FETCH_ERROR", e.getMessage());
-            Log.errorf(e, "Error fetching transcript for video ID %s.", video.videoId);
+        } catch (PersistenceException e) {
+            Log.errorf(e, "Failed to persist transcript for video ID %s. The transaction will be rolled back.", video.videoId);
             return FetchTranscriptResult.ERROR;
         }
     }
