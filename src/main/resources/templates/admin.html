@@ -79,7 +79,13 @@
                             <tr>
                                 <td>{item_count}</td>
                                 <td>{item.id}</td>
-                                <td>{item.contentSource.topics.iterator().next().name}</td>
+                                <td>
+                                    {#if !item.contentSource.topics.isEmpty()}
+                                        {item.contentSource.topics.iterator().next().name}
+                                    {#else}
+                                        N/A
+                                    {/if}
+                                </td>
                                 <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
                                 <td id="transcript-status-{item.id}">
                                     {#if item.transcript}
@@ -130,7 +136,13 @@
                             <tr>
                                 <td>{summary_count}</td>
                                 <td>{summary.contentItem.id}</td>
-                                <td>{summary.contentItem.contentSource.topics.iterator().next().name}</td>
+                                <td>
+                                    {#if !summary.contentItem.contentSource.topics.isEmpty()}
+                                        {summary.contentItem.contentSource.topics.iterator().next().name}
+                                    {#else}
+                                        N/A
+                                    {/if}
+                                </td>
                                 <td><a href="{summary.contentItem.sourceUrl}" target="_blank">{summary.contentItem.title}</a></td>
                                 <td id="transcript-status-{summary.contentItem.id}">
                                     {#if summary.contentItem.transcript}
@@ -210,7 +222,13 @@
                             <tr>
                                 <td>{item_count}</td>
                                 <td>{item.id}</td>
-                                <td>{item.contentSource.topics.iterator().next().name}</td>
+                                <td>
+                                    {#if !item.contentSource.topics.isEmpty()}
+                                        {item.contentSource.topics.iterator().next().name}
+                                    {#else}
+                                        N/A
+                                    {/if}
+                                </td>
                                 <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
                                 <td id="transcript-status-{item.id}">
                                     {#if item.transcript}
@@ -225,7 +243,9 @@
                                 <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
+                                    {#if !item.transcript}
                                     <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    {/if}
                                 </td>
                             </tr>
                         {/for}
