@@ -64,21 +64,45 @@
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
+                            <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Published At</th>
                             <th scope="col">Created At</th>
-                            <th scope="col">Source URL</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {#for contentItem in pendingContentItems}
+                        {#for item in pendingContentItems}
                             <tr>
-                                <td>{contentItem_count}</td>
-                                <td>{contentItem.id}</td>
-                                <td>{contentItem.title}</td>
-                                <td>{contentItem.processingStatus}</td>
-                                <td>{contentItem.formattedCreatedAt(dateTimeFormat)}</td>
-                                <td><a href="{contentItem.sourceUrl}" target="_blank">{contentItem.sourceUrl}</a></td>
+                                <td>{item_count}</td>
+                                <td>{item.id}</td>
+                                <td>
+                                    {#if !item.contentSource.topics.isEmpty()}
+                                        {item.contentSource.topics.iterator().next().name}
+                                    {#else}
+                                        N/A
+                                    {/if}
+                                </td>
+                                <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
+                                <td id="transcript-status-{item.id}">
+                                    {#if item.transcript}
+                                        <i class="fas fa-check-circle text-success" title="Transcript available"></i>
+                                    {#else}
+                                        <i class="fas fa-times-circle text-danger" title="Transcript missing"></i>
+                                    {/if}
+                                </td>
+                                <td>{item.processingStatus}</td>
+                                <td>{item.formattedPublishedAt}</td>
+                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{item.formattedDuration}</td>
+                                <td>
+                                    {#if !item.transcript}
+                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    {/if}
+                                </td>
                             </tr>
                         {/for}
                     </tbody>
@@ -97,10 +121,14 @@
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
+                            <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
-                            <th scope="col">Duration</th>
+                            <th scope="col">Published At</th>
                             <th scope="col">Created At</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Summary</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,22 +137,25 @@
                                 <td>{summary_count}</td>
                                 <td>{summary.contentItem.id}</td>
                                 <td>
-                                    <a href="/ui/summaries/{summary.id}" target="_blank" title="{summary.getExecutiveSummary()}" data-summary-url="/ui/summaries/{summary.id}" data-executive-summary="{summary.getExecutiveSummary()}">
-                                        {summary.contentItem.title}
-                                        {#if summary.contentItem.authorName}
-                                            <br><small>by {summary.contentItem.authorName}</small>
-                                        {/if}
-                                    </a>
-                                </td>
-                                <td>{summary.contentItem.processingStatus}</td>
-                                <td>
-                                    {#if summary.contentItem.duration}
-                                        {summary.contentItem.formattedDuration()}
+                                    {#if !summary.contentItem.contentSource.topics.isEmpty()}
+                                        {summary.contentItem.contentSource.topics.iterator().next().name}
                                     {#else}
                                         N/A
                                     {/if}
                                 </td>
-                                <td>{summary.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td><a href="{summary.contentItem.sourceUrl}" target="_blank">{summary.contentItem.title}</a></td>
+                                <td id="transcript-status-{summary.contentItem.id}">
+                                    {#if summary.contentItem.transcript}
+                                        <i class="fas fa-check-circle text-success" title="Transcript available"></i>
+                                    {#else}
+                                        <i class="fas fa-times-circle text-danger" title="Transcript missing"></i>
+                                    {/if}
+                                </td>
+                                <td>{summary.contentItem.processingStatus}</td>
+                                <td>{summary.contentItem.formattedPublishedAt}</td>
+                                <td>{summary.contentItem.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{summary.contentItem.formattedDuration}</td>
+                                <td><a href="/ui/summaries/{summary.id}" target="_blank">View Summary</a></td>
                             </tr>
                         {/for}
                     </tbody>
@@ -142,9 +173,10 @@
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
-                            <th scope="col">Created At</th>
-                            <th scope="col">Briefing Date</th>
                             <th scope="col">Topic Name</th>
+                            <th scope="col">Briefing Date</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -152,9 +184,10 @@
                             <tr>
                                 <td>{briefing_count}</td>
                                 <td>{briefing.id}</td>
-                                <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
-                                <td>{briefing.briefingDate.format(dateFormat)}</td>
                                 <td>{briefing.topic.name}</td>
+                                <td>{briefing.briefingDate.format(dateFormat)}</td>
+                                <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td><a href="/ui/briefings/{briefing.id}" target="_blank">View Briefing</a></td>
                             </tr>
                         {/for}
                     </tbody>
@@ -173,21 +206,47 @@
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">ID</th>
+                            <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Published At</th>
+                            <th scope="col">Duration</th>
                             <th scope="col">Created At</th>
-                            <th scope="col">Source URL</th>
+                            <th scope="col">Error</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {#for contentItem in failedContentItems}
+                        {#for item in failedContentItems}
                             <tr>
-                                <td>{contentItem_count}</td>
-                                <td>{contentItem.id}</td>
-                                <td>{contentItem.title}</td>
-                                <td>{contentItem.processingStatus}</td>
-                                <td>{contentItem.formattedCreatedAt(dateTimeFormat)}</td>
-                                <td><a href="{contentItem.sourceUrl}" target="_blank">{contentItem.sourceUrl}</a></td>
+                                <td>{item_count}</td>
+                                <td>{item.id}</td>
+                                <td>
+                                    {#if !item.contentSource.topics.isEmpty()}
+                                        {item.contentSource.topics.iterator().next().name}
+                                    {#else}
+                                        N/A
+                                    {/if}
+                                </td>
+                                <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
+                                <td id="transcript-status-{item.id}">
+                                    {#if item.transcript}
+                                        <i class="fas fa-check-circle text-success" title="Transcript available"></i>
+                                    {#else}
+                                        <i class="fas fa-times-circle text-danger" title="Transcript missing"></i>
+                                    {/if}
+                                </td>
+                                <td>{item.processingStatus}</td>
+                                <td>{item.formattedPublishedAt}</td>
+                                <td>{item.formattedDuration}</td>
+                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td title="{item.errorMessage}">{item.errorCode}</td>
+                                <td>
+                                    {#if !item.transcript}
+                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    {/if}
+                                </td>
                             </tr>
                         {/for}
                     </tbody>

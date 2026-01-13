@@ -18,3 +18,11 @@
     text-decoration: line-through;
     color: gray;
 }
+
+.text-success {
+    color: var(--pico-success, #43a047); /* Fallback to a green color */
+}
+
+.text-danger {
+    color: var(--pico-del-color, #d32f2f); /* Fallback to a red color */
+}

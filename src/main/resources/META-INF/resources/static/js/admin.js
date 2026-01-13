@@ -57,9 +57,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
     }
 
+    const fetchTranscriptButtons = document.querySelectorAll('.fetch-transcript-btn');
+    fetchTranscriptButtons.forEach(button => {
+        button.addEventListener('click', async function () {
+            const contentItemId = this.getAttribute('data-id');
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = 'Fetching...';
+
+            try {
+                const response = await fetch(`/api/v1/admin/content-items/${contentItemId}/fetch-transcript`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok) {
+                    const transcriptCell = document.querySelector(`#transcript-status-${contentItemId}`);
+                    if (transcriptCell) {
+                        transcriptCell.innerHTML = '<i class="fas fa-check-circle text-success" title="Transcript available"></i>';
+                    }
+                    this.textContent = 'Success!';
+                    setTimeout(() => {
+                        this.style.display = 'none'; // Hide button on success
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    displayFlashMessage(`Error: ${errorData.message || 'Unknown error'}`, 'danger');
+                    this.textContent = 'Failed';
+                    setTimeout(() => {
+                        this.disabled = false;
+                        this.textContent = originalText;
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error fetching transcript:', error);
+                displayFlashMessage('A network error occurred while fetching the transcript.', 'danger');
+                this.disabled = false;
+                this.textContent = originalText;
+            }
+        });
+    });
+
     function displayFlashMessage(message, type) {
         const mainElement = document.querySelector('main.container');
         if (!mainElement) return;
+
+        // Remove any existing flash messages
+        const existingAlert = mainElement.querySelector('.alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
 
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type}`;
