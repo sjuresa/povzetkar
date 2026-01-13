@@ -36,8 +36,7 @@ public class ContentItemService {
             return FetchTranscriptResult.NOT_FOUND;
         }
 
-        ContentItem contentItem = optionalContentItem.get();
-        if (!(contentItem instanceof YouTubeVideo video)) {
+        if (!(optionalContentItem.get() instanceof YouTubeVideo video)) {
             Log.warnf("Content item with ID %d is not a YouTube video.", contentItemId);
             return FetchTranscriptResult.NOT_A_VIDEO;
         }
@@ -52,20 +51,21 @@ public class ContentItemService {
                 Log.infof("Successfully fetched transcript for video ID %s.", video.videoId);
                 return FetchTranscriptResult.SUCCESS;
             } else {
-                video.processingStatus = ProcessingStatus.FAILED;
-                video.errorCode = "TRANSCRIPT_UNAVAILABLE";
-                video.errorMessage = "Transcript is not available for this video.";
-                video.persist();
+                updateVideoAsFailed(video, "TRANSCRIPT_UNAVAILABLE", "Transcript is not available for this video.");
                 Log.warnf("Transcript unavailable for video ID %s.", video.videoId);
                 return FetchTranscriptResult.TRANSCRIPT_UNAVAILABLE;
             }
         } catch (Exception e) {
+            updateVideoAsFailed(video, "TRANSCRIPT_FETCH_ERROR", e.getMessage());
             Log.errorf(e, "Error fetching transcript for video ID %s.", video.videoId);
-            video.processingStatus = ProcessingStatus.FAILED;
-            video.errorCode = "TRANSCRIPT_FETCH_ERROR";
-            video.errorMessage = e.getMessage();
-            video.persist();
             return FetchTranscriptResult.ERROR;
         }
+    }
+
+    private void updateVideoAsFailed(YouTubeVideo video, String errorCode, String errorMessage) {
+        video.processingStatus = ProcessingStatus.FAILED;
+        video.errorCode = errorCode;
+        video.errorMessage = errorMessage;
+        video.persist();
     }
 }
