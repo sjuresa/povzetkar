@@ -69,6 +69,7 @@
                             <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
+                            <th scope="col">Created At</th>
                             <th scope="col">Duration</th>
                             <th scope="col">Actions</th>
                         </tr>
@@ -89,6 +90,7 @@
                                 </td>
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
+                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>
                                     {#if !item.transcript}
@@ -118,6 +120,7 @@
                             <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
+                            <th scope="col">Created At</th>
                             <th scope="col">Duration</th>
                             <th scope="col">Summary</th>
                         </tr>
@@ -138,6 +141,7 @@
                                 </td>
                                 <td>{summary.contentItem.processingStatus}</td>
                                 <td>{summary.contentItem.formattedPublishedAt}</td>
+                                <td>{summary.contentItem.formattedCreatedAt(dateTimeFormat)}</td>
                                 <td>{summary.contentItem.formattedDuration}</td>
                                 <td><a href="/ui/summaries/{summary.id}" target="_blank">View Summary</a></td>
                             </tr>
@@ -195,6 +199,8 @@
                             <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Created At</th>
                             <th scope="col">Error</th>
                             <th scope="col">Actions</th>
                         </tr>
@@ -215,6 +221,8 @@
                                 </td>
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
+                                <td>{item.formattedDuration}</td>
+                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
                                     <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
