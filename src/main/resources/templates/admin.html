@@ -89,9 +89,9 @@
                                 <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
                                 <td id="transcript-status-{item.id}">
                                     {#if item.transcript}
-                                        <i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>
+                                        <i class="fas fa-check-circle text-success" title="Transcript available"></i>
                                     {#else}
-                                        <i class="fas fa-times-circle" style="color: red;" title="Transcript missing"></i>
+                                        <i class="fas fa-times-circle text-danger" title="Transcript missing"></i>
                                     {/if}
                                 </td>
                                 <td>{item.processingStatus}</td>
@@ -146,9 +146,9 @@
                                 <td><a href="{summary.contentItem.sourceUrl}" target="_blank">{summary.contentItem.title}</a></td>
                                 <td id="transcript-status-{summary.contentItem.id}">
                                     {#if summary.contentItem.transcript}
-                                        <i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>
+                                        <i class="fas fa-check-circle text-success" title="Transcript available"></i>
                                     {#else}
-                                        <i class="fas fa-times-circle" style="color: red;" title="Transcript missing"></i>
+                                        <i class="fas fa-times-circle text-danger" title="Transcript missing"></i>
                                     {/if}
                                 </td>
                                 <td>{summary.contentItem.processingStatus}</td>
@@ -232,9 +232,9 @@
                                 <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
                                 <td id="transcript-status-{item.id}">
                                     {#if item.transcript}
-                                        <i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>
+                                        <i class="fas fa-check-circle text-success" title="Transcript available"></i>
                                     {#else}
-                                        <i class="fas fa-times-circle" style="color: red;" title="Transcript missing"></i>
+                                        <i class="fas fa-times-circle text-danger" title="Transcript missing"></i>
                                     {/if}
                                 </td>
                                 <td>{item.processingStatus}</td>

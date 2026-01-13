@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     const transcriptCell = document.querySelector(`#transcript-status-${contentItemId}`);
                     if (transcriptCell) {
-                        transcriptCell.innerHTML = '<i class="fas fa-check-circle" style="color: green;" title="Transcript available"></i>';
+                        transcriptCell.innerHTML = '<i class="fas fa-check-circle text-success" title="Transcript available"></i>';
                     }
                     this.textContent = 'Success!';
                     setTimeout(() => {
