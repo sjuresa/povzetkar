@@ -105,33 +105,35 @@ public class AdminResource {
         }
 
         ContentItemService.FetchTranscriptResult result = contentItemService.fetchTranscript(contentItemId);
+
+        final int statusCode;
+        final String message;
+
         switch (result) {
-            case SUCCESS:
-                context.response()
-                        .setStatusCode(200)
-                        .end(new JsonObject().put("message", "Transcript fetched successfully.").encode());
-                break;
-            case NOT_FOUND:
-                context.response()
-                        .setStatusCode(404)
-                        .end(new JsonObject().put("message", "Content item not found.").encode());
-                break;
-            case NOT_A_VIDEO:
-                context.response()
-                        .setStatusCode(400)
-                        .end(new JsonObject().put("message", "Content item is not a YouTube video.").encode());
-                break;
-            case TRANSCRIPT_UNAVAILABLE:
-                context.response()
-                        .setStatusCode(422)
-                        .end(new JsonObject().put("message", "Transcript is unavailable for this video.").encode());
-                break;
-            case ERROR:
-            default:
-                context.response()
-                        .setStatusCode(500)
-                        .end(new JsonObject().put("message", "Failed to fetch transcript due to an internal server error.").encode());
-                break;
+            case SUCCESS -> {
+                statusCode = 200;
+                message = "Transcript fetched successfully.";
+            }
+            case NOT_FOUND -> {
+                statusCode = 404;
+                message = "Content item not found.";
+            }
+            case NOT_A_VIDEO -> {
+                statusCode = 400;
+                message = "Content item is not a YouTube video.";
+            }
+            case TRANSCRIPT_UNAVAILABLE -> {
+                statusCode = 422;
+                message = "Transcript is unavailable for this video.";
+            }
+            default -> { // Handles ERROR and any other unhandled enum values
+                statusCode = 500;
+                message = "Failed to fetch transcript due to an internal server error.";
+            }
         }
+
+        context.response()
+                .setStatusCode(statusCode)
+                .end(new JsonObject().put("message", message).encode());
     }
 }
