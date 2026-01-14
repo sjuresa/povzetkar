@@ -20,7 +20,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 *   **Centralized Date/Time Formatting Service:** Create a dedicated service for date/time formatting to avoid adding helper methods to every model class.
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
-*   **Refactor Blocking Code in Reactive Chains [Partially Complete]:** A significant portion of this was completed in v0.6.2 with the introduction of the `JustInTimeSummarizationScheduler`. A full code review should still be conducted to identify any other remaining instances of blocking code in reactive pipelines.
+*   **Refactor Blocking Code in Reactive Chains:** A significant portion of this was completed in v0.6.2 with the introduction of the `JustInTimeSummarizationScheduler`. A full code review should still be conducted to identify any other remaining instances of blocking code in reactive pipelines.
 *   **Create a Testing Guide:** Document best practices for Quarkus integration testing, including transactional patterns, mocking strategies for Panache entities vs. external services, and how to handle reactive code. This will help prevent the kind of trial-and-error debugging experienced during the v0.6.2 development cycle.
     *   **Addendum (v0.7.0):** The guide must include a section on dependency management for test libraries. It should emphasize letting the Quarkus BOM manage versions for `JUnit`, `Mockito`, etc., to prevent classpath conflicts (`NoSuchMethodError`) during framework upgrades.
 *   **Improve Test Suite Resilience to Logging Changes:** The test suite proved brittle to changes in logging messages. Mocks that rely on specific string formats for `callDescription` should be updated to use `anyString()` to avoid test failures from minor logging improvements.
@@ -29,4 +29,4 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### Orchestration & Briefing Generation
 
-*   **Use a Request Object for Orchestration:** The `OrchestrationManager.runOrchestrationManually` method signature is growing (currently 5 parameters). Refactor this to accept a dedicated `OrchestrationRequest` data object to improve readability and make it easier to add more granular options in the future without breaking the method signature.
+*   **Use a Request Object for Orchestration:** The `OrchestrationManager.runOrchestrationManually` method signature is growing unwieldy (currently 5+ parameters, with more added in v0.7.0). Refactor this to accept a dedicated `OrchestrationRequest` data object. This will improve readability, make the API more extensible, and prevent future breaking changes to the method signature as more granular options are added.

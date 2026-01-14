@@ -1,10 +1,11 @@
 # Project Povzetkar: Development Roadmap
 
-**Version:** 1.6
+**Version:** 1.7
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.7     | January 13, 2026   | Povzetkar AI | Marked v0.7 as complete.                                                                                                                                                 |
 | 1.6     | January 7, 2026    | Povzetkar AI | Redefined v0.7 scope to "Operational Excellence & Technical Modernization" based on planning. Shifted subsequent versions. Created new v0.9 for Advanced GenAI features. |
 | 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                                     |
 | 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                      |
@@ -89,6 +90,8 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.7: Operational Excellence & Technical Modernization
 
 **Goal:** Mature the platform from a "working prototype" to a robust, observable, and manageable system. This version focuses on operational tools (Topic management, Logging), recovering from failure modes (PENDING state), and updating to **Quarkus 3.27.x LTS**.
+
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Technical Update:** Update the project to Quarkus 3.27.x LTS.

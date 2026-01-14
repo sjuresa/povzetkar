@@ -1,14 +1,15 @@
 # Povzetkar Runbook
 
-**Version:** 1.4
+**Version:** 1.5
 
 ## Revision History
-| Version | Date               | Author       | Changes                                                             |
-|---------|--------------------|--------------|---------------------------------------------------------------------|
-| 1.4     | November 1, 2025   | Povzetkar AI | Updated for v0.6: removed legacy app, simplified run instructions.  |
-| 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                   |
-| 1.1     | September 17, 2025 | Povzetkar AI | Added instructions for verifying the pgvector extension.            |
-| 1.0     | August 16, 2025    | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project. |
+| Version | Date               | Author       | Changes                                                                 |
+|---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 1.5     | January 13, 2026   | Povzetkar AI | Updated manual orchestration instructions for v0.7.0 granular controls. |
+| 1.4     | November 1, 2025   | Povzetkar AI | Updated for v0.6: removed legacy app, simplified run instructions.      |
+| 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                       |
+| 1.1     | September 17, 2025 | Povzetkar AI | Added instructions for verifying the pgvector extension.                |
+| 1.0     | August 16, 2025    | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project.     |
 
 ## 1. Introduction
 
@@ -148,31 +149,28 @@ To manually trigger the orchestration process for a specific date or a range of 
 *   **Endpoint:** `POST /api/v1/orchestrator/run`
 *   **Method:** `POST`
 *   **Query Parameters:**
-    *   `startDate` (Optional): The start date for orchestration in `YYYY-MM-DD` format. If omitted, defaults to the current date.
-    *   `endDate` (Optional): The end date for orchestration in `YYYY-MM-DD` format. If omitted, defaults to `startDate`.
+    *   `processPending` (boolean, default `false`): Re-process items in `PENDING` or `RETRY_LATER` state.
+    *   `summarize` (boolean, default `false`): Fetch and summarize new content.
+    *   `createBriefing` (boolean, default `false`): Generate briefings from existing summaries.
+    *   `startDate` (Optional): The start date for the `summarize` step in `YYYY-MM-DD` format. If omitted, defaults to the current date.
+    *   `endDate` (Optional): The end date for the `summarize` step in `YYYY-MM-DD` format. If omitted, defaults to `startDate`.
 *   **Examples using curl:**
-    *   **Run for current date (default):**
+    *   **Run all steps for current date:**
         ```bash
-        curl -X POST http://localhost:8080/api/v1/orchestrator/run
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?processPending=true&summarize=true&createBriefing=true"
         ```
-    *   **Run for a specific past date:**
+    *   **Only re-process failed/pending items:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=2025-09-15"
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?processPending=true"
         ```
-    *   **Run for a range of past dates:**
+    *   **Only summarize new content for a range of past dates:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=2025-09-10&endDate=2025-09-15"
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?summarize=true&startDate=2025-09-10&endDate=2025-09-15"
         ```
-    *   **Error: Future date:**
+    *   **Only generate new briefings:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=2025-10-01"
+        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?createBriefing=true"
         ```
-        (Will return HTTP 400 Bad Request)
-    *   **Error: Invalid date format:**
-        ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?startDate=01-01-2025"
-        ```
-        (Will return HTTP 400 Bad Request)
 
 #### 8.2.3 Verification
 
@@ -214,6 +212,10 @@ This section allows you to manually trigger the main orchestration process, opti
     *   **Start Date (optional):** Select a start date using the date picker. If left empty, it defaults to the current date.
     *   **End Date (optional):** Select an end date. If left empty, it defaults to the Start Date.
 *   **Action:** Click the "Run Orchestration" button.
+*   **Orchestration Options:**
+    *   **Process Retry/Pending Items:** Check to re-process items in `PENDING` or `RETRY_LATER` state.
+    *   **Generate Summaries:** Check to fetch and summarize new content for the selected date range.
+    *   **Generate Briefings:** Check to generate new briefings from existing summaries.
 *   **Confirmation:** A `window.confirm()` dialog will appear. Confirm to proceed.
 *   **Validation:** The system validates that:
     *   End Date is not before Start Date.
