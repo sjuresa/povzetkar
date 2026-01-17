@@ -4,6 +4,7 @@ import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -93,13 +94,20 @@ class YouTubeSummarizationStrategyTest {
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(null);
+            
+            // Mock ContentItem.findById to return our mockVideo so we can verify updates
+            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
 
             mockTransactions(tx);
 
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
-            PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.RETRY_LATER);
+            
+            // Verify status and error fields were updated on the mockVideo
+            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+            assertEquals(ContentProcessingError.TRANSCRIPT_UNAVAILABLE.name(), mockVideo.errorCode);
+            assertEquals("Transcript could not be retrieved.", mockVideo.errorMessage);
         }
     }
 
@@ -113,16 +121,25 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            
+            ApiException apiException = new ApiException(500, "AI Error", null);
             // Use anyString() to match the dynamic call description
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString()))
-                    .thenThrow(new ApiException(500, "AI Error", null));
+                    .thenThrow(apiException);
+
+            // Mock ContentItem.findById to return our mockVideo so we can verify updates
+            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
 
             mockTransactions(tx);
 
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
-            PanacheMock.verify(ContentItem.class).updateProcessingStatus(1L, ProcessingStatus.FAILED);
+            
+            // Verify status and error fields were updated on the mockVideo
+            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+            assertEquals(ContentProcessingError.UPSTREAM_SERVICE_ERROR.name(), mockVideo.errorCode);
+            assertEquals(apiException.getMessage(), mockVideo.errorMessage);
         }
     }
 
@@ -132,10 +149,10 @@ class YouTubeSummarizationStrategyTest {
              MockedConstruction<Summary> cons = mockConstruction(Summary.class, (mock, ctx) -> doNothing().when(mock).persist())) {
 
             PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
+            PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo instead of ContentItem
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
@@ -147,6 +164,8 @@ class YouTubeSummarizationStrategyTest {
 
             assertTrue(result);
             assertEquals(ProcessingStatus.COMPLETED, mockVideo.processingStatus);
+            assertNull(mockVideo.errorCode);
+            assertNull(mockVideo.errorMessage);
 
             assertEquals(1, cons.constructed().size());
             verify(cons.constructed().getFirst()).persist();
@@ -157,10 +176,10 @@ class YouTubeSummarizationStrategyTest {
     void testSummarize_handlesPersistenceExceptionOnRaceCondition() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
             PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
+            PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
@@ -186,14 +205,18 @@ class YouTubeSummarizationStrategyTest {
     void testSummarize_handlesOtherPersistenceExceptionAsFailure() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
             PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
+            PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo
+            PanacheMock.mock(ContentItem.class); // Still need to mock ContentItem for updateProcessingStatus
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString())).thenReturn("Success");
+            
+            // Mock ContentItem.findById to return our mockVideo so we can verify updates
+            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
 
             TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
@@ -212,7 +235,11 @@ class YouTubeSummarizationStrategyTest {
 
             // Assert
             assertFalse(result, "Should return false for generic persistence exception");
-            PanacheMock.verify(ContentItem.class).updateProcessingStatus(mockVideo.id, ProcessingStatus.FAILED);
+            
+            // Verify status and error fields were updated on the mockVideo
+            assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
+            assertEquals(ContentProcessingError.UNKNOWN_ERROR.name(), mockVideo.errorCode);
+            assertEquals("Generic persistence error", mockVideo.errorMessage);
         }
     }
 }

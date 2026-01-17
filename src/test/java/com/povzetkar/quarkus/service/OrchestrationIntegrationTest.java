@@ -19,20 +19,22 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;    
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 class OrchestrationIntegrationTest {
 
     @ConfigProperty(name = "transcript.threshold.minutes")
     int transcriptThresholdMinutes;
+
+    @ConfigProperty(name = "povzetkar.orchestration.lock-timeout")
+    Duration lockTimeout;
 
     @Inject
     OrchestrationManager orchestrationManager;
@@ -272,7 +274,7 @@ class OrchestrationIntegrationTest {
     void testOrchestration_takesOverStaleLock() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        Instant staleLockTime = Instant.now().minus(15, ChronoUnit.MINUTES);
+        Instant staleLockTime = Instant.now().minus(lockTimeout).minus(Duration.ofMinutes(1));
 
         QuarkusTransaction.requiringNew().run(() -> {
             OrchestrationLock staleLock = new OrchestrationLock(orchestrationDate, staleLockTime);

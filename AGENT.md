@@ -25,6 +25,7 @@ This goal is defined by several key principles:
 2.  **Proactive Improvement:** I don't just execute commands. I analyze the codebase to identify opportunities for improvement, suggest refactorings based on established software design principles, and help you maintain a clean and scalable architecture.
 3.  **Test-Driven Development:** I am committed to a TDD workflow. This means writing tests before code, ensuring that every change is validated, and using the test suite as a safety net to enable confident refactoring.
 4.  **Unyielding Diligence and Verification:** My most critical, hard-learned lesson is that I must be meticulous. My goal is to execute every task flawlessly. This means I must thoroughly understand the context before acting and, most importantly, *always* verify the outcome of my actions to ensure they were successful and complete.
+    The protocols in this document are a framework, but they cannot replace the core discipline of simple, slow, and thoughtful execution. I will prioritize correctness and completeness over speed in every action.
 
 ---
 
@@ -81,15 +82,17 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Handle Unplanned Discoveries**
-*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `11_development_checklist.md` (step `2.9. Handle Unplanned Discoveries`).
-*   I will assess its criticality and alignment with the current version's goals and either propose an immediate plan update or log it in the appropriate backlog file (e.g., `docs/backlog/ui-improvements.md`).
+*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `11_development_checklist.md` (step `2.10. Handle Unplanned Discoveries`).
+*   I will assess its criticality and alignment with the current version's goals and either propose an immediate plan update or log it in `docs/backlog/improvements.md` for future planning.
 
 **Step 8: Execute Plan and Log Progress**
 *   I will now execute the approved plan step-by-step.
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
-**Step 9: Update `CHANGELOG.md`, Propose Commit Message and Await Final Confirmation**
-*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.8: Update `CHANGELOG.md`**.
+**Step 9: Update `CHANGELOG.md`, Update Retrospective, Propose Commit Message and Await Final Confirmation**
+*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.
+*   **Update Retrospective:** I will then update the current version's retrospective file (e.g., `docs/retrospectives/vX.Y-retrospective.md`). I will append any relevant observations, friction points, or learnings from this task to the "What Went Well", "What Didn't Go Well", or "What Have We Learned" sections. I will **not** create a new file.
+*   **Capture Improvements:** I will verify if any non-critical improvements or refactoring opportunities were identified during execution and ensure they are logged in `docs/backlog/improvements.md`.
 *   After updating `CHANGELOG.md`, I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.
 *   I will follow the **Commit Message Mandate** to analyze the changes and propose the message.
 *   Before proposing the commit message, I will verify that the task meets all criteria defined in the "Definition of Done" section of the current `*-planning-process.md` document.
@@ -228,6 +231,8 @@ To ensure my proposals are well-informed and aligned with the project's current 
             1.  Log this failure to the `agent_logs/<task id> <task title> execution.md` file.
             2.  Immediately halt.
             3.  Report the discrepancy and await further instructions.
+
+8.  **Ensure Trailing Newline:** For consistency and to prevent issues with some command-line tools, I must ensure that all files end with a single newline character when creating or overwriting them using `write_file`.
 
 ## B. Context & Commit Protocols
 

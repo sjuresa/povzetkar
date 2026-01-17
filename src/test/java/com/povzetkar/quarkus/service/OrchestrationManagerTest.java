@@ -20,6 +20,8 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
 import java.time.Instant;
@@ -98,6 +100,7 @@ class OrchestrationManagerTest {
         Topic topic = new Topic();
         topic.name = "Test Topic";
         topic.user = user;
+        topic.enabled = true;
         return topic;
     }
 
@@ -378,7 +381,7 @@ class OrchestrationManagerTest {
         LocalDate futureDate = LocalDate.now().plusDays(1);
 
         // When / Then
-        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(futureDate, null).await().indefinitely(), "Orchestration cannot be run for future dates.");
+        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(futureDate, null), "Orchestration cannot be run for future dates.");
     }
 
     @Test
@@ -388,7 +391,7 @@ class OrchestrationManagerTest {
         LocalDate endDate = LocalDate.now().minusDays(5);
 
         // When / Then
-        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely(), "Start date cannot be after end date.");
+        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(startDate, endDate), "Start date cannot be after end date.");
     }
 
     @Test
@@ -402,7 +405,7 @@ class OrchestrationManagerTest {
         topic.persist();
         ContentSource contentSource = setupContentSource();
         contentSource.persist(); // Persist contentSource in the main transaction
-        contentSource.flush(); // Ensure contentSource is flushed
+        ContentSource.flush(); // Ensure contentSource is flushed
         topic.contentSources.add(contentSource);
         topic.persist();
 
@@ -422,15 +425,15 @@ class OrchestrationManagerTest {
         verify(orchestrationLockService, never()).releaseLock(orchestrationDate);
     }
 
-    @Test
     @Transactional
-    void testRunOrchestration_ReprocessesRetryLaterItems() {
+    @ParameterizedTest
+    @EnumSource(value = ProcessingStatus.class, names = {"RETRY_LATER", "PENDING"})
+    void testRunOrchestration_ReprocessesStuckItems(ProcessingStatus initialStatus) {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
 
-        // Setup all test data within a single new transaction to ensure it's committed and visible
-        // to the transactions started by the application code under test.
-        final ContentItem retryItem = QuarkusTransaction.requiringNew().call(() -> {
+        // Setup all test data within a single new transaction
+        final ContentItem stuckItem = QuarkusTransaction.requiringNew().call(() -> {
             User user = setupUser();
             user.persist();
 
@@ -443,12 +446,12 @@ class OrchestrationManagerTest {
             topic.contentSources.add(contentSource);
 
             ContentItem item = new ContentItem();
-            item.sourceUrl = "http://example.com/retry";
-            item.rawContent = "raw content for retry";
-            item.title = "Retry Item Title";
+            item.sourceUrl = "http://example.com/" + initialStatus.name().toLowerCase();
+            item.rawContent = "raw content for " + initialStatus.name();
+            item.title = initialStatus.name() + " Item Title";
             item.publishedAt = Instant.now();
             item.contentSource = contentSource;
-            item.processingStatus = ProcessingStatus.RETRY_LATER;
+            item.processingStatus = initialStatus; // Simulate stuck item
             item.persist();
             return item;
         });
@@ -485,15 +488,210 @@ class OrchestrationManagerTest {
         // Clear the persistence context to ensure we load the latest state from the database
         ContentItem.getEntityManager().clear();
 
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(retryItem), orchestrationDate);
+        // Verify that the scheduler was called with the stuck item
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(stuckItem), orchestrationDate);
 
         // Verify ContentItem status
-        ContentItem updatedRetryItem = ContentItem.findById(retryItem.id);
-        assertEquals(ProcessingStatus.COMPLETED, updatedRetryItem.processingStatus);
+        ContentItem updatedItem = ContentItem.findById(stuckItem.id);
+        assertEquals(ProcessingStatus.COMPLETED, updatedItem.processingStatus);
 
         // Verify Summary creation
-        List<Summary> summaries = Summary.list("contentItem", updatedRetryItem);
+        List<Summary> summaries = Summary.list("contentItem", updatedItem);
         assertEquals(1, summaries.size());
-        assertEquals("Generated Summary for " + updatedRetryItem.title, summaries.getFirst().summaryText);
+        assertEquals("Generated Summary for " + updatedItem.title, summaries.getFirst().summaryText);
+    }
+
+    @Test
+    @Transactional
+    void testRunOrchestrationManually_skipsDisabledTopics() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        User user = setupUser();
+        user.persist();
+        Topic topic = setupTopic(user);
+        topic.enabled = false; // Disable the topic
+        topic.persist();
+        ContentSource contentSource = setupContentSource();
+        contentSource.persist();
+        topic.contentSources.add(contentSource);
+        topic.persist();
+
+        // Mock external service calls
+        doNothing().when(orchestrationLockService).acquireLock(expectedDate);
+        doNothing().when(orchestrationLockService).releaseLock(expectedDate);
+
+        // When
+        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, true, true, true).await().indefinitely();
+
+        // Then
+        // Verify that topicProcessor was NOT called
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        
+        // Verify lock was acquired and released
+        verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
+        verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
+    }
+
+    @Test
+    @Transactional
+    void testRunOrchestrationManually_granularExecution_summarizeOnly() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        User user = setupUser();
+        user.persist();
+        Topic topic = setupTopic(user);
+        topic.persist();
+        ContentSource contentSource = setupContentSource();
+        contentSource.persist();
+        topic.contentSources.add(contentSource);
+        topic.persist();
+
+        // Mock external service calls
+        doNothing().when(orchestrationLockService).acquireLock(expectedDate);
+        doNothing().when(orchestrationLockService).releaseLock(expectedDate);
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        // When
+        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, false, true, false).await().indefinitely();
+
+        // Then
+        // Verify content orchestration ran
+        verify(topicProcessor, times(1)).processTopicUni(topic, expectedDate);
+        
+        // Verify briefing generation did NOT run (no briefings created)
+        assertEquals(0, Briefing.count());
+    }
+
+    @Test
+    void testRunOrchestrationManually_granularExecution_briefingOnly() { // Removed @Transactional
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        
+        // Setup entities within a transaction
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+            topic.persist();
+
+            ContentItem contentItem = new ContentItem();
+            contentItem.sourceUrl = "http://example.com/1";
+            contentItem.rawContent = "raw content";
+            contentItem.title = "Test Content Item Title";
+            contentItem.publishedAt = Instant.now();
+            contentItem.contentSource = contentSource;
+            contentItem.processingStatus = ProcessingStatus.COMPLETED;
+            contentItem.persist();
+
+            Summary summary = new Summary("Test Summary", contentItem, expectedDate);
+            summary.persist();
+        });
+
+        // Mock VideoSummaryService for DefaultBriefingGenerator
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+                .thenReturn("Generated Meta-summary");
+
+        // When
+        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, false, false, true).await().indefinitely();
+
+        // Then
+        // Verify content orchestration did NOT run
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        
+        // Verify briefing generation ran
+        assertEquals(1, Briefing.count());
+    }
+
+    @Test
+    @Transactional
+    void testRunOrchestrationManually_granularExecution_pendingOnly() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        
+        // Setup entities
+        User user = setupUser();
+        user.persist();
+        Topic topic = setupTopic(user);
+        topic.persist();
+        ContentSource contentSource = setupContentSource();
+        contentSource.persist();
+        topic.contentSources.add(contentSource);
+        topic.persist();
+        
+        ContentItem item = new ContentItem();
+        item.sourceUrl = "http://example.com/pending";
+        item.rawContent = "raw content";
+        item.title = "Pending Item";
+        item.publishedAt = Instant.now();
+        item.contentSource = contentSource;
+        item.processingStatus = ProcessingStatus.PENDING;
+        item.persist();
+
+        // Mock external service calls
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        // When
+        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, true, false, false).await().indefinitely();
+
+        // Then
+        // Verify pending processing ran
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(item), expectedDate);
+        
+        // Verify content orchestration did NOT run
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        
+        // Verify briefing generation did NOT run
+        assertEquals(0, Briefing.count());
+    }
+
+    @Test
+    @Transactional
+    void testRunOrchestration_IgnoresStuckItemsForDisabledTopics() {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+
+        // Setup a disabled topic with a pending item
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+
+            Topic disabledTopic = setupTopic(user);
+            disabledTopic.enabled = false;
+            disabledTopic.persist();
+
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+
+            disabledTopic.contentSources.add(contentSource);
+
+            ContentItem item = new ContentItem();
+            item.sourceUrl = "http://example.com/pending_disabled";
+            item.rawContent = "raw content";
+            item.title = "Pending Item on Disabled Topic";
+            item.publishedAt = Instant.now();
+            item.contentSource = contentSource;
+            item.processingStatus = ProcessingStatus.PENDING;
+            item.persist();
+        });
+
+        doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
+        doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        // When
+        orchestrationManager.runOrchestrationScheduled().await().indefinitely();
+
+        // Then
+        // Verify that the scheduler was NOT called because the topic is disabled
+        verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), any(LocalDate.class));
     }
 }

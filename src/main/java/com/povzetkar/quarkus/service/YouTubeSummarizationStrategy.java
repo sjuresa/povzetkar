@@ -4,6 +4,7 @@ import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -42,56 +43,103 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
     public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
         YouTubeVideo video = (YouTubeVideo) item;
 
-        boolean alreadySummarized = QuarkusTransaction.requiringNew().call(() -> Summary.findByContentId(video.id) != null);
-        if (alreadySummarized) {
+        if (isAlreadySummarized(video.id)) {
             return true;
         }
 
         Content content = contentCreationService.createContentForVideo(video);
         if (content == null) {
-            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
+            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript could not be retrieved.");
             return false;
         }
 
         try {
-            logger.info("Generating summary for video: {} (ID: {})", video.title, video.id);
-            String callDescription = String.format("video summary for '%s' (ID: %d)", video.title, video.id);
-            String summaryText = videoSummaryService.generateContent(client, content, callDescription);
-            
-            QuarkusTransaction.requiringNew().run(() -> {
-                ContentItem attachedItem = ContentItem.findById(video.id);
-                if (attachedItem != null) {
-                    Summary summary = new Summary(summaryText, attachedItem, orchestrationDate);
-                    summary.persist();
-                    attachedItem.processingStatus = ProcessingStatus.COMPLETED;
-                }
-            });
+            String summaryText = generateSummary(client, video, content);
+            persistSummary(video, summaryText, orchestrationDate);
             logger.info("Successfully generated and persisted summary for video: {} (ID: {})", video.title, video.id);
             return true;
         } catch (PersistenceException e) {
-            if (e.getCause() instanceof ConstraintViolationException) {
-                logger.info("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
-                return true; // Treat as success as the summary likely exists now.
-            } else {
-                logger.error("Persistence error while creating summary for video: {}.", video.sourceUrl, e);
-                updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
-                return false;
-            }
+            return handlePersistenceException(video, e);
         } catch (ApiException e) {
-            if (e.code() == 429) {
-                logger.warn("Rate limit exceeded (429) for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", video.title, video.id, e.getMessage());
-                updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER);
+            return handleApiException(video, e);
+        }
+    }
+
+    private boolean isAlreadySummarized(Long videoId) {
+        return QuarkusTransaction.requiringNew().call(() -> Summary.findByContentId(videoId) != null);
+    }
+
+    private String generateSummary(GenAiClient client, YouTubeVideo video, Content content) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Generating summary for video: {} (ID: {}, Duration: {}, URL: {})", video.title, video.id, video.formattedDuration(), video.sourceUrl);
+        }
+        String callDescription = String.format("video summary for '%s' (ID: %d)", video.title, video.id);
+        return videoSummaryService.generateContent(client, content, callDescription);
+    }
+
+    private void persistSummary(YouTubeVideo video, String summaryText, LocalDate orchestrationDate) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            YouTubeVideo attachedVideo = YouTubeVideo.findById(video.id);
+            if (attachedVideo != null) {
+                // Explicitly copy the transcript from the detached object to the managed entity
+                attachedVideo.transcript = video.transcript;
+
+                Summary summary = new Summary(summaryText, attachedVideo, orchestrationDate);
+                summary.persist();
+                attachedVideo.processingStatus = ProcessingStatus.COMPLETED;
+                // Clear any previous errors on success
+                attachedVideo.errorCode = null;
+                attachedVideo.errorMessage = null;
             } else {
-                logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
-                updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED);
+                logger.warn("Could not find YouTubeVideo with id {} to persist summary. It may have been deleted mid-process.", video.id);
             }
+        });
+    }
+
+    private boolean handlePersistenceException(YouTubeVideo video, PersistenceException e) {
+        if (e.getCause() instanceof ConstraintViolationException) {
+            logger.info("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
+            return true; // Treat as success as the summary likely exists now.
+        } else {
+            logger.error("Persistence error while creating summary for video: {}.", video.sourceUrl, e);
+            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED, ContentProcessingError.UNKNOWN_ERROR, e.getMessage());
             return false;
         }
     }
 
-    private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status) {
-        QuarkusTransaction.requiringNew().run(() ->
-                ContentItem.updateProcessingStatus(videoId, status)
-        );
+    private boolean handleApiException(YouTubeVideo video, ApiException e) {
+        ContentProcessingError error;
+
+        if (e.code() == 429) {
+            error = ContentProcessingError.RATE_LIMIT_EXCEEDED;
+        } else if (e.code() >= 500) {
+            error = ContentProcessingError.UPSTREAM_SERVICE_ERROR;
+        } else {
+            error = ContentProcessingError.UNKNOWN_ERROR;
+        }
+
+        ProcessingStatus status = error.isRetriable() ? ProcessingStatus.RETRY_LATER : ProcessingStatus.FAILED;
+
+        if (error.isRetriable()) {
+            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
+        } else {
+            logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
+        }
+        
+        updateStatusInNewTransaction(video.id, status, error, e.getMessage());
+        return false;
+    }
+
+    private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status, ContentProcessingError errorCode, String errorMessage) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            ContentItem item = ContentItem.findById(videoId);
+            if (item != null) {
+                item.processingStatus = status;
+                if (errorCode != null) {
+                    item.errorCode = errorCode.name();
+                    item.errorMessage = errorMessage;
+                }
+            }
+        });
     }
 }
