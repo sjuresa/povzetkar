@@ -7,6 +7,7 @@ import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
+import com.povzetkar.quarkus.ui.util.WebUtils;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
@@ -19,6 +20,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ApplicationScoped
 public class AdminResource {
@@ -93,16 +95,12 @@ public class AdminResource {
     @Route(path = "/api/v1/admin/content-items/:id/fetch-transcript", methods = Route.HttpMethod.POST)
     @Blocking
     public void fetchTranscript(RoutingContext context) {
-        String idParam = context.pathParam("id");
-        long contentItemId;
-        try {
-            contentItemId = Long.parseLong(idParam);
-        } catch (NumberFormatException _) {
-            context.response()
-                    .setStatusCode(400)
-                    .end(new JsonObject().put("message", "Invalid content item ID format.").encode());
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
+                msg -> context.response().setStatusCode(400).end(new JsonObject().put("message", msg).encode()));
+        if (idOptional.isEmpty()) {
             return;
         }
+        long contentItemId = idOptional.get();
 
         ContentItemService.FetchTranscriptResult result = contentItemService.fetchTranscript(contentItemId);
 
