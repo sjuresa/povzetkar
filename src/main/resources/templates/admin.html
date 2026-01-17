@@ -66,6 +66,7 @@
                             <th scope="col">ID</th>
                             <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Author</th>
                             <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
@@ -81,12 +82,15 @@
                                 <td>{item.id}</td>
                                 <td>
                                     {#if !item.contentSource.topics.isEmpty()}
-                                        {item.contentSource.topics.iterator().next().name}
+                                        {#for topic in item.contentSource.topics}
+                                            {topic.name}{#if topic_hasNext}, {/if}
+                                        {/for}
                                     {#else}
                                         N/A
                                     {/if}
                                 </td>
                                 <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
+                                <td>{item.authorName.or('N/A')}</td>
                                 <td id="transcript-status-{item.id}">
                                     {#if item.transcript}
                                         <i class="fas fa-check-circle text-success" title="Transcript available"></i>
@@ -123,6 +127,7 @@
                             <th scope="col">ID</th>
                             <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Author</th>
                             <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
@@ -138,12 +143,15 @@
                                 <td>{summary.contentItem.id}</td>
                                 <td>
                                     {#if !summary.contentItem.contentSource.topics.isEmpty()}
-                                        {summary.contentItem.contentSource.topics.iterator().next().name}
+                                        {#for topic in summary.contentItem.contentSource.topics}
+                                            {topic.name}{#if topic_hasNext}, {/if}
+                                        {/for}
                                     {#else}
                                         N/A
                                     {/if}
                                 </td>
                                 <td><a href="{summary.contentItem.sourceUrl}" target="_blank">{summary.contentItem.title}</a></td>
+                                <td>{summary.contentItem.authorName.or('N/A')}</td>
                                 <td id="transcript-status-{summary.contentItem.id}">
                                     {#if summary.contentItem.transcript}
                                         <i class="fas fa-check-circle text-success" title="Transcript available"></i>
@@ -208,6 +216,7 @@
                             <th scope="col">ID</th>
                             <th scope="col">Topic</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Author</th>
                             <th scope="col">Transcript</th>
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
@@ -224,12 +233,15 @@
                                 <td>{item.id}</td>
                                 <td>
                                     {#if !item.contentSource.topics.isEmpty()}
-                                        {item.contentSource.topics.iterator().next().name}
+                                        {#for topic in item.contentSource.topics}
+                                            {topic.name}{#if topic_hasNext}, {/if}
+                                        {/for}
                                     {#else}
                                         N/A
                                     {/if}
                                 </td>
                                 <td><a href="{item.sourceUrl}" target="_blank">{item.title}</a></td>
+                                <td>{item.authorName.or('N/A')}</td>
                                 <td id="transcript-status-{item.id}">
                                     {#if item.transcript}
                                         <i class="fas fa-check-circle text-success" title="Transcript available"></i>
