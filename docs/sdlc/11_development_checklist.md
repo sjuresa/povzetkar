@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 1.5     | January 17, 2026 | Povzetkar AI | Added Dependency Security Check (IntelliJ) and expanded documentation review scope.                                                 |
 | 1.4     | January 13, 2026 | Povzetkar AI | Restructured release phases for clarity (Finalization -> Release -> Post-Release).                                                  |
 | 1.3     | January 7, 2026  | Povzetkar AI | Added step 2.7 for continuous retrospective and backlog updates during task execution.                                              |
 | 1.2     | January 7, 2026  | Povzetkar AI | Added initialization of retrospective draft to Phase 1.                                                                             |
@@ -29,6 +30,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined to explicitly outline the test scenarios.
 - [ ] **1.7. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
 - [ ] **1.8. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
+- [ ] **1.9. Dependency Security Check:** Run the IntelliJ IDEA Package Checker to identify and address vulnerabilities in the current dependencies.
 
 ---
 
