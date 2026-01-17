@@ -113,5 +113,5 @@ This API provides full CRUD (Create, Read, Update, Delete) functionality for man
 *   **Status:** `Implemented`
 *   **Source:** `AdminResource.java`
 *   **Success Response (200 OK):**
-    *   **Body:** JSON object containing the updated transcript or status.
+*   **Body:** A JSON object with a confirmation message, e.g., `{"message": "Transcript fetched successfully."}`.
 *   **Error Response (404 Not Found):** If the content item does not exist.

@@ -228,7 +228,7 @@ Stores raw ingested content from various sources.
 - `channel_id` (varchar): The ID of the video's channel. `NULL`
 - `transcript` (text): The full transcript of the video. `NULL`
 - `error_message` (text): The last error message encountered during processing, if any. `NULL`
-- `error_code` (varchar): A specific error code (e.g., 'TRANSCRIPT_UNAVAILABLE', 'RATE_LIMIT'). `NULL`
+- `error_code` (varchar(50)): A specific error code (e.g., 'TRANSCRIPT_UNAVAILABLE', 'RATE_LIMIT'). `NULL`
 - `duration_seconds` (integer): Duration for video/audio content. `NULL`
 - `created_at` (timestamp): When the item was ingested. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
