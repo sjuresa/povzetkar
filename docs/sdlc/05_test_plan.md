@@ -4,6 +4,7 @@
 | Version | Date             | Author       | Changes                                                                       |
 |---------|------------------|--------------|-------------------------------------------------------------------------------|
 | 1.2     | January 17, 2026 | Povzetkar AI | Added dependency management strategy for test libraries (BOM).                |
+| 1.1     | January 6, 2026  | Povzetkar AI | Refined integration testing strategy to discourage internal mocking.          |
 | 1.0     | August 15, 2025  | Povzetkar AI | Initial version.                                                              |
 
 ## 1. Introduction
