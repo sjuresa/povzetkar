@@ -1,7 +1,7 @@
 # API and Endpoint Specification - Project Povzetkar
 
 **Version:** 1.0
-**Date:** November 13, 2025
+**Date:** January 17, 2026
 
 ## 1. Introduction
 
@@ -32,6 +32,9 @@ This API provides programmatic access to trigger core system processes.
 *   **Query Parameters:**
     *   `startDate` (string, optional): The start date for the orchestration range (format: `YYYY-MM-DD`).
     *   `endDate` (string, optional): The end date for the orchestration range (format: `YYYY-MM-DD`).
+    *   `processPending` (boolean, optional): If `true`, re-processes items in PENDING/RETRY_LATER state. Default: `false`.
+    *   `summarize` (boolean, optional): If `true`, fetches and summarizes new content. Default: `false`.
+    *   `createBriefing` (boolean, optional): If `true`, generates briefings from existing summaries. Default: `false`.
 *   **Success Response (202 Accepted):**
     *   Indicates that the orchestration process has been successfully started in the background.
     *   **Body:** `Orchestration process started.`
@@ -102,3 +105,13 @@ This API provides full CRUD (Create, Read, Update, Delete) functionality for man
 *   **Error Responses:**
     *   **400 Bad Request:** Returned if the `sourceTypeId` is invalid or not supported.
     *   **404 Not Found:** If details for the given identifier cannot be found on the platform.
+
+### 4.3. Admin API
+
+#### `POST /api/v1/admin/content-items/{id}/fetch-transcript`
+*   **Description:** Manually triggers the transcript retrieval process for a specific content item. Useful for retrying items that failed due to transient errors or missing transcripts.
+*   **Status:** `Implemented`
+*   **Source:** `AdminResource.java`
+*   **Success Response (200 OK):**
+    *   **Body:** JSON object containing the updated transcript or status.
+*   **Error Response (404 Not Found):** If the content item does not exist.

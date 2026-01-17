@@ -1,11 +1,9 @@
 # Test Plan - Project Povzetkar
 
-**Version:** 1.1
-
 ## Revision History
 | Version | Date             | Author       | Changes                                                                       |
 |---------|------------------|--------------|-------------------------------------------------------------------------------|
-| 1.1     | January 6, 2026  | Povzetkar AI | Refined integration testing strategy to discourage internal mocking.          |
+| 1.2     | January 17, 2026 | Povzetkar AI | Added dependency management strategy for test libraries (BOM).                |
 | 1.0     | August 15, 2025  | Povzetkar AI | Initial version.                                                              |
 
 ## 1. Introduction
@@ -26,6 +24,7 @@ Testing will cover all major components of the system:
 ### 3.1. Unit Testing
 - **Objective:** To verify the correctness of individual classes and methods in isolation.
 - **Tools:** JUnit 5, Mockito.
+- **Dependency Management:** Test libraries (JUnit, Mockito, etc.) must have their versions managed by the Quarkus BOM to prevent classpath conflicts (e.g., `NoSuchMethodError`). Explicit version overrides in `pom.xml` should be avoided unless strictly necessary.
 - **Scope:** All business logic in services, utility classes, and data models. External dependencies (like database connections or external APIs) will be mocked.
 - **Example:** A test for `VideoSummarizationService` would mock `YouTubeDataService` and `ProcessingStateService` to verify that the orchestration logic is correct.
 
