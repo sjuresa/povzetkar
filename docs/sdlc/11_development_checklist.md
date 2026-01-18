@@ -48,7 +48,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
     - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
     - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
-    - [ ] **QA Check:** Ensure explicit dependency versions in `pom.xml` do not conflict with the framework's BOM (Bill of Materials). *Note: Investigate `maven-enforcer-plugin` (dependencyConvergence) during Task POV-89 to automate this.*
+    - [ ] **QA Check:** Ensure explicit dependency versions in pom.xml do not conflict with the framework's BOM (Bill of Materials). *Note: Investigate maven-enforcer-plugin (e.g., dependencyConvergence, requireUpperBoundDeps) during Task POV-89 to automate this.*
     - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
 - [ ] **2.7. Update Retrospective & Backlog:**
