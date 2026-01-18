@@ -31,25 +31,25 @@ The application requires a `.env` file in the project root for database credenti
 `docker-compose.yml` uses these to configure the PostgreSQL container, and the Quarkus application is configured to use
 them for its database connection.
 
-```properties
-# For the PostgreSQL container (development)
-DB_USER=povzetkar
-DB_PASS=povzetkar
-DB_NAME=povzetkar
-# For the PostgreSQL container (testing)
-TEST_DB_USER=povzetkar_test
-TEST_DB_PASS=povzetkar_test
-TEST_DB_NAME=povzetkar_test
-# For the Quarkus application
-YOUTUBE_API_KEY=your_youtube_api_key_here
-GOOGLE_API_KEYS=your_google_api_keys_here
-```
+    ```properties
+    # For the PostgreSQL container (development)
+    DB_USER=povzetkar
+    DB_PASS=povzetkar
+    DB_NAME=povzetkar
+    # For the PostgreSQL container (testing)
+    TEST_DB_USER=povzetkar_test
+    TEST_DB_PASS=povzetkar_test
+    TEST_DB_NAME=povzetkar_test
+    # For the Quarkus application
+    YOUTUBE_API_KEY=your_youtube_api_key_here
+    GOOGLE_API_KEYS=your_google_api_keys_here
+    ```
 
-2. **Start the Database:**
-   This command starts the PostgreSQL database in a Docker container.
-   ```bash
-   docker compose up -d
-   ```
+2.  **Start the Database:**
+    This command starts the PostgreSQL database in a Docker container.
+    ```bash
+    docker compose up -d
+    ```
 
 ## 4. Resetting the Local Database
 
@@ -122,18 +122,18 @@ The application requires several environment variables to function correctly. Th
 
 **Required Environment Variables:**
 
-| Variable | Description | Example |
-| :--- | :--- | :--- |
-| `DB_KIND` | Database type | `postgresql` |
-| `DB_HOST` | Database host | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` |
-| `DB_PORT` | Database port | `5432` |
-| `DB_NAME` | Database name | `povzetkar` |
-| `DB_USER` | Database username | `povzetkar` |
-| `DB_PASS` | Database password | `povzetkar` |
-| `YOUTUBE_API_KEY` | YouTube Data API Key | `AIzaSy...` |
-| `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...` |
-| `GITHUB_USERNAME` | GitHub Username (for issue reporting) | `myuser` |
-| `GITHUB_PAT` | GitHub Personal Access Token | `ghp_...` |
+| Variable          | Description                             | Example                                                                |
+|:------------------|:----------------------------------------|:-----------------------------------------------------------------------|
+| `DB_KIND`         | Database type                           | `postgresql`                                                           |
+| `DB_HOST`         | Database host                           | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` |
+| `DB_PORT`         | Database port                           | `5432`                                                                 |
+| `DB_NAME`         | Database name                           | `povzetkar`                                                            |
+| `DB_USER`         | Database username                       | `your_db_user`                                                         |
+| `DB_PASS`         | Database password                       | `your_db_password`                                                     |
+| `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                            |
+| `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                            |
+| `GITHUB_USERNAME` | GitHub Username (for issue reporting)   | `myuser`                                                               |
+| `GITHUB_PAT`      | GitHub Personal Access Token            | `ghp_...`                                                              |
 
 **Docker Run Example:**
 
