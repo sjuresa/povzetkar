@@ -1,10 +1,11 @@
 # Povzetkar Runbook
 
-**Version:** 1.5
+**Version:** 1.6
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                                 |
 |---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 1.6     | January 18, 2026   | Povzetkar AI | Added instructions for containerized execution (Docker/Podman).         |
 | 1.5     | January 13, 2026   | Povzetkar AI | Updated manual orchestration instructions for v0.7.0 granular controls. |
 | 1.4     | November 1, 2025   | Povzetkar AI | Updated for v0.6: removed legacy app, simplified run instructions.      |
 | 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                       |
@@ -101,13 +102,86 @@ To run the test suite:
 ./mvnw test
 ```
 
-## 8. Application Usage
+## 8. Containerized Execution (Docker/Podman)
 
-### 8.1 Content Source Management
+The application can be packaged as a container image using Jib. This image is OCI-compliant and can be run with Docker or Podman.
+
+### 8.1 Building the Container Image
+
+To build the container image, run the following Maven command:
+
+```bash
+./mvnw clean package -Dquarkus.container-image.build=true
+```
+
+This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by default).
+
+### 8.2 Running the Container
+
+The application requires several environment variables to function correctly. These must be passed to the container at runtime.
+
+**Required Environment Variables:**
+
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `DB_KIND` | Database type | `postgresql` |
+| `DB_HOST` | Database host | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` |
+| `DB_PORT` | Database port | `5432` |
+| `DB_NAME` | Database name | `povzetkar` |
+| `DB_USER` | Database username | `povzetkar` |
+| `DB_PASS` | Database password | `povzetkar` |
+| `YOUTUBE_API_KEY` | YouTube Data API Key | `AIzaSy...` |
+| `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...` |
+| `GITHUB_USERNAME` | GitHub Username (for issue reporting) | `myuser` |
+| `GITHUB_PAT` | GitHub Personal Access Token | `ghp_...` |
+
+**Docker Run Example:**
+
+Assuming the database is running in a container named `povzetkar-db-dev` on the same network (e.g., `povzetkar_default` created by docker-compose):
+
+```bash
+docker run -it --rm \
+  --network povzetkar_default \
+  -e DB_KIND=postgresql \
+  -e DB_HOST=povzetkar-db-dev \
+  -e DB_PORT=5432 \
+  -e DB_NAME=povzetkar \
+  -e DB_USER=povzetkar \
+  -e DB_PASS=povzetkar \
+  -e YOUTUBE_API_KEY=your_key \
+  -e GOOGLE_API_KEYS=your_key \
+  -e GITHUB_USERNAME=your_user \
+  -e GITHUB_PAT=your_pat \
+  -p 8080:8080 \
+  si.jumis/povzetkar:latest
+```
+
+**Podman Run Example:**
+
+```bash
+podman run -it --rm \
+  --network povzetkar_default \
+  -e DB_KIND=postgresql \
+  -e DB_HOST=povzetkar-db-dev \
+  -e DB_PORT=5432 \
+  -e DB_NAME=povzetkar \
+  -e DB_USER=povzetkar \
+  -e DB_PASS=povzetkar \
+  -e YOUTUBE_API_KEY=your_key \
+  -e GOOGLE_API_KEYS=your_key \
+  -e GITHUB_USERNAME=your_user \
+  -e GITHUB_PAT=your_pat \
+  -p 8080:8080 \
+  si.jumis/povzetkar:latest
+```
+
+## 9. Application Usage
+
+### 9.1 Content Source Management
 
 The `ContentSourceDetailService` is responsible for enriching and refreshing details (like name, description, and subscriber count) for content sources in the database. This service can be triggered on-demand or runs on a schedule.
 
-#### 8.1.1 On-Demand Enrichment
+#### 9.1.1 On-Demand Enrichment
 
 To manually trigger the enrichment process for all content sources that are missing details:
 
@@ -118,7 +192,7 @@ To manually trigger the enrichment process for all content sources that are miss
     curl -X POST http://localhost:8080/api/v1/content-sources/enrich
     ```
 
-#### 8.1.2 Scheduled Refresh
+#### 9.1.2 Scheduled Refresh
 
 The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
 
@@ -128,11 +202,11 @@ The service is configured to periodically refresh content source details automat
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
-### 8.2 Orchestrator and Briefing Service
+### 9.2 Orchestrator and Briefing Service
 
 The `OrchestratorService` is responsible for the end-to-end process of fetching new content, summarizing it, and generating daily briefings for active users. This service runs on a schedule.
 
-#### 8.2.1 Scheduled Orchestration
+#### 9.2.1 Scheduled Orchestration
 
 The orchestration process is configured to run periodically. By default, it runs daily at midnight.
 
@@ -142,7 +216,7 @@ The orchestration process is configured to run periodically. By default, it runs
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
-#### 8.2.2 Manual Orchestration
+#### 9.2.2 Manual Orchestration
 
 To manually trigger the orchestration process for a specific date or a range of dates:
 
@@ -172,7 +246,7 @@ To manually trigger the orchestration process for a specific date or a range of 
         curl -X POST "http://localhost:8080/api/v1/orchestrator/run?createBriefing=true"
         ```
 
-#### 8.2.3 Verification
+#### 9.2.3 Verification
 
 To verify that the orchestrator is running and generating summaries and briefings:
 
@@ -188,15 +262,15 @@ To verify that the orchestrator is running and generating summaries and briefing
     SELECT * FROM briefings;
     ```
 
-### 8.3 Admin UI Page
+### 9.3 Admin UI Page
 
 The Admin UI page (`/ui/admin`) provides a user-friendly interface to trigger system-level actions and monitor the status of content processing and briefing generation.
 
-#### 8.3.1 Accessing the Admin UI
+#### 9.3.1 Accessing the Admin UI
 
 *   **URL:** `http://localhost:8080/ui/admin`
 
-#### 8.3.2 Triggering Content Source Enrichment
+#### 9.3.2 Triggering Content Source Enrichment
 
 This section allows you to manually initiate the process of enriching content sources.
 
@@ -204,7 +278,7 @@ This section allows you to manually initiate the process of enriching content so
 *   **Confirmation:** A `window.confirm()` dialog will appear. Confirm to proceed.
 *   **Feedback:** You will be redirected back to the Admin UI page with a success or error message.
 
-#### 8.3.3 Triggering Orchestration
+#### 9.3.3 Triggering Orchestration
 
 This section allows you to manually trigger the main orchestration process, optionally for a specific date range.
 
@@ -222,7 +296,7 @@ This section allows you to manually trigger the main orchestration process, opti
     *   Neither Start Date nor End Date are in the future.
 *   **Feedback:** You will be redirected back to the Admin UI page with a success or error message.
 
-#### 8.3.4 Monitoring History
+#### 9.3.4 Monitoring History
 
 The Admin UI page displays several tables for monitoring the application's activity:
 
