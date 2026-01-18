@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 1.6     | January 18, 2026 | Povzetkar AI | Added BOM alignment check to QA steps based on v0.7.0 retrospective.                                                                |
 | 1.5     | January 17, 2026 | Povzetkar AI | Added Dependency Security Check (IntelliJ) and expanded documentation review scope.                                                 |
 | 1.4     | January 13, 2026 | Povzetkar AI | Restructured release phases for clarity (Finalization -> Release -> Post-Release).                                                  |
 | 1.3     | January 7, 2026  | Povzetkar AI | Added step 2.7 for continuous retrospective and backlog updates during task execution.                                              |
@@ -47,6 +48,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
     - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
     - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
+    - [ ] **QA Check:** Ensure explicit dependency versions in `pom.xml` do not conflict with the framework's BOM (Bill of Materials).
     - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
 - [ ] **2.7. Update Retrospective & Backlog:**
