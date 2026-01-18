@@ -35,6 +35,7 @@ This API provides programmatic access to trigger core system processes.
     *   `processPending` (boolean, optional): If `true`, re-processes items in PENDING/RETRY_LATER state. Default: `false`.
     *   `summarize` (boolean, optional): If `true`, fetches and summarizes new content. Default: `false`.
     *   `createBriefing` (boolean, optional): If `true`, generates briefings from existing summaries. Default: `false`.
+    *   **Note:** If no flags (`processPending`, `summarize`, `createBriefing`) are set to `true`, no orchestration actions will be performed.
 *   **Success Response (202 Accepted):**
     *   Indicates that the orchestration process has been successfully started in the background.
     *   **Body:** `Orchestration process started.`
@@ -113,4 +114,8 @@ This API provides full CRUD (Create, Read, Update, Delete) functionality for man
 *   **Status:** `Implemented`
 *   **Source:** `AdminResource.java`
 *   **Success Response (200 OK):** A JSON object with a confirmation message, e.g., `{"message": "Transcript fetched successfully."}`.
-*   **Error Response (404 Not Found):** If the content item does not exist.
+*   **Error Responses:**
+    *   **400 Bad Request:** If the content item is not a YouTube video.
+    *   **404 Not Found:** If the content item does not exist.
+    *   **422 Unprocessable Entity:** If the transcript is unavailable for this video.
+    *   **500 Internal Server Error:** For any other unexpected failures.
