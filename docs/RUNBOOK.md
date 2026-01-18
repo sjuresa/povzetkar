@@ -132,8 +132,6 @@ The application requires several environment variables to function correctly. Th
 | `DB_PASS`         | Database password                       | `your_db_password`                                                     |
 | `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                            |
 | `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                            |
-| `GITHUB_USERNAME` | GitHub Username (for issue reporting)   | `myuser`                                                               |
-| `GITHUB_PAT`      | GitHub Personal Access Token            | `ghp_...`                                                              |
 
 **Docker Run Example:**
 
@@ -142,7 +140,7 @@ Assuming the database is running in a container named `povzetkar-db-dev` on the 
 ```bash
 docker run -it --rm \
   --network povzetkar_default \
-  --env-file .env.docker \
+  --env-file .env \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
@@ -152,7 +150,7 @@ docker run -it --rm \
 ```bash
 podman run -it --rm \
   --network povzetkar_default \
-  --env-file .env.docker \
+  --env-file .env \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
