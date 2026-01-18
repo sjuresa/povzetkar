@@ -142,16 +142,7 @@ Assuming the database is running in a container named `povzetkar-db-dev` on the 
 ```bash
 docker run -it --rm \
   --network povzetkar_default \
-  -e DB_KIND=postgresql \
-  -e DB_HOST=povzetkar-db-dev \
-  -e DB_PORT=5432 \
-  -e DB_NAME=povzetkar \
-  -e DB_USER=your_db_user \
-  -e DB_PASS=your_db_password \
-  -e YOUTUBE_API_KEY=your_key \
-  -e GOOGLE_API_KEYS=your_key \
-  -e GITHUB_USERNAME=your_user \
-  -e GITHUB_PAT=your_pat \
+  --env-file .env.docker \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
@@ -161,16 +152,7 @@ docker run -it --rm \
 ```bash
 podman run -it --rm \
   --network povzetkar_default \
-  -e DB_KIND=postgresql \
-  -e DB_HOST=povzetkar-db-dev \
-  -e DB_PORT=5432 \
-  -e DB_NAME=povzetkar \
-  -e DB_USER=your_db_user \
-  -e DB_PASS=your_db_password \
-  -e YOUTUBE_API_KEY=your_key \
-  -e GOOGLE_API_KEYS=your_key \
-  -e GITHUB_USERNAME=your_user \
-  -e GITHUB_PAT=your_pat \
+  --env-file .env.docker \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
