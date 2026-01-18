@@ -11,7 +11,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 ### UI/UX
 
 *   **Changelog/Roadmap in UI:** Add a new section to the UI to display the `CHANGELOG.md` and `docs/overview/roadmap.md` files, providing greater transparency to users.
-*   **Centralized Breadcrumb Management:** Explore a more automated or centralized way to manage breadcrumbs, potentially using annotations or a filter, to reduce boilerplate code in JAX-RS resources.
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
 *   **Standardize AJAX Form Submissions:** The custom JavaScript for the orchestration form is brittle. Refactor it into a more generic, reusable helper function or library to handle all AJAX-based form submissions consistently. This will make the client-side logic more robust and easier to maintain.

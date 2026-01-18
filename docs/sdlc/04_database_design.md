@@ -1,20 +1,19 @@
 # Database Design Document - Project Povzetkar
 
-**Version:** 1.8
-
 ## Revision History
 
-| Version | Date               | Author       | Changes                                                              |
-|---------|--------------------|--------------|----------------------------------------------------------------------|
+| Version | Date               | Author       | Changes                                                                                                                                                     |
+|---------|--------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.9     | January 17, 2026   | Povzetkar AI | Added `enabled` to `topics` and error tracking fields to `content_items` (v0.7.0).                                                                          |
 | 1.8     | November 1, 2025   | Povzetkar AI | Sync with V1 migration: added `users.username`, `orchestration_locks`, and `content_items` inheritance fields. Corrected `summaries.embedding` nullability. |
-| 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                          |
-| 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments. |
-| 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.              |
-| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant.                     |
-| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).                            |
-| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.                        |
-| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`.                     |
-| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.                              |
+| 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                                                                                                                 |
+| 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments.                                                                                        |
+| 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.                                                                                                     |
+| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant.                                                                                                            |
+| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).                                                                                                                   |
+| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.                                                                                                               |
+| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`.                                                                                                            |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.                                                                                                                     |
 
 ## 1. Introduction
 
@@ -193,6 +192,7 @@ A lookup table for content topics or categories, owned by a user.
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `user_id` (FK, bigint): References `users.id`. `NOT NULL`
 - `name` (varchar): The name of the topic (e.g., 'ai', 'crypto'). `NOT NULL`
+- `enabled` (boolean): Whether the topic is active for processing. `NOT NULL DEFAULT TRUE`
 - **Constraints**: `UNIQUE (user_id, name)`
 - `created_at` (timestamp): When the topic was created. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
@@ -227,6 +227,8 @@ Stores raw ingested content from various sources.
 - `author_name` (varchar): The name of the video's author. `NULL`
 - `channel_id` (varchar): The ID of the video's channel. `NULL`
 - `transcript` (text): The full transcript of the video. `NULL`
+- `error_message` (text): The last error message encountered during processing, if any. `NULL`
+- `error_code` (varchar(50)): A specific error code (e.g., 'TRANSCRIPT_UNAVAILABLE', 'RATE_LIMIT'). `NULL`
 - `duration_seconds` (integer): Duration for video/audio content. `NULL`
 - `created_at` (timestamp): When the item was ingested. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 

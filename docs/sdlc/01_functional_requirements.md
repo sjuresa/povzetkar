@@ -1,11 +1,10 @@
 # Functional Requirements Document (FRD) - Project Povzetkar
 
-**Version:** 1.2
-
 ## Revision History
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
+| 1.3     | January 17, 2026 | Povzetkar AI | Added requirements for topic management, granular orchestration, and error visibility (v0.7.0). |
 | 1.2     | January 6, 2026  | Povzetkar AI | Marked self-healing requirement as implemented (v0.6.2).                                        |
 | 1.1     | November 1, 2025 | Povzetkar AI | Synced with v0.6: marked stories as implemented, updated user roles, and refreshed terminology. |
 | 1.0     | August 15, 2025  | Povzetkar AI | Initial version of the functional requirements based on the project specification.              |
@@ -30,6 +29,7 @@ This section breaks down the system's functionality into user-centric stories.
 *   **(Future)** **As an Administrator, I want to** add a list of websites, blogs, and Reddit communities so the system can ingest articles and posts.
 *   **(Implemented)** **As a System, I want to** automatically fetch new content from all configured sources on a periodic basis.
 *   **(Implemented)** **As a System, I want to** generate a concise, accurate summary for every new piece of content.
+*   **(Implemented)** **As a System, I want to** capture and persist detailed error codes and messages when processing fails, enabling targeted troubleshooting.
 *   **(Implemented)** **As a System, I want to** automatically re-process content that failed due to transient errors so that the system can self-heal and ensure data completeness.
 *   **(Future)** **As a System, I want to** generate vector embeddings for all content and summaries to enable semantic search.
 
@@ -57,4 +57,7 @@ This section breaks down the system's functionality into user-centric stories.
 
 *   **(Implemented)** **As a User, I want to** navigate a simple web interface to select a topic to view the latest briefings.
 *   **(Implemented)** **As an Administrator, I want to** add, edit, and delete topics and manage their associated content sources through the web interface.
+*   **(Implemented)** **As an Administrator, I want to** enable or disable specific topics to control which content is actively processed without deleting the topic configuration.
 *   **(Implemented)** **As an Administrator, I want to** use a simple web interface to trigger system-level actions like content enrichment and orchestration.
+*   **(Implemented)** **As an Administrator, I want to** granularly trigger specific phases of the orchestration process (e.g., only processing pending items or only generating briefings).
+*   **(Implemented)** **As an Administrator, I want to** view specific error details for failed content items and manually trigger a retry for transcript fetching.

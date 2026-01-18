@@ -1,15 +1,14 @@
 # Development Methodology Comparison
 
-**Version:** 1.4
-
 ## Revision History
-| Version | Date               | Author       | Changes                                                                                                                                |
-|---------|--------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| 1.4     | January 6, 2026    | Povzetkar AI | Added "Codified Testing Patterns" to proposed improvements based on v0.6.2 retrospective.                                              |
-| 1.3     | November 1, 2025   | Povzetkar AI | Integrated adopted practices (Retrospectives, Value Stream Focus) into the core methodology. Section 7 now only contains proposed improvements. |
-| 1.2     | September 9, 2025  | Povzetkar AI | Refined Section 7 to clarify the adoption status of new practices.                                                                     |
-| 1.1     | September 1, 2025  | Povzetkar AI | Added section on adopted practices for improvement.                                                                                    |
-| 1.0     | September 1, 2025  | Povzetkar AI | Initial version of the methodology comparison.                                                                                         |
+| Version | Date              | Author       | Changes                                                                                                                                         |
+|---------|-------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.5     | January 17, 2026  | Povzetkar AI | Updated "Amplify Learning" section to reflect the adopted Project-Wide Documentation Review practice.                                           |
+| 1.4     | January 6, 2026   | Povzetkar AI | Added "Codified Testing Patterns" to proposed improvements based on v0.6.2 retrospective.                                                       |
+| 1.3     | November 1, 2025  | Povzetkar AI | Integrated adopted practices (Retrospectives, Value Stream Focus) into the core methodology. Section 7 now only contains proposed improvements. |
+| 1.2     | September 9, 2025 | Povzetkar AI | Refined Section 7 to clarify the adoption status of new practices.                                                                              |
+| 1.1     | September 1, 2025 | Povzetkar AI | Added section on adopted practices for improvement.                                                                                             |
+| 1.0     | September 1, 2025 | Povzetkar AI | Initial version of the methodology comparison.                                                                                                  |
 
 ## 1. Introduction
 
@@ -83,7 +82,9 @@ Extreme Programming is a highly disciplined methodology focused on technical pra
 Lean is less of a methodology and more of a guiding philosophy. Our process aligns well with its core principles.
 
 *   **Eliminate Waste:** Our decision to simplify the v0.5 migration script to a direct database write instead of building a throwaway API is a perfect example of eliminating waste (in this case, unnecessary, temporary code).
-*   **Amplify Learning:** The creation of `docs/versions/*-planning-process.md` documents is a direct implementation of this principle. We are documenting our decisions and learnings to inform future work.
+*   **Amplify Learning:** We have institutionalized this through two mechanisms:
+    1.  **Planning Documents:** Creating `docs/versions/*-planning-process.md` to capture rationale.
+    2.  **Project-Wide Documentation Review:** A mandatory phase at the end of every version (Phase 3.2 in the checklist) where we systematically review and refresh core documentation (`docs/sdlc`, `docs/analysis`, etc.) to prevent knowledge rot.
 *   **Decide as Late as Possible:** We have a high-level `roadmap.md` but make detailed, binding decisions only for the immediate version we are working on. This allows us to adapt as we learn more.
 *   **Build Integrity In:** Our strict adherence to TDD and automated verification steps ensures that quality is built into the process from the beginning, not added as an afterthought.
 *   **See the Whole:** During the planning phase for each new version (in `docs/versions/*-planning-process.md`), we explicitly consider how the planned tasks contribute to the overall project goals defined in `roadmap.md`. This ensures we maintain a long-term architectural vision and avoid local optimizations that harm the overall system.
