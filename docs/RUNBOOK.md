@@ -33,12 +33,12 @@ them for its database connection.
 
     ```properties
     # For the PostgreSQL container (development)
-    DB_USER=povzetkar
-    DB_PASS=povzetkar
+    DB_USER=your_db_user
+    DB_PASS=your_db_password
     DB_NAME=povzetkar
     # For the PostgreSQL container (testing)
-    TEST_DB_USER=povzetkar_test
-    TEST_DB_PASS=povzetkar_test
+    TEST_DB_USER=your_test_db_user
+    TEST_DB_PASS=your_test_db_password
     TEST_DB_NAME=povzetkar_test
     # For the Quarkus application
     YOUTUBE_API_KEY=your_youtube_api_key_here
@@ -146,8 +146,8 @@ docker run -it --rm \
   -e DB_HOST=povzetkar-db-dev \
   -e DB_PORT=5432 \
   -e DB_NAME=povzetkar \
-  -e DB_USER=povzetkar \
-  -e DB_PASS=povzetkar \
+  -e DB_USER=your_db_user \
+  -e DB_PASS=your_db_password \
   -e YOUTUBE_API_KEY=your_key \
   -e GOOGLE_API_KEYS=your_key \
   -e GITHUB_USERNAME=your_user \
@@ -165,8 +165,8 @@ podman run -it --rm \
   -e DB_HOST=povzetkar-db-dev \
   -e DB_PORT=5432 \
   -e DB_NAME=povzetkar \
-  -e DB_USER=povzetkar \
-  -e DB_PASS=povzetkar \
+  -e DB_USER=your_db_user \
+  -e DB_PASS=your_db_password \
   -e YOUTUBE_API_KEY=your_key \
   -e GOOGLE_API_KEYS=your_key \
   -e GITHUB_USERNAME=your_user \
