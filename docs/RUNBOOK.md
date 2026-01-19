@@ -152,7 +152,7 @@ docker run -it --rm \
 
 **Podman Run Example:**
 
-> **Note:** Ensure `DB_HOST` in `.env.docker` is set to your host's IP address accessible from the container (e.g., `10.0.2.2` or your LAN IP). Podman does not share networks with Docker Compose by default.
+> **Note:** Ensure `DB_HOST` in `.env.docker` is set to your host's IP address accessible from the container. On many systems, you can use the special DNS name `host.containers.internal`. Otherwise, you may need to use a specific IP (e.g., `10.0.2.2` on some VM setups or your LAN IP). Podman does not share networks with Docker Compose by default.
 
 ```bash
 podman run -it --rm \
