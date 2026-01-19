@@ -142,12 +142,13 @@ To prevent recurring defects identified in retrospectives, every plan and code c
 2.  **JPA Identity:** All JPA entities must implement `equals()` and `hashCode()` based on their primary key (or business key), never the default object identity.
 3.  **Integration Test Integrity:** Integration tests (`@QuarkusTest`) must not mock internal services or Panache entities; they must verify side effects (DB state) or mock only external boundaries.
 
-### Code Refactoring Checklist
+### D. Code Refactoring Checklist
 
-To prevent incomplete analysis, any plan involving code modification or refactoring is incomplete until it explicitly addresses the following three areas.
+To prevent incomplete analysis, as experienced during the POV-91 refactoring, any plan involving code modification or refactoring is incomplete until it explicitly addresses the following three areas. This checklist must be mentally confirmed before presenting a plan.
+
 1.  **The Declaration:** The code that is being changed (e.g., the method definition, class signature).
-2.  **The Usages:** All places in the production code where the declaration is being used.
-3.  **The Tests:** All test files that verify the behavior of the declaration.
+2.  **The Usages:** All places in the **production code** where the declaration is being used.
+3.  **The Tests:** All **test files** that verify the behavior of the declaration, including unit, integration, and UI tests.
 
 ### The Pre-Flight Check Mandate
 
