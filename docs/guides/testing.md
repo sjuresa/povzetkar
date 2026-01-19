@@ -77,7 +77,7 @@ Integration tests verify the interaction between multiple components, including 
           testSource.persist();
 
           when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), any(LocalDate.class), anyLong(), anyString()))
-              .thenReturn(List.of(/* mock YouTubeVideo objects that will be processed */));
+              .thenReturn(List.of(new YouTubeVideo("vid1", "Test Video", "http://...", "Test Author", "UC_test_channel", Instant.now(), Duration.ofMinutes(10))));
           // When
           orchestrationManager.runOrchestrationManually(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 1), true, true, true).await().indefinitely();
           // Then
