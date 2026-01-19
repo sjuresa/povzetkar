@@ -35,11 +35,11 @@ Unit tests verify a single class in isolation. They are fast and should be the m
           when(strategyFactory.getStrategy(source.sourceTypeId)).thenReturn(mockStrategy);
 
           // When
-          contentItemFetcher.fetchItems(source, LocalDate.now(), 10L, "stop-id");
-
+          final LocalDate fixedDate = LocalDate.of(2023, 1, 1);
+          contentItemFetcher.fetchItems(source, fixedDate, 10L, "stop-id");
           // Then
           verify(strategyFactory).getStrategy(source.sourceTypeId);
-          verify(mockStrategy).fetch(source, LocalDate.now(), 10L, "stop-id");
+          verify(mockStrategy).fetch(source, fixedDate, 10L, "stop-id");
       }
   }
   ```
@@ -53,7 +53,7 @@ Integration tests verify the interaction between multiple components, including 
     - **`@TestTransaction`:** This is the **preferred** method. It automatically starts a transaction before each test and rolls it back afterward, ensuring a clean database state for every test without manual cleanup.
     - **Manual Cleanup:** If `@TestTransaction` is not used, you must manually clean up all database records in a `@BeforeEach` or `@AfterEach` method using Panache's `deleteAll()` methods. This is the current pattern in `OrchestrationIntegrationTest.java` but should be migrated to `@TestTransaction` when possible.
 - **Mocking External Services:** Use `@InjectMock` to mock services that communicate with external systems (e.g., `YouTubeContentFetcherService`, `GenAiClient`). This keeps tests fast and reliable.
-- **Do Not Mock Panache Entities:** Panache entities should be used directly to set up test data and assert against the database state. Mocking them (`PanacheMock`) is an anti-pattern for integration tests.
+- **Do Not Mock Panache Entities:** Panache entities should be used directly to set up test data and assert against the database state. Mocking them (`PanacheMock`) is an antipattern for integration tests.
 
 - **Example (Preferred `@TestTransaction` approach):**
   ```java
@@ -76,14 +76,13 @@ Integration tests verify the interaction between multiple components, including 
           testSource.name = "Test Channel";
           testSource.persist();
 
-          when(youTubeContentFetcherService.fetchYouTubeVideos(...)).thenReturn(...);
-
+          when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), any(LocalDate.class), anyLong(), anyString()))
+              .thenReturn(List.of(/* mock videos that result in one ContentItem */));
           // When
-          orchestrationManager.runOrchestrationManually(...).await().indefinitely();
-
+          orchestrationManager.runOrchestrationManually(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 1)).await().indefinitely();
           // Then
           assertEquals(1, ContentItem.count());
-          verify(youTubeContentFetcherService).fetchYouTubeVideos(...);
+          verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), any(LocalDate.class), anyLong(), anyString());
       }
   }
   ```
