@@ -32,12 +32,14 @@ Unit tests verify a single class in isolation. They are fast and should be the m
           ContentSource source = new ContentSource();
           source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
           ContentFetchingStrategy mockStrategy = Mockito.mock(ContentFetchingStrategy.class);
+          List<ContentItem> expectedItems = List.of(new ContentItem()); // Dummy list for assertion
           when(strategyFactory.getStrategy(source.sourceTypeId)).thenReturn(mockStrategy);
-
+          when(mockStrategy.fetch(any(), any(), any(), anyString())).thenReturn(expectedItems);
           // When
           final LocalDate fixedDate = LocalDate.of(2023, 1, 1);
-          contentItemFetcher.fetchItems(source, fixedDate, 10L, "stop-id");
+          List<ContentItem> actualItems = contentItemFetcher.fetchItems(source, fixedDate, 10L, "stop-id");
           // Then
+          assertEquals(expectedItems, actualItems); // Assert the result
           verify(strategyFactory).getStrategy(source.sourceTypeId);
           verify(mockStrategy).fetch(source, fixedDate, 10L, "stop-id");
       }
