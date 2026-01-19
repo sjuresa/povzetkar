@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.ai.GenAiClient;
+import com.povzetkar.quarkus.api.OrchestrationRequest;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -197,6 +198,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_defaultCurrentDate() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
+        var request = new OrchestrationRequest(null, null, true, true, true);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -235,7 +237,7 @@ class OrchestrationManagerTest {
                 .thenReturn("Generated Meta-summary");
 
         // When
-        orchestrationManager.runOrchestrationManually(null, null).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify real database interactions
@@ -256,6 +258,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_singlePastDate() { // Removed @Transactional
         // Given
         LocalDate pastDate = LocalDate.now().minusDays(5);
+        var request = new OrchestrationRequest(pastDate, null, true, true, true);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -294,7 +297,7 @@ class OrchestrationManagerTest {
                 .thenReturn("Generated Meta-summary");
 
         // When
-        orchestrationManager.runOrchestrationManually(pastDate, null).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify real database interactions
@@ -316,6 +319,7 @@ class OrchestrationManagerTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(3);
         LocalDate endDate = LocalDate.now().minusDays(1);
+        var request = new OrchestrationRequest(startDate, endDate, true, true, true);
         long numOfDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         
         // Setup entities within a transaction
@@ -358,7 +362,7 @@ class OrchestrationManagerTest {
                 .thenReturn("Generated Meta-summary");
 
         // When
-        orchestrationManager.runOrchestrationManually(startDate, endDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify real database interactions
@@ -379,9 +383,10 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_futureDate_throwsException() {
         // Given
         LocalDate futureDate = LocalDate.now().plusDays(1);
+        var request = new OrchestrationRequest(futureDate, null, true, true, true);
 
         // When / Then
-        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(futureDate, null), "Orchestration cannot be run for future dates.");
+        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(request), "Orchestration cannot be run for future dates.");
     }
 
     @Test
@@ -389,9 +394,10 @@ class OrchestrationManagerTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(1);
         LocalDate endDate = LocalDate.now().minusDays(5);
+        var request = new OrchestrationRequest(startDate, endDate, true, true, true);
 
         // When / Then
-        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(startDate, endDate), "Start date cannot be after end date.");
+        assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(request), "Start date cannot be after end date.");
     }
 
     @Test
@@ -399,6 +405,7 @@ class OrchestrationManagerTest {
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -413,7 +420,7 @@ class OrchestrationManagerTest {
                 .when(orchestrationLockService).acquireLock(orchestrationDate);
 
         // When
-        orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify real database interactions
@@ -506,6 +513,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_skipsDisabledTopics() {
         // Given
         LocalDate expectedDate = LocalDate.now();
+        var request = new OrchestrationRequest(expectedDate, expectedDate, true, true, true);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -521,7 +529,7 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
 
         // When
-        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, true, true, true).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify that topicProcessor was NOT called
@@ -537,6 +545,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_summarizeOnly() {
         // Given
         LocalDate expectedDate = LocalDate.now();
+        var request = new OrchestrationRequest(expectedDate, expectedDate, false, true, false);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -555,7 +564,7 @@ class OrchestrationManagerTest {
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
-        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, false, true, false).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify content orchestration ran
@@ -569,6 +578,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_briefingOnly() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
+        var request = new OrchestrationRequest(expectedDate, expectedDate, false, false, true);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -599,7 +609,7 @@ class OrchestrationManagerTest {
                 .thenReturn("Generated Meta-summary");
 
         // When
-        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, false, false, true).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify content orchestration did NOT run
@@ -614,6 +624,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_pendingOnly() {
         // Given
         LocalDate expectedDate = LocalDate.now();
+        var request = new OrchestrationRequest(expectedDate, expectedDate, true, false, false);
         
         // Setup entities
         User user = setupUser();
@@ -639,7 +650,7 @@ class OrchestrationManagerTest {
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
-        orchestrationManager.runOrchestrationManually(expectedDate, expectedDate, true, false, false).await().indefinitely();
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         // Then
         // Verify pending processing ran

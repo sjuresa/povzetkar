@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.api.OrchestrationRequest;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
@@ -58,9 +59,9 @@ public class OrchestrationManager {
         return executeSummarizationStepForDate(LocalDate.now(), true, true);
     }
 
-    public Uni<Void> runOrchestrationManually(LocalDate startDate, LocalDate endDate, boolean processPending, boolean summarize, boolean createBriefing) {
-        LocalDate actualStartDate = (startDate != null) ? startDate : LocalDate.now();
-        LocalDate actualEndDate = (endDate != null) ? endDate : actualStartDate;
+    public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {
+        LocalDate actualStartDate = (request.startDate() != null) ? request.startDate() : LocalDate.now();
+        LocalDate actualEndDate = (request.endDate() != null) ? request.endDate() : actualStartDate;
 
         if (actualStartDate.isAfter(LocalDate.now()) || actualEndDate.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Orchestration cannot be run for future dates.");
@@ -74,16 +75,16 @@ public class OrchestrationManager {
             LogKeys.TRIGGER, "manual",
             LogKeys.START_DATE, actualStartDate,
             LogKeys.END_DATE, actualEndDate,
-            LogKeys.PROCESS_PENDING, processPending,
-            LogKeys.SUMMARIZE, summarize,
-            LogKeys.CREATE_BRIEFING, createBriefing,
+            LogKeys.PROCESS_PENDING, request.processPending(),
+            LogKeys.SUMMARIZE, request.summarize(),
+            LogKeys.CREATE_BRIEFING, request.createBriefing(),
             LogKeys.MESSAGE, "Manual orchestration triggered."
         );
 
         Uni<Void> summarizationTask;
-        if (processPending || summarize) {
+        if (request.processPending() || request.summarize()) {
             List<Uni<Void>> dailySummarizationTasks = actualStartDate.datesUntil(actualEndDate.plusDays(1))
-                    .map(date -> executeSummarizationStepForDate(date, processPending, summarize))
+                    .map(date -> executeSummarizationStepForDate(date, request.processPending(), request.summarize()))
                     .toList();
             summarizationTask = Uni.combine().all().unis(dailySummarizationTasks).discardItems()
                     .onItem().invoke(() -> logger.info(
@@ -103,7 +104,7 @@ public class OrchestrationManager {
         }
 
         return summarizationTask.chain(() -> {
-            if (createBriefing) {
+            if (request.createBriefing()) {
                 logger.info(
                     LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
                     LogKeys.STATUS, LogKeys.STARTED,
@@ -132,11 +133,6 @@ public class OrchestrationManager {
             LogKeys.MESSAGE, "Manual orchestration failed unexpectedly"
         ))
         .replaceWithVoid();
-    }
-
-    // Overload for backward compatibility for tests
-    public Uni<Void> runOrchestrationManually(LocalDate startDate, LocalDate endDate) {
-        return runOrchestrationManually(startDate, endDate, true, true, true);
     }
 
     private Uni<Void> executeSummarizationStepForDate(LocalDate orchestrationDate, boolean processPending, boolean processNew) {

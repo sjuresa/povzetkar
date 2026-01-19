@@ -204,32 +204,51 @@ The orchestration process is configured to run periodically. By default, it runs
 
 #### 9.2.2 Manual Orchestration
 
-To manually trigger the orchestration process for a specific date or a range of dates:
+To manually trigger the orchestration process:
 
 *   **Endpoint:** `POST /api/v1/orchestrator/run`
 *   **Method:** `POST`
-*   **Query Parameters:**
-    *   `processPending` (boolean, default `false`): Re-process items in `PENDING` or `RETRY_LATER` state.
-    *   `summarize` (boolean, default `false`): Fetch and summarize new content.
-    *   `createBriefing` (boolean, default `false`): Generate briefings from existing summaries.
-    *   `startDate` (Optional): The start date for the `summarize` step in `YYYY-MM-DD` format. If omitted, defaults to the current date.
-    *   `endDate` (Optional): The end date for the `summarize` step in `YYYY-MM-DD` format. If omitted, defaults to `startDate`.
+*   **Request Body:**
+    The endpoint accepts a JSON object with the following fields. All fields are optional.
+    ```json
+    {
+      "startDate": "YYYY-MM-DD",
+      "endDate": "YYYY-MM-DD",
+      "processPending": true,
+      "summarize": true,
+      "createBriefing": false
+    }
+    ```
+    - `startDate` (Optional): The start date for the `summarize` step. Defaults to the current date if omitted.
+    - `endDate` (Optional): The end date for the `summarize` step. Defaults to `startDate` if omitted.
+    - `processPending` (boolean, default `false`): Re-process items in `PENDING` or `RETRY_LATER` state.
+    - `summarize` (boolean, default `false`): Fetch and summarize new content.
+    - `createBriefing` (boolean, default `false`): Generate briefings from existing summaries.
+
 *   **Examples using curl:**
     *   **Run all steps for current date:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?processPending=true&summarize=true&createBriefing=true"
+        curl -X POST -H "Content-Type: application/json" \
+          --data '{"processPending":true,"summarize":true,"createBriefing":true}' \
+          http://localhost:8080/api/v1/orchestrator/run
         ```
     *   **Only re-process failed/pending items:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?processPending=true"
+        curl -X POST -H "Content-Type: application/json" \
+          --data '{"processPending":true}' \
+          http://localhost:8080/api/v1/orchestrator/run
         ```
     *   **Only summarize new content for a range of past dates:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?summarize=true&startDate=2025-09-10&endDate=2025-09-15"
+        curl -X POST -H "Content-Type: application/json" \
+          --data '{"summarize":true,"startDate":"2025-09-10","endDate":"2025-09-15"}' \
+          http://localhost:8080/api/v1/orchestrator/run
         ```
     *   **Only generate new briefings:**
         ```bash
-        curl -X POST "http://localhost:8080/api/v1/orchestrator/run?createBriefing=true"
+        curl -X POST -H "Content-Type: application/json" \
+          --data '{"createBriefing":true}' \
+          http://localhost:8080/api/v1/orchestrator/run
         ```
 
 #### 9.2.3 Verification
