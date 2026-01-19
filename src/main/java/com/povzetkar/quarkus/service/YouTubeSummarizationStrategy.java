@@ -150,7 +150,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 LogKeys.VIDEO_ID, video.videoId,
                 LogKeys.VIDEO_TITLE, video.title,
                 LogKeys.ERROR_CODE, e.code(),
-                LogKeys.REASON, "retriable_error"
+                LogKeys.REASON, "retriable_error",
+                LogKeys.ERROR_MESSAGE, e.getMessage()
             );
         } else {
             logger.error(e,
