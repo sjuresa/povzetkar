@@ -140,6 +140,8 @@ The application requires several environment variables to function correctly. Th
 
 Assuming the database is running in a container named `povzetkar-db-dev` on the same network (e.g., `povzetkar_default` created by docker-compose):
 
+> **Note:** The network name `povzetkar_default` is derived from the directory name. If your directory is named differently, check the network name using `docker network ls`.
+
 ```bash
 docker run -it --rm \
   --network povzetkar_default \
@@ -150,9 +152,10 @@ docker run -it --rm \
 
 **Podman Run Example:**
 
+> **Note:** Ensure `DB_HOST` in `.env.docker` is set to your host's IP address accessible from the container (e.g., `10.0.2.2` or your LAN IP). Podman does not share networks with Docker Compose by default.
+
 ```bash
 podman run -it --rm \
-  --network povzetkar_default \
   --env-file .env.docker \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
