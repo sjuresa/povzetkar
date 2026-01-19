@@ -1,31 +1,28 @@
-function buildOrchestrationUrl(form) {
-    const formData = new FormData(form);
-    const params = new URLSearchParams();
-    for (const [name, value] of formData.entries()) {
-        if (value) {
-            params.append(name, value);
-        }
-    }
-    const queryString = params.toString();
-    return queryString ? `${form.action}?${queryString}` : form.action;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
 
     async function handleAjaxFormSubmit(event, { successMessage, errorMessage, errorLogMessage }) {
         event.preventDefault();
         const form = event.target;
-        let url = form.action;
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
 
-        if (form.id === 'orchestrationForm') {
-            url = buildOrchestrationUrl(form);
+        // Coerce checkbox values to booleans and add entries for unchecked boxes.
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            payload[cb.name] = payload.hasOwnProperty(cb.name);
+        });
+
+        // Remove empty string values so they are omitted from the JSON payload.
+        for (const key in payload) {
+            if (payload[key] === '') {
+                delete payload[key];
+            }
         }
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch(form.action, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: '{}'
+                body: JSON.stringify(payload)
             });
             const responseBody = await response.text();
             if (response.ok) {
@@ -60,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchTranscriptButtons = document.querySelectorAll('.fetch-transcript-btn');
     fetchTranscriptButtons.forEach(button => {
         button.addEventListener('click', async function () {
-            const contentItemId = this.getAttribute('data-id');
+            const contentItemId = this.dataset.id;
             const originalText = this.textContent;
             this.disabled = true;
             this.textContent = 'Fetching...';

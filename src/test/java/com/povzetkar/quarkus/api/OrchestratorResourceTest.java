@@ -3,17 +3,16 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.service.OrchestrationManager;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
 import io.smallrye.mutiny.Uni;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -22,107 +21,95 @@ class OrchestratorResourceTest {
     @InjectMock
     OrchestrationManager orchestrationManager;
 
+    @BeforeEach
+    void setup() {
+        // Reset mock before each test
+        reset(orchestrationManager);
+        // Default mock behavior
+        when(orchestrationManager.runOrchestrationManually(any(OrchestrationRequest.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+    }
+
     @Test
     void testRunOrchestrationManually_noDates() {
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
-                .thenReturn(Uni.createFrom().voidItem());
+        var request = new OrchestrationRequest(null, null, false, false, false);
 
         given()
+                .contentType(ContentType.JSON)
+                .body(request)
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(null, null, false, false, false);
+        verify(orchestrationManager).runOrchestrationManually(request);
     }
 
     @Test
     void testRunOrchestrationManually_singlePastDate() {
         LocalDate pastDate = LocalDate.now().minusDays(1);
-        String pastDateStr = pastDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
-                .thenReturn(Uni.createFrom().voidItem());
+        var request = new OrchestrationRequest(pastDate, null, false, false, false);
 
         given()
-                .queryParam("startDate", pastDateStr)
+                .contentType(ContentType.JSON)
+                .body(request)
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(pastDate, null, false, false, false);
+        verify(orchestrationManager).runOrchestrationManually(request);
     }
 
     @Test
     void testRunOrchestrationManually_dateRange() {
         LocalDate startDate = LocalDate.now().minusDays(3);
         LocalDate endDate = LocalDate.now().minusDays(1);
-        String startDateStr = startDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String endDateStr = endDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
-                .thenReturn(Uni.createFrom().voidItem());
+        var request = new OrchestrationRequest(startDate, endDate, false, false, false);
 
         given()
-                .queryParam("startDate", startDateStr)
-                .queryParam("endDate", endDateStr)
+                .contentType(ContentType.JSON)
+                .body(request)
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(startDate, endDate, false, false, false);
-    }
-
-    @Test
-    void testRunOrchestrationManually_invalidDateFormat() {
-        given()
-                .queryParam("startDate", "2023/01/01")
-                .when().post("/api/v1/orchestrator/run")
-                .then()
-                .statusCode(400)
-                .body(is("Invalid date format. Please use YYYY-MM-DD."));
-
-        verify(orchestrationManager, times(0)).runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
+        verify(orchestrationManager).runOrchestrationManually(request);
     }
 
     @Test
     void testRunOrchestrationManually_futureDate() {
-        LocalDate futureDate = LocalDate.of(2025, 12, 25); // Fixed future date
-        String futureDateStr = futureDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        LocalDate futureDate = LocalDate.now().plusDays(1);
+        var request = new OrchestrationRequest(futureDate, null, false, false, false);
 
         doThrow(new IllegalArgumentException("Orchestration cannot be run for future dates."))
-                .when(orchestrationManager).runOrchestrationManually(futureDate, null, false, false, false);
+                .when(orchestrationManager).runOrchestrationManually(request);
 
         given()
-                .queryParam("startDate", futureDateStr)
+                .contentType(ContentType.JSON)
+                .body(request)
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(400)
                 .body(is("Orchestration cannot be run for future dates."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(futureDate, null, false, false, false);
+        verify(orchestrationManager).runOrchestrationManually(request);
     }
 
     @Test
     void testRunOrchestrationManually_granularOptions() {
         LocalDate startDate = LocalDate.now().minusDays(1);
-        String startDateStr = startDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-
-        Mockito.when(orchestrationManager.runOrchestrationManually(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
-                .thenReturn(Uni.createFrom().voidItem());
+        var request = new OrchestrationRequest(startDate, null, true, false, true);
 
         given()
-                .queryParam("startDate", startDateStr)
-                .queryParam("processPending", true)
-                .queryParam("summarize", false)
-                .queryParam("createBriefing", true)
+                .contentType(ContentType.JSON)
+                .body(request)
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
                 .body(is("Orchestration process started."));
 
-        verify(orchestrationManager, times(1)).runOrchestrationManually(startDate, null, true, false, true);
+        verify(orchestrationManager).runOrchestrationManually(request);
     }
 }
