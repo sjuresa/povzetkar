@@ -29,14 +29,17 @@ Unit tests verify a single class in isolation. They are fast and should be the m
       @Test
       void testFetchItems() {
           // Given
-          when(strategyFactory.getStrategy(...)).thenReturn(...);
+          ContentSource source = new ContentSource();
+          source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+          ContentFetchingStrategy mockStrategy = Mockito.mock(ContentFetchingStrategy.class);
+          when(strategyFactory.getStrategy(source.sourceTypeId)).thenReturn(mockStrategy);
 
           // When
-          List<ContentItem> items = contentItemFetcher.fetchItems(...);
+          contentItemFetcher.fetchItems(source, LocalDate.now(), 10L, "stop-id");
 
           // Then
-          assertNotNull(items);
-          verify(strategyFactory).getStrategy(...);
+          verify(strategyFactory).getStrategy(source.sourceTypeId);
+          verify(mockStrategy).fetch(source, LocalDate.now(), 10L, "stop-id");
       }
   }
   ```
@@ -67,7 +70,10 @@ Integration tests verify the interaction between multiple components, including 
       void testOrchestrationFlow_success() {
           // Given: Set up test data within the transactional test method.
           // No manual cleanup is needed.
-          ContentSource testSource = new ContentSource(...);
+          ContentSource testSource = new ContentSource();
+          testSource.sourceIdentifier = "UC_test_channel";
+          testSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+          testSource.name = "Test Channel";
           testSource.persist();
 
           when(youTubeContentFetcherService.fetchYouTubeVideos(...)).thenReturn(...);
@@ -108,6 +114,5 @@ To prevent classpath conflicts (e.g., `NoSuchMethodError`) and ensure compatibil
 - **Quarkus BOM:** Rely on the `quarkus-bom` to manage versions for:
     - `junit-jupiter`
     - `mockito-core` & `mockito-junit-jupiter`
-    - `assertj-core`
     - `rest-assured`
 - **Action:** When adding a new test dependency, check if it is managed by the BOM first. If it is, omit the `<version>` tag.
