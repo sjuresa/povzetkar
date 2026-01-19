@@ -112,7 +112,7 @@ class OrchestrationIntegrationTest {
                 .thenReturn(List.of(longVideo));
         when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
 
-        when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString()))
+        when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString()))
                 .thenReturn("Generated Summary for Video");
         when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Meta-summary");
@@ -122,7 +122,7 @@ class OrchestrationIntegrationTest {
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService).getTranscript("video1_id");
-        verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString());
+        verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString());
         verify(videoSummaryService).createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), eq("Default Topic"));
 
         List<ContentItem> contentItems = ContentItem.listAll();
@@ -175,7 +175,7 @@ class OrchestrationIntegrationTest {
                 .thenReturn(List.of(videoToProcess));
         when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
 
-        when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString()))
+        when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString()))
                 .thenThrow(new ApiException(429, "Rate limit exceeded", null));
         // When
         orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
@@ -183,7 +183,7 @@ class OrchestrationIntegrationTest {
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService).getTranscript("video1_id");
-        verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString());
+        verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString());
         verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString());
 
         List<ContentItem> contentItems = ContentItem.listAll();
@@ -211,7 +211,7 @@ class OrchestrationIntegrationTest {
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(video1));
         when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
-        when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString()))
+        when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString()))
                 .thenReturn("Initial Summary");
 
         orchestrationManager.runOrchestrationManually(orchestrationDate, orchestrationDate).await().indefinitely();
