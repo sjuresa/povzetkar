@@ -33,6 +33,9 @@ them for its database connection.
 
     ```properties
     # For the PostgreSQL container (development)
+    DB_KIND=postgresql
+    DB_HOST=povzetkar-db-dev
+    DB_PORT=5432
     DB_USER=your_db_user
     DB_PASS=your_db_password
     DB_NAME=povzetkar
