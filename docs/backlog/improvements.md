@@ -14,7 +14,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
 *   **Standardize AJAX Form Submissions:** The custom JavaScript for the orchestration form is brittle. Refactor it into a more generic, reusable helper function or library to handle all AJAX-based form submissions consistently. This will make the client-side logic more robust and easier to maintain.
-*   **Use `dataset` Attributes in JavaScript:** In `admin.js`, the code uses `this.getAttribute('data-id')`. This should be updated to use the more modern and cleaner `this.dataset.id` property for accessing data attributes.
 
 ### Backend & Architecture
 
