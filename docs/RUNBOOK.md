@@ -123,7 +123,7 @@ This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by 
 
 The application requires several environment variables to function correctly. These must be passed to the container at runtime.
 
-**Required Environment Variables:**
+**Required Environment Variables:** (.env.docker)
 
 | Variable          | Description                             | Example                                                                                                                    |
 |:------------------|:----------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
@@ -143,7 +143,7 @@ Assuming the database is running in a container named `povzetkar-db-dev` on the 
 ```bash
 docker run -it --rm \
   --network povzetkar_default \
-  --env-file .env \
+  --env-file .env.docker \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
@@ -153,7 +153,7 @@ docker run -it --rm \
 ```bash
 podman run -it --rm \
   --network povzetkar_default \
-  --env-file .env \
+  --env-file .env.docker \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
