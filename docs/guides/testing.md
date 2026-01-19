@@ -34,7 +34,7 @@ Unit tests verify a single class in isolation. They are fast and should be the m
           ContentFetchingStrategy mockStrategy = Mockito.mock(ContentFetchingStrategy.class);
           List<ContentItem> expectedItems = List.of(new ContentItem()); // Dummy list for assertion
           when(strategyFactory.getStrategy(source.sourceTypeId)).thenReturn(mockStrategy);
-          when(mockStrategy.fetch(any(), any(), any(), anyString())).thenReturn(expectedItems);
+          when(mockStrategy.fetch(source, fixedDate, 10L, "stop-id")).thenReturn(expectedItems);
           // When
           final LocalDate fixedDate = LocalDate.of(2023, 1, 1);
           List<ContentItem> actualItems = contentItemFetcher.fetchItems(source, fixedDate, 10L, "stop-id");
