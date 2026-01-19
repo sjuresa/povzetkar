@@ -34,7 +34,7 @@ them for its database connection.
     ```properties
     # For the PostgreSQL container (development)
     DB_KIND=postgresql
-    DB_HOST=povzetkar-db-dev
+    DB_HOST=localhost
     DB_PORT=5432
     DB_USER=your_db_user
     DB_PASS=your_db_password
@@ -125,16 +125,16 @@ The application requires several environment variables to function correctly. Th
 
 **Required Environment Variables:**
 
-| Variable          | Description                             | Example                                                                |
-|:------------------|:----------------------------------------|:-----------------------------------------------------------------------|
-| `DB_KIND`         | Database type                           | `postgresql`                                                           |
-| `DB_HOST`         | Database host                           | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` |
-| `DB_PORT`         | Database port                           | `5432`                                                                 |
-| `DB_NAME`         | Database name                           | `povzetkar`                                                            |
-| `DB_USER`         | Database username                       | `your_db_user`                                                         |
-| `DB_PASS`         | Database password                       | `your_db_password`                                                     |
-| `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                            |
-| `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                            |
+| Variable          | Description                             | Example                                                                                                                    |
+|:------------------|:----------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
+| `DB_KIND`         | Database type                           | `postgresql`                                                                                                               |
+| `DB_HOST`         | Database host                           | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` to connect to a service running on the host machine |
+| `DB_PORT`         | Database port                           | `5432`                                                                                                                     |
+| `DB_NAME`         | Database name                           | `povzetkar`                                                                                                                |
+| `DB_USER`         | Database username                       | `your_db_user`                                                                                                             |
+| `DB_PASS`         | Database password                       | `your_db_password`                                                                                                         |
+| `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                                                                                |
+| `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                                                                                |
 
 **Docker Run Example:**
 
