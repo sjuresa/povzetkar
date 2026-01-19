@@ -198,6 +198,7 @@ To ensure my proposals are well-informed and aligned with the project's current 
     -   `docs/overview/roadmap.md`: For long-term vision and goals.
     -   `docs/sdlc/11_development_checklist.md`: For the step-by-step process of any given phase.
     -   `docs/sdlc/07_development_methodology_comparison.md`: To understand our agreed-upon agile hybrid methodology.
+    -   `docs/guides/testing.md`: For testing patterns and best practices.
 -   **Version-Specific Documents:**
     -   `docs/versions/vX.Y-planning-process.md`: For the rationale and strategic decisions of the current version.
     -   `docs/versions/vX.Y-tasks.md`: For the specific, agreed-upon tasks for the current version.
