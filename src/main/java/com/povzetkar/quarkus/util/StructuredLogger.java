@@ -58,7 +58,7 @@ public class StructuredLogger {
     private String formatEntry(Map.Entry<String, Object> entry) {
         Object value = entry.getValue();
         if (value instanceof String s) {
-            String escapedValue = s.replace("\"", "\\\"");
+            String escapedValue = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
             return String.format("%s=\"%s\"", entry.getKey(), escapedValue);
         }
         return String.format("%s=%s", entry.getKey(), value);
