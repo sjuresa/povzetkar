@@ -52,7 +52,7 @@ Integration tests verify the interaction between multiple components, including 
 - **Mocking External Services:** Use `@InjectMock` to mock services that communicate with external systems (e.g., `YouTubeContentFetcherService`, `GenAiClient`). This keeps tests fast and reliable.
 - **Do Not Mock Panache Entities:** Panache entities should be used directly to set up test data and assert against the database state. Mocking them (`PanacheMock`) is an anti-pattern for integration tests.
 
-- **Example (`OrchestrationIntegrationTest.java`):**
+- **Example (Preferred `@TestTransaction` approach):**
   ```java
   @QuarkusTest
   class OrchestrationIntegrationTest {
@@ -62,19 +62,14 @@ Integration tests verify the interaction between multiple components, including 
       @InjectMock
       YouTubeContentFetcherService youTubeContentFetcherService;
 
-      @BeforeEach
-      @Transactional // Or use @TestTransaction on the class
-      void setUp() {
-          // Clean up and set up test data
-          ContentSource.deleteAll();
-          // ...
+      @Test
+      @TestTransaction // Ensures transaction is rolled back after the test
+      void testOrchestrationFlow_success() {
+          // Given: Set up test data within the transactional test method.
+          // No manual cleanup is needed.
           ContentSource testSource = new ContentSource(...);
           testSource.persist();
-      }
 
-      @Test
-      void testOrchestrationFlow_success() {
-          // Given
           when(youTubeContentFetcherService.fetchYouTubeVideos(...)).thenReturn(...);
 
           // When
@@ -113,5 +108,6 @@ To prevent classpath conflicts (e.g., `NoSuchMethodError`) and ensure compatibil
 - **Quarkus BOM:** Rely on the `quarkus-bom` to manage versions for:
     - `junit-jupiter`
     - `mockito-core` & `mockito-junit-jupiter`
+    - `assertj-core`
     - `rest-assured`
 - **Action:** When adding a new test dependency, check if it is managed by the BOM first. If it is, omit the `<version>` tag.
