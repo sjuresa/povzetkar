@@ -154,13 +154,14 @@ public class OrchestrationManager {
 
         try {
             orchestrationLockService.acquireLock(orchestrationDate);
-        } catch (OrchestrationLockService.OrchestrationLockException _) {
+        } catch (OrchestrationLockService.OrchestrationLockException e) {
             logger.warn(
                 LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
                 LogKeys.STATUS, LogKeys.SKIPPED,
                 LogKeys.DATE, orchestrationDate,
                 LogKeys.REASON, "already_in_progress",
-                LogKeys.MESSAGE, "Skipping summarization step as it is already in progress."
+                LogKeys.MESSAGE, "Skipping summarization step as it is already in progress.",
+                LogKeys.ERROR_MESSAGE, e.getMessage()
             );
             return Uni.createFrom().voidItem();
         }
