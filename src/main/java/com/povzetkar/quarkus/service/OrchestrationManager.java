@@ -146,9 +146,9 @@ public class OrchestrationManager {
         logger.info(
             LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
             LogKeys.STATUS, LogKeys.STARTED,
-            "date", orchestrationDate,
+            LogKeys.DATE, orchestrationDate,
             LogKeys.PROCESS_PENDING, processPending,
-            "processNew", processNew,
+            LogKeys.PROCESS_NEW, processNew,
             LogKeys.MESSAGE, "Summarization step started."
         );
 
@@ -158,7 +158,7 @@ public class OrchestrationManager {
             logger.warn(
                 LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
                 LogKeys.STATUS, LogKeys.SKIPPED,
-                "date", orchestrationDate,
+                LogKeys.DATE, orchestrationDate,
                 LogKeys.REASON, "already_in_progress",
                 LogKeys.MESSAGE, "Skipping summarization step as it is already in progress."
             );
@@ -176,8 +176,8 @@ public class OrchestrationManager {
                 })
                 .onTermination().invoke(() -> {
                     logger.debug(
-                        LogKeys.ACTION, "releaseLock",
-                        "date", orchestrationDate,
+                        LogKeys.ACTION, LogKeys.RELEASE_LOCK,
+                        LogKeys.DATE, orchestrationDate,
                         LogKeys.MESSAGE, "Releasing orchestration lock."
                     );
                     orchestrationLockService.releaseLock(orchestrationDate);
@@ -191,7 +191,7 @@ public class OrchestrationManager {
                 logger.info(
                     LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
                     LogKeys.STATUS, LogKeys.FINISHED,
-                    "date", orchestrationDate,
+                    LogKeys.DATE, orchestrationDate,
                     LogKeys.REASON, "no_active_users",
                     LogKeys.MESSAGE, "No active users found. Topic processing finished."
                 );
@@ -207,7 +207,7 @@ public class OrchestrationManager {
             logger.info(
                 LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
                 LogKeys.TOPIC_COUNT, allTopics.size(),
-                "date", orchestrationDate,
+                LogKeys.DATE, orchestrationDate,
                 LogKeys.MESSAGE, "Found enabled topics to process."
             );
 
@@ -218,13 +218,13 @@ public class OrchestrationManager {
                     .onItem().invoke(() -> logger.info(
                         LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
                         LogKeys.STATUS, LogKeys.FINISHED,
-                        "date", orchestrationDate,
+                        LogKeys.DATE, orchestrationDate,
                         LogKeys.MESSAGE, "Topic processing finished."
                     ))
                     .onFailure().invoke(ex -> logger.error(ex,
                         LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
                         LogKeys.STATUS, LogKeys.FAILED,
-                        "date", orchestrationDate,
+                        LogKeys.DATE, orchestrationDate,
                         LogKeys.MESSAGE, "Topic processing failed unexpectedly"
                     ))
                     .replaceWithVoid();
@@ -235,7 +235,7 @@ public class OrchestrationManager {
         logger.info(
             LogKeys.ACTION, LogKeys.PENDING_ITEMS,
             LogKeys.STATUS, LogKeys.STARTED,
-            "date", orchestrationDate,
+            LogKeys.DATE, orchestrationDate,
             LogKeys.MESSAGE, "Checking for content items to retry or pending from previous runs."
         );
         return processPendingAndRetryItemsByPage(orchestrationDate, 0);
@@ -261,7 +261,7 @@ public class OrchestrationManager {
                     logger.info(
                         LogKeys.ACTION, LogKeys.PENDING_ITEMS,
                         LogKeys.STATUS, LogKeys.FINISHED,
-                        "date", orchestrationDate,
+                        LogKeys.DATE, orchestrationDate,
                         LogKeys.REASON, "no_items_found",
                         LogKeys.MESSAGE, "No items to retry or pending."
                     );
@@ -273,7 +273,7 @@ public class OrchestrationManager {
                 LogKeys.ACTION, LogKeys.PENDING_ITEMS,
                 LogKeys.ITEM_COUNT, itemsToProcess.size(),
                 LogKeys.PAGE_INDEX, pageIndex,
-                "date", orchestrationDate,
+                LogKeys.DATE, orchestrationDate,
                 LogKeys.MESSAGE, "Found items to retry/pending. Starting re-processing."
             );
 
@@ -288,7 +288,7 @@ public class OrchestrationManager {
         logger.info(
             LogKeys.ACTION, LogKeys.BRIEFING_SCHEDULED,
             LogKeys.TRIGGER, "scheduled",
-            "date", today,
+            LogKeys.DATE, today,
             LogKeys.MESSAGE, "Scheduled briefing generation triggered."
         );
         return generateBriefingsForDate(today);
@@ -298,7 +298,7 @@ public class OrchestrationManager {
         logger.info(
             LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
             LogKeys.STATUS, LogKeys.STARTED,
-            "date", briefingDate,
+            LogKeys.DATE, briefingDate,
             LogKeys.MESSAGE, "Starting parallel briefing generation for all topics."
         );
         List<User> activeUsers = User.listAllActive();
@@ -337,7 +337,7 @@ public class OrchestrationManager {
                                 LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
                                 LogKeys.STATUS, LogKeys.SKIPPED,
                                 LogKeys.TOPIC_NAME, topic.name,
-                                "date", briefingDate,
+                                LogKeys.DATE, briefingDate,
                                 LogKeys.REASON, "up_to_date",
                                 LogKeys.MESSAGE, "Briefing is up-to-date. Skipping generation."
                             );
@@ -349,7 +349,7 @@ public class OrchestrationManager {
                             LogKeys.ACTION, LogKeys.META_SUMMARY_GENERATION,
                             LogKeys.STATUS, LogKeys.STARTED,
                             LogKeys.TOPIC_NAME, topic.name,
-                            "date", briefingDate,
+                            LogKeys.DATE, briefingDate,
                             LogKeys.MESSAGE, "Briefing needs to be regenerated. Generating meta-summary."
                         );
                         String metaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
@@ -362,7 +362,7 @@ public class OrchestrationManager {
                             LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
                             LogKeys.STATUS, LogKeys.FAILED,
                             LogKeys.TOPIC_NAME, topic.name,
-                            "date", briefingDate,
+                            LogKeys.DATE, briefingDate,
                             LogKeys.MESSAGE, "An unexpected error occurred during briefing generation."
                         );
                     }
@@ -373,13 +373,13 @@ public class OrchestrationManager {
                 .onItem().invoke(() -> logger.info(
                     LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
                     LogKeys.STATUS, LogKeys.FINISHED,
-                    "date", briefingDate,
+                    LogKeys.DATE, briefingDate,
                     LogKeys.MESSAGE, "Finished parallel briefing generation for all topics."
                 ))
                 .onFailure().invoke(ex -> logger.error(ex,
                     LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
                     LogKeys.STATUS, LogKeys.FAILED,
-                    "date", briefingDate,
+                    LogKeys.DATE, briefingDate,
                     LogKeys.MESSAGE, "Parallel briefing generation failed unexpectedly"
                 ));
     }

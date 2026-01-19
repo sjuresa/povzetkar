@@ -46,8 +46,8 @@ public class StructuredLogger {
     private String buildLogMessage(Object... keyValuePairs) {
         Map<String, Object> context = new LinkedHashMap<>();
         for (int i = 0; i < keyValuePairs.length; i += 2) {
-            if (i + 1 < keyValuePairs.length) {
-                context.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+            if (i + 1 < keyValuePairs.length && keyValuePairs[i] instanceof String key) {
+                context.put(key, keyValuePairs[i + 1]);
             }
         }
         return context.entrySet().stream()
@@ -57,8 +57,9 @@ public class StructuredLogger {
 
     private String formatEntry(Map.Entry<String, Object> entry) {
         Object value = entry.getValue();
-        if (value instanceof String) {
-            return String.format("%s=\"%s\"", entry.getKey(), value);
+        if (value instanceof String s) {
+            String escapedValue = s.replace("\"", "\\\"");
+            return String.format("%s=\"%s\"", entry.getKey(), escapedValue);
         }
         return String.format("%s=%s", entry.getKey(), value);
     }

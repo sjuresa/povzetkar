@@ -9,7 +9,6 @@ public final class LogKeys {
     // --- General Keys ---
     public static final String ACTION = "action";
     public static final String STATUS = "status";
-    public static final String DESCRIPTION = "description";
     public static final String DURATION_S = "duration_s";
     public static final String ERROR_CODE = "error_code";
     public static final String ERROR_MESSAGE = "error_message";
@@ -20,18 +19,21 @@ public final class LogKeys {
     public static final String ENTITY_TYPE = "entityType";
     public static final String VIDEO_ID = "videoId";
     public static final String VIDEO_TITLE = "videoTitle";
+    public static final String DURATION = "duration";
+    public static final String URL = "url";
     public static final String SOURCE = "source";
     public static final String COUNT = "count";
     
     // --- Orchestration Keys ---
     public static final String TRIGGER = "trigger";
+    public static final String DATE = "date";
     public static final String START_DATE = "startDate";
     public static final String END_DATE = "endDate";
     public static final String PROCESS_PENDING = "processPending";
+    public static final String PROCESS_NEW = "processNew";
     public static final String SUMMARIZE = "summarize";
     public static final String CREATE_BRIEFING = "createBriefing";
     public static final String TOPIC_NAME = "topicName";
-    public static final String TOPIC_ID = "topicId";
     public static final String USER_COUNT = "userCount";
     public static final String TOPIC_COUNT = "topicCount";
     public static final String ITEM_COUNT = "itemCount";
@@ -52,6 +54,7 @@ public final class LogKeys {
     public static final String BRIEFING_SCHEDULED = "briefingScheduled";
     public static final String BRIEFING_GENERATION = "briefingGeneration";
     public static final String META_SUMMARY_GENERATION = "metaSummaryGeneration";
+    public static final String RELEASE_LOCK = "releaseLock";
 
     // --- Entity Type Values ---
     public static final String VIDEO = "video";

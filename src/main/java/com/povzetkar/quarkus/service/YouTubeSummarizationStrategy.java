@@ -79,8 +79,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             LogKeys.ACTION, LogKeys.GENERATE_SUMMARY,
             LogKeys.VIDEO_ID, video.videoId,
             LogKeys.VIDEO_TITLE, video.title,
-            "duration", video.formattedDuration(),
-            "url", video.sourceUrl
+            LogKeys.DURATION, video.formattedDuration(),
+            LogKeys.URL, video.sourceUrl
         );
         return videoSummaryService.generateContent(client, content, video.title, video.videoId);
     }
