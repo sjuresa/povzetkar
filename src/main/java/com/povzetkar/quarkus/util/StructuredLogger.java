@@ -46,8 +46,14 @@ public class StructuredLogger {
     private String buildLogMessage(Object... keyValuePairs) {
         Map<String, Object> context = new LinkedHashMap<>();
         for (int i = 0; i < keyValuePairs.length; i += 2) {
-            if (i + 1 < keyValuePairs.length && keyValuePairs[i] instanceof String key) {
+            if (i + 1 >= keyValuePairs.length) {
+                logger.warn("StructuredLogger usage warning: Odd number of arguments provided. The last key is ignored.");
+                break;
+            }
+            if (keyValuePairs[i] instanceof String key) {
                 context.put(key, keyValuePairs[i + 1]);
+            } else {
+                logger.warn("StructuredLogger usage warning: Key at index {} is not a String (value: '{}'). This key-value pair will be skipped.", i, keyValuePairs[i]);
             }
         }
         return context.entrySet().stream()
