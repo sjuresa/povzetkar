@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Containerization:** Added Jib support for building OCI-compliant container images without a Docker daemon (`mvn clean package -Dquarkus.container-image.build=true`).
 - **Documentation:** Updated `RUNBOOK.md` with instructions for running the containerized application using Docker and Podman.
+- **Testing Guide:** Added `docs/guides/testing.md` documenting patterns for transactional tests, mocking, and reactive testing.
+
+### Changed
+- **Dependency Management:** Removed explicit versions for `slf4j`, `logback`, and `mockito` in `pom.xml`, delegating version management to the `quarkus-bom` to ensure compatibility and reduce maintenance.
 
 ## [0.7.0] - 2026-01-13
 
