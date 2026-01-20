@@ -46,7 +46,8 @@ public class OrchestratorResource {
             logger.error(e,
                     LogKeys.ACTION, LogKeys.ORCHESTRATION_MANUAL,
                     LogKeys.STATUS, LogKeys.FAILED,
-                    LogKeys.MESSAGE, "Error starting manual orchestration"
+                    LogKeys.MESSAGE, "Error starting manual orchestration",
+                    LogKeys.ERROR_MESSAGE, e.getMessage()
             );
             return Response.serverError().entity("Error starting manual orchestration: " + e.getMessage()).build();
         }
