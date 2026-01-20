@@ -1,10 +1,9 @@
 # Project Povzetkar: Development Roadmap
 
-**Version:** 1.7
-
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.8     | January 20, 2026   | Povzetkar AI | Marked v0.8 as complete.                                                                                                                                                 |
 | 1.7     | January 13, 2026   | Povzetkar AI | Marked v0.7 as complete.                                                                                                                                                 |
 | 1.6     | January 7, 2026    | Povzetkar AI | Redefined v0.7 scope to "Operational Excellence & Technical Modernization" based on planning. Shifted subsequent versions. Created new v0.9 for Advanced GenAI features. |
 | 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                                     |
@@ -104,6 +103,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.8: Standalone Application Deployment
 
 **Goal:** Prepare and document the process for building and running the Quarkus application as a standalone executable (JAR or native binary), moving away from development mode (`mvn quarkus:dev`).
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Build Configuration:** Configure the Maven `pom.xml` to produce a runnable JAR (`quarkus-app/quarkus-run.jar`).

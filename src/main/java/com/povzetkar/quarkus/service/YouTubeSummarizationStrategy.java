@@ -8,14 +8,14 @@ import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.util.LogKeys;
+import com.povzetkar.quarkus.util.StructuredLogger;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import org.hibernate.exception.ConstraintViolationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 
@@ -23,7 +23,7 @@ import java.time.LocalDate;
 @Priority(10)
 public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
-    private static final Logger logger = LoggerFactory.getLogger(YouTubeSummarizationStrategy.class);
+    private static final StructuredLogger logger = StructuredLogger.getLogger(YouTubeSummarizationStrategy.class);
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;
@@ -56,7 +56,12 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         try {
             String summaryText = generateSummary(client, video, content);
             persistSummary(video, summaryText, orchestrationDate);
-            logger.info("Successfully generated and persisted summary for video: {} (ID: {})", video.title, video.id);
+            logger.info(
+                LogKeys.ACTION, LogKeys.PERSIST_SUMMARY,
+                LogKeys.STATUS, LogKeys.SUCCESS,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title
+            );
             return true;
         } catch (PersistenceException e) {
             return handlePersistenceException(video, e);
@@ -70,11 +75,15 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
     }
 
     private String generateSummary(GenAiClient client, YouTubeVideo video, Content content) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Generating summary for video: {} (ID: {}, Duration: {}, URL: {})", video.title, video.id, video.formattedDuration(), video.sourceUrl);
-        }
-        String callDescription = String.format("video summary for '%s' (ID: %d)", video.title, video.id);
-        return videoSummaryService.generateContent(client, content, callDescription);
+        logger.info(
+            LogKeys.ACTION, LogKeys.GENERATE_SUMMARY,
+            LogKeys.VIDEO_ID, video.videoId,
+            LogKeys.VIDEO_TITLE, video.title,
+            LogKeys.DURATION, video.formattedDuration(),
+            LogKeys.URL, video.sourceUrl
+        );
+        String description = String.format("video summary for '%s' (ID: %s)", video.title, video.videoId);
+        return videoSummaryService.generateContent(client, content, description, video.title, video.videoId);
     }
 
     private void persistSummary(YouTubeVideo video, String summaryText, LocalDate orchestrationDate) {
@@ -91,17 +100,32 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 attachedVideo.errorCode = null;
                 attachedVideo.errorMessage = null;
             } else {
-                logger.warn("Could not find YouTubeVideo with id {} to persist summary. It may have been deleted mid-process.", video.id);
+                logger.warn(
+                    LogKeys.ACTION, LogKeys.PERSIST_SUMMARY,
+                    LogKeys.STATUS, LogKeys.FAILED,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.REASON, "video_not_found"
+                );
             }
         });
     }
 
     private boolean handlePersistenceException(YouTubeVideo video, PersistenceException e) {
         if (e.getCause() instanceof ConstraintViolationException) {
-            logger.info("Could not persist summary for video id {}, likely due to a race condition. Assuming it was created by another process.", video.id);
+            logger.info(
+                LogKeys.ACTION, LogKeys.PERSIST_SUMMARY,
+                LogKeys.STATUS, LogKeys.SKIPPED,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.REASON, "race_condition"
+            );
             return true; // Treat as success as the summary likely exists now.
         } else {
-            logger.error("Persistence error while creating summary for video: {}.", video.sourceUrl, e);
+            logger.error(e,
+                LogKeys.ACTION, LogKeys.PERSIST_SUMMARY,
+                LogKeys.STATUS, LogKeys.FAILED,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.ERROR_MESSAGE, e.getMessage()
+            );
             updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED, ContentProcessingError.UNKNOWN_ERROR, e.getMessage());
             return false;
         }
@@ -121,9 +145,23 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         ProcessingStatus status = error.isRetriable() ? ProcessingStatus.RETRY_LATER : ProcessingStatus.FAILED;
 
         if (error.isRetriable()) {
-            logger.warn("API call failed with retriable error code {} for video: {} (ID: {}). Marking as RETRY_LATER. Error: {}", e.code(), video.title, video.id, e.getMessage());
+            logger.warn(
+                LogKeys.ACTION, LogKeys.GENERATE_SUMMARY,
+                LogKeys.STATUS, LogKeys.FAILED,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title,
+                LogKeys.ERROR_CODE, e.code(),
+                LogKeys.REASON, "retriable_error"
+            );
         } else {
-            logger.error("Failed to create summary for video: {} (ID: {}). Error code: {}. Message: {}", video.title, video.id, e.code(), e.getMessage(), e);
+            logger.error(e,
+                LogKeys.ACTION, LogKeys.GENERATE_SUMMARY,
+                LogKeys.STATUS, LogKeys.FAILED,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title,
+                LogKeys.ERROR_CODE, e.code(),
+                LogKeys.ERROR_MESSAGE, e.getMessage()
+            );
         }
         
         updateStatusInNewTransaction(video.id, status, error, e.getMessage());

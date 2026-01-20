@@ -1,11 +1,14 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.api.OrchestrationRequest;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.util.LogKeys;
+import com.povzetkar.quarkus.util.StructuredLogger;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Multi;
@@ -13,8 +16,6 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class OrchestrationManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(OrchestrationManager.class);
+    private static final StructuredLogger logger = StructuredLogger.getLogger(OrchestrationManager.class);
 
     private final OrchestrationLockService orchestrationLockService;
     private final TopicProcessor topicProcessor;
@@ -49,14 +50,18 @@ public class OrchestrationManager {
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
     public Uni<Void> runOrchestrationScheduled() {
-        logger.info("Scheduled content orchestration triggered.");
+        logger.info(
+            LogKeys.ACTION, LogKeys.ORCHESTRATION_SCHEDULED,
+            LogKeys.TRIGGER, "scheduled",
+            LogKeys.MESSAGE, "Scheduled content orchestration triggered."
+        );
         // Scheduled runs should always process pending items and new content.
         return executeSummarizationStepForDate(LocalDate.now(), true, true);
     }
 
-    public Uni<Void> runOrchestrationManually(LocalDate startDate, LocalDate endDate, boolean processPending, boolean summarize, boolean createBriefing) {
-        LocalDate actualStartDate = (startDate != null) ? startDate : LocalDate.now();
-        LocalDate actualEndDate = (endDate != null) ? endDate : actualStartDate;
+    public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {
+        LocalDate actualStartDate = (request.startDate() != null) ? request.startDate() : LocalDate.now();
+        LocalDate actualEndDate = (request.endDate() != null) ? request.endDate() : actualStartDate;
 
         if (actualStartDate.isAfter(LocalDate.now()) || actualEndDate.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Orchestration cannot be run for future dates.");
@@ -65,51 +70,95 @@ public class OrchestrationManager {
             throw new IllegalArgumentException("Start date cannot be after end date.");
         }
 
-        logger.info("Manual orchestration triggered for date range: {} to {}. Process Pending: {}, Summarize: {}, Create Briefing: {}", actualStartDate, actualEndDate, processPending, summarize, createBriefing);
+        logger.info(
+            LogKeys.ACTION, LogKeys.ORCHESTRATION_MANUAL,
+            LogKeys.TRIGGER, "manual",
+            LogKeys.START_DATE, actualStartDate,
+            LogKeys.END_DATE, actualEndDate,
+            LogKeys.PROCESS_PENDING, request.processPending(),
+            LogKeys.SUMMARIZE, request.summarize(),
+            LogKeys.CREATE_BRIEFING, request.createBriefing(),
+            LogKeys.MESSAGE, "Manual orchestration triggered."
+        );
 
         Uni<Void> summarizationTask;
-        if (processPending || summarize) {
+        if (request.processPending() || request.summarize()) {
             List<Uni<Void>> dailySummarizationTasks = actualStartDate.datesUntil(actualEndDate.plusDays(1))
-                    .map(date -> executeSummarizationStepForDate(date, processPending, summarize))
+                    .map(date -> executeSummarizationStepForDate(date, request.processPending(), request.summarize()))
                     .toList();
             summarizationTask = Uni.combine().all().unis(dailySummarizationTasks).discardItems()
-                    .onItem().invoke(() -> logger.info("Manual summarization step for date range {}-{} finished.", actualStartDate, actualEndDate));
+                    .onItem().invoke(() -> logger.info(
+                        LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
+                        LogKeys.STATUS, LogKeys.FINISHED,
+                        LogKeys.START_DATE, actualStartDate,
+                        LogKeys.END_DATE, actualEndDate,
+                        LogKeys.MESSAGE, "Manual summarization step finished."
+                    ));
         } else {
-            logger.info("Skipping summarization step as per request.");
+            logger.info(
+                LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
+                LogKeys.STATUS, LogKeys.SKIPPED,
+                LogKeys.MESSAGE, "Skipping summarization step as per request."
+            );
             summarizationTask = Uni.createFrom().voidItem();
         }
 
         return summarizationTask.chain(() -> {
-            if (createBriefing) {
-                logger.info("Proceeding to briefing generation for date range {}-{}.", actualStartDate, actualEndDate);
+            if (request.createBriefing()) {
+                logger.info(
+                    LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                    LogKeys.STATUS, LogKeys.STARTED,
+                    LogKeys.START_DATE, actualStartDate,
+                    LogKeys.END_DATE, actualEndDate,
+                    LogKeys.MESSAGE, "Proceeding to briefing generation."
+                );
                 List<Uni<Void>> dailyBriefingGenerations = actualStartDate.datesUntil(actualEndDate.plusDays(1))
                         .map(this::generateBriefingsForDate)
                         .toList();
                 return Uni.join().all(dailyBriefingGenerations).andFailFast().replaceWithVoid();
             } else {
-                logger.info("Skipping briefing generation as per request.");
+                logger.info(
+                    LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                    LogKeys.STATUS, LogKeys.SKIPPED,
+                    LogKeys.MESSAGE, "Skipping briefing generation as per request."
+                );
                 return Uni.createFrom().voidItem();
             }
         })
-        .onFailure().invoke(ex -> logger.error("Manual orchestration for date range {}-{} failed unexpectedly", actualStartDate, actualEndDate, ex))
+        .onFailure().invoke(ex -> logger.error(ex,
+            LogKeys.ACTION, LogKeys.ORCHESTRATION_MANUAL,
+            LogKeys.STATUS, LogKeys.FAILED,
+            LogKeys.START_DATE, actualStartDate,
+            LogKeys.END_DATE, actualEndDate,
+            LogKeys.MESSAGE, "Manual orchestration failed unexpectedly"
+        ))
         .replaceWithVoid();
-    }
-
-    // Overload for backward compatibility for tests
-    public Uni<Void> runOrchestrationManually(LocalDate startDate, LocalDate endDate) {
-        return runOrchestrationManually(startDate, endDate, true, true, true);
     }
 
     private Uni<Void> executeSummarizationStepForDate(LocalDate orchestrationDate, boolean processPending, boolean processNew) {
         if (!processPending && !processNew) {
             return Uni.createFrom().voidItem();
         }
-        logger.info("Summarization step started for date: {}. Process Pending: {}, Process New: {}", orchestrationDate, processPending, processNew);
+        logger.info(
+            LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
+            LogKeys.STATUS, LogKeys.STARTED,
+            LogKeys.DATE, orchestrationDate,
+            LogKeys.PROCESS_PENDING, processPending,
+            LogKeys.PROCESS_NEW, processNew,
+            LogKeys.MESSAGE, "Summarization step started."
+        );
 
         try {
             orchestrationLockService.acquireLock(orchestrationDate);
         } catch (OrchestrationLockService.OrchestrationLockException e) {
-            logger.warn("Skipping summarization step for date {} as it is already in progress: {}", orchestrationDate, e.getMessage());
+            logger.warn(
+                LogKeys.ACTION, LogKeys.SUMMARIZATION_STEP,
+                LogKeys.STATUS, LogKeys.SKIPPED,
+                LogKeys.DATE, orchestrationDate,
+                LogKeys.REASON, "already_in_progress",
+                LogKeys.MESSAGE, "Skipping summarization step as it is already in progress.",
+                LogKeys.ERROR_MESSAGE, e.getMessage()
+            );
             return Uni.createFrom().voidItem();
         }
 
@@ -123,7 +172,11 @@ public class OrchestrationManager {
                     return Uni.createFrom().voidItem();
                 })
                 .onTermination().invoke(() -> {
-                    logger.debug("Releasing orchestration lock for date: {}", orchestrationDate);
+                    logger.debug(
+                        LogKeys.ACTION, LogKeys.RELEASE_LOCK,
+                        LogKeys.DATE, orchestrationDate,
+                        LogKeys.MESSAGE, "Releasing orchestration lock."
+                    );
                     orchestrationLockService.releaseLock(orchestrationDate);
                 });
     }
@@ -132,26 +185,56 @@ public class OrchestrationManager {
         return Uni.createFrom().deferred(() -> {
             List<User> activeUsers = User.listAllActive();
             if (activeUsers.isEmpty()) {
-                logger.info("No active users found. Topic processing finished for date: {}.", orchestrationDate);
+                logger.info(
+                    LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                    LogKeys.STATUS, LogKeys.FINISHED,
+                    LogKeys.DATE, orchestrationDate,
+                    LogKeys.REASON, "no_active_users",
+                    LogKeys.MESSAGE, "No active users found. Topic processing finished."
+                );
                 return Uni.createFrom().voidItem();
             }
-            logger.info("Found {} active users for topic processing.", activeUsers.size());
+            logger.info(
+                LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                LogKeys.USER_COUNT, activeUsers.size(),
+                LogKeys.MESSAGE, "Found active users for topic processing."
+            );
 
             List<Topic> allTopics = Topic.findEnabledByUsers(activeUsers);
-            logger.info("Found {} enabled topics to process for date {}.", allTopics.size(), orchestrationDate);
+            logger.info(
+                LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                LogKeys.TOPIC_COUNT, allTopics.size(),
+                LogKeys.DATE, orchestrationDate,
+                LogKeys.MESSAGE, "Found enabled topics to process."
+            );
 
             return Multi.createFrom().iterable(allTopics)
                     .onItem().transformToUni(topic -> topicProcessor.processTopicUni(topic, orchestrationDate))
                     .merge()
                     .collect().asList()
-                    .onItem().invoke(() -> logger.info("Topic processing finished for date: {}.", orchestrationDate))
-                    .onFailure().invoke(ex -> logger.error("Topic processing failed unexpectedly for date: {}", orchestrationDate, ex))
+                    .onItem().invoke(() -> logger.info(
+                        LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                        LogKeys.STATUS, LogKeys.FINISHED,
+                        LogKeys.DATE, orchestrationDate,
+                        LogKeys.MESSAGE, "Topic processing finished."
+                    ))
+                    .onFailure().invoke(ex -> logger.error(ex,
+                        LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                        LogKeys.STATUS, LogKeys.FAILED,
+                        LogKeys.DATE, orchestrationDate,
+                        LogKeys.MESSAGE, "Topic processing failed unexpectedly"
+                    ))
                     .replaceWithVoid();
         });
     }
 
     private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate) {
-        logger.info("Checking for content items to retry or pending from previous runs for date: {}.", orchestrationDate);
+        logger.info(
+            LogKeys.ACTION, LogKeys.PENDING_ITEMS,
+            LogKeys.STATUS, LogKeys.STARTED,
+            LogKeys.DATE, orchestrationDate,
+            LogKeys.MESSAGE, "Checking for content items to retry or pending from previous runs."
+        );
         return processPendingAndRetryItemsByPage(orchestrationDate, 0);
     }
 
@@ -172,12 +255,24 @@ public class OrchestrationManager {
                 .list()).chain(itemsToProcess -> {
             if (itemsToProcess.isEmpty()) {
                 if (pageIndex == 0) {
-                    logger.info("No items to retry or pending for date: {}.", orchestrationDate);
+                    logger.info(
+                        LogKeys.ACTION, LogKeys.PENDING_ITEMS,
+                        LogKeys.STATUS, LogKeys.FINISHED,
+                        LogKeys.DATE, orchestrationDate,
+                        LogKeys.REASON, "no_items_found",
+                        LogKeys.MESSAGE, "No items to retry or pending."
+                    );
                 }
                 return Uni.createFrom().voidItem();
             }
 
-            logger.info("Found {} items to retry/pending on page {} for date {}. Starting re-processing.", itemsToProcess.size(), pageIndex, orchestrationDate);
+            logger.info(
+                LogKeys.ACTION, LogKeys.PENDING_ITEMS,
+                LogKeys.ITEM_COUNT, itemsToProcess.size(),
+                LogKeys.PAGE_INDEX, pageIndex,
+                LogKeys.DATE, orchestrationDate,
+                LogKeys.MESSAGE, "Found items to retry/pending. Starting re-processing."
+            );
 
             return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate)
                     .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, pageIndex + 1));
@@ -187,20 +282,39 @@ public class OrchestrationManager {
     @Scheduled(cron = "{povzetkar.briefing.cron}")
     public Uni<Void> runBriefingGenerationScheduled() {
         LocalDate today = LocalDate.now();
-        logger.info("Scheduled briefing generation triggered for date: {}.", today);
+        logger.info(
+            LogKeys.ACTION, LogKeys.BRIEFING_SCHEDULED,
+            LogKeys.TRIGGER, "scheduled",
+            LogKeys.DATE, today,
+            LogKeys.MESSAGE, "Scheduled briefing generation triggered."
+        );
         return generateBriefingsForDate(today);
     }
 
     private Uni<Void> generateBriefingsForDate(LocalDate briefingDate) {
-        logger.info("Starting parallel briefing generation for all topics on {}.", briefingDate);
+        logger.info(
+            LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+            LogKeys.STATUS, LogKeys.STARTED,
+            LogKeys.DATE, briefingDate,
+            LogKeys.MESSAGE, "Starting parallel briefing generation for all topics."
+        );
         List<User> activeUsers = User.listAllActive();
         List<Topic> allTopics = Topic.findEnabledByUsers(activeUsers);
         if (allTopics.isEmpty()) {
-            logger.info("No enabled topics found for active users. Skipping briefing generation.");
+            logger.info(
+                LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                LogKeys.STATUS, LogKeys.SKIPPED,
+                LogKeys.REASON, "no_enabled_topics",
+                LogKeys.MESSAGE, "No enabled topics found for active users. Skipping briefing generation."
+            );
             return Uni.createFrom().voidItem();
         }
 
-        logger.info("Found {} enabled topics. Proceeding with briefing generation.", allTopics.size());
+        logger.info(
+            LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+            LogKeys.TOPIC_COUNT, allTopics.size(),
+            LogKeys.MESSAGE, "Found enabled topics. Proceeding with briefing generation."
+        );
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
                 .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
@@ -216,25 +330,54 @@ public class OrchestrationManager {
                         );
 
                         if (availableSummaryIds.equals(existingBriefingSummaryIds)) {
-                            logger.info("Briefing for topic '{}' on {} is up-to-date. Skipping generation.", topic.name, briefingDate);
+                            logger.info(
+                                LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                                LogKeys.STATUS, LogKeys.SKIPPED,
+                                LogKeys.TOPIC_NAME, topic.name,
+                                LogKeys.DATE, briefingDate,
+                                LogKeys.REASON, "up_to_date",
+                                LogKeys.MESSAGE, "Briefing is up-to-date. Skipping generation."
+                            );
                             return;
                         }
 
                         // Step 2: Perform blocking AI call outside of any transaction
-                        logger.info("Briefing for topic '{}' on {} needs to be regenerated. Generating meta-summary.", topic.name, briefingDate);
+                        logger.info(
+                            LogKeys.ACTION, LogKeys.META_SUMMARY_GENERATION,
+                            LogKeys.STATUS, LogKeys.STARTED,
+                            LogKeys.TOPIC_NAME, topic.name,
+                            LogKeys.DATE, briefingDate,
+                            LogKeys.MESSAGE, "Briefing needs to be regenerated. Generating meta-summary."
+                        );
                         String metaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
 
                         // Step 3: Write data in a new transaction
                         QuarkusTransaction.requiringNew().run(() -> briefingService.generateBriefing(topic, briefingDate, availableSummaries, metaSummary));
 
                     } catch (Exception e) {
-                        logger.error("An unexpected error occurred during briefing generation for topic '{}' on {}.", topic.name, briefingDate, e);
+                        logger.error(e,
+                            LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                            LogKeys.STATUS, LogKeys.FAILED,
+                            LogKeys.TOPIC_NAME, topic.name,
+                            LogKeys.DATE, briefingDate,
+                            LogKeys.MESSAGE, "An unexpected error occurred during briefing generation."
+                        );
                     }
                 })))
                 .toList();
 
         return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()
-                .onItem().invoke(() -> logger.info("Finished parallel briefing generation for all topics on {}.", briefingDate))
-                .onFailure().invoke(ex -> logger.error("Parallel briefing generation for date {} failed unexpectedly", briefingDate, ex));
+                .onItem().invoke(() -> logger.info(
+                    LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                    LogKeys.STATUS, LogKeys.FINISHED,
+                    LogKeys.DATE, briefingDate,
+                    LogKeys.MESSAGE, "Finished parallel briefing generation for all topics."
+                ))
+                .onFailure().invoke(ex -> logger.error(ex,
+                    LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                    LogKeys.STATUS, LogKeys.FAILED,
+                    LogKeys.DATE, briefingDate,
+                    LogKeys.MESSAGE, "Parallel briefing generation failed unexpectedly"
+                ));
     }
 }

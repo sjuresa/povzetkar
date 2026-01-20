@@ -1,9 +1,12 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.api.OrchestrationRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -28,43 +31,46 @@ class AdminResourceTest {
     @Test
     void testEnrichSourcesAjaxCall() {
         RestAssured.given()
-                .contentType(ContentType.JSON) // Specify Content-Type as application/json
-                .body("{}").when().post("/api/v1/content-sources/enrich")
+                .contentType(ContentType.JSON)
+                .body("{}")
+                .when().post("/api/v1/content-sources/enrich")
                 .then()
                 .statusCode(202) // Accepted
-                .body(containsString("Content sources enrichment started.")); // Expected response from JAX-RS
+                .body(containsString("Content sources enrichment started."));
     }
 
     @Test
     void testRunOrchestrationAjaxCall() {
+        var request = new OrchestrationRequest(null, null, false, false, false);
         RestAssured.given()
-                .contentType(ContentType.JSON) // Specify Content-Type as application/json
-                .body("{}").when().post("/api/v1/orchestrator/run")
+                .contentType(ContentType.JSON)
+                .body(request)
+                .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202) // Accepted
-                .body(containsString("Orchestration process started.")); // Expected response from JAX-RS
+                .body(containsString("Orchestration process started."));
     }
 
     @Test
     void testRunOrchestrationAjaxCallWithDates() {
+        var request = new OrchestrationRequest(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 2), true, true, true);
         RestAssured.given()
-                .contentType(ContentType.JSON) // Specify Content-Type as application/json
-                .queryParam("startDate", "2023-01-01")
-                .queryParam("endDate", "2023-01-01")
-                .body("{}").when().post("/api/v1/orchestrator/run")
+                .contentType(ContentType.JSON)
+                .body(request)
+                .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202) // Accepted
-                .body(containsString("Orchestration process started.")); // Expected response from JAX-RS
+                .body(containsString("Orchestration process started."));
     }
 
     @Test
-    void testRunOrchestrationAjaxCallWithInvalidDates() {
+    void testRunOrchestrationAjaxCallWithInvalidDateFormat() {
+        String invalidJson = "{\"startDate\":\"invalid-date\"}";
         RestAssured.given()
-                .contentType(ContentType.JSON) // Specify Content-Type as application/json
-                .queryParam("startDate", "invalid-date")
-                .body("{}").when().post("/api/v1/orchestrator/run")
+                .contentType(ContentType.JSON)
+                .body(invalidJson)
+                .when().post("/api/v1/orchestrator/run")
                 .then()
-                .statusCode(400) // Bad Request
-                .body(containsString("Invalid date format. Please use YYYY-MM-DD."));
+                .statusCode(400); // Bad Request
     }
 }

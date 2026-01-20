@@ -97,7 +97,7 @@ class TranscriptPersistenceTest {
             return mock(Content.class);
         });
 
-        when(videoSummaryService.generateContent(any(), any(), anyString())).thenReturn("Summary text");
+        when(videoSummaryService.generateContent(any(), any(), anyString(), anyString(), anyString())).thenReturn("Summary text");
 
         // Act
         // We pass the detached entity (fetched in setUp but transaction closed)

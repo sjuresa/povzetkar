@@ -7,16 +7,16 @@ import com.google.genai.types.Part;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
 import com.povzetkar.quarkus.ai.Prompts;
+import com.povzetkar.quarkus.util.LogKeys;
+import com.povzetkar.quarkus.util.StructuredLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
 @ApplicationScoped
 public class VideoSummaryService {
-    private static final Logger logger = LoggerFactory.getLogger(VideoSummaryService.class);
+    private static final StructuredLogger logger = StructuredLogger.getLogger(VideoSummaryService.class);
 
     private final GenAiPool genAiPool;
     private final String flashModelName;
@@ -48,7 +48,8 @@ public class VideoSummaryService {
     public String createBriefingFromSummaries(GenAiClient client, String rawSummaries, String date, String topicName) {
         String finalPrompt = Prompts.SUMMARIES_SUMMARY_PROMPT.formatted(date, rawSummaries);
         Content content = Content.fromParts(Part.fromText(finalPrompt));
-        return generateContent(client, content, "daily briefing for topic '" + topicName + "' on " + date);
+        String description = "Daily briefing for topic '" + topicName + "' on " + date;
+        return generateContent(client, content, description, null, null);
     }
 
     /**
@@ -57,21 +58,37 @@ public class VideoSummaryService {
      *
      * @param client          The pre-acquired client to use for the API call.
      * @param content         The content to send to the model.
-     * @param callDescription A short description of the call for logging purposes.
+     * @param description     A short description of the call for logging purposes.
+     * @param videoTitle      The title of the video, for logging purposes (optional).
+     * @param videoId         The YouTube ID of the video, for logging purposes (optional).
      * @return The cleaned, string response from the API.
      * @throws ApiException if an error occurs.
      */
-    public String generateContent(GenAiClient client, Content content, String callDescription) {
+    public String generateContent(GenAiClient client, Content content, String description, String videoTitle, String videoId) {
         long startTime = System.nanoTime();
-        logger.info("Starting API call for: {}", callDescription);
+        logger.info(
+            LogKeys.ACTION, LogKeys.GENERATE_CONTENT,
+            LogKeys.STATUS, "start",
+            LogKeys.DESCRIPTION, description,
+            LogKeys.VIDEO_ID, videoId,
+            LogKeys.VIDEO_TITLE, videoTitle
+        );
 
         try {
-            logger.info("Token count:{}", client.getModels().countTokens(flashModelName, Collections.singletonList(content), null).totalTokens().orElse(0));
+            long tokenCount = client.getModels().countTokens(flashModelName, Collections.singletonList(content), null).totalTokens().orElse(0);
+            logger.info(
+                LogKeys.ACTION, LogKeys.COUNT_TOKENS,
+                LogKeys.COUNT, tokenCount,
+                LogKeys.DESCRIPTION, description,
+                LogKeys.VIDEO_ID, videoId,
+                LogKeys.VIDEO_TITLE, videoTitle
+            );
+            
             GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
-            logApiCallDuration(startTime, callDescription);
+            logApiCallDuration(startTime, description, videoTitle, videoId);
             return cleanAiResponse(response.text());
         } catch (ApiException e) {
-            logApiCallFailure(startTime, callDescription, e);
+            logApiCallFailure(startTime, description, videoTitle, videoId, e);
             throw e;
         }
     }
@@ -100,20 +117,36 @@ public class VideoSummaryService {
     /**
      * Logs the duration of a successful API call.
      */
-    private void logApiCallDuration(long startTime, String callDescription) {
-        if (logger.isInfoEnabled()) {
-            long endTime = System.nanoTime();
-            double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-            logger.info(String.format("API call for %s finished successfully in %.2f seconds.", callDescription, durationSeconds));
-        }
+    private void logApiCallDuration(long startTime, String description, String videoTitle, String videoId) {
+        long endTime = System.nanoTime();
+        double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+        logger.info(
+            LogKeys.ACTION, LogKeys.GENERATE_CONTENT,
+            LogKeys.STATUS, "success",
+            LogKeys.DESCRIPTION, description,
+            LogKeys.VIDEO_ID, videoId,
+            LogKeys.VIDEO_TITLE, videoTitle,
+            LogKeys.DURATION_S, String.format("%.2f", durationSeconds),
+            LogKeys.MESSAGE, "API call finished successfully"
+        );
     }
 
     /**
      * Logs the duration and reason of a failed API call.
      */
-    private void logApiCallFailure(long startTime, String callDescription, ApiException e) {
+    private void logApiCallFailure(long startTime, String description, String videoTitle, String videoId, ApiException e) {
         long endTime = System.nanoTime();
         double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-        logger.error("API call for {} failed after {} seconds. Error code: {}. Message: {}", callDescription, durationSeconds, e.code(), e.getMessage());
+        logger.error(e,
+            LogKeys.ACTION, LogKeys.GENERATE_CONTENT,
+            LogKeys.STATUS, "failure",
+            LogKeys.DESCRIPTION, description,
+            LogKeys.VIDEO_ID, videoId,
+            LogKeys.VIDEO_TITLE, videoTitle,
+            LogKeys.DURATION_S, String.format("%.2f", durationSeconds),
+            LogKeys.ERROR_CODE, e.code(),
+            LogKeys.ERROR_MESSAGE, e.getMessage(),
+            LogKeys.MESSAGE, "API call failed"
+        );
     }
 }
