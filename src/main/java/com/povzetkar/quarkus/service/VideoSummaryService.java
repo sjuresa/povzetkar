@@ -80,7 +80,8 @@ public class VideoSummaryService {
                 LogKeys.ACTION, LogKeys.COUNT_TOKENS,
                 LogKeys.COUNT, tokenCount,
                 LogKeys.DESCRIPTION, description,
-                LogKeys.VIDEO_ID, videoId
+                LogKeys.VIDEO_ID, videoId,
+                LogKeys.VIDEO_TITLE, videoTitle
             );
             
             GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
