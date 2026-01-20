@@ -87,7 +87,7 @@ class VideoSummaryServiceTest {
         when(mockResponse.text()).thenReturn(rawResponse);
         when(mockModels.generateContent(anyString(), any(Content.class), eq(null))).thenReturn(mockResponse);
 
-        String result = videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), null, null);
+        String result = videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null);
 
         assertEquals(expectedCleanedResponse, result);
     }
@@ -101,7 +101,7 @@ class VideoSummaryServiceTest {
                 .thenThrow(rateLimitException);
 
         ApiException thrown = assertThrows(ApiException.class, () ->
-                videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), null, null));
+                videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null));
 
         assertEquals(rateLimitException, thrown);
         // Verify it was only called once

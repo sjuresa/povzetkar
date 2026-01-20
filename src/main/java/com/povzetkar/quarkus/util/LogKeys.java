@@ -9,6 +9,7 @@ public final class LogKeys {
     // --- General Keys ---
     public static final String ACTION = "action";
     public static final String STATUS = "status";
+    public static final String DESCRIPTION = "description";
     public static final String DURATION_S = "duration_s";
     public static final String ERROR_CODE = "error_code";
     public static final String ERROR_MESSAGE = "error_message";

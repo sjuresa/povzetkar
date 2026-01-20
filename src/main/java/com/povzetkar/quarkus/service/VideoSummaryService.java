@@ -48,8 +48,8 @@ public class VideoSummaryService {
     public String createBriefingFromSummaries(GenAiClient client, String rawSummaries, String date, String topicName) {
         String finalPrompt = Prompts.SUMMARIES_SUMMARY_PROMPT.formatted(date, rawSummaries);
         Content content = Content.fromParts(Part.fromText(finalPrompt));
-        // Since this is not for a specific video, we pass null for videoId and videoTitle
-        return generateContent(client, content, null, null);
+        String description = "Daily briefing for topic '" + topicName + "' on " + date;
+        return generateContent(client, content, description, null, null);
     }
 
     /**
@@ -58,16 +58,18 @@ public class VideoSummaryService {
      *
      * @param client          The pre-acquired client to use for the API call.
      * @param content         The content to send to the model.
-     * @param videoTitle      The title of the video, for logging purposes.
-     * @param videoId         The YouTube ID of the video, for logging purposes.
+     * @param description     A short description of the call for logging purposes.
+     * @param videoTitle      The title of the video, for logging purposes (optional).
+     * @param videoId         The YouTube ID of the video, for logging purposes (optional).
      * @return The cleaned, string response from the API.
      * @throws ApiException if an error occurs.
      */
-    public String generateContent(GenAiClient client, Content content, String videoTitle, String videoId) {
+    public String generateContent(GenAiClient client, Content content, String description, String videoTitle, String videoId) {
         long startTime = System.nanoTime();
         logger.info(
             LogKeys.ACTION, LogKeys.GENERATE_CONTENT,
             LogKeys.STATUS, "start",
+            LogKeys.DESCRIPTION, description,
             LogKeys.VIDEO_ID, videoId,
             LogKeys.VIDEO_TITLE, videoTitle
         );
@@ -77,14 +79,15 @@ public class VideoSummaryService {
             logger.info(
                 LogKeys.ACTION, LogKeys.COUNT_TOKENS,
                 LogKeys.COUNT, tokenCount,
+                LogKeys.DESCRIPTION, description,
                 LogKeys.VIDEO_ID, videoId
             );
             
             GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
-            logApiCallDuration(startTime, videoTitle, videoId);
+            logApiCallDuration(startTime, description, videoTitle, videoId);
             return cleanAiResponse(response.text());
         } catch (ApiException e) {
-            logApiCallFailure(startTime, videoTitle, videoId, e);
+            logApiCallFailure(startTime, description, videoTitle, videoId, e);
             throw e;
         }
     }
@@ -113,32 +116,36 @@ public class VideoSummaryService {
     /**
      * Logs the duration of a successful API call.
      */
-    private void logApiCallDuration(long startTime, String videoTitle, String videoId) {
+    private void logApiCallDuration(long startTime, String description, String videoTitle, String videoId) {
         long endTime = System.nanoTime();
         double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
         logger.info(
             LogKeys.ACTION, LogKeys.GENERATE_CONTENT,
             LogKeys.STATUS, "success",
+            LogKeys.DESCRIPTION, description,
             LogKeys.VIDEO_ID, videoId,
             LogKeys.VIDEO_TITLE, videoTitle,
-            LogKeys.DURATION_S, String.format("%.2f", durationSeconds)
+            LogKeys.DURATION_S, String.format("%.2f", durationSeconds),
+            LogKeys.MESSAGE, "API call finished successfully"
         );
     }
 
     /**
      * Logs the duration and reason of a failed API call.
      */
-    private void logApiCallFailure(long startTime, String videoTitle, String videoId, ApiException e) {
+    private void logApiCallFailure(long startTime, String description, String videoTitle, String videoId, ApiException e) {
         long endTime = System.nanoTime();
         double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
         logger.error(e,
             LogKeys.ACTION, LogKeys.GENERATE_CONTENT,
             LogKeys.STATUS, "failure",
+            LogKeys.DESCRIPTION, description,
             LogKeys.VIDEO_ID, videoId,
             LogKeys.VIDEO_TITLE, videoTitle,
             LogKeys.DURATION_S, String.format("%.2f", durationSeconds),
             LogKeys.ERROR_CODE, e.code(),
-            LogKeys.ERROR_MESSAGE, e.getMessage()
+            LogKeys.ERROR_MESSAGE, e.getMessage(),
+            LogKeys.MESSAGE, "API call failed"
         );
     }
 }

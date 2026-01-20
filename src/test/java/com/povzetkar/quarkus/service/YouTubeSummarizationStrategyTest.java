@@ -125,7 +125,7 @@ class YouTubeSummarizationStrategyTest {
             
             ApiException apiException = new ApiException(500, "AI Error", null);
             // Use anyString() to match the dynamic call description
-            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString()))
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString()))
                     .thenThrow(apiException);
 
             // Mock ContentItem.findById to return our mockVideo so we can verify updates
@@ -157,7 +157,7 @@ class YouTubeSummarizationStrategyTest {
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
-            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString())).thenReturn("Success");
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
 
             mockTransactions(tx);
 
@@ -184,7 +184,7 @@ class YouTubeSummarizationStrategyTest {
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
-            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString())).thenReturn("Success");
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
 
             TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
@@ -214,7 +214,7 @@ class YouTubeSummarizationStrategyTest {
             Content content = mock(Content.class);
             when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
             // Use anyString() to match the dynamic call description
-            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString())).thenReturn("Success");
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
             
             // Mock ContentItem.findById to return our mockVideo so we can verify updates
             Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);

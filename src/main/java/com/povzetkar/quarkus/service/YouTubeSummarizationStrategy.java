@@ -82,7 +82,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             LogKeys.DURATION, video.formattedDuration(),
             LogKeys.URL, video.sourceUrl
         );
-        return videoSummaryService.generateContent(client, content, video.title, video.videoId);
+        String description = String.format("video summary for '%s' (ID: %s)", video.title, video.videoId);
+        return videoSummaryService.generateContent(client, content, description, video.title, video.videoId);
     }
 
     private void persistSummary(YouTubeVideo video, String summaryText, LocalDate orchestrationDate) {
@@ -150,8 +151,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 LogKeys.VIDEO_ID, video.videoId,
                 LogKeys.VIDEO_TITLE, video.title,
                 LogKeys.ERROR_CODE, e.code(),
-                LogKeys.REASON, "retriable_error",
-                LogKeys.ERROR_MESSAGE, e.getMessage()
+                LogKeys.REASON, "retriable_error"
             );
         } else {
             logger.error(e,
