@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.0] - Unreleased
+## [Unreleased]
+
+## [0.8.0] - 2026-01-20
 
 ### Added
 - **Containerization:** Added Jib support for building OCI-compliant container images without a Docker daemon (`mvn clean package -Dquarkus.container-image.build=true`).
@@ -18,9 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Frontend:** The AJAX form submission logic in `admin.js` has been generalized and made more robust, correctly serializing form state (including all checkboxes) into a JSON payload.
 - **Dependency Management:** Removed explicit versions for `slf4j`, `logback`, and `mockito` in `pom.xml`, delegating version management to the `quarkus-bom` to ensure compatibility and reduce maintenance.
 - **Logging:** Refactored logging in `OrchestrationManager`, `ContentCreationService`, `VideoSummaryService`, and `YouTubeSummarizationStrategy` to use a new thread-safe `StructuredLogger` utility. Standardized on using the public YouTube video ID and title in logs for easier correlation.
-
-### Fixed
-- **Tests:** Updated all unit and integration tests (`OrchestratorResourceTest`, `AdminResourceTest`, `OrchestrationIntegrationTest`, `OrchestrationManagerTest`) to align with the refactored orchestration API, ensuring the test suite is consistent with the new implementation.
 
 ## [0.7.0] - 2026-01-13
 
