@@ -22,7 +22,7 @@ public class OrchestratorResource {
 
     @POST
     @Path("/run")
-    public Response runOrchestrationManually(OrchestrationRequest request) {
+    public Response runOrchestrationManually(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
         try {
             // The orchestration is intentionally not awaited here.
             // It runs in the background, and we immediately return a response to the client.

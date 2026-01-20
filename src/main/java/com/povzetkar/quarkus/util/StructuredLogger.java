@@ -60,7 +60,7 @@ public class StructuredLogger {
     private String formatEntry(String key, Object value) {
         String valueStr = (value == null) ? "null" : value.toString();
 
-        if (value instanceof String || valueStr.contains(" ")) {
+        if (value instanceof String || valueStr.contains(" ") || valueStr.contains("\"") || valueStr.contains("=")) {
             String escapedValue = valueStr.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
             return String.format("%s=\"%s\"", key, escapedValue);
         }
