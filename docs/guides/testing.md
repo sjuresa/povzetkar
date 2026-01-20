@@ -81,9 +81,7 @@ Integration tests verify the interaction between multiple components, including 
           when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), any(LocalDate.class), anyLong(), anyString()))
               .thenReturn(List.of(new YouTubeVideo("vid1", "Test Video", "http://...", "Test Author", "UC_test_channel", Instant.parse("2023-01-01T10:00:00Z"), Duration.ofMinutes(10))));
           // When
-          OrchestrationRequest request = new OrchestrationRequest();
-          request.startDate = LocalDate.of(2023, 1, 1);
-          request.endDate = LocalDate.of(2023, 1, 1);
+          OrchestrationRequest request = new OrchestrationRequest(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 1), true, true, false);
           orchestrationManager.runOrchestrationManually(request).await().indefinitely();
           // Then
           assertEquals(1, ContentItem.count());
