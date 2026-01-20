@@ -42,6 +42,9 @@ public class StructuredLogger {
     }
 
     private String buildLogMessage(Object... keyValuePairs) {
+        if (keyValuePairs == null) {
+            return "";
+        }
         StringJoiner joiner = new StringJoiner(" ");
         for (int i = 0; i < keyValuePairs.length; i += 2) {
             if (i + 1 >= keyValuePairs.length) {
