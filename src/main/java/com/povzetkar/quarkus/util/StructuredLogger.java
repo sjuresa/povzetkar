@@ -45,19 +45,19 @@ public class StructuredLogger {
         if (keyValuePairs == null) {
             return "";
         }
+        if (keyValuePairs.length % 2 != 0) {
+            throw new IllegalArgumentException("StructuredLogger requires an even number of arguments for key-value pairs.");
+        }
+
         StringJoiner joiner = new StringJoiner(" ");
         for (int i = 0; i < keyValuePairs.length; i += 2) {
-            if (i + 1 >= keyValuePairs.length) {
-                logger.warn("StructuredLogger usage warning: Odd number of arguments provided. The last key is ignored.");
-                break;
+            if (!(keyValuePairs[i] instanceof String key)) {
+                String typeName = (keyValuePairs[i] != null) ? keyValuePairs[i].getClass().getName() : "null";
+                throw new IllegalArgumentException("StructuredLogger keys must be strings. Found " + typeName + " at index " + i);
             }
-            if (keyValuePairs[i] instanceof String key) {
-                Object value = keyValuePairs[i + 1];
-                if (value != null) {
-                    joiner.add(formatEntry(key, value));
-                }
-            } else {
-                logger.warn("StructuredLogger usage warning: Key at index {} is not a String (value: '{}'). This key-value pair will be skipped.", i, keyValuePairs[i]);
+            Object value = keyValuePairs[i + 1];
+            if (value != null) {
+                joiner.add(formatEntry(key, value));
             }
         }
         return joiner.toString();
