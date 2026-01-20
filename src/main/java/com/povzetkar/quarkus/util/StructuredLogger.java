@@ -49,7 +49,10 @@ public class StructuredLogger {
                 break;
             }
             if (keyValuePairs[i] instanceof String key) {
-                joiner.add(formatEntry(key, keyValuePairs[i + 1]));
+                Object value = keyValuePairs[i + 1];
+                if (value != null) {
+                    joiner.add(formatEntry(key, value));
+                }
             } else {
                 logger.warn("StructuredLogger usage warning: Key at index {} is not a String (value: '{}'). This key-value pair will be skipped.", i, keyValuePairs[i]);
             }
