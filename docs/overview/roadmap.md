@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.9     | January 21, 2026   | Povzetkar AI | Inserted v0.9 "Operational Refinement" based on user request. Shifted User Management to v0.10 and Advanced Content to v0.11.                                            |
 | 1.8     | January 20, 2026   | Povzetkar AI | Marked v0.8 as complete.                                                                                                                                                 |
 | 1.7     | January 13, 2026   | Povzetkar AI | Marked v0.7 as complete.                                                                                                                                                 |
 | 1.6     | January 7, 2026    | Povzetkar AI | Redefined v0.7 scope to "Operational Excellence & Technical Modernization" based on planning. Shifted subsequent versions. Created new v0.9 for Advanced GenAI features. |
@@ -113,14 +114,20 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.9: Advanced Content Capabilities
+## v0.9: Operational Refinement & Admin Tools
 
-**Goal:** Implement advanced AI features that were deferred from v0.7 to prioritize deployment. This includes sophisticated rate limiting and handling large data volumes for briefings.
+**Goal:** Stabilize the application operations and enhance the administrator's toolkit before introducing multi-user complexity. This version focuses on visibility (Quotas, Dry-run), resilience (Circuit Breaker), and process documentation.
 
 ### Key Tasks & Implementation Steps:
-1.  **Advanced Rate Limiting:** Implement Daily Quotas and TPM limits for GenAI.
-2.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods to handle context window limits.
-3.  **Spikes:** Execute research tasks for Transactional Testing patterns and Agent Context (MCP).
+1.  **Admin Visibility:**
+    *   Implement "Dry-run" orchestration to preview actions.
+    *   Display remaining GenAI quotas on the dashboard.
+    *   Fix timezone display issues in history.
+2.  **System Resilience:** Implement a Circuit Breaker pattern to handle consecutive 503 errors from external APIs.
+3.  **Process & Research:**
+    *   Create a comprehensive Methodology document.
+    *   **Spike:** Research MCP (Model Context Protocol) for agent context integration.
+    *   Adopt Architectural Decision Records (ADRs).
 
 ---
 
@@ -136,7 +143,17 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.11: Production Hardening
+## v0.11: Advanced Content Capabilities
+
+**Goal:** Implement advanced AI features that were deferred to prioritize User Management. This includes sophisticated rate limiting and handling large data volumes for briefings.
+
+### Key Tasks & Implementation Steps:
+1.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods to handle context window limits.
+2.  **Advanced Rate Limiting:** Implement strict TPM limits for GenAI (building on v0.9 quota visibility).
+
+---
+
+## v0.12: Production Hardening
 
 **Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
 
