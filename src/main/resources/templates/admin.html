@@ -100,7 +100,7 @@
                                 </td>
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
-                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>
                                     {#if !item.transcript}
@@ -161,7 +161,7 @@
                                 </td>
                                 <td>{summary.contentItem.processingStatus}</td>
                                 <td>{summary.contentItem.formattedPublishedAt}</td>
-                                <td>{summary.contentItem.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatInstant(summary.contentItem.createdAt)}</td>
                                 <td>{summary.contentItem.formattedDuration}</td>
                                 <td><a href="/ui/summaries/{summary.id}" target="_blank">View Summary</a></td>
                             </tr>
@@ -193,8 +193,8 @@
                                 <td>{briefing_count}</td>
                                 <td>{briefing.id}</td>
                                 <td>{briefing.topic.name}</td>
-                                <td>{briefing.briefingDate.format(dateFormat)}</td>
-                                <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatLocalDate(briefing.briefingDate)}</td>
+                                <td>{dateTimeService.formatInstant(briefing.createdAt)}</td>
                                 <td><a href="/ui/briefings/{briefing.id}" target="_blank">View Briefing</a></td>
                             </tr>
                         {/for}
@@ -252,7 +252,7 @@
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
                                 <td>{item.formattedDuration}</td>
-                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
                                     {#if !item.transcript}

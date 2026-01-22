@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **UI:** Implemented centralized date/time formatting via `DateTimeService`.
+- **UI:** Added timezone configuration (`povzetkar.ui.timezone`) to `application.properties` to display times in the user's local timezone (default: `Europe/Ljubljana`).
+
 ### Documentation
 - **Methodology:** Created `docs/process/methodology.md`, a definitive guide consolidating the project's development processes, roles, and lifecycle. Updated `07_development_methodology_comparison.md` to reference it.
 
