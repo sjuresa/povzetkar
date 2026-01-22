@@ -19,7 +19,7 @@ public class WebUtils {
         }
         try {
             return Optional.of(Long.parseLong(paramValue));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             errorHandler.accept(errorMessage);
             return Optional.empty();
         }
@@ -32,7 +32,7 @@ public class WebUtils {
         }
         try {
             return Optional.of(Long.parseLong(attributeValue));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             errorHandler.accept(formatErrorMessage);
             return Optional.empty();
         }
@@ -45,7 +45,7 @@ public class WebUtils {
         }
         try {
             return Optional.of(Integer.parseInt(attributeValue));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             errorHandler.accept(formatErrorMessage);
             return Optional.empty();
         }
@@ -59,9 +59,21 @@ public class WebUtils {
         }
         try {
             return Optional.of(Long.parseLong(paramValue));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             errorHandler.accept(errorMessage);
             return Optional.empty();
+        }
+    }
+
+    public static int getIntegerQueryParam(RoutingContext context, String paramName, int defaultValue) {
+        String paramValue = context.request().getParam(paramName);
+        if (paramValue == null || paramValue.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(paramValue);
+        } catch (NumberFormatException _) {
+            return defaultValue;
         }
     }
 }

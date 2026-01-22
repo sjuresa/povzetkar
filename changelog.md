@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Admin:** Implemented persistent tracking of GenAI API calls per API key. The daily usage count is now stored in the database and displayed on the Admin Dashboard.
 - **UI:** Implemented centralized date/time formatting via `DateTimeService`.
 - **UI:** Added timezone configuration (`povzetkar.ui.timezone`) to `application.properties` to display times in the user's local timezone (default: `Europe/Ljubljana`).
+- **UI:** Implemented pagination for all history tables on the Admin page. The page size is configurable via `povzetkar.ui.admin.page-size`.
 
 ### Documentation
 - **Methodology:** Created `docs/process/methodology.md`, a definitive guide consolidating the project's development processes, roles, and lifecycle. Updated `07_development_methodology_comparison.md` to reference it.
+- **Runbook:** Added documentation for the new `povzetkar.ui.admin.page-size` configuration property.
 
 ## [0.8.0] - 2026-01-20
 
@@ -250,7 +252,7 @@ This version marks a major architectural milestone by establishing the foundatio
 - **Formalized SDLC Documentation**: A comprehensive suite of documentation has been added, including functional and non-functional requirements, API specifications, database design, a test plan, a development roadmap, and a high-level system specification. This establishes a clear architectural vision and development strategy for Project Povzetkar.
 
 ### Tests
-- Expanded unit/integration tests covering transcript formatting, transcript service, GenAI pool, summarization, and YouTube integration.
+- Expanded unit/integration tests covering transcript formatting, transcript service, GenAiPool, summarization, and YouTube integration.
 
 ## [0.3] - 2025-08-10
 
