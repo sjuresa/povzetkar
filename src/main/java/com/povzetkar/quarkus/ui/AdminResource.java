@@ -111,7 +111,7 @@ public class AdminResource {
         if (page < 1) {
             page = 1;
         }
-        data.put(listKey, query.page(page, pageSize).list());
+        data.put(listKey, query.page(page - 1, pageSize).list());
         data.put(totalPagesKey, query.pageCount());
         data.put(currentPageKey, page);
     }
