@@ -68,42 +68,34 @@ public class AdminResource {
         data.put("activeTab", HISTORY_TAB.equals(activeTab) ? HISTORY_TAB : "actions");
 
         // Pagination
-        int pendingPage = WebUtils.getIntegerQueryParam(context, "pendingPage", 1).orElse(1) - 1;
-        int summariesPage = WebUtils.getIntegerQueryParam(context, "summariesPage", 1).orElse(1) - 1;
-        int briefingsPage = WebUtils.getIntegerQueryParam(context, "briefingsPage", 1).orElse(1) - 1;
-        int failedPage = WebUtils.getIntegerQueryParam(context, "failedPage", 1).orElse(1) - 1;
+        int pendingPage = WebUtils.getIntegerQueryParam(context, "pendingPage", 1) - 1;
+        int summariesPage = WebUtils.getIntegerQueryParam(context, "summariesPage", 1) - 1;
+        int briefingsPage = WebUtils.getIntegerQueryParam(context, "briefingsPage", 1) - 1;
+        int failedPage = WebUtils.getIntegerQueryParam(context, "failedPage", 1) - 1;
 
         // Pending Content Items
         var pendingQuery = ContentItem.find(
                 "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.processingStatus = ?1 ORDER BY ci.createdAt DESC",
                 ProcessingStatus.PENDING
         );
-        data.put("pendingContentItems", pendingQuery.page(pendingPage, pageSize).list());
-        data.put("pendingTotalPages", pendingQuery.pageCount());
-        data.put("pendingCurrentPage", pendingPage + 1);
+        addPagedDataToTemplate(data, "pendingContentItems", "pendingTotalPages", "pendingCurrentPage", pendingPage, pendingQuery);
 
         // Recent Summaries
         var summaryQuery = Summary.find(
                 "SELECT s FROM Summary s JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics ORDER BY s.createdAt DESC"
         );
-        data.put("recentSummaries", summaryQuery.page(summariesPage, pageSize).list());
-        data.put("summariesTotalPages", summaryQuery.pageCount());
-        data.put("summariesCurrentPage", summariesPage + 1);
+        addPagedDataToTemplate(data, "recentSummaries", "summariesTotalPages", "summariesCurrentPage", summariesPage, summaryQuery);
 
         // Recent Briefings
         var briefingQuery = Briefing.find("FROM Briefing b JOIN FETCH b.topic ORDER BY b.createdAt DESC");
-        data.put("recentBriefings", briefingQuery.page(briefingsPage, pageSize).list());
-        data.put("briefingsTotalPages", briefingQuery.pageCount());
-        data.put("briefingsCurrentPage", briefingsPage + 1);
+        addPagedDataToTemplate(data, "recentBriefings", "briefingsTotalPages", "briefingsCurrentPage", briefingsPage, briefingQuery);
 
         // Failed Content Items
         var failedQuery = ContentItem.find(
                 "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.processingStatus = ?1 OR ci.processingStatus = ?2 ORDER BY ci.createdAt DESC",
                 ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER
         );
-        data.put("failedContentItems", failedQuery.page(failedPage, pageSize).list());
-        data.put("failedTotalPages", failedQuery.pageCount());
-        data.put("failedCurrentPage", failedPage + 1);
+        addPagedDataToTemplate(data, "failedContentItems", "failedTotalPages", "failedCurrentPage", failedPage, failedQuery);
 
         // Other data
         data.put("genAiClientUsage", apiKeyUsageService.getUsageForToday());
@@ -112,6 +104,12 @@ public class AdminResource {
         context.response()
                 .putHeader("Content-Type", "text/html; charset=utf-8")
                 .end(admin.instance().data(data).render());
+    }
+
+    private void addPagedDataToTemplate(Map<String, Object> data, String listKey, String totalPagesKey, String currentPageKey, int page, io.quarkus.hibernate.orm.panache.PanacheQuery<?> query) {
+        data.put(listKey, query.page(page, pageSize).list());
+        data.put(totalPagesKey, query.pageCount());
+        data.put(currentPageKey, page + 1);
     }
 
     @Route(path = "/api/v1/admin/content-items/:id/fetch-transcript", methods = Route.HttpMethod.POST)

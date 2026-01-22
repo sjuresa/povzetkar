@@ -65,15 +65,15 @@ public class WebUtils {
         }
     }
 
-    public static Optional<Integer> getIntegerQueryParam(RoutingContext context, String paramName, int defaultValue) {
+    public static int getIntegerQueryParam(RoutingContext context, String paramName, int defaultValue) {
         String paramValue = context.request().getParam(paramName);
         if (paramValue == null || paramValue.isBlank()) {
-            return Optional.of(defaultValue);
+            return defaultValue;
         }
         try {
-            return Optional.of(Integer.parseInt(paramValue));
+            return Integer.parseInt(paramValue);
         } catch (NumberFormatException _) {
-            return Optional.of(defaultValue);
+            return defaultValue;
         }
     }
 }
