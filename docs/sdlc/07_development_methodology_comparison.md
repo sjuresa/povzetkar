@@ -115,4 +115,4 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 ### 7.2. Automated Dependency Vulnerability Scanning
 
 *   **What it is:** Integrating an automated tool (like Snyk or GitHub's Dependabot) into the CI/CD pipeline to continuously scan project dependencies for known security vulnerabilities.
-*   **Proposed Implementation:** As part of our "Production Hardening" phase (v0.9), we would configure Dependabot to automatically create Pull Requests to update vulnerable dependencies. This moves security from a manual check to a proactive, automated process.
+*   **Proposed Implementation:** As part of our "Production Hardening" phase (v0.12), we would configure Dependabot to automatically create Pull Requests to update vulnerable dependencies. This moves security from a manual check to a proactive, automated process.

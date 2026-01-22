@@ -120,14 +120,14 @@ This document outlines the concrete steps for implementing the features describe
 
 ### Key Tasks & Implementation Steps:
 1.  **Admin Visibility:**
-    *   Implement "Dry-run" orchestration to preview actions.
-    *   Display remaining GenAI quotas on the dashboard.
+    *   Implement "Orchestration Preview" to check candidates before processing.
+    *   Display GenAI usage per API key on the dashboard.
+    *   Implement pagination for history tables.
     *   Fix timezone display issues in history.
 2.  **System Resilience:** Implement a Circuit Breaker pattern to handle consecutive 503 errors from external APIs.
 3.  **Process & Research:**
     *   Create a comprehensive Methodology document.
     *   **Spike:** Research MCP (Model Context Protocol) for agent context integration.
-    *   Adopt Architectural Decision Records (ADRs).
 
 ---
 
@@ -149,7 +149,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ### Key Tasks & Implementation Steps:
 1.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods to handle context window limits.
-2.  **Advanced Rate Limiting:** Implement strict TPM limits for GenAI (building on v0.9 quota visibility).
+2.  **Advanced Rate Limiting:** Implement strict TPM limits for GenAI (building on v0.9 usage tracking).
 
 ---
 
