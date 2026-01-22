@@ -135,6 +135,31 @@
                         {/for}
                     </tbody>
                 </table>
+                {#if pendingTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage - 1}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Previous page"
+                               {#if pendingCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if pendingCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {pendingCurrentPage} of {pendingTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage + 1}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Next page"
+                               {#if pendingCurrentPage == pendingTotalPages}aria-disabled="true"{/if}
+                               class="button {#if pendingCurrentPage == pendingTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No content items currently pending processing.</p>
             {/if}
@@ -192,6 +217,31 @@
                         {/for}
                     </tbody>
                 </table>
+                {#if summariesTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage - 1}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Previous page"
+                               {#if summariesCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if summariesCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {summariesCurrentPage} of {summariesTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage + 1}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Next page"
+                               {#if summariesCurrentPage == summariesTotalPages}aria-disabled="true"{/if}
+                               class="button {#if summariesCurrentPage == summariesTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No recent content items with summaries found.</p>
             {/if}
@@ -224,6 +274,31 @@
                         {/for}
                     </tbody>
                 </table>
+                {#if briefingsTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage - 1}&failedPage={failedCurrentPage}"
+                               aria-label="Previous page"
+                               {#if briefingsCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if briefingsCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {briefingsCurrentPage} of {briefingsTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage + 1}&failedPage={failedCurrentPage}"
+                               aria-label="Next page"
+                               {#if briefingsCurrentPage == briefingsTotalPages}aria-disabled="true"{/if}
+                               class="button {#if briefingsCurrentPage == briefingsTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No recent briefings found.</p>
             {/if}
@@ -287,6 +362,31 @@
                         {/for}
                     </tbody>
                 </table>
+                {#if failedTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage - 1}"
+                               aria-label="Previous page"
+                               {#if failedCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if failedCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {failedCurrentPage} of {failedTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage + 1}"
+                               aria-label="Next page"
+                               {#if failedCurrentPage == failedTotalPages}aria-disabled="true"{/if}
+                               class="button {#if failedCurrentPage == failedTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No failed content items found.</p>
             {/if}
