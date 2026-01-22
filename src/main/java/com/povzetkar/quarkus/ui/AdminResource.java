@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
+import com.povzetkar.quarkus.ui.util.DateTimeService;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.povzetkar.quarkus.ui.util.WebUtils;
 import io.quarkus.qute.Location;
@@ -32,29 +33,27 @@ public class AdminResource {
     private final ViewUtils viewUtils;
     private final Template admin;
     private final ContentItemService contentItemService;
+    private final DateTimeService dateTimeService;
 
-    @ConfigProperty(name = "povzetkar.ui.datetime.format")
-    String dateTimeFormat;
-    @ConfigProperty(name = "povzetkar.ui.date.format")
-    String dateFormat;
     @ConfigProperty(name = "povzetkar.ui.admin.page-size")
     int pageSize;
 
     @Inject
     public AdminResource(@Location("admin.html") Template admin,
                          ViewUtils viewUtils,
-                         ContentItemService contentItemService) {
+                         ContentItemService contentItemService,
+                         DateTimeService dateTimeService) {
         this.admin = admin;
         this.viewUtils = viewUtils;
         this.contentItemService = contentItemService;
+        this.dateTimeService = dateTimeService;
     }
 
     @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void getAdminPage(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        data.put("dateTimeFormat", dateTimeFormat);
-        data.put("dateFormat", dateFormat);
+        data.put("dateTimeService", dateTimeService);
         data.put("breadcrumbs", List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb("Admin", ADMIN_REDIRECT_PATH)
