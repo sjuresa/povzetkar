@@ -2,9 +2,9 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ApiKeyUsage;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,12 +19,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @QuarkusTest
 class ApiKeyUsageServiceTest {
 
-    @Inject
-    ApiKeyUsageService apiKeyUsageService;
+    private ZoneId testZone;
+    private Clock fixedClock;
+    private LocalDate testDate;
 
-    // This test uses the real service, which uses the system clock for PST.
-    // To test date-specific logic, we'd need to inject a mock Clock.
-    // The service is designed to allow this.
+    @BeforeEach
+    void setUp() {
+        testZone = ZoneId.of("America/Los_Angeles");
+        testDate = LocalDate.of(2023, 1, 1);
+        fixedClock = Clock.fixed(testDate.atStartOfDay(testZone).toInstant(), testZone);
+    }
 
     @AfterEach
     @Transactional
@@ -38,12 +42,11 @@ class ApiKeyUsageServiceTest {
     void incrementUsage_shouldCreateNewRecord() {
         // Arrange
         String apiKeyName = "test-key-1";
-        ZoneId testZone = ZoneId.of("America/Los_Angeles");
-        LocalDate testDate = LocalDate.of(2023, 1, 1);
-        Clock fixedClock = Clock.fixed(testDate.atStartOfDay(testZone).toInstant(), testZone);
         ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
+
         // Act
         testService.incrementUsage(apiKeyName);
+
         // Assert
         ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, testDate).firstResult();
         assertNotNull(usage);
@@ -56,14 +59,14 @@ class ApiKeyUsageServiceTest {
     void incrementUsage_shouldIncrementExistingRecord() {
         // Arrange
         String apiKeyName = "test-key-1";
-        apiKeyUsageService.incrementUsage(apiKeyName); // First usage
+        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
+        testService.incrementUsage(apiKeyName); // First usage
 
         // Act
-        apiKeyUsageService.incrementUsage(apiKeyName); // Second usage
+        testService.incrementUsage(apiKeyName); // Second usage
 
         // Assert
-        LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
-        ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, today).firstResult();
+        ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, testDate).firstResult();
         assertNotNull(usage);
         assertEquals(2, usage.getUsageCount());
         assertEquals(1, ApiKeyUsage.count());
@@ -74,12 +77,9 @@ class ApiKeyUsageServiceTest {
     @Transactional
     void getUsageForToday_shouldReturnOnlyTodayRecords() {
         // Arrange - Use a controllable clock
-        ZoneId pstZone = ZoneId.of("America/Los_Angeles");
-        LocalDate today = LocalDate.of(2023, 10, 27);
-        LocalDate yesterday = today.minusDays(1);
-
-        Clock fixedClock = Clock.fixed(today.atStartOfDay(pstZone).toInstant(), pstZone);
         ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
+        LocalDate today = LocalDate.now(fixedClock);
+        LocalDate yesterday = today.minusDays(1);
 
         // Manually create records for different dates
         createUsageRecord("key-today", today, 5);
@@ -96,22 +96,21 @@ class ApiKeyUsageServiceTest {
 
     @Test
     @DisplayName("incrementUsage should create a new record for a new day")
-    @Transactional // Added @Transactional
+    @Transactional
     void incrementUsage_shouldCreateRecordForNewDay() {
         // Arrange
         String apiKeyName = "test-key-new-day";
-        ZoneId pstZone = ZoneId.of("America/Los_Angeles");
 
         // Day 1
         LocalDate day1 = LocalDate.of(2023, 10, 27);
-        Clock day1Clock = Clock.fixed(day1.atStartOfDay(pstZone).toInstant(), pstZone);
+        Clock day1Clock = Clock.fixed(day1.atStartOfDay(testZone).toInstant(), testZone);
         ApiKeyUsageService serviceDay1 = new ApiKeyUsageService(day1Clock);
         serviceDay1.incrementUsage(apiKeyName);
         serviceDay1.incrementUsage(apiKeyName);
 
         // Day 2
         LocalDate day2 = LocalDate.of(2023, 10, 28);
-        Clock day2Clock = Clock.fixed(day2.atStartOfDay(pstZone).toInstant(), pstZone);
+        Clock day2Clock = Clock.fixed(day2.atStartOfDay(testZone).toInstant(), testZone);
         ApiKeyUsageService serviceDay2 = new ApiKeyUsageService(day2Clock);
 
         // Act

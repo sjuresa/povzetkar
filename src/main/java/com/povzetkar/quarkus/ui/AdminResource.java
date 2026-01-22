@@ -41,8 +41,7 @@ public class AdminResource {
     @ConfigProperty(name = "povzetkar.ui.admin.page-size")
     int pageSize;
 
-    @ConfigProperty(name = "povzetkar.api-usage.timezone", defaultValue = "America/Los_Angeles")
-    String apiUsageTimezone;
+    // Removed direct injection of apiUsageTimezone
 
     @Inject
     public AdminResource(@Location("admin.html") Template admin,
@@ -96,7 +95,7 @@ public class AdminResource {
 
         List<ApiKeyUsage> genAiClientUsage = apiKeyUsageService.getUsageForToday();
         data.put("genAiClientUsage", genAiClientUsage);
-        data.put("apiUsageTimezone", apiUsageTimezone);
+        data.put("apiUsageTimezone", apiKeyUsageService.getTimezoneId()); // Get timezone from service
 
         context.response()
                 .putHeader("Content-Type", "text/html; charset=utf-8")

@@ -15,15 +15,20 @@ import java.util.List;
 public class ApiKeyUsageService {
 
     private final Clock clock;
+    private final ZoneId zoneId; // Store the ZoneId
 
     @Inject
     public ApiKeyUsageService(
             @ConfigProperty(name = "povzetkar.api-usage.timezone", defaultValue = "America/Los_Angeles") String timezoneId) {
-        this(Clock.system(ZoneId.of(timezoneId)));
+        ZoneId configuredZoneId = ZoneId.of(timezoneId);
+        this.clock = Clock.system(configuredZoneId);
+        this.zoneId = configuredZoneId; // Initialize the zoneId field
     }
 
+    // Constructor for testing purposes
     public ApiKeyUsageService(Clock clock) {
         this.clock = clock;
+        this.zoneId = clock.getZone(); // Derive zoneId from the provided clock for tests
     }
 
     @Transactional
@@ -43,5 +48,9 @@ public class ApiKeyUsageService {
     public List<ApiKeyUsage> getUsageForToday() {
         LocalDate today = LocalDate.now(clock);
         return ApiKeyUsage.list("usageDate", today);
+    }
+
+    public String getTimezoneId() {
+        return zoneId.getId();
     }
 }
