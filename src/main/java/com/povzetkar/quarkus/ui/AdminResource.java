@@ -10,6 +10,7 @@ import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.DateTimeService;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.povzetkar.quarkus.ui.util.WebUtils;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.vertx.web.Route;
@@ -68,10 +69,10 @@ public class AdminResource {
         data.put("activeTab", HISTORY_TAB.equals(activeTab) ? HISTORY_TAB : "actions");
 
         // Pagination
-        int pendingPage = WebUtils.getIntegerQueryParam(context, "pendingPage", 1) - 1;
-        int summariesPage = WebUtils.getIntegerQueryParam(context, "summariesPage", 1) - 1;
-        int briefingsPage = WebUtils.getIntegerQueryParam(context, "briefingsPage", 1) - 1;
-        int failedPage = WebUtils.getIntegerQueryParam(context, "failedPage", 1) - 1;
+        int pendingPage = WebUtils.getIntegerQueryParam(context, "pendingPage", 1);
+        int summariesPage = WebUtils.getIntegerQueryParam(context, "summariesPage", 1);
+        int briefingsPage = WebUtils.getIntegerQueryParam(context, "briefingsPage", 1);
+        int failedPage = WebUtils.getIntegerQueryParam(context, "failedPage", 1);
 
         // Pending Content Items
         var pendingQuery = ContentItem.find(
@@ -106,10 +107,13 @@ public class AdminResource {
                 .end(admin.instance().data(data).render());
     }
 
-    private void addPagedDataToTemplate(Map<String, Object> data, String listKey, String totalPagesKey, String currentPageKey, int page, io.quarkus.hibernate.orm.panache.PanacheQuery<?> query) {
+    private void addPagedDataToTemplate(Map<String, Object> data, String listKey, String totalPagesKey, String currentPageKey, int page, PanacheQuery<?> query) {
+        if (page < 1) {
+            page = 1;
+        }
         data.put(listKey, query.page(page, pageSize).list());
         data.put(totalPagesKey, query.pageCount());
-        data.put(currentPageKey, page + 1);
+        data.put(currentPageKey, page);
     }
 
     @Route(path = "/api/v1/admin/content-items/:id/fetch-transcript", methods = Route.HttpMethod.POST)

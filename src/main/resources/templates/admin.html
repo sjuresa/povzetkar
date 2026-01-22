@@ -150,7 +150,7 @@
                             <span>Page {pendingCurrentPage} of {pendingTotalPages}</span>
                         </li>
                         <li>
-                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage + 1}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
                                aria-label="Next page"
                                {#if pendingCurrentPage == pendingTotalPages}aria-disabled="true"{/if}
                                class="button {#if pendingCurrentPage == pendingTotalPages}secondary disabled{/if}">
