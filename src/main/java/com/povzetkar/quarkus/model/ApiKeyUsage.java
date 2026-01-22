@@ -28,7 +28,7 @@ public class ApiKeyUsage extends PanacheEntityBase {
     public LocalDate usageDate;
 
     @Column(name = "usage_count", nullable = false)
-    public long usageCount;
+    private long usageCount; // Made private
 
     public ApiKeyUsage() {
     }
@@ -37,5 +37,15 @@ public class ApiKeyUsage extends PanacheEntityBase {
         this.apiKeyName = apiKeyName;
         this.usageDate = usageDate;
         this.usageCount = 0;
+    }
+
+    // Getter for usageCount
+    public long getUsageCount() {
+        return usageCount;
+    }
+
+    // Method to increment usageCount
+    public void incrementUsageCount() {
+        this.usageCount++;
     }
 }

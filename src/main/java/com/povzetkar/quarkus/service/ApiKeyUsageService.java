@@ -2,7 +2,9 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ApiKeyUsage;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -12,14 +14,14 @@ import java.util.List;
 @ApplicationScoped
 public class ApiKeyUsageService {
 
-    private static final ZoneId PST_ZONE_ID = ZoneId.of("America/Los_Angeles");
     private final Clock clock;
 
-    public ApiKeyUsageService() {
-        this.clock = Clock.system(PST_ZONE_ID);
+    @Inject
+    public ApiKeyUsageService(
+            @ConfigProperty(name = "povzetkar.api-usage.timezone", defaultValue = "America/Los_Angeles") String timezoneId) {
+        this(Clock.system(ZoneId.of(timezoneId)));
     }
 
-    // Constructor for testing purposes
     public ApiKeyUsageService(Clock clock) {
         this.clock = clock;
     }
@@ -34,7 +36,7 @@ public class ApiKeyUsageService {
             usage = new ApiKeyUsage(apiKeyName, today);
         }
 
-        usage.usageCount++;
+        usage.incrementUsageCount();
         usage.persist();
     }
 

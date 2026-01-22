@@ -46,7 +46,7 @@ class ApiKeyUsageServiceTest {
         // Assert
         ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, today).firstResult();
         assertNotNull(usage);
-        assertEquals(1, usage.usageCount);
+        assertEquals(1, usage.getUsageCount());
     }
 
     @Test
@@ -64,7 +64,7 @@ class ApiKeyUsageServiceTest {
         LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
         ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, today).firstResult();
         assertNotNull(usage);
-        assertEquals(2, usage.usageCount);
+        assertEquals(2, usage.getUsageCount());
         assertEquals(1, ApiKeyUsage.count());
     }
 
@@ -90,7 +90,7 @@ class ApiKeyUsageServiceTest {
         // Assert
         assertEquals(1, todayUsage.size());
         assertEquals("key-today", todayUsage.getFirst().apiKeyName);
-        assertEquals(5, todayUsage.getFirst().usageCount);
+        assertEquals(5, todayUsage.getFirst().getUsageCount());
     }
 
     @Test
@@ -122,17 +122,19 @@ class ApiKeyUsageServiceTest {
 
         ApiKeyUsage usageDay1 = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, day1).firstResult();
         assertNotNull(usageDay1);
-        assertEquals(2, usageDay1.usageCount);
+        assertEquals(2, usageDay1.getUsageCount());
 
         ApiKeyUsage usageDay2 = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, day2).firstResult();
         assertNotNull(usageDay2);
-        assertEquals(1, usageDay2.usageCount);
+        assertEquals(1, usageDay2.getUsageCount());
     }
 
     @Transactional
     void createUsageRecord(String apiKeyName, LocalDate date, long count) {
         ApiKeyUsage usage = new ApiKeyUsage(apiKeyName, date);
-        usage.usageCount = count;
+        for (int i = 0; i < count; i++) {
+            usage.incrementUsageCount();
+        }
         usage.persist();
     }
 }
