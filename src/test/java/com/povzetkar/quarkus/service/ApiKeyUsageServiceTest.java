@@ -2,6 +2,8 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ApiKeyUsage;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 class ApiKeyUsageServiceTest {
+
+    @Inject
+    EntityManager entityManager;
 
     private ZoneId testZone;
     private Clock fixedClock;
@@ -42,7 +47,7 @@ class ApiKeyUsageServiceTest {
     void incrementUsage_shouldCreateNewRecord() {
         // Arrange
         String apiKeyName = "test-key-1";
-        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
+        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock, entityManager);
 
         // Act
         testService.incrementUsage(apiKeyName);
@@ -59,7 +64,7 @@ class ApiKeyUsageServiceTest {
     void incrementUsage_shouldIncrementExistingRecord() {
         // Arrange
         String apiKeyName = "test-key-1";
-        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
+        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock, entityManager);
         testService.incrementUsage(apiKeyName); // First usage
 
         // Act
@@ -77,7 +82,7 @@ class ApiKeyUsageServiceTest {
     @Transactional
     void getUsageForToday_shouldReturnOnlyTodayRecords() {
         // Arrange - Use a controllable clock
-        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
+        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock, entityManager);
         LocalDate today = LocalDate.now(fixedClock);
         LocalDate yesterday = today.minusDays(1);
 
@@ -104,14 +109,14 @@ class ApiKeyUsageServiceTest {
         // Day 1
         LocalDate day1 = LocalDate.of(2023, 10, 27);
         Clock day1Clock = Clock.fixed(day1.atStartOfDay(testZone).toInstant(), testZone);
-        ApiKeyUsageService serviceDay1 = new ApiKeyUsageService(day1Clock);
+        ApiKeyUsageService serviceDay1 = new ApiKeyUsageService(day1Clock, entityManager);
         serviceDay1.incrementUsage(apiKeyName);
         serviceDay1.incrementUsage(apiKeyName);
 
         // Day 2
         LocalDate day2 = LocalDate.of(2023, 10, 28);
         Clock day2Clock = Clock.fixed(day2.atStartOfDay(testZone).toInstant(), testZone);
-        ApiKeyUsageService serviceDay2 = new ApiKeyUsageService(day2Clock);
+        ApiKeyUsageService serviceDay2 = new ApiKeyUsageService(day2Clock, entityManager);
 
         // Act
         serviceDay2.incrementUsage(apiKeyName);
@@ -129,6 +134,7 @@ class ApiKeyUsageServiceTest {
         assertEquals(1, usageDay2.getUsageCount());
     }
 
+    @Transactional
     void createUsageRecord(String apiKeyName, LocalDate date, long count) {
         ApiKeyUsage usage = new ApiKeyUsage(apiKeyName, date);
         for (int i = 0; i < count; i++) {
