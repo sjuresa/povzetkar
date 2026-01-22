@@ -13,6 +13,10 @@
 
 ## 1. Introduction
 
+> **Note:** This document provides the historical context and rationale for our chosen approach. For the definitive, operational guide on *how* we work today, please refer to **[`docs/process/methodology.md`](../process/methodology.md)**.
+
+---
+
 This document analyzes our current development process by comparing it to established agile methodologies. The goal is to understand the strengths of our hybrid approach and identify what makes it effective for our specific context.
 
 Our process can be described as a **structured, asynchronous, single-flow process inspired by Agile principles**. It is tailored for a collaboration between a single developer (the AI) and a single product owner/technical lead (the user).
