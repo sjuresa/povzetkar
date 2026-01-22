@@ -41,6 +41,9 @@ public class AdminResource {
     @ConfigProperty(name = "povzetkar.ui.admin.page-size")
     int pageSize;
 
+    @ConfigProperty(name = "povzetkar.api-usage.timezone", defaultValue = "America/Los_Angeles")
+    String apiUsageTimezone;
+
     @Inject
     public AdminResource(@Location("admin.html") Template admin,
                          ViewUtils viewUtils,
@@ -93,6 +96,7 @@ public class AdminResource {
 
         List<ApiKeyUsage> genAiClientUsage = apiKeyUsageService.getUsageForToday();
         data.put("genAiClientUsage", genAiClientUsage);
+        data.put("apiUsageTimezone", apiUsageTimezone);
 
         context.response()
                 .putHeader("Content-Type", "text/html; charset=utf-8")

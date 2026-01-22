@@ -38,13 +38,14 @@ class ApiKeyUsageServiceTest {
     void incrementUsage_shouldCreateNewRecord() {
         // Arrange
         String apiKeyName = "test-key-1";
-        LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
-
+        ZoneId testZone = ZoneId.of("America/Los_Angeles");
+        LocalDate testDate = LocalDate.of(2023, 1, 1);
+        Clock fixedClock = Clock.fixed(testDate.atStartOfDay(testZone).toInstant(), testZone);
+        ApiKeyUsageService testService = new ApiKeyUsageService(fixedClock);
         // Act
-        apiKeyUsageService.incrementUsage(apiKeyName);
-
+        testService.incrementUsage(apiKeyName);
         // Assert
-        ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, today).firstResult();
+        ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, testDate).firstResult();
         assertNotNull(usage);
         assertEquals(1, usage.getUsageCount());
     }
@@ -89,7 +90,7 @@ class ApiKeyUsageServiceTest {
 
         // Assert
         assertEquals(1, todayUsage.size());
-        assertEquals("key-today", todayUsage.getFirst().apiKeyName);
+        assertEquals("key-today", todayUsage.getFirst().getApiKeyName());
         assertEquals(5, todayUsage.getFirst().getUsageCount());
     }
 

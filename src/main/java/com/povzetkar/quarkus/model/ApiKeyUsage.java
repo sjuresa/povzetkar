@@ -19,16 +19,16 @@ public class ApiKeyUsage extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     @Column(name = "api_key_name", nullable = false)
-    public String apiKeyName;
+    private String apiKeyName;
 
     @Column(name = "usage_date", nullable = false)
-    public LocalDate usageDate;
+    private LocalDate usageDate;
 
     @Column(name = "usage_count", nullable = false)
-    private long usageCount; // Made private
+    private long usageCount;
 
     public ApiKeyUsage() {
     }
@@ -39,12 +39,22 @@ public class ApiKeyUsage extends PanacheEntityBase {
         this.usageCount = 0;
     }
 
-    // Getter for usageCount
+    public Long getId() {
+        return id;
+    }
+
+    public String getApiKeyName() {
+        return apiKeyName;
+    }
+
+    public LocalDate getUsageDate() {
+        return usageDate;
+    }
+
     public long getUsageCount() {
         return usageCount;
     }
 
-    // Method to increment usageCount
     public void incrementUsageCount() {
         this.usageCount++;
     }
