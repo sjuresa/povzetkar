@@ -55,6 +55,30 @@
 
     {#if activeTab.equals('history')}
     <div role="tabpanel">
+        <section id="gen-ai-usage">
+            <h2>GenAI API Key Usage (Current Day - PST)</h2>
+            {#if genAiClientUsage.size() > 0}
+                <table role="grid">
+                    <thead>
+                        <tr>
+                            <th scope="col">API Key Name</th>
+                            <th scope="col">Daily Usage Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#for usage in genAiClientUsage}
+                            <tr>
+                                <td>{usage.apiKeyName}</td>
+                                <td>{usage.usageCount}</td>
+                            </tr>
+                        {/for}
+                    </tbody>
+                </table>
+            {#else}
+                <p>No GenAI clients configured or no usage recorded for today.</p>
+            {/if}
+        </section>
+
         {#if pendingContentItems}
         <section id="pending-content-items">
             <h2>Pending Content Items</h2>

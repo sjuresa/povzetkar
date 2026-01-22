@@ -21,4 +21,8 @@ public class GenAiClient {
     public Models getModels() {
         return client.models;
     }
+
+    public String getName() {
+        return name;
+    }
 }

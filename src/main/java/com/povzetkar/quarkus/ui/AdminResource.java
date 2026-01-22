@@ -1,9 +1,11 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.model.ApiKeyUsage;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.service.ApiKeyUsageService;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.DateTimeService;
@@ -34,6 +36,7 @@ public class AdminResource {
     private final Template admin;
     private final ContentItemService contentItemService;
     private final DateTimeService dateTimeService;
+    private final ApiKeyUsageService apiKeyUsageService;
 
     @ConfigProperty(name = "povzetkar.ui.admin.page-size")
     int pageSize;
@@ -42,11 +45,13 @@ public class AdminResource {
     public AdminResource(@Location("admin.html") Template admin,
                          ViewUtils viewUtils,
                          ContentItemService contentItemService,
-                         DateTimeService dateTimeService) {
+                         DateTimeService dateTimeService,
+                         ApiKeyUsageService apiKeyUsageService) {
         this.admin = admin;
         this.viewUtils = viewUtils;
         this.contentItemService = contentItemService;
         this.dateTimeService = dateTimeService;
+        this.apiKeyUsageService = apiKeyUsageService;
     }
 
     @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
@@ -85,6 +90,9 @@ public class AdminResource {
                 ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER
         ).page(0, pageSize).list();
         data.put("failedContentItems", failedContentItems);
+
+        List<ApiKeyUsage> genAiClientUsage = apiKeyUsageService.getUsageForToday();
+        data.put("genAiClientUsage", genAiClientUsage);
 
         context.response()
                 .putHeader("Content-Type", "text/html; charset=utf-8")
