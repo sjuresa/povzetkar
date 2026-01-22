@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ApiKeyUsage;
+import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -41,14 +42,11 @@ public class ApiKeyUsageService {
         LocalDate today = LocalDate.now(clock);
 
         // Pessimistic lock to prevent race conditions
-        ApiKeyUsage usage = (ApiKeyUsage) entityManager.createQuery(
-                        "SELECT u FROM ApiKeyUsage u WHERE u.apiKeyName = :apiKeyName AND u.usageDate = :usageDate")
-                .setParameter("apiKeyName", apiKeyName)
-                .setParameter("usageDate", today)
-                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
-                .getResultStream()
-                .findFirst()
-                .orElse(null);
+        ApiKeyUsage usage = ApiKeyUsage.find(
+                        "apiKeyName = :apiKeyName AND usageDate = :usageDate",
+                        Parameters.with("apiKeyName", apiKeyName).and("usageDate", today))
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResult();
 
         if (usage != null) {
             usage.incrementUsageCount();
