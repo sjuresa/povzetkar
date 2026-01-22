@@ -129,7 +129,6 @@ class ApiKeyUsageServiceTest {
         assertEquals(1, usageDay2.getUsageCount());
     }
 
-    @Transactional
     void createUsageRecord(String apiKeyName, LocalDate date, long count) {
         ApiKeyUsage usage = new ApiKeyUsage(apiKeyName, date);
         for (int i = 0; i < count; i++) {
