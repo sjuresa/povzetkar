@@ -116,7 +116,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.9: Operational Refinement & Admin Tools
 
-**Goal:** Stabilize the application operations and enhance the administrator's toolkit before introducing multi-user complexity. This version focuses on visibility (Quotas, Dry-run), resilience (Circuit Breaker), and process documentation.
+**Goal:** Stabilize the application operations and enhance the administrator's toolkit before introducing multi-user complexity. This version focuses on visibility (GenAI Usage, Orchestration Preview), resilience (Circuit Breaker), and process documentation.
 
 ### Key Tasks & Implementation Steps:
 1.  **Admin Visibility:**
