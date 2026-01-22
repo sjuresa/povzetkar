@@ -83,9 +83,9 @@ public class GenAiPool implements AutoCloseable {
                 actualAcquisitionTime = now; // No sleep needed, acquire now
             }
             selectedClient.lastUsedTimestamp = actualAcquisitionTime; // Update timestamp after cooldown
-            apiKeyUsageService.incrementUsage(selectedClient.getName());
             logger.info("Acquired client {}.", selectedClient.name);
         }
+        apiKeyUsageService.incrementUsage(selectedClient.getName());
         return selectedClient;
     }
 
