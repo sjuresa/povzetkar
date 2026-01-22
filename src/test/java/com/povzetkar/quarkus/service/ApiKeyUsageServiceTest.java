@@ -53,6 +53,8 @@ class ApiKeyUsageServiceTest {
         testService.incrementUsage(apiKeyName);
 
         // Assert
+        entityManager.flush();
+        entityManager.clear();
         ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, testDate).firstResult();
         assertNotNull(usage);
         assertEquals(1, usage.getUsageCount());
@@ -71,6 +73,8 @@ class ApiKeyUsageServiceTest {
         testService.incrementUsage(apiKeyName); // Second usage
 
         // Assert
+        entityManager.flush();
+        entityManager.clear();
         ApiKeyUsage usage = ApiKeyUsage.find("apiKeyName = ?1 and usageDate = ?2", apiKeyName, testDate).firstResult();
         assertNotNull(usage);
         assertEquals(2, usage.getUsageCount());
@@ -122,6 +126,8 @@ class ApiKeyUsageServiceTest {
         serviceDay2.incrementUsage(apiKeyName);
 
         // Assert
+        entityManager.flush();
+        entityManager.clear();
         long totalRecords = ApiKeyUsage.count("apiKeyName", apiKeyName);
         assertEquals(2, totalRecords, "Should have two separate records for two different days");
 
@@ -136,8 +142,11 @@ class ApiKeyUsageServiceTest {
 
     @Transactional
     void createUsageRecord(String apiKeyName, LocalDate date, long count) {
+        if (count <= 0) {
+            return;
+        }
         ApiKeyUsage usage = new ApiKeyUsage(apiKeyName, date);
-        for (int i = 0; i < count; i++) {
+        for (long i = 1; i < count; i++) {
             usage.incrementUsageCount();
         }
         usage.persist();

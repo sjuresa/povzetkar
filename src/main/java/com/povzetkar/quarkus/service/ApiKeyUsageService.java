@@ -68,7 +68,6 @@ public class ApiKeyUsageService {
             // The record did not exist, so we create it.
             // This is the point where a race condition can occur.
             ApiKeyUsage newUsage = new ApiKeyUsage(apiKeyName, today);
-            newUsage.incrementUsageCount(); // Set initial count to 1
             entityManager.persist(newUsage);
         }
         entityManager.flush();
@@ -76,7 +75,7 @@ public class ApiKeyUsageService {
 
     public List<ApiKeyUsage> getUsageForToday() {
         LocalDate today = LocalDate.now(clock);
-        return ApiKeyUsage.list("usageDate", today);
+        return ApiKeyUsage.list("usageDate = ?1 order by apiKeyName", today);
     }
 
     public String getTimezoneId() {

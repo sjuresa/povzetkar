@@ -36,7 +36,7 @@ public class ApiKeyUsage extends PanacheEntityBase {
     public ApiKeyUsage(String apiKeyName, LocalDate usageDate) {
         this.apiKeyName = apiKeyName;
         this.usageDate = usageDate;
-        this.usageCount = 0;
+        this.usageCount = 1;
     }
 
     public Long getId() {
