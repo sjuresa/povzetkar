@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.ai;
 
 import com.google.api.client.util.Sleeper;
 import com.google.genai.Client;
+import com.povzetkar.quarkus.service.ApiKeyUsageService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -32,17 +33,20 @@ public class GenAiPool implements AutoCloseable {
     private final List<GenAiClient> clientPool;
     private final long coolDownPeriod;
     private final TimeProvider timeProvider;
+    private final ApiKeyUsageService apiKeyUsageService;
 
     @Inject
     public GenAiPool(@ConfigProperty(name = "google.api.keys") List<String> apiKeys,
-                     @ConfigProperty(name = "cooldown.period.sec") long coolDownPeriod) {
-        this(apiKeys, coolDownPeriod, new DefaultTimeProvider(), Sleeper.DEFAULT);
+                     @ConfigProperty(name = "cooldown.period.sec") long coolDownPeriod,
+                     ApiKeyUsageService apiKeyUsageService) {
+        this(apiKeys, coolDownPeriod, new DefaultTimeProvider(), Sleeper.DEFAULT, apiKeyUsageService);
     }
 
-    GenAiPool(List<String> apiKeys, long coolDownPeriod, TimeProvider timeProvider, Sleeper sleeper) {
+    GenAiPool(List<String> apiKeys, long coolDownPeriod, TimeProvider timeProvider, Sleeper sleeper, ApiKeyUsageService apiKeyUsageService) {
         this.coolDownPeriod = TimeUnit.SECONDS.toNanos(coolDownPeriod);
         this.timeProvider = timeProvider;
         this.sleeper = sleeper;
+        this.apiKeyUsageService = apiKeyUsageService;
         clientPool = new ArrayList<>();
 
         for (int i = 0; i < apiKeys.size(); i++) {
@@ -81,6 +85,7 @@ public class GenAiPool implements AutoCloseable {
             selectedClient.lastUsedTimestamp = actualAcquisitionTime; // Update timestamp after cooldown
             logger.info("Acquired client {}.", selectedClient.name);
         }
+        apiKeyUsageService.incrementUsage(selectedClient.getName());
         return selectedClient;
     }
 
