@@ -360,7 +360,7 @@ public class TopicResource {
             return;
         }
         Long topicId = topicIdOptional.get();
-        Topic.findByIdWithContentSources(topicId).ifPresentOrElse(topic -> { // Use the new method
+        Topic.findByIdOptional(topicId).ifPresentOrElse(topic -> {
             Map<String, Object> data = viewUtils.createTemplateData(context);
             String query = context.request().getParam("query");
             List<ContentSource> contentSources;
@@ -371,7 +371,7 @@ public class TopicResource {
             }
 
             // Filter out content sources already associated with the topic
-            Set<Long> existingSourceIds = topic.contentSources.stream()
+            Set<Long> existingSourceIds = ((Topic)topic).contentSources.stream()
                                             .map(cs -> cs.id)
                                             .collect(Collectors.toSet());
             List<ContentSource> filteredContentSources = contentSources.stream()
@@ -384,7 +384,7 @@ public class TopicResource {
             data.put(BREADCRUMBS_KEY, List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                    new Breadcrumb((topic).name, topicBriefingsPath((topic).id)),
+                    new Breadcrumb(((Topic)topic).name, topicBriefingsPath(((Topic)topic).id)),
                     new Breadcrumb("Select Source", context.request().uri())
             ));
             context.response().end(selectContentSource.instance().data(data).render());

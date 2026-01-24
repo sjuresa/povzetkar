@@ -49,6 +49,18 @@
                     <button type="submit" onclick="return confirm('Are you sure you want to run orchestration?');">Run Orchestration</button>
                 </fieldset>
             </form>
+
+            <form id="previewForm" action="/api/v1/orchestrator/preview" method="post">
+                <fieldset>
+                    <legend>Run Preview</legend>
+                    <label for="preview-start-date">Start Date (optional):</label>
+                    <input type="date" id="preview-start-date" name="startDate">
+
+                    <label for="preview-end-date">End Date (optional):</label>
+                    <input type="date" id="preview-end-date" name="endDate">
+                    <button type="submit" onclick="return confirm('Are you sure you want to run a preview?');">Run Preview</button>
+                </fieldset>
+            </form>
         </section>
     </div>
     {/if}
@@ -127,8 +139,18 @@
                                 <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>
+                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form" style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <select name="status" aria-label="Change Status" style="margin-bottom: 0; width: auto;">
+                                            <option value="PENDING" {#if item.processingStatus.name() == 'PENDING'}selected{/if}>PENDING</option>
+                                            <option value="COMPLETED" {#if item.processingStatus.name() == 'COMPLETED'}selected{/if}>COMPLETED</option>
+                                            <option value="FAILED" {#if item.processingStatus.name() == 'FAILED'}selected{/if}>FAILED</option>
+                                            <option value="RETRY_LATER" {#if item.processingStatus.name() == 'RETRY_LATER'}selected{/if}>RETRY_LATER</option>
+                                            <option value="IGNORED" {#if item.processingStatus.name() == 'IGNORED'}selected{/if}>IGNORED</option>
+                                        </select>
+                                        <button type="submit" class="secondary small" style="margin-bottom: 0;">Update</button>
+                                    </form>
                                     {#if !item.transcript}
-                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    <button class="fetch-transcript-btn" data-id="{item.id}" style="margin-top: 0.5rem;">Fetch Transcript</button>
                                     {/if}
                                 </td>
                             </tr>
@@ -306,7 +328,7 @@
 
         {#if failedContentItems}
         <section id="failed-content-items">
-            <h2>Failed Content Items</h2>
+            <h2>Failed and Ignored Content Items</h2>
             {#if failedContentItems.size() > 0}
                 <table role="grid">
                     <thead>
@@ -354,8 +376,18 @@
                                 <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
+                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form" style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <select name="status" aria-label="Change Status" style="margin-bottom: 0; width: auto;">
+                                            <option value="PENDING" {#if item.processingStatus.name() == 'PENDING'}selected{/if}>PENDING</option>
+                                            <option value="COMPLETED" {#if item.processingStatus.name() == 'COMPLETED'}selected{/if}>COMPLETED</option>
+                                            <option value="FAILED" {#if item.processingStatus.name() == 'FAILED'}selected{/if}>FAILED</option>
+                                            <option value="RETRY_LATER" {#if item.processingStatus.name() == 'RETRY_LATER'}selected{/if}>RETRY_LATER</option>
+                                            <option value="IGNORED" {#if item.processingStatus.name() == 'IGNORED'}selected{/if}>IGNORED</option>
+                                        </select>
+                                        <button type="submit" class="secondary small" style="margin-bottom: 0;">Update</button>
+                                    </form>
                                     {#if !item.transcript}
-                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    <button class="fetch-transcript-btn" data-id="{item.id}" style="margin-top: 0.5rem;">Fetch Transcript</button>
                                     {/if}
                                 </td>
                             </tr>

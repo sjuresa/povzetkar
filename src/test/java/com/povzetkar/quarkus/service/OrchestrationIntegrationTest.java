@@ -97,6 +97,7 @@ class OrchestrationIntegrationTest {
         ContentSource.deleteAll();
         User.deleteAll();
         OrchestrationLock.deleteAll();
+        OrchestrationLock.deleteAll();
     }
 
     @Test
@@ -104,7 +105,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_success() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
 
         YouTubeVideo longVideo = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -147,7 +148,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_noNewContent() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
 
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(Collections.emptyList());
@@ -169,7 +170,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_summarizationFails() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
 
         YouTubeVideo videoToProcess = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -203,7 +204,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_briefingOverwrite() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
         Topic testTopic = Topic.find("name", "Default Topic").firstResult();
 
         when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
@@ -259,7 +260,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
 
         QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.acquireLock(orchestrationDate));
 
@@ -280,7 +281,7 @@ class OrchestrationIntegrationTest {
     void testOrchestration_takesOverStaleLock() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
         Instant staleLockTime = Instant.now().minus(lockTimeout).minus(Duration.ofMinutes(1));
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -297,5 +298,32 @@ class OrchestrationIntegrationTest {
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         assertEquals(0, OrchestrationLock.count());
+    }
+
+    @Test
+    @Transactional
+    void testOrchestrationFlow_previewMode() throws IOException {
+        // Given
+        LocalDate orchestrationDate = LocalDate.now();
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, false, false, false, true);
+
+        YouTubeVideo video1 = new YouTubeVideo(
+                "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
+                "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
+        when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
+                .thenReturn(List.of(video1));
+
+        // When
+        orchestrationManager.runOrchestrationManually(request).await().indefinitely();
+
+        // Then
+        verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
+        verify(youTubeTranscriptService, never()).getTranscript(anyString());
+        verify(videoSummaryService, never()).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
+        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString());
+
+        List<ContentItem> contentItems = ContentItem.listAll();
+        assertEquals(1, contentItems.size());
+        assertEquals(ProcessingStatus.PENDING, contentItems.getFirst().processingStatus);
     }
 }

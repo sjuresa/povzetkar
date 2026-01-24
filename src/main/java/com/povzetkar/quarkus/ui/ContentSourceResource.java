@@ -14,6 +14,8 @@ import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +27,8 @@ import static com.povzetkar.quarkus.ui.TopicResource.UI_BASE_PATH;
 
 @ApplicationScoped
 public class ContentSourceResource {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContentSourceResource.class);
 
     public static final String CONTENT_SOURCES_PATH = UI_BASE_PATH + "/content-sources";
     public static final String CONTENT_SOURCES_ADD_PATH = CONTENT_SOURCES_PATH + "/add";
@@ -42,6 +46,10 @@ public class ContentSourceResource {
     public ContentSourceResource(@Location("content-source-form.html") Template contentSourceForm, ViewUtils viewUtils) {
         this.contentSourceForm = contentSourceForm;
         this.viewUtils = viewUtils;
+    }
+
+    public static String topicBriefingsPath(long topicId) {
+        return TopicResource.TOPIC_BRIEFINGS_PATH.replace(TopicResource.TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
     }
 
     private void renderAddFormWithData(RoutingContext context, Long topicId, String name, String sourceIdentifier, Integer sourceTypeId) {
@@ -82,11 +90,13 @@ public class ContentSourceResource {
         String name = context.request().getFormAttribute("name");
         String sourceIdentifier = context.request().getFormAttribute("sourceIdentifier");
 
-        Optional<Long> topicIdOptional = WebUtils.getLongFormAttribute(context, PARAM_TOPIC_ID, "Invalid format for topic ID.", validator::addError);
-        validator.validateNotNull(topicIdOptional.orElse(null), "Topic ID is required.");
+        logger.info("Validating content source. Name: '{}', SourceIdentifier: '{}'", name, sourceIdentifier);
 
         validator.validateNotBlank(name, "Name cannot be blank.");
         validator.validateNotBlank(sourceIdentifier, "Source Identifier cannot be blank.");
+
+        Optional<Long> topicIdOptional = WebUtils.getLongFormAttribute(context, PARAM_TOPIC_ID, "Invalid format for topic ID.", validator::addError);
+        validator.validateNotNull(topicIdOptional.orElse(null), "Topic ID is required.");
 
         Optional<Integer> sourceTypeIdOptional = WebUtils.getIntegerFormAttribute(context, PARAM_SOURCE_TYPE_ID, INVALID_SOURCE_TYPE_ID_FORMAT, validator::addError);
         validator.validateNotNull(sourceTypeIdOptional.orElse(null), INVALID_SOURCE_TYPE_ID);
