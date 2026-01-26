@@ -139,15 +139,15 @@
                                 <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>
-                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form" style="display: flex; gap: 0.5rem; align-items: center;">
-                                        <select name="status" aria-label="Change Status" style="margin-bottom: 0; width: auto;">
+                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form action-form-inline">
+                                        <select name="status" aria-label="Change Status">
                                             <option value="PENDING" {#if item.processingStatus.name() == 'PENDING'}selected{/if}>PENDING</option>
                                             <option value="COMPLETED" {#if item.processingStatus.name() == 'COMPLETED'}selected{/if}>COMPLETED</option>
                                             <option value="FAILED" {#if item.processingStatus.name() == 'FAILED'}selected{/if}>FAILED</option>
                                             <option value="RETRY_LATER" {#if item.processingStatus.name() == 'RETRY_LATER'}selected{/if}>RETRY_LATER</option>
                                             <option value="IGNORED" {#if item.processingStatus.name() == 'IGNORED'}selected{/if}>IGNORED</option>
                                         </select>
-                                        <button type="submit" class="secondary small" style="margin-bottom: 0;">Update</button>
+                                        <button type="submit" class="secondary small">Update</button>
                                     </form>
                                     {#if !item.transcript}
                                     <button class="fetch-transcript-btn" data-id="{item.id}" style="margin-top: 0.5rem;">Fetch Transcript</button>
@@ -376,15 +376,15 @@
                                 <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
-                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form" style="display: flex; gap: 0.5rem; align-items: center;">
-                                        <select name="status" aria-label="Change Status" style="margin-bottom: 0; width: auto;">
+                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form action-form-inline">
+                                        <select name="status" aria-label="Change Status">
                                             <option value="PENDING" {#if item.processingStatus.name() == 'PENDING'}selected{/if}>PENDING</option>
                                             <option value="COMPLETED" {#if item.processingStatus.name() == 'COMPLETED'}selected{/if}>COMPLETED</option>
                                             <option value="FAILED" {#if item.processingStatus.name() == 'FAILED'}selected{/if}>FAILED</option>
                                             <option value="RETRY_LATER" {#if item.processingStatus.name() == 'RETRY_LATER'}selected{/if}>RETRY_LATER</option>
                                             <option value="IGNORED" {#if item.processingStatus.name() == 'IGNORED'}selected{/if}>IGNORED</option>
                                         </select>
-                                        <button type="submit" class="secondary small" style="margin-bottom: 0;">Update</button>
+                                        <button type="submit" class="secondary small">Update</button>
                                     </form>
                                     {#if !item.transcript}
                                     <button class="fetch-transcript-btn" data-id="{item.id}" style="margin-top: 0.5rem;">Fetch Transcript</button>

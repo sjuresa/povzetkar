@@ -26,3 +26,18 @@
 .text-danger {
     color: var(--pico-del-color, #d32f2f); /* Fallback to a red color */
 }
+
+.action-form-inline {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.action-form-inline select,
+.action-form-inline button {
+    margin-bottom: 0;
+}
+
+.action-form-inline select {
+    width: auto;
+}
