@@ -182,8 +182,8 @@ public class TopicResource {
         }
         Long id = idOptional.get();
         Topic.findByIdOptional(id).ifPresentOrElse(
-            topic -> renderEditForm(context, (Topic) topic),
-            () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
+                topic -> renderEditForm(context, (Topic) topic),
+                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
 
@@ -361,35 +361,35 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
         Topic.findByIdWithContentSources(topicId).ifPresentOrElse(topic -> { // Use the new method
-            Map<String, Object> data = viewUtils.createTemplateData(context);
-            String query = context.request().getParam("query");
-            List<ContentSource> contentSources;
-            if (query != null && !query.isBlank()) {
-                contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
-            } else {
-                contentSources = ContentSource.listAll();
-            }
+                    Map<String, Object> data = viewUtils.createTemplateData(context);
+                    String query = context.request().getParam("query");
+                    List<ContentSource> contentSources;
+                    if (query != null && !query.isBlank()) {
+                        contentSources = ContentSource.find("lower(name) like lower(?1)", "%" + query + "%").list();
+                    } else {
+                        contentSources = ContentSource.listAll();
+                    }
 
-            // Filter out content sources already associated with the topic
-            Set<Long> existingSourceIds = topic.contentSources.stream()
-                                            .map(cs -> cs.id)
-                                            .collect(Collectors.toSet());
-            List<ContentSource> filteredContentSources = contentSources.stream()
-                                                        .filter(cs -> !existingSourceIds.contains(cs.id))
-                                                        .toList();
+                    // Filter out content sources already associated with the topic
+                    Set<Long> existingSourceIds = topic.contentSources.stream()
+                            .map(cs -> cs.id)
+                            .collect(Collectors.toSet());
+                    List<ContentSource> filteredContentSources = contentSources.stream()
+                            .filter(cs -> !existingSourceIds.contains(cs.id))
+                            .toList();
 
-            data.put(TOPIC_KEY, topic);
-            data.put("contentSources", filteredContentSources); // Pass the filtered list
-            data.put("query", query);
-            data.put(BREADCRUMBS_KEY, List.of(
-                    ViewUtils.HOME_BREADCRUMB,
-                    new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                    new Breadcrumb((topic).name, topicBriefingsPath((topic).id)),
-                    new Breadcrumb("Select Source", context.request().uri())
-            ));
-            context.response().end(selectContentSource.instance().data(data).render());
-        },
-        () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
+                    data.put(TOPIC_KEY, topic);
+                    data.put("contentSources", filteredContentSources); // Pass the filtered list
+                    data.put("query", query);
+                    data.put(BREADCRUMBS_KEY, List.of(
+                            ViewUtils.HOME_BREADCRUMB,
+                            new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
+                            new Breadcrumb((topic).name, topicBriefingsPath((topic).id)),
+                            new Breadcrumb("Select Source", context.request().uri())
+                    ));
+                    context.response().end(selectContentSource.instance().data(data).render());
+                },
+                () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId))
         );
     }
 }

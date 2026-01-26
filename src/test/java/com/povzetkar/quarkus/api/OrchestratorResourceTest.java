@@ -32,7 +32,7 @@ class OrchestratorResourceTest {
 
     @Test
     void testRunOrchestrationManually_noDates() {
-        var request = new OrchestrationRequest(null, null, false, false, false);
+        var request = new OrchestrationRequest(null, null, false, false, false, false);
 
         given()
                 .contentType(ContentType.JSON)
@@ -48,7 +48,7 @@ class OrchestratorResourceTest {
     @Test
     void testRunOrchestrationManually_singlePastDate() {
         LocalDate pastDate = LocalDate.now().minusDays(1);
-        var request = new OrchestrationRequest(pastDate, null, false, false, false);
+        var request = new OrchestrationRequest(pastDate, null, false, false, false, false);
 
         given()
                 .contentType(ContentType.JSON)
@@ -65,7 +65,7 @@ class OrchestratorResourceTest {
     void testRunOrchestrationManually_dateRange() {
         LocalDate startDate = LocalDate.now().minusDays(3);
         LocalDate endDate = LocalDate.now().minusDays(1);
-        var request = new OrchestrationRequest(startDate, endDate, false, false, false);
+        var request = new OrchestrationRequest(startDate, endDate, false, false, false, false);
 
         given()
                 .contentType(ContentType.JSON)
@@ -81,7 +81,7 @@ class OrchestratorResourceTest {
     @Test
     void testRunOrchestrationManually_futureDate() {
         LocalDate futureDate = LocalDate.now().plusDays(1);
-        var request = new OrchestrationRequest(futureDate, null, false, false, false);
+        var request = new OrchestrationRequest(futureDate, null, false, false, false, false);
 
         doThrow(new IllegalArgumentException("Orchestration cannot be run for future dates."))
                 .when(orchestrationManager).runOrchestrationManually(request);
@@ -100,7 +100,7 @@ class OrchestratorResourceTest {
     @Test
     void testRunOrchestrationManually_granularOptions() {
         LocalDate startDate = LocalDate.now().minusDays(1);
-        var request = new OrchestrationRequest(startDate, null, true, false, true);
+        var request = new OrchestrationRequest(startDate, null, true, false, true, false);
 
         given()
                 .contentType(ContentType.JSON)

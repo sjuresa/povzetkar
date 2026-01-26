@@ -198,7 +198,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_defaultCurrentDate() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(null, null, true, true, true);
+        var request = new OrchestrationRequest(null, null, true, true, true, false);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -258,7 +258,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_singlePastDate() { // Removed @Transactional
         // Given
         LocalDate pastDate = LocalDate.now().minusDays(5);
-        var request = new OrchestrationRequest(pastDate, null, true, true, true);
+        var request = new OrchestrationRequest(pastDate, null, true, true, true, false);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -319,7 +319,7 @@ class OrchestrationManagerTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(3);
         LocalDate endDate = LocalDate.now().minusDays(1);
-        var request = new OrchestrationRequest(startDate, endDate, true, true, true);
+        var request = new OrchestrationRequest(startDate, endDate, true, true, true, false);
         long numOfDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         
         // Setup entities within a transaction
@@ -383,7 +383,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_futureDate_throwsException() {
         // Given
         LocalDate futureDate = LocalDate.now().plusDays(1);
-        var request = new OrchestrationRequest(futureDate, null, true, true, true);
+        var request = new OrchestrationRequest(futureDate, null, true, true, true, false);
 
         // When / Then
         assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(request), "Orchestration cannot be run for future dates.");
@@ -394,7 +394,7 @@ class OrchestrationManagerTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(1);
         LocalDate endDate = LocalDate.now().minusDays(5);
-        var request = new OrchestrationRequest(startDate, endDate, true, true, true);
+        var request = new OrchestrationRequest(startDate, endDate, true, true, true, false);
 
         // When / Then
         assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(request), "Start date cannot be after end date.");
@@ -405,7 +405,7 @@ class OrchestrationManagerTest {
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -513,7 +513,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_skipsDisabledTopics() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, true, true, true);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, true, true, true, false);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -527,6 +527,8 @@ class OrchestrationManagerTest {
         // Mock external service calls
         doNothing().when(orchestrationLockService).acquireLock(expectedDate);
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().voidItem());
 
         // When
         orchestrationManager.runOrchestrationManually(request).await().indefinitely();
@@ -545,7 +547,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_summarizeOnly() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, false, true, false);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, false, true, false, false);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -578,7 +580,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_briefingOnly() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, false, false, true);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, false, false, true, false);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -624,7 +626,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_pendingOnly() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, true, false, false);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, true, false, false, false);
         
         // Setup entities
         User user = setupUser();

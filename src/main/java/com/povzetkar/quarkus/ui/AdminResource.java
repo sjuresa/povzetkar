@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.service.ApiKeyUsageService;
+import com.povzetkar.quarkus.service.ContentItemAdminService;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.DateTimeService;
@@ -31,12 +32,14 @@ public class AdminResource {
     private static final String ADMIN_REDIRECT_PATH = "/ui/admin";
     private static final String TAB_PARAM = "tab";
     private static final String HISTORY_TAB = "history";
+    private static final String MESSAGE_KEY = "message";
 
     private final ViewUtils viewUtils;
     private final Template admin;
     private final ContentItemService contentItemService;
     private final DateTimeService dateTimeService;
     private final ApiKeyUsageService apiKeyUsageService;
+    private final ContentItemAdminService contentItemAdminService;
 
     @ConfigProperty(name = "povzetkar.ui.admin.page-size")
     int pageSize;
@@ -46,12 +49,14 @@ public class AdminResource {
                          ViewUtils viewUtils,
                          ContentItemService contentItemService,
                          DateTimeService dateTimeService,
-                         ApiKeyUsageService apiKeyUsageService) {
+                         ApiKeyUsageService apiKeyUsageService,
+                         ContentItemAdminService contentItemAdminService) {
         this.admin = admin;
         this.viewUtils = viewUtils;
         this.contentItemService = contentItemService;
         this.dateTimeService = dateTimeService;
         this.apiKeyUsageService = apiKeyUsageService;
+        this.contentItemAdminService = contentItemAdminService;
     }
 
     @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
@@ -93,8 +98,8 @@ public class AdminResource {
 
         // Failed Content Items
         var failedQuery = ContentItem.find(
-                "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.processingStatus = ?1 OR ci.processingStatus = ?2 ORDER BY ci.createdAt DESC",
-                ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER
+                "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.processingStatus IN (?1, ?2, ?3) ORDER BY ci.createdAt DESC",
+                ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER, ProcessingStatus.IGNORED
         );
         addPagedDataToTemplate(data, "failedContentItems", "failedTotalPages", "failedCurrentPage", failedPage, failedQuery);
 
@@ -120,7 +125,7 @@ public class AdminResource {
     @Blocking
     public void fetchTranscript(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
-                msg -> context.response().setStatusCode(400).end(new JsonObject().put("message", msg).encode()));
+                msg -> context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, msg).encode()));
         if (idOptional.isEmpty()) {
             return;
         }
@@ -156,6 +161,33 @@ public class AdminResource {
 
         context.response()
                 .setStatusCode(statusCode)
-                .end(new JsonObject().put("message", message).encode());
+                .end(new JsonObject().put(MESSAGE_KEY, message).encode());
+    }
+
+    @Route(path = "/api/v1/admin/content-items/:id/status", methods = Route.HttpMethod.POST)
+    @Blocking
+    public void updateContentItemStatus(RoutingContext context) {
+        Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
+                msg -> context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, msg).encode()));
+        if (idOptional.isEmpty()) {
+            return;
+        }
+        long contentItemId = idOptional.get();
+
+        String statusParam = context.request().getFormAttribute("status");
+        ProcessingStatus newStatus;
+        try {
+            newStatus = ProcessingStatus.valueOf(statusParam);
+        } catch (IllegalArgumentException | NullPointerException _) {
+            context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, "Invalid status value provided.").encode());
+            return;
+        }
+
+        boolean success = contentItemAdminService.updateStatus(contentItemId, newStatus);
+        if (success) {
+            context.response().setStatusCode(200).end(new JsonObject().put(MESSAGE_KEY, "Content item status updated successfully.").encode());
+        } else {
+            context.response().setStatusCode(500).end(new JsonObject().put(MESSAGE_KEY, "Failed to update content item status.").encode());
+        }
     }
 }

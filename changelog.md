@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Implemented centralized date/time formatting via `DateTimeService`.
 - **UI:** Added timezone configuration (`povzetkar.ui.timezone`) to `application.properties` to display times in the user's local timezone (default: `Europe/Ljubljana`).
 - **UI:** Implemented pagination for all history tables on the Admin page. The page size is configurable via `povzetkar.ui.admin.page-size`.
+- **Orchestration:** Implemented a "Preview" mode to fetch new content without summarization, returning a count of pending items.
+- **Orchestration:** Implemented manual status management in the Admin UI, allowing users to change the status of pending and failed items.
+- **Database:** Added `IGNORED` to the `ProcessingStatus` enum and created a Flyway migration to update the database schema.
+
+### Changed
+- **UI:** The "Failed Content Items" table in the Admin UI has been renamed to "Failed and Ignored Content Items" and now displays items with `FAILED`, `RETRY_LATER`, and `IGNORED` statuses.
+- **UI:** Replaced individual status change buttons with a dropdown menu for more flexible status management.
 
 ### Documentation
 - **Methodology:** Created `docs/process/methodology.md`, a definitive guide consolidating the project's development processes, roles, and lifecycle. Updated `07_development_methodology_comparison.md` to reference it.
@@ -316,6 +323,3 @@ This version marks a major architectural milestone by establishing the foundatio
 - State management for tracking processed videos per channel and date.
 - Utility classes for file operations, resource reading, and sleep abstraction.
 - Detailed logging configuration for runtime diagnostics.
-
-### Documentation
-- Added prompt templates and resource files for authors, videos, and summaries.

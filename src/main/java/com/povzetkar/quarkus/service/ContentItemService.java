@@ -10,7 +10,10 @@ import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 
 @ApplicationScoped
 public class ContentItemService {
@@ -68,5 +71,19 @@ public class ContentItemService {
         video.errorCode = error.name();
         video.errorMessage = errorMessage;
         video.persist();
+    }
+
+    public long countPending() {
+        return ContentItem.count("processingStatus in ?1", Set.of(ProcessingStatus.PENDING, ProcessingStatus.RETRY_LATER));
+    }
+
+    public long countPending(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            return countPending(); // Fallback to all pending if dates are not provided
+        }
+        return ContentItem.count("processingStatus in ?1 and publishedAt >= ?2 and publishedAt < ?3",
+                Set.of(ProcessingStatus.PENDING, ProcessingStatus.RETRY_LATER),
+                startDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant());
     }
 }
