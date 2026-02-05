@@ -132,4 +132,22 @@ class VideoSummaryServiceTest {
         verify(mockApiKeyUsageService).incrementErrorCount("test-key");
         verify(mockGenAiClient).incrementAndGetFailures();
     }
+
+    @Test
+    @DisplayName("generateContent should not trigger circuit breaker when failures are below threshold")
+    void generateContent_shouldNotTriggerCircuitBreaker_whenFailuresBelowThreshold() {
+        ApiException serviceUnavailableException = new ApiException(503, "503 Service Unavailable", null);
+
+        when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
+                .thenThrow(serviceUnavailableException);
+        when(mockGenAiClient.incrementAndGetFailures()).thenReturn(2); // Below threshold of 3
+
+        // Assert that the original ApiException is thrown, not CircuitBreakerOpenException
+        ApiException thrown = assertThrows(ApiException.class, () ->
+                videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null));
+
+        assertEquals(serviceUnavailableException, thrown);
+        verify(mockApiKeyUsageService).incrementErrorCount("test-key");
+        verify(mockGenAiClient).incrementAndGetFailures();
+    }
 }
