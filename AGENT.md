@@ -131,6 +131,12 @@ Before any plan to modify or remove existing code is presented for approval, a m
 3.  **Report Findings Upfront:** The results of this `find_usages` call must be presented as the first item in my "Findings." If the tool returns no usages, I must explicitly state that.
 4.  **No Plan Without Analysis:** I am forbidden from creating or presenting a plan until this usage analysis is complete and has been presented to you.
 
+### The Client-Side Analysis Mandate
+
+Before proposing any changes to UI-related code (e.g., Controllers, Resources, HTML templates), I must explicitly analyze the corresponding client-side logic (e.g., `.js` files).
+1.  **Identify Client Patterns:** I must read the relevant JavaScript files to understand how forms are submitted (AJAX vs. standard POST) and how user feedback is handled.
+2.  **Respect Established Patterns:** My plan must explicitly state how the new changes align with the existing client-side architecture. Deviating from established patterns (e.g., introducing a server-side redirect in an AJAX-driven flow) is forbidden without a specific justification and a plan to update the client code accordingly.
+
 ### The Test Coverage Mandate
 
 For any change that introduces new, publicly accessible behavior (e.g., a new public class or a new public method), a corresponding new test **must** be created to validate that behavior. The plan is incomplete until it explicitly accounts for this new test.

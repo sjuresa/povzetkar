@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
 | 1.9     | January 21, 2026   | Povzetkar AI | Inserted v0.9 "Operational Refinement" based on user request. Shifted User Management to v0.10 and Advanced Content to v0.11.                                            |
 | 1.8     | January 20, 2026   | Povzetkar AI | Marked v0.8 as complete.                                                                                                                                                 |
 | 1.7     | January 13, 2026   | Povzetkar AI | Marked v0.7 as complete.                                                                                                                                                 |
@@ -117,6 +118,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.9: Operational Refinement & Admin Tools
 
 **Goal:** Stabilize the application operations and enhance the administrator's toolkit before introducing multi-user complexity. This version focuses on visibility (GenAI Usage, Orchestration Preview), resilience (Circuit Breaker), and process documentation.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Admin Visibility:**
