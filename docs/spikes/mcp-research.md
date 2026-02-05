@@ -31,23 +31,23 @@ The **Model Context Protocol (MCP)** is an open standard designed to standardize
 The project is currently running on **Quarkus 3.30.7**. Below are the relevant documentation links for the core extensions used in `povzetkar`.
 
 ### Core & Web
--   **Quarkus REST (formerly RESTEasy Reactive):** Writing REST Services
--   **Qute Templating:** Qute Reference Guide
--   **Reactive Routes:** Reactive Routes Guide
+-   **Quarkus REST (formerly RESTEasy Reactive):** [Writing REST Services](https://quarkus.io/guides/rest-json)
+-   **Qute Templating:** [Qute Reference Guide](https://quarkus.io/guides/qute)
+-   **Reactive Routes:** [Reactive Routes Guide](https://quarkus.io/guides/reactive-routes)
 
 ### Data & Persistence
--   **Hibernate ORM with Panache:** Simplified Hibernate ORM
--   **Datasources (PostgreSQL):** Datasources Guide
--   **Flyway Migration:** Flyway Guide
--   **Hibernate Validator:** Validation Guide
+-   **Hibernate ORM with Panache:** [Simplified Hibernate ORM](https://quarkus.io/guides/hibernate-orm-panache)
+-   **Datasources (PostgreSQL):** [Datasources Guide](https://quarkus.io/guides/datasource)
+-   **Flyway Migration:** [Flyway Guide](https://quarkus.io/guides/flyway)
+-   **Hibernate Validator:** [Validation Guide](https://quarkus.io/guides/validation)
 
 ### Observability & Resilience
--   **SmallRye Health:** Health Guide
--   **Scheduler:** Scheduler Guide
+-   **SmallRye Health:** [Health Guide](https://quarkus.io/guides/smallrye-health)
+-   **Scheduler:** [Scheduler Guide](https://quarkus.io/guides/scheduler)
 
 ### Testing
--   **Quarkus Testing:** Testing Guide
--   **Mocking:** Mocking with Mockito
+-   **Quarkus Testing:** [Testing Guide](https://quarkus.io/guides/getting-started-testing)
+-   **Mocking:** [Mocking with Mockito](https://quarkus.io/guides/getting-started-testing#mock-support)
 
 ## 3. Integration Strategy for Povzetkar
 
@@ -78,6 +78,11 @@ We can implement a custom MCP Server (e.g., **povzetkar-context**) that runs alo
     -   `fetch_transcript(url)`: Invokes the `YouTubeTranscriptService` to fetch a transcript for debugging.
     -   `check_health()`: Calls the `/q/health` endpoint.
     -   `run_db_query(sql)`: (Restricted) Executes a read-only query for debugging.
+        -   **Safeguards:**
+            -   **RBAC:** Only accessible to authenticated Admins.
+            -   **Sanitization:** Strict validation to prevent SQL injection and ensure read-only (SELECT) statements.
+            -   **Auditing:** All queries are logged with user identity.
+            -   **Limits:** Enforced query timeouts and result set size limits (e.g., max 50 rows) to prevent DoS.
 
 ### Recommendation
 
