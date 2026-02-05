@@ -11,12 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Resilience:** Implemented a Circuit Breaker pattern for AI API calls. The system now pauses orchestration for a specific client after a configurable number of consecutive 503 errors (`povzetkar.orchestrator.circuit-breaker.threshold`).
 - **Observability:** Added `error_count` to the `api_key_usage` table to track API failures separately from successful usage.
 - **Observability:** Added debug logging for AI response headers to facilitate future quota tracking research.
-
-### Changed
-- **Dependency:** Upgraded `google-genai` library from `1.9.0` to `1.34.0`.
-- **Usage Tracking:** Refined API usage tracking to only increment the usage count on successful calls. 503 errors now increment the new `error_count` instead.
-
-### Added
 - **Admin:** Implemented persistent tracking of GenAI API calls per API key. The daily usage count is now stored in the database and displayed on the Admin Dashboard.
 - **UI:** Implemented centralized date/time formatting via `DateTimeService`.
 - **UI:** Added timezone configuration (`povzetkar.ui.timezone`) to `application.properties` to display times in the user's local timezone (default: `Europe/Ljubljana`).
@@ -26,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database:** Added `IGNORED` to the `ProcessingStatus` enum and created a Flyway migration to update the database schema.
 
 ### Changed
+- **Dependency:** Upgraded `google-genai` library from `1.9.0` to `1.34.0`.
+- **Usage Tracking:** Refined API usage tracking to only increment the usage count on successful calls. 503 errors now increment the new `error_count` instead.
 - **UI:** The "Failed Content Items" table in the Admin UI has been renamed to "Failed and Ignored Content Items" and now displays items with `FAILED`, `RETRY_LATER`, and `IGNORED` statuses.
 - **UI:** Replaced individual status change buttons with a dropdown menu for more flexible status management.
 
@@ -322,7 +318,7 @@ This version marks a major architectural milestone by establishing the foundatio
 - Expanded and improved test coverage for summarization workflows, file handling, and documentation updates.
 - Updated tests to use direct path handling for file operations.
 
-## [0.1] - 2025-07-18
+## [01] - 2025-07-18
 
 ### New Features
 - Initial release of a Java application for summarizing YouTube videos using AI, with support for multiple workflows including author-based, URL-based, and transcript-based summarization.
