@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.9.0] - 2026-02-05
+
+### Added
+- **Resilience:** Implemented a Circuit Breaker pattern for AI API calls. The system now pauses orchestration for a specific client after a configurable number of consecutive 503 errors (`povzetkar.orchestrator.circuit-breaker.threshold`).
+- **Observability:** Added `error_count` to the `api_key_usage` table to track API failures separately from successful usage.
+- **Observability:** Added debug logging for AI response headers to facilitate future quota tracking research.
+- **Admin:** Implemented persistent tracking of GenAI API calls per API key. The daily usage count is now stored in the database and displayed on the Admin Dashboard.
+- **UI:** Implemented centralized date/time formatting via `DateTimeService`.
+- **UI:** Added timezone configuration (`povzetkar.ui.timezone`) to `application.properties` to display times in the user's local timezone (default: `Europe/Ljubljana`).
+- **UI:** Implemented pagination for all history tables on the Admin page. The page size is configurable via `povzetkar.ui.admin.page-size`.
+- **Orchestration:** Implemented a "Preview" mode to fetch new content without summarization, returning a count of pending items.
+- **Orchestration:** Implemented manual status management in the Admin UI, allowing users to change the status of pending and failed items.
+- **Database:** Added `IGNORED` to the `ProcessingStatus` enum and created a Flyway migration to update the database schema.
+
+### Changed
+- **Dependency:** Upgraded `google-genai` library from `1.9.0` to `1.34.0`.
+- **Usage Tracking:** Refined API usage tracking to only increment the usage count on successful calls. 503 errors now increment the new `error_count` instead.
+- **UI:** The "Failed Content Items" table in the Admin UI has been renamed to "Failed and Ignored Content Items" and now displays items with `FAILED`, `RETRY_LATER`, and `IGNORED` statuses.
+- **UI:** Replaced individual status change buttons with a dropdown menu for more flexible status management.
+
+### Documentation
+- **Methodology:** Created `docs/process/methodology.md`, a definitive guide consolidating the project's development processes, roles, and lifecycle. Updated `07_development_methodology_comparison.md` to reference it.
+- **Runbook:** Added documentation for the new `povzetkar.ui.admin.page-size` configuration property.
+- **Research:** Added `docs/spikes/mcp-research.md` detailing the Model Context Protocol (MCP) and a strategy for integrating it with the agent workflow.
+
 ## [0.8.0] - 2026-01-20
 
 ### Added
@@ -242,7 +267,7 @@ This version marks a major architectural milestone by establishing the foundatio
 - **Formalized SDLC Documentation**: A comprehensive suite of documentation has been added, including functional and non-functional requirements, API specifications, database design, a test plan, a development roadmap, and a high-level system specification. This establishes a clear architectural vision and development strategy for Project Povzetkar.
 
 ### Tests
-- Expanded unit/integration tests covering transcript formatting, transcript service, GenAI pool, summarization, and YouTube integration.
+- Expanded unit/integration tests covering transcript formatting, transcript service, GenAiPool, summarization, and YouTube integration.
 
 ## [0.3] - 2025-08-10
 
@@ -306,6 +331,3 @@ This version marks a major architectural milestone by establishing the foundatio
 - State management for tracking processed videos per channel and date.
 - Utility classes for file operations, resource reading, and sleep abstraction.
 - Detailed logging configuration for runtime diagnostics.
-
-### Documentation
-- Added prompt templates and resource files for authors, videos, and summaries.

@@ -1,10 +1,11 @@
 # Povzetkar Runbook
 
-**Version:** 1.6
+**Version:** 1.7
 
 ## Revision History
 | Version | Date               | Author       | Changes                                                                 |
 |---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 1.7     | January 22, 2026   | Povzetkar AI | Added documentation for admin history pagination configuration.         |
 | 1.6     | January 18, 2026   | Povzetkar AI | Added instructions for containerized execution (Docker/Podman).         |
 | 1.5     | January 13, 2026   | Povzetkar AI | Updated manual orchestration instructions for v0.7.0 granular controls. |
 | 1.4     | November 1, 2025   | Povzetkar AI | Updated for v0.6: removed legacy app, simplified run instructions.      |
@@ -311,3 +312,23 @@ The Admin UI page displays several tables for monitoring the application's activ
 *   **Failed Content Items:** Lists content items whose processing status is `FAILED` or `RETRY_LATER`, indicating issues that may require attention.
 
 All tables include a '#' column for row numbering and display dates in the configurable format `dd.MM.yyyy HH:mm:ss`.
+
+#### 9.3.5 History Pagination
+
+The history tables on the Admin UI page are paginated. The number of items displayed per page can be configured in `application.properties`.
+
+*   **Configuration Property:** `povzetkar.ui.admin.page-size`
+*   **Location:** `src/main/resources/application.properties`
+*   **Default Value:** `20`
+
+You can modify this value to control how many items appear on each page of the history tables.
+
+### 9.4 Circuit Breaker Configuration
+
+The circuit breaker for GenAI API calls prevents repeated attempts to a failing service. It tracks consecutive 503 (Service Unavailable) errors per API key.
+
+*   **Configuration Property:** `povzetkar.orchestrator.circuit-breaker.threshold`
+*   **Location:** `src/main/resources/application.properties`
+*   **Default Value:** `3`
+
+If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.

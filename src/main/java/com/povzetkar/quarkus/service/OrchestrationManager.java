@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.api.OrchestrationRequest;
+import com.povzetkar.quarkus.exception.CircuitBreakerOpenException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
@@ -13,6 +14,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 public class OrchestrationManager {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(OrchestrationManager.class);
+    private static final String ORCHESTRATION_PREVIEW = "orchestration_preview";
 
     private final OrchestrationLockService orchestrationLockService;
     private final TopicProcessor topicProcessor;
@@ -78,8 +81,13 @@ public class OrchestrationManager {
             LogKeys.PROCESS_PENDING, request.processPending(),
             LogKeys.SUMMARIZE, request.summarize(),
             LogKeys.CREATE_BRIEFING, request.createBriefing(),
+            "previewOnly", request.previewOnly(),
             LogKeys.MESSAGE, "Manual orchestration triggered."
         );
+
+        if (request.previewOnly()) {
+            return runOrchestrationPreview(request);
+        }
 
         Uni<Void> summarizationTask;
         if (request.processPending() || request.summarize()) {
@@ -133,6 +141,58 @@ public class OrchestrationManager {
             LogKeys.MESSAGE, "Manual orchestration failed unexpectedly"
         ))
         .replaceWithVoid();
+    }
+
+    private Uni<Void> runOrchestrationPreview(OrchestrationRequest request) {
+        LocalDate actualStartDate = (request.startDate() != null) ? request.startDate() : LocalDate.now();
+        LocalDate actualEndDate = (request.endDate() != null) ? request.endDate() : actualStartDate;
+
+        return Uni.createFrom().item(() -> {
+            List<User> activeUsers = User.listAllActive();
+            if (activeUsers.isEmpty()) {
+                logger.info(
+                    LogKeys.ACTION, ORCHESTRATION_PREVIEW,
+                    LogKeys.STATUS, LogKeys.SKIPPED,
+                    LogKeys.REASON, "no_active_users",
+                    LogKeys.MESSAGE, "No active users found. Orchestration preview finished."
+                );
+                return Collections.<Topic>emptyList();
+            }
+            return Topic.findEnabledByUsers(activeUsers);
+        })
+        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+        .chain(allTopics -> {
+            if (allTopics.isEmpty()) {
+                logger.info(
+                    LogKeys.ACTION, ORCHESTRATION_PREVIEW,
+                    LogKeys.STATUS, LogKeys.SKIPPED,
+                    LogKeys.REASON, "no_enabled_topics",
+                    LogKeys.MESSAGE, "No enabled topics found for active users. Orchestration preview finished."
+                );
+                return Uni.createFrom().voidItem();
+            }
+
+            List<Uni<List<ContentItem>>> dailyTopicProcessingTasks = actualStartDate.datesUntil(actualEndDate.plusDays(1))
+                    .flatMap(date -> allTopics.stream()
+                            .map(topic -> topicProcessor.fetchAndPersistContentUni(topic, date)))
+                    .toList();
+
+            return Uni.combine().all().unis(dailyTopicProcessingTasks).with(results ->
+                results.stream()
+                        .map(result -> (List<?>) result)
+                        .mapToInt(List::size)
+                        .sum()
+            )
+            .onItem().invoke(count -> logger.info(
+                    LogKeys.ACTION, ORCHESTRATION_PREVIEW,
+                    LogKeys.STATUS, LogKeys.FINISHED,
+                    LogKeys.START_DATE, actualStartDate,
+                    LogKeys.END_DATE, actualEndDate,
+                    "item_count", count,
+                    LogKeys.MESSAGE, "Orchestration preview finished. Found " + count + " new items."
+            ))
+            .replaceWithVoid();
+        });
     }
 
     private Uni<Void> executeSummarizationStepForDate(LocalDate orchestrationDate, boolean processPending, boolean processNew) {
@@ -218,7 +278,13 @@ public class OrchestrationManager {
                         LogKeys.DATE, orchestrationDate,
                         LogKeys.MESSAGE, "Topic processing finished."
                     ))
-                    .onFailure().invoke(ex -> logger.error(ex,
+                    .onFailure(CircuitBreakerOpenException.class).invoke(ex -> logger.error(ex,
+                        LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                        LogKeys.STATUS, "stopped",
+                        LogKeys.DATE, orchestrationDate,
+                        LogKeys.MESSAGE, "Orchestration stopped due to circuit breaker."
+                    ))
+                    .onFailure(ex -> !(ex instanceof CircuitBreakerOpenException)).invoke(ex -> logger.error(ex,
                         LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
                         LogKeys.STATUS, LogKeys.FAILED,
                         LogKeys.DATE, orchestrationDate,

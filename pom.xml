@@ -6,7 +6,7 @@
 
     <groupId>si.jumis</groupId>
     <artifactId>povzetkar</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -16,17 +16,17 @@
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
 
         <!-- Centralized Dependency Versions -->
-        <google.genai.version>1.9.0</google.genai.version>
+        <google.genai.version>1.34.0</google.genai.version>
         <google.youtube.version>v3-rev20250714-2.0.0</google.youtube.version>
         <byte-buddy.version>1.17.6</byte-buddy.version>
         <commons.codec.version>1.13</commons.codec.version>
-        <assertj.version>3.26.3</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <youtube-transcript-api.version>0.4.0</youtube-transcript-api.version>
 
         <!-- Quarkus Specific Properties -->
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.27.1</quarkus.platform.version>
+        <quarkus.platform.version>3.30.7</quarkus.platform.version>
         <flexmark-all.version>0.64.8</flexmark-all.version>
 
         <!-- Centralized Plugin Versions -->

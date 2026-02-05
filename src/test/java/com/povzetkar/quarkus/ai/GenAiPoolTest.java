@@ -36,7 +36,8 @@ class GenAiPoolTest {
     @BeforeEach
     void setUp() {
         List<String> apiKeys = Arrays.asList("key1", "key2");
-        when(mockTimeProvider.nanoTime()).thenAnswer(invocation -> currentTime);
+        when(mockTimeProvider.nanoTime()).thenAnswer(_ -> currentTime);
+
         genAiPool = new GenAiPool(apiKeys, coolDownPeriod, mockTimeProvider, mockSleeper);
     }
 

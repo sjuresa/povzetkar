@@ -24,11 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+
             const responseBody = await response.text();
+            // Try to parse as JSON if possible to extract message, otherwise use text
+            let message = responseBody;
+            try {
+                const json = JSON.parse(responseBody);
+                if (json.message) message = json.message;
+            } catch (e) {
+                // Not JSON, use text
+            }
+
             if (response.ok) {
-                displayFlashMessage(responseBody || successMessage, 'success');
+                displayFlashMessage(message || successMessage, 'success');
             } else {
-                displayFlashMessage(responseBody || errorMessage, 'danger');
+                displayFlashMessage(message || errorMessage, 'danger');
             }
         } catch (error) {
             console.error(errorLogMessage, error);
@@ -36,12 +46,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const actionForms = document.querySelectorAll('.action-form');
+    actionForms.forEach(form => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const urlEncodedData = new URLSearchParams(formData);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: urlEncodedData
+                });
+
+                const responseData = await response.json(); // Expecting JSON response with "message"
+
+                if (response.ok) {
+                    displayFlashMessage(responseData.message || 'Operation successful', 'success');
+                    // Reload after a short delay to show the message and update the UI.
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    displayFlashMessage(responseData.message || 'Operation failed', 'danger');
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                displayFlashMessage('An unexpected error occurred.', 'danger');
+            }
+        });
+    });
+
     const orchestrationForm = document.getElementById('orchestrationForm');
     if (orchestrationForm) {
         orchestrationForm.addEventListener('submit', (event) => handleAjaxFormSubmit(event, {
             successMessage: 'Orchestration process started successfully.',
             errorMessage: 'Failed to start orchestration process.',
             errorLogMessage: 'Error during orchestration AJAX call:'
+        }));
+    }
+
+    const previewForm = document.getElementById('previewForm');
+    if (previewForm) {
+        previewForm.addEventListener('submit', (event) => handleAjaxFormSubmit(event, {
+            successMessage: 'Preview process started successfully.',
+            errorMessage: 'Failed to start preview process.',
+            errorLogMessage: 'Error during preview AJAX call:'
         }));
     }
 

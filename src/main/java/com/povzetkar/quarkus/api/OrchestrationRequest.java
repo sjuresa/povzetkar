@@ -7,6 +7,7 @@ public record OrchestrationRequest(
     LocalDate endDate,
     boolean processPending,
     boolean summarize,
-    boolean createBriefing
+    boolean createBriefing,
+    boolean previewOnly
 ) {
 }

@@ -101,9 +101,9 @@ class GenAiPoolConcurrencySpikeTest {
                         client = genAiPool.getGenAiClient();
                         Instant callEndTime = Instant.now();
 
-                        clientAcquisitionStartTimes.computeIfAbsent(client.name, k -> Collections.synchronizedList(new ArrayList<>()))
+                        clientAcquisitionStartTimes.computeIfAbsent(client.name, _ -> Collections.synchronizedList(new ArrayList<>()))
                                 .add(callStartTime);
-                        clientAcquisitionEndTimes.computeIfAbsent(client.name, k -> Collections.synchronizedList(new ArrayList<>()))
+                        clientAcquisitionEndTimes.computeIfAbsent(client.name, _ -> Collections.synchronizedList(new ArrayList<>()))
                                 .add(callEndTime);
                         successfulAcquisitions.incrementAndGet();
                         logger.debug("Thread {} acquired client: {} (Start: {}, End: {})",

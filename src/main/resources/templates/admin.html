@@ -49,12 +49,48 @@
                     <button type="submit" onclick="return confirm('Are you sure you want to run orchestration?');">Run Orchestration</button>
                 </fieldset>
             </form>
+
+            <form id="previewForm" action="/api/v1/orchestrator/preview" method="post">
+                <fieldset>
+                    <legend>Run Preview</legend>
+                    <label for="preview-start-date">Start Date (optional):</label>
+                    <input type="date" id="preview-start-date" name="startDate">
+
+                    <label for="preview-end-date">End Date (optional):</label>
+                    <input type="date" id="preview-end-date" name="endDate">
+                    <button type="submit" onclick="return confirm('Are you sure you want to run a preview?');">Run Preview</button>
+                </fieldset>
+            </form>
         </section>
     </div>
     {/if}
 
     {#if activeTab.equals('history')}
     <div role="tabpanel">
+        <section id="gen-ai-usage">
+            <h2>GenAI API Key Usage (Current Day - {apiUsageTimezone})</h2>
+            {#if genAiClientUsage.size() > 0}
+                <table role="grid">
+                    <thead>
+                        <tr>
+                            <th scope="col">API Key Name</th>
+                            <th scope="col">Daily Usage Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#for usage in genAiClientUsage}
+                            <tr>
+                                <td>{usage.apiKeyName}</td>
+                                <td>{usage.usageCount}</td>
+                            </tr>
+                        {/for}
+                    </tbody>
+                </table>
+            {#else}
+                <p>No GenAI clients configured or no usage recorded for today.</p>
+            {/if}
+        </section>
+
         {#if pendingContentItems}
         <section id="pending-content-items">
             <h2>Pending Content Items</h2>
@@ -100,17 +136,52 @@
                                 </td>
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
-                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>
+                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form action-form-inline">
+                                        <select name="status" aria-label="Change Status">
+                                            <option value="PENDING" {#if item.processingStatus.name() == 'PENDING'}selected{/if}>PENDING</option>
+                                            <option value="COMPLETED" {#if item.processingStatus.name() == 'COMPLETED'}selected{/if}>COMPLETED</option>
+                                            <option value="FAILED" {#if item.processingStatus.name() == 'FAILED'}selected{/if}>FAILED</option>
+                                            <option value="RETRY_LATER" {#if item.processingStatus.name() == 'RETRY_LATER'}selected{/if}>RETRY_LATER</option>
+                                            <option value="IGNORED" {#if item.processingStatus.name() == 'IGNORED'}selected{/if}>IGNORED</option>
+                                        </select>
+                                        <button type="submit" class="secondary small">Update</button>
+                                    </form>
                                     {#if !item.transcript}
-                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    <button class="fetch-transcript-btn" data-id="{item.id}" style="margin-top: 0.5rem;">Fetch Transcript</button>
                                     {/if}
                                 </td>
                             </tr>
                         {/for}
                     </tbody>
                 </table>
+                {#if pendingTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage - 1}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Previous page"
+                               {#if pendingCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if pendingCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {pendingCurrentPage} of {pendingTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage + 1}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Next page"
+                               {#if pendingCurrentPage == pendingTotalPages}aria-disabled="true"{/if}
+                               class="button {#if pendingCurrentPage == pendingTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No content items currently pending processing.</p>
             {/if}
@@ -161,13 +232,38 @@
                                 </td>
                                 <td>{summary.contentItem.processingStatus}</td>
                                 <td>{summary.contentItem.formattedPublishedAt}</td>
-                                <td>{summary.contentItem.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatInstant(summary.contentItem.createdAt)}</td>
                                 <td>{summary.contentItem.formattedDuration}</td>
                                 <td><a href="/ui/summaries/{summary.id}" target="_blank">View Summary</a></td>
                             </tr>
                         {/for}
                     </tbody>
                 </table>
+                {#if summariesTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage - 1}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Previous page"
+                               {#if summariesCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if summariesCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {summariesCurrentPage} of {summariesTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage + 1}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage}"
+                               aria-label="Next page"
+                               {#if summariesCurrentPage == summariesTotalPages}aria-disabled="true"{/if}
+                               class="button {#if summariesCurrentPage == summariesTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No recent content items with summaries found.</p>
             {/if}
@@ -193,13 +289,38 @@
                                 <td>{briefing_count}</td>
                                 <td>{briefing.id}</td>
                                 <td>{briefing.topic.name}</td>
-                                <td>{briefing.briefingDate.format(dateFormat)}</td>
-                                <td>{briefing.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatLocalDate(briefing.briefingDate)}</td>
+                                <td>{dateTimeService.formatInstant(briefing.createdAt)}</td>
                                 <td><a href="/ui/briefings/{briefing.id}" target="_blank">View Briefing</a></td>
                             </tr>
                         {/for}
                     </tbody>
                 </table>
+                {#if briefingsTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage - 1}&failedPage={failedCurrentPage}"
+                               aria-label="Previous page"
+                               {#if briefingsCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if briefingsCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {briefingsCurrentPage} of {briefingsTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage + 1}&failedPage={failedCurrentPage}"
+                               aria-label="Next page"
+                               {#if briefingsCurrentPage == briefingsTotalPages}aria-disabled="true"{/if}
+                               class="button {#if briefingsCurrentPage == briefingsTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No recent briefings found.</p>
             {/if}
@@ -207,7 +328,7 @@
 
         {#if failedContentItems}
         <section id="failed-content-items">
-            <h2>Failed Content Items</h2>
+            <h2>Failed and Ignored Content Items</h2>
             {#if failedContentItems.size() > 0}
                 <table role="grid">
                     <thead>
@@ -252,17 +373,52 @@
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
                                 <td>{item.formattedDuration}</td>
-                                <td>{item.formattedCreatedAt(dateTimeFormat)}</td>
+                                <td>{dateTimeService.formatInstant(item.createdAt)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
+                                    <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form action-form-inline">
+                                        <select name="status" aria-label="Change Status">
+                                            <option value="PENDING" {#if item.processingStatus.name() == 'PENDING'}selected{/if}>PENDING</option>
+                                            <option value="COMPLETED" {#if item.processingStatus.name() == 'COMPLETED'}selected{/if}>COMPLETED</option>
+                                            <option value="FAILED" {#if item.processingStatus.name() == 'FAILED'}selected{/if}>FAILED</option>
+                                            <option value="RETRY_LATER" {#if item.processingStatus.name() == 'RETRY_LATER'}selected{/if}>RETRY_LATER</option>
+                                            <option value="IGNORED" {#if item.processingStatus.name() == 'IGNORED'}selected{/if}>IGNORED</option>
+                                        </select>
+                                        <button type="submit" class="secondary small">Update</button>
+                                    </form>
                                     {#if !item.transcript}
-                                    <button class="fetch-transcript-btn" data-id="{item.id}">Fetch Transcript</button>
+                                    <button class="fetch-transcript-btn" data-id="{item.id}" style="margin-top: 0.5rem;">Fetch Transcript</button>
                                     {/if}
                                 </td>
                             </tr>
                         {/for}
                     </tbody>
                 </table>
+                {#if failedTotalPages > 1}
+                <nav aria-label="Pagination" class="pagination-nav">
+                    <ul>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage - 1}"
+                               aria-label="Previous page"
+                               {#if failedCurrentPage == 1}aria-disabled="true"{/if}
+                               class="button {#if failedCurrentPage == 1}secondary disabled{/if}">
+                                Previous
+                            </a>
+                        </li>
+                        <li>
+                            <span>Page {failedCurrentPage} of {failedTotalPages}</span>
+                        </li>
+                        <li>
+                            <a href="{ADMIN_REDIRECT_PATH}?tab=history&pendingPage={pendingCurrentPage}&summariesPage={summariesCurrentPage}&briefingsPage={briefingsCurrentPage}&failedPage={failedCurrentPage + 1}"
+                               aria-label="Next page"
+                               {#if failedCurrentPage == failedTotalPages}aria-disabled="true"{/if}
+                               class="button {#if failedCurrentPage == failedTotalPages}secondary disabled{/if}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {/if}
             {#else}
                 <p>No failed content items found.</p>
             {/if}
