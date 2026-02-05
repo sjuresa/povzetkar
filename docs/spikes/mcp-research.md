@@ -81,10 +81,22 @@ We can implement a custom MCP Server (e.g., **povzetkar-context**) that runs alo
 
 ### Recommendation
 
-1.  **Immediate:** Configure Agent to use **Context7** for Quarkus documentation.
-2.  **Next Step:** Build a **Node.js Bridge** (Povzetkar Server) to expose local `roadmap.md` and DB schema.
+1.  **External Context:** Configure Agent to use **Context7** for Quarkus documentation immediately.
+2.  **Internal Context (Povzetkar Server):**
+    -   **Revised Approach:** Instead of a Node.js bridge, investigate a **Java/Quarkus implementation**.
+    -   **Reasoning:** A Java solution allows direct reuse of existing Panache entities and services (e.g., `YouTubeTranscriptService`), avoiding code duplication and keeping the technology stack unified.
 
-## 4. Specific Use Case: Improving Test Reliability
+## 4. Value Proposition: Why "Povzetkar Server"?
+
+**Who is the user?**
+The primary user is the **AI Agent** (e.g., in Cursor, Windsurf, or a CLI agent), acting as a proxy for the developer.
+
+**Why do we need it?**
+1.  **Grounding:** Instead of guessing the database schema or current task status, the Agent queries the live system.
+2.  **Safety:** The Agent can run "read-only" tools (like fetching a transcript) to verify fixes without executing arbitrary code.
+3.  **Context Efficiency:** Instead of loading 50 files into the context window, the Agent fetches only the specific documentation or data it needs via MCP resources.
+
+## 5. Specific Use Case: Improving Test Reliability
 
 The Agent has historically struggled with Quarkus testing patterns (e.g., Transactional boundaries, Reactive testing, Mocking vs. Real DB). MCP solves this by providing **authoritative context** on demand.
 
