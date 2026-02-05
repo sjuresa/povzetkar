@@ -97,7 +97,6 @@ class OrchestrationIntegrationTest {
         ContentSource.deleteAll();
         User.deleteAll();
         OrchestrationLock.deleteAll();
-        OrchestrationLock.deleteAll();
     }
 
     @Test
