@@ -30,6 +30,9 @@ public class VideoSummaryService {
                                @ConfigProperty(name = "gemini.model.name") String flashModelName,
                                ApiKeyUsageService apiKeyUsageService,
                                @ConfigProperty(name = "povzetkar.orchestrator.circuit-breaker.threshold", defaultValue = "3") int circuitBreakerThreshold) {
+        if (circuitBreakerThreshold <= 0) {
+            throw new IllegalArgumentException("Circuit breaker threshold must be a positive integer.");
+        }
         this.genAiPool = genAiPool;
         this.flashModelName = flashModelName;
         this.apiKeyUsageService = apiKeyUsageService;
