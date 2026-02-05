@@ -11,7 +11,7 @@ public class FormValidator {
     }
 
     public void validateNotBlank(String value, String errorMessage) {
-        if (value == null || value.trim().isBlank()) {
+        if (value == null || value.isBlank()) {
             addError(errorMessage);
         }
     }
