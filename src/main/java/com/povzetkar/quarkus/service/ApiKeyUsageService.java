@@ -69,17 +69,11 @@ public class ApiKeyUsageService {
     @Transactional
     void updateOrCreateUsageTransactional(String apiKeyName, CounterType counterType) {
         LocalDate today = LocalDate.now(clock);
-        String updateQuery;
-        long initialUsage = 0;
-        long initialError = 0;
+        String columnToIncrement = (counterType == CounterType.USAGE) ? "usageCount" : "errorCount";
+        String updateQuery = "UPDATE ApiKeyUsage SET " + columnToIncrement + " = " + columnToIncrement + " + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate";
 
-        if (counterType == CounterType.USAGE) {
-            updateQuery = "UPDATE ApiKeyUsage SET usageCount = usageCount + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate";
-            initialUsage = 1;
-        } else {
-            updateQuery = "UPDATE ApiKeyUsage SET errorCount = errorCount + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate";
-            initialError = 1;
-        }
+        long initialUsage = (counterType == CounterType.USAGE) ? 1 : 0;
+        long initialError = (counterType == CounterType.ERROR) ? 1 : 0;
 
         int updatedCount = entityManager.createQuery(updateQuery)
                 .setParameter("apiKeyName", apiKeyName)

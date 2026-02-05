@@ -116,8 +116,8 @@ Version 0.6.1 introduces a comprehensive UI/UX refinement, transforming the basi
     - Implemented AJAX-driven forms to trigger backend orchestration and enrichment services.
     - Added monitoring tables for pending, recent, and failed content items and briefings.
     - Included user-friendly features like tooltips/modals for executive summaries and links to a new summary detail page.
-    - **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
-    - **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
+- **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
+- **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
 
 ### Refactored
 
