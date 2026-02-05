@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Resilience:** Implemented a Circuit Breaker pattern for AI API calls. The system now pauses orchestration for a specific client after a configurable number of consecutive 503 errors (`povzetkar.orchestrator.circuit-breaker.threshold`).
+- **Observability:** Added `error_count` to the `api_key_usage` table to track API failures separately from successful usage.
+- **Observability:** Added debug logging for AI response headers to facilitate future quota tracking research.
+
+### Changed
+- **Dependency:** Upgraded `google-genai` library from `1.9.0` to `1.34.0`.
+- **Usage Tracking:** Refined API usage tracking to only increment the usage count on successful calls. 503 errors now increment the new `error_count` instead.
+
+### Added
 - **Admin:** Implemented persistent tracking of GenAI API calls per API key. The daily usage count is now stored in the database and displayed on the Admin Dashboard.
 - **UI:** Implemented centralized date/time formatting via `DateTimeService`.
 - **UI:** Added timezone configuration (`povzetkar.ui.timezone`) to `application.properties` to display times in the user's local timezone (default: `Europe/Ljubljana`).
@@ -111,8 +120,8 @@ Version 0.6.1 introduces a comprehensive UI/UX refinement, transforming the basi
     - Implemented AJAX-driven forms to trigger backend orchestration and enrichment services.
     - Added monitoring tables for pending, recent, and failed content items and briefings.
     - Included user-friendly features like tooltips/modals for executive summaries and links to a new summary detail page.
-- **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
-- **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
+    - **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
+    - **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
 
 ### Refactored
 

@@ -73,6 +73,39 @@ public class ApiKeyUsageService {
         entityManager.flush();
     }
 
+    public void incrementErrorCount(String apiKeyName) {
+        try {
+            incrementErrorCountTransactional(apiKeyName);
+        } catch (PersistenceException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
+                logger.warn("Race condition detected when creating ApiKeyUsage for {}. Retrying operation.", apiKeyName);
+                // Retry the operation. This time, the record will exist.
+                incrementErrorCountTransactional(apiKeyName);
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    @Transactional
+    void incrementErrorCountTransactional(String apiKeyName) {
+        LocalDate today = LocalDate.now(clock);
+
+        int updatedCount = entityManager.createQuery(
+                        "UPDATE ApiKeyUsage SET errorCount = errorCount + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate")
+                .setParameter("apiKeyName", apiKeyName)
+                .setParameter("usageDate", today)
+                .executeUpdate();
+
+        if (updatedCount == 0) {
+            // The record did not exist, so we create it.
+            // usageCount = 0, errorCount = 1
+            ApiKeyUsage newUsage = new ApiKeyUsage(apiKeyName, today, 0, 1);
+            entityManager.persist(newUsage);
+        }
+        entityManager.flush();
+    }
+
     public List<ApiKeyUsage> getUsageForToday() {
         LocalDate today = LocalDate.now(clock);
         return ApiKeyUsage.list("usageDate = ?1 order by apiKeyName", today);

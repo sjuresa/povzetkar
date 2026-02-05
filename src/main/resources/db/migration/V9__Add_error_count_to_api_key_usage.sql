@@ -1,0 +1,1 @@
+ALTER TABLE api_key_usage ADD COLUMN error_count BIGINT NOT NULL DEFAULT 0;

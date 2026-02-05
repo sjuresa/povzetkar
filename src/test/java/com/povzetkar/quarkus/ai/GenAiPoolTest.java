@@ -1,7 +1,6 @@
 package com.povzetkar.quarkus.ai;
 
 import com.google.api.client.util.Sleeper;
-import com.povzetkar.quarkus.service.ApiKeyUsageService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,9 +28,6 @@ class GenAiPoolTest {
     @Mock
     private GenAiPool.TimeProvider mockTimeProvider;
 
-    @Mock
-    private ApiKeyUsageService mockApiKeyUsageService;
-
     private GenAiPool genAiPool;
 
     private final long coolDownPeriod = 60L;
@@ -40,9 +36,9 @@ class GenAiPoolTest {
     @BeforeEach
     void setUp() {
         List<String> apiKeys = Arrays.asList("key1", "key2");
-        when(mockTimeProvider.nanoTime()).thenAnswer(invocation -> currentTime);
+        when(mockTimeProvider.nanoTime()).thenAnswer(_ -> currentTime);
 
-        genAiPool = new GenAiPool(apiKeys, coolDownPeriod, mockTimeProvider, mockSleeper, mockApiKeyUsageService);
+        genAiPool = new GenAiPool(apiKeys, coolDownPeriod, mockTimeProvider, mockSleeper);
     }
 
     @AfterEach

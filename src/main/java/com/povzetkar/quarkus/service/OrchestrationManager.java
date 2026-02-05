@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.api.OrchestrationRequest;
+import com.povzetkar.quarkus.exception.CircuitBreakerOpenException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ProcessingStatus;
@@ -277,7 +278,13 @@ public class OrchestrationManager {
                         LogKeys.DATE, orchestrationDate,
                         LogKeys.MESSAGE, "Topic processing finished."
                     ))
-                    .onFailure().invoke(ex -> logger.error(ex,
+                    .onFailure(CircuitBreakerOpenException.class).invoke(ex -> logger.error(ex,
+                        LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
+                        LogKeys.STATUS, "stopped",
+                        LogKeys.DATE, orchestrationDate,
+                        LogKeys.MESSAGE, "Orchestration stopped due to circuit breaker."
+                    ))
+                    .onFailure(ex -> !(ex instanceof CircuitBreakerOpenException)).invoke(ex -> logger.error(ex,
                         LogKeys.ACTION, LogKeys.TOPIC_PROCESSING,
                         LogKeys.STATUS, LogKeys.FAILED,
                         LogKeys.DATE, orchestrationDate,
