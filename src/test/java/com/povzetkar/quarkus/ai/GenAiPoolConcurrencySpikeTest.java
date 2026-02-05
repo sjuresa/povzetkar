@@ -1,10 +1,8 @@
 package com.povzetkar.quarkus.ai;
 
-import com.povzetkar.quarkus.service.ApiKeyUsageService;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +79,6 @@ class GenAiPoolConcurrencySpikeTest {
 
         TestTimeProvider testTimeProvider = new TestTimeProvider();
         TestSleeper testSleeper = new TestSleeper(testTimeProvider);
-        ApiKeyUsageService mockApiKeyUsageService = Mockito.mock(ApiKeyUsageService.class);
 
         CountDownLatch latch = new CountDownLatch(numberOfThreads);
         Map<String, List<Instant>> clientAcquisitionStartTimes = new ConcurrentHashMap<>();
@@ -91,7 +88,7 @@ class GenAiPoolConcurrencySpikeTest {
         Instant testStartTime = Instant.now();
         testTimeProvider.setTime(testStartTime.toEpochMilli() * 1_000_000); // Initialize test time
 
-        try (GenAiPool genAiPool = new GenAiPool(List.of("key1", "key2"), cooldownPeriodSec, testTimeProvider, testSleeper, mockApiKeyUsageService);
+        try (GenAiPool genAiPool = new GenAiPool(List.of("key1", "key2"), cooldownPeriodSec, testTimeProvider, testSleeper);
              ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads)) {
 
             logger.info("Starting concurrent client acquisition test with {} threads and pool size {}", numberOfThreads, poolSize);
@@ -104,9 +101,9 @@ class GenAiPoolConcurrencySpikeTest {
                         client = genAiPool.getGenAiClient();
                         Instant callEndTime = Instant.now();
 
-                        clientAcquisitionStartTimes.computeIfAbsent(client.name, k -> Collections.synchronizedList(new ArrayList<>()))
+                        clientAcquisitionStartTimes.computeIfAbsent(client.name, _ -> Collections.synchronizedList(new ArrayList<>()))
                                 .add(callStartTime);
-                        clientAcquisitionEndTimes.computeIfAbsent(client.name, k -> Collections.synchronizedList(new ArrayList<>()))
+                        clientAcquisitionEndTimes.computeIfAbsent(client.name, _ -> Collections.synchronizedList(new ArrayList<>()))
                                 .add(callEndTime);
                         successfulAcquisitions.incrementAndGet();
                         logger.debug("Thread {} acquired client: {} (Start: {}, End: {})",

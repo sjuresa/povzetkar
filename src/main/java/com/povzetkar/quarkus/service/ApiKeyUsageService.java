@@ -24,6 +24,10 @@ public class ApiKeyUsageService {
     private final ZoneId zoneId;
     private final EntityManager entityManager;
 
+    private enum CounterType {
+        USAGE, ERROR
+    }
+
     @Inject
     public ApiKeyUsageService(
             @ConfigProperty(name = "povzetkar.api-usage.timezone", defaultValue = "America/Los_Angeles") String timezoneId,
@@ -41,13 +45,21 @@ public class ApiKeyUsageService {
     }
 
     public void incrementUsage(String apiKeyName) {
+        updateOrCreateUsage(apiKeyName, CounterType.USAGE);
+    }
+
+    public void incrementErrorCount(String apiKeyName) {
+        updateOrCreateUsage(apiKeyName, CounterType.ERROR);
+    }
+
+    private void updateOrCreateUsage(String apiKeyName, CounterType counterType) {
         try {
-            incrementUsageTransactional(apiKeyName);
+            updateOrCreateUsageTransactional(apiKeyName, counterType);
         } catch (PersistenceException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
                 logger.warn("Race condition detected when creating ApiKeyUsage for {}. Retrying operation.", apiKeyName);
                 // Retry the operation. This time, the record will exist.
-                incrementUsageTransactional(apiKeyName);
+                updateOrCreateUsageTransactional(apiKeyName, counterType);
             } else {
                 throw e;
             }
@@ -55,19 +67,21 @@ public class ApiKeyUsageService {
     }
 
     @Transactional
-    void incrementUsageTransactional(String apiKeyName) {
+    void updateOrCreateUsageTransactional(String apiKeyName, CounterType counterType) {
         LocalDate today = LocalDate.now(clock);
+        String columnToIncrement = (counterType == CounterType.USAGE) ? "usageCount" : "errorCount";
+        String updateQuery = "UPDATE ApiKeyUsage SET " + columnToIncrement + " = " + columnToIncrement + " + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate";
 
-        int updatedCount = entityManager.createQuery(
-                        "UPDATE ApiKeyUsage SET usageCount = usageCount + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate")
+        long initialUsage = (counterType == CounterType.USAGE) ? 1 : 0;
+        long initialError = (counterType == CounterType.ERROR) ? 1 : 0;
+
+        int updatedCount = entityManager.createQuery(updateQuery)
                 .setParameter("apiKeyName", apiKeyName)
                 .setParameter("usageDate", today)
                 .executeUpdate();
 
         if (updatedCount == 0) {
-            // The record did not exist, so we create it.
-            // This is the point where a race condition can occur.
-            ApiKeyUsage newUsage = new ApiKeyUsage(apiKeyName, today);
+            ApiKeyUsage newUsage = new ApiKeyUsage(apiKeyName, today, initialUsage, initialError);
             entityManager.persist(newUsage);
         }
         entityManager.flush();

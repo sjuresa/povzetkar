@@ -7,9 +7,11 @@ import com.google.genai.types.Part;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
 import com.povzetkar.quarkus.ai.Prompts;
+import com.povzetkar.quarkus.exception.CircuitBreakerOpenException;
 import com.povzetkar.quarkus.util.LogKeys;
 import com.povzetkar.quarkus.util.StructuredLogger;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Collections;
@@ -20,11 +22,21 @@ public class VideoSummaryService {
 
     private final GenAiPool genAiPool;
     private final String flashModelName;
+    private final ApiKeyUsageService apiKeyUsageService;
+    private final int circuitBreakerThreshold;
 
+    @Inject
     public VideoSummaryService(GenAiPool genAiPool,
-                               @ConfigProperty(name = "gemini.model.name") String flashModelName) {
+                               @ConfigProperty(name = "gemini.model.name") String flashModelName,
+                               ApiKeyUsageService apiKeyUsageService,
+                               @ConfigProperty(name = "povzetkar.orchestrator.circuit-breaker.threshold", defaultValue = "3") int circuitBreakerThreshold) {
+        if (circuitBreakerThreshold <= 0) {
+            throw new IllegalArgumentException("Circuit breaker threshold must be a positive integer.");
+        }
         this.genAiPool = genAiPool;
         this.flashModelName = flashModelName;
+        this.apiKeyUsageService = apiKeyUsageService;
+        this.circuitBreakerThreshold = circuitBreakerThreshold;
     }
 
     /**
@@ -85,9 +97,27 @@ public class VideoSummaryService {
             );
             
             GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
+            
+            // Success: increment usage and reset failures
+            apiKeyUsageService.incrementUsage(client.getName());
+            client.resetFailures();
+
             logApiCallDuration(startTime, description, videoTitle, videoId);
             return cleanAiResponse(response.text());
         } catch (ApiException e) {
+            if (e.code() == 503) {
+                apiKeyUsageService.incrementErrorCount(client.getName());
+                int failures = client.incrementAndGetFailures();
+                if (failures >= circuitBreakerThreshold) {
+                    logger.error(e,
+                        LogKeys.ACTION, "circuit_breaker_open",
+                        "client", client.getName(),
+                        "failures", failures,
+                        LogKeys.MESSAGE, "Circuit breaker open due to consecutive 503 errors."
+                    );
+                    throw new CircuitBreakerOpenException("Circuit breaker open for client " + client.getName() + " after " + failures + " consecutive failures.");
+                }
+            }
             logApiCallFailure(startTime, description, videoTitle, videoId, e);
             throw e;
         }

@@ -7,6 +7,7 @@ import com.google.genai.types.CountTokensResponse;
 import com.google.genai.types.GenerateContentResponse;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
+import com.povzetkar.quarkus.exception.CircuitBreakerOpenException;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -34,6 +35,9 @@ class VideoSummaryServiceTest {
     @InjectMock
     GenAiPool mockGenAiPool;
 
+    @InjectMock
+    ApiKeyUsageService mockApiKeyUsageService;
+
     GenAiClient mockGenAiClient;
     Models mockModels;
     GenerateContentResponse mockResponse;
@@ -48,6 +52,7 @@ class VideoSummaryServiceTest {
 
         when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
         when(mockGenAiClient.getModels()).thenReturn(mockModels);
+        when(mockGenAiClient.getName()).thenReturn("test-key");
         when(mockModels.countTokens(anyString(), anyList(), eq(null))).thenReturn(mockCountTokensResponse);
         when(mockCountTokensResponse.totalTokens()).thenReturn(Optional.of(100));
     }
@@ -71,6 +76,7 @@ class VideoSummaryServiceTest {
         String capturedPrompt = contentCaptor.getValue().toString();
         assertTrue(capturedPrompt.contains(rawSummaries));
         assertTrue(capturedPrompt.contains(date));
+        verify(mockApiKeyUsageService).incrementUsage("test-key");
     }
 
     @ParameterizedTest
@@ -90,6 +96,7 @@ class VideoSummaryServiceTest {
         String result = videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null);
 
         assertEquals(expectedCleanedResponse, result);
+        verify(mockApiKeyUsageService).incrementUsage("test-key");
     }
 
     @Test
@@ -106,5 +113,41 @@ class VideoSummaryServiceTest {
         assertEquals(rateLimitException, thrown);
         // Verify it was only called once
         verify(mockModels, times(1)).generateContent(anyString(), any(Content.class), eq(null));
+        verify(mockApiKeyUsageService, never()).incrementUsage(anyString());
+        verify(mockApiKeyUsageService, never()).incrementErrorCount(anyString());
+    }
+
+    @Test
+    @DisplayName("generateContent should handle 503 error and trigger circuit breaker")
+    void generateContent_shouldHandle503AndTriggerCircuitBreaker() {
+        ApiException serviceUnavailableException = new ApiException(503, "503 Service Unavailable", null);
+
+        when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
+                .thenThrow(serviceUnavailableException);
+        when(mockGenAiClient.incrementAndGetFailures()).thenReturn(3); // Threshold is 3
+
+        assertThrows(CircuitBreakerOpenException.class, () ->
+                videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null));
+
+        verify(mockApiKeyUsageService).incrementErrorCount("test-key");
+        verify(mockGenAiClient).incrementAndGetFailures();
+    }
+
+    @Test
+    @DisplayName("generateContent should not trigger circuit breaker when failures are below threshold")
+    void generateContent_shouldNotTriggerCircuitBreaker_whenFailuresBelowThreshold() {
+        ApiException serviceUnavailableException = new ApiException(503, "503 Service Unavailable", null);
+
+        when(mockModels.generateContent(anyString(), any(Content.class), eq(null)))
+                .thenThrow(serviceUnavailableException);
+        when(mockGenAiClient.incrementAndGetFailures()).thenReturn(2); // Below threshold of 3
+
+        // Assert that the original ApiException is thrown, not CircuitBreakerOpenException
+        ApiException thrown = assertThrows(ApiException.class, () ->
+                videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null));
+
+        assertEquals(serviceUnavailableException, thrown);
+        verify(mockApiKeyUsageService).incrementErrorCount("test-key");
+        verify(mockGenAiClient).incrementAndGetFailures();
     }
 }

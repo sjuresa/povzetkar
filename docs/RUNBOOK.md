@@ -322,3 +322,13 @@ The history tables on the Admin UI page are paginated. The number of items displ
 *   **Default Value:** `20`
 
 You can modify this value to control how many items appear on each page of the history tables.
+
+### 9.4 Circuit Breaker Configuration
+
+The circuit breaker for GenAI API calls prevents repeated attempts to a failing service. It tracks consecutive 503 (Service Unavailable) errors per API key.
+
+*   **Configuration Property:** `povzetkar.orchestrator.circuit-breaker.threshold`
+*   **Location:** `src/main/resources/application.properties`
+*   **Default Value:** `3`
+
+If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.

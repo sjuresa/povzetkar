@@ -30,13 +30,21 @@ public class ApiKeyUsage extends PanacheEntityBase {
     @Column(name = "usage_count", nullable = false)
     private long usageCount;
 
+    @Column(name = "error_count", nullable = false)
+    private long errorCount;
+
     public ApiKeyUsage() {
     }
 
     public ApiKeyUsage(String apiKeyName, LocalDate usageDate) {
+        this(apiKeyName, usageDate, 1, 0);
+    }
+
+    public ApiKeyUsage(String apiKeyName, LocalDate usageDate, long usageCount, long errorCount) {
         this.apiKeyName = apiKeyName;
         this.usageDate = usageDate;
-        this.usageCount = 1;
+        this.usageCount = usageCount;
+        this.errorCount = errorCount;
     }
 
     public Long getId() {
@@ -55,7 +63,15 @@ public class ApiKeyUsage extends PanacheEntityBase {
         return usageCount;
     }
 
+    public long getErrorCount() {
+        return errorCount;
+    }
+
     public void incrementUsageCount() {
         this.usageCount++;
+    }
+
+    public void incrementErrorCount() {
+        this.errorCount++;
     }
 }
