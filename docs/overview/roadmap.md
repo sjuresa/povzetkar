@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
 | 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
 | 1.9     | January 21, 2026   | Povzetkar AI | Inserted v0.9 "Operational Refinement" based on user request. Shifted User Management to v0.10 and Advanced Content to v0.11.                                            |
 | 1.8     | January 20, 2026   | Povzetkar AI | Marked v0.8 as complete.                                                                                                                                                 |
@@ -133,15 +134,16 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.10: User Management & Security
+## v0.10: User Management, Security & Developer Experience
 
-**Goal:** Implement a robust user management, authentication, and authorization system to secure the application and its APIs, preparing it for multi-user production environments.
+**Goal:** Transform the application into a secure, multi-tenant platform while simultaneously improving developer experience, documentation, and operational logic.
+**Status:** 🚧 In Progress
 
 ### Key Tasks & Implementation Steps:
-1.  **Authentication:** Implement user registration and login endpoints using a secure mechanism (e.g., JWT tokens).
-2.  **Authorization:** Integrate Quarkus Security to protect all relevant API endpoints. Define and enforce user roles (e.g., `USER`, `ADMIN`).
-3.  **Secure UI:** Modify the web interface to be multi-tenant, ensuring users can only see their own topics and briefings after logging in.
-4.  **User Management:** Provide basic administrative capabilities for managing users.
+1.  **User Management & Security:** Implement Authentication and Authorization to isolate user data (Multi-tenancy).
+2.  **Developer Experience:** Standardize project structure, align testing guides, and expose API documentation (OpenAPI/Swagger).
+3.  **Operational Logic:** Implement content filtering based on minimum video duration to skip short content.
+4.  **Observability & UI:** Add auditing fields, and expose Changelog and Roadmap within the application.
 
 ---
 
