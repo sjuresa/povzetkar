@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- **Agent Protocol:** Updated `AGENT.md` with a new protocol for using the `context7` MCP server to retrieve external documentation.
+- **Agent Protocol:** Optimized `AGENT.md` by removing deduplication and condensing protocols for better token efficiency.
+- **Project Structure:** Created `docs/overview/project-structure.md` to document the project's directory layout and architecture.
+- **Testing Guide:** Refactored `docs/guides/testing.md` to clarify the usage of `@QuarkusTest` vs `@QuarkusIntegrationTest` and deprecated `docs/guides/mastering-testing.md`.
+- **ADR:** Initialized `docs/adr/` with the first Architectural Decision Record (ADR-001) to track architectural decisions.
+
 ## [v0.9.0] - 2026-02-05
 
 ### Added
