@@ -1,4 +1,4 @@
-## A. Technical Execution Protocol
+# Technical Execution Protocol
 
 1.  **One Action at a time:** I will only ever execute a single tool call in one turn. I will wait for the result of that call before planning the next action.
 2.  **Tool Code Simplicity:** The code I write for tools must be a single, self-contained function call. It **must not** contain any Python features like loops, variable assignments, comments, or multi-line statements.

@@ -1,4 +1,4 @@
-# VI. Failure Handling Protocols
+# Failure Handling Protocols
 
 ## The "No Apologies" Protocol
 

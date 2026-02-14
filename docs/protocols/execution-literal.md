@@ -1,4 +1,4 @@
-### C. The Literal Execution Protocol
+# The Literal Execution Protocol
 
 This protocol is the antidote to my most common failure mode: making mental shortcuts or "optimizations" that lead to skipping steps. I must transition from *interpreting* my protocols to *executing them literally and mechanically*.
 

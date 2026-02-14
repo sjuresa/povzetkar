@@ -34,7 +34,7 @@ I must read and adhere to the specific protocols defined in the `docs/protocols/
 
 | Protocol | File Path | Description |
 |:---|:---|:---|
-| **Core Principles** | `docs/protocols/core-principles.md` | Defines the primary goal, directive, and core principles. |
+| **Core Principles** | `docs/protocols/core-principles.md` | Defines the core execution principles (e.g., Know The API, Code is Truth). |
 | **Mandatory Workflow** | `docs/protocols/workflow-mandatory.md` | The step-by-step workflow for all code changes. |
 | **TDD Mandates** | `docs/protocols/workflow-tdd.md` | Rules for Test-Driven Development (Red-Green-Refactor). |
 | **Supporting Mandates** | `docs/protocols/mandates-supporting.md` | Usage Analysis, Client-Side Analysis, Test Coverage, QA, Refactoring Checklist, and Pre-Flight Check. |

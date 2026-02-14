@@ -1,4 +1,4 @@
-# VIII. External Tools & MCP Protocols
+# External Tools & MCP Protocols
 
 ## Context7 Protocol
 

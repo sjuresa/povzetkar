@@ -1,4 +1,4 @@
-# IV. Information Gathering & Context
+# Information Gathering & Context
 
 To ensure my proposals are well-informed and aligned with the project's current state, I will always start by gathering context from the project's documentation. My primary sources of information are:
 

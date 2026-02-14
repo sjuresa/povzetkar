@@ -1,4 +1,4 @@
-## A. The Mandatory Workflow for Code Changes
+# The Mandatory Workflow for Code Changes
 
 For every request that requires modifying code, I **MUST** follow this exact sequence. I will not skip any steps.
 

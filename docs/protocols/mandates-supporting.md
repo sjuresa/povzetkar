@@ -1,8 +1,8 @@
-## C. Supporting Mandates
+# Supporting Mandates
 
 These mandates are prerequisites for creating and executing a valid plan.
 
-### The Usage Analysis Mandate
+## The Usage Analysis Mandate
 
 Before any plan to modify or remove existing code is presented for approval, a mandatory usage analysis **must** be performed.
 1.  **Identify the Target:** The specific class, method, or variable to be changed or removed is the "target."
@@ -10,24 +10,24 @@ Before any plan to modify or remove existing code is presented for approval, a m
 3.  **Report Findings Upfront:** The results of this `find_usages` call must be presented as the first item in my "Findings." If the tool returns no usages, I must explicitly state that.
 4.  **No Plan Without Analysis:** I am forbidden from creating or presenting a plan until this usage analysis is complete and has been presented to you.
 
-### The Client-Side Analysis Mandate
+## The Client-Side Analysis Mandate
 
 Before proposing any changes to UI-related code (e.g., Controllers, Resources, HTML templates), I must explicitly analyze the corresponding client-side logic (e.g., `.js` files).
 1.  **Identify Client Patterns:** I must read the relevant JavaScript files to understand how forms are submitted (AJAX vs. standard POST) and how user feedback is handled.
 2.  **Respect Established Patterns:** My plan must explicitly state how the new changes align with the existing client-side architecture. Deviating from established patterns (e.g., introducing a server-side redirect in an AJAX-driven flow) is forbidden without a specific justification and a plan to update the client code accordingly.
 
-### The Test Coverage Mandate
+## The Test Coverage Mandate
 
 For any change that introduces new, publicly accessible behavior (e.g., a new public class or a new public method), a corresponding new test **must** be created to validate that behavior. The plan is incomplete until it explicitly accounts for this new test.
 
-### The Quality Assurance Mandate
+## The Quality Assurance Mandate
 
 To prevent recurring defects identified in retrospectives, every plan and code change must explicitly verify:
 1.  **Reactive Purity:** No blocking calls (e.g., `Thread.sleep`, JDBC without reactive drivers) inside reactive pipelines (`Uni`, `Multi`).
 2.  **JPA Identity:** All JPA entities must implement `equals()` and `hashCode()` based on their primary key (or business key), never the default object identity.
 3.  **Integration Test Integrity:** Integration tests (`@QuarkusTest`) must not mock internal services or Panache entities; they must verify side effects (DB state) or mock only external boundaries.
 
-### D. Code Refactoring Checklist
+## Code Refactoring Checklist
 
 To prevent incomplete analysis, as experienced during the POV-91 refactoring, any plan involving code modification or refactoring is incomplete until it explicitly addresses the following three areas. This checklist must be mentally confirmed before presenting a plan.
 
@@ -35,15 +35,15 @@ To prevent incomplete analysis, as experienced during the POV-91 refactoring, an
 2.  **The Usages:** All places in the **production code** where the declaration is being used.
 3.  **The Tests:** All **test files** that verify the behavior of the declaration, including unit, integration, and UI tests.
 
-### The Pre-Flight Check Mandate
+## The Pre-Flight Check Mandate
 
 To prevent incomplete plans and regressions, I must strictly adhere to the following gating protocol.
 
-#### The Pre-Plan Gating Protocol
+### The Pre-Plan Gating Protocol
 
 This protocol is a non-negotiable internal gating mechanism. It is a prerequisite for the planning function to execute. Before I can generate any plan, I must first run a "pre-plan protocol check" by verifying every item in the rubric below. I am forbidden from proceeding to generate a plan until every item on this checklist is confirmed complete.
 
-#### The Pre-Plan Rubric
+### The Pre-Plan Rubric
 
 This rubric must be used to verify the completeness of the planning phase before presenting the plan for approval.
 
@@ -59,7 +59,7 @@ This rubric must be used to verify the completeness of the planning phase before
 | 1.8  | **Plan Presentation: Structure:** Does the plan include a "Detailed Plan," "Design Justification," and "Breaking Changes Analysis"?                                                                            |   ☐    |
 | 1.9  | **Await Approval:** Have I stopped and awaited explicit user approval before any execution?                                                                                                                    |   ☐    |
 
-#### The Execution & Completion Rubric
+### The Execution & Completion Rubric
 
 This rubric must be used to verify the completeness of the execution and completion phases.
 
