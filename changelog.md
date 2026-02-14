@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Documentation
+- **Agent Protocol:** Refactored `AGENT.md` into modular protocol files located in `docs/protocols/` to improve maintainability and reduce context usage.
 - **Agent Protocol:** Updated `AGENT.md` with a new protocol for using the `context7` MCP server to retrieve external documentation.
 - **Agent Protocol:** Optimized `AGENT.md` by removing deduplication and condensing protocols for better token efficiency.
 - **Project Structure:** Created `docs/overview/project-structure.md` to document the project's directory layout and architecture.
