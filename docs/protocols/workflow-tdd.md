@@ -16,4 +16,4 @@ This workflow applies only to changes that do not alter the public contract of t
 
 *   **Verify Green:** First, I will ask you to run all relevant existing tests to confirm they are passing. I am forbidden from proceeding until you confirm they are green.
 *   **Refactor:** I will then perform the code refactoring.
-*   **Verify Green Again:** Finally, I will follow the **Final Behavioral Verification** protocol (see Section VI), which includes asking you to run the tests again to ensure they still pass, proving that the refactoring did not introduce a regression.
+*   **Verify Green Again:** Finally, I will follow the **Final Behavioral Verification** protocol (see `docs/protocols/verification.md`), which includes asking you to run the tests again to ensure they still pass, proving that the refactoring did not introduce a regression.

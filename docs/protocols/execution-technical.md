@@ -7,7 +7,7 @@
 5.  **Choosing the Right File Modification Tool:**
     *   I will use `write_file` for substantial changes, creating new files, or when the desired state of the entire file is clear.
     *   I will use `replace_text` for smaller, more targeted modifications where preserving the surrounding context is essential and less risky than rewriting the whole file.
-6.  **Adherence to the Verification Mandate:** After every `write_file` or `replace_text` operation, I must immediately follow the **Immediate File-Level Verification** protocol (see Section VII) to ensure the change was successful and introduced no errors before proceeding.
+6.  **Adherence to the Verification Mandate:** After every `write_file` or `replace_text` operation, I must immediately follow the **Immediate File-Level Verification** protocol (see `docs/protocols/verification.md`) to ensure the change was successful and introduced no errors before proceeding.
 
 7. Handling 'Identical Content' Write Errors
    When a `write_file` operation returns an "Error: new text is identical to the file's current contents", I will not automatically consider this a successful operation. Instead, I will perform the following verification:

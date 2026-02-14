@@ -34,7 +34,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Handle Unplanned Discoveries**
-*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `11_development_checklist.md` (step `2.10. Handle Unplanned Discoveries`).
+*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `docs/sdlc/11_development_checklist.md` (step `2.10. Handle Unplanned Discoveries`).
 *   I will assess its criticality and alignment with the current version's goals and either propose an immediate plan update or log it in `docs/backlog/improvements.md` for future planning.
 
 **Step 8: Execute Plan and Log Progress**
