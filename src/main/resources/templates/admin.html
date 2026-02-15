@@ -107,6 +107,7 @@
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
                             <th scope="col">Created At</th>
+                            <th scope="col">Modified At</th>
                             <th scope="col">Duration</th>
                             <th scope="col">Actions</th>
                         </tr>
@@ -137,6 +138,7 @@
                                 <td>{item.processingStatus}</td>
                                 <td>{item.formattedPublishedAt}</td>
                                 <td>{dateTimeService.formatInstant(item.createdAt)}</td>
+                                <td>{dateTimeService.formatInstant(item.updatedAt)}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>
                                     <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form action-form-inline">
@@ -203,6 +205,7 @@
                             <th scope="col">Status</th>
                             <th scope="col">Published At</th>
                             <th scope="col">Created At</th>
+                            <th scope="col">Modified At</th>
                             <th scope="col">Duration</th>
                             <th scope="col">Summary</th>
                         </tr>
@@ -233,6 +236,7 @@
                                 <td>{summary.contentItem.processingStatus}</td>
                                 <td>{summary.contentItem.formattedPublishedAt}</td>
                                 <td>{dateTimeService.formatInstant(summary.contentItem.createdAt)}</td>
+                                <td>{dateTimeService.formatInstant(summary.contentItem.updatedAt)}</td>
                                 <td>{summary.contentItem.formattedDuration}</td>
                                 <td><a href="/ui/summaries/{summary.id}" target="_blank">View Summary</a></td>
                             </tr>
@@ -280,6 +284,7 @@
                             <th scope="col">Topic Name</th>
                             <th scope="col">Briefing Date</th>
                             <th scope="col">Created At</th>
+                            <th scope="col">Modified At</th>
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
@@ -291,6 +296,7 @@
                                 <td>{briefing.topic.name}</td>
                                 <td>{dateTimeService.formatLocalDate(briefing.briefingDate)}</td>
                                 <td>{dateTimeService.formatInstant(briefing.createdAt)}</td>
+                                <td>{dateTimeService.formatInstant(briefing.updatedAt)}</td>
                                 <td><a href="/ui/briefings/{briefing.id}" target="_blank">View Briefing</a></td>
                             </tr>
                         {/for}
@@ -343,6 +349,7 @@
                             <th scope="col">Published At</th>
                             <th scope="col">Duration</th>
                             <th scope="col">Created At</th>
+                            <th scope="col">Modified At</th>
                             <th scope="col">Error</th>
                             <th scope="col">Actions</th>
                         </tr>
@@ -374,6 +381,7 @@
                                 <td>{item.formattedPublishedAt}</td>
                                 <td>{item.formattedDuration}</td>
                                 <td>{dateTimeService.formatInstant(item.createdAt)}</td>
+                                <td>{dateTimeService.formatInstant(item.updatedAt)}</td>
                                 <td title="{item.errorMessage}">{item.errorCode}</td>
                                 <td>
                                     <form action="/api/v1/admin/content-items/{item.id}/status" method="post" class="action-form action-form-inline">
