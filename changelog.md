@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Auditing:** Added `updated_at` timestamp to `BaseAuditableEntity` and all inheriting entities (`ContentItem`, `Briefing`, `Summary`) as well as `ContentSource` and `Topic` to track modification times.
+- **API Documentation:** Integrated `quarkus-smallrye-openapi` to expose OpenAPI documentation and Swagger UI at `/q/swagger-ui`.
+- **Admin UI:** Added "Modified At" column to the Admin Dashboard tables to display the last modification time of entities.
+- **Database:** Created a Flyway migration (`V10__Add_updated_at_to_auditable_entities.sql`) to add the `updated_at` column to relevant tables and backfill existing data.
+
+### Changed
+- **Refactoring:** Updated `ContentSource` and `Topic` entities to extend `BaseAuditableEntity`, centralizing auditing logic and ensuring consistent `createdAt` and `updatedAt` handling.
+
 ### Documentation
 - **Agent Protocol:** Refactored `AGENT.md` into modular protocol files located in `docs/protocols/` to improve maintainability and reduce context usage.
 - **Agent Protocol:** Updated `AGENT.md` with a new protocol for using the `context7` MCP server to retrieve external documentation.
