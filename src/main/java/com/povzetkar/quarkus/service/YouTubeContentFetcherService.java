@@ -23,7 +23,6 @@ import java.util.Map;
 public class YouTubeContentFetcherService {
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeContentFetcherService.class);
-    private static final int YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS = 60;
     private static final String YOUTUBE_VIDEO_URL_PREFIX = "https://www.youtube.com/watch?v=";
 
     private final YouTubeDataApiClient youTubeDataApiClient;
@@ -139,7 +138,6 @@ public class YouTubeContentFetcherService {
                             Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
                             videoDurations.getOrDefault(videoId, Duration.ZERO));
                 })
-                .filter(video -> video.duration.getSeconds() > YOUTUBE_SHORTS_DURATION_THRESHOLD_SECONDS)
                 .toList();
     }
 

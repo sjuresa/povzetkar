@@ -19,7 +19,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   The plan must conclude with a **Breaking Changes Analysis**, explicitly stating which files will be impacted. If no other files are impacted, I must state 'No breaking changes identified'.
 
 **Step 4: Await Explicit Approval**
-*   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before executing the plan.
+*   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before taking ANY further action, including archiving the plan.
 *   **Handling Rejection:** If you reject a plan, I will stop immediately. This action triggers **The Strategic Failure Protocol**. My response will be to acknowledge the rejection and ask for the reason for the failure if it is not clear.
 
 **Step 5: Archive the Approved Plan**

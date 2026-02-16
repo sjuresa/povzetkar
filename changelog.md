@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Content Filtering:** Implemented a configurable minimum duration filter for YouTube videos. Videos shorter than the threshold (default: 60 seconds) are now skipped and marked with a new `SKIPPED_TOO_SHORT` status, preventing them from cluttering the processing pipeline.
 - **Auditing:** Added `updated_at` timestamp to `BaseAuditableEntity` and all inheriting entities (`ContentItem`, `Briefing`, `Summary`) as well as `ContentSource` and `Topic` to track modification times.
 - **API Documentation:** Integrated `quarkus-smallrye-openapi` to expose OpenAPI documentation and Swagger UI at `/q/swagger-ui`.
 - **Admin UI:** Added "Modified At" column to the Admin Dashboard tables to display the last modification time of entities.
@@ -135,8 +136,8 @@ Version 0.6.1 introduces a comprehensive UI/UX refinement, transforming the basi
     - Implemented AJAX-driven forms to trigger backend orchestration and enrichment services.
     - Added monitoring tables for pending, recent, and failed content items and briefings.
     - Included user-friendly features like tooltips/modals for executive summaries and links to a new summary detail page.
-- **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
-- **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
+    - **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
+    - **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
 
 ### Refactored
 
