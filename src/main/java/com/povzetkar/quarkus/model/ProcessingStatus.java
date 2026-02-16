@@ -5,5 +5,6 @@ public enum ProcessingStatus {
     COMPLETED,
     FAILED,
     RETRY_LATER,
-    IGNORED
+    IGNORED,
+    SKIPPED_TOO_SHORT
 }

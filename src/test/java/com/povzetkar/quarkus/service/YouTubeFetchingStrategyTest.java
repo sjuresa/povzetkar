@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -18,12 +19,16 @@ import org.mockito.MockedStatic;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -103,6 +108,48 @@ class YouTubeFetchingStrategyTest {
             assertTrue(persistedVideos.stream().anyMatch(v -> "new456".equals(v.videoId) && v.duration.equals(Duration.ofSeconds(300)) && "".equals(v.rawContent)));
 
             assertEquals(2, result.size());
+        }
+    }
+
+    @Test
+    void testFetch_shouldMarkShortVideosAsSkipped() throws IOException {
+        // Given
+        ContentSource source = new ContentSource();
+        source.name = "Test Source";
+        source.sourceIdentifier = "test-source-id";
+        source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+
+        YouTubeVideo shortVideo = new YouTubeVideo();
+        shortVideo.videoId = "short123";
+        // 30 seconds < 60 seconds default
+        shortVideo.duration = Duration.ofSeconds(30);
+
+        List<YouTubeVideo> fetchedVideos = List.of(shortVideo);
+        when(mockFetcherService.fetchYouTubeVideos(any(), any(), any(), any())).thenReturn(fetchedVideos);
+
+        try (MockedStatic<QuarkusTransaction> mockedTx = mockStatic(QuarkusTransaction.class)) {
+            TransactionRunnerOptions runner = mockTransactionRunnerOptions();
+            mockedTx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
+
+            // Mock list returning empty, so it's a new video
+            when(YouTubeVideo.list(eq("videoId in ?1"), anyList())).thenReturn(Collections.emptyList());
+
+            // When
+            List<ContentItem> result = strategy.fetch(source, LocalDate.now(), null, null);
+
+            // Then
+            ArgumentCaptor<List<YouTubeVideo>> captor = ArgumentCaptor.forClass(List.class);
+            PanacheMock.verify(YouTubeVideo.class, times(1)).persist(captor.capture());
+            List<YouTubeVideo> persistedVideos = captor.getValue();
+
+            assertFalse(persistedVideos.isEmpty());
+            assertEquals(1, persistedVideos.size());
+            assertEquals(ProcessingStatus.SKIPPED_TOO_SHORT, persistedVideos.getFirst().processingStatus);
+
+            // Assert on result
+            assertFalse(result.isEmpty());
+            assertEquals(1, result.size());
+            assertEquals(ProcessingStatus.SKIPPED_TOO_SHORT, result.getFirst().processingStatus);
         }
     }
 }
