@@ -39,17 +39,18 @@ Tests are located in `src/test/java` and mirror the package structure of the mai
 *   **`adr/`**: Architectural Decision Records.
 *   **`guides/`**: Developer guides (e.g., Testing, Setup).
 *   **`overview/`**: High-level project information (Roadmap, Structure).
+*   **`process/`**: Process definitions and checklists (e.g., Code Review Checklist).
 *   **`versions/`**: Planning and task tracking for specific versions.
 
 ## Functional Architecture Map
 
 To quickly locate functionality, refer to this mapping of business domains to code artifacts:
 
-| Domain | Key Services/Classes | Key Resources/UI |
-| :--- | :--- | :--- |
-| **Orchestration** | `OrchestrationManager`, `OrchestrationLockService` | N/A (Background Process) |
-| **Content Fetching** | `YouTubeContentFetcherService`, `YouTubeTranscriptService` | N/A |
-| **Summarization** | `VideoSummaryService`, `BriefingService` | N/A |
-| **Topic Management** | `TopicProcessor` | `TopicResource`, `topics.html` |
-| **User Management** | `User`, `Role` | `LoginResource` (Planned) |
-| **Observability** | `StructuredLogger` | `SystemInfoResource` |
+| Domain               | Key Services/Classes                                       | Key Resources/UI               |
+|:---------------------|:-----------------------------------------------------------|:-------------------------------|
+| **Orchestration**    | `OrchestrationManager`, `OrchestrationLockService`         | N/A (Background Process)       |
+| **Content Fetching** | `YouTubeContentFetcherService`, `YouTubeTranscriptService` | N/A                            |
+| **Summarization**    | `VideoSummaryService`, `BriefingService`                   | N/A                            |
+| **Topic Management** | `TopicProcessor`                                           | `TopicResource`, `topics.html` |
+| **User Management**  | `User`, `Role`                                             | `LoginResource` (Planned)      |
+| **Observability**    | `StructuredLogger`                                         | `SystemInfoResource`           |

@@ -1,0 +1,66 @@
+# Code & Documentation Review Checklist
+
+This document is the mandatory checklist to be mentally reviewed before any code is committed. Its purpose is to uphold the highest standards of software quality, maintainability, security, and performance, and to prevent the types of regressions and inconsistencies experienced in the past (e.g., during the POV-103 refactoring).
+
+## 1. Design & Architecture
+
+*   [ ] **Adherence to SOLID Principles:**
+  *   **Single Responsibility:** Does the class/method do one thing and do it well?
+  *   **Open/Closed:** Is the code open for extension but closed for modification? (e.g., using strategies, interfaces).
+  *   **Liskov Substitution:** Can subclasses be substituted for their base classes without altering behavior?
+  *   **Interface Segregation:** Are interfaces lean and focused? Clients should not be forced to depend on methods they do not use.
+  *   **Dependency Inversion:** Does the code depend on abstractions, not on concrete implementations? (e.g., using `@Inject` with interfaces).
+*   [ ] **Loose Coupling:** Can the component be tested in isolation? Does it have minimal, well-defined dependencies?
+*   [ ] **Architectural Consistency:** Does the change follow established patterns within the project (e.g., Service/Resource layers, Panache entities, DTOs)?
+
+## 2. Code Quality & Readability
+
+*   [ ] **Intention-Revealing Names:** Are variables, methods, and classes named clearly and unambiguously?
+*   [ ] **Simplicity (KISS/YAGNI):** Is the code as simple as possible? Is there any unnecessary complexity or functionality that isn't needed right now (You Ain't Gonna Need It)?
+*   [ ] **Comments Explain "Why", Not "What":** Are comments used to explain complex business logic or design trade-offs, rather than restating what the code does?
+*   [ ] **No Magic Numbers/Strings:** Are constants and configuration values defined in a central, named location?
+
+## 3. Security
+
+*   [ ] **Input Validation:** Is all external input (API requests, user forms) validated and sanitized to prevent injection attacks (SQLi, XSS)?
+*   [ ] **Authentication & Authorization:** Are protected endpoints correctly secured? Are checks performed to ensure the user has the right permissions for the requested data (especially with multi-tenancy)?
+*   [ ] **Secret Management:** Are secrets, API keys, and passwords loaded from configuration/environment variables, not hardcoded in the source?
+*   [ ] **Dependency Security:** Have the new/updated dependencies been checked for known vulnerabilities?
+
+## 4. Testing
+
+*   [ ] **Correct Test Type:** Is the appropriate test type used? (`@QuarkusTest` for component tests with mocks, `@QuarkusIntegrationTest` for black-box E2E tests, `@TestTransaction` for DB tests).
+*   [ ] **Meaningful Coverage:** Do tests cover not just the "happy path" but also edge cases, error conditions, and security checks?
+*   [ ] **Readable & Maintainable Tests:** Is the test easy to understand? Does it follow a clear Given/When/Then structure?
+*   [ ] **No Fragile Tests:** Does the test avoid dependencies on implementation details that might change (e.g., asserting on exact error message strings that include variable parts)?
+
+## 5. Performance & Scalability
+
+*   [ ] **Database Efficiency:** Are there any obvious N+1 query problems? Are queries indexed appropriately?
+*   [ ] **Reactive Purity:** Is blocking code (`Thread.sleep`, non-reactive JDBC) avoided in reactive pipelines (`Uni`, `Multi`)?
+*   [ ] **Resource Management:** Are resources like streams or connections properly closed in `finally` blocks or with try-with-resources?
+
+## 6. Refactoring & Documentation Hygiene
+
+*This section is especially critical when moving or renaming files.*
+
+*   [ ] **Subtraction Check:** Was the original content **deleted** from its source location after being moved? (Prevents DRY violations).
+*   [ ] **Orphan Check:** Is every new file correctly referenced in an index or configuration (`AGENT.md`, `pom.xml`, etc.)?
+*   [ ] **Dangling Pointer Check:** Have all internal references (e.g., "see Section VI") been updated to point to the new file paths (e.g., `docs/protocols/verification.md`)?
+*   [ ] **Document Structure:** Does each modular document start with a Level 1 heading (`#`) and have a logical heading structure?
+*   [ ] **Index Accuracy:** Does the description of a file in any index accurately reflect its contents?
+
+## 7. Agent-Specific Protocols (AI Context)
+
+*   [ ] **Bootstrap Logic:** Does `AGENT.md` contain an explicit, non-negotiable instruction to read required protocols *before* starting work? (The "Cold Start" fix).
+*   [ ] **Token Efficiency:** Is the agent's entry point (`AGENT.md`) lean? Is it loading only the context it needs for the specific task?
+
+## 8. Git Hygiene
+
+*   [ ] **Conventional Commits:** Does the commit message follow the `type(scope): description` format?
+*   [ ] **Atomic Commits:** Does the commit represent a single, logical change? Are unrelated changes (e.g., a refactoring and a bug fix) in separate commits?
+*   [ ] **Clean `git status`:** Have all new files been staged? Are there any unintended changes included?
+
+---
+
+**Instruction for Agent:** Before proposing a commit message or marking a task as complete, you must mentally walk through this checklist. If you find a violation, you must correct it before proceeding.
