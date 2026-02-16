@@ -51,6 +51,7 @@ class BriefingServiceTest {
     void setupTestData() {
         User testUser = new User();
         testUser.username = "test_user_" + UUID.randomUUID();
+        testUser.email = testUser.username + "@example.com";
         testUser.name = "Test User";
         testUser.active = true;
         testUser.persist();

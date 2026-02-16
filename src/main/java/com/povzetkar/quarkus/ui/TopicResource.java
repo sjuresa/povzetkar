@@ -86,9 +86,14 @@ public class TopicResource {
         // Create a dummy topic to hold the submitted name for re-population
         Topic submittedTopic = new Topic();
         submittedTopic.name = name;
-        User dummyUser = new User();
-        dummyUser.id = userId;
-        submittedTopic.user = dummyUser;
+        if (userId != null) {
+            User dummyUser = new User();
+            dummyUser.id = userId;
+            dummyUser.username = "dummy"; // Required
+            dummyUser.email = "dummy@dummy.com"; // Required
+            dummyUser.name = "dummy"; // Required
+            submittedTopic.user = dummyUser;
+        }
         data.put(TOPIC_KEY, submittedTopic);
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **User Management:** Implemented `User` and `Role` entities to support authentication and authorization.
+- **Database:** Created a Flyway migration (`V11__UpdateUserAndCreateRoles.sql`) to update the `users` table with `email`, `created_at`, and `updated_at` columns, and to create `roles` and `user_roles` tables.
+- **Security:** Updated `User` entity to exclude password storage, aligning with the delegated authentication strategy (e.g., OIDC).
 - **Content Filtering:** Implemented a configurable minimum duration filter for YouTube videos. Videos shorter than the threshold (default: 60 seconds) are now skipped and marked with a new `SKIPPED_TOO_SHORT` status, preventing them from cluttering the processing pipeline.
 - **Auditing:** Added `updated_at` timestamp to `BaseAuditableEntity` and all inheriting entities (`ContentItem`, `Briefing`, `Summary`) as well as `ContentSource` and `Topic` to track modification times.
 - **API Documentation:** Integrated `quarkus-smallrye-openapi` to expose OpenAPI documentation and Swagger UI at `/q/swagger-ui`.
@@ -345,6 +348,10 @@ This version marks a major architectural milestone by establishing the foundatio
 - Integration with YouTube Data API for video retrieval and Gemini API for AI-generated summaries.
 - Structured Markdown output for video summaries and daily briefings.
 - Project configuration with Maven, Java 21, and logging setup.
+- Added retry logic for AI API calls to handle rate limiting.
+- State management for tracking processed videos per channel and date.
+- Utility classes for file operations, resource reading, and sleep abstraction.
+- Detailed logging configuration for runtime diagnostics.
 - Added retry logic for AI API calls to handle rate limiting.
 - State management for tracking processed videos per channel and date.
 - Utility classes for file operations, resource reading, and sleep abstraction.

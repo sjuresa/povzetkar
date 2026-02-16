@@ -36,6 +36,7 @@ class TopicResourceTest {
         testUser = new User();
         testUser.name = "Test User";
         testUser.username = "topic_resource_test_user";
+        testUser.email = "topic_resource_test_user@example.com";
         testUser.active = true;
         testUser.persist();
 

@@ -30,6 +30,7 @@ class ContentSourceResourceTest {
         var testUser = new User();
         testUser.name = "testuser";
         testUser.username = "cs_resource_test_user";
+        testUser.email = "cs_resource_test_user@example.com";
         testUser.active = true;
         testUser.persist();
 

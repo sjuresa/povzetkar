@@ -96,6 +96,7 @@ class ContentSourceResourceTest {
         User user = new User();
         user.name = name;
         user.username = username;
+        user.email = username + "@example.com";
         em.persist(user);
         createdUserIds.add(user.id);
         return user;

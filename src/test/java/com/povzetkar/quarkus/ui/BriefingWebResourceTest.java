@@ -38,6 +38,7 @@ class BriefingWebResourceTest {
         testUser = new User();
         testUser.name = "Povzetkar AI";
         testUser.username = "briefing_test_user";
+        testUser.email = "briefing_test_user@example.com";
         testUser.active = true;
         testUser.persist();
 
