@@ -48,6 +48,7 @@ class TranscriptPersistenceTest {
     void setUp() {
         User user = new User();
         user.username = "testuser";
+        user.email = "testuser@example.com";
         user.name = "Test User";
         user.persist();
 

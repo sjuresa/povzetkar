@@ -73,6 +73,8 @@ class TopicProcessorTest {
         testUser = new User();
         testUser.id = 1L;
         testUser.name = "Test User";
+        testUser.username = "test_user";
+        testUser.email = "test_user@example.com";
         testUser.active = true;
 
         testTopic = new Topic();

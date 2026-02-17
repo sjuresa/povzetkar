@@ -21,6 +21,7 @@ class BriefingTest {
         // Create a User dependency
         User user = new User();
         user.username = "test_user_briefing_" + UUID.randomUUID();
+        user.email = user.username + "@example.com";
         user.name = "Test User";
         user.active = true;
         user.persist();

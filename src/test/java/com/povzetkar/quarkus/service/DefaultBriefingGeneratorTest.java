@@ -44,6 +44,7 @@ class DefaultBriefingGeneratorTest {
 
         User testUser = new User();
         testUser.username = "test_user";
+        testUser.email = "test_user@example.com";
         testUser.name = "Test User";
         testUser.active = true;
         testUser.persist();

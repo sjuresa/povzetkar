@@ -33,6 +33,7 @@ class SummaryResourceTest {
 
         User user = new User();
         user.username = "test";
+        user.email = "test@example.com";
         user.name = "Test User";
         user.active = true;
         user.persist();
