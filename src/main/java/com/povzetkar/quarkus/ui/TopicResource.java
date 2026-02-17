@@ -80,21 +80,21 @@ public class TopicResource {
         return TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
     }
 
+    public record TopicFormData(Long id, String name, UserFormData user) {
+        public record UserFormData(Long id) {}
+    }
+
     private void renderAddForm(RoutingContext context, String name, Long userId) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
         data.put("users", User.listAll());
-        // Create a dummy topic to hold the submitted name for re-population
-        Topic submittedTopic = new Topic();
-        submittedTopic.name = name;
-        if (userId != null) {
-            User dummyUser = new User();
-            dummyUser.id = userId;
-            dummyUser.username = "dummy"; // Required
-            dummyUser.email = "dummy@dummy.com"; // Required
-            dummyUser.name = "dummy"; // Required
-            submittedTopic.user = dummyUser;
-        }
-        data.put(TOPIC_KEY, submittedTopic);
+        
+        TopicFormData formData = new TopicFormData(
+            null, 
+            name, 
+            userId != null ? new TopicFormData.UserFormData(userId) : null
+        );
+        
+        data.put(TOPIC_KEY, formData);
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
@@ -103,13 +103,13 @@ public class TopicResource {
         context.response().end(topicForm.instance().data(data).render());
     }
 
-    private void renderEditForm(RoutingContext context, Topic topic) {
+    private void renderEditForm(RoutingContext context, TopicFormData formData) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        data.put(TOPIC_KEY, topic);
+        data.put(TOPIC_KEY, formData);
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                new Breadcrumb(topic.name, topicBriefingsPath(topic.id)),
+                new Breadcrumb(formData.name(), topicBriefingsPath(formData.id())),
                 new Breadcrumb("Edit", context.request().uri())
         ));
         context.response().end(topicForm.instance().data(data).render());
@@ -187,7 +187,15 @@ public class TopicResource {
         }
         Long id = idOptional.get();
         Topic.findByIdOptional(id).ifPresentOrElse(
-                topic -> renderEditForm(context, (Topic) topic),
+                topic -> {
+                    Topic t = (Topic) topic;
+                    TopicFormData formData = new TopicFormData(
+                        t.id, 
+                        t.name, 
+                        t.user != null ? new TopicFormData.UserFormData(t.user.id) : null
+                    );
+                    renderEditForm(context, formData);
+                },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
@@ -214,8 +222,13 @@ public class TopicResource {
 
         if (validator.hasErrors()) {
             viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-            topic.name = name; // Set the invalid name for re-rendering
-            renderEditForm(context, topic);
+            // Create DTO with submitted name but existing ID and User
+            TopicFormData formData = new TopicFormData(
+                topic.id, 
+                name, 
+                topic.user != null ? new TopicFormData.UserFormData(topic.user.id) : null
+            );
+            renderEditForm(context, formData);
             return;
         }
 
