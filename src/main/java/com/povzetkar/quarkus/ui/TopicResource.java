@@ -80,6 +80,7 @@ public class TopicResource {
         return TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
     }
 
+    // DTO for form data to avoid using dummy entities
     public record TopicFormData(Long id, String name, UserFormData user) {
         public record UserFormData(Long id) {}
     }
@@ -187,12 +188,13 @@ public class TopicResource {
         }
         Long id = idOptional.get();
         Topic.findByIdOptional(id).ifPresentOrElse(
-                topic -> {
-                    Topic t = (Topic) topic;
+                entity -> {
+                    Topic topic = (Topic) entity;
+                    // TODO: Security - POV-108: Verify that the authenticated user owns this topic
                     TopicFormData formData = new TopicFormData(
-                        t.id, 
-                        t.name, 
-                        t.user != null ? new TopicFormData.UserFormData(t.user.id) : null
+                        topic.id, 
+                        topic.name, 
+                        topic.user != null ? new TopicFormData.UserFormData(topic.user.id) : null
                     );
                     renderEditForm(context, formData);
                 },
@@ -215,6 +217,7 @@ public class TopicResource {
             return;
         }
         Topic topic = topicOptional.get();
+        // TODO: Security - POV-108: Verify that the authenticated user owns this topic
 
         FormValidator validator = new FormValidator();
         String name = context.request().getFormAttribute("name");
