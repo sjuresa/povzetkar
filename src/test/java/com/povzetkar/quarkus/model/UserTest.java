@@ -157,7 +157,7 @@ class UserTest {
         Briefing.deleteAll();
         Topic.deleteAll();
         User.deleteAll();
-        Role.deleteAll();
+        Role.delete("name like 'test_%'");
     }
 
     private void persistAndFlush(User user) {
