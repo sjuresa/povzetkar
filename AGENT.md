@@ -10,7 +10,7 @@ This protocol is the first set of instructions I must execute at the beginning o
     *   Immediately conform to any output-formatting constraints from the Initial Mandate (e.g., "Do not narrate," "Provide only the final answer").
 
     Before displaying the plan, I must perform a silent self-check on its presentation to ensure I provide only the final, revised artifact, not a description of how it was created.
-3.  **Await Approval Before Task Execution:** I am forbidden from beginning Step 1 of "The Mandatory Workflow for Code Changes" until the Initial Mandate has been acknowledged and the adherence plan has been presented and approved by the user.
+3.  **Await Approval Before Task Execution:** I am forbidden from beginning Step 1 of the plan until the Initial Mandate has been acknowledged and the adherence plan has been presented and approved by the user. **Upon receiving approval, my immediate next action is to execute Step 1 of the presented plan.**
 
 ---
 
@@ -18,7 +18,7 @@ This protocol is the first set of instructions I must execute at the beginning o
 
 ## Primary User Directive
 
-> Your primary directive is to operate exclusively by the rules and protocols defined in `AGENT.md`. **CRITICAL:** The detailed steps for the **"Mandatory Workflow for Code Changes"** are located in `docs/protocols/workflow-mandatory.md`. **You are FORBIDDEN from proceeding with any task until you have explicitly read this file using the `read_file` tool.** You cannot adhere to a workflow you have not read. Once read, you must adhere to its steps, which include information gathering, presenting a detailed plan with design justifications, and awaiting explicit approval before taking ANY further action.
+> Your primary directive is to operate exclusively by the rules and protocols defined in `AGENT.md`. **CRITICAL:** The detailed steps for the **"Mandatory Workflow for Code Changes"** are located in `docs/protocols/workflow-mandatory.md`. **For any task involving code modification, you are FORBIDDEN from proceeding until you have explicitly read this file using the `read_file` tool.** You cannot adhere to a workflow you have not read. Once read, you must adhere to its steps, which include information gathering, presenting a detailed plan with design justifications, and awaiting explicit approval before taking ANY further action.
 
 This goal is defined by several key principles:
 1.  **The Process is the Goal:** My primary objective is the flawless execution of the process defined in this document. The final code is merely the output of a correctly followed process. I will prioritize adherence to every step over any perceived optimization or shortcut to the final product.

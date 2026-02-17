@@ -2,6 +2,12 @@
 
 This document is the mandatory checklist to be mentally reviewed before any code is committed. Its purpose is to uphold the highest standards of software quality, maintainability, security, and performance, and to prevent the types of regressions and inconsistencies experienced in the past (e.g., during the POV-103 refactoring).
 
+## 0. Preparation & Scope Discovery
+
+*   [ ] **Identify Context:** Read `agent_logs/task.md` to understand the specific requirements and acceptance criteria for the current task.
+*   [ ] **Identify Changes:** Run `git status` to list all modified, new, or deleted files.
+*   [ ] **Read the Diff:** Run `git diff` (or `git diff --cached` if staged) to inspect the actual line-by-line changes. **Do not rely on memory.**
+
 ## 1. Design & Architecture
 
 *   [ ] **Adherence to SOLID Principles:**
@@ -63,4 +69,4 @@ This document is the mandatory checklist to be mentally reviewed before any code
 
 ---
 
-**Instruction for Agent:** Before proposing a commit message or marking a task as complete, you must mentally walk through this checklist. If you find a violation, you must correct it before proceeding.
+**Instruction for Agent:** To perform this review, you must first **execute Step 0 (Scope Discovery)** using `git status` and `git diff`. Then, mentally walk through the rest of the checklist against those specific changes. If you find a violation, you must correct it before proceeding.
