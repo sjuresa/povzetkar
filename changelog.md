@@ -352,7 +352,3 @@ This version marks a major architectural milestone by establishing the foundatio
 - State management for tracking processed videos per channel and date.
 - Utility classes for file operations, resource reading, and sleep abstraction.
 - Detailed logging configuration for runtime diagnostics.
-- Added retry logic for AI API calls to handle rate limiting.
-- State management for tracking processed videos per channel and date.
-- Utility classes for file operations, resource reading, and sleep abstraction.
-- Detailed logging configuration for runtime diagnostics.

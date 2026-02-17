@@ -39,7 +39,7 @@ public class User extends BaseAuditableEntity {
     @Column(nullable = false)
     public String name;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "user_roles",
         joinColumns = @JoinColumn(name = "user_id"),
