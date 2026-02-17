@@ -6,7 +6,7 @@ This document is the mandatory checklist to be mentally reviewed before any code
 
 *   [ ] **Identify Context:** Read `agent_logs/task.md` to understand the specific requirements and acceptance criteria for the current task.
 *   [ ] **Identify Changes:** Run `git status` to list all modified, new, or deleted files.
-*   [ ] **Read the Diff:** Run `git diff` (or `git diff --cached` if staged) to inspect the actual line-by-line changes. **Do not rely on memory.**
+*   [ ] **Read the Diff:** Run `git diff HEAD` to inspect all line-by-line changes since the last commit. **Do not rely on memory.**
 
 ## 1. Design & Architecture
 
@@ -69,4 +69,4 @@ This document is the mandatory checklist to be mentally reviewed before any code
 
 ---
 
-**Instruction for Agent:** To perform this review, you must first **execute Step 0 (Scope Discovery)** by reading `agent_logs/task.md` and using `git status` and `git diff` (or `git diff --cached` for staged changes). Then, mentally walk through the rest of the checklist against those specific changes. If you find a violation, you must correct it before proceeding.
+**Instruction for Agent:** To perform this review, you must first **execute Step 0 (Scope Discovery)** by reading `agent_logs/task.md` and using `git status` and `git diff HEAD`. Then, mentally walk through the rest of the checklist against those specific changes. If you find a violation, you must correct it before proceeding.
