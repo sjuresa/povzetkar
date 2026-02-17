@@ -69,4 +69,4 @@ This document is the mandatory checklist to be mentally reviewed before any code
 
 ---
 
-**Instruction for Agent:** To perform this review, you must first **execute Step 0 (Scope Discovery)** by reading `agent_logs/task.md` and using `git status` and `git diff`. Then, mentally walk through the rest of the checklist against those specific changes. If you find a violation, you must correct it before proceeding.
+**Instruction for Agent:** To perform this review, you must first **execute Step 0 (Scope Discovery)** by reading `agent_logs/task.md` and using `git status` and `git diff` (or `git diff --cached` for staged changes). Then, mentally walk through the rest of the checklist against those specific changes. If you find a violation, you must correct it before proceeding.
