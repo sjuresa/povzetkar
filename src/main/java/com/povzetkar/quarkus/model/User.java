@@ -13,6 +13,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
 
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ public class User extends BaseAuditableEntity {
     public String username;
 
     @Column(unique = true, nullable = false)
+    @Email
     public String email;
 
     @Column(nullable = false)
@@ -66,15 +68,12 @@ public class User extends BaseAuditableEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        if (id == null || user.id == null) {
-            return false;
-        }
-        return id.equals(user.id);
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(username, user.username);
     }
+
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(username);
     }
 }

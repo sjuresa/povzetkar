@@ -29,16 +29,12 @@ public class Role extends PanacheEntityBase {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Role role = (Role) o;
-        if (id == null || role.id == null) {
-            return false;
-        }
-        return id.equals(role.id);
+        if (!(o instanceof Role role)) return false;
+        return Objects.equals(name, role.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(name);
     }
 }
