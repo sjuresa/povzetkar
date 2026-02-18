@@ -43,8 +43,7 @@ public class LoginResource {
     @Route(path = "/logout", methods = HttpMethod.GET)
     public void logout(RoutingContext context) {
         String safeLogoutPath = logoutPath;
-        // Basic validation to prevent Open Redirect
-        if (!safeLogoutPath.startsWith("/") || safeLogoutPath.startsWith("//")) {
+        if (!safeLogoutPath.startsWith("/") || safeLogoutPath.contains(":") || safeLogoutPath.contains("//") || safeLogoutPath.contains("\\")) {
             safeLogoutPath = "/";
         }
         logout.data("logoutPath", safeLogoutPath).createUni().subscribe()
