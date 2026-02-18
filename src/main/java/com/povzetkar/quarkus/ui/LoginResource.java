@@ -57,7 +57,7 @@ public class LoginResource {
             logger.warn("Configured logout path '{}' is not a valid URI. Using default safe path '/'", logoutPath);
         }
         logout.data("logoutPath", safeLogoutPath).createUni().subscribe()
-                .with(html -> context.response().putHeader("Content-Type", "text/html").end(html));
+                .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html));
     }
 
     @Route(path = "/", methods = HttpMethod.GET)

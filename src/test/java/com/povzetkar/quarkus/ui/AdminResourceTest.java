@@ -74,4 +74,15 @@ class AdminResourceTest {
                 .then()
                 .statusCode(400); // Bad Request
     }
+
+    @Test
+    void testUpdateContentItemStatus() {
+        RestAssured.given()
+                .contentType(ContentType.URLENC)
+                .formParam("status", "COMPLETED")
+                .when().post("/api/v1/admin/content-items/999/status")
+                .then()
+                .statusCode(500) // Expect 500 because ID 999 not found returns false -> 500
+                .body(containsString("Failed to update content item status"));
+    }
 }
