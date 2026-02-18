@@ -122,12 +122,13 @@ public class TopicResource {
     @Blocking
     public void getTopics(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        User currentUser = userContextService.getCurrentUser();
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
 
         Map<User, List<Topic>> topicsByUser;
-        if (currentUser == null) {
+        if (currentUserOpt.isEmpty()) {
             topicsByUser = Collections.emptyMap();
         } else {
+            User currentUser = currentUserOpt.get();
             List<Topic> userTopics = Topic.find("user", currentUser).list();
             topicsByUser = Map.of(currentUser, userTopics.stream()
                     .sorted(Comparator.comparing(topic -> topic.name))
@@ -160,19 +161,20 @@ public class TopicResource {
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
 
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        if (currentUserOpt.isEmpty()) {
+            viewUtils.setErrorMessage(context, "User not found.");
+            renderAddForm(context, name);
+            return;
+        }
+
         if (validator.hasErrors()) {
             viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
             renderAddForm(context, name); // Re-render with submitted values
             return;
         }
 
-        User currentUser = userContextService.getCurrentUser();
-        if (currentUser == null) {
-             viewUtils.setErrorMessage(context, "User not found.");
-             renderAddForm(context, name);
-             return;
-        }
-
+        User currentUser = currentUserOpt.get();
         Topic topic = new Topic();
         topic.user = currentUser;
         topic.name = name;
@@ -293,11 +295,12 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
         
-        User currentUser = userContextService.getCurrentUser();
-        if (currentUser == null) {
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        if (currentUserOpt.isEmpty()) {
              context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
              return;
         }
+        User currentUser = currentUserOpt.get();
 
         PanacheQuery<Topic> query = Topic.find("select t from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", topicId, currentUser);
         query.firstResultOptional().ifPresentOrElse(
@@ -386,11 +389,12 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
         
-        User currentUser = userContextService.getCurrentUser();
-        if (currentUser == null) {
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        if (currentUserOpt.isEmpty()) {
              context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
              return;
         }
+        User currentUser = currentUserOpt.get();
 
         // Use a custom query to fetch topic with content sources AND verify ownership
         Topic.find("select t from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", topicId, currentUser)
