@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Povzetkar AI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--pico-background-color);
+            /* Optionally add a subtle gradient or pattern for premium feel */
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .login-card {
+            max-width: 400px;
+            width: 100%;
+            padding: 2rem;
+            background-color: var(--pico-card-background-color);
+            border-radius: var(--pico-border-radius);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--pico-primary);
+        }
+
+        .login-title {
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .login-subtitle {
+            color: var(--pico-muted-color);
+            margin-bottom: 2rem;
+        }
+
+        .login-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-card">
+        <div class="login-logo">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h1 class="login-title">Povzetkar AI</h1>
+        <p class="login-subtitle">Your intelligent content summarizer</p>
+
+        <a href="/ui/admin" role="button" class="login-btn">
+            <i class="fas fa-sign-in-alt"></i> Login with OIDC
+        </a>
+
+        <p style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--pico-muted-color);">
+            Authorized access only. Please sign in with your corporate credentials.
+        </p>
+    </main>
+</body>
+
+</html>

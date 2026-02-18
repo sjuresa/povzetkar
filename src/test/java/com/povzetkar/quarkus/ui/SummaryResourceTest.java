@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
+@TestSecurity(user = "summary_test_user", roles = "user")
 class SummaryResourceTest {
 
     private Summary testSummary;

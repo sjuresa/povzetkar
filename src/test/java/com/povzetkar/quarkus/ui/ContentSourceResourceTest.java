@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
-@TestSecurity(user = "cs_resource_test_user")
+@TestSecurity(user = "cs_resource_test_user", roles = "user")
 class ContentSourceResourceTest {
 
     private Topic testTopic;

@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.api.OrchestrationRequest;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 
 @QuarkusTest
+@TestSecurity(user = "admin_user", roles = { "user", "admin" })
 class AdminResourceTest {
-
 
     @Test
     void testGetAdminPageDefaultsToActionsTab() {

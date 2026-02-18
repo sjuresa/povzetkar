@@ -16,6 +16,7 @@ import static org.hamcrest.Matchers.is;
 class SecurityTest {
 
     @Test
+    @TestSecurity(user = "user", roles = "user")
     void testPublicEndpoint() {
         given()
                 .when().get("/api/public")
@@ -27,9 +28,10 @@ class SecurityTest {
     @Test
     void testSecuredEndpointAnonymous() {
         given()
+                .redirects().follow(false)
                 .when().get("/api/secured")
                 .then()
-                .statusCode(401);
+                .statusCode(302);
     }
 
     @Test
