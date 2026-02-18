@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.ui;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.service.UserContextService;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.FormValidator;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
@@ -40,12 +41,15 @@ public class ContentSourceResource {
 
 
     private final ViewUtils viewUtils;
-
+    private final UserContextService userContextService;
     private final Template contentSourceForm;
 
-    public ContentSourceResource(@Location("content-source-form.html") Template contentSourceForm, ViewUtils viewUtils) {
+    public ContentSourceResource(@Location("content-source-form.html") Template contentSourceForm,
+                                 ViewUtils viewUtils,
+                                 UserContextService userContextService) {
         this.contentSourceForm = contentSourceForm;
         this.viewUtils = viewUtils;
+        this.userContextService = userContextService;
     }
 
     public static String topicBriefingsPath(long topicId) {
@@ -77,6 +81,11 @@ public class ContentSourceResource {
     public void showAddForm(RoutingContext context) {
         Optional<Long> topicIdOptional = WebUtils.getLongQueryParam(context, PARAM_TOPIC_ID, INVALID_OR_MISSING_TOPIC_ID_PARAM, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
+            return;
+        }
+        // Verify topic ownership before rendering the form
+        if (userContextService.findOwnedTopic(topicIdOptional.get()).isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TopicResource.TOPIC_NOT_FOUND_MSG, topicIdOptional.get()));
             return;
         }
         renderAddFormWithData(context, topicIdOptional.get(), null, null, null); // Fresh form
@@ -116,24 +125,31 @@ public class ContentSourceResource {
         Long topicId = topicIdOptional.get();
         Integer sourceTypeId = sourceTypeIdOptional.get();
 
+        // Verify topic ownership before proceeding
+        Optional<Topic> topicOptional = userContextService.findOwnedTopic(topicId);
+        if (topicOptional.isEmpty()) {
+            context.response().setStatusCode(404).end(String.format(TopicResource.TOPIC_NOT_FOUND_MSG, topicId));
+            return;
+        }
+        Topic topic = topicOptional.get();
+
         ContentSource contentSource = new ContentSource();
         contentSource.name = name;
         contentSource.sourceIdentifier = sourceIdentifier;
         contentSource.sourceTypeId = sourceTypeId;
 
-        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
-        topicOptional.ifPresentOrElse(
-                    topic -> {
-                        contentSource.persist();
-                        topic.contentSources.add(contentSource);
-                        topic.persist();
-                        viewUtils.setSuccessMessage(context, "Content Source created and added to topic.");
-                        viewUtils.handleRedirect(context, TopicResource.topicBriefingsPath(topicId));
-                    },
-                    () -> {
-                        viewUtils.setErrorMessage(context, String.format("Topic with id %d not found.", topicId));
-                        renderAddFormWithData(context, topicId, name, sourceIdentifier, sourceTypeId);
-                    }
-            );
+        // Check if content source already exists globally
+        Optional<ContentSource> existingContentSource = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2", sourceIdentifier, sourceTypeId).firstResultOptional();
+        if (existingContentSource.isPresent()) {
+            contentSource = existingContentSource.get(); // Use existing source
+        } else {
+            contentSource.persist(); // Persist new source
+        }
+
+        // Add content source to topic
+        topic.contentSources.add(contentSource);
+        topic.persist();
+        viewUtils.setSuccessMessage(context, "Content Source created/added and linked to topic.");
+        viewUtils.handleRedirect(context, TopicResource.topicBriefingsPath(topicId));
     }
 }

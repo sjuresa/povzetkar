@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Security:** Implemented multi-tenancy for topics. Users can now only view and manage their own topics and their associations with content sources.
 - **Security:** Configured OIDC (OpenID Connect) as the authentication mechanism using `quarkus-oidc`.
 - **Security:** Enabled Keycloak Dev Services for local development to provide a seamless authentication experience.
 - **Security:** Added `quarkus-test-security` to support testing of secured endpoints without a running OIDC provider.
@@ -21,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database:** Created a Flyway migration (`V10__Add_updated_at_to_auditable_entities.sql`) to add the `updated_at` column to relevant tables and backfill existing data.
 
 ### Changed
+- **UI/API:** The `/ui/topics` endpoint now only returns topics owned by the authenticated user.
+- **UI/API:** All endpoints for creating, updating, or deleting topics and their content source associations now enforce ownership, returning a 404 error if a user attempts to access another user's resources.
+- **Refactoring:** Centralized user authentication and topic ownership logic into a new `UserContextService` to reduce duplication in UI resources.
+- **Refactoring:** Switched from field injection to constructor injection in `TopicResource`, `ContentSourceResource`, and `UserContextService` to improve testability and adhere to best practices.
 - **Refactoring:** Updated `ContentSource` and `Topic` entities to extend `BaseAuditableEntity`, centralizing auditing logic and ensuring consistent `createdAt` and `updatedAt` handling.
 
 ### Documentation
