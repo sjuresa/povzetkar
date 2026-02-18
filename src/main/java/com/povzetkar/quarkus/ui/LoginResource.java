@@ -15,14 +15,17 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class LoginResource {
 
     private final Template login;
+    private final Template logout;
     private final SecurityIdentity securityIdentity;
     private final String logoutPath;
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
+            @Location("logout.html") Template logout,
             SecurityIdentity securityIdentity,
             @ConfigProperty(name = "quarkus.oidc.logout.path", defaultValue = "/logout") String logoutPath) {
         this.login = login;
+        this.logout = logout;
         this.securityIdentity = securityIdentity;
         this.logoutPath = logoutPath;
     }
@@ -38,16 +41,7 @@ public class LoginResource {
 
     @Route(path = "/logout", methods = HttpMethod.GET)
     public void logout(RoutingContext context) {
-        String html = String.format("""
-                <html>
-                <body onload="document.forms[0].submit()">
-                    <form action="%s" method="POST">
-                        <button type="submit">Logging out...</button>
-                    </form>
-                </body>
-                </html>
-                """, logoutPath);
-        context.response().putHeader("Content-Type", "text/html").end(html);
+        context.response().putHeader("Content-Type", "text/html").end(logout.data("logoutPath", logoutPath).render());
     }
 
     @Route(path = "/", methods = HttpMethod.GET)

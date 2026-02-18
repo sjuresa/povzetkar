@@ -16,7 +16,6 @@ import static org.hamcrest.Matchers.is;
 class SecurityTest {
 
     @Test
-    @TestSecurity(user = "user", roles = "user")
     void testPublicEndpoint() {
         given()
                 .when().get("/api/public")
