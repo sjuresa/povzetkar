@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.security;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -62,7 +63,7 @@ class SecurityTest {
 
     // Temporary resource for testing security infrastructure
     @Path("/api")
-    public static class TestResource {
+    private static class TestResource {
 
         @GET
         @Path("/public")
@@ -73,7 +74,7 @@ class SecurityTest {
 
         @GET
         @Path("/secured")
-        @jakarta.annotation.security.RolesAllowed("user")
+        @RolesAllowed("user")
         @Produces(MediaType.TEXT_PLAIN)
         public String securedResource() {
             return "secured";
@@ -81,7 +82,7 @@ class SecurityTest {
 
         @GET
         @Path("/admin")
-        @jakarta.annotation.security.RolesAllowed("admin")
+        @RolesAllowed("admin")
         @Produces(MediaType.TEXT_PLAIN)
         public String adminResource() {
             return "admin";
