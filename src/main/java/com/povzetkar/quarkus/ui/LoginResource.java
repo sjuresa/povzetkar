@@ -52,6 +52,8 @@ public class LoginResource {
             // Ensure the URI is just a path, not an absolute URL with a scheme or host.
             if (uri.getScheme() == null && uri.getHost() == null) {
                 safeLogoutPath = uri.getPath();
+            } else {
+                logger.warn("Configured logout path '{}' is an absolute URI, which is not supported for security reasons. Using default safe path '/'", logoutPath);
             }
         } catch (java.net.URISyntaxException _) {
             logger.warn("Configured logout path '{}' is not a valid URI. Using default safe path '/'", logoutPath);
