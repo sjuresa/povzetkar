@@ -21,6 +21,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -122,12 +123,16 @@ public class TopicResource {
     public void getTopics(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
         User currentUser = userContextService.getCurrentUser();
-        
-        List<Topic> userTopics = Topic.find("user", currentUser).list();
-        
-        Map<User, List<Topic>> topicsByUser = Map.of(currentUser, userTopics.stream()
-                .sorted(Comparator.comparing(topic -> topic.name))
-                .toList());
+
+        Map<User, List<Topic>> topicsByUser;
+        if (currentUser == null) {
+            topicsByUser = Collections.emptyMap();
+        } else {
+            List<Topic> userTopics = Topic.find("user", currentUser).list();
+            topicsByUser = Map.of(currentUser, userTopics.stream()
+                    .sorted(Comparator.comparing(topic -> topic.name))
+                    .toList());
+        }
 
         data.put("topicsByUser", topicsByUser);
         data.put(BREADCRUMBS_KEY, List.of(
