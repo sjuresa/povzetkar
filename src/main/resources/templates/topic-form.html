@@ -6,16 +6,6 @@
     <form action="{#if topic && topic.id}/ui/topics/update/{topic.id}{#else}/ui/topics{/if}" method="post">
         <fieldset>
             <legend>Topic Details</legend>
-            {#if !topic || !topic.id}
-                <div>
-                    <label for="userId">User:</label>
-                    <select id="userId" name="userId">
-                        {#for user in users}
-                            <option value="{user.id}" {#if topic && topic.user && topic.user.id == user.id}selected{/if}>{user.name}</option>
-                        {/for}
-                    </select>
-                </div>
-            {/if}
             <div>
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name" value="{topic.name ?: ''}" required placeholder="e.g., My New Topic">
