@@ -41,7 +41,7 @@ public class LoginResource {
 
     @Route(path = "/logout", methods = HttpMethod.GET)
     public void logout(RoutingContext context) {
-        context.response().putHeader("Content-Type", "text/html").end(logout.data("logoutPath", logoutPath).render());
+        context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(logout.data("logoutPath", logoutPath).render());
     }
 
     @Route(path = "/", methods = HttpMethod.GET)
