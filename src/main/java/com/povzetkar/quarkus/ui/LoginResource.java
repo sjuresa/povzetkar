@@ -33,19 +33,27 @@ public class LoginResource {
     @Route(path = "/login", methods = HttpMethod.GET)
     public void login(RoutingContext context) {
         if (!securityIdentity.isAnonymous()) {
-            context.response().setStatusCode(302).putHeader("Location", "/ui/topics").end();
+            context.response().setStatusCode(302).putHeader("Location", TopicResource.TOPICS_PATH).end();
             return;
         }
-        context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(login.render());
+        login.instance().createUni().subscribe()
+                .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html));
     }
 
     @Route(path = "/logout", methods = HttpMethod.GET)
     public void logout(RoutingContext context) {
-        context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(logout.data("logoutPath", logoutPath).render());
+        String safeLogoutPath = logoutPath;
+        // Basic validation to prevent Open Redirect
+        if (!safeLogoutPath.startsWith("/") || safeLogoutPath.startsWith("//")) {
+            safeLogoutPath = "/";
+        }
+        logout.data("logoutPath", safeLogoutPath).createUni().subscribe()
+                .with(html -> context.response().putHeader("Content-Type", "text/html").end(html));
     }
 
     @Route(path = "/", methods = HttpMethod.GET)
     public void index(RoutingContext context) {
-        context.response().setStatusCode(302).putHeader("Location", "/login").end();
+        String location = securityIdentity.isAnonymous() ? "/login" : TopicResource.TOPICS_PATH;
+        context.response().setStatusCode(302).putHeader("Location", location).end();
     }
 }
