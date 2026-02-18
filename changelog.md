@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Security:** Configured OIDC (OpenID Connect) as the authentication mechanism using `quarkus-oidc`.
+- **Security:** Enabled Keycloak Dev Services for local development to provide a seamless authentication experience.
+- **Security:** Added `quarkus-test-security` to support testing of secured endpoints without a running OIDC provider.
 - **User Management:** Implemented `User` and `Role` entities to support authentication and authorization.
 - **Database:** Created a Flyway migration (`V11__UpdateUserAndCreateRoles.sql`) to update the `users` table with `email`, `created_at`, and `updated_at` columns, and to create `roles` and `user_roles` tables.
 - **Security:** Updated `User` entity to exclude password storage, aligning with the delegated authentication strategy (e.g., OIDC).
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Project Structure:** Created `docs/overview/project-structure.md` to document the project's directory layout and architecture.
 - **Testing Guide:** Refactored `docs/guides/testing.md` to clarify the usage of `@QuarkusTest` vs `@QuarkusIntegrationTest` and deprecated `docs/guides/mastering-testing.md`.
 - **ADR:** Initialized `docs/adr/` with the first Architectural Decision Record (ADR-001) to track architectural decisions.
+- **ADR:** Added ADR-002 documenting the decision to use OIDC for authentication.
 
 ## [v0.9.0] - 2026-02-05
 
