@@ -34,7 +34,7 @@ class SummaryResourceTest {
         tearDown();
 
         User user = new User();
-        user.username = "test";
+        user.username = "summary_test_user";
         user.email = "test@example.com";
         user.name = "Test User";
         user.active = true;

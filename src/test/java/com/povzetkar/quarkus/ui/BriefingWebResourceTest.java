@@ -23,7 +23,7 @@ import java.util.Collections;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
-@TestSecurity(user = "briefing_web_test_user", roles = "user")
+@TestSecurity(user = "briefing_test_user", roles = "user")
 class BriefingWebResourceTest {
 
     private Briefing testBriefing;
