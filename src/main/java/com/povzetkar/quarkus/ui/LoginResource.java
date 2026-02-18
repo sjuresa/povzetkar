@@ -10,9 +10,13 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class LoginResource {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoginResource.class);
 
     private final Template login;
     private final Template logout;
@@ -42,9 +46,15 @@ public class LoginResource {
 
     @Route(path = "/logout", methods = HttpMethod.GET)
     public void logout(RoutingContext context) {
-        String safeLogoutPath = logoutPath;
-        if (!safeLogoutPath.startsWith("/") || safeLogoutPath.contains(":") || safeLogoutPath.contains("//") || safeLogoutPath.contains("\\")) {
-            safeLogoutPath = "/";
+        String safeLogoutPath = "/";
+        try {
+            java.net.URI uri = new java.net.URI(logoutPath);
+            // Ensure the URI is just a path, not an absolute URL with a scheme or host.
+            if (uri.getScheme() == null && uri.getHost() == null) {
+                safeLogoutPath = uri.getPath();
+            }
+        } catch (java.net.URISyntaxException _) {
+            logger.warn("Configured logout path '{}' is not a valid URI. Using default safe path '/'", logoutPath);
         }
         logout.data("logoutPath", safeLogoutPath).createUni().subscribe()
                 .with(html -> context.response().putHeader("Content-Type", "text/html").end(html));
