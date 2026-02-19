@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.util.data.DataHolder;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
@@ -19,21 +20,19 @@ import jakarta.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Path("/ui/system")
 public class SystemInfoResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemInfoResource.class);
 
-    private static final MutableDataSet MARKDOWN_OPTIONS = new MutableDataSet()
-            .set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
+    private static final DataHolder MARKDOWN_OPTIONS = new MutableDataSet()
+            .set(Parser.EXTENSIONS, List.of(TablesExtension.create()))
+            .toImmutable();
     private static final Parser MARKDOWN_PARSER = Parser.builder(MARKDOWN_OPTIONS).build();
     private static final HtmlRenderer MARKDOWN_RENDERER = HtmlRenderer.builder(MARKDOWN_OPTIONS).build();
 
@@ -45,6 +44,8 @@ public class SystemInfoResource {
     private final Template roadmap;
     private final ViewUtils viewUtils;
     private final RoutingContext context;
+    private final String cachedChangelogHtml;
+    private final String cachedRoadmapHtml;
 
     @Inject
     public SystemInfoResource(@Location("changelog.qute.html") Template changelog,
@@ -55,6 +56,8 @@ public class SystemInfoResource {
         this.roadmap = roadmap;
         this.viewUtils = viewUtils;
         this.context = context;
+        this.cachedChangelogHtml = renderMarkdownResourceToHtml("changelog.md");
+        this.cachedRoadmapHtml = renderMarkdownResourceToHtml("docs/overview/roadmap.md");
     }
 
     private String renderMarkdownResourceToHtml(String resourcePath) {
@@ -66,10 +69,7 @@ public class SystemInfoResource {
                 return String.format(ERROR_RESOURCE_NOT_FOUND_TEMPLATE, resourcePath);
             }
 
-            String markdown = new BufferedReader(
-                    new InputStreamReader(inputStream, StandardCharsets.UTF_8))
-                    .lines()
-                    .collect(Collectors.joining("\n"));
+            String markdown = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
             if (markdown.trim().isEmpty()) {
                 String errorMsg = "Resource is empty: " + resourcePath;
@@ -89,10 +89,8 @@ public class SystemInfoResource {
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance getChangelog() {
         try {
-            // changelog.md is at the root of the classpath
-            String changelogHtml = renderMarkdownResourceToHtml("changelog.md");
             Map<String, Object> data = viewUtils.createTemplateData(context);
-            data.put("renderedMarkdown", changelogHtml);
+            data.put("renderedMarkdown", cachedChangelogHtml);
             data.put("breadcrumbs", List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb("Changelog", "/ui/system/changelog")));
@@ -107,10 +105,8 @@ public class SystemInfoResource {
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance getRoadmap() {
         try {
-            // roadmap.md is in docs/overview in the classpath
-            String roadmapHtml = renderMarkdownResourceToHtml("docs/overview/roadmap.md");
             Map<String, Object> data = viewUtils.createTemplateData(context);
-            data.put("renderedMarkdown", roadmapHtml);
+            data.put("renderedMarkdown", cachedRoadmapHtml);
             data.put("breadcrumbs", List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb("Roadmap", "/ui/system/roadmap")));
