@@ -55,7 +55,7 @@ public class LoginResource {
             } else {
                 String path = uri.normalize().getPath();
                 // Use a regex whitelist for robust path validation against open redirects.
-                if (path != null && path.matches("^(/[a-zA-Z0-9_/-]*)*$")) {
+                if (path != null && path.matches("^/([a-zA-Z0-9_./-]+/)*[a-zA-Z0-9_./-]*$")) {
                     safeLogoutPath = path;
                 } else {
                     logger.warn("Configured logout path '{}' could lead to an open redirect or path traversal. Using default safe path '/'", logoutPath);
