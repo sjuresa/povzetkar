@@ -31,7 +31,15 @@ import java.util.stream.Collectors;
 public class SystemInfoResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemInfoResource.class);
-    private static final String CLOSING_DIV = "</div>";
+
+    private static final MutableDataSet MARKDOWN_OPTIONS = new MutableDataSet()
+            .set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
+    private static final Parser MARKDOWN_PARSER = Parser.builder(MARKDOWN_OPTIONS).build();
+    private static final HtmlRenderer MARKDOWN_RENDERER = HtmlRenderer.builder(MARKDOWN_OPTIONS).build();
+
+    private static final String ERROR_RESOURCE_NOT_FOUND_TEMPLATE = "<div class='alert alert-danger'><strong>Error:</strong> Resource not found in classpath: %s</div>";
+    private static final String WARNING_RESOURCE_EMPTY_TEMPLATE = "<div class='alert alert-warning'><strong>Warning:</strong> Resource is empty: %s</div>";
+    private static final String ERROR_PROCESSING_RESOURCE_TEMPLATE = "<div class='alert alert-danger'>Error processing resource <strong>%s</strong>: %s</div>";
 
     private final Template changelog;
     private final Template roadmap;
@@ -50,18 +58,12 @@ public class SystemInfoResource {
     }
 
     private String renderMarkdownResourceToHtml(String resourcePath) {
-        MutableDataSet options = new MutableDataSet();
-        options.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
-
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
         try (InputStream inputStream = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(resourcePath)) {
             if (inputStream == null) {
                 String errorMsg = "Resource not found in classpath: " + resourcePath;
                 LOG.error(errorMsg);
-                return "<div class='alert alert-danger'><strong>Error:</strong> " + errorMsg + CLOSING_DIV;
+                return String.format(ERROR_RESOURCE_NOT_FOUND_TEMPLATE, resourcePath);
             }
 
             String markdown = new BufferedReader(
@@ -72,14 +74,13 @@ public class SystemInfoResource {
             if (markdown.trim().isEmpty()) {
                 String errorMsg = "Resource is empty: " + resourcePath;
                 LOG.warn(errorMsg);
-                return "<div class='alert alert-warning'><strong>Warning:</strong> " + errorMsg + CLOSING_DIV;
+                return String.format(WARNING_RESOURCE_EMPTY_TEMPLATE, resourcePath);
             }
 
-            return renderer.render(parser.parse(markdown));
+            return MARKDOWN_RENDERER.render(MARKDOWN_PARSER.parse(markdown));
         } catch (Exception e) {
             LOG.error("Error reading or rendering resource {}: {}", resourcePath, e.getMessage(), e);
-            return "<div class='alert alert-danger'>Error processing resource <strong>" + resourcePath + "</strong>: "
-                    + e.getMessage() + CLOSING_DIV;
+            return String.format(ERROR_PROCESSING_RESOURCE_TEMPLATE, resourcePath, e.getMessage());
         }
     }
 
