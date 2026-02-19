@@ -12,6 +12,7 @@ import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import io.vertx.ext.web.RoutingContext;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 @Path("/ui/system")
+@RolesAllowed("user")
 public class SystemInfoResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemInfoResource.class);
