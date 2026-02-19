@@ -1,19 +1,19 @@
 {#include main.html}
-{@java.lang.String renderedMarkdown}
+{@com.povzetkar.quarkus.ui.model.MarkdownContent content}
 {#title}Roadmap{/title}
 {#content}
 <div class="container-fluid">
     <div>
-        {#if errorMessage}
+        {#if content.errorMessage}
         <div class="alert alert-danger">
-            <strong>Error:</strong> {errorMessage}
+            <strong>Error:</strong> {content.errorMessage}
         </div>
-        {#else if warningMessage}
+        {#else if content.warningMessage}
         <div class="alert alert-warning">
-            <strong>Warning:</strong> {warningMessage}
+            <strong>Warning:</strong> {content.warningMessage}
         </div>
         {#else}
-        {renderedMarkdown.raw}
+        {content.html.raw}
         {/if}
     </div>
 </div>

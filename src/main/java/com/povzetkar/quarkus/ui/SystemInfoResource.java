@@ -106,15 +106,7 @@ public class SystemInfoResource {
     private TemplateInstance renderPage(Template template, MarkdownContent content, String title, String path) {
         try {
             Map<String, Object> data = viewUtils.createTemplateData(contextInstance.get());
-            if (content.html() != null) {
-                data.put("renderedMarkdown", content.html());
-            }
-            if (content.errorMessage() != null) {
-                data.put("errorMessage", content.errorMessage());
-            }
-            if (content.warningMessage() != null) {
-                data.put("warningMessage", content.warningMessage());
-            }
+            data.put("content", content);
             data.put("breadcrumbs", List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb(title, path)));
