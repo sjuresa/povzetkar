@@ -187,7 +187,7 @@ public class AdminResource {
         if (success) {
             context.response().setStatusCode(200).end(new JsonObject().put(MESSAGE_KEY, "Content item status updated successfully.").encode());
         } else {
-            context.response().setStatusCode(500).end(new JsonObject().put(MESSAGE_KEY, "Failed to update content item status.").encode());
+            context.response().setStatusCode(404).end(new JsonObject().put(MESSAGE_KEY, "Failed to update content item status. Invalid status.").encode());
         }
     }
 }

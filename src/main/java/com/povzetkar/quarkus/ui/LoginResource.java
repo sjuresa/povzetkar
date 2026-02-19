@@ -52,7 +52,7 @@ public class LoginResource {
             // Ensure the URI is just a path, not an absolute URL with a scheme or host.
             if (uri.getScheme() == null && uri.getHost() == null) {
                 String path = uri.normalize().getPath();
-                if (path != null && path.startsWith("/") && !path.startsWith("//") && !path.startsWith("\\")) {
+                if (path != null && path.startsWith("/") && !path.startsWith("//") && !path.contains("\\")) {
                     safeLogoutPath = path;
                 } else {
                     logger.warn("Configured logout path '{}' could lead to an open redirect. Using default safe path '/'", logoutPath);
