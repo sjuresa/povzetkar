@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
 | 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
 | 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
 | 1.9     | January 21, 2026   | Povzetkar AI | Inserted v0.9 "Operational Refinement" based on user request. Shifted User Management to v0.10 and Advanced Content to v0.11.                                            |
@@ -144,28 +145,47 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Developer Experience:** Standardize project structure, align testing guides, and expose API documentation (OpenAPI/Swagger).
 3.  **Operational Logic:** Implement content filtering based on minimum video duration to skip short content.
 4.  **Observability & UI:** Add auditing fields, and expose Changelog and Roadmap within the application.
+5.  **Google OIDC:** Integrate Google OIDC for seamless user authentication and linking.
 
 ---
 
-## v0.11: Advanced Content Capabilities
+## v0.11: API-First & Advanced Security
 
-**Goal:** Implement advanced AI features that were deferred to prioritize User Management. This includes sophisticated rate limiting and handling large data volumes for briefings.
+**Goal:** Decouple the frontend by establishing a comprehensive REST API and implementing fine-grained security (PBAC) to support advanced user interactions.
 
 ### Key Tasks & Implementation Steps:
-1.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods to handle context window limits.
-2.  **Advanced Rate Limiting:** Implement strict TPM limits for GenAI (building on v0.9 usage tracking).
+1.  **Frontend API:**
+    -   Design and implement REST endpoints for all core resources (`/api/v1/topics`, `/api/v1/briefings`, etc.).
+    -   Ensure responses are JSON-formatted and suitable for an SPA (Single Page Application).
+2.  **Advanced Security (PBAC):**
+    -   Implement **Permission-Based Access Control** (Step 2 of ADR-003).
+    -   Define granular permissions (e.g., `TOPIC_CREATE`, `BRIEFING_VIEW`) and map them to roles.
+    -   Secure the new API endpoints using these permissions.
+3.  **Documentation:**
+    -   Generate OpenAPI/Swagger specifications for the new API.
 
 ---
 
-## v0.12: Production Hardening
+## v0.12: Advanced Content Capabilities
+
+**Goal:** Implement advanced AI features that were deferred. This includes sophisticated rate limiting and handling large data volumes.
+
+### Key Tasks & Implementation Steps:
+1.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods.
+2.  **Advanced Rate Limiting:** Implement strict TPM limits for GenAI.
+
+---
+
+## v0.13: Production Hardening
 
 **Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
 
 ### Key Tasks & Implementation Steps:
-1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards. Configure Alertmanager for critical failure notifications.
-2.  **Secrets Management:** Integrate a secrets management solution (e.g., HashiCorp Vault) to handle API keys and database credentials securely, removing them from `.env` files in production.
-3.  **Backup & Recovery:** Establish and document an automated database backup and recovery process.
-4.  **Dependency Scanning:** Integrate an automated dependency vulnerability scanner (e.g., Snyk, Dependabot) into the CI pipeline.
+1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards.
+2.  **Secrets Management:** Integrate a secrets management solution.
+3.  **Backup & Recovery:** Establish automated database backup/recovery.
+4.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
+5.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
 
 ---
 
