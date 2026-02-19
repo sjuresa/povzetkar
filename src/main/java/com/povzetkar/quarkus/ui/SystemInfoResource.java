@@ -42,10 +42,13 @@ public class SystemInfoResource {
     private static final String WARNING_RESOURCE_EMPTY_TEMPLATE = "<div class='alert alert-warning'><strong>Warning:</strong> Resource is empty: %s</div>";
     private static final String ERROR_PROCESSING_RESOURCE_TEMPLATE = "<div class='alert alert-danger'>Error processing resource <strong>%s</strong>: %s</div>";
 
+    private static final String CHANGELOG_RESOURCE_PATH = "changelog.md";
+    private static final String ROADMAP_RESOURCE_PATH = "docs/overview/roadmap.md";
+
     private final Template changelog;
     private final Template roadmap;
     private final ViewUtils viewUtils;
-    private final RoutingContext context;
+    private final jakarta.enterprise.inject.Instance<RoutingContext> contextInstance;
     private final String cachedChangelogHtml;
     private final String cachedRoadmapHtml;
 
@@ -53,13 +56,13 @@ public class SystemInfoResource {
     public SystemInfoResource(@Location("changelog.qute.html") Template changelog,
             @Location("roadmap.qute.html") Template roadmap,
             ViewUtils viewUtils,
-            RoutingContext context) {
+            jakarta.enterprise.inject.Instance<RoutingContext> contextInstance) {
         this.changelog = changelog;
         this.roadmap = roadmap;
         this.viewUtils = viewUtils;
-        this.context = context;
-        this.cachedChangelogHtml = renderMarkdownResourceToHtml("changelog.md");
-        this.cachedRoadmapHtml = renderMarkdownResourceToHtml("docs/overview/roadmap.md");
+        this.contextInstance = contextInstance;
+        this.cachedChangelogHtml = renderMarkdownResourceToHtml(CHANGELOG_RESOURCE_PATH);
+        this.cachedRoadmapHtml = renderMarkdownResourceToHtml(ROADMAP_RESOURCE_PATH);
     }
 
     private String renderMarkdownResourceToHtml(String resourcePath) {
@@ -102,7 +105,7 @@ public class SystemInfoResource {
 
     private TemplateInstance renderPage(Template template, String markdownHtml, String title, String path) {
         try {
-            Map<String, Object> data = viewUtils.createTemplateData(context);
+            Map<String, Object> data = viewUtils.createTemplateData(contextInstance.get());
             data.put("renderedMarkdown", markdownHtml);
             data.put("breadcrumbs", List.of(
                     ViewUtils.HOME_BREADCRUMB,
