@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.ui.exception.UiRenderingException;
+import com.povzetkar.quarkus.ui.model.MarkdownContent;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
@@ -13,6 +14,7 @@ import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -28,6 +30,7 @@ import java.util.Map;
 
 @Path("/ui/system")
 @RolesAllowed("user")
+@ApplicationScoped
 public class SystemInfoResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemInfoResource.class);
@@ -38,10 +41,6 @@ public class SystemInfoResource {
     private static final Parser MARKDOWN_PARSER = Parser.builder(MARKDOWN_OPTIONS).build();
     private static final HtmlRenderer MARKDOWN_RENDERER = HtmlRenderer.builder(MARKDOWN_OPTIONS).build();
 
-    private static final String ERROR_RESOURCE_NOT_FOUND_TEMPLATE = "<div class='alert alert-danger'><strong>Error:</strong> Resource not found in classpath: %s</div>";
-    private static final String WARNING_RESOURCE_EMPTY_TEMPLATE = "<div class='alert alert-warning'><strong>Warning:</strong> Resource is empty: %s</div>";
-    private static final String ERROR_PROCESSING_RESOURCE_TEMPLATE = "<div class='alert alert-danger'>Error processing resource <strong>%s</strong>: %s</div>";
-
     private static final String CHANGELOG_RESOURCE_PATH = "changelog.md";
     private static final String ROADMAP_RESOURCE_PATH = "docs/overview/roadmap.md";
 
@@ -49,8 +48,8 @@ public class SystemInfoResource {
     private final Template roadmap;
     private final ViewUtils viewUtils;
     private final jakarta.enterprise.inject.Instance<RoutingContext> contextInstance;
-    private final String cachedChangelogHtml;
-    private final String cachedRoadmapHtml;
+    private final MarkdownContent cachedChangelog;
+    private final MarkdownContent cachedRoadmap;
 
     @Inject
     public SystemInfoResource(@Location("changelog.qute.html") Template changelog,
@@ -61,17 +60,17 @@ public class SystemInfoResource {
         this.roadmap = roadmap;
         this.viewUtils = viewUtils;
         this.contextInstance = contextInstance;
-        this.cachedChangelogHtml = renderMarkdownResourceToHtml(CHANGELOG_RESOURCE_PATH);
-        this.cachedRoadmapHtml = renderMarkdownResourceToHtml(ROADMAP_RESOURCE_PATH);
+        this.cachedChangelog = loadMarkdownResource(CHANGELOG_RESOURCE_PATH);
+        this.cachedRoadmap = loadMarkdownResource(ROADMAP_RESOURCE_PATH);
     }
 
-    private String renderMarkdownResourceToHtml(String resourcePath) {
-        try (InputStream inputStream = Thread.currentThread().getContextClassLoader()
+    private MarkdownContent loadMarkdownResource(String resourcePath) {
+        try (InputStream inputStream = getClass().getClassLoader()
                 .getResourceAsStream(resourcePath)) {
             if (inputStream == null) {
                 String errorMsg = "Resource not found in classpath: " + resourcePath;
                 LOG.error(errorMsg);
-                return String.format(ERROR_RESOURCE_NOT_FOUND_TEMPLATE, resourcePath);
+                return MarkdownContent.error(errorMsg);
             }
 
             String markdown = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -79,13 +78,14 @@ public class SystemInfoResource {
             if (markdown.trim().isEmpty()) {
                 String errorMsg = "Resource is empty: " + resourcePath;
                 LOG.warn(errorMsg);
-                return String.format(WARNING_RESOURCE_EMPTY_TEMPLATE, resourcePath);
+                return MarkdownContent.warning(errorMsg);
             }
 
-            return MARKDOWN_RENDERER.render(MARKDOWN_PARSER.parse(markdown));
+            return MarkdownContent.success(MARKDOWN_RENDERER.render(MARKDOWN_PARSER.parse(markdown)));
         } catch (Exception e) {
-            LOG.error("Error reading or rendering resource {}: {}", resourcePath, e.getMessage(), e);
-            return String.format(ERROR_PROCESSING_RESOURCE_TEMPLATE, resourcePath, e.getMessage());
+            String errorMsg = "Error reading or rendering resource " + resourcePath + ": " + e.getMessage();
+            LOG.error(errorMsg, e);
+            return MarkdownContent.error(errorMsg);
         }
     }
 
@@ -93,20 +93,28 @@ public class SystemInfoResource {
     @Path("/changelog")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance getChangelog() {
-        return renderPage(changelog, cachedChangelogHtml, "Changelog", "/ui/system/changelog");
+        return renderPage(changelog, cachedChangelog, "Changelog", "/ui/system/changelog");
     }
 
     @GET
     @Path("/roadmap")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance getRoadmap() {
-        return renderPage(roadmap, cachedRoadmapHtml, "Roadmap", "/ui/system/roadmap");
+        return renderPage(roadmap, cachedRoadmap, "Roadmap", "/ui/system/roadmap");
     }
 
-    private TemplateInstance renderPage(Template template, String markdownHtml, String title, String path) {
+    private TemplateInstance renderPage(Template template, MarkdownContent content, String title, String path) {
         try {
             Map<String, Object> data = viewUtils.createTemplateData(contextInstance.get());
-            data.put("renderedMarkdown", markdownHtml);
+            if (content.html() != null) {
+                data.put("renderedMarkdown", content.html());
+            }
+            if (content.errorMessage() != null) {
+                data.put("errorMessage", content.errorMessage());
+            }
+            if (content.warningMessage() != null) {
+                data.put("warningMessage", content.warningMessage());
+            }
             data.put("breadcrumbs", List.of(
                     ViewUtils.HOME_BREADCRUMB,
                     new Breadcrumb(title, path)));

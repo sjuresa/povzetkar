@@ -4,7 +4,17 @@
 {#content}
 <div class="container-fluid">
     <div>
+        {#if errorMessage}
+        <div class="alert alert-danger">
+            <strong>Error:</strong> {errorMessage}
+        </div>
+        {#else if warningMessage}
+        <div class="alert alert-warning">
+            <strong>Warning:</strong> {warningMessage}
+        </div>
+        {#else}
         {renderedMarkdown.raw}
+        {/if}
     </div>
 </div>
 {/content}
