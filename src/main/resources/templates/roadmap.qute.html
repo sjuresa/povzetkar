@@ -1,0 +1,20 @@
+{#include main.html}
+{@com.povzetkar.quarkus.ui.model.MarkdownContent content}
+{#title}Roadmap{/title}
+{#content}
+<div class="container-fluid">
+    <div>
+        {#if content.errorMessage}
+        <div class="alert alert-danger">
+            <strong>Error:</strong> {content.errorMessage}
+        </div>
+        {#else if content.warningMessage}
+        <div class="alert alert-warning">
+            <strong>Warning:</strong> {content.warningMessage}
+        </div>
+        {#else}
+        {content.html.raw}
+        {/if}
+    </div>
+</div>
+{/content}
