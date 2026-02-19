@@ -88,31 +88,26 @@ public class SystemInfoResource {
     @Path("/changelog")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance getChangelog() {
-        try {
-            Map<String, Object> data = viewUtils.createTemplateData(context);
-            data.put("renderedMarkdown", cachedChangelogHtml);
-            data.put("breadcrumbs", List.of(
-                    ViewUtils.HOME_BREADCRUMB,
-                    new Breadcrumb("Changelog", "/ui/system/changelog")));
-            return changelog.data(data);
-        } catch (Exception e) {
-            throw new UiRenderingException("Failed to render changelog page", e);
-        }
+        return renderPage(changelog, cachedChangelogHtml, "Changelog", "/ui/system/changelog");
     }
 
     @GET
     @Path("/roadmap")
     @Produces(MediaType.TEXT_HTML)
     public TemplateInstance getRoadmap() {
+        return renderPage(roadmap, cachedRoadmapHtml, "Roadmap", "/ui/system/roadmap");
+    }
+
+    private TemplateInstance renderPage(Template template, String markdownHtml, String title, String path) {
         try {
             Map<String, Object> data = viewUtils.createTemplateData(context);
-            data.put("renderedMarkdown", cachedRoadmapHtml);
+            data.put("renderedMarkdown", markdownHtml);
             data.put("breadcrumbs", List.of(
                     ViewUtils.HOME_BREADCRUMB,
-                    new Breadcrumb("Roadmap", "/ui/system/roadmap")));
-            return roadmap.data(data);
+                    new Breadcrumb(title, path)));
+            return template.data(data);
         } catch (Exception e) {
-            throw new UiRenderingException("Failed to render roadmap page", e);
+            throw new UiRenderingException("Failed to render " + title.toLowerCase() + " page", e);
         }
     }
 }

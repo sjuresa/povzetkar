@@ -256,8 +256,8 @@
                 <version>3.3.1</version>
                 <executions>
                     <execution>
-                        <id>copy-changelog</id>
-                        <!-- Copy CHANGELOG.md to target/classes so it's on the classpath -->
+                        <id>copy-markdown-docs</id>
+                        <!-- Copy markdown documents to target/classes so they are on the classpath -->
                         <phase>process-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
@@ -269,25 +269,7 @@
                                     <directory>${project.basedir}</directory>
                                     <includes>
                                         <include>changelog.md</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-roadmap</id>
-                        <!-- Copy roadmap.md to target/classes/docs/overview so it matches the requested path -->
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.outputDirectory}/docs/overview</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/docs/overview</directory>
-                                    <includes>
-                                        <include>roadmap.md</include>
+                                        <include>docs/overview/roadmap.md</include>
                                     </includes>
                                 </resource>
                             </resources>
