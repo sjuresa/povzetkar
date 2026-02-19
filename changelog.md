@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Refactoring:** Centralized user authentication and topic ownership logic into a new `UserContextService` to reduce duplication in UI resources.
 - **Refactoring:** Switched from field injection to constructor injection in `TopicResource`, `ContentSourceResource`, and `UserContextService` to improve testability and adhere to best practices.
 - **Refactoring:** Updated `ContentSource` and `Topic` entities to extend `BaseAuditableEntity`, centralizing auditing logic and ensuring consistent `createdAt` and `updatedAt` handling.
+- **Testing:** Enabled OIDC globally for tests (`%test.quarkus.oidc.enabled=true`) to ensure consistent security context mocking.
+- **Testing:** Updated `SecurityTest` to verify 302 Redirects instead of 401 Unauthorized for anonymous access, aligning with OIDC flow.
+- **Refactoring:** Refactored `LoginResource` to use constructor injection.
+
+### Fixed
+- **Testing:** Fixed `ContentSourceResourceTest` (API) failure by ensuring the mocked user in `@TestSecurity` matches the user created in the database setup.
+- **Testing:** Resolved build failures by adding `@TestSecurity` annotations to `OrchestratorResourceTest`, `AdminResourceTest`, `BriefingWebResourceTest`, `HomeResourceTest`, and `SummaryResourceTest`.
 
 ### Documentation
 - **Agent Protocol:** Refactored `AGENT.md` into modular protocol files located in `docs/protocols/` to improve maintainability and reduce context usage.

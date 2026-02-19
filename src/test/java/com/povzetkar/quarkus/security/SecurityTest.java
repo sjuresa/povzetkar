@@ -27,9 +27,10 @@ class SecurityTest {
     @Test
     void testSecuredEndpointAnonymous() {
         given()
+                .redirects().follow(false)
                 .when().get("/api/secured")
                 .then()
-                .statusCode(401);
+                .statusCode(302);
     }
 
     @Test

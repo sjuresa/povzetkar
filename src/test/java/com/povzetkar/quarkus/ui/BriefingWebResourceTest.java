@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
@@ -22,12 +23,10 @@ import java.util.Collections;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
+@TestSecurity(user = "briefing_test_user", roles = "user")
 class BriefingWebResourceTest {
 
-    private User testUser;
-    private Topic testTopic;
     private Briefing testBriefing;
-    private YouTubeVideo testContentItem;
 
     @BeforeEach
     @Transactional
@@ -35,7 +34,7 @@ class BriefingWebResourceTest {
         // Ensure a clean slate before creating new data
         tearDown();
 
-        testUser = new User();
+        User testUser = new User();
         testUser.name = "Povzetkar AI";
         testUser.username = "briefing_test_user";
         testUser.email = "briefing_test_user@example.com";
@@ -43,7 +42,7 @@ class BriefingWebResourceTest {
         testUser.persist();
 
         // Create test topic
-        testTopic = new Topic();
+        Topic testTopic = new Topic();
         testTopic.name = "Kripto";
         testTopic.user = testUser;
         testTopic.persist();
@@ -56,7 +55,7 @@ class BriefingWebResourceTest {
         testContentSource.persist();
 
         // Create test content item
-        testContentItem = new YouTubeVideo();
+        YouTubeVideo testContentItem = new YouTubeVideo();
         testContentItem.videoId = "testVideoId"; // Added videoId
         testContentItem.contentSource = testContentSource;
         testContentItem.sourceUrl = "http://example.com/video1";
