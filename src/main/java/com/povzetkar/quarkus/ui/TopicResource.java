@@ -206,6 +206,7 @@ public class TopicResource {
     }
 
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
+    @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
@@ -236,15 +237,10 @@ public class TopicResource {
             return;
         }
 
-        persistTopicUpdate(topic, name);
-        viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-        viewUtils.handleRedirect(context, topicBriefingsPath(id));
-    }
-
-    @Transactional
-    void persistTopicUpdate(Topic topic, String name) {
         topic.name = name;
         topic.persist();
+        viewUtils.setSuccessMessage(context, "Topic updated successfully.");
+        viewUtils.handleRedirect(context, topicBriefingsPath(id));
     }
 
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
