@@ -1,6 +1,6 @@
 # ADR-003: Authorization Strategy (RBAC vs PBAC)
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-02-19
 
 ## Context
