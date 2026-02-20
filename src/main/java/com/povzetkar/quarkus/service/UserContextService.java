@@ -1,9 +1,12 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.model.UserIdentity;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 
 import java.util.Optional;
 
@@ -37,8 +40,62 @@ public class UserContextService {
      * @return An Optional containing the Topic if found and owned by the user, otherwise an empty Optional.
      */
     public Optional<Topic> findOwnedTopic(Long topicId) {
-        return getCurrentUser().flatMap(currentUser ->
-            Topic.find("id = ?1 and user = ?2", topicId, currentUser).firstResultOptional()
-        );
+        return getCurrentUser().flatMap(
+                currentUser -> Topic.find("id = ?1 and user = ?2", topicId, currentUser).firstResultOptional());
+    }
+
+    /**
+     * Ensures a user exists and is linked to the provided OIDC identity.
+     * 1. If the identity exists, the associated user is returned.
+     * 2. If the identity doesn't exist, check for a user with matching email.
+     * 3. If a matching user is found, link the new identity.
+     * 4. If no matching user, create a new User and link the identity.
+     *
+     * @param provider   The OIDC provider name (e.g., "google").
+     * @param externalId The provider's unique ID for the user ('sub' claim).
+     * @param email      The user's email from OIDC.
+     * @param name       The user's full name from OIDC.
+     * @return The User entity, newly created or existing.
+     */
+    @Transactional
+    public User ensureUser(String provider, String externalId, String email, String name) {
+        User user = UserIdentity.findByProviderAndExternalId(provider, externalId)
+                .map(identity -> identity.user)
+                .orElseGet(() -> {
+                    User existingUser = User.find("email", email).firstResultOptional()
+                            .map(User.class::cast)
+                            .orElseGet(() -> createNewUser(email, name));
+
+                    linkIdentity(existingUser, provider, externalId, email);
+                    return existingUser;
+                });
+
+        // Eagerly initialize roles to avoid LazyInitializationException outside the
+        // transaction
+        org.hibernate.Hibernate.initialize(user.roles);
+        return user;
+    }
+
+    private User createNewUser(String email, String name) {
+        User user = new User();
+        user.email = email;
+        user.username = email; // Use email as username for now
+        user.name = name;
+        user.active = true;
+
+        Role.find("name", "user").firstResultOptional()
+                .map(Role.class::cast)
+                .ifPresent(user::addRole);
+
+        user.persist();
+        return user;
+    }
+
+    private void linkIdentity(User user, String provider, String externalId, String email) {
+        UserIdentity identity = new UserIdentity();
+        identity.provider = provider;
+        identity.externalId = externalId;
+        identity.email = email;
+        user.addIdentity(identity);
     }
 }

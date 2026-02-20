@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Authentication:** Integrated Google OIDC for secure user authentication and identity linking.
+- **Authentication:** Implemented a programmatic local-only logout flow, preventing the default RP-Initiated global Google logout behavior to enhance the user experience.
 - **UI Enhancements:** Implemented `/ui/system/changelog` and `/ui/system/roadmap` pages to display project `CHANGELOG.md` and `docs/overview/roadmap.md` content rendered as HTML.
 - **UI Enhancements:** Added links to the Changelog and Roadmap pages on `home.html` for improved discoverability.
 - **Security:** Implemented multi-tenancy for topics. Users can now only view and manage their own topics and their associations with content sources.

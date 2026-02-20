@@ -42,19 +42,24 @@ public class User extends BaseAuditableEntity {
     public String name;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     public Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     public Set<Topic> topics = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    public Set<UserIdentity> identities = new HashSet<>();
+
     public void addRole(Role role) {
         this.roles.add(role);
+    }
+
+    public void addIdentity(UserIdentity identity) {
+        identity.user = this;
+        this.identities.add(identity);
     }
 
     public static List<User> listAllActive() {

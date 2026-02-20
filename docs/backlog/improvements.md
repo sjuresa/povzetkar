@@ -10,6 +10,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### UI/UX
 
+*   **OIDC Session Mismatch Handling:** Investigate and implement a graceful fallback when the local Quarkus session cookie exists but the upstream OIDC provider (Google) session has expired or been revoked, currently leading to potential endless redirect loops or `401 Unauthorized` errors on secured pages.
 *   **Changelog/Roadmap in UI:** Add a new section to the UI to display the `CHANGELOG.md` and `docs/overview/roadmap.md` files, providing greater transparency to users.
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
