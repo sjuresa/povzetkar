@@ -52,5 +52,5 @@ To quickly locate functionality, refer to this mapping of business domains to co
 | **Content Fetching** | `YouTubeContentFetcherService`, `YouTubeTranscriptService` | N/A                            |
 | **Summarization**    | `VideoSummaryService`, `BriefingService`                   | N/A                            |
 | **Topic Management** | `TopicProcessor`                                           | `TopicResource`, `topics.html` |
-| **User Management**  | `User`, `Role`                                             | `LoginResource` (Planned)      |
+| **User Management**  | `User`, `Role`                                             | `LoginResource`                |
 | **Observability**    | `StructuredLogger`                                         | `SystemInfoResource`           |

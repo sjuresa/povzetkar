@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
 | 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
 | 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
 | 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
@@ -138,7 +139,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.10: User Management, Security & Developer Experience
 
 **Goal:** Transform the application into a secure, multi-tenant platform while simultaneously improving developer experience, documentation, and operational logic.
-**Status:** 🚧 In Progress
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **User Management & Security:** Implement Authentication and Authorization to isolate user data (Multi-tenancy).

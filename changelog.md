@@ -7,48 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.10.0] - 2026-02-20
+
+### Summary
+
+Version 0.10.0 transforms the application into a secure, multi-tenant platform. This major release integrates Google OIDC for seamless authentication, ensures strict data isolation so users only see their own topics and content sources, and provides a polished developer experience with OpenAPI documentation and standardized project structures. Additionally, structural enhancements like a minimum duration filter for videos and robust auditing capabilities have been introduced.
+
 ### Added
-- **Authentication:** Integrated Google OIDC for secure user authentication and identity linking.
-- **Authentication:** Implemented a programmatic local-only logout flow, preventing the default RP-Initiated global Google logout behavior to enhance the user experience.
-- **UI Enhancements:** Implemented `/ui/system/changelog` and `/ui/system/roadmap` pages to display project `CHANGELOG.md` and `docs/overview/roadmap.md` content rendered as HTML.
-- **UI Enhancements:** Added links to the Changelog and Roadmap pages on `home.html` for improved discoverability.
-- **Security:** Implemented multi-tenancy for topics. Users can now only view and manage their own topics and their associations with content sources.
-- **Security:** Configured OIDC (OpenID Connect) as the authentication mechanism using `quarkus-oidc`.
-- **Security:** Enabled Keycloak Dev Services for local development to provide a seamless authentication experience.
-- **Security:** Added `quarkus-test-security` to support testing of secured endpoints without a running OIDC provider.
-- **User Management:** Implemented `User` and `Role` entities to support authentication and authorization.
-- **Database:** Created a Flyway migration (`V11__UpdateUserAndCreateRoles.sql`) to update the `users` table with `email`, `created_at`, and `updated_at` columns, and to create `roles` and `user_roles` tables.
-- **Security:** Updated `User` entity to exclude password storage, aligning with the delegated authentication strategy (e.g., OIDC).
-- **Content Filtering:** Implemented a configurable minimum duration filter for YouTube videos. Videos shorter than the threshold (default: 60 seconds) are now skipped and marked with a new `SKIPPED_TOO_SHORT` status, preventing them from cluttering the processing pipeline.
-- **Auditing:** Added `updated_at` timestamp to `BaseAuditableEntity` and all inheriting entities (`ContentItem`, `Briefing`, `Summary`) as well as `ContentSource` and `Topic` to track modification times.
+- **Authentication:** Integrated Google OIDC (`quarkus-oidc`) for secure user authentication and identity linking, including a programmatic local-only logout flow that preserves the global Google session.
+- **Security (Multi-tenancy):** Implemented multi-tenancy for topics. Users can now only view and manage their own topics and associations with content sources. Endpoints enforce ownership and return 404 for unauthorized access.
+- **UI Enhancements:** Implemented `/ui/system/changelog` and `/ui/system/roadmap` pages to display project documentation rendered as HTML, with navigation links added to the home page.
 - **API Documentation:** Integrated `quarkus-smallrye-openapi` to expose OpenAPI documentation and Swagger UI at `/q/swagger-ui`.
-- **Admin UI:** Added "Modified At" column to the Admin Dashboard tables to display the last modification time of entities.
-- **Database:** Created a Flyway migration (`V10__Add_updated_at_to_auditable_entities.sql`) to add the `updated_at` column to relevant tables and backfill existing data.
-
-### Changed
-- **UI/API:** The `/ui/topics` endpoint now only returns topics owned by the authenticated user.
-- **UI/API:** All endpoints for creating, updating, or deleting topics and their content source associations now enforce ownership, returning a 404 error if a user attempts to access another user's resources.
-- **Refactoring:** Centralized user authentication and topic ownership logic into a new `UserContextService` to reduce duplication in UI resources.
-- **Refactoring:** Switched from field injection to constructor injection in `TopicResource`, `ContentSourceResource`, and `UserContextService` to improve testability and adhere to best practices.
-- **Refactoring:** Updated `ContentSource` and `Topic` entities to extend `BaseAuditableEntity`, centralizing auditing logic and ensuring consistent `createdAt` and `updatedAt` handling.
-- **Testing:** Enabled OIDC globally for tests (`%test.quarkus.oidc.enabled=true`) to ensure consistent security context mocking.
-- **Testing:** Updated `SecurityTest` to verify 302 Redirects instead of 401 Unauthorized for anonymous access, aligning with OIDC flow.
-- **Refactoring:** Refactored `LoginResource` to use constructor injection.
-
-### Fixed
-- **Testing:** Fixed `ContentSourceResourceTest` (API) failure by ensuring the mocked user in `@TestSecurity` matches the user created in the database setup.
-- **Testing:** Resolved build failures by adding `@TestSecurity` annotations to `OrchestratorResourceTest`, `AdminResourceTest`, `BriefingWebResourceTest`, `HomeResourceTest`, and `SummaryResourceTest`.
+- **Content Filtering:** Implemented a configurable minimum duration filter for YouTube videos. Videos shorter than the threshold (default: 60 seconds) are marked with a new `SKIPPED_TOO_SHORT` status.
+- **Admin UI:** Added a "Modified At" column to the Admin Dashboard tables.
+- **Auditing:** Added `updated_at` tracking to all major entities (`ContentItem`, `Briefing`, `Summary`, `ContentSource`, `Topic`).
 
 ### Documentation
-- **Agent Protocol:** Refactored `AGENT.md` into modular protocol files located in `docs/protocols/` to improve maintainability and reduce context usage.
-- **Agent Protocol:** Updated `AGENT.md` with a new protocol for using the `context7` MCP server to retrieve external documentation.
-- **Agent Protocol:** Optimized `AGENT.md` by removing deduplication and condensing protocols for better token efficiency.
+- **Agent Protocols:** Refactored `AGENT.md` into modular protocol files in `docs/protocols/`, optimized for token efficiency, and added a protocol for using the `context7` MCP server.
 - **Project Structure:** Created `docs/overview/project-structure.md` to document the project's directory layout and architecture.
 - **Testing Guide:** Refactored `docs/guides/testing.md` to clarify the usage of `@QuarkusTest` vs `@QuarkusIntegrationTest` and deprecated `docs/guides/mastering-testing.md`.
-- **ADR:** Initialized `docs/adr/` with the first Architectural Decision Record (ADR-001) to track architectural decisions.
-- **ADR:** Added ADR-002 documenting the decision to use OIDC for authentication.
+- **ADR:** Initialized `docs/adr/` with the first Architectural Decision Record (ADR-001) and added ADR-002 documenting the decision to use OIDC for authentication.
 
 ## [v0.9.0] - 2026-02-05
+
+### Summary
+
+Version 0.9.0 focuses on **Operational Refinement & Admin Tools**. This release stabilizes the application's core logic by introducing a Circuit Breaker pattern to increase resilience against external API failures (like GenAI 503s) and enhances the administrator's toolkit with features like Orchestration Preview, GenAI usage tracking, and history pagination. A comprehensive Methodology guide has also been established.
 
 ### Added
 - **Resilience:** Implemented a Circuit Breaker pattern for AI API calls. The system now pauses orchestration for a specific client after a configurable number of consecutive 503 errors (`povzetkar.orchestrator.circuit-breaker.threshold`).
@@ -74,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Research:** Added `docs/spikes/mcp-research.md` detailing the Model Context Protocol (MCP) and a strategy for integrating it with the agent workflow.
 
 ## [0.8.0] - 2026-01-20
+
+### Summary
+
+Version 0.8.0 introduces **Standalone Application Deployment**. It provides the necessary configuration to build and run the Quarkus application as an immutable, OCI-compliant container image (via Jib) without relying on development mode. This release also significantly improves observability by implementing a structured Logfmt logging pattern for key processing steps.
 
 ### Added
 - **Containerization:** Added Jib support for building OCI-compliant container images without a Docker daemon (`mvn clean package -Dquarkus.container-image.build=true`).

@@ -11,6 +11,7 @@ Finalize all documentation for the vX.Y.Z release. This involves cleaning up the
     *   Update release date to today's date.
     *   **Editorial Cleanup:** Remove internal refactoring noise (e.g., specific class refactorings that don't affect public behavior), consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during the current development cycle.
     *   Move all changes from the `[Unreleased]` section to a new version section (e.g., `[vX.Y.Z] - YYYY-MM-DD`).
+    *   **Version Summary:** Write a concise paragraph under the new version header summarizing the main theme and key achievements of the release.
     *   Add a new, empty `[Unreleased]` section at the top.
 2.  **Improvement Backlog (`docs/backlog/improvements.md`):**
     *   Review and clean up. Ensure items completed in vX.Y.Z are removed.
