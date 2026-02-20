@@ -1,7 +1,6 @@
 package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,8 +8,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,7 +22,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class User extends PanacheEntityBase {
+public class User extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,15 +31,36 @@ public class User extends PanacheEntityBase {
     @Column(unique = true, nullable = false)
     public String username;
 
+    @Column(unique = true, nullable = false)
+    @Email
+    public String email;
+
     @Column(nullable = false)
     public boolean active = true;
 
     @Column(nullable = false)
     public String name;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    public Set<Role> roles = new HashSet<>();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     public Set<Topic> topics = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    public Set<UserIdentity> identities = new HashSet<>();
+
+    public void addRole(Role role) {
+        this.roles.add(role);
+    }
+
+    public void addIdentity(UserIdentity identity) {
+        identity.user = this;
+        this.identities.add(identity);
+    }
 
     public static List<User> listAllActive() {
         return list("active", true);
@@ -49,15 +73,12 @@ public class User extends PanacheEntityBase {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        if (id == null || user.id == null) {
-            return false;
-        }
-        return id.equals(user.id);
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(username, user.username);
     }
+
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(username);
     }
 }

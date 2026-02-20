@@ -6,9 +6,10 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,41 +31,45 @@ class TopicResourceTest {
     private Briefing testBriefing;
 
     @BeforeEach
-    @Transactional
     void setup() {
         tearDown();
 
-        testUser = new User();
-        testUser.name = "Test User";
-        testUser.username = "topic_resource_test_user";
-        testUser.active = true;
-        testUser.persist();
+        QuarkusTransaction.requiringNew().run(() -> {
+            testUser = new User();
+            testUser.name = "Test User";
+            testUser.username = "topic_resource_test_user";
+            testUser.email = "topic_resource_test_user@example.com";
+            testUser.active = true;
+            testUser.persist();
 
-        testTopic = new Topic();
-        testTopic.name = "Crypto";
-        testTopic.user = testUser;
-        testTopic.persist();
+            testTopic = new Topic();
+            testTopic.name = "Crypto";
+            testTopic.user = testUser;
+            testTopic.persist();
 
-        testBriefing = new Briefing();
-        testBriefing.topic = testTopic;
-        testBriefing.title = "Test Briefing Title";
-        testBriefing.metaSummary = "Test meta summary.";
-        testBriefing.briefingDate = LocalDate.now();
-        testBriefing.persist();
+            testBriefing = new Briefing();
+            testBriefing.topic = testTopic;
+            testBriefing.title = "Test Briefing Title";
+            testBriefing.metaSummary = "Test meta summary.";
+            testBriefing.briefingDate = LocalDate.now();
+            testBriefing.persist();
+        });
     }
 
     @AfterEach
-    @Transactional
     void tearDown() {
-        Briefing.deleteAll();
-        Summary.deleteAll();
-        ContentItem.deleteAll();
-        Topic.deleteAll();
-        ContentSource.deleteAll();
-        User.deleteAll();
+        QuarkusTransaction.requiringNew().run(() -> {
+            Briefing.deleteAll();
+            Summary.deleteAll();
+            ContentItem.deleteAll();
+            Topic.deleteAll();
+            ContentSource.deleteAll();
+            User.deleteAll();
+        });
     }
 
     @Test
+    @TestSecurity(user = "topic_resource_test_user")
     void testGetTopics() {
         RestAssured.given()
                 .when().get("/ui/topics")
@@ -76,6 +82,7 @@ class TopicResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "topic_resource_test_user")
     void testListBriefingsByTopic() {
         RestAssured.given()
                 .when().get("/ui/topics/" + testTopic.id + "/briefings")
@@ -86,23 +93,25 @@ class TopicResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "topic_resource_test_user")
     void testShowAddForm() {
         RestAssured.given()
                 .when().get("/ui/topics/add")
                 .then()
                 .statusCode(200)
                 .body(containsString("<h1>Add Topic</h1>"))
-                .body(containsString("<form"));
+                .body(containsString("<form"))
+                .body(not(containsString("<select id=\"userId\""))); // Verify user dropdown is gone
     }
 
     @Disabled("until Base UI Test Class is implemented")
     @Test
+    @TestSecurity(user = "topic_resource_test_user")
     void testAddTopic_success() {
         long initialCount = Topic.count();
         RestAssured.given()
                 .redirects().follow(false)
                 .formParam("name", "New Awesome Topic")
-                .formParam("userId", testUser.id)
                 .when().post("/ui/topics")
                 .then()
                 .statusCode(303)
@@ -113,11 +122,11 @@ class TopicResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "topic_resource_test_user")
     void testAddTopic_blankName() {
         long initialCount = Topic.count();
         RestAssured.given()
                 .formParam("name", "")
-                .formParam("userId", testUser.id)
                 .when().post("/ui/topics")
                 .then()
                 .statusCode(200)
@@ -127,32 +136,21 @@ class TopicResourceTest {
     }
 
     @Test
-    void testAddTopic_missingUser() {
-        long initialCount = Topic.count();
+    @TestSecurity(user = "another_user")
+    void testAccessOtherUserTopic_returns404() {
+        // Create another user and topic
+        QuarkusTransaction.requiringNew().run(() -> {
+            User anotherUser = new User();
+            anotherUser.name = "Another User";
+            anotherUser.username = "another_user";
+            anotherUser.email = "another_user@example.com";
+            anotherUser.persist();
+        });
+
+        // Attempt to access testTopic which belongs to testUser
         RestAssured.given()
-                .formParam("name", "A Topic")
-                // No userId
-                .when().post("/ui/topics")
+                .when().get("/ui/topics/" + testTopic.id + "/edit")
                 .then()
-                .statusCode(200)
-                .body(containsString("User is required."));
-
-        assertEquals(initialCount, Topic.count());
-    }
-
-    @Test
-    void testAddTopic_nonExistentUser() {
-        long nonExistentUserId = 99999L;
-        long initialCount = Topic.count();
-
-        RestAssured.given()
-                .formParam("name", "A Topic")
-                .formParam("userId", nonExistentUserId)
-                .when().post("/ui/topics")
-                .then()
-                .statusCode(200)
-                .body(containsString(String.format("User with id %d not found.", nonExistentUserId)));
-
-        assertEquals(initialCount, Topic.count());
+                .statusCode(404);
     }
 }

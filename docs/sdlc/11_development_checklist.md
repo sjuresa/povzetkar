@@ -29,9 +29,8 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.6. Create Task Breakdown:** Create a new `docs/versions/vX.Y-tasks.md` file, breaking down the high-level goals into concrete, actionable tasks.
     - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in the v0.6 retrospective.
     - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined to explicitly outline the test scenarios.
-- [ ] **1.7. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
-- [ ] **1.8. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
-- [ ] **1.9. Dependency Security Check:** Run the IntelliJ IDEA Package Checker to identify and address vulnerabilities in the current dependencies.
+- [ ] **1.7. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
+- [ ] **1.8. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
 
 ---
 

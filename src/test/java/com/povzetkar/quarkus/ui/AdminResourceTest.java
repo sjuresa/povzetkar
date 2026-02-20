@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.ui;
 
 import com.povzetkar.quarkus.api.OrchestrationRequest;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 
 @QuarkusTest
+@TestSecurity(user = "admin_user", roles = { "user", "admin" })
 class AdminResourceTest {
-
 
     @Test
     void testGetAdminPageDefaultsToActionsTab() {
@@ -72,5 +73,16 @@ class AdminResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(400); // Bad Request
+    }
+
+    @Test
+    void testUpdateContentItemStatus() {
+        RestAssured.given()
+                .contentType(ContentType.URLENC)
+                .formParam("status", "COMPLETED")
+                .when().post("/api/v1/admin/content-items/999/status")
+                .then()
+                .statusCode(404)
+                .body(containsString("Failed to update content item status"));
     }
 }

@@ -2,19 +2,18 @@ package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
-import java.time.Instant;
+
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "topics", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"user_id", "name"})
 })
-public class Topic extends PanacheEntityBase {
+public class Topic extends BaseAuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,24 +38,24 @@ public class Topic extends PanacheEntityBase {
     @JsonManagedReference
     public Set<ContentSource> contentSources = new HashSet<>();
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    public Instant createdAt;
-
     @Column(nullable = false)
     public boolean enabled = true;
-
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
 
     public static List<Topic> findEnabledByUsers(List<User> users) {
         return find("select distinct t from Topic t left join fetch t.contentSources where t.enabled = true and t.user in ?1", users).list();
     }
 
-    public static Optional<Topic> findByIdWithContentSources(Long id) {
-        return find("SELECT t FROM Topic t LEFT JOIN FETCH t.contentSources WHERE t.id = ?1", id).firstResultOptional();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Topic topic))
+            return false;
+        return Objects.equals(user, topic.user) && Objects.equals(name, topic.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(user, name);
     }
 }

@@ -92,6 +92,7 @@ class OrchestrationManagerTest {
     private User setupUser() {
         User user = new User();
         user.username = "test_user";
+        user.email = "test_user@example.com";
         user.name = "Test User";
         user.active = true;
         return user;

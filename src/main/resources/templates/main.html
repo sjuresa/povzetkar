@@ -1,54 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{#insert title}My Application{/}</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-        <link rel="stylesheet" href="/static/css/app.css">
-        <link rel="stylesheet" href="/static/css/custom.css">
-    </head>
-    <body>
-        <header class="container">
-            <nav>
-                {#if breadcrumbs}
-                <ul aria-label="breadcrumb">
-                    {#for item in breadcrumbs}
-                    <li>
-                        {#if item_hasNext}
-                        <a href="{item.url}">{item.label}</a>
-                        {#else}
-                        <span aria-current="page">{item.label}</span>
-                        {/if}
-                    </li>
-                    {/for}
-                </ul>
-                {/if}
-                <ul>
-                    <li><a href="/ui/topics">Topics</a></li>
-                    <li><a href="/ui/admin">Admin</a></li>
-                </ul>
-            </nav>
-        </header>
-        <main class="container">
-            {#if successMessage}
-            <div class="alert alert-success" role="alert">
-                {successMessage}
-            </div>
-            {/if}
-            {#if errorMessage}
-            <div class="alert alert-danger" role="alert">
-                {errorMessage}
-            </div>
-            {/if}
 
-            {#insert content}{/}
-        </main>
-        <footer class="container">
-            <small>&copy; 2025 Povzetkar - v{version}</small>
-        </footer>
-        <script src="/static/js/confirm.js"></script>
-        <script src="/static/js/app.js"></script>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{#insert title}My Application{/}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+
+<body>
+    <header class="container">
+        <nav>
+            {#if breadcrumbs}
+            <ul aria-label="breadcrumb">
+                {#for item in breadcrumbs}
+                <li>
+                    {#if item_hasNext}
+                    <a href="{item.url}">{item.label}</a>
+                    {#else}
+                    <span aria-current="page">{item.label}</span>
+                    {/if}
+                </li>
+                {/for}
+            </ul>
+            {/if}
+            <ul>
+                <li><a href="/ui/topics">Topics</a></li>
+                <li><a href="/ui/admin">Admin</a></li>
+                <li><a href="/logout" role="button" class="outline contrast logout-button">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="container">
+        {#if successMessage}
+        <div class="alert alert-success" role="alert">
+            {successMessage}
+        </div>
+        {/if}
+        {#if errorMessage}
+        <div class="alert alert-danger" role="alert">
+            {errorMessage}
+        </div>
+        {/if}
+
+        {#insert content}{/}
+    </main>
+    <footer class="container">
+        <small>&copy; 2025-{thisYear} Povzetkar - v{version}</small>
+    </footer>
+    <script src="/static/js/confirm.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+
 </html>

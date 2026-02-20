@@ -1,9 +1,9 @@
 target
-summaries
-tldry
-
+.mvn
+.quarkus
 .idea
 *.iml
 /.run/
 .env
-
+.env.*
+/agent_logs

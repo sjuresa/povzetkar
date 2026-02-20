@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.10.0] - 2026-02-20
+
+### Summary
+
+Version 0.10.0 transforms the application into a secure, multi-tenant platform. This major release integrates Google OIDC for seamless authentication, ensures strict data isolation so users only see their own topics and content sources, and provides a polished developer experience with OpenAPI documentation and standardized project structures. Additionally, structural enhancements like a minimum duration filter for videos and robust auditing capabilities have been introduced.
+
+### Added
+- **Authentication:** Integrated Google OIDC (`quarkus-oidc`) for secure user authentication and identity linking, including a programmatic local-only logout flow that preserves the global Google session.
+- **Security (Multi-tenancy):** Implemented multi-tenancy for topics. Users can now only view and manage their own topics and associations with content sources. Endpoints enforce ownership and return 404 for unauthorized access.
+- **UI Enhancements:** Implemented `/ui/system/changelog` and `/ui/system/roadmap` pages to display project documentation rendered as HTML, with navigation links added to the home page.
+- **API Documentation:** Integrated `quarkus-smallrye-openapi` to expose OpenAPI documentation and Swagger UI at `/q/swagger-ui`.
+- **Content Filtering:** Implemented a configurable minimum duration filter for YouTube videos. Videos shorter than the threshold (default: 60 seconds) are marked with a new `SKIPPED_TOO_SHORT` status.
+- **Admin UI:** Added a "Modified At" column to the Admin Dashboard tables.
+- **Auditing:** Added `updated_at` tracking to all major entities (`ContentItem`, `Briefing`, `Summary`, `ContentSource`, `Topic`).
+
+### Documentation
+- **Agent Protocols:** Refactored `AGENT.md` into modular protocol files in `docs/protocols/`, optimized for token efficiency, and added a protocol for using the `context7` MCP server.
+- **Project Structure:** Created `docs/overview/project-structure.md` to document the project's directory layout and architecture.
+- **Testing Guide:** Refactored `docs/guides/testing.md` to clarify the usage of `@QuarkusTest` vs `@QuarkusIntegrationTest` and deprecated `docs/guides/mastering-testing.md`.
+- **ADR:** Initialized `docs/adr/` with the first Architectural Decision Record (ADR-001) and added ADR-002 documenting the decision to use OIDC for authentication.
+
 ## [v0.9.0] - 2026-02-05
+
+### Summary
+
+Version 0.9.0 focuses on **Operational Refinement & Admin Tools**. This release stabilizes the application's core logic by introducing a Circuit Breaker pattern to increase resilience against external API failures (like GenAI 503s) and enhances the administrator's toolkit with features like Orchestration Preview, GenAI usage tracking, and history pagination. A comprehensive Methodology guide has also been established.
 
 ### Added
 - **Resilience:** Implemented a Circuit Breaker pattern for AI API calls. The system now pauses orchestration for a specific client after a configurable number of consecutive 503 errors (`povzetkar.orchestrator.circuit-breaker.threshold`).
@@ -33,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Research:** Added `docs/spikes/mcp-research.md` detailing the Model Context Protocol (MCP) and a strategy for integrating it with the agent workflow.
 
 ## [0.8.0] - 2026-01-20
+
+### Summary
+
+Version 0.8.0 introduces **Standalone Application Deployment**. It provides the necessary configuration to build and run the Quarkus application as an immutable, OCI-compliant container image (via Jib) without relying on development mode. This release also significantly improves observability by implementing a structured Logfmt logging pattern for key processing steps.
 
 ### Added
 - **Containerization:** Added Jib support for building OCI-compliant container images without a Docker daemon (`mvn clean package -Dquarkus.container-image.build=true`).
@@ -118,8 +147,8 @@ Version 0.6.1 introduces a comprehensive UI/UX refinement, transforming the basi
     - Implemented AJAX-driven forms to trigger backend orchestration and enrichment services.
     - Added monitoring tables for pending, recent, and failed content items and briefings.
     - Included user-friendly features like tooltips/modals for executive summaries and links to a new summary detail page.
-- **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
-- **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
+    - **Summary Detail Page:** Created a new page to display full summary details, with Markdown rendering.
+    - **Scalable Content Source Selection:** Replaced the unscalable `select` dropdown with a new searchable page for adding existing content sources to a topic.
 
 ### Refactored
 

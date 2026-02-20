@@ -21,6 +21,7 @@ class UserTest {
     void testPersistUserWithNullNameThrowsException() {
         User user = new User();
         user.username = "testuser_nullname";
+        user.email = "testuser_nullname@example.com";
         user.active = true;
         user.name = null;
 
@@ -33,11 +34,13 @@ class UserTest {
     void testPersistUserWithDuplicateUsernameThrowsException() {
         User user1 = new User();
         user1.username = "duplicate_user";
+        user1.email = "duplicate_user1@example.com";
         user1.name = "User One";
         persistAndFlush(user1);
 
         User user2 = new User();
         user2.username = "duplicate_user";
+        user2.email = "duplicate_user2@example.com";
         user2.name = "User Two";
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user2),
@@ -46,9 +49,28 @@ class UserTest {
 
     @Test
     @Transactional
+    void testPersistUserWithDuplicateEmailThrowsException() {
+        User user1 = new User();
+        user1.username = "user1";
+        user1.email = "duplicate_email@example.com";
+        user1.name = "User One";
+        persistAndFlush(user1);
+
+        User user2 = new User();
+        user2.username = "user2";
+        user2.email = "duplicate_email@example.com";
+        user2.name = "User Two";
+
+        assertThrows(PersistenceException.class, () -> persistAndFlush(user2),
+                "Persisting a User with a duplicate email should throw PersistenceException");
+    }
+
+    @Test
+    @Transactional
     void testUserActiveDefaultValue() {
         User user = new User();
         user.username = "testuser_active";
+        user.email = "testuser_active@example.com";
         user.name = "Test User";
         persistAndFlush(user);
 
@@ -62,6 +84,7 @@ class UserTest {
     void testPersistAndRetrieveUser() {
         User user = new User();
         user.username = "testuser_retrieve";
+        user.email = "testuser_retrieve@example.com";
         user.name = "Another Test User";
         user.active = false;
         persistAndFlush(user);
@@ -70,7 +93,10 @@ class UserTest {
         assertNotNull(retrievedUser);
         assertEquals(user.id, retrievedUser.id);
         assertEquals("Another Test User", retrievedUser.name);
+        assertEquals("testuser_retrieve@example.com", retrievedUser.email);
         assertFalse(retrievedUser.active);
+        assertNotNull(retrievedUser.createdAt);
+        assertNotNull(retrievedUser.updatedAt);
     }
 
     @Test
@@ -78,6 +104,7 @@ class UserTest {
     void testUserHasTopics() {
         User user = new User();
         user.username = "user_with_topics";
+        user.email = "user_with_topics@example.com";
         user.name = "User With Topics";
         persistAndFlush(user);
 
@@ -102,12 +129,35 @@ class UserTest {
         assertTrue(retrievedUser.topics.stream().anyMatch(t -> t.name.equals("Topic 2")));
     }
 
+    @Test
+    @Transactional
+    void testUserHasRoles() {
+        Role role = new Role("test_role");
+        em.persist(role);
+
+        User user = new User();
+        user.username = "user_with_roles";
+        user.email = "user_with_roles@example.com";
+        user.name = "User With Roles";
+        user.addRole(role);
+        persistAndFlush(user);
+
+        em.clear();
+
+        User retrievedUser = em.find(User.class, user.id);
+        assertNotNull(retrievedUser);
+        assertNotNull(retrievedUser.roles);
+        assertEquals(1, retrievedUser.roles.size());
+        assertTrue(retrievedUser.roles.stream().anyMatch(r -> r.name.equals("test_role")));
+    }
+
     @AfterEach
     @Transactional
     void cleanup() {
         Briefing.deleteAll();
         Topic.deleteAll();
         User.deleteAll();
+        Role.delete("name like 'test_%'");
     }
 
     private void persistAndFlush(User user) {

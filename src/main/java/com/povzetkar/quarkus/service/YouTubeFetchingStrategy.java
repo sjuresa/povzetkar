@@ -2,15 +2,18 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,10 +28,14 @@ public class YouTubeFetchingStrategy implements ContentFetchingStrategy {
     private static final Logger logger = LoggerFactory.getLogger(YouTubeFetchingStrategy.class);
 
     private final YouTubeContentFetcherService youTubeContentFetcherService;
+    private final Duration minVideoDuration;
 
     @Inject
-    public YouTubeFetchingStrategy(YouTubeContentFetcherService youTubeContentFetcherService) {
+    public YouTubeFetchingStrategy(
+            YouTubeContentFetcherService youTubeContentFetcherService,
+            @ConfigProperty(name = "povzetkar.content.video.min-duration") Duration minVideoDuration) {
         this.youTubeContentFetcherService = youTubeContentFetcherService;
+        this.minVideoDuration = minVideoDuration;
     }
 
     @Override
@@ -54,6 +61,9 @@ public class YouTubeFetchingStrategy implements ContentFetchingStrategy {
                     if (!existingVideoIds.contains(video.videoId)) {
                         video.contentSource = source;
                         video.rawContent = ""; // Set rawContent to empty string to satisfy NOT NULL constraint
+                        if (video.duration != null && video.duration.compareTo(minVideoDuration) < 0) {
+                            video.processingStatus = ProcessingStatus.SKIPPED_TOO_SHORT;
+                        }
                         newVideosToPersist.add(video);
                     }
                 }

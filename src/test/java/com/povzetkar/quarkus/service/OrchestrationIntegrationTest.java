@@ -67,6 +67,7 @@ class OrchestrationIntegrationTest {
     void setupTestData() {
         User testUser = new User();
         testUser.username = "orchestration_test_user";
+        testUser.email = "orchestration_test_user@example.com";
         testUser.name = "Test User";
         testUser.active = true;
         testUser.persist();

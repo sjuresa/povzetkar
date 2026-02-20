@@ -29,12 +29,14 @@ class TopicTest {
     void testSameTopicNameForDifferentUsers() {
         User user1 = new User();
         user1.username = "user1-" + UUID.randomUUID();
+        user1.email = user1.username + "@example.com";
         user1.name = "User 1-" + UUID.randomUUID();
         em.persist(user1);
         user1Id = user1.id;
 
         User user2 = new User();
         user2.username = "user2-" + UUID.randomUUID();
+        user2.email = user2.username + "@example.com";
         user2.name = "User 2-" + UUID.randomUUID();
         em.persist(user2);
         user2Id = user2.id;
@@ -61,6 +63,7 @@ class TopicTest {
     void testSameTopicNameForSameUserThrowsException() {
         User user = new User();
         user.username = "singleuser-" + UUID.randomUUID();
+        user.email = user.username + "@example.com";
         user.name = "Single User-" + UUID.randomUUID();
         em.persist(user);
         singleUserId = user.id;

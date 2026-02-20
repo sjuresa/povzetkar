@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logging out...</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+<p>You are being logged out. Please wait...</p>
+<form id="logoutForm" action="{logoutPath}" method="POST" style="display: none;">
+    <button type="submit">Logout</button>
+</form>
+<script>
+    document.getElementById('logoutForm').submit();
+</script>
+</body>
+</html>

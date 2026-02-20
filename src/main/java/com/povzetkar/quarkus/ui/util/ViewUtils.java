@@ -49,6 +49,7 @@ public class ViewUtils {
         data.put(ERROR_MESSAGE_KEY, context.session().remove(ERROR_MESSAGE_KEY));
 
         data.put("version", appDetails.getVersion());
+        data.put("thisYear", java.time.Year.now().getValue());
         return data;
     }
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -128,6 +129,44 @@ class YouTubeContentFetcherServiceTest {
         assertNotNull(videos);
         assertFalse(videos.isEmpty());
         verifyFallbackWasUsed(derivedPlaylistId, realPlaylistId);
+    }
+
+    @Test
+    void testFetchYouTubeVideos_returnsShortVideos() throws IOException {
+        // Given
+        String derivedPlaylistId = "UU_testChannelId";
+
+        // Mock response with a short video
+        PlaylistItem item = new PlaylistItem();
+        PlaylistItemSnippet snippet = new PlaylistItemSnippet();
+        ResourceId resourceId = new ResourceId();
+        resourceId.setVideoId("shortVideo");
+        snippet.setResourceId(resourceId);
+        snippet.setTitle("Short Video");
+        snippet.setChannelTitle("Test Channel");
+        snippet.setChannelId("UC_testChannelId");
+        snippet.setPublishedAt(new DateTime(publishedInstant.toEpochMilli()));
+        item.setSnippet(snippet);
+
+        PlaylistItemListResponse response = new PlaylistItemListResponse();
+        response.setItems(Collections.singletonList(item));
+
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L)))
+                .thenReturn(response);
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any())).thenReturn(response);
+        // Short duration (30s)
+        when(youTubeDataApiClient.fetchVideoDurations(anyList()))
+                .thenReturn(Map.of("shortVideo", Duration.ofSeconds(30)));
+        when(youTubeDataApiClient.getLocalDateInZone(any(Instant.class))).thenReturn(fetchDate);
+
+        // When
+        List<YouTubeVideo> videos = youTubeContentFetcherService.fetchYouTubeVideos(contentSource, fetchDate, null,
+                null);
+
+        // Then
+        assertNotNull(videos);
+        assertFalse(videos.isEmpty(), "Short videos should NOT be filtered out by the service");
+        assertEquals("shortVideo", videos.getFirst().videoId);
     }
 
     private void setupFallbackMocks(String realPlaylistId) throws IOException {

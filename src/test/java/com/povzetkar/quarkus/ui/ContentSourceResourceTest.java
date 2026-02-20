@@ -7,9 +7,10 @@ import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -18,38 +19,43 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
+@TestSecurity(user = "cs_resource_test_user", roles = "user")
 class ContentSourceResourceTest {
 
     private Topic testTopic;
+    private User testUser;
 
     @BeforeEach
-    @Transactional
     void setup() {
         tearDown();
-        // Data creation only
-        var testUser = new User();
-        testUser.name = "testuser";
-        testUser.username = "cs_resource_test_user";
-        testUser.active = true;
-        testUser.persist();
+        QuarkusTransaction.requiringNew().run(() -> {
+            // Data creation only
+            testUser = new User();
+            testUser.name = "testuser";
+            testUser.username = "cs_resource_test_user";
+            testUser.email = "cs_resource_test_user@example.com";
+            testUser.active = true;
+            testUser.persist();
 
-        // Create test topic
-        testTopic = new Topic();
-        testTopic.name = "Test Topic";
-        testTopic.user = testUser;
-        testTopic.persist();
+            // Create test topic
+            testTopic = new Topic();
+            testTopic.name = "Test Topic";
+            testTopic.user = testUser;
+            testTopic.persist();
+        });
     }
 
     @AfterEach
-    @Transactional
     void tearDown() {
-        // Cleanup only
-        Briefing.deleteAll();
-        Summary.deleteAll();
-        ContentItem.deleteAll();
-        Topic.deleteAll();
-        ContentSource.deleteAll();
-        User.deleteAll();
+        QuarkusTransaction.requiringNew().run(() -> {
+            // Cleanup only
+            Briefing.deleteAll();
+            Summary.deleteAll();
+            ContentItem.deleteAll();
+            Topic.deleteAll();
+            ContentSource.deleteAll();
+            User.deleteAll();
+        });
     }
 
     @Test
@@ -105,15 +111,17 @@ class ContentSourceResourceTest {
                 .statusCode(303) // Expect redirect status
                 .header("Location", containsString("/ui/topics/" + testTopic.id + "/briefings"));
 
-        // Verify content source was created and linked to topic
-        ContentSource createdSource = ContentSource.find("sourceIdentifier", "valid-id").firstResult();
-        assert createdSource != null;
-        assert createdSource.name.equals("Valid Source");
-        assert createdSource.sourceTypeId == SourceTypeEnum.BLOG.getId();
+        QuarkusTransaction.requiringNew().run(() -> {
+            // Verify content source was created and linked to topic
+            ContentSource createdSource = ContentSource.find("sourceIdentifier", "valid-id").firstResult();
+            assert createdSource != null;
+            assert createdSource.name.equals("Valid Source");
+            assert createdSource.sourceTypeId == SourceTypeEnum.BLOG.getId();
 
-        Topic updatedTopic = Topic.findById(testTopic.id);
-        assert updatedTopic != null;
-        assert updatedTopic.contentSources.contains(createdSource);
+            Topic updatedTopic = Topic.findById(testTopic.id);
+            assert updatedTopic != null;
+            assert updatedTopic.contentSources.contains(createdSource);
+        });
     }
 
     @Test
@@ -152,7 +160,30 @@ class ContentSourceResourceTest {
                 .formParam("topicId", nonExistentTopicId)
                 .when().post("/ui/content-sources")
                 .then()
-                .statusCode(200)
-                .body(containsString(String.format("Topic with id %d not found.", nonExistentTopicId)));
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "another_user")
+    void testAddContentSource_toAnotherUsersTopic_returns404() {
+        QuarkusTransaction.requiringNew().run(() -> {
+            // Create another user
+            User anotherUser = new User();
+            anotherUser.name = "Another User";
+            anotherUser.username = "another_user";
+            anotherUser.email = "another_user@example.com";
+            anotherUser.persist();
+        });
+
+        // testTopic belongs to cs_resource_test_user
+        // We are logged in as another_user
+        RestAssured.given()
+                .formParam("name", "Test Source")
+                .formParam("sourceIdentifier", "test-id")
+                .formParam("sourceTypeId", SourceTypeEnum.YOUTUBE.getId())
+                .formParam("topicId", testTopic.id)
+                .when().post("/ui/content-sources")
+                .then()
+                .statusCode(404);
     }
 }

@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.service.UserContextService;
 import com.povzetkar.quarkus.ui.util.Breadcrumb;
 import com.povzetkar.quarkus.ui.util.FormValidator;
 import com.povzetkar.quarkus.ui.util.ViewUtils;
@@ -17,7 +18,10 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +31,8 @@ import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TopicResource {
+    private static final Logger logger = LoggerFactory.getLogger(TopicResource.class);
+
     public static final String UI_BASE_PATH = "/ui";
     public static final String TOPICS_PATH = UI_BASE_PATH + "/topics"; // /ui/topics
     public static final String TOPIC_ADD_PATH = TOPICS_PATH + "/add"; // /ui/topics/add
@@ -47,49 +53,51 @@ public class TopicResource {
     public static final String TOPIC_ID_PATH_PARAM = ":topicId";
 
     private static final String INVALID_TOPIC_ID_FORMAT = "Invalid topic ID format.";
-    private static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
+    static final String TOPIC_NOT_FOUND_MSG = "Topic with id %d not found.";
     private static final String PARAM_CONTENT_SOURCE_ID = "contentSourceId";
     private static final String INVALID_CONTENT_SOURCE_ID_FORMAT = "Invalid content source ID format.";
     private static final String CONTENT_SOURCE_NOT_FOUND_MSG = "ContentSource with id %d not found.";
-    private static final String PARAM_USER_ID = "userId";
-    private static final String INVALID_USER_ID_FORMAT = "Invalid userId format.";
 
     private final ViewUtils viewUtils;
-
-    @ConfigProperty(name = "povzetkar.ui.date.format")
-    String dateFormat;
-
+    private final UserContextService userContextService;
     private final Template topics;
     private final Template topicForm;
     private final Template briefingsByTopic;
     private final Template selectContentSource;
 
+    @ConfigProperty(name = "povzetkar.ui.date.format")
+    String dateFormat;
+
     public TopicResource(@Location("topics.html") Template topics,
                          @Location("topic-form.html") Template topicForm,
                          @Location("briefings-by-topic.html") Template briefingsByTopic,
                          @Location("select-content-source.html") Template selectContentSource,
-                         ViewUtils viewUtils) {
+                         ViewUtils viewUtils,
+                         UserContextService userContextService) {
         this.topics = topics;
         this.topicForm = topicForm;
         this.briefingsByTopic = briefingsByTopic;
         this.selectContentSource = selectContentSource;
         this.viewUtils = viewUtils;
+        this.userContextService = userContextService;
     }
 
     public static String topicBriefingsPath(long topicId) {
         return TOPIC_BRIEFINGS_PATH.replace(TOPIC_ID_PATH_PARAM, String.valueOf(topicId));
     }
 
-    private void renderAddForm(RoutingContext context, String name, Long userId) {
+    // DTO for form data to avoid using dummy entities
+    public record TopicFormData(Long id, String name) {}
+
+    private void renderAddForm(RoutingContext context, String name) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        data.put("users", User.listAll());
-        // Create a dummy topic to hold the submitted name for re-population
-        Topic submittedTopic = new Topic();
-        submittedTopic.name = name;
-        User dummyUser = new User();
-        dummyUser.id = userId;
-        submittedTopic.user = dummyUser;
-        data.put(TOPIC_KEY, submittedTopic);
+        
+        TopicFormData formData = new TopicFormData(
+            null, 
+            name
+        );
+        
+        data.put(TOPIC_KEY, formData);
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
@@ -98,13 +106,13 @@ public class TopicResource {
         context.response().end(topicForm.instance().data(data).render());
     }
 
-    private void renderEditForm(RoutingContext context, Topic topic) {
+    private void renderEditForm(RoutingContext context, TopicFormData formData) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        data.put(TOPIC_KEY, topic);
+        data.put(TOPIC_KEY, formData);
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,
                 new Breadcrumb(TOPICS_LABEL, TOPICS_PATH),
-                new Breadcrumb(topic.name, topicBriefingsPath(topic.id)),
+                new Breadcrumb(formData.name(), topicBriefingsPath(formData.id())),
                 new Breadcrumb("Edit", context.request().uri())
         ));
         context.response().end(topicForm.instance().data(data).render());
@@ -114,12 +122,20 @@ public class TopicResource {
     @Blocking
     public void getTopics(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        List<User> usersWithTopics = User.findAllWithTopics();
-        Map<User, List<Topic>> topicsByUser = usersWithTopics.stream()
-                .filter(user -> !user.topics.isEmpty())
-                .collect(Collectors.toMap(user -> user, user -> user.topics.stream()
-                        .sorted(Comparator.comparing(topic -> topic.name))
-                        .toList()));
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+
+        Map<User, List<Topic>> topicsByUser;
+        if (currentUserOpt.isEmpty()) {
+            topicsByUser = Collections.emptyMap();
+        } else {
+            User currentUser = currentUserOpt.get();
+            List<Topic> userTopics = Topic
+                    .find("from Topic t left join fetch t.contentSources where t.user = ?1", currentUser).list();
+            topicsByUser = Map.of(currentUser, userTopics.stream()
+                    .sorted(Comparator.comparing(topic -> topic.name))
+                    .toList());
+        }
+
         data.put("topicsByUser", topicsByUser);
         data.put(BREADCRUMBS_KEY, List.of(
                 ViewUtils.HOME_BREADCRUMB,
@@ -134,7 +150,7 @@ public class TopicResource {
     @Route(path = TOPIC_ADD_PATH, methods = Route.HttpMethod.GET)
     @Blocking
     public void showAddForm(RoutingContext context) {
-        renderAddForm(context, null, null); // Fresh form
+        renderAddForm(context, null); // Fresh form
     }
 
     @Route(path = TOPICS_PATH, methods = Route.HttpMethod.POST)
@@ -143,34 +159,31 @@ public class TopicResource {
     public void addTopic(RoutingContext context) {
         FormValidator validator = new FormValidator();
         String name = context.request().getFormAttribute("name");
-        Optional<Long> userIdOptional = WebUtils.getLongFormAttribute(context, PARAM_USER_ID, INVALID_USER_ID_FORMAT, validator::addError);
-        Long userId = userIdOptional.orElse(null); // Get userId or null if validation failed
 
         validator.validateNotBlank(name, "Topic name cannot be blank.");
-        validator.validateNotNull(userId, "User is required.");
 
-        if (validator.hasErrors()) {
-            viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-            renderAddForm(context, name, userId); // Re-render with submitted values
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        if (currentUserOpt.isEmpty()) {
+            viewUtils.setErrorMessage(context, "User not found.");
+            renderAddForm(context, name);
             return;
         }
 
-        // Validation passed, it's safe to get the user ID
-        Optional<User> userOptional = User.findByIdOptional(userId);
-        userOptional.ifPresentOrElse(
-                user -> {
-                    Topic topic = new Topic();
-                    topic.user = user;
-                    topic.name = name;
-                    topic.persist();
-                    viewUtils.setSuccessMessage(context, "Topic created successfully.");
-                    viewUtils.handleRedirect(context, TOPICS_PATH);
-                },
-                () -> {
-                    viewUtils.setErrorMessage(context, String.format("User with id %d not found.", userId));
-                    renderAddForm(context, name, userId); // Re-render with submitted values
-                }
-        );
+        if (validator.hasErrors()) {
+            viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
+            renderAddForm(context, name); // Re-render with submitted values
+            return;
+        }
+
+        User currentUser = currentUserOpt.get();
+        Topic topic = new Topic();
+        topic.user = currentUser;
+        topic.name = name;
+        logger.info("Persisting topic: {} for user: {}", name, currentUser.username);
+        topic.persist();
+        logger.info("Topic persisted with ID: {}", topic.id);
+        viewUtils.setSuccessMessage(context, "Topic created successfully.");
+        viewUtils.handleRedirect(context, TOPICS_PATH);
     }
 
     @Route(path = TOPIC_EDIT_PATH, methods = Route.HttpMethod.GET)
@@ -181,13 +194,20 @@ public class TopicResource {
             return;
         }
         Long id = idOptional.get();
-        Topic.findByIdOptional(id).ifPresentOrElse(
-                topic -> renderEditForm(context, (Topic) topic),
+        userContextService.findOwnedTopic(id).ifPresentOrElse(
+                topic -> {
+                    TopicFormData formData = new TopicFormData(
+                        topic.id, 
+                        topic.name
+                    );
+                    renderEditForm(context, formData);
+                },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
         );
     }
 
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
+    @Transactional
     @Blocking
     public void updateTopic(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
@@ -196,7 +216,7 @@ public class TopicResource {
         }
         Long id = idOptional.get();
 
-        Optional<Topic> topicOptional = Topic.findByIdOptional(id);
+        Optional<Topic> topicOptional = userContextService.findOwnedTopic(id);
         if (topicOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id));
             return;
@@ -209,20 +229,19 @@ public class TopicResource {
 
         if (validator.hasErrors()) {
             viewUtils.setErrorMessage(context, String.join("; ", validator.getErrors()));
-            topic.name = name; // Set the invalid name for re-rendering
-            renderEditForm(context, topic);
+            // Create DTO with submitted name but existing ID
+            TopicFormData formData = new TopicFormData(
+                topic.id, 
+                name
+            );
+            renderEditForm(context, formData);
             return;
         }
 
-        persistTopicUpdate(topic, name);
-        viewUtils.setSuccessMessage(context, "Topic updated successfully.");
-        viewUtils.handleRedirect(context, topicBriefingsPath(id));
-    }
-
-    @Transactional
-    void persistTopicUpdate(Topic topic, String name) {
         topic.name = name;
         topic.persist();
+        viewUtils.setSuccessMessage(context, "Topic updated successfully.");
+        viewUtils.handleRedirect(context, topicBriefingsPath(id));
     }
 
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
@@ -234,8 +253,8 @@ public class TopicResource {
             return;
         }
         Long id = idOptional.get();
-        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
-                    String topicName = ((Topic)topic).name;
+        userContextService.findOwnedTopic(id).ifPresentOrElse(topic -> {
+                    String topicName = topic.name;
                     topic.delete();
                     viewUtils.setSuccessMessage(context, "Topic '" + topicName + "' deleted successfully.");
                     viewUtils.handleRedirect(context, TOPICS_PATH);
@@ -253,12 +272,11 @@ public class TopicResource {
             return;
         }
         Long id = idOptional.get();
-        Topic.findByIdOptional(id).ifPresentOrElse(topic -> {
-                    Topic t = (Topic) topic;
-                    t.enabled = !t.enabled;
-                    t.persist();
-                    String status = t.enabled ? "enabled" : "disabled";
-                    viewUtils.setSuccessMessage(context, "Topic '" + t.name + "' " + status + " successfully.");
+        userContextService.findOwnedTopic(id).ifPresentOrElse(topic -> {
+                    topic.enabled = !topic.enabled;
+                    topic.persist();
+                    String status = topic.enabled ? "enabled" : "disabled";
+                    viewUtils.setSuccessMessage(context, "Topic '" + topic.name + "' " + status + " successfully.");
                     viewUtils.handleRedirect(context, TOPICS_PATH);
                 },
                 () -> context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, id))
@@ -273,8 +291,15 @@ public class TopicResource {
             return;
         }
         Long topicId = topicIdOptional.get();
+        
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        if (currentUserOpt.isEmpty()) {
+             context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+             return;
+        }
+        User currentUser = currentUserOpt.get();
 
-        PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.id = ?1", topicId);
+        PanacheQuery<Topic> query = Topic.find("select t from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", topicId, currentUser);
         query.firstResultOptional().ifPresentOrElse(
                 topic -> {
                     Map<String, Object> data = viewUtils.createTemplateData(context);
@@ -305,13 +330,14 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
 
-        Optional<Long> contentSourceIdOptional = WebUtils.getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> contentSourceIdOptional = WebUtils.getLongPathParam(context, PARAM_CONTENT_SOURCE_ID,
+                INVALID_CONTENT_SOURCE_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (contentSourceIdOptional.isEmpty()) {
             return Optional.empty();
         }
         Long contentSourceId = contentSourceIdOptional.get();
 
-        Optional<Topic> topicOptional = Topic.findByIdOptional(topicId);
+        Optional<Topic> topicOptional = userContextService.findOwnedTopic(topicId);
         if (topicOptional.isEmpty()) {
             context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
             return Optional.empty();
@@ -360,7 +386,19 @@ public class TopicResource {
             return;
         }
         Long topicId = topicIdOptional.get();
-        Topic.findByIdWithContentSources(topicId).ifPresentOrElse(topic -> { // Use the new method
+        
+        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        if (currentUserOpt.isEmpty()) {
+             context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
+             return;
+        }
+        User currentUser = currentUserOpt.get();
+
+        // Use a custom query to fetch topic with content sources AND verify ownership
+        Topic.find("select t from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", topicId, currentUser)
+             .firstResultOptional()
+             .map(t -> (Topic) t)
+             .ifPresentOrElse(topic -> {
                     Map<String, Object> data = viewUtils.createTemplateData(context);
                     String query = context.request().getParam("query");
                     List<ContentSource> contentSources;

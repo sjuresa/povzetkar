@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -25,6 +26,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
+@TestSecurity(user = "api_test_user", roles = "user")
 class ContentSourceResourceTest {
 
     private static final String API_BASE_PATH = "/api/v1/content-sources";
@@ -49,7 +51,7 @@ class ContentSourceResourceTest {
     @BeforeEach
     @Transactional
     void setup() {
-        User user = createUser("Test User " + UUID.randomUUID(), "test_user_" + UUID.randomUUID());
+        User user = createUser("Test User", "api_test_user");
         this.testUserId = user.id;
 
         Topic topic = createTopic(user);
@@ -96,6 +98,7 @@ class ContentSourceResourceTest {
         User user = new User();
         user.name = name;
         user.username = username;
+        user.email = username + "@example.com";
         em.persist(user);
         createdUserIds.add(user.id);
         return user;
