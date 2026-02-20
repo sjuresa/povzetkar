@@ -40,7 +40,8 @@ public class UserIdentity extends BaseAuditableEntity {
     public String email;
 
     public static Optional<UserIdentity> findByProviderAndExternalId(String provider, String externalId) {
-        return find("provider = ?1 and externalId = ?2", provider, externalId).firstResultOptional();
+        return find("from UserIdentity ui join fetch ui.user where ui.provider = ?1 and ui.externalId = ?2", provider,
+                externalId).firstResultOptional();
     }
 
     @Override

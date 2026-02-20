@@ -129,7 +129,8 @@ public class TopicResource {
             topicsByUser = Collections.emptyMap();
         } else {
             User currentUser = currentUserOpt.get();
-            List<Topic> userTopics = Topic.find("user", currentUser).list();
+            List<Topic> userTopics = Topic
+                    .find("from Topic t left join fetch t.contentSources where t.user = ?1", currentUser).list();
             topicsByUser = Map.of(currentUser, userTopics.stream()
                     .sorted(Comparator.comparing(topic -> topic.name))
                     .toList());
@@ -329,7 +330,8 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
 
-        Optional<Long> contentSourceIdOptional = WebUtils.getLongPathParam(context, PARAM_CONTENT_SOURCE_ID, INVALID_CONTENT_SOURCE_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
+        Optional<Long> contentSourceIdOptional = WebUtils.getLongPathParam(context, PARAM_CONTENT_SOURCE_ID,
+                INVALID_CONTENT_SOURCE_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (contentSourceIdOptional.isEmpty()) {
             return Optional.empty();
         }
