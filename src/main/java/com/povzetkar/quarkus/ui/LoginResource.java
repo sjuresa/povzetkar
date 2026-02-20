@@ -9,7 +9,6 @@ import io.vertx.ext.web.RoutingContext;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,60 +16,58 @@ import org.slf4j.LoggerFactory;
 public class LoginResource {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginResource.class);
+    private static final String LOCATION_HEADER = "Location";
+    private static final String LOGIN_PATH = "/login";
 
     private final Template login;
-    private final Template logout;
     private final SecurityIdentity securityIdentity;
-    private final String logoutPath;
+    private final io.quarkus.oidc.OidcSession oidcSession;
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
-            @Location("logout.html") Template logout,
             SecurityIdentity securityIdentity,
-            @ConfigProperty(name = "quarkus.oidc.logout.path", defaultValue = "/logout") String logoutPath) {
+            io.quarkus.oidc.OidcSession oidcSession) {
         this.login = login;
-        this.logout = logout;
         this.securityIdentity = securityIdentity;
-        this.logoutPath = logoutPath;
+        this.oidcSession = oidcSession;
     }
 
     @Route(path = "/login", methods = HttpMethod.GET)
     public void login(RoutingContext context) {
         if (!securityIdentity.isAnonymous()) {
-            context.response().setStatusCode(302).putHeader("Location", TopicResource.TOPICS_PATH).end();
+            redirect(context, TopicResource.TOPICS_PATH);
             return;
         }
         login.instance().createUni().subscribe()
-                .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html), context::fail);
+                .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html),
+                        context::fail);
     }
 
     @Route(path = "/logout", methods = HttpMethod.GET)
     public void logout(RoutingContext context) {
-        String safeLogoutPath = "/";
-        try {
-            java.net.URI uri = new java.net.URI(logoutPath);
-            // Ensure the URI is just a path, not an absolute URL with a scheme or host.
-            if (uri.getScheme() != null || uri.getHost() != null) {
-                logger.warn("Configured logout path '{}' is an absolute URI, which is not supported for security reasons. Using default safe path '/'", logoutPath);
-            } else {
-                String path = uri.normalize().getPath();
-                // Use a regex whitelist for robust path validation against open redirects.
-                if (path != null && path.matches("^/([a-zA-Z0-9_./-]+/)*[a-zA-Z0-9_./-]*$")) {
-                    safeLogoutPath = path;
-                } else {
-                    logger.warn("Configured logout path '{}' could lead to an open redirect or path traversal. Using default safe path '/'", logoutPath);
-                }
-            }
-        } catch (java.net.URISyntaxException _) {
-            logger.warn("Configured logout path '{}' is not a valid URI. Using default safe path '/'", logoutPath);
+        if (securityIdentity.isAnonymous()) {
+            redirect(context, LOGIN_PATH);
+            return;
         }
-        logout.data("logoutPath", safeLogoutPath).createUni().subscribe()
-                .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html), context::fail);
+
+        oidcSession.logout().subscribe().with(
+                _ -> {
+                    logger.info("Successfully destroyed local application session.");
+                    redirect(context, LOGIN_PATH);
+                },
+                err -> {
+                    logger.error("Failed to perform local OIDC logout", err);
+                    redirect(context, LOGIN_PATH);
+                });
     }
 
     @Route(path = "/", methods = HttpMethod.GET)
     public void index(RoutingContext context) {
-        String location = securityIdentity.isAnonymous() ? "/login" : TopicResource.TOPICS_PATH;
-        context.response().setStatusCode(302).putHeader("Location", location).end();
+        String location = securityIdentity.isAnonymous() ? LOGIN_PATH : TopicResource.TOPICS_PATH;
+        redirect(context, location);
+    }
+
+    private void redirect(RoutingContext context, String location) {
+        context.response().setStatusCode(302).putHeader(LOCATION_HEADER, location).end();
     }
 }
