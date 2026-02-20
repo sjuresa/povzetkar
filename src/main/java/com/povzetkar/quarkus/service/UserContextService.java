@@ -29,6 +29,16 @@ public class UserContextService {
         if (securityIdentity.isAnonymous()) {
             throw new IllegalStateException("User is not authenticated");
         }
+
+        if (securityIdentity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt) {
+            String provider = "google"; // Default provider mapped in augmentor
+            String externalId = jwt.getSubject();
+            Optional<UserIdentity> identityOpt = UserIdentity.findByProviderAndExternalId(provider, externalId);
+            if (identityOpt.isPresent()) {
+                return Optional.of(identityOpt.get().user);
+            }
+        }
+
         String username = securityIdentity.getPrincipal().getName();
         return User.find("username", username).firstResultOptional();
     }
