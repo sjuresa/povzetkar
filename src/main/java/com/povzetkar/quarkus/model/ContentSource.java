@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Objects;
 
 @Entity
 @Table(name = "content_sources", uniqueConstraints = { @UniqueConstraint(columnNames = {"source_identifier", "source_type_id"}) })
@@ -42,4 +43,18 @@ public class ContentSource extends BaseAuditableEntity {
     @ManyToMany(mappedBy = "contentSources")
     @JsonIgnore
     public Set<Topic> topics = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof ContentSource that))
+            return false;
+        return sourceTypeId == that.sourceTypeId && Objects.equals(sourceIdentifier, that.sourceIdentifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceIdentifier, sourceTypeId);
+    }
 }
