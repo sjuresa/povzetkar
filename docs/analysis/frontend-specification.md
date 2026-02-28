@@ -108,7 +108,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   View user profile details.
     *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions. **To prevent hardcoding, the list of available roles MUST be fetched dynamically from a dedicated backend endpoint (e.g., `GET /api/v1/roles`).**
         *   **CRITICAL SAFEGUARD:** The primary enforcement against self-lockout MUST happen on the backend, which should reject any attempt by an administrator to perform an action that would cause them to lose their own `USER_MGMT_UPDATE` permission. The UI should provide a preventative check to disable the removal of such a role only if the API supplies the necessary role-to-permission mapping to make that determination; otherwise, it must gracefully handle the backend's error response.
-    *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
+    *   **Action:** Deactivate/Ban user account. **Must require a strong confirmation dialog** (e.g., prompting the administrator to type the user's name or the word "deactivate" into a text field) before enabling the final "Deactivate" button. This prevents accidental irreversible operations.
         *   **CRITICAL SAFEGUARD:** The UI must disable the deactivate action for the currently logged-in administrator's own account.
 
 ### 4.7. User Settings (`/settings`)
@@ -156,7 +156,10 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using i18n key `permissions.actionNotAllowed`). |
 | Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using i18n key `permissions.actionNotAllowed`). |
 
-### 5.2. Instance-Level Authorization Expectation
+### 5.2. Visual Clutter Reduction in Tables
+While the standard strategy is to disable UI elements for missing permissions (promoting feature discoverability), views with many repeated disabled elements (such as an 'Actions' column in a data table) can become visually cluttered. The frontend implementation MAY hide a group of controls entirely (e.g., hiding the entire 'Actions' column in the Topics list) if the current user lacks *all* associated permissions required for the actions within that group.
+
+### 5.3. Instance-Level Authorization Expectation
 While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
 
 ## 6. Frontend Stack & Technical Constraints
