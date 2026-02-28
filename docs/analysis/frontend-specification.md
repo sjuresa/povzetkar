@@ -161,7 +161,10 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 ### 5.2. Visual Clutter Reduction in Tables
 While the standard strategy is to disable UI elements for missing permissions (promoting feature discoverability), views with many repeated disabled elements (such as an 'Actions' column in a data table) can become visually cluttered. The frontend implementation SHOULD hide a group of controls entirely (e.g., hiding the entire 'Actions' column in the Topics list) if the current user lacks *all* associated permissions required for the actions within that group.
 
-### 5.3. Instance-Level Authorization Expectation
+### 5.3. Touch Device Fallback for Disabled Actions
+To adhere to the Mobile-First principle (Section 2.2), relying solely on "hover" for tooltips on disabled actions is insufficient. On touch devices where hover is unavailable, tapping or pressing a disabled UI element MUST trigger the display of the explanatory tooltip or an equivalent transient toast message, ensuring mobile users receive the same context regarding their restricted permissions as desktop users.
+
+### 5.4. Instance-Level Authorization Expectation
 While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
 
 ## 6. Frontend Stack & Technical Constraints
