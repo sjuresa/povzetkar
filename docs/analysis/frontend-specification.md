@@ -27,11 +27,13 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Global API Errors:**
     *   `401 Unauthorized`: Immediately clear local session and redirect to Login.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
+    *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
 
 ## 3. Authentication & Routing
 
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
+*   **CSRF Protection:** For all state-changing requests (e.g., `POST`, `PUT`, `DELETE`), the frontend MUST include a CSRF token. This token will be provided by the backend (e.g., in a cookie) and must be sent back in a custom HTTP header to prevent CSRF attacks.
 *   **Protected Routes:** All routes except `/login` require a valid session. If unauthenticated, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
 
@@ -61,7 +63,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1).
+        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input should prevent adding empty or duplicate keywords.
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 
