@@ -18,6 +18,8 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Mobile-First & Responsive:** The UI MUST be designed and built "mobile-first" so it perfectly adapts to tablet and desktop resolutions. Tables should be scrollable horizontally or transform into card lists on narrow screens.
 *   **SEO & Web Vitals:** The application should be SEO friendly. Specifically, the **Landing Page** should utilize Server-Side Rendering (SSR) or Static Site Generation (SSG) to ensure content is indexable by search engines. Secure internal pages (Dashboard, Admin) can remain pure client-side routed.
 *   **Mobile App Readiness:** Design the JSON API contracts and components keeping in mind that these will likely power a native mobile application (iOS/Android) in the near future.
+*   **Accessibility (a11y):** The application must be usable by people with disabilities, adhering to WCAG 2.1 AA standards. This includes using proper semantic HTML, ensuring keyboard navigability for all interactive elements, providing `aria-*` attributes where necessary, and maintaining sufficient color contrast.
+*   **Internationalization (i18n):** Design the application with i18n in mind from the start. Store all user-facing strings in resource files (e.g., JSON), use an i18n library (like `i18next` or `vue-i18n`), and consider how layouts might change with different language string lengths.
 
 ### 2.3. Error Handling & Feedback
 *   **Toast Notifications:** Used for transient success/error messages (e.g., "Topic saved successfully", "Failed to delete topic").
@@ -64,7 +66,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace and **collapse multiple internal whitespace characters into a single space** before validation and addition. It should prevent adding empty keywords and must perform a **case-insensitive** check to prevent duplicates (e.g., adding "AI" when "ai" already exists should be blocked).
+        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace and **collapse multiple internal whitespace characters into a single space**. Additionally, to ensure a canonical format, keywords must be **normalized to lowercase** before validation and addition. It should prevent adding empty or duplicate keywords (e.g., if a user enters "AI", it is normalized to "ai", which would be blocked if "ai" already exists).
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 
