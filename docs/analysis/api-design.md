@@ -255,7 +255,7 @@ Returns roles available for assignment.
 ```
 *Note: Backend will return 400/403 if modifying these roles results in the "Last Administrator" lockout scenario.*
 
-**`PUT /api/v1/users/{id}/status`**
+**`PATCH /api/v1/users/{id}/status`**
 Deactivate or ban a user.
 **Request Body:**
 ```json
