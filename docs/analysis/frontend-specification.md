@@ -27,7 +27,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   Client-side validation (required fields, format) before submission.
     *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
 *   **Global API Errors:**
-    *   `401 Unauthorized`: Clear any client-side user state (e.g., in-memory user objects, local storage flags) and redirect the user to the Login page. Rely on the backend's subsequent login flow to establish a new session and overwrite any stale cookies.
+    *   `401 Unauthorized`: Clear any client-side user state (e.g., in-memory user objects, local storage flags) and redirect the user to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`) so the user can be routed back after successful re-authentication. Rely on the backend's subsequent login flow to establish a new session and overwrite any stale cookies.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
     *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
