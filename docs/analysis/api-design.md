@@ -6,7 +6,7 @@ This document defines the REST API contract required to support the capabilities
 
 *   **Content Type:** `application/json` for all requests and responses.
 *   **Authentication:** `SameSite=Strict` HTTP-only Cookie.
-*   **Authorization:** Endpoints enforces PBAC; unauthorized access returns `403 Forbidden`. Unauthenticated access returns `401 Unauthorized`.
+*   **Authorization:** Endpoints enforce PBAC; unauthorized access returns `403 Forbidden`. Unauthenticated access returns `401 Unauthorized`.
 *   **Error Format:** Standard `ProblemDetail` (RFC 7807) format for `400 Bad Request` and other errors.
 *   **Date/Time Format:** ISO-8601 (e.g., `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm:ssZ`).
 
@@ -272,6 +272,12 @@ Gets status of running jobs to disable UI buttons. (Can be polled, or upgraded t
 **Response (200 OK):**
 ```json
 {
-  "runningJobs": ["SYNC_YOUTUBE_FEEDS"]
+  "runningJobs": [
+    {
+      "jobType": "SYNC_YOUTUBE_FEEDS",
+      "status": "RUNNING",
+      "startedAt": "2023-10-26T10:00:00Z"
+    }
+  ]
 }
 ```
