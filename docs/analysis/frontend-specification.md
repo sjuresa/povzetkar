@@ -63,7 +63,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input should prevent adding empty keywords and must perform a **case-insensitive** check to prevent duplicates (e.g., adding "AI" when "ai" already exists should be blocked).
+        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace before validation and addition. It should prevent adding empty keywords and must perform a **case-insensitive** check to prevent duplicates (e.g., adding "AI" when "ai" already exists should be blocked).
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 
