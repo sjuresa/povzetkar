@@ -25,7 +25,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   Client-side validation (required fields, format) before submission.
     *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
 *   **Global API Errors:**
-    *   `401 Unauthorized`: Immediately clear local session and redirect to Login.
+    *   `401 Unauthorized`: Call the backend logout endpoint (e.g., `POST /api/v1/users/logout`) to clear any stale server-side session cookies, then redirect the user to the Login page. The frontend cannot manually clear HttpOnly cookies.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
     *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
@@ -35,7 +35,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
 *   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. Upon a successful response, the frontend redirects the user to the public Landing Page.
 *   **CSRF Protection:** For all state-changing requests (e.g., `POST`, `PUT`, `DELETE`), the frontend MUST include a CSRF token. This token will be provided by the backend (e.g., in a cookie) and must be sent back in a custom HTTP header to prevent CSRF attacks.
-*   **Protected Routes:** All routes except `/login` require a valid session. If unauthenticated, redirect to `/login`.
+*   **Protected Routes:** All routes except for the public Landing Page (`/`) and Login (`/login`) require a valid session. If unauthenticated on a protected route, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
 
 ## 4. Screen Specifications
@@ -64,7 +64,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace before validation and addition. It should prevent adding empty keywords and must perform a **case-insensitive** check to prevent duplicates (e.g., adding "AI" when "ai" already exists should be blocked).
+        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace and **collapse multiple internal whitespace characters into a single space** before validation and addition. It should prevent adding empty keywords and must perform a **case-insensitive** check to prevent duplicates (e.g., adding "AI" when "ai" already exists should be blocked).
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 
