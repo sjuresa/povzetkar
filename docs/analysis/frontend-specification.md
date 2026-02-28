@@ -25,7 +25,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   Client-side validation (required fields, format) before submission.
     *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
 *   **Global API Errors:**
-    *   `401 Unauthorized`: Call the backend logout endpoint (e.g., `POST /api/v1/users/logout`) to clear any stale server-side session cookies, then redirect the user to the Login page. The frontend cannot manually clear HttpOnly cookies.
+    *   `401 Unauthorized`: Clear any client-side user state (e.g., in-memory user objects, local storage flags) and redirect the user to the Login page. Rely on the backend's subsequent login flow to establish a new session and overwrite any stale cookies.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
     *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
@@ -105,7 +105,9 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Detail View/Modal:**
     *   View user profile details.
     *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions. **To prevent hardcoding, the list of available roles MUST be fetched dynamically from a dedicated backend endpoint (e.g., `GET /api/v1/roles`).**
+        *   **CRITICAL SAFEGUARD:** The UI must disable the ability for an administrator to remove their own `ADMIN` role or any role that grants them `USER_MGMT_UPDATE` permissions to prevent self-lockout.
     *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
+        *   **CRITICAL SAFEGUARD:** The UI must disable the deactivate action for the currently logged-in administrator's own account.
 
 ### 4.7. User Settings (`/settings`)
 *   **Purpose:** Allows the individual user to manage their personal profile and preferences. Accessible via the dropdown menu in the global header.
