@@ -80,7 +80,14 @@ This document outlines the requirements and specifications for the standalone fr
 ### 4.5. Content Sources & Details (`/sources`)
 *   **List View:** Table of configured feeds (e.g., YouTube channels, RSS).
     *   Columns: Platform (Icon), Source Name, URL (clickable link), Status (Active, Failing).
+    *   Actions per row: Edit (opens modal or new page), Delete (Icon button).
     *   Search/Filter bar.
+*   **Create/Edit Modal or Page:**
+    *   Fields: 
+        *   `Platform` (Dropdown/Select, e.g., "YouTube Channel", "RSS Feed", Required).
+        *   `Source Name` (Text input, Required).
+        *   `URL` (Text input, URL validation, Required).
+    *   Must handle backend validation errors gracefully.
 *   **Detail View (`/sources/:id`):**
     *   **Header:** Source Name, Platform, Statistics.
     *   **Content Items List:** List of individual pieces of content (e.g., YouTube videos) belonging to this source.
@@ -97,7 +104,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   Search/Filter by email or role.
 *   **Detail View/Modal:**
     *   View user profile details.
-    *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions.
+    *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions. **To prevent hardcoding, the list of available roles MUST be fetched dynamically from a dedicated backend endpoint (e.g., `GET /api/v1/roles`).**
     *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
 
 ### 4.7. Admin Command Center (`/admin`)
