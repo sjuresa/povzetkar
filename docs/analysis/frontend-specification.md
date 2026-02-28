@@ -27,7 +27,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   Client-side validation (required fields, format) before submission.
     *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
 *   **Global API Errors:**
-    *   `401 Unauthorized`: For navigation-blocking API calls, clear client-side user state and redirect to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`). For background/non-critical API calls, display a modal dialog informing the user their session has expired. The modal should offer a "Login" button that opens the login page in a new tab. After a successful login in the new tab, the original page should detect the new session (e.g., via visibility change or cross-document messaging), automatically retry the failed background request, and close the modal, allowing the user to seamlessly continue their work.
+    *   `401 Unauthorized`: For navigation-blocking API calls, clear client-side user state and redirect to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`). For background/non-critical API calls, display a modal dialog informing the user their session has expired. The modal should offer a "Login" button that redirects the current page to the login screen, preserving the original URL as a `redirect_uri` to return to after a successful login. This provides a more robust and predictable experience than complex cross-tab communication.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
     *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
@@ -141,20 +141,20 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 |:--------------------------------|:------------------------|:----------------------------------------------------------------------|
 | Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                           |
 | Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Create Topic" Button           | `TOPIC_CREATE`          | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| "Create Topic" Button           | `TOPIC_CREATE`          | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
 | Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                           |
 | Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Add Source" Button             | `SOURCE_CREATE`         | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| "Add Source" Button             | `SOURCE_CREATE`         | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
 | View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
-| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
+| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render with `aria-disabled="true"` + tooltip key e.g., `permissions.actionNotAllowed` |
 
 ### 5.2. Instance-Level Authorization Expectation
 While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
