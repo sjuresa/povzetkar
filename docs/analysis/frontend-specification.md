@@ -16,7 +16,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Main Content Area:** Renders the active route's view. Must support a global loading overlay/spinner during initial chunk loading or heavy data fetching.
 ### 2.2. Responsiveness & Future-Proofing
 *   **Mobile-First & Responsive:** The UI MUST be designed and built "mobile-first" so it perfectly adapts to tablet and desktop resolutions. Tables should be scrollable horizontally or transform into card lists on narrow screens.
-*   **SEO & Web Vitals:** The application (or at least the public landing page and accessible content) should be SEO friendly (e.g., using SSR/SSG if necessary, proper `meta` tags, fast load times).
+*   **SEO & Web Vitals:** The application should be SEO friendly. Specifically, the **Landing Page** should utilize Server-Side Rendering (SSR) or Static Site Generation (SSG) to ensure content is indexable by search engines. Secure internal pages (Dashboard, Admin) can remain pure client-side routed.
 *   **Mobile App Readiness:** Design the JSON API contracts and components keeping in mind that these will likely power a native mobile application (iOS/Android) in the near future.
 
 ### 2.3. Error Handling & Feedback
@@ -63,7 +63,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input should prevent adding empty or duplicate keywords.
+        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input should prevent adding empty keywords and must perform a **case-insensitive** check to prevent duplicates (e.g., adding "AI" when "ai" already exists should be blocked).
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 
@@ -97,7 +97,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Detail View/Modal:**
     *   View user profile details.
     *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions.
-    *   **Action:** Deactivate/Ban user account.
+    *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
 
 ### 4.7. Admin Command Center (`/admin`)
 *   *Note: Only accessible to users with `ADMIN_DASHBOARD_VIEW`.*
@@ -105,7 +105,9 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Tabs:**
     *   **Metrics:** Simple charts or big numbers showing GenAI API token usage.
     *   **System Controls & Orchestration:** 
-        *   Buttons to trigger global background tasks (e.g., "Force Run All Orchestrations", "Preview Candidate Items", "Fetch Transcripts"). Must have confirmation dialogs.
+        *   Buttons to trigger global background tasks (e.g., "Force Run All Orchestrations", "Preview Candidate Items", "Fetch Transcripts"). 
+        *   Must have confirmation dialogs.
+        *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) while the corresponding task/API call is in progress.
     *   **Job & History Management:** 
         *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later).
         *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry). Requires `ADMIN_JOB_UPDATE`.
@@ -119,13 +121,13 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 
 | UI Component / Action           | Required Permission Key | Behavior if Missing                          |
 |:--------------------------------|:------------------------|:---------------------------------------------|
-| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Return 403 / Hide from Sidebar Nav           |
+| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)  |
 | "Create Topic" Button           | `TOPIC_CREATE`          | Render disabled with tooltip "No permission" |
 | "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render disabled with tooltip "No permission" |
 | "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render disabled with tooltip "No permission" |
 | "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render disabled with tooltip "No permission" |
 | "Add Source" Button             | `SOURCE_CREATE`         | Render disabled with tooltip "No permission" |
-| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Return 403 / Hide from Sidebar Nav           |
+| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)  |
 | "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip "No permission" |
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip "No permission" |
 | Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render disabled with tooltip "No permission" |
