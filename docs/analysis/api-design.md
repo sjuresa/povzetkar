@@ -134,11 +134,11 @@ Manually triggers a briefing generation for the topic.
   "briefingDate": "2023-10-25",
   "executiveSummary": "### 1. Overall Executive Summary\n...",
   "briefingText": "# Full Markdown Body\n...",
-  "sources": [
+  "sourceContentItems": [
     {
       "id": 999,
       "title": "State of AI 2023",
-      "url": "https://youtube.com/watch?v=..."
+      "sourceUrl": "https://youtube.com/watch?v=..."
     }
   ]
 }
