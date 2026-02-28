@@ -71,7 +71,9 @@ This document outlines the requirements and specifications for the standalone fr
 *   **List View:** Filterable list of previous reports.
 *   **Detail View (`/briefings/:id`):**
     *   **Header:** Topic Name, Generation Date.
-    *   **Main Content:** Rich Markdown rendering of the `briefing_text`. Must display standard markdown elements (headers, lists, bold).
+    *   **Main Content:** Rich Markdown rendering of the `briefing_text`. 
+        *   **CRITICAL SECURITY MEASURE:** The Markdown must be strictly sanitized on the frontend (e.g., using DOMPurify) before being rendered as HTML to strip out any potentially malicious HTML tags (`<script>`) or attributes (`onerror`), mitigating Cross-Site Scripting (XSS) risks from ingested content.
+        *   Must display standard markdown elements (headers, lists, bold).
     *   **Sidebar/Footer (Sources):** A list of `ContentItem` references (clickable links to YouTube videos or articles) that were summarized to create this report.
 
 ### 4.5. Content Sources & Details (`/sources`)
@@ -94,7 +96,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   Search/Filter by email or role.
 *   **Detail View/Modal:**
     *   View user profile details.
-    *   **Action (Crucial):** Assign or revoke Roles (e.g., granting a user `ADMIN` or specific granular permissions).
+    *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions.
     *   **Action:** Deactivate/Ban user account.
 
 ### 4.7. Admin Command Center (`/admin`)
@@ -106,7 +108,7 @@ This document outlines the requirements and specifications for the standalone fr
         *   Buttons to trigger global background tasks (e.g., "Force Run All Orchestrations", "Preview Candidate Items", "Fetch Transcripts"). Must have confirmation dialogs.
     *   **Job & History Management:** 
         *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later).
-        *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry).
+        *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry). Requires `ADMIN_JOB_UPDATE`.
 
 ## 5. Permission-Based Access Control (PBAC) Integration
 
@@ -126,6 +128,7 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 | View Users List (`/users`)      | `USER_MGMT_VIEW`        | Return 403 / Hide from Sidebar Nav           |
 | "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip "No permission" |
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip "No permission" |
+| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render disabled with tooltip "No permission" |
 
 ## 6. Frontend Stack & Technical Constraints
 *(To be decided by the frontend team, but recommendations for interfacing with this generic spec):*
