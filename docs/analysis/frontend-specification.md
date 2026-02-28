@@ -34,7 +34,7 @@ This document outlines the requirements and specifications for the standalone fr
 
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
 *   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. Upon a successful response, the frontend redirects the user to the public Landing Page.
-*   **CSRF Protection:** For all state-changing requests (e.g., `POST`, `PUT`, `DELETE`), the frontend MUST include a CSRF token. This token will be provided by the backend (e.g., in a cookie) and must be sent back in a custom HTTP header to prevent CSRF attacks.
+*   **CSRF Protection:** The primary defense against CSRF attacks should leverage modern browser security by setting the `SameSite=Strict` (or `Lax`) attribute on the backend's session cookie. If the backend implementation requires it (e.g., due to CORS configurations or legacy support), a double-submit token pattern via a custom HTTP header (e.g., `X-XSRF-TOKEN`) may be implemented instead.
 *   **Protected Routes:** All routes except for the public Landing Page (`/`) and Login (`/login`) require a valid session. If unauthenticated on a protected route, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
 
@@ -107,7 +107,13 @@ This document outlines the requirements and specifications for the standalone fr
     *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions. **To prevent hardcoding, the list of available roles MUST be fetched dynamically from a dedicated backend endpoint (e.g., `GET /api/v1/roles`).**
     *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
 
-### 4.7. Admin Command Center (`/admin`)
+### 4.7. User Settings (`/settings`)
+*   **Purpose:** Allows the individual user to manage their personal profile and preferences. Accessible via the dropdown menu in the global header.
+*   **Views:**
+    *   **Profile Details:** Display basic user information (Name, Email, Avatar) retrieved from the OIDC claims. Currently, this information is read-only as it's managed by the Identity Provider.
+    *   **Preferences:** Placeholder for future settings (e.g., UI Theme/Dark Mode, notification preferences).
+
+### 4.8. Admin Command Center (`/admin`)
 *   *Note: Only accessible to users with `ADMIN_DASHBOARD_VIEW`.*
 *   **Layout:** Tabbed interface mirroring existing backend capabilities.
 *   **Tabs:**
@@ -145,6 +151,9 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 | "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip "No permission" |
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip "No permission" |
 | Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render disabled with tooltip "No permission" |
+
+### 5.2. Instance-Level Authorization Expectation
+While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
 
 ## 6. Frontend Stack & Technical Constraints
 *(To be decided by the frontend team, but recommendations for interfacing with this generic spec):*
