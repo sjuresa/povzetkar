@@ -141,13 +141,13 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 |:--------------------------------|:------------------------|:----------------------------------------------------------------------|
 | Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                           |
 | Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Create Topic" Button           | `TOPIC_CREATE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicCreateNotAllowed`). |
+| "Create Topic" Button           | `TOPIC_CREATE`          | Hide from UI                                                                                          |
 | "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicUpdateNotAllowed`). |
 | "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicDeleteNotAllowed`). |
 | "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicTriggerRunNotAllowed`). |
 | Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                           |
 | Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Add Source" Button             | `SOURCE_CREATE`         | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.sourceCreateNotAllowed`). |
+| "Add Source" Button             | `SOURCE_CREATE`         | Hide from UI                                                                                          |
 | View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.contentItemViewNotAllowed`). |
 | Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.summaryGenerateNotAllowed`). |
 | Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.briefingGenerateNotAllowed`). |
