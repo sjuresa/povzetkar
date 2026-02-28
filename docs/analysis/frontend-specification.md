@@ -60,13 +60,12 @@ This document outlines the requirements and specifications for the standalone fr
 
 ### 4.3. Topic Management (`/topics`)
 *   **List View:**
-    *   Data Table or Card Grid displaying: Name, Keywords (as badges/chips), Status (Active/Inactive), Last Run Date.
+    *   Data Table or Card Grid displaying: Name, Status (Active/Inactive), Last Run Date.
     *   Actions per row: Edit (opens modal or new page), Trigger Run (Icon button, disabled if running), Delete (Icon button).
     *   Empty State: Friendly message "No topics yet. Create your first topic to start gathering intelligence."
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace and **collapse multiple internal whitespace characters into a single space**. Additionally, to ensure a canonical format, keywords must be **normalized to lowercase** before validation and addition. It must prevent adding empty or duplicate keywords (e.g., if a user enters "AI", it is normalized to "ai", which would be blocked if "ai" already exists). Furthermore, to maintain data quality, the input should enforce a **character length constraint** (e.g., minimum 2, maximum 30 characters) and explicitly define an **allowed character set** (e.g., restricting input to alphanumeric characters, spaces, and hyphens) to prevent the inclusion of disruptive special characters.
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 

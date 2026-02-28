@@ -192,9 +192,10 @@ This document outlines the concrete steps for implementing the features describe
 ### Key Tasks & Implementation Steps:
 1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards.
 2.  **Secrets Management:** Integrate a secrets management solution.
-3.  **Backup & Recovery:** Establish automated database backup/recovery.
-4.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
-5.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
+3.  **Job Auditing & History:** Implement a robust `job_executions` or `audit_logs` table in the database to persistently track the status, duration, and errors of Orchestrator jobs for UI display, moving beyond simple structured application logs.
+4.  **Backup & Recovery:** Establish automated database backup/recovery.
+5.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
+6.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
 
 ---
 
