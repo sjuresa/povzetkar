@@ -86,6 +86,15 @@ Invalidates the HTTP-only session cookie.
 ```
 **Response (200 OK):** Returns the updated topic object.
 
+**`PATCH /api/v1/topics/{id}`**
+**Request Body:**
+```json
+{
+  "enabled": false
+}
+```
+**Response (200 OK):** Returns the updated topic object.
+
 **`DELETE /api/v1/topics/{id}`**
 **Response (204 No Content)**
 
@@ -268,16 +277,17 @@ Deactivate or ban a user.
 **Response (202 Accepted):** Returns job tracking ID or acknowledgement.
 
 **`GET /api/v1/admin/jobs/status`**
-Gets status of running jobs to disable UI buttons. (Can be polled, or upgraded to SSE).
+Gets paginated list of background job executions. Supports query parameters `?status=RUNNING,COMPLETED,FAILED` and pagination `?page=0&size=20`.
 **Response (200 OK):**
 ```json
 {
-  "runningJobs": [
+  "items": [
     {
       "jobType": "SYNC_YOUTUBE_FEEDS",
       "status": "RUNNING",
       "startedAt": "2023-10-26T10:00:00Z"
     }
-  ]
+  ],
+  "totalCount": 1
 }
 ```
