@@ -35,7 +35,7 @@ This document outlines the requirements and specifications for the standalone fr
 ## 3. Authentication & Routing
 
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
-*   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. After the call is initiated, the frontend must clear all client-side user state (e.g., user object, local storage) and redirect to the public Landing Page, regardless of the backend call's success. A transient error may be shown on failure.
+*   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. If the backend call is successful, the frontend must clear all client-side user state (e.g., user object, local storage) and redirect to the public Landing Page. If the backend call fails, the frontend should inform the user that the logout failed and they may still be logged in on the server, rather than redirecting and giving a false sense of security.
 *   **CSRF Protection:** The primary defense against CSRF attacks should leverage modern browser security by setting the `SameSite=Strict` (or `Lax`) attribute on the backend's session cookie. If the backend implementation requires it (e.g., due to CORS configurations or legacy support), a double-submit token pattern via a custom HTTP header (e.g., `X-XSRF-TOKEN`) may be implemented instead.
 *   **Protected Routes:** All routes except for the public Landing Page (`/`) and Login (`/login`) require a valid session. If unauthenticated on a protected route, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
@@ -107,7 +107,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Detail View/Modal:**
     *   View user profile details.
     *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions. **To prevent hardcoding, the list of available roles MUST be fetched dynamically from a dedicated backend endpoint (e.g., `GET /api/v1/roles`).**
-        *   **CRITICAL SAFEGUARD:** The UI must disable the ability for an administrator to remove their own `ADMIN` role or any role that grants them `USER_MGMT_UPDATE` permissions to prevent self-lockout.
+        *   **CRITICAL SAFEGUARD:** The UI must prevent an administrator from performing an action that would cause them to lose their own `USER_MGMT_UPDATE` permission. This means disabling the removal of a role if it is the user's only role that provides this permission.
     *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
         *   **CRITICAL SAFEGUARD:** The UI must disable the deactivate action for the currently logged-in administrator's own account.
 
@@ -125,7 +125,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   **System Controls & Orchestration:** 
         *   Buttons to trigger global background tasks (e.g., "Force Run All Orchestrations", "Preview Candidate Items", "Fetch Transcripts"). 
         *   Must have confirmation dialogs.
-        *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) while the corresponding asynchronous background job is in progress on the server. The frontend should poll a designated job status endpoint to update both the button state and the global status context accurately.
+        *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) while the corresponding asynchronous background job is in progress on the server. To ensure an efficient and responsive UI, the frontend should ideally use real-time communication technologies like WebSockets or Server-Sent Events (SSE) to receive job status updates, falling back to polling a designated job status endpoint only if necessary.
     *   **Job & History Management:** 
         *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later).
         *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry). Requires `ADMIN_JOB_UPDATE`.
