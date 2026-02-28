@@ -54,14 +54,17 @@ Invalidates the HTTP-only session cookie.
 **`GET /api/v1/topics`**
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 101,
-    "name": "Artificial Intelligence",
-    "enabled": true,
-    "lastRunDate": "2023-10-25T14:30:00Z"
-  }
-]
+{
+  "items": [
+    {
+      "id": 101,
+      "name": "Artificial Intelligence",
+      "enabled": true,
+      "lastRunDate": "2023-10-25T14:30:00Z"
+    }
+  ],
+  "totalCount": 1
+}
 ```
 *(Backend Implementation Note: The `Topic` JPA entity must be updated to include a persisted `last_run_date` timestamp column, updated whenever a new Briefing is successfully generated for the topic.)*
 
@@ -69,10 +72,22 @@ Invalidates the HTTP-only session cookie.
 **Request Body:**
 ```json
 {
-  "name": "Future of Work",
-  "enabled": true
+  "name": "Future of Work"
 }
 ```
+
+**`PUT /api/v1/topics/{id}`**
+**Request Body:**
+```json
+{
+  "name": "Future of Work - Updated",
+  "enabled": false
+}
+```
+**Response (200 OK):** Returns the updated topic object.
+
+**`DELETE /api/v1/topics/{id}`**
+**Response (204 No Content)**
 
 **`POST /api/v1/topics/{id}/trigger-run`**
 Manually triggers a briefing generation for the topic.
@@ -127,19 +142,44 @@ Manually triggers a briefing generation for the topic.
 **`GET /api/v1/sources`**
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 201,
-    "platform": "YOUTUBE",
-    "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
-    "name": "MrBeast Tech",
-    "description": "Tech reviews and experiments",
-    "subscriberCount": 1000000,
-    "url": "https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA"
-  }
-]
+{
+  "items": [
+    {
+      "id": 201,
+      "platform": "YOUTUBE",
+      "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "name": "MrBeast Tech",
+      "description": "Tech reviews and experiments",
+      "subscriberCount": 1000000,
+      "url": "https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  ],
+  "totalCount": 1
+}
 ```
 *(Backend Implementation Note: The DTO mapper must dynamically construct the `url` string by combining the base platform URL (e.g., `https://youtube.com/channel/`) with the persistent `sourceIdentifier`.)*
+
+**`POST /api/v1/sources`**
+**Request Body:**
+```json
+{
+  "platform": "YOUTUBE",
+  "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+  "name": "MrBeast Tech"
+}
+```
+*(Note: `description` and `subscriberCount` are typically fetched by the backend during sync, not provided via POST).*
+
+**`PUT /api/v1/sources/{id}`**
+**Request Body:**
+```json
+{
+  "name": "MrBeast Tech (Renamed)"
+}
+```
+
+**`DELETE /api/v1/sources/{id}`**
+**Response (204 No Content)**
 
 **`GET /api/v1/sources/{id}/items`**
 List individual pieces of content under a source (Supports pagination).
@@ -169,26 +209,32 @@ List individual pieces of content under a source (Supports pagination).
 **`GET /api/v1/users`**
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 1,
-    "name": "System Admin",
-    "email": "admin@example.com",
-    "authProvider": "GOOGLE",
-    "active": true,
-    "roles": ["ADMIN"]
-  }
-]
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "System Admin",
+      "email": "admin@example.com",
+      "authProvider": "GOOGLE",
+      "active": true,
+      "roles": ["ADMIN"]
+    }
+  ],
+  "totalCount": 1
+}
 ```
 
 **`GET /api/v1/roles`**
 Returns roles available for assignment.
 **Response (200 OK):**
 ```json
-[
-  { "id": 1, "name": "ADMIN" },
-  { "id": 2, "name": "USER" }
-]
+{
+  "items": [
+    { "id": 1, "name": "ADMIN" },
+    { "id": 2, "name": "USER" }
+  ],
+  "totalCount": 2
+}
 ```
 
 **`PUT /api/v1/users/{id}/roles`**
