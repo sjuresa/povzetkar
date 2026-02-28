@@ -35,7 +35,7 @@ This document outlines the requirements and specifications for the standalone fr
 ## 3. Authentication & Routing
 
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
-*   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. Upon a successful response, the frontend redirects the user to the public Landing Page.
+*   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. Upon a successful response, the frontend must clear all client-side user state (e.g., user object, local storage) before redirecting the user to the public Landing Page.
 *   **CSRF Protection:** The primary defense against CSRF attacks should leverage modern browser security by setting the `SameSite=Strict` (or `Lax`) attribute on the backend's session cookie. If the backend implementation requires it (e.g., due to CORS configurations or legacy support), a double-submit token pattern via a custom HTTP header (e.g., `X-XSRF-TOKEN`) may be implemented instead.
 *   **Protected Routes:** All routes except for the public Landing Page (`/`) and Login (`/login`) require a valid session. If unauthenticated on a protected route, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
@@ -76,7 +76,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   **Header:** Topic Name, Generation Date.
     *   **Main Content:** Rich Markdown rendering of the `briefing_text`. 
         *   **CRITICAL SECURITY MEASURE:** The Markdown must be strictly sanitized on the frontend (e.g., using DOMPurify) before being rendered as HTML to strip out any potentially malicious HTML tags (`<script>`) or attributes (`onerror`), mitigating Cross-Site Scripting (XSS) risks from ingested content.
-        *   Must display standard markdown elements (headers, lists, bold).
+        *   Must display standard Markdown elements (headers, lists, bold).
     *   **Sidebar/Footer (Sources):** A list of `ContentItem` references (clickable links to YouTube videos or articles) that were summarized to create this report.
 
 ### 4.5. Content Sources & Details (`/sources`)
@@ -125,7 +125,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   **System Controls & Orchestration:** 
         *   Buttons to trigger global background tasks (e.g., "Force Run All Orchestrations", "Preview Candidate Items", "Fetch Transcripts"). 
         *   Must have confirmation dialogs.
-        *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) while the corresponding task/API call is in progress.
+        *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) while the corresponding asynchronous background job is in progress on the server. The frontend should poll a designated job status endpoint to update both the button state and the global status context accurately.
     *   **Job & History Management:** 
         *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later).
         *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry). Requires `ADMIN_JOB_UPDATE`.
@@ -137,24 +137,24 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 
 ### 5.1. UI Behavior Rules Matrix
 
-| UI Component / Action           | Required Permission Key | Behavior if Missing                          |
-|:--------------------------------|:------------------------|:---------------------------------------------|
-| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)  |
-| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)  |
-| "Create Topic" Button           | `TOPIC_CREATE`          | Render disabled with tooltip "No permission" |
-| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render disabled with tooltip "No permission" |
-| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render disabled with tooltip "No permission" |
-| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render disabled with tooltip "No permission" |
-| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)  |
-| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)  |
-| "Add Source" Button             | `SOURCE_CREATE`         | Render disabled with tooltip "No permission" |
-| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render disabled with tooltip "No permission" |
-| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render disabled with tooltip "No permission" |
-| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render disabled with tooltip "No permission" |
-| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)  |
-| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip "No permission" |
-| System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip "No permission" |
-| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render disabled with tooltip "No permission" |
+| UI Component / Action           | Required Permission Key | Behavior if Missing                                                   |
+|:--------------------------------|:------------------------|:----------------------------------------------------------------------|
+| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                           |
+| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                           |
+| "Create Topic" Button           | `TOPIC_CREATE`          | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                           |
+| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                           |
+| "Add Source" Button             | `SOURCE_CREATE`         | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)                           |
+| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
+| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render disabled with tooltip key e.g., `permissions.actionNotAllowed` |
 
 ### 5.2. Instance-Level Authorization Expectation
 While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
