@@ -19,7 +19,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **SEO & Web Vitals:** The application (or at least the public landing page and accessible content) should be SEO friendly (e.g., using SSR/SSG if necessary, proper `meta` tags, fast load times).
 *   **Mobile App Readiness:** Design the JSON API contracts and components keeping in mind that these will likely power a native mobile application (iOS/Android) in the near future.
 
-### 2.2. Error Handling & Feedback
+### 2.3. Error Handling & Feedback
 *   **Toast Notifications:** Used for transient success/error messages (e.g., "Topic saved successfully", "Failed to delete topic").
 *   **Form Validation:**
     *   Client-side validation (required fields, format) before submission.
@@ -111,19 +111,19 @@ This document outlines the requirements and specifications for the standalone fr
 The UI must adapt dynamically based on the current user's permissions, provided by the backend endpoint (e.g., `/api/v1/users/me`). 
 *Do NOT hardcode UI logic against `admin` or `user` strings.*
 
-### UI Behavior Rules Matrix
+### 5.1. UI Behavior Rules Matrix
 
 | UI Component / Action | Required Permission Key | Behavior if Missing |
 | :--- | :--- | :--- |
 | Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW` | Return 403 / Hide from Sidebar Nav |
-| "Create Topic" Button | `TOPIC_CREATE` | Do not render in DOM |
-| "Edit" Button on Topic row | `TOPIC_UPDATE` | Render disabled OR do not render |
-| "Delete" Button on Topic row| `TOPIC_DELETE` | Do not render in DOM |
+| "Create Topic" Button | `TOPIC_CREATE` | Render disabled with tooltip "No permission" |
+| "Edit" Button on Topic row | `TOPIC_UPDATE` | Render disabled with tooltip "No permission" |
+| "Delete" Button on Topic row| `TOPIC_DELETE` | Render disabled with tooltip "No permission" |
 | "Trigger Run" on Topic row | `TOPIC_TRIGGER_RUN` | Render disabled with tooltip "No permission" |
-| "Add Source" Button | `SOURCE_CREATE` | Do not render in DOM |
+| "Add Source" Button | `SOURCE_CREATE` | Render disabled with tooltip "No permission" |
 | View Users List (`/users`) | `USER_MGMT_VIEW` | Return 403 / Hide from Sidebar Nav |
-| "Edit User" / "Assign Role" | `USER_MGMT_UPDATE` | Render disabled OR do not render |
-| System Control Buttons (Admin) | `ADMIN_SYSTEM_TRIGGER` | Render disabled |
+| "Edit User" / "Assign Role" | `USER_MGMT_UPDATE` | Render disabled with tooltip "No permission" |
+| System Control Buttons (Admin) | `ADMIN_SYSTEM_TRIGGER` | Render disabled with tooltip "No permission" |
 
 ## 6. Frontend Stack & Technical Constraints
 *(To be decided by the frontend team, but recommendations for interfacing with this generic spec):*
