@@ -151,13 +151,13 @@ Manually triggers a briefing generation for the topic.
       "name": "MrBeast Tech",
       "description": "Tech reviews and experiments",
       "subscriberCount": 1000000,
-      "url": "https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA"
+      "sourceUrl": "https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA"
     }
   ],
   "totalCount": 1
 }
 ```
-*(Backend Implementation Note: The DTO mapper must dynamically construct the `url` string by combining the base platform URL (e.g., `https://youtube.com/channel/`) with the persistent `sourceIdentifier`.)*
+*(Backend Implementation Note: The DTO mapper must dynamically construct the `sourceUrl` string by combining the base platform URL (e.g., `https://youtube.com/channel/`) with the persistent `sourceIdentifier`.)*
 
 **`POST /api/v1/sources`**
 **Request Body:**
@@ -241,7 +241,7 @@ Returns roles available for assignment.
 **Request Body:**
 ```json
 {
-  "roles": ["ADMIN", "USER"]
+  "roleIds": [1, 2]
 }
 ```
 *Note: Backend will return 400/403 if modifying these roles results in the "Last Administrator" lockout scenario.*
