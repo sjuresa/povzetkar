@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
 | 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
 | 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
 | 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
@@ -153,17 +154,24 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.11: API-First & Advanced Security
 
 **Goal:** Decouple the frontend by establishing a comprehensive REST API and implementing fine-grained security (PBAC) to support advanced user interactions.
+**Status:** 🏃 In Progress
 
 ### Key Tasks & Implementation Steps:
-1.  **Frontend API:**
-    -   Design and implement REST endpoints for all core resources (`/api/v1/topics`, `/api/v1/briefings`, etc.).
-    -   Ensure responses are JSON-formatted and suitable for an SPA (Single Page Application).
-2.  **Advanced Security (PBAC):**
+1.  **Frontend Specification:**
+    -   Create `frontend-specification.md` defining screens, user flows, data requirements, and PBAC implications (visibility/actions).
+2.  **Frontend API:**
+    -   Design and implement REST endpoints (`/api/v1/topics`, etc.) based strictly on the frontend specification.
+    -   Ensure responses are JSON-formatted.
+3.  **Advanced Security (PBAC):**
     -   Implement **Permission-Based Access Control** (Step 2 of ADR-003).
     -   Define granular permissions (e.g., `TOPIC_CREATE`, `BRIEFING_VIEW`) and map them to roles.
     -   Secure the new API endpoints using these permissions.
-3.  **Documentation:**
+4.  **Automated Security Scanning & SAST:**
+    -   Integrate dependency vulnerability scanning (e.g., Trivy, OWASP dependency-check).
+    -   Integrate Static Application Security Testing (SAST) for code quality and flaws (e.g., SonarQube, SpotBugs).
+5.  **Documentation & Developer Experience:**
     -   Generate OpenAPI/Swagger specifications for the new API.
+    -   Implement Test Data Builder pattern to streamline testing.
 
 ---
 
