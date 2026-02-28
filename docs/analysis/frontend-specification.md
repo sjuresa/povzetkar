@@ -75,7 +75,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Detail View (`/briefings/:id`):**
     *   **Header:** Topic Name, Generation Date.
     *   **Main Content:** Rich Markdown rendering of the `briefing_text`. 
-        *   **CRITICAL SECURITY MEASURE:** The Markdown must be strictly sanitized on the frontend (e.g., using DOMPurify) before being rendered as HTML to strip out any potentially malicious HTML tags (`<script>`) or attributes (`onerror`), mitigating Cross-Site Scripting (XSS) risks from ingested content.
+        *   **CRITICAL SECURITY MEASURE:** While the primary defense regarding Cross-Site Scripting (XSS) from ingested content lies with the backend performing rigorous sanitization before persistence, the frontend MUST act as a secondary defense layer or "defense-in-depth." The Markdown must be strictly sanitized on the frontend (e.g., using DOMPurify) before being rendered as HTML to strip out any potentially malicious HTML tags (`<script>`) or attributes (`onerror`).
         *   Must display standard Markdown elements (headers, lists, bold).
     *   **Sidebar/Footer (Sources):** A list of `ContentItem` references (clickable links to YouTube videos or articles) that were summarized to create this report.
 
@@ -107,7 +107,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Detail View/Modal:**
     *   View user profile details.
     *   **Action (Crucial):** Assign or revoke predefined **Roles** (e.g., `ADMIN`, `USER`). The frontend manages Roles at a macro-level; the backend internally maps these Roles to the granular permissions (e.g., `TOPIC_CREATE`) evaluated by the PBAC matrix. The UI should present a dropdown or multi-select of available system Roles, not individual permissions. **To prevent hardcoding, the list of available roles MUST be fetched dynamically from a dedicated backend endpoint (e.g., `GET /api/v1/roles`).**
-        *   **CRITICAL SAFEGUARD:** The UI must prevent an administrator from performing an action that would cause them to lose their own `USER_MGMT_UPDATE` permission. This means disabling the removal of a role if it is the user's only role that provides this permission.
+        *   **CRITICAL SAFEGUARD:** The primary enforcement against self-lockout MUST happen on the backend, which should reject any attempt by an administrator to perform an action that would cause them to lose their own `USER_MGMT_UPDATE` permission. The UI should provide a preventative check to disable the removal of such a role only if the API supplies the necessary role-to-permission mapping to make that determination; otherwise, it must gracefully handle the backend's error response.
     *   **Action:** Deactivate/Ban user account. **Must require a confirmation dialog** ("Are you sure you want to deactivate this user?") before proceeding to prevent accidental lockouts.
         *   **CRITICAL SAFEGUARD:** The UI must disable the deactivate action for the currently logged-in administrator's own account.
 
