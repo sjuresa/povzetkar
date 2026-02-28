@@ -35,7 +35,7 @@ Returns the profile and effective permissions for the currently authenticated us
 ```
 
 ### 2.2. Logout
-**`POST /api/v1/auth/logout`** (or `/api/v1/users/logout` per spec)
+**`POST /api/v1/auth/logout`**
 Invalidates the HTTP-only session cookie.
 **Response (200 OK):**
 ```json
@@ -112,7 +112,7 @@ Manually triggers a briefing generation for the topic.
   "briefingText": "# Full Markdown Body\n...",
   "sources": [
     {
-      "contentItemId": 999,
+      "id": 999,
       "title": "State of AI 2023",
       "url": "https://youtube.com/watch?v=..."
     }
@@ -142,21 +142,24 @@ Manually triggers a briefing generation for the topic.
 *(Backend Implementation Note: The DTO mapper must dynamically construct the `url` string by combining the base platform URL (e.g., `https://youtube.com/channel/`) with the persistent `sourceIdentifier`.)*
 
 **`GET /api/v1/sources/{id}/items`**
-List individual pieces of content under a source.
+List individual pieces of content under a source (Supports pagination).
 **Response (200 OK):**
 ```json
-[
-  {
-    "id": 305,
-    "title": "New AI Models compared",
-    "sourceUrl": "https://www.youtube.com/watch?v=dSC1mmt-yEE",
-    "publishedAt": "2023-10-24T10:00:00Z",
-    "processingStatus": "COMPLETED",
-    "errorCode": null,
-    "durationSeconds": 600,
-    "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
-  }
-]
+{
+  "items": [
+    {
+      "id": 305,
+      "title": "New AI Models compared",
+      "sourceUrl": "https://www.youtube.com/watch?v=dSC1mmt-yEE",
+      "publishedAt": "2023-10-24T10:00:00Z",
+      "processingStatus": "COMPLETED",
+      "errorCode": null,
+      "durationSeconds": 600,
+      "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
+    }
+  ],
+  "totalCount": 1
+}
 ```
 *(Backend Implementation Note: The base `ContentItem` does not contain `durationSeconds` or `thumbnailUrl`. The DTO mapper must check if the item is an `instanceof YouTubeVideo` to extract the `duration` and construct the `thumbnailUrl` using the `videoId`.)*
 
