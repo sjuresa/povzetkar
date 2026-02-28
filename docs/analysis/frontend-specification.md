@@ -31,7 +31,7 @@ This document outlines the requirements and specifications for the standalone fr
 
 ## 3. Authentication & Routing
 
-*   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and manages the resulting session (e.g., storing a secure HTTP-only cookie or JWT, depending on API implementation).
+*   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
 *   **Protected Routes:** All routes except `/login` require a valid session. If unauthenticated, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
 
@@ -113,17 +113,17 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 
 ### 5.1. UI Behavior Rules Matrix
 
-| UI Component / Action | Required Permission Key | Behavior if Missing |
-| :--- | :--- | :--- |
-| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW` | Return 403 / Hide from Sidebar Nav |
-| "Create Topic" Button | `TOPIC_CREATE` | Render disabled with tooltip "No permission" |
-| "Edit" Button on Topic row | `TOPIC_UPDATE` | Render disabled with tooltip "No permission" |
-| "Delete" Button on Topic row| `TOPIC_DELETE` | Render disabled with tooltip "No permission" |
-| "Trigger Run" on Topic row | `TOPIC_TRIGGER_RUN` | Render disabled with tooltip "No permission" |
-| "Add Source" Button | `SOURCE_CREATE` | Render disabled with tooltip "No permission" |
-| View Users List (`/users`) | `USER_MGMT_VIEW` | Return 403 / Hide from Sidebar Nav |
-| "Edit User" / "Assign Role" | `USER_MGMT_UPDATE` | Render disabled with tooltip "No permission" |
-| System Control Buttons (Admin) | `ADMIN_SYSTEM_TRIGGER` | Render disabled with tooltip "No permission" |
+| UI Component / Action           | Required Permission Key | Behavior if Missing                          |
+|:--------------------------------|:------------------------|:---------------------------------------------|
+| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Return 403 / Hide from Sidebar Nav           |
+| "Create Topic" Button           | `TOPIC_CREATE`          | Render disabled with tooltip "No permission" |
+| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render disabled with tooltip "No permission" |
+| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render disabled with tooltip "No permission" |
+| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render disabled with tooltip "No permission" |
+| "Add Source" Button             | `SOURCE_CREATE`         | Render disabled with tooltip "No permission" |
+| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Return 403 / Hide from Sidebar Nav           |
+| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip "No permission" |
+| System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip "No permission" |
 
 ## 6. Frontend Stack & Technical Constraints
 *(To be decided by the frontend team, but recommendations for interfacing with this generic spec):*
