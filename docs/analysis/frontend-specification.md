@@ -33,6 +33,7 @@ This document outlines the requirements and specifications for the standalone fr
 ## 3. Authentication & Routing
 
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
+*   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. The frontend relies on the backend to handle any necessary OIDC provider logout mechanics. Upon a successful response, the frontend redirects the user to the public Landing Page.
 *   **CSRF Protection:** For all state-changing requests (e.g., `POST`, `PUT`, `DELETE`), the frontend MUST include a CSRF token. This token will be provided by the backend (e.g., in a cookie) and must be sent back in a custom HTTP header to prevent CSRF attacks.
 *   **Protected Routes:** All routes except `/login` require a valid session. If unauthenticated, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
@@ -122,11 +123,17 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 | UI Component / Action           | Required Permission Key | Behavior if Missing                          |
 |:--------------------------------|:------------------------|:---------------------------------------------|
 | Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)  |
+| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)  |
 | "Create Topic" Button           | `TOPIC_CREATE`          | Render disabled with tooltip "No permission" |
 | "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render disabled with tooltip "No permission" |
 | "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render disabled with tooltip "No permission" |
 | "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render disabled with tooltip "No permission" |
+| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)  |
+| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)  |
 | "Add Source" Button             | `SOURCE_CREATE`         | Render disabled with tooltip "No permission" |
+| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render disabled with tooltip "No permission" |
+| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render disabled with tooltip "No permission" |
+| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render disabled with tooltip "No permission" |
 | View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)  |
 | "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render disabled with tooltip "No permission" |
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render disabled with tooltip "No permission" |
