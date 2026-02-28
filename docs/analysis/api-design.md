@@ -179,7 +179,7 @@ Manually triggers a briefing generation for the topic.
 ```
 *(Note: `description` and `subscriberCount` are typically fetched by the backend during sync, not provided via POST).*
 
-**`PUT /api/v1/sources/{id}`**
+**`PATCH /api/v1/sources/{id}`**
 **Request Body:**
 ```json
 {
