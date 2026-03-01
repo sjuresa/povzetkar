@@ -14,7 +14,7 @@ This document defines the REST API contract required to support the capabilities
 ### 1.1 Data Transfer Objects (DTO) vs. Entities
 **CRITICAL ARCHITECTURAL DECISION:** This API strictly follows the **Backend-For-Frontend (BFF)** pattern. The returned JSON payloads below **do not represent 1:1 mappings of the internal Java Database Entities (e.g., `Briefing.java`, `ContentSource.java`).** Exposing raw JPA entities to the frontend couples the UI to the database schema, exposing internal state and creating over-fetching.
 Instead, the backend implementation (Task 4) MUST utilize Data Transfer Objects (DTOs) and mappers (e.g., MapStruct) to transform data:
-*   **Computed Fields:** UI elements like `status` on a `ContentSource` or `briefingText` on a `Briefing` may not exist in the database. The backend is tasked with calculating these dynamically on read (e.g., deriving `status` from recent `ContentProcessingError` logs, or assembling `briefingText` by concatenating `Briefing.metaSummary` with all associated `Summary.summaryText` entries).
+*   **Computed Fields:** UI elements like `status` on a `ContentSource` or `briefingText` on a `Briefing` may not exist in the database. The backend is tasked with calculating these dynamically on read (e.g., deriving `status` from recent `ContentProcessingError` logs, or assembling `briefingText` by concatenating only the associated `Summary.summaryText` entries).
 
 ## 2. Authentication & Identity (`/api/v1/auth` & `/api/v1/users/me`)
 
