@@ -110,7 +110,7 @@ Manually triggers a briefing generation for the topic.
 ### 3.2. Briefings (`/api/v1/briefings`)
 *Required Permission: `BRIEFING_VIEW`*
 
-**`GET /api/v1/briefings`** (Supports filtering by `topicId`)
+**`GET /api/v1/briefings`** (Supports filtering by `topicId`, `startDate=YYYY-MM-DD`, and `endDate=YYYY-MM-DD`)
 **Response (200 OK):**
 ```json
 {
@@ -265,7 +265,7 @@ Returns roles available for assignment.
   "roleIds": [1, 2]
 }
 ```
-*Note: Backend will return 400/403 if modifying these roles results in the "Last Administrator" lockout scenario.*
+*Note: Backend will return 409 Conflict if modifying these roles results in the "Last Administrator" lockout scenario.*
 
 **`PATCH /api/v1/users/{id}`**
 Deactivate or ban a user.
@@ -286,7 +286,17 @@ Deactivate or ban a user.
   "jobType": "SYNC_YOUTUBE_FEEDS" // Enum: SYNC_YOUTUBE_FEEDS, GENERATE_BRIEFINGS, etc.
 }
 ```
-**Response (202 Accepted):** Returns job tracking ID or acknowledgement.
+**Response (202 Accepted):** Returns initial job state and `Location` header (e.g., `/api/v1/admin/jobs/{jobId}`).
+```json
+{
+  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "jobType": "SYNC_YOUTUBE_FEEDS",
+  "status": "QUEUED",
+  "startedAt": null,
+  "endedAt": null,
+  "errorMessage": null
+}
+```
 
 **`GET /api/v1/admin/jobs`**
 Gets paginated list of background job executions. Supports query parameters `?status=RUNNING,COMPLETED,FAILED` and pagination `?page=0&size=20`.
