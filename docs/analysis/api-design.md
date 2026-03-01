@@ -9,7 +9,7 @@ This document defines the REST API contract required to support the capabilities
 *   **Authorization:** Endpoints enforce PBAC; unauthorized access returns `403 Forbidden`. Unauthenticated access returns `401 Unauthorized`.
 *   **Error Format:** Standard `ProblemDetail` (RFC 7807) format for `400 Bad Request` and other errors.
 *   **Date/Time Format:** ISO-8601 (e.g., `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm:ssZ`).
-*   **Pagination:** All list endpoints support pagination via `?page=<number>&size=<number>` query parameters. Responses for paginated lists will include `items` and `totalCount`.
+*   **Pagination:** All list endpoints support 0-indexed pagination via `?page=<number>&size=<number>` query parameters. Responses for paginated lists will include `items` and `totalCount`.
 
 ### 1.1 Data Transfer Objects (DTO) vs. Entities
 **CRITICAL ARCHITECTURAL DECISION:** This API strictly follows the **Backend-For-Frontend (BFF)** pattern. The returned JSON payloads below **do not represent 1:1 mappings of the internal Java Database Entities (e.g., `Briefing.java`, `ContentSource.java`).** Exposing raw JPA entities to the frontend couples the UI to the database schema, exposing internal state and creating over-fetching.
@@ -88,7 +88,7 @@ Invalidates the HTTP-only session cookie.
   "enabled": false
 }
 ```
-**Response (200 OK):** Returns the updated topic object.
+**Response (200 OK):** Returns the updated topic object. *(Note: PUT acts as a full replacement. Any omitted fields will be reset to their default values or `null`.)*
 
 **`PATCH /api/v1/topics/{id}`**
 **Request Body:**
