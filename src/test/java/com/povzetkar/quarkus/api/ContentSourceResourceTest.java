@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.api;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
@@ -95,7 +98,7 @@ class ContentSourceResourceTest {
     }
 
     private User createUser(String name, String username) {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.name = name;
         user.username = username;
         user.email = username + "@example.com";
@@ -105,7 +108,7 @@ class ContentSourceResourceTest {
     }
 
     private Topic createTopic(User user) {
-        Topic topic = new Topic();
+        Topic topic = TopicBuilder.aTopic().build();
         topic.name = TEST_TOPIC_NAME;
         topic.user = user;
         em.persist(topic);
@@ -114,7 +117,7 @@ class ContentSourceResourceTest {
     }
 
     private ContentSource createContentSource(String sourceIdentifier, String name, String description) {
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = sourceIdentifier;
         contentSource.sourceTypeId = DEFAULT_SOURCE_TYPE_ID;
         contentSource.name = name;
@@ -160,7 +163,7 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testCreateContentSource_Success() {
-        ContentSource newContentSource = new ContentSource();
+        ContentSource newContentSource = ContentSourceBuilder.aContentSource().build();
         newContentSource.sourceIdentifier = "new-source-id-" + UUID.randomUUID();
         newContentSource.sourceTypeId = 2;
         newContentSource.name = "New Content Source";
@@ -215,7 +218,7 @@ class ContentSourceResourceTest {
 
     @Test
     void testCreateContentSource_Conflict() {
-        ContentSource duplicateContentSource = new ContentSource();
+        ContentSource duplicateContentSource = ContentSourceBuilder.aContentSource().build();
         duplicateContentSource.sourceIdentifier = TEST_CONTENT_SOURCE_ID_PREFIX + 0;
         duplicateContentSource.sourceTypeId = 1;
         duplicateContentSource.name = "Duplicate Content Source";
@@ -252,7 +255,7 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_NotFound() {
-        ContentSource nonExistentContentSource = new ContentSource();
+        ContentSource nonExistentContentSource = ContentSourceBuilder.aContentSource().build();
         nonExistentContentSource.id = 99999L;
         nonExistentContentSource.sourceIdentifier = "non-existent";
         nonExistentContentSource.sourceTypeId = 1;

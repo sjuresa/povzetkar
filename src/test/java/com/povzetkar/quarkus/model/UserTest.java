@@ -1,4 +1,6 @@
 package com.povzetkar.quarkus.model;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -19,7 +21,7 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithNullNameThrowsException() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "testuser_nullname";
         user.email = "testuser_nullname@example.com";
         user.active = true;
@@ -32,13 +34,13 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithDuplicateUsernameThrowsException() {
-        User user1 = new User();
+        User user1 = UserBuilder.aUser().build();
         user1.username = "duplicate_user";
         user1.email = "duplicate_user1@example.com";
         user1.name = "User One";
         persistAndFlush(user1);
 
-        User user2 = new User();
+        User user2 = UserBuilder.aUser().build();
         user2.username = "duplicate_user";
         user2.email = "duplicate_user2@example.com";
         user2.name = "User Two";
@@ -50,13 +52,13 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithDuplicateEmailThrowsException() {
-        User user1 = new User();
+        User user1 = UserBuilder.aUser().build();
         user1.username = "user1";
         user1.email = "duplicate_email@example.com";
         user1.name = "User One";
         persistAndFlush(user1);
 
-        User user2 = new User();
+        User user2 = UserBuilder.aUser().build();
         user2.username = "user2";
         user2.email = "duplicate_email@example.com";
         user2.name = "User Two";
@@ -68,7 +70,7 @@ class UserTest {
     @Test
     @Transactional
     void testUserActiveDefaultValue() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "testuser_active";
         user.email = "testuser_active@example.com";
         user.name = "Test User";
@@ -82,7 +84,7 @@ class UserTest {
     @Test
     @Transactional
     void testPersistAndRetrieveUser() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "testuser_retrieve";
         user.email = "testuser_retrieve@example.com";
         user.name = "Another Test User";
@@ -102,18 +104,18 @@ class UserTest {
     @Test
     @Transactional
     void testUserHasTopics() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "user_with_topics";
         user.email = "user_with_topics@example.com";
         user.name = "User With Topics";
         persistAndFlush(user);
 
-        Topic topic1 = new Topic();
+        Topic topic1 = TopicBuilder.aTopic().build();
         topic1.name = "Topic 1";
         topic1.user = user;
         em.persist(topic1);
 
-        Topic topic2 = new Topic();
+        Topic topic2 = TopicBuilder.aTopic().build();
         topic2.name = "Topic 2";
         topic2.user = user;
         em.persist(topic2);
@@ -135,7 +137,7 @@ class UserTest {
         Role role = new Role("test_role");
         em.persist(role);
 
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "user_with_roles";
         user.email = "user_with_roles@example.com";
         user.name = "User With Roles";

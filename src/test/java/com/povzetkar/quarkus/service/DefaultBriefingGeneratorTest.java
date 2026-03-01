@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.*;
@@ -42,19 +45,19 @@ class DefaultBriefingGeneratorTest {
         // Clean up database before each test to ensure isolation
         tearDown();
 
-        User testUser = new User();
+        User testUser = UserBuilder.aUser().build();
         testUser.username = "test_user";
         testUser.email = "test_user@example.com";
         testUser.name = "Test User";
         testUser.active = true;
         testUser.persist();
 
-        testTopic = new Topic();
+        testTopic = TopicBuilder.aTopic().build();
         testTopic.name = "Test Topic";
         testTopic.user = testUser;
         testTopic.persist();
 
-        testContentSource = new ContentSource();
+        testContentSource = ContentSourceBuilder.aContentSource().build();
         testContentSource.sourceIdentifier = "test_source";
         testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         testContentSource.name = "Test Source";

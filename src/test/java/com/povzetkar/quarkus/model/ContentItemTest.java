@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.model;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.transaction.Transactional;
@@ -15,7 +16,7 @@ class ContentItemTest {
     @Test
     @Transactional
     void testPrePersistSetsCreatedAtAndProcessingStatus() {
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "testContentSourceId" +  UUID.randomUUID();
         contentSource.sourceTypeId = 1;
         contentSource.name = "Test ContentSource";
@@ -39,7 +40,7 @@ class ContentItemTest {
     @Test
     @Transactional
     void testContentItemRelationships() {
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "contentSource456-" + UUID.randomUUID();
         contentSource.sourceTypeId = 1;
         contentSource.name = "Another ContentSource";

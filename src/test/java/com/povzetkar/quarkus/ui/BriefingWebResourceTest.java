@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.ui;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
@@ -34,7 +37,7 @@ class BriefingWebResourceTest {
         // Ensure a clean slate before creating new data
         tearDown();
 
-        User testUser = new User();
+        User testUser = UserBuilder.aUser().build();
         testUser.name = "Povzetkar AI";
         testUser.username = "briefing_test_user";
         testUser.email = "briefing_test_user@example.com";
@@ -42,13 +45,13 @@ class BriefingWebResourceTest {
         testUser.persist();
 
         // Create test topic
-        Topic testTopic = new Topic();
+        Topic testTopic = TopicBuilder.aTopic().build();
         testTopic.name = "Kripto";
         testTopic.user = testUser;
         testTopic.persist();
 
         // Create test content source
-        ContentSource testContentSource = new ContentSource();
+        ContentSource testContentSource = ContentSourceBuilder.aContentSource().build();
         testContentSource.name = "Test Source";
         testContentSource.sourceIdentifier = "test-source-id"; // Corrected field name
         testContentSource.sourceTypeId = com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId();

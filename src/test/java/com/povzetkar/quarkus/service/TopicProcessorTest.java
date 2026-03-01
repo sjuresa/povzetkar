@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -70,18 +73,18 @@ class TopicProcessorTest {
         }).when(managedExecutor).runAsync(any(Runnable.class));
 
         // Setup common test data
-        testUser = new User();
+        testUser = UserBuilder.aUser().build();
         testUser.id = 1L;
         testUser.name = "Test User";
         testUser.username = "test_user";
         testUser.email = "test_user@example.com";
         testUser.active = true;
 
-        testTopic = new Topic();
+        testTopic = TopicBuilder.aTopic().build();
         testTopic.id = 1L;
         testTopic.name = "Test Topic";
         testTopic.user = testUser;
-        testContentSource = new ContentSource();
+        testContentSource = ContentSourceBuilder.aContentSource().build();
         testContentSource.id = 1L;
         testContentSource.name = "Test Content Source";
         Set<ContentSource> contentSources = new HashSet<>();

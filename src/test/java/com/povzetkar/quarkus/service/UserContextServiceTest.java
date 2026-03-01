@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
@@ -44,7 +45,7 @@ class UserContextServiceTest {
     @Test
     @Transactional
     void ensureUser_ExistingIdentity_ReturnsUser() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "testuser";
         user.email = "test@example.com";
         user.name = "Test User";
@@ -65,7 +66,7 @@ class UserContextServiceTest {
     @Test
     @Transactional
     void ensureUser_ExistingUserByEmail_LinksIdentityAndReturnsUser() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "testuser";
         user.email = "test@example.com";
         user.name = "Test User";

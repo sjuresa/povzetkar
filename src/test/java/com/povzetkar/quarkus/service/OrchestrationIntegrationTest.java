@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.google.genai.errors.ApiException;
 import com.povzetkar.quarkus.ai.GenAiClient;
@@ -65,19 +68,19 @@ class OrchestrationIntegrationTest {
     }
 
     void setupTestData() {
-        User testUser = new User();
+        User testUser = UserBuilder.aUser().build();
         testUser.username = "orchestration_test_user";
         testUser.email = "orchestration_test_user@example.com";
         testUser.name = "Test User";
         testUser.active = true;
         testUser.persist();
 
-        Topic testTopic = new Topic();
+        Topic testTopic = TopicBuilder.aTopic().build();
         testTopic.name = "Default Topic";
         testTopic.user = testUser;
         testTopic.persist();
 
-        ContentSource testContentSource = new ContentSource();
+        ContentSource testContentSource = ContentSourceBuilder.aContentSource().build();
         testContentSource.sourceIdentifier = "orchestration_test_channel_id";
         testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         testContentSource.name = "Test Channel";

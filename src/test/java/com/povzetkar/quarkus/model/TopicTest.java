@@ -1,4 +1,6 @@
 package com.povzetkar.quarkus.model;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -27,14 +29,14 @@ class TopicTest {
     @Test
     @Transactional
     void testSameTopicNameForDifferentUsers() {
-        User user1 = new User();
+        User user1 = UserBuilder.aUser().build();
         user1.username = "user1-" + UUID.randomUUID();
         user1.email = user1.username + "@example.com";
         user1.name = "User 1-" + UUID.randomUUID();
         em.persist(user1);
         user1Id = user1.id;
 
-        User user2 = new User();
+        User user2 = UserBuilder.aUser().build();
         user2.username = "user2-" + UUID.randomUUID();
         user2.email = user2.username + "@example.com";
         user2.name = "User 2-" + UUID.randomUUID();
@@ -44,13 +46,13 @@ class TopicTest {
         uniqueSharedName = "shared-name-" + UUID.randomUUID();
 
         assertDoesNotThrow(() -> {
-            Topic topic1 = new Topic();
+            Topic topic1 = TopicBuilder.aTopic().build();
             topic1.name = uniqueSharedName;
             topic1.user = user1;
             em.persist(topic1);
             em.flush(); // Force the insert to happen now
 
-            Topic topic2 = new Topic();
+            Topic topic2 = TopicBuilder.aTopic().build();
             topic2.name = uniqueSharedName;
             topic2.user = user2;
             em.persist(topic2);
@@ -61,7 +63,7 @@ class TopicTest {
     @Test
     @Transactional
     void testSameTopicNameForSameUserThrowsException() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "singleuser-" + UUID.randomUUID();
         user.email = user.username + "@example.com";
         user.name = "Single User-" + UUID.randomUUID();
@@ -70,13 +72,13 @@ class TopicTest {
 
         uniqueName = "unique-name-" + UUID.randomUUID();
 
-        Topic topic1 = new Topic();
+        Topic topic1 = TopicBuilder.aTopic().build();
         topic1.name = uniqueName;
         topic1.user = user;
         em.persist(topic1);
         em.flush(); // Ensure the first topic is persisted
 
-        Topic topic2 = new Topic();
+        Topic topic2 = TopicBuilder.aTopic().build();
         topic2.name = uniqueName;
         topic2.user = user;
 

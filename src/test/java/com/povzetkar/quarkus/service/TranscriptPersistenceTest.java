@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.google.genai.types.Content;
 import com.povzetkar.quarkus.ai.GenAiClient;
@@ -46,18 +49,18 @@ class TranscriptPersistenceTest {
     @BeforeEach
     @Transactional
     void setUp() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "testuser";
         user.email = "testuser@example.com";
         user.name = "Test User";
         user.persist();
 
-        Topic topic = new Topic();
+        Topic topic = TopicBuilder.aTopic().build();
         topic.name = "Test Topic";
         topic.user = user;
         topic.persist();
 
-        ContentSource source = new ContentSource();
+        ContentSource source = ContentSourceBuilder.aContentSource().build();
         source.sourceIdentifier = "test_channel";
         source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         source.name = "Test Channel";

@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.model.Channel;
@@ -49,7 +50,7 @@ class YouTubeContentFetcherServiceTest {
     @BeforeEach
     void setUp() {
         Mockito.reset(youTubeDataApiClient);
-        contentSource = new ContentSource();
+        contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "UC_testChannelId";
         contentSource.name = "Test Channel";
         fetchDate = LocalDate.of(2025, 10, 26);

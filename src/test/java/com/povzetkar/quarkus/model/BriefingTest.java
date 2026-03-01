@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.model;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.transaction.Transactional;
@@ -19,7 +22,7 @@ class BriefingTest {
     @Transactional
     void testBriefingPersistence() {
         // Create a User dependency
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "test_user_briefing_" + UUID.randomUUID();
         user.email = user.username + "@example.com";
         user.name = "Test User";
@@ -27,13 +30,13 @@ class BriefingTest {
         user.persist();
 
         // Create a Topic dependency
-        Topic topic = new Topic();
+        Topic topic = TopicBuilder.aTopic().build();
         topic.name = "Test Topic";
         topic.user = user;
         topic.persist();
 
         // Create a ContentSource dependency
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "test_briefing_source_id";
         contentSource.sourceTypeId = 2; // Assuming a valid source type ID exists
         contentSource.name = "Test Briefing Source";

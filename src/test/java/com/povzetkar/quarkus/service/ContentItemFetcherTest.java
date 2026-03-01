@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -45,7 +46,7 @@ class ContentItemFetcherTest {
     @Test
     void testFetchItemsForYouTubeContentSource() {
         // Given
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         LocalDate fetchDate = LocalDate.now();
         Long maxTotal = 10L;
@@ -73,7 +74,7 @@ class ContentItemFetcherTest {
     @Test
     void testFetchItemsForOtherContentSource() {
         // Given
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceTypeId = OTHER_SOURCE_TYPE_ID;
         LocalDate fetchDate = LocalDate.now();
         Long maxTotal = 10L;

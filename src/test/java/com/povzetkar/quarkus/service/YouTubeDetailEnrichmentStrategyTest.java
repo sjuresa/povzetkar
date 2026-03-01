@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.ChannelSnippet;
@@ -57,11 +58,11 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testEnrichContentSources_success() throws IOException {
         // Given
-        ContentSource source1 = new ContentSource();
+        ContentSource source1 = ContentSourceBuilder.aContentSource().build();
         source1.sourceIdentifier = "channel1";
         source1.name = ""; // Missing detail
         source1.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        ContentSource source2 = new ContentSource();
+        ContentSource source2 = ContentSourceBuilder.aContentSource().build();
         source2.sourceIdentifier = "channel2";
         source2.name = ""; // Missing detail
         source2.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
@@ -93,11 +94,11 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testRefreshContentSources_success() throws IOException {
         // Given
-        ContentSource source1 = new ContentSource();
+        ContentSource source1 = ContentSourceBuilder.aContentSource().build();
         source1.sourceIdentifier = "channel1";
         source1.name = "Old Name One";
         source1.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        ContentSource source2 = new ContentSource();
+        ContentSource source2 = ContentSourceBuilder.aContentSource().build();
         source2.sourceIdentifier = "channel2";
         source2.name = "Old Name Two";
         source2.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
@@ -127,7 +128,7 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testEnrichContentSources_apiError() throws IOException {
         // Given
-        ContentSource source1 = new ContentSource();
+        ContentSource source1 = ContentSourceBuilder.aContentSource().build();
         source1.sourceIdentifier = "channel1";
         source1.name = "";
         source1.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();

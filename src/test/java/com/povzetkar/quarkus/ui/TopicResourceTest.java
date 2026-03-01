@@ -1,4 +1,6 @@
 package com.povzetkar.quarkus.ui;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
@@ -35,14 +37,14 @@ class TopicResourceTest {
         tearDown();
 
         QuarkusTransaction.requiringNew().run(() -> {
-            testUser = new User();
+            testUser = UserBuilder.aUser().build();
             testUser.name = "Test User";
             testUser.username = "topic_resource_test_user";
             testUser.email = "topic_resource_test_user@example.com";
             testUser.active = true;
             testUser.persist();
 
-            testTopic = new Topic();
+            testTopic = TopicBuilder.aTopic().build();
             testTopic.name = "Crypto";
             testTopic.user = testUser;
             testTopic.persist();
@@ -140,7 +142,7 @@ class TopicResourceTest {
     void testAccessOtherUserTopic_returns404() {
         // Create another user and topic
         QuarkusTransaction.requiringNew().run(() -> {
-            User anotherUser = new User();
+            User anotherUser = UserBuilder.aUser().build();
             anotherUser.name = "Another User";
             anotherUser.username = "another_user";
             anotherUser.email = "another_user@example.com";

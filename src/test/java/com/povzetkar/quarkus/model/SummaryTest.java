@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.model;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.persistence.PersistenceException;
@@ -17,7 +18,7 @@ class SummaryTest {
     @Transactional
     void testSummaryPersistence() {
         // Create a ContentSource dependency
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "test_source_id";
         contentSource.sourceTypeId = 1; // Assuming a valid source type ID exists
         contentSource.name = "Test Source";
@@ -56,7 +57,7 @@ class SummaryTest {
     @Transactional
     void testSummaryPersistence_DuplicateContentItemFails() {
         // Create a ContentSource dependency
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "test_source_id_duplicate";
         contentSource.sourceTypeId = 1;
         contentSource.name = "Test Source Duplicate";

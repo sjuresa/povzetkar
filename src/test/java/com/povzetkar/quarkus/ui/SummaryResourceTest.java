@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.ui;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
@@ -33,19 +36,19 @@ class SummaryResourceTest {
         // Clean up to ensure isolation
         tearDown();
 
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "summary_test_user";
         user.email = "test@example.com";
         user.name = "Test User";
         user.active = true;
         user.persist();
 
-        Topic topic = new Topic();
+        Topic topic = TopicBuilder.aTopic().build();
         topic.name = "Test Topic";
         topic.user = user;
         topic.persist();
 
-        ContentSource cs = new ContentSource();
+        ContentSource cs = ContentSourceBuilder.aContentSource().build();
         cs.sourceIdentifier = "test-cs";
         cs.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         cs.name = "Test Content Source";

@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -64,7 +65,7 @@ class YouTubeFetchingStrategyTest {
     @Test
     void fetch_shouldPersistOnlyNewVideosInBatch() throws IOException {
         // Given
-        ContentSource source = new ContentSource();
+        ContentSource source = ContentSourceBuilder.aContentSource().build();
         source.name = "Test Source";
         source.sourceIdentifier = "test-source-id";
         source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
@@ -114,7 +115,7 @@ class YouTubeFetchingStrategyTest {
     @Test
     void testFetch_shouldMarkShortVideosAsSkipped() throws IOException {
         // Given
-        ContentSource source = new ContentSource();
+        ContentSource source = ContentSourceBuilder.aContentSource().build();
         source.name = "Test Source";
         source.sourceIdentifier = "test-source-id";
         source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();

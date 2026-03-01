@@ -1,4 +1,7 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.api.OrchestrationRequest;
@@ -90,7 +93,7 @@ class OrchestrationManagerTest {
     }
 
     private User setupUser() {
-        User user = new User();
+        User user = UserBuilder.aUser().build();
         user.username = "test_user";
         user.email = "test_user@example.com";
         user.name = "Test User";
@@ -99,7 +102,7 @@ class OrchestrationManagerTest {
     }
 
     private Topic setupTopic(User user) {
-        Topic topic = new Topic();
+        Topic topic = TopicBuilder.aTopic().build();
         topic.name = "Test Topic";
         topic.user = user;
         topic.enabled = true;
@@ -107,7 +110,7 @@ class OrchestrationManagerTest {
     }
 
     private ContentSource setupContentSource() {
-        ContentSource contentSource = new ContentSource();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         contentSource.sourceIdentifier = "test_source";
         contentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
         contentSource.name = "Test Channel";
