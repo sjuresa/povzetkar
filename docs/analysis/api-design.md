@@ -156,7 +156,7 @@ Manually triggers a briefing generation for the topic.
   "items": [
     {
       "id": 201,
-      "platform": "YOUTUBE",
+      "platform": "YOUTUBE", // Enum: YOUTUBE, BLOG
       "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
       "name": "MrBeast Tech",
       "description": "Tech reviews and experiments",
@@ -173,7 +173,7 @@ Manually triggers a briefing generation for the topic.
 **Request Body:**
 ```json
 {
-  "platform": "YOUTUBE",
+  "platform": "YOUTUBE", // Enum: YOUTUBE, BLOG
   "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
   "name": "MrBeast Tech"
 }
@@ -202,7 +202,7 @@ List individual pieces of content under a source (Supports pagination).
       "title": "New AI Models compared",
       "sourceUrl": "https://www.youtube.com/watch?v=dSC1mmt-yEE",
       "publishedAt": "2023-10-24T10:00:00Z",
-      "processingStatus": "COMPLETED",
+      "processingStatus": "COMPLETED", // Enum: PENDING, COMPLETED, FAILED, RETRY_LATER, IGNORED, SKIPPED_TOO_SHORT
       "errorCode": null,
       "durationSeconds": 600,
       "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
@@ -225,7 +225,7 @@ List individual pieces of content under a source (Supports pagination).
       "id": 1,
       "name": "System Admin",
       "email": "admin@example.com",
-      "authProvider": "GOOGLE",
+      "authProvider": "GOOGLE", // e.g., GOOGLE, LOCAL
       "active": true,
       "roles": ["ADMIN"]
     }
@@ -272,7 +272,7 @@ Deactivate or ban a user.
 **Request Body:**
 ```json
 {
-  "jobType": "SYNC_YOUTUBE_FEEDS"
+  "jobType": "SYNC_YOUTUBE_FEEDS" // Enum: SYNC_YOUTUBE_FEEDS, GENERATE_BRIEFINGS, etc.
 }
 ```
 **Response (202 Accepted):** Returns job tracking ID or acknowledgement.
@@ -285,8 +285,8 @@ Gets paginated list of background job executions. Supports query parameters `?st
   "items": [
     {
       "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-      "jobType": "SYNC_YOUTUBE_FEEDS",
-      "status": "RUNNING",
+      "jobType": "SYNC_YOUTUBE_FEEDS", // Enum: SYNC_YOUTUBE_FEEDS, GENERATE_BRIEFINGS, etc.
+      "status": "RUNNING", // Enum: RUNNING, COMPLETED, FAILED
       "startedAt": "2023-10-26T10:00:00Z",
       "endedAt": null,
       "errorMessage": null
