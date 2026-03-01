@@ -151,7 +151,7 @@ Manually triggers a briefing generation for the topic.
   ]
 }
 ```
-*(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` via `Briefing.getExecutiveSummary()` and dynamically assemble the full `briefingText` string by appending all related `Summary` markdown content below the `metaSummary`. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
+*(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` from `metaSummary` (e.g., via `Briefing.getExecutiveSummary()`) and assemble the `briefingText` string by concatenating only the related `Summary` markdown content. This avoids sending the executive summary content twice. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
 
 ### 3.3. Content Sources (`/api/v1/sources`)
 *Required Permission: `SOURCE_VIEW`, `SOURCE_CREATE`, `SOURCE_UPDATE`, `SOURCE_DELETE`*
@@ -187,6 +187,17 @@ Manually triggers a briefing generation for the topic.
 ```
 *(Note: `description` and `subscriberCount` are typically fetched by the backend during sync, not provided via POST).*
 **Response (201 Created):** Returns the created source object.
+
+**`PUT /api/v1/sources/{id}`**
+**Request Body:**
+```json
+{
+  "platform": "YOUTUBE",
+  "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+  "name": "MrBeast Tech"
+}
+```
+**Response (200 OK):** Returns the updated source object. *(Note: PUT acts as a full replacement. Any omitted fields will be reset to their default values or `null`.)*
 
 **`PATCH /api/v1/sources/{id}`**
 **Request Body:**
