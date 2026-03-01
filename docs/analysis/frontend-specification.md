@@ -35,7 +35,11 @@ This document outlines the requirements and specifications for the standalone fr
 ## 3. Authentication & Routing
 
 *   **Login Flow:** The app delegates auth to Google OIDC via the backend. The frontend handles redirects to the backend auth endpoint and relies on the browser's cookie management for the resulting session, which is established via a secure, HTTP-only cookie set by the backend.
-*   **Logout Flow:** When the user clicks "Logout", the frontend must call a specific backend endpoint (e.g., `POST /api/v1/users/logout`) to invalidate the session cookie on the server. To ensure a complete single sign-out experience, the backend will respond with a `200 OK` and include the OIDC provider's `end_session_endpoint` URL in the response payload. The frontend MUST clear all client-side user state (e.g., user object, local storage) and then redirect the user's browser to this OIDC provider URL to complete the sign-out process. If the backend call fails, the frontend should inform the user that the logout failed, explain that they may still be logged in on the server, and provide a clear 'Retry' action (e.g., a button within the notification toast or modal) to allow them to attempt the logout again securely.
+*   **Logout Flow:**
+    1.  The user clicks the "Logout" button in the Top App Bar.
+    2.  The frontend makes a `POST` request to the backend API (`/api/v1/auth/logout`).
+    3.  The backend invalidates the HTTP session/cookie and returns a 200 OK response, ideally including the OIDC provider's end-session endpoint URL if applicable.
+    4.  The frontend clears any local state (e.g., cached user data, tokens) to ensure a clean client-side state. It then redirects the user's browser to the OIDC provider's `end_session_endpoint` URL (if provided by the backend) to complete the single sign-out process. If the backend call fails, the frontend should inform the user that the logout failed, explain that they may still be logged in on the server, and provide a clear 'Retry' action (e.g., a button within the notification toast or modal) to allow them to attempt the logout again securely.
 *   **CSRF Protection:** The primary defense against CSRF attacks should leverage modern browser security by setting the `SameSite=Strict` (or `Lax`) attribute on the backend's session cookie. If this primary defense is insufficient for any scenario (e.g., due to cross-origin API calls with legacy support restrictions), a secondary mechanism like the double-submit token pattern via a custom HTTP header (e.g., `X-XSRF-TOKEN`) MUST be implemented to ensure complete protection.
 *   **Protected Routes:** All routes except for the public Landing Page (`/`) and Login (`/login`) require a valid session. If unauthenticated on a protected route, redirect to `/login`.
 *   **Route Guards (PBAC):** Routes must check `user.permissions` against required permissions (defined in section 5) before rendering.
@@ -60,13 +64,12 @@ This document outlines the requirements and specifications for the standalone fr
 
 ### 4.3. Topic Management (`/topics`)
 *   **List View:**
-    *   Data Table or Card Grid displaying: Name, Keywords (as badges/chips), Status (Active/Inactive), Last Run Date.
+    *   Data Table or Card Grid displaying: Name, Status (Active/Inactive), Last Run Date.
     *   Actions per row: Edit (opens modal or new page), Trigger Run (Icon button, disabled if running), Delete (Icon button).
     *   Empty State: Friendly message "No topics yet. Create your first topic to start gathering intelligence."
 *   **Create/Edit Modal or Page:**
     *   Fields: 
         *   `Name` (Text input, Required).
-        *   `Keywords` (Token/Chip input field - type and press enter to add, Required at least 1). The input must trim leading and trailing whitespace and **collapse multiple internal whitespace characters into a single space**. Additionally, to ensure a canonical format, keywords must be **normalized to lowercase** before validation and addition. It must prevent adding empty or duplicate keywords (e.g., if a user enters "AI", it is normalized to "ai", which would be blocked if "ai" already exists). Furthermore, to maintain data quality, the input should enforce a **character length constraint** (e.g., minimum 2, maximum 30 characters) and explicitly define an **allowed character set** (e.g., restricting input to alphanumeric characters, spaces, and hyphens) to prevent the inclusion of disruptive special characters.
         *   `Status` (Toggle/Switch).
     *   Must handle backend validation errors gracefully.
 
