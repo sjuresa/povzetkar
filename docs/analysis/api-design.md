@@ -142,12 +142,15 @@ Manually triggers a briefing generation for the topic.
     {
       "id": 999,
       "title": "State of AI 2023",
-      "sourceUrl": "https://youtube.com/watch?v=..."
+      "sourceUrl": "https://youtube.com/watch?v=...",
+      "publishedAt": "2023-10-24T10:00:00Z",
+      "durationSeconds": 600,
+      "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
     }
   ]
 }
 ```
-*(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` via `Briefing.getExecutiveSummary()` and dynamically assemble the full `briefingText` string by appending all related `Summary` markdown content below the `metaSummary`.)*
+*(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` via `Briefing.getExecutiveSummary()` and dynamically assemble the full `briefingText` string by appending all related `Summary` markdown content below the `metaSummary`. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
 
 ### 3.3. Content Sources (`/api/v1/sources`)
 *Required Permission: `SOURCE_VIEW`, `SOURCE_CREATE`, `SOURCE_UPDATE`, `SOURCE_DELETE`*
@@ -232,6 +235,9 @@ List individual pieces of content under a source (Supports pagination).
       "active": true,
       "roles": [
         { "id": 1, "name": "ADMIN" }
+      ],
+      "permissions": [
+        "TOPIC_VIEW", "TOPIC_CREATE", "USER_MGMT_UPDATE" // etc.
       ]
     }
   ],
