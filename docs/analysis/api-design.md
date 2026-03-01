@@ -79,6 +79,7 @@ Invalidates the HTTP-only session cookie.
   "name": "Future of Work"
 }
 ```
+**Response (201 Created):** Returns the created topic object.
 
 **`PUT /api/v1/topics/{id}`**
 **Request Body:**
@@ -185,6 +186,7 @@ Manually triggers a briefing generation for the topic.
 }
 ```
 *(Note: `description` and `subscriberCount` are typically fetched by the backend during sync, not provided via POST).*
+**Response (201 Created):** Returns the created source object.
 
 **`PATCH /api/v1/sources/{id}`**
 **Request Body:**
@@ -265,6 +267,7 @@ Returns roles available for assignment.
   "roleIds": [1, 2]
 }
 ```
+**Response (200 OK):** Returns the updated user object.
 *Note: Backend will return 409 Conflict if modifying these roles results in the "Last Administrator" lockout scenario.*
 
 **`PATCH /api/v1/users/{id}`**
@@ -275,6 +278,7 @@ Deactivate or ban a user.
   "active": false
 }
 ```
+**Response (200 OK):** Returns the updated user object.
 
 ### 3.5. Admin Command Center (`/api/v1/admin`)
 *Required Permission: `ADMIN_DASHBOARD_VIEW`, `ADMIN_SYSTEM_TRIGGER`, `ADMIN_JOB_UPDATE`*
