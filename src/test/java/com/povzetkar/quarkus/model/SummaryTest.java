@@ -57,10 +57,11 @@ class SummaryTest {
     @Transactional
     void testSummaryPersistence_DuplicateContentItemFails() {
         // Create a ContentSource dependency
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = "test_source_id_duplicate";
-        contentSource.sourceTypeId = 1;
-        contentSource.name = "Test Source Duplicate";
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+			.withSourceIdentifier("test_source_id_duplicate")
+			.withSourceTypeId(1)
+			.withName("Test Source Duplicate")
+			.build();
         contentSource.subscriberCount = 100;
         contentSource.persist();
 

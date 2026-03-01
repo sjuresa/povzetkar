@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.api;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -108,9 +109,10 @@ class ContentSourceResourceTest {
     }
 
     private Topic createTopic(User user) {
-        Topic topic = TopicBuilder.aTopic().build();
-        topic.name = TEST_TOPIC_NAME;
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+                .withName(TEST_TOPIC_NAME)
+                .withUser(user)
+                .build();
         em.persist(topic);
         createdTopicIds.add(topic.id);
         return topic;

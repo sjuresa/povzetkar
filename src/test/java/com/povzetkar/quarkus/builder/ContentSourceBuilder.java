@@ -1,13 +1,14 @@
 package com.povzetkar.quarkus.builder;
 
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.SourceTypeEnum;
 
 import java.util.UUID;
 
 public class ContentSourceBuilder {
 
     private String sourceIdentifier;
-    private int sourceTypeId = 1; // E.g., YOUTUBE
+    private int sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
     private String name;
     private String description;
     private int subscriberCount = 0;

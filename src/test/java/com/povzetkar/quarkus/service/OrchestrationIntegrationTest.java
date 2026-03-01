@@ -68,22 +68,25 @@ class OrchestrationIntegrationTest {
     }
 
     void setupTestData() {
-        User testUser = UserBuilder.aUser().build();
-        testUser.username = "orchestration_test_user";
-        testUser.email = "orchestration_test_user@example.com";
-        testUser.name = "Test User";
+        User testUser = UserBuilder.aUser()
+			.withUsername("orchestration_test_user")
+			.withEmail("orchestration_test_user@example.com")
+			.withName("Test User")
+			.build();
         testUser.active = true;
         testUser.persist();
 
-        Topic testTopic = TopicBuilder.aTopic().build();
-        testTopic.name = "Default Topic";
-        testTopic.user = testUser;
+        Topic testTopic = TopicBuilder.aTopic()
+			.withName("Default Topic")
+			.withUser(testUser)
+			.build();
         testTopic.persist();
 
-        ContentSource testContentSource = ContentSourceBuilder.aContentSource().build();
-        testContentSource.sourceIdentifier = "orchestration_test_channel_id";
-        testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        testContentSource.name = "Test Channel";
+        ContentSource testContentSource = ContentSourceBuilder.aContentSource()
+			.withSourceIdentifier("orchestration_test_channel_id")
+			.withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+			.withName("Test Channel")
+			.build();
         testContentSource.subscriberCount = 1000;
         testContentSource.persist();
 

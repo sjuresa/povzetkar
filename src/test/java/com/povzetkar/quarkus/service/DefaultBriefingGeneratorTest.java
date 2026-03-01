@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -52,15 +53,17 @@ class DefaultBriefingGeneratorTest {
         testUser.active = true;
         testUser.persist();
 
-        testTopic = TopicBuilder.aTopic().build();
-        testTopic.name = "Test Topic";
-        testTopic.user = testUser;
+        testTopic = TopicBuilder.aTopic()
+                .withName("Test Topic")
+                .withUser(testUser)
+                .build();
         testTopic.persist();
 
-        testContentSource = ContentSourceBuilder.aContentSource().build();
-        testContentSource.sourceIdentifier = "test_source";
-        testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        testContentSource.name = "Test Source";
+        testContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("test_source")
+                .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+                .withName("Test Source")
+                .build();
         testContentSource.persist();
 
         testTopic.contentSources.add(testContentSource);

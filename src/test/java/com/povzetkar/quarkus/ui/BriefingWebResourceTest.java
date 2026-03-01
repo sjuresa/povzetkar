@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.ui;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -37,17 +38,19 @@ class BriefingWebResourceTest {
         // Ensure a clean slate before creating new data
         tearDown();
 
-        User testUser = UserBuilder.aUser().build();
-        testUser.name = "Povzetkar AI";
-        testUser.username = "briefing_test_user";
-        testUser.email = "briefing_test_user@example.com";
+        User testUser = UserBuilder.aUser()
+			.withName("Povzetkar AI")
+			.withUsername("briefing_test_user")
+			.withEmail("briefing_test_user@example.com")
+			.build();
         testUser.active = true;
         testUser.persist();
 
         // Create test topic
-        Topic testTopic = TopicBuilder.aTopic().build();
-        testTopic.name = "Kripto";
-        testTopic.user = testUser;
+        Topic testTopic = TopicBuilder.aTopic()
+			.withName("Kripto")
+			.withUser(testUser)
+			.build();
         testTopic.persist();
 
         // Create test content source

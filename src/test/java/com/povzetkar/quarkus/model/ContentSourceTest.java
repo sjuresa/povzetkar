@@ -16,10 +16,11 @@ class ContentSourceTest {
     @Test
     @Transactional
     void testContentSourceDefaultsAndPrePersist() {
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = "testContentSourceId" + UUID.randomUUID();
-        contentSource.sourceTypeId = 1;
-        contentSource.name = "Test ContentSource";
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+			.withSourceIdentifier("testContentSourceId" + UUID.randomUUID())
+			.withSourceTypeId(1)
+			.withName("Test ContentSource")
+			.build();
         contentSource.description = "A test description";
         contentSource.persist();
 

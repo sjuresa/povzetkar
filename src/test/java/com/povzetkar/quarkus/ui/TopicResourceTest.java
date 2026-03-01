@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.ui;
+
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
 
@@ -37,16 +38,18 @@ class TopicResourceTest {
         tearDown();
 
         QuarkusTransaction.requiringNew().run(() -> {
-            testUser = UserBuilder.aUser().build();
-            testUser.name = "Test User";
-            testUser.username = "topic_resource_test_user";
-            testUser.email = "topic_resource_test_user@example.com";
+            testUser = UserBuilder.aUser()
+                    .withName("Test User")
+                    .withUsername("topic_resource_test_user")
+                    .withEmail("topic_resource_test_user@example.com")
+                    .build();
             testUser.active = true;
             testUser.persist();
 
-            testTopic = TopicBuilder.aTopic().build();
-            testTopic.name = "Crypto";
-            testTopic.user = testUser;
+            testTopic = TopicBuilder.aTopic()
+                    .withName("Crypto")
+                    .withUser(testUser)
+                    .build();
             testTopic.persist();
 
             testBriefing = new Briefing();

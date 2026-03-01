@@ -36,22 +36,25 @@ class SummaryResourceTest {
         // Clean up to ensure isolation
         tearDown();
 
-        User user = UserBuilder.aUser().build();
-        user.username = "summary_test_user";
-        user.email = "test@example.com";
-        user.name = "Test User";
+        User user = UserBuilder.aUser()
+			.withUsername("summary_test_user")
+			.withEmail("test@example.com")
+			.withName("Test User")
+			.build();
         user.active = true;
         user.persist();
 
-        Topic topic = TopicBuilder.aTopic().build();
-        topic.name = "Test Topic";
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+			.withName("Test Topic")
+			.withUser(user)
+			.build();
         topic.persist();
 
-        ContentSource cs = ContentSourceBuilder.aContentSource().build();
-        cs.sourceIdentifier = "test-cs";
-        cs.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        cs.name = "Test Content Source";
+        ContentSource cs = ContentSourceBuilder.aContentSource()
+			.withSourceIdentifier("test-cs")
+			.withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+			.withName("Test Content Source")
+			.build();
         cs.persist();
 
         ContentItem ci = new ContentItem();

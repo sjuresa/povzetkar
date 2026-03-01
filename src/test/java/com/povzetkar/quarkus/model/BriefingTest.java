@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.model;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -22,24 +23,28 @@ class BriefingTest {
     @Transactional
     void testBriefingPersistence() {
         // Create a User dependency
-        User user = UserBuilder.aUser().build();
-        user.username = "test_user_briefing_" + UUID.randomUUID();
-        user.email = user.username + "@example.com";
-        user.name = "Test User";
+        String username = "test_user_briefing_" + UUID.randomUUID();
+        User user = UserBuilder.aUser()
+                .withUsername(username)
+                .withEmail(username + "@example.com")
+                .withName("Test User")
+                .build();
         user.active = true;
         user.persist();
 
         // Create a Topic dependency
-        Topic topic = TopicBuilder.aTopic().build();
-        topic.name = "Test Topic";
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+                .withName("Test Topic")
+                .withUser(user)
+                .build();
         topic.persist();
 
         // Create a ContentSource dependency
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = "test_briefing_source_id";
-        contentSource.sourceTypeId = 2; // Assuming a valid source type ID exists
-        contentSource.name = "Test Briefing Source";
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("test_briefing_source_id")
+                .withSourceTypeId(2)
+                .withName("Test Briefing Source")
+                .build();
         contentSource.subscriberCount = 200;
         contentSource.persist();
 

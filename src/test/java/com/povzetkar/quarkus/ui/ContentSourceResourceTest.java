@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.ui;
+
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
 
@@ -32,17 +33,19 @@ class ContentSourceResourceTest {
         tearDown();
         QuarkusTransaction.requiringNew().run(() -> {
             // Data creation only
-            testUser = UserBuilder.aUser().build();
-            testUser.name = "testuser";
-            testUser.username = "cs_resource_test_user";
-            testUser.email = "cs_resource_test_user@example.com";
+            testUser = UserBuilder.aUser()
+                    .withName("testuser")
+                    .withUsername("cs_resource_test_user")
+                    .withEmail("cs_resource_test_user@example.com")
+                    .build();
             testUser.active = true;
             testUser.persist();
 
             // Create test topic
-            testTopic = TopicBuilder.aTopic().build();
-            testTopic.name = "Test Topic";
-            testTopic.user = testUser;
+            testTopic = TopicBuilder.aTopic()
+                    .withName("Test Topic")
+                    .withUser(testUser)
+                    .build();
             testTopic.persist();
         });
     }

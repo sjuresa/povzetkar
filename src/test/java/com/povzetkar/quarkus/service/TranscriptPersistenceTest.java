@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -49,21 +50,24 @@ class TranscriptPersistenceTest {
     @BeforeEach
     @Transactional
     void setUp() {
-        User user = UserBuilder.aUser().build();
-        user.username = "testuser";
-        user.email = "testuser@example.com";
-        user.name = "Test User";
+        User user = UserBuilder.aUser()
+			.withUsername("testuser")
+			.withEmail("testuser@example.com")
+			.withName("Test User")
+			.build();
         user.persist();
 
-        Topic topic = TopicBuilder.aTopic().build();
-        topic.name = "Test Topic";
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+			.withName("Test Topic")
+			.withUser(user)
+			.build();
         topic.persist();
 
-        ContentSource source = ContentSourceBuilder.aContentSource().build();
-        source.sourceIdentifier = "test_channel";
-        source.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        source.name = "Test Channel";
+        ContentSource source = ContentSourceBuilder.aContentSource()
+			.withSourceIdentifier("test_channel")
+			.withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+			.withName("Test Channel")
+			.build();
         source.persist();
 
         testVideo = new YouTubeVideo();

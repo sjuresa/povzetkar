@@ -40,9 +40,9 @@ public class TopicBuilder {
         Topic topic = new Topic();
         topic.name = this.name;
 
-        // Ensure a user always exists if not explicitly set
         if (this.user == null) {
-            this.user = UserBuilder.aUser().build();
+            throw new IllegalStateException(
+                    "A persisted User must be explicitly provided via .withUser() to avoid TransientPropertyValueException.");
         }
         topic.user = this.user;
 

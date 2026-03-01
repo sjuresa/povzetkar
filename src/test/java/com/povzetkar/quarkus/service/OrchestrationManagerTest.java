@@ -93,28 +93,30 @@ class OrchestrationManagerTest {
     }
 
     private User setupUser() {
-        User user = UserBuilder.aUser().build();
-        user.username = "test_user";
-        user.email = "test_user@example.com";
-        user.name = "Test User";
+        User user = UserBuilder.aUser()
+			.withUsername("test_user")
+			.withEmail("test_user@example.com")
+			.withName("Test User")
+			.build();
         user.active = true;
         return user;
     }
 
     private Topic setupTopic(User user) {
-        Topic topic = TopicBuilder.aTopic().build();
-        topic.name = "Test Topic";
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+			.withName("Test Topic")
+			.withUser(user)
+			.build();
         topic.enabled = true;
         return topic;
     }
 
     private ContentSource setupContentSource() {
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = "test_source";
-        contentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        contentSource.name = "Test Channel";
-        return contentSource;
+        return ContentSourceBuilder.aContentSource()
+			.withSourceIdentifier("test_source")
+			.withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+			.withName("Test Channel")
+			.build();
     }
 
     @Test
