@@ -277,16 +277,21 @@ Deactivate or ban a user.
 ```
 **Response (202 Accepted):** Returns job tracking ID or acknowledgement.
 
-**`GET /api/v1/admin/jobs/status`**
+**`GET /api/v1/admin/jobs`**
 Gets paginated list of background job executions. Supports query parameters `?status=RUNNING,COMPLETED,FAILED` and pagination `?page=0&size=20`.
 **Response (200 OK):**
 ```json
 {
-  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  "jobType": "SYNC_YOUTUBE_FEEDS",
-  "status": "RUNNING",
-  "startedAt": "2023-10-26T10:00:00Z",
-  "endedAt": null,
-  "errorMessage": null
+  "items": [
+    {
+      "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "jobType": "SYNC_YOUTUBE_FEEDS",
+      "status": "RUNNING",
+      "startedAt": "2023-10-26T10:00:00Z",
+      "endedAt": null,
+      "errorMessage": null
+    }
+  ],
+  "totalCount": 1
 }
 ```
