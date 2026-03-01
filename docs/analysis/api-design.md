@@ -27,7 +27,10 @@ Returns the profile and effective permissions for the currently authenticated us
   "id": 1,
   "name": "Jane Doe",
   "email": "jane@example.com",
-  "roles": ["ADMIN", "USER"],
+  "roles": [
+    { "id": 1, "name": "ADMIN" },
+    { "id": 2, "name": "USER" }
+  ],
   "permissions": [
     "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
     "ADMIN_DASHBOARD_VIEW", "USER_MGMT_UPDATE" // etc.
@@ -227,7 +230,9 @@ List individual pieces of content under a source (Supports pagination).
       "email": "admin@example.com",
       "authProvider": "GOOGLE", // e.g., GOOGLE, LOCAL
       "active": true,
-      "roles": ["ADMIN"]
+      "roles": [
+        { "id": 1, "name": "ADMIN" }
+      ]
     }
   ],
   "totalCount": 1
