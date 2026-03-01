@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- **Frontend Specification:** Finalized UI/UX requirements for the v0.11.0 API-first redesign (`docs/analysis/frontend-specification.md`).
+- **API Contract:** Finalized the Backend-For-Frontend REST API contract, standardizing pagination, list responses, enum values, and strict HTTP code usage (`docs/analysis/api-design.md`).
+
 ## [v0.10.0] - 2026-02-20
 
 ### Summary
