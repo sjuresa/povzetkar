@@ -282,13 +282,11 @@ Gets paginated list of background job executions. Supports query parameters `?st
 **Response (200 OK):**
 ```json
 {
-  "items": [
-    {
-      "jobType": "SYNC_YOUTUBE_FEEDS",
-      "status": "RUNNING",
-      "startedAt": "2023-10-26T10:00:00Z"
-    }
-  ],
-  "totalCount": 1
+  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "jobType": "SYNC_YOUTUBE_FEEDS",
+  "status": "RUNNING",
+  "startedAt": "2023-10-26T10:00:00Z",
+  "endedAt": null,
+  "errorMessage": null
 }
 ```
