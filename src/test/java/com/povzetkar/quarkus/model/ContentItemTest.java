@@ -18,10 +18,10 @@ class ContentItemTest {
     @Transactional
     void testPrePersistSetsCreatedAtAndProcessingStatus() {
         ContentSource contentSource = ContentSourceBuilder.aContentSource()
-			.withSourceIdentifier("testContentSourceId" +  UUID.randomUUID())
-			.withSourceTypeId(1)
-			.withName("Test ContentSource")
-			.build();
+            .withSourceIdentifier("testContentSourceId" +  UUID.randomUUID())
+            .withSourceTypeId(1)
+            .withName("Test ContentSource")
+            .build();
         contentSource.persist();
 
         ContentItem contentItem = new ContentItem();
@@ -43,10 +43,10 @@ class ContentItemTest {
     @Transactional
     void testContentItemRelationships() {
         ContentSource contentSource = ContentSourceBuilder.aContentSource()
-			.withSourceIdentifier("contentSource456-" + UUID.randomUUID())
-			.withSourceTypeId(1)
-			.withName("Another ContentSource")
-			.build();
+            .withSourceIdentifier("contentSource456-" + UUID.randomUUID())
+            .withSourceTypeId(1)
+            .withName("Another ContentSource")
+            .build();
         contentSource.persist();
 
         ContentItem contentItem = new ContentItem();

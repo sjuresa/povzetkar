@@ -109,10 +109,10 @@ class OrchestrationManagerTest {
 
     private ContentSource setupContentSource() {
         return ContentSourceBuilder.aContentSource()
-			.withSourceIdentifier("test_source")
-			.withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
-			.withName("Test Channel")
-			.build();
+            .withSourceIdentifier("test_source")
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .withName("Test Channel")
+            .build();
     }
 
     @Test

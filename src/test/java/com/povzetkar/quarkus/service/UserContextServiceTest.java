@@ -46,10 +46,10 @@ class UserContextServiceTest {
     @Transactional
     void ensureUser_ExistingIdentity_ReturnsUser() {
         User user = UserBuilder.aUser()
-			.withUsername("testuser")
-			.withEmail("test@example.com")
-			.withName("Test User")
-			.build();
+            .withUsername("testuser")
+            .withEmail("test@example.com")
+            .withName("Test User")
+            .build();
         user.persist();
 
         UserIdentity identity = new UserIdentity();
@@ -68,10 +68,10 @@ class UserContextServiceTest {
     @Transactional
     void ensureUser_ExistingUserByEmail_LinksIdentityAndReturnsUser() {
         User user = UserBuilder.aUser()
-			.withUsername("testuser")
-			.withEmail("test@example.com")
-			.withName("Test User")
-			.build();
+            .withUsername("testuser")
+            .withEmail("test@example.com")
+            .withName("Test User")
+            .build();
         user.persist();
 
         User result = userContextService.ensureUser("google", "ext123", "test@example.com", "Updated Name");

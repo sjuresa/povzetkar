@@ -51,23 +51,23 @@ class TranscriptPersistenceTest {
     @Transactional
     void setUp() {
         User user = UserBuilder.aUser()
-			.withUsername("testuser")
-			.withEmail("testuser@example.com")
-			.withName("Test User")
-			.build();
+            .withUsername("testuser")
+            .withEmail("testuser@example.com")
+            .withName("Test User")
+            .build();
         user.persist();
 
         Topic topic = TopicBuilder.aTopic()
-			.withName("Test Topic")
-			.withUser(user)
-			.build();
+            .withName("Test Topic")
+            .withUser(user)
+            .build();
         topic.persist();
 
         ContentSource source = ContentSourceBuilder.aContentSource()
-			.withSourceIdentifier("test_channel")
-			.withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
-			.withName("Test Channel")
-			.build();
+            .withSourceIdentifier("test_channel")
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .withName("Test Channel")
+            .build();
         source.persist();
 
         testVideo = new YouTubeVideo();
