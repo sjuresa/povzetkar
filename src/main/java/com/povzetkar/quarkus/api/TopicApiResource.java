@@ -17,6 +17,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import jakarta.annotation.security.RolesAllowed;
 
 import java.net.URI;
 import java.util.List;
@@ -44,13 +45,13 @@ public class TopicApiResource {
     }
 
     @GET
+    @RolesAllowed("TOPIC_VIEW")
     @Operation(summary = "Get all topics", description = "Retrieves a paginated list of topics for the current user.")
     public PaginatedResponse<TopicDTO> getTopics(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
 
         PanacheQuery<Topic> query = Topic.find("user", Sort.by("id"), user);
         query.page(pageIndex, pageSize);
@@ -63,20 +64,20 @@ public class TopicApiResource {
 
     @GET
     @Path("/{id}")
+    @RolesAllowed("TOPIC_VIEW")
     @Operation(summary = "Get topic by ID", description = "Retrieves a specific topic by its ID.")
     public TopicDTO getTopic(@PathParam("id") Long id) {
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
         return topicMapper.toDTO(topic);
     }
 
     @POST
     @Transactional
+    @RolesAllowed("TOPIC_CREATE")
     @Operation(summary = "Create topic", description = "Creates a new topic for the current user.")
     public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO) {
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
 
         // Prevent duplicate names for the same user
         Optional<Topic> existing = Topic.find(USER_1_AND_NAME_2, user, createDTO.name()).firstResultOptional();
@@ -94,10 +95,10 @@ public class TopicApiResource {
     @PUT
     @Path("/{id}")
     @Transactional
+    @RolesAllowed("TOPIC_UPDATE")
     @Operation(summary = "Update topic", description = "Fully replaces an existing topic.")
     public TopicDTO updateTopic(@PathParam("id") Long id, @Valid @NotNull TopicUpdateDTO updateDTO) {
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 
         // Prevent duplicate names for the same user when changing name
@@ -116,10 +117,10 @@ public class TopicApiResource {
     @PATCH
     @Path("/{id}")
     @Transactional
+    @RolesAllowed("TOPIC_UPDATE")
     @Operation(summary = "Partially update topic", description = "Partially updates an existing topic.")
     public TopicDTO patchTopic(@PathParam("id") Long id, @Valid @NotNull TopicPatchDTO patchDTO) {
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 
         if (patchDTO.name() != null && !topic.name.equals(patchDTO.name())) {
@@ -136,10 +137,10 @@ public class TopicApiResource {
     @DELETE
     @Path("/{id}")
     @Transactional
+    @RolesAllowed("TOPIC_DELETE")
     @Operation(summary = "Delete topic", description = "Deletes a specific topic.")
     public Response deleteTopic(@PathParam("id") Long id) {
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
         topic.delete();
         return Response.noContent().build();
@@ -149,8 +150,7 @@ public class TopicApiResource {
     @Path("/{id}/trigger-run")
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
     public Response triggerTopicRun(@PathParam("id") Long id) {
-        User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 
         // Run the orchestration process in the background
@@ -165,5 +165,10 @@ public class TopicApiResource {
                 .firstResultOptional()
                 .orElseThrow(
                         () -> new NotFoundException("Topic with id " + id + " not found or does not belong to user."));
+    }
+
+    private User getAuthenticatedUser() {
+        return userContextService.getCurrentUser()
+                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
     }
 }

@@ -17,6 +17,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import jakarta.annotation.security.RolesAllowed;
 
 import java.net.URI;
 import java.util.List;
@@ -42,6 +43,7 @@ public class ContentSourceResource {
     }
 
     @GET
+    @RolesAllowed("SOURCE_VIEW")
     @Operation(summary = "Get all content sources", description = "Retrieves a paginated list of all content sources.")
     public PaginatedResponse<ContentSourceDTO> getAllContentSources(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
@@ -58,6 +60,7 @@ public class ContentSourceResource {
 
     @GET
     @Path("/{id}")
+    @RolesAllowed("SOURCE_VIEW")
     @Operation(summary = "Get content source by ID", description = "Retrieves a specific content source by its ID.")
     public ContentSourceDTO getContentSourceById(@PathParam("id") Long id) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
@@ -67,6 +70,7 @@ public class ContentSourceResource {
 
     @POST
     @Transactional
+    @RolesAllowed("SOURCE_CREATE")
     @Operation(summary = "Create content source", description = "Creates a new content source.")
     public Response createContentSource(@Valid @NotNull ContentSourceCreateDTO createDTO) {
         ContentSource contentSource = contentSourceMapper.toEntity(createDTO);
@@ -88,17 +92,16 @@ public class ContentSourceResource {
     @PUT
     @Path("/{id}")
     @Transactional
+    @RolesAllowed("SOURCE_UPDATE")
     @Operation(summary = "Update content source", description = "Fully replaces an existing content source.")
     public ContentSourceDTO updateContentSource(@PathParam("id") Long id,
             @Valid @NotNull ContentSourceUpdateDTO updateDTO) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
-        int parsedSourceTypeId;
-        try {
-            parsedSourceTypeId = SourceTypeEnum.valueOf(updateDTO.platform()).getId();
-        } catch (IllegalArgumentException _) {
-            throw new BadRequestException("Invalid platform: " + updateDTO.platform());
+        Integer parsedSourceTypeId = contentSourceMapper.mapPlatformToSourceTypeId(updateDTO.platform());
+        if (parsedSourceTypeId == null) {
+            throw new BadRequestException("Platform must not be blank");
         }
 
         Optional<ContentSource> existingWithSameKey = ContentSource
@@ -119,6 +122,7 @@ public class ContentSourceResource {
     @PATCH
     @Path("/{id}")
     @Transactional
+    @RolesAllowed("SOURCE_UPDATE")
     @Operation(summary = "Partially update content source", description = "Partially updates an existing content source.")
     public ContentSourceDTO patchContentSource(@PathParam("id") Long id,
             @Valid @NotNull ContentSourcePatchDTO patchDTO) {
@@ -132,6 +136,7 @@ public class ContentSourceResource {
     @DELETE
     @Path("/{id}")
     @Transactional
+    @RolesAllowed("SOURCE_DELETE")
     @Operation(summary = "Delete content source", description = "Deletes a specific content source.")
     public Response deleteContentSource(@PathParam("id") Long id) {
         if (!ContentSource.deleteById(id)) {
@@ -143,6 +148,7 @@ public class ContentSourceResource {
     // Maintain existing enrich functionality for compatibility
     @POST
     @Path("/enrich")
+    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
     public Response enrichContentSources() {
         contentSourceDetailService.enrichContentSources();
         return Response.accepted().entity("Content sources enrichment started.").build();
@@ -150,6 +156,7 @@ public class ContentSourceResource {
 
     @GET
     @Path("/details/{sourceTypeId}/{identifier}")
+    @RolesAllowed("SOURCE_VIEW")
     public ContentSourceDetailService.ContentSourceDetails getContentSourceDetails(
             @PathParam("sourceTypeId") int sourceTypeId, @PathParam("identifier") String identifier) {
         return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)

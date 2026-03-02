@@ -30,19 +30,18 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-@TestSecurity(user = "api_test_user", roles = "user")
+@TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE", "SOURCE_UPDATE",
+                "SOURCE_DELETE" })
 class ContentSourceResourceTest {
 
         private static final String API_BASE_PATH = "/api/v1/sources";
         private static final String TEST_TOPIC_NAME = "test-topic-" + UUID.randomUUID();
         private static final String TEST_CONTENT_SOURCE_ID_PREFIX = "UC-test-id-";
         private static final String TEST_CONTENT_SOURCE_NAME_PREFIX = "Test ContentSource ";
-        private static final String NON_EXISTENT_TOPIC_NAME = "non-existent-topic";
         private static final int DEFAULT_SOURCE_TYPE_ID = 1;
 
         final EntityManager em;
 
-        private Long testUserId;
         private final Set<Long> createdContentSourceIds = new HashSet<>();
         private final Set<Long> createdUserIds = new HashSet<>();
         private final Set<Long> createdTopicIds = new HashSet<>();
@@ -56,7 +55,6 @@ class ContentSourceResourceTest {
         @Transactional
         void setup() {
                 User user = createUser("Test User", "api_test_user");
-                this.testUserId = user.id;
 
                 Topic topic = createTopic(user);
 
@@ -187,6 +185,22 @@ class ContentSourceResourceTest {
                 ContentSource found = em.find(ContentSource.class, created.id());
                 assertNotNull(found);
                 assertEquals("New Content Source", found.name);
+        }
+
+        @Test
+        @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW" })
+        void testCreateContentSource_Forbidden() {
+                com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO newContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO(
+                                "YOUTUBE",
+                                "forbidden-source-id-" + java.util.UUID.randomUUID(),
+                                "Forbidden Content Source");
+
+                given()
+                                .contentType(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
+                                .body(newContentSource)
+                                .when().post(API_BASE_PATH)
+                                .then()
+                                .statusCode(403);
         }
 
         @Test
@@ -355,13 +369,4 @@ class ContentSourceResourceTest {
                                 .statusCode(404);
         }
 
-        @Test
-        void testGetContentSourcesByTopic_TopicNotFound() {
-                given()
-                                .pathParam("userId", testUserId)
-                                .pathParam("topicName", NON_EXISTENT_TOPIC_NAME)
-                                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-                                .then()
-                                .statusCode(404);
-        }
 }

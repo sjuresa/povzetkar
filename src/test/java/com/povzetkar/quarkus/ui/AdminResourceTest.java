@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 
 @QuarkusTest
-@TestSecurity(user = "admin_user", roles = { "user", "admin" })
+@TestSecurity(user = "admin_user", roles = { "user", "admin", "ADMIN_SYSTEM_TRIGGER" })
 class AdminResourceTest {
 
     @Test

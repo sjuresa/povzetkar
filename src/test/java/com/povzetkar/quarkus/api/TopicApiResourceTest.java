@@ -52,7 +52,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testGetTopics() {
         given()
                 .when().get("/api/v1/topics")
@@ -65,7 +66,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testGetTopicById() {
         given()
                 .when().get("/api/v1/topics/" + testTopic.id)
@@ -75,7 +77,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testCreateTopic() {
         TopicCreateDTO dto = new TopicCreateDTO("New Topic");
 
@@ -91,7 +94,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testCreateTopicConflict() {
         TopicCreateDTO dto = new TopicCreateDTO("Initial Setup Topic");
 
@@ -104,7 +108,21 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW" })
+    void testCreateTopicForbidden() {
+        TopicCreateDTO dto = new TopicCreateDTO("Forbidden Topic");
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().post("/api/v1/topics")
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testUpdateTopic() {
         TopicUpdateDTO dto = new TopicUpdateDTO("Updated Topic Name", false);
 
@@ -119,7 +137,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testPatchTopic() {
         TopicPatchDTO dto = new TopicPatchDTO(null, false);
 
@@ -134,7 +153,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testDeleteTopic() {
         given()
                 .when().delete("/api/v1/topics/" + testTopic.id)
@@ -148,7 +168,8 @@ class TopicApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = "user")
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testTriggerTopicRun() {
         given()
                 .contentType(ContentType.JSON)
