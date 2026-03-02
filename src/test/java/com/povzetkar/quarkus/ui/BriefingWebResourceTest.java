@@ -54,10 +54,11 @@ class BriefingWebResourceTest {
         testTopic.persist();
 
         // Create test content source
-        ContentSource testContentSource = ContentSourceBuilder.aContentSource().build();
-        testContentSource.name = "Test Source";
-        testContentSource.sourceIdentifier = "test-source-id"; // Corrected field name
-        testContentSource.sourceTypeId = com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId();
+        ContentSource testContentSource = ContentSourceBuilder.aContentSource()
+            .withName("Test Source")
+            .withSourceIdentifier("test-source-id") // Corrected field name
+            .withSourceTypeId(com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId())
+            .build();
         testContentSource.persist();
 
         // Create test content item

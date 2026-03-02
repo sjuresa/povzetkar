@@ -173,10 +173,11 @@ class ContentSourceResourceTest {
     void testAddContentSource_toAnotherUsersTopic_returns404() {
         QuarkusTransaction.requiringNew().run(() -> {
             // Create another user
-            User anotherUser = UserBuilder.aUser().build();
-            anotherUser.name = "Another User";
-            anotherUser.username = "another_user";
-            anotherUser.email = "another_user@example.com";
+            User anotherUser = UserBuilder.aUser()
+                .withName("Another User")
+                .withUsername("another_user")
+                .withEmail("another_user@example.com")
+                .build();
             anotherUser.persist();
         });
 

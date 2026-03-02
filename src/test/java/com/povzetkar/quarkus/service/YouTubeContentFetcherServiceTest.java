@@ -50,9 +50,10 @@ class YouTubeContentFetcherServiceTest {
     @BeforeEach
     void setUp() {
         Mockito.reset(youTubeDataApiClient);
-        contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = "UC_testChannelId";
-        contentSource.name = "Test Channel";
+        contentSource = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("UC_testChannelId")
+            .withName("Test Channel")
+            .build();
         fetchDate = LocalDate.of(2025, 10, 26);
         publishedInstant = fetchDate.atStartOfDay().toInstant(ZoneOffset.UTC);
     }

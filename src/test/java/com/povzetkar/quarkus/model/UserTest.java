@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.model;
+
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
 
@@ -21,11 +22,12 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithNullNameThrowsException() {
-        User user = UserBuilder.aUser().build();
-        user.username = "testuser_nullname";
-        user.email = "testuser_nullname@example.com";
+        User user = UserBuilder.aUser()
+                .withUsername("testuser_nullname")
+                .withEmail("testuser_nullname@example.com")
+                .withName(null)
+                .build();
         user.active = true;
-        user.name = null;
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user),
                 "Persisting a User with a null name should throw PersistenceException");

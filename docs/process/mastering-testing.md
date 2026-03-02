@@ -29,6 +29,8 @@ The builders are configured to provide valid, randomized defaults (like unique u
 
 To override specific properties, chain methods:
 ```java
+User adminUser = UserBuilder.aUser().withUsername("admin").build();
+
 Topic topic = TopicBuilder.aTopic()
     .withName("Custom Topic")
     .withUser(adminUser)

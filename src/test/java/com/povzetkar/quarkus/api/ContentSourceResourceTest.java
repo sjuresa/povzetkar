@@ -65,8 +65,7 @@ class ContentSourceResourceTest {
             ContentSource contentSource = createContentSource(
                     TEST_CONTENT_SOURCE_ID_PREFIX + i,
                     TEST_CONTENT_SOURCE_NAME_PREFIX + i,
-                    "Description " + i
-            );
+                    "Description " + i);
             if (i < 10) {
                 topic.contentSources.add(contentSource);
                 contentSource.topics.add(topic);
@@ -99,10 +98,11 @@ class ContentSourceResourceTest {
     }
 
     private User createUser(String name, String username) {
-        User user = UserBuilder.aUser().build();
-        user.name = name;
-        user.username = username;
-        user.email = username + "@example.com";
+        User user = UserBuilder.aUser()
+                .withName(name)
+                .withUsername(username)
+                .withEmail(username + "@example.com")
+                .build();
         em.persist(user);
         createdUserIds.add(user.id);
         return user;
@@ -119,10 +119,11 @@ class ContentSourceResourceTest {
     }
 
     private ContentSource createContentSource(String sourceIdentifier, String name, String description) {
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = sourceIdentifier;
-        contentSource.sourceTypeId = DEFAULT_SOURCE_TYPE_ID;
-        contentSource.name = name;
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier(sourceIdentifier)
+                .withSourceTypeId(DEFAULT_SOURCE_TYPE_ID)
+                .withName(name)
+                .build();
         contentSource.description = description;
         em.persist(contentSource);
         em.flush(); // Explicitly flush to ensure it's in the DB
@@ -165,10 +166,11 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testCreateContentSource_Success() {
-        ContentSource newContentSource = ContentSourceBuilder.aContentSource().build();
-        newContentSource.sourceIdentifier = "new-source-id-" + UUID.randomUUID();
-        newContentSource.sourceTypeId = 2;
-        newContentSource.name = "New Content Source";
+        ContentSource newContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("new-source-id-" + UUID.randomUUID())
+                .withSourceTypeId(2)
+                .withName("New Content Source")
+                .build();
         newContentSource.description = "A brand new source";
 
         ContentSource created = given()
@@ -220,10 +222,11 @@ class ContentSourceResourceTest {
 
     @Test
     void testCreateContentSource_Conflict() {
-        ContentSource duplicateContentSource = ContentSourceBuilder.aContentSource().build();
-        duplicateContentSource.sourceIdentifier = TEST_CONTENT_SOURCE_ID_PREFIX + 0;
-        duplicateContentSource.sourceTypeId = 1;
-        duplicateContentSource.name = "Duplicate Content Source";
+        ContentSource duplicateContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier(TEST_CONTENT_SOURCE_ID_PREFIX + 0)
+                .withSourceTypeId(1)
+                .withName("Duplicate Content Source")
+                .build();
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -257,11 +260,12 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_NotFound() {
-        ContentSource nonExistentContentSource = ContentSourceBuilder.aContentSource().build();
+        ContentSource nonExistentContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("non-existent")
+                .withSourceTypeId(1)
+                .withName("Non Existent")
+                .build();
         nonExistentContentSource.id = 99999L;
-        nonExistentContentSource.sourceIdentifier = "non-existent";
-        nonExistentContentSource.sourceTypeId = 1;
-        nonExistentContentSource.name = "Non Existent";
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)

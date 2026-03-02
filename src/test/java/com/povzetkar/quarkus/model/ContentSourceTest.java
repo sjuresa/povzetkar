@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.model;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,11 +32,12 @@ class ContentSourceTest {
     @Test
     @Transactional
     void testCreateAndPersistContentSource() {
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
         String sourceIdentifier = "test-content-source-id" + UUID.randomUUID();
-        contentSource.sourceIdentifier = sourceIdentifier;
-        contentSource.sourceTypeId = 1;
-        contentSource.name = "Test ContentSource";
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier(sourceIdentifier)
+                .withSourceTypeId(1)
+                .withName("Test ContentSource")
+                .build();
         contentSource.description = "Description";
         contentSource.subscriberCount = 1000;
         contentSource.persist();

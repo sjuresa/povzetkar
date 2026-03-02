@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.model;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -18,10 +19,11 @@ class SummaryTest {
     @Transactional
     void testSummaryPersistence() {
         // Create a ContentSource dependency
-        ContentSource contentSource = ContentSourceBuilder.aContentSource().build();
-        contentSource.sourceIdentifier = "test_source_id";
-        contentSource.sourceTypeId = 1; // Assuming a valid source type ID exists
-        contentSource.name = "Test Source";
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("test_source_id")
+                .withSourceTypeId(1) // Assuming a valid source type ID exists
+                .withName("Test Source")
+                .build();
         contentSource.subscriberCount = 100;
         contentSource.persist();
 
