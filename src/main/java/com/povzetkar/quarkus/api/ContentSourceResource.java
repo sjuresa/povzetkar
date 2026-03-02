@@ -122,11 +122,7 @@ public class ContentSourceResource {
                     Response.Status.CONFLICT);
         }
 
-        try {
-            contentSourceMapper.updateEntity(updateDTO, entity);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException(e.getMessage());
-        }
+        contentSourceMapper.updateEntity(updateDTO, entity);
 
         return contentSourceMapper.toDTO(entity);
     }

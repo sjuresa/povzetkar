@@ -56,7 +56,7 @@ public interface ContentSourceMapper {
                 if (entity.sourceIdentifier.startsWith("http://") || entity.sourceIdentifier.startsWith("https://")) {
                     yield entity.sourceIdentifier;
                 }
-                yield null;
+                yield "https://" + entity.sourceIdentifier;
             }
             default -> null;
         };
