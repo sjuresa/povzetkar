@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class UserBuilder {
 
+    private Long id;
     private String username;
     private String email;
     private String name;
@@ -21,6 +22,11 @@ public class UserBuilder {
 
     public static UserBuilder aUser() {
         return new UserBuilder();
+    }
+
+    public UserBuilder withId(Long id) {
+        this.id = id;
+        return this;
     }
 
     public UserBuilder withUsername(String username) {
@@ -45,6 +51,7 @@ public class UserBuilder {
 
     public User build() {
         User user = new User();
+        user.id = this.id;
         user.username = this.username;
         user.email = this.email;
         user.name = this.name;

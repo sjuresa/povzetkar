@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public class TopicBuilder {
 
+    private Long id;
     private String name;
     private User user;
     private boolean enabled = true;
@@ -19,6 +20,11 @@ public class TopicBuilder {
 
     public static TopicBuilder aTopic() {
         return new TopicBuilder();
+    }
+
+    public TopicBuilder withId(Long id) {
+        this.id = id;
+        return this;
     }
 
     public TopicBuilder withName(String name) {
@@ -38,6 +44,7 @@ public class TopicBuilder {
 
     public Topic build() {
         Topic topic = new Topic();
+        topic.id = this.id;
         topic.name = this.name;
 
         if (this.user == null) {

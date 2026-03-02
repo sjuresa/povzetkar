@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -63,7 +64,8 @@ class OrchestrationIntegrationTest {
         tearDown();
         setupTestData();
 
-        // Since the scheduler runs async, we need to mock the client acquisition to be synchronous for predictable tests
+        // Since the scheduler runs async, we need to mock the client acquisition to be
+        // synchronous for predictable tests
         when(videoSummaryService.acquireClient()).thenReturn(mock(com.povzetkar.quarkus.ai.GenAiClient.class));
     }
 
@@ -86,8 +88,8 @@ class OrchestrationIntegrationTest {
             .withSourceIdentifier("orchestration_test_channel_id")
             .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
             .withName("Test Channel")
+            .withSubscriberCount(1000)
             .build();
-        testContentSource.subscriberCount = 1000;
         testContentSource.persist();
 
         testTopic.contentSources.add(testContentSource);

@@ -30,20 +30,12 @@ class TopicTest {
     @Test
     @Transactional
     void testSameTopicNameForDifferentUsers() {
-        String u1Name = "user1-" + UUID.randomUUID();
         User user1 = UserBuilder.aUser()
-                .withUsername(u1Name)
-                .withEmail(u1Name + "@example.com")
-                .withName("User 1-" + UUID.randomUUID())
                 .build();
         em.persist(user1);
         user1Id = user1.id;
 
-        String u2Name = "user2-" + UUID.randomUUID();
         User user2 = UserBuilder.aUser()
-                .withUsername(u2Name)
-                .withEmail(u2Name + "@example.com")
-                .withName("User 2-" + UUID.randomUUID())
                 .build();
         em.persist(user2);
         user2Id = user2.id;
@@ -71,11 +63,7 @@ class TopicTest {
     @Test
     @Transactional
     void testSameTopicNameForSameUserThrowsException() {
-        String uName = "singleuser-" + UUID.randomUUID();
         User user = UserBuilder.aUser()
-                .withUsername(uName)
-                .withEmail(uName + "@example.com")
-                .withName("Single User-" + UUID.randomUUID())
                 .build();
         em.persist(user);
         singleUserId = user.id;

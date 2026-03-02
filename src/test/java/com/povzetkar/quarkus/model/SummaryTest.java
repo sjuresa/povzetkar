@@ -23,8 +23,8 @@ class SummaryTest {
                 .withSourceIdentifier("test_source_id")
                 .withSourceTypeId(1) // Assuming a valid source type ID exists
                 .withName("Test Source")
+                .withSubscriberCount(100)
                 .build();
-        contentSource.subscriberCount = 100;
         contentSource.persist();
 
         // Create a ContentItem dependency

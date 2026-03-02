@@ -75,21 +75,22 @@ class TopicProcessorTest {
 
         // Setup common test data
         testUser = UserBuilder.aUser()
+                .withId(1L)
                 .withName("Test User")
                 .withUsername("test_user")
                 .withEmail("test_user@example.com")
                 .build();
-        testUser.id = 1L;
 
         testTopic = TopicBuilder.aTopic()
+                .withId(1L)
                 .withName("Test Topic")
                 .withUser(testUser)
                 .build();
-        testTopic.id = 1L;
+
         testContentSource = ContentSourceBuilder.aContentSource()
+                .withId(1L)
                 .withName("Test Content Source")
                 .build();
-        testContentSource.id = 1L;
         Set<ContentSource> contentSources = new HashSet<>();
         contentSources.add(testContentSource);
         testTopic.contentSources = contentSources;

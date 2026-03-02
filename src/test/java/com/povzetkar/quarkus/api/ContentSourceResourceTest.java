@@ -133,7 +133,8 @@ class ContentSourceResourceTest {
 
     @Test
     void testGetAllContentSources_Success() {
-        long expectedSize = em.createQuery("SELECT COUNT(cs) FROM ContentSource cs", Long.class).getSingleResult();
+        long expectedSize = em.createQuery("SELECT COUNT(cs) FROM ContentSource cs", Long.class)
+                .getSingleResult();
 
         given()
                 .when().get(API_BASE_PATH)
@@ -144,7 +145,8 @@ class ContentSourceResourceTest {
 
     @Test
     void testGetContentSourceById_Success() {
-        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource existingContentSource = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
 
         given()
                 .pathParam("id", existingContentSource.id)
@@ -239,7 +241,8 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_Success() {
-        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource existingContentSource = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
 
         existingContentSource.name = "Updated Name";
 
@@ -261,11 +264,11 @@ class ContentSourceResourceTest {
     @Transactional
     void testUpdateContentSource_NotFound() {
         ContentSource nonExistentContentSource = ContentSourceBuilder.aContentSource()
+                .withId(99999L)
                 .withSourceIdentifier("non-existent")
                 .withSourceTypeId(1)
                 .withName("Non Existent")
                 .build();
-        nonExistentContentSource.id = 99999L;
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -279,7 +282,8 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_InvalidInput() {
-        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource existingContentSource = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
 
         // Case 1: name is null
         Map<String, Object> payload = new HashMap<>();
@@ -318,7 +322,8 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testDeleteContentSource_Success() {
-        ContentSource contentSourceToDelete = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource contentSourceToDelete = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
         assertNotNull(contentSourceToDelete);
 
         given()
