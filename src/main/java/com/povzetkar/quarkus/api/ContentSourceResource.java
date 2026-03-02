@@ -111,10 +111,6 @@ public class ContentSourceResource {
             throw new BadRequestException(e.getMessage());
         }
 
-        if (parsedSourceTypeId == null) {
-            throw new BadRequestException("Platform must not be blank");
-        }
-
         Optional<ContentSource> existingWithSameKey = ContentSource
                 .find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
                         updateDTO.sourceIdentifier(), parsedSourceTypeId, id)
