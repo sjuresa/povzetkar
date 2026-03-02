@@ -39,7 +39,11 @@ public class OidcSecurityIdentityAugmentor implements SecurityIdentityAugmentor 
             // Create a new identity augmented with database roles
             QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
 
-            user.roles.forEach(role -> builder.addRole(role.name));
+            user.roles.forEach(role -> {
+                builder.addRole(role.name);
+                RolePermissionsMap.getPermissionsForRole(role.name)
+                        .forEach(permission -> builder.addRole(permission.name()));
+            });
 
             return builder.build();
         });
