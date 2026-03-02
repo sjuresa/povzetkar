@@ -1,5 +1,9 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -34,24 +38,26 @@ class BriefingWebResourceTest {
         // Ensure a clean slate before creating new data
         tearDown();
 
-        User testUser = new User();
-        testUser.name = "Povzetkar AI";
-        testUser.username = "briefing_test_user";
-        testUser.email = "briefing_test_user@example.com";
-        testUser.active = true;
+        User testUser = UserBuilder.aUser()
+                .withName("Povzetkar AI")
+                .withUsername("briefing_test_user")
+                .withEmail("briefing_test_user@example.com")
+                .build();
         testUser.persist();
 
         // Create test topic
-        Topic testTopic = new Topic();
-        testTopic.name = "Kripto";
-        testTopic.user = testUser;
+        Topic testTopic = TopicBuilder.aTopic()
+                .withName("Kripto")
+                .withUser(testUser)
+                .build();
         testTopic.persist();
 
         // Create test content source
-        ContentSource testContentSource = new ContentSource();
-        testContentSource.name = "Test Source";
-        testContentSource.sourceIdentifier = "test-source-id"; // Corrected field name
-        testContentSource.sourceTypeId = com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId();
+        ContentSource testContentSource = ContentSourceBuilder.aContentSource()
+                .withName("Test Source")
+                .withSourceIdentifier("test-source-id") // Corrected field name
+                .withSourceTypeId(com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId())
+                .build();
         testContentSource.persist();
 
         // Create test content item

@@ -1,5 +1,9 @@
 package com.povzetkar.quarkus.model;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -8,7 +12,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,25 +22,25 @@ class BriefingTest {
     @Transactional
     void testBriefingPersistence() {
         // Create a User dependency
-        User user = new User();
-        user.username = "test_user_briefing_" + UUID.randomUUID();
-        user.email = user.username + "@example.com";
-        user.name = "Test User";
-        user.active = true;
+        User user = UserBuilder.aUser()
+                .withName("Test User")
+                .build();
         user.persist();
 
         // Create a Topic dependency
-        Topic topic = new Topic();
-        topic.name = "Test Topic";
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+                .withName("Test Topic")
+                .withUser(user)
+                .build();
         topic.persist();
 
         // Create a ContentSource dependency
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceIdentifier = "test_briefing_source_id";
-        contentSource.sourceTypeId = 2; // Assuming a valid source type ID exists
-        contentSource.name = "Test Briefing Source";
-        contentSource.subscriberCount = 200;
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("test_briefing_source_id")
+                .withSourceTypeId(2)
+                .withName("Test Briefing Source")
+                .withSubscriberCount(200)
+                .build();
         contentSource.persist();
 
         // Create two unique ContentItem dependencies

@@ -1,5 +1,9 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
@@ -61,8 +65,7 @@ class ContentSourceResourceTest {
             ContentSource contentSource = createContentSource(
                     TEST_CONTENT_SOURCE_ID_PREFIX + i,
                     TEST_CONTENT_SOURCE_NAME_PREFIX + i,
-                    "Description " + i
-            );
+                    "Description " + i);
             if (i < 10) {
                 topic.contentSources.add(contentSource);
                 contentSource.topics.add(topic);
@@ -76,49 +79,52 @@ class ContentSourceResourceTest {
     void cleanup() {
         if (!createdContentSourceIds.isEmpty()) {
             em.createQuery("DELETE FROM ContentSource cs WHERE cs.id IN :ids")
-              .setParameter("ids", createdContentSourceIds)
-              .executeUpdate();
+                    .setParameter("ids", createdContentSourceIds)
+                    .executeUpdate();
             createdContentSourceIds.clear();
         }
         if (!createdTopicIds.isEmpty()) {
             em.createQuery("DELETE FROM Topic t WHERE t.id IN :ids")
-              .setParameter("ids", createdTopicIds)
-              .executeUpdate();
+                    .setParameter("ids", createdTopicIds)
+                    .executeUpdate();
             createdTopicIds.clear();
         }
         if (!createdUserIds.isEmpty()) {
             em.createQuery("DELETE FROM User u WHERE u.id IN :ids")
-              .setParameter("ids", createdUserIds)
-              .executeUpdate();
+                    .setParameter("ids", createdUserIds)
+                    .executeUpdate();
             createdUserIds.clear();
         }
     }
 
     private User createUser(String name, String username) {
-        User user = new User();
-        user.name = name;
-        user.username = username;
-        user.email = username + "@example.com";
+        User user = UserBuilder.aUser()
+                .withName(name)
+                .withUsername(username)
+                .withEmail(username + "@example.com")
+                .build();
         em.persist(user);
         createdUserIds.add(user.id);
         return user;
     }
 
     private Topic createTopic(User user) {
-        Topic topic = new Topic();
-        topic.name = TEST_TOPIC_NAME;
-        topic.user = user;
+        Topic topic = TopicBuilder.aTopic()
+                .withName(TEST_TOPIC_NAME)
+                .withUser(user)
+                .build();
         em.persist(topic);
         createdTopicIds.add(topic.id);
         return topic;
     }
 
     private ContentSource createContentSource(String sourceIdentifier, String name, String description) {
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceIdentifier = sourceIdentifier;
-        contentSource.sourceTypeId = DEFAULT_SOURCE_TYPE_ID;
-        contentSource.name = name;
-        contentSource.description = description;
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier(sourceIdentifier)
+                .withSourceTypeId(DEFAULT_SOURCE_TYPE_ID)
+                .withName(name)
+                .withDescription(description)
+                .build();
         em.persist(contentSource);
         em.flush(); // Explicitly flush to ensure it's in the DB
         createdContentSourceIds.add(contentSource.id);
@@ -127,7 +133,8 @@ class ContentSourceResourceTest {
 
     @Test
     void testGetAllContentSources_Success() {
-        long expectedSize = em.createQuery("SELECT COUNT(cs) FROM ContentSource cs", Long.class).getSingleResult();
+        long expectedSize = em.createQuery("SELECT COUNT(cs) FROM ContentSource cs", Long.class)
+                .getSingleResult();
 
         given()
                 .when().get(API_BASE_PATH)
@@ -138,7 +145,8 @@ class ContentSourceResourceTest {
 
     @Test
     void testGetContentSourceById_Success() {
-        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource existingContentSource = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
 
         given()
                 .pathParam("id", existingContentSource.id)
@@ -160,11 +168,12 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testCreateContentSource_Success() {
-        ContentSource newContentSource = new ContentSource();
-        newContentSource.sourceIdentifier = "new-source-id-" + UUID.randomUUID();
-        newContentSource.sourceTypeId = 2;
-        newContentSource.name = "New Content Source";
-        newContentSource.description = "A brand new source";
+        ContentSource newContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("new-source-id-" + UUID.randomUUID())
+                .withSourceTypeId(2)
+                .withName("New Content Source")
+                .withDescription("A brand new source")
+                .build();
 
         ContentSource created = given()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -215,10 +224,11 @@ class ContentSourceResourceTest {
 
     @Test
     void testCreateContentSource_Conflict() {
-        ContentSource duplicateContentSource = new ContentSource();
-        duplicateContentSource.sourceIdentifier = TEST_CONTENT_SOURCE_ID_PREFIX + 0;
-        duplicateContentSource.sourceTypeId = 1;
-        duplicateContentSource.name = "Duplicate Content Source";
+        ContentSource duplicateContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier(TEST_CONTENT_SOURCE_ID_PREFIX + 0)
+                .withSourceTypeId(1)
+                .withName("Duplicate Content Source")
+                .build();
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -231,7 +241,8 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_Success() {
-        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource existingContentSource = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
 
         existingContentSource.name = "Updated Name";
 
@@ -252,11 +263,12 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_NotFound() {
-        ContentSource nonExistentContentSource = new ContentSource();
-        nonExistentContentSource.id = 99999L;
-        nonExistentContentSource.sourceIdentifier = "non-existent";
-        nonExistentContentSource.sourceTypeId = 1;
-        nonExistentContentSource.name = "Non Existent";
+        ContentSource nonExistentContentSource = ContentSourceBuilder.aContentSource()
+                .withId(99999L)
+                .withSourceIdentifier("non-existent")
+                .withSourceTypeId(1)
+                .withName("Non Existent")
+                .build();
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -270,7 +282,8 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testUpdateContentSource_InvalidInput() {
-        ContentSource existingContentSource = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource existingContentSource = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
 
         // Case 1: name is null
         Map<String, Object> payload = new HashMap<>();
@@ -309,7 +322,8 @@ class ContentSourceResourceTest {
     @Test
     @Transactional
     void testDeleteContentSource_Success() {
-        ContentSource contentSourceToDelete = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        ContentSource contentSourceToDelete = em.find(ContentSource.class,
+                createdContentSourceIds.iterator().next());
         assertNotNull(contentSourceToDelete);
 
         given()
@@ -340,10 +354,10 @@ class ContentSourceResourceTest {
     @Test
     void testGetContentSourcesByTopic_TopicNotFound() {
         given()
-          .pathParam("userId", testUserId)
-          .pathParam("topicName", NON_EXISTENT_TOPIC_NAME)
-          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-          .then()
-             .statusCode(404);
+                .pathParam("userId", testUserId)
+                .pathParam("topicName", NON_EXISTENT_TOPIC_NAME)
+                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
+                .then()
+                .statusCode(404);
     }
 }

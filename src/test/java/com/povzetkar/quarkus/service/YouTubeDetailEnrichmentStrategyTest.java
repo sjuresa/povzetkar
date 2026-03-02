@@ -1,4 +1,5 @@
 package com.povzetkar.quarkus.service;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 
 import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.ChannelSnippet;
@@ -57,14 +58,16 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testEnrichContentSources_success() throws IOException {
         // Given
-        ContentSource source1 = new ContentSource();
-        source1.sourceIdentifier = "channel1";
-        source1.name = ""; // Missing detail
-        source1.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        ContentSource source2 = new ContentSource();
-        source2.sourceIdentifier = "channel2";
-        source2.name = ""; // Missing detail
-        source2.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+        ContentSource source1 = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("channel1")
+            .withName("") // Missing detail
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .build();
+        ContentSource source2 = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("channel2")
+            .withName("") // Missing detail
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .build();
 
         when(ContentSource.list(anyString(), any(Object[].class))).thenReturn(List.of(source1, source2));
 
@@ -93,14 +96,16 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testRefreshContentSources_success() throws IOException {
         // Given
-        ContentSource source1 = new ContentSource();
-        source1.sourceIdentifier = "channel1";
-        source1.name = "Old Name One";
-        source1.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        ContentSource source2 = new ContentSource();
-        source2.sourceIdentifier = "channel2";
-        source2.name = "Old Name Two";
-        source2.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+        ContentSource source1 = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("channel1")
+            .withName("Old Name One")
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .build();
+        ContentSource source2 = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("channel2")
+            .withName("Old Name Two")
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .build();
         List sourcesToRefresh = List.of(source1, source2);
 
         when(ContentSource.list(anyString(), any(Object[].class))).thenReturn(sourcesToRefresh);
@@ -127,10 +132,11 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testEnrichContentSources_apiError() throws IOException {
         // Given
-        ContentSource source1 = new ContentSource();
-        source1.sourceIdentifier = "channel1";
-        source1.name = "";
-        source1.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+        ContentSource source1 = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("channel1")
+            .withName("")
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .build();
 
         when(ContentSource.list(anyString(), any(Object[].class))).thenReturn(List.of(source1));
 

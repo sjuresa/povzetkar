@@ -1,5 +1,9 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import com.google.genai.errors.ApiException;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.api.OrchestrationRequest;
@@ -60,28 +64,32 @@ class OrchestrationIntegrationTest {
         tearDown();
         setupTestData();
 
-        // Since the scheduler runs async, we need to mock the client acquisition to be synchronous for predictable tests
+        // Since the scheduler runs async, we need to mock the client acquisition to be
+        // synchronous for predictable tests
         when(videoSummaryService.acquireClient()).thenReturn(mock(com.povzetkar.quarkus.ai.GenAiClient.class));
     }
 
     void setupTestData() {
-        User testUser = new User();
-        testUser.username = "orchestration_test_user";
-        testUser.email = "orchestration_test_user@example.com";
-        testUser.name = "Test User";
-        testUser.active = true;
+        User testUser = UserBuilder.aUser()
+            .withUsername("orchestration_test_user")
+            .withEmail("orchestration_test_user@example.com")
+            .withName("Test User")
+            .build();
+
         testUser.persist();
 
-        Topic testTopic = new Topic();
-        testTopic.name = "Default Topic";
-        testTopic.user = testUser;
+        Topic testTopic = TopicBuilder.aTopic()
+            .withName("Default Topic")
+            .withUser(testUser)
+            .build();
         testTopic.persist();
 
-        ContentSource testContentSource = new ContentSource();
-        testContentSource.sourceIdentifier = "orchestration_test_channel_id";
-        testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        testContentSource.name = "Test Channel";
-        testContentSource.subscriberCount = 1000;
+        ContentSource testContentSource = ContentSourceBuilder.aContentSource()
+            .withSourceIdentifier("orchestration_test_channel_id")
+            .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+            .withName("Test Channel")
+            .withSubscriberCount(1000)
+            .build();
         testContentSource.persist();
 
         testTopic.contentSources.add(testContentSource);
