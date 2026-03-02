@@ -34,7 +34,7 @@ class AdminResourceTest {
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body("{}")
-                .when().post("/api/v1/content-sources/enrich")
+                .when().post("/api/v1/sources/enrich")
                 .then()
                 .statusCode(202) // Accepted
                 .body(containsString("Content sources enrichment started."));
@@ -54,7 +54,8 @@ class AdminResourceTest {
 
     @Test
     void testRunOrchestrationAjaxCallWithDates() {
-        var request = new OrchestrationRequest(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 2), true, true, true, false); // Added false for previewOnly
+        var request = new OrchestrationRequest(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 2), true, true, true,
+                false); // Added false for previewOnly
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(request)

@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **API:** Implemented Core REST APIs for Topics (`/api/v1/topics`) and Content Sources (`/api/v1/sources`) adhering to the Backend-For-Frontend (BFF) pattern using DTOs and MapStruct `@Mapper` interfaces. Includes pagination support for collection endpoints.
+
 ### Changed
 - **Testing:** Implemented the Test Data Builder pattern for core entities (`User`, `Topic`, `ContentSource`) to streamline test data generation and resolve testing brittleness. Refactored the entire test suite to use these builders.
+- **API:** Refactored `ContentSourceResource` and Admin UI to utilize the new `/api/v1/sources` standard path and DTO payloads.
+- **Database Schema:** Added `last_run_date` to the `topics` table via Flyway migration (`V14__add_last_run_date_to_topics.sql`).
 
 ### Documentation
 - **Frontend Specification:** Finalized UI/UX requirements for the v0.11.0 API-first redesign (`docs/analysis/frontend-specification.md`).
