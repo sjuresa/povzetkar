@@ -18,11 +18,11 @@ class ContentSourceTest {
     @Transactional
     void testContentSourceDefaultsAndPrePersist() {
         ContentSource contentSource = ContentSourceBuilder.aContentSource()
-			.withSourceIdentifier("testContentSourceId" + UUID.randomUUID())
-			.withSourceTypeId(1)
-			.withName("Test ContentSource")
-			.build();
-        contentSource.description = "A test description";
+                .withSourceIdentifier("testContentSourceId" + UUID.randomUUID())
+                .withSourceTypeId(1)
+                .withName("Test ContentSource")
+                .withDescription("A test description")
+                .build();
         contentSource.persist();
 
         assertNotNull(contentSource.createdAt);
@@ -37,9 +37,9 @@ class ContentSourceTest {
                 .withSourceIdentifier(sourceIdentifier)
                 .withSourceTypeId(1)
                 .withName("Test ContentSource")
+                .withDescription("Description")
+                .withSubscriberCount(1000)
                 .build();
-        contentSource.description = "Description";
-        contentSource.subscriberCount = 1000;
         contentSource.persist();
 
         ContentSource retrievedContentSource = ContentSource.find("sourceIdentifier", sourceIdentifier).firstResult();

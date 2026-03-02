@@ -60,11 +60,11 @@ class SummaryTest {
     void testSummaryPersistence_DuplicateContentItemFails() {
         // Create a ContentSource dependency
         ContentSource contentSource = ContentSourceBuilder.aContentSource()
-			.withSourceIdentifier("test_source_id_duplicate")
-			.withSourceTypeId(1)
-			.withName("Test Source Duplicate")
-			.build();
-        contentSource.subscriberCount = 100;
+            .withSourceIdentifier("test_source_id_duplicate")
+            .withSourceTypeId(1)
+            .withName("Test Source Duplicate")
+            .withSubscriberCount(100)
+            .build();
         contentSource.persist();
 
         // Create a ContentItem dependency

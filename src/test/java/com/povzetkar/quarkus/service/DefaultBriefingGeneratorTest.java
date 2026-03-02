@@ -46,11 +46,11 @@ class DefaultBriefingGeneratorTest {
         // Clean up database before each test to ensure isolation
         tearDown();
 
-        User testUser = UserBuilder.aUser().build();
-        testUser.username = "test_user";
-        testUser.email = "test_user@example.com";
-        testUser.name = "Test User";
-        testUser.active = true;
+        User testUser = UserBuilder.aUser()
+                .withUsername("test_user")
+                .withEmail("test_user@example.com")
+                .withName("Test User")
+                .build();
         testUser.persist();
 
         testTopic = TopicBuilder.aTopic()

@@ -79,20 +79,20 @@ class ContentSourceResourceTest {
     void cleanup() {
         if (!createdContentSourceIds.isEmpty()) {
             em.createQuery("DELETE FROM ContentSource cs WHERE cs.id IN :ids")
-              .setParameter("ids", createdContentSourceIds)
-              .executeUpdate();
+                    .setParameter("ids", createdContentSourceIds)
+                    .executeUpdate();
             createdContentSourceIds.clear();
         }
         if (!createdTopicIds.isEmpty()) {
             em.createQuery("DELETE FROM Topic t WHERE t.id IN :ids")
-              .setParameter("ids", createdTopicIds)
-              .executeUpdate();
+                    .setParameter("ids", createdTopicIds)
+                    .executeUpdate();
             createdTopicIds.clear();
         }
         if (!createdUserIds.isEmpty()) {
             em.createQuery("DELETE FROM User u WHERE u.id IN :ids")
-              .setParameter("ids", createdUserIds)
-              .executeUpdate();
+                    .setParameter("ids", createdUserIds)
+                    .executeUpdate();
             createdUserIds.clear();
         }
     }
@@ -123,8 +123,8 @@ class ContentSourceResourceTest {
                 .withSourceIdentifier(sourceIdentifier)
                 .withSourceTypeId(DEFAULT_SOURCE_TYPE_ID)
                 .withName(name)
+                .withDescription(description)
                 .build();
-        contentSource.description = description;
         em.persist(contentSource);
         em.flush(); // Explicitly flush to ensure it's in the DB
         createdContentSourceIds.add(contentSource.id);
@@ -170,8 +170,8 @@ class ContentSourceResourceTest {
                 .withSourceIdentifier("new-source-id-" + UUID.randomUUID())
                 .withSourceTypeId(2)
                 .withName("New Content Source")
+                .withDescription("A brand new source")
                 .build();
-        newContentSource.description = "A brand new source";
 
         ContentSource created = given()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -349,10 +349,10 @@ class ContentSourceResourceTest {
     @Test
     void testGetContentSourcesByTopic_TopicNotFound() {
         given()
-          .pathParam("userId", testUserId)
-          .pathParam("topicName", NON_EXISTENT_TOPIC_NAME)
-          .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
-          .then()
-             .statusCode(404);
+                .pathParam("userId", testUserId)
+                .pathParam("topicName", NON_EXISTENT_TOPIC_NAME)
+                .when().get("/api/v1/users/{userId}/topics/{topicName}/content-sources")
+                .then()
+                .statusCode(404);
     }
 }

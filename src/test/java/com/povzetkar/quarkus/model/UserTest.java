@@ -27,7 +27,6 @@ class UserTest {
                 .withEmail("testuser_nullname@example.com")
                 .withName(null)
                 .build();
-        user.active = true;
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user),
                 "Persisting a User with a null name should throw PersistenceException");
@@ -92,11 +91,11 @@ class UserTest {
     @Transactional
     void testPersistAndRetrieveUser() {
         User user = UserBuilder.aUser()
-			.withUsername("testuser_retrieve")
-			.withEmail("testuser_retrieve@example.com")
-			.withName("Another Test User")
-			.build();
-        user.active = false;
+            .withUsername("testuser_retrieve")
+            .withEmail("testuser_retrieve@example.com")
+            .withName("Another Test User")
+            .inactive()
+            .build();
         persistAndFlush(user);
 
         User retrievedUser = em.find(User.class, user.id);

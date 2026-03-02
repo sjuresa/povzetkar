@@ -38,7 +38,7 @@ class ContentSourceResourceTest {
                     .withUsername("cs_resource_test_user")
                     .withEmail("cs_resource_test_user@example.com")
                     .build();
-            testUser.active = true;
+
             testUser.persist();
 
             // Create test topic

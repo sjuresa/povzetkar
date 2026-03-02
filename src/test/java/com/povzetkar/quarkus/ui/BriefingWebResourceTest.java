@@ -39,26 +39,25 @@ class BriefingWebResourceTest {
         tearDown();
 
         User testUser = UserBuilder.aUser()
-			.withName("Povzetkar AI")
-			.withUsername("briefing_test_user")
-			.withEmail("briefing_test_user@example.com")
-			.build();
-        testUser.active = true;
+                .withName("Povzetkar AI")
+                .withUsername("briefing_test_user")
+                .withEmail("briefing_test_user@example.com")
+                .build();
         testUser.persist();
 
         // Create test topic
         Topic testTopic = TopicBuilder.aTopic()
-			.withName("Kripto")
-			.withUser(testUser)
-			.build();
+                .withName("Kripto")
+                .withUser(testUser)
+                .build();
         testTopic.persist();
 
         // Create test content source
         ContentSource testContentSource = ContentSourceBuilder.aContentSource()
-            .withName("Test Source")
-            .withSourceIdentifier("test-source-id") // Corrected field name
-            .withSourceTypeId(com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId())
-            .build();
+                .withName("Test Source")
+                .withSourceIdentifier("test-source-id") // Corrected field name
+                .withSourceTypeId(com.povzetkar.quarkus.model.SourceTypeEnum.YOUTUBE.getId())
+                .build();
         testContentSource.persist();
 
         // Create test content item

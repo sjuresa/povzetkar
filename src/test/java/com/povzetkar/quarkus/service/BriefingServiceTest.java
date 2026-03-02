@@ -59,7 +59,7 @@ class BriefingServiceTest {
                 .withEmail(uName + "@example.com")
                 .withName("Test User")
                 .build();
-        testUser.active = true;
+
         testUser.persist();
 
         testTopic = TopicBuilder.aTopic()

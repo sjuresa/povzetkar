@@ -29,7 +29,6 @@ class BriefingTest {
                 .withEmail(username + "@example.com")
                 .withName("Test User")
                 .build();
-        user.active = true;
         user.persist();
 
         // Create a Topic dependency
@@ -44,8 +43,8 @@ class BriefingTest {
                 .withSourceIdentifier("test_briefing_source_id")
                 .withSourceTypeId(2)
                 .withName("Test Briefing Source")
+                .withSubscriberCount(200)
                 .build();
-        contentSource.subscriberCount = 200;
         contentSource.persist();
 
         // Create two unique ContentItem dependencies

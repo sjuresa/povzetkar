@@ -93,22 +93,18 @@ class OrchestrationManagerTest {
     }
 
     private User setupUser() {
-        User user = UserBuilder.aUser()
-			.withUsername("test_user")
-			.withEmail("test_user@example.com")
-			.withName("Test User")
-			.build();
-        user.active = true;
-        return user;
+        return UserBuilder.aUser()
+            .withUsername("test_user")
+            .withEmail("test_user@example.com")
+            .withName("Test User")
+            .build();
     }
 
     private Topic setupTopic(User user) {
-        Topic topic = TopicBuilder.aTopic()
-			.withName("Test Topic")
-			.withUser(user)
-			.build();
-        topic.enabled = true;
-        return topic;
+        return TopicBuilder.aTopic()
+            .withName("Test Topic")
+            .withUser(user)
+            .build();
     }
 
     private ContentSource setupContentSource() {

@@ -73,7 +73,7 @@ class OrchestrationIntegrationTest {
 			.withEmail("orchestration_test_user@example.com")
 			.withName("Test User")
 			.build();
-        testUser.active = true;
+
         testUser.persist();
 
         Topic testTopic = TopicBuilder.aTopic()

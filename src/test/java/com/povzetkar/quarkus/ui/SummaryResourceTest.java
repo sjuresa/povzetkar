@@ -41,7 +41,7 @@ class SummaryResourceTest {
 			.withEmail("test@example.com")
 			.withName("Test User")
 			.build();
-        user.active = true;
+
         user.persist();
 
         Topic topic = TopicBuilder.aTopic()

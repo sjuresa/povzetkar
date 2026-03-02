@@ -80,7 +80,6 @@ class TopicProcessorTest {
                 .withEmail("test_user@example.com")
                 .build();
         testUser.id = 1L;
-        testUser.active = true;
 
         testTopic = TopicBuilder.aTopic()
                 .withName("Test Topic")
