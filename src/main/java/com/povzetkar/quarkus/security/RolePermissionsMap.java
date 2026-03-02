@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.security;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -43,8 +44,8 @@ public class RolePermissionsMap {
      */
     public static Set<Permission> getPermissionsForRole(String roleName) {
         if (roleName == null) {
-            return EnumSet.noneOf(Permission.class);
+            return Collections.emptySet();
         }
-        return ROLE_PERMISSIONS.getOrDefault(roleName.toLowerCase(), EnumSet.noneOf(Permission.class));
+        return ROLE_PERMISSIONS.getOrDefault(roleName.toLowerCase(), Collections.emptySet());
     }
 }
