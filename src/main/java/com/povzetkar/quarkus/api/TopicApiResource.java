@@ -148,6 +148,7 @@ public class TopicApiResource {
 
     @POST
     @Path("/{id}/trigger-run")
+    @RolesAllowed("TOPIC_TRIGGER_RUN")
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
     public Response triggerTopicRun(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();

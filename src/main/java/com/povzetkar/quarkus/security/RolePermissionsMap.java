@@ -28,8 +28,6 @@ public class RolePermissionsMap {
             Permission.SUMMARY_GENERATE,
             Permission.SOURCE_VIEW,
             Permission.SOURCE_CREATE,
-            Permission.SOURCE_UPDATE,
-            Permission.SOURCE_DELETE,
             Permission.CONTENT_ITEM_VIEW);
 
     private static final Map<String, Set<Permission>> ROLE_PERMISSIONS = Map.of(

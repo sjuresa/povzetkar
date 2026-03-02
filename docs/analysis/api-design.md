@@ -154,7 +154,7 @@ Manually triggers a briefing generation for the topic.
 *(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` from `metaSummary` (e.g., via `Briefing.getExecutiveSummary()`) and assemble the `briefingText` string by concatenating only the related `Summary` markdown content. This avoids sending the executive summary content twice. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
 
 ### 3.3. Content Sources (`/api/v1/sources`)
-*Required Permission: `SOURCE_VIEW`, `SOURCE_CREATE`, `SOURCE_UPDATE`, `SOURCE_DELETE`*
+*Required Permissions: `SOURCE_VIEW` (List/Get items), `SOURCE_CREATE` (POST), `SOURCE_UPDATE` (PUT/PATCH, Admin only), `SOURCE_DELETE` (DELETE, Admin only)*
 
 **`GET /api/v1/sources`**
 **Response (200 OK):**

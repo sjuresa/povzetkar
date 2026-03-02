@@ -37,7 +37,9 @@ class RolePermissionsMapTest {
                         Permission.ADMIN_SYSTEM_TRIGGER,
                         Permission.ADMIN_JOB_UPDATE,
                         Permission.USER_MGMT_VIEW,
-                        Permission.USER_MGMT_UPDATE);
+                        Permission.USER_MGMT_UPDATE,
+                        Permission.SOURCE_UPDATE,
+                        Permission.SOURCE_DELETE);
     }
 
     @Test

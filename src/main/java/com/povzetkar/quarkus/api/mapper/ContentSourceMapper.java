@@ -38,7 +38,7 @@ public interface ContentSourceMapper {
         try {
             return SourceTypeEnum.valueOf(platform).getId();
         } catch (IllegalArgumentException _) {
-            throw new jakarta.ws.rs.BadRequestException("Invalid platform: " + platform);
+            throw new IllegalArgumentException("Invalid platform: " + platform);
         }
     }
 

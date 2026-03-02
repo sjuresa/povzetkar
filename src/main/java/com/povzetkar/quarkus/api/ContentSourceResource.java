@@ -73,7 +73,12 @@ public class ContentSourceResource {
     @RolesAllowed("SOURCE_CREATE")
     @Operation(summary = "Create content source", description = "Creates a new content source.")
     public Response createContentSource(@Valid @NotNull ContentSourceCreateDTO createDTO) {
-        ContentSource contentSource = contentSourceMapper.toEntity(createDTO);
+        ContentSource contentSource;
+        try {
+            contentSource = contentSourceMapper.toEntity(createDTO);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(e.getMessage());
+        }
 
         Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
                 contentSource.sourceIdentifier, contentSource.sourceTypeId).firstResultOptional();
@@ -99,7 +104,13 @@ public class ContentSourceResource {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
-        Integer parsedSourceTypeId = contentSourceMapper.mapPlatformToSourceTypeId(updateDTO.platform());
+        Integer parsedSourceTypeId;
+        try {
+            parsedSourceTypeId = contentSourceMapper.mapPlatformToSourceTypeId(updateDTO.platform());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+
         if (parsedSourceTypeId == null) {
             throw new BadRequestException("Platform must not be blank");
         }
@@ -115,7 +126,12 @@ public class ContentSourceResource {
                     Response.Status.CONFLICT);
         }
 
-        contentSourceMapper.updateEntity(updateDTO, entity);
+        try {
+            contentSourceMapper.updateEntity(updateDTO, entity);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+
         return contentSourceMapper.toDTO(entity);
     }
 

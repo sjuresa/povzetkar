@@ -30,8 +30,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-@TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE", "SOURCE_UPDATE",
-                "SOURCE_DELETE" })
+@TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE" })
 class ContentSourceResourceTest {
 
         private static final String API_BASE_PATH = "/api/v1/sources";
@@ -251,6 +250,7 @@ class ContentSourceResourceTest {
         }
 
         @Test
+        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_UPDATE", "SOURCE_DELETE" })
         @Transactional
         void testUpdateContentSource_Success() {
                 ContentSource existingContentSource = em.find(ContentSource.class,
@@ -280,6 +280,7 @@ class ContentSourceResourceTest {
         }
 
         @Test
+        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_UPDATE" })
         @Transactional
         void testUpdateContentSource_NotFound() {
                 com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO nonExistentContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO(
@@ -297,6 +298,7 @@ class ContentSourceResourceTest {
         }
 
         @Test
+        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_UPDATE" })
         @Transactional
         void testUpdateContentSource_InvalidInput() {
                 ContentSource existingContentSource = em.find(ContentSource.class,
@@ -338,6 +340,7 @@ class ContentSourceResourceTest {
         }
 
         @Test
+        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_DELETE" })
         @Transactional
         void testDeleteContentSource_Success() {
                 ContentSource contentSourceToDelete = em.find(ContentSource.class,
@@ -360,6 +363,7 @@ class ContentSourceResourceTest {
         }
 
         @Test
+        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_DELETE" })
         @Transactional
         void testDeleteContentSource_NotFound() {
                 given()
@@ -367,6 +371,29 @@ class ContentSourceResourceTest {
                                 .when().delete(API_BASE_PATH + "/{id}")
                                 .then()
                                 .statusCode(404);
+        }
+
+        @Test
+        void testUpdateContentSource_Forbidden() {
+                com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO dummyDTO = new com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO(
+                                "YOUTUBE", "dummy-id", "Dummy Name");
+
+                given()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .pathParam("id", createdContentSourceIds.iterator().next())
+                                .body(dummyDTO)
+                                .when().put(API_BASE_PATH + "/{id}")
+                                .then()
+                                .statusCode(403);
+        }
+
+        @Test
+        void testDeleteContentSource_Forbidden() {
+                given()
+                                .pathParam("id", createdContentSourceIds.iterator().next())
+                                .when().delete(API_BASE_PATH + "/{id}")
+                                .then()
+                                .statusCode(403);
         }
 
 }
