@@ -62,12 +62,9 @@ public class UserApiResource {
     public PaginatedResponse<UserDTO> getUsers(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
-
-        long totalCount = User.count();
         PanacheQuery<User> query = User.find("FROM User u LEFT JOIN FETCH u.roles ORDER BY u.name ASC");
-        query.page(pageIndex, pageSize);
-
-        List<UserDTO> items = query.list().stream()
+        long totalCount = query.count();
+        List<UserDTO> items = query.page(pageIndex, pageSize).list().stream()
                 .map(userMapper::toDTO)
                 .toList();
 
@@ -80,7 +77,8 @@ public class UserApiResource {
     @Transactional
     @Operation(summary = "Update user status", description = "Activate or deactivate a user.")
     public UserDTO updateUserStatus(@PathParam("id") Long id, UserUpdateDTO dto) {
-        User user = User.<User>findByIdOptional(id)
+        User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
+                .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!dto.active()) {
@@ -118,7 +116,8 @@ public class UserApiResource {
     @Transactional
     @Operation(summary = "Update user roles", description = "Assign or remove roles for a user.")
     public UserDTO updateUserRoles(@PathParam("id") Long id, UserRoleUpdateDTO dto) {
-        User user = User.<User>findByIdOptional(id)
+        User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
+                .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         User currentUser = userContextService.getCurrentUser()
@@ -146,11 +145,14 @@ public class UserApiResource {
         }
 
         // Apply changes
+        List<Long> roleIds = dto.roleIds();
         Set<Role> newRoles = new HashSet<>();
-        for (Long roleId : dto.roleIds()) {
-            Role role = Role.<Role>findByIdOptional(roleId)
-                    .orElseThrow(() -> new BadRequestException("Role not found with id: " + roleId));
-            newRoles.add(role);
+        if (roleIds != null && !roleIds.isEmpty()) {
+            List<Role> foundRoles = Role.list("id in ?1", roleIds);
+            if (foundRoles.size() != new HashSet<>(roleIds).size()) {
+                throw new BadRequestException("One or more invalid role IDs provided.");
+            }
+            newRoles.addAll(foundRoles);
         }
 
         user.roles.clear();
