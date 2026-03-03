@@ -46,11 +46,8 @@ public class UserApiResource {
     @Transactional
     @Operation(summary = "Get current user profile", description = "Returns the profile and permissions for the authenticated user.")
     public UserDTO getCurrentUser() {
-        User user = userContextService.getCurrentUser()
+        User user = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-        
-        // Ensure roles are initialized for mapping
-        org.hibernate.Hibernate.initialize(user.roles);
         
         return userMapper.toDTO(user);
     }
