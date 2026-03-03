@@ -64,7 +64,7 @@ public class TopicApiResource {
         PanacheQuery<Topic> query = Topic.find("user", Sort.by("id"), user);
         query.page(pageIndex, pageSize);
 
-        List<TopicDTO> dtoList = query.list().stream().map(topicMapper::toDTO).toList();
+        List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
 
         return new PaginatedResponse<>(dtoList, count);

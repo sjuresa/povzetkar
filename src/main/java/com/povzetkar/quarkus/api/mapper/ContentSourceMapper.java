@@ -43,22 +43,12 @@ public interface ContentSourceMapper {
     }
 
     default String computeSourceUrl(ContentSource entity) {
-        if (entity.sourceIdentifier == null) {
-            return null;
+        String platform = mapSourceTypeIdToPlatform(entity.sourceTypeId);
+        if ("YOUTUBE".equals(platform) && entity.sourceIdentifier != null) {
+            return "https://youtube.com/channel/" + entity.sourceIdentifier;
+        } else if ("BLOG".equals(platform)) {
+            return entity.sourceIdentifier;
         }
-        SourceTypeEnum sourceType = SourceTypeEnum.fromId(entity.sourceTypeId);
-        if (sourceType == null) {
-            return null;
-        }
-        return switch (sourceType) {
-            case YOUTUBE -> "https://youtube.com/channel/" + entity.sourceIdentifier;
-            case BLOG -> {
-                if (entity.sourceIdentifier.startsWith("http://") || entity.sourceIdentifier.startsWith("https://")) {
-                    yield entity.sourceIdentifier;
-                }
-                yield "https://" + entity.sourceIdentifier;
-            }
-            default -> null;
-        };
+        return null;
     }
 }

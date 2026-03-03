@@ -52,7 +52,7 @@ public class ContentSourceResource {
         PanacheQuery<ContentSource> query = ContentSource.findAll(Sort.by("id"));
         query.page(pageIndex, pageSize);
 
-        List<ContentSourceDTO> dtoList = query.list().stream().map(contentSourceMapper::toDTO).toList();
+        List<ContentSourceDTO> dtoList = query.stream().map(contentSourceMapper::toDTO).toList();
         long count = query.count();
 
         return new PaginatedResponse<>(dtoList, count);
