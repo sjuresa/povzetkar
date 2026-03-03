@@ -1,12 +1,14 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.*;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.UserDTO;
+import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
+import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
 import com.povzetkar.quarkus.api.mapper.UserMapper;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -28,6 +30,7 @@ import java.util.Set;
 @Tag(name = "Users", description = "Endpoints for User management")
 public class UserApiResource {
 
+    private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private final UserMapper userMapper;
     private final UserContextService userContextService;
 
@@ -44,7 +47,7 @@ public class UserApiResource {
     @Operation(summary = "Get current user profile", description = "Returns the profile and permissions for the authenticated user.")
     public UserDTO getCurrentUser() {
         User user = userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+                .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
         
         // Ensure roles are initialized for mapping
         org.hibernate.Hibernate.initialize(user.roles);
@@ -60,17 +63,15 @@ public class UserApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
-        PanacheQuery<User> query = User.findAll(Sort.by("name").ascending());
+        long totalCount = User.count();
+        PanacheQuery<User> query = User.find("FROM User u LEFT JOIN FETCH u.roles ORDER BY u.name ASC");
         query.page(pageIndex, pageSize);
 
         List<UserDTO> items = query.list().stream()
-                .map(user -> {
-                    org.hibernate.Hibernate.initialize(user.roles);
-                    return userMapper.toDTO(user);
-                })
+                .map(userMapper::toDTO)
                 .toList();
 
-        return new PaginatedResponse<>(items, query.count());
+        return new PaginatedResponse<>(items, totalCount);
     }
 
     @PATCH
@@ -81,6 +82,29 @@ public class UserApiResource {
     public UserDTO updateUserStatus(@PathParam("id") Long id, UserUpdateDTO dto) {
         User user = User.<User>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (!dto.active()) {
+            User currentUser = userContextService.getCurrentUser()
+                    .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+
+            // 1. Protection: Admin cannot deactivate themselves
+            if (user.id.equals(currentUser.id)) {
+                throw new WebApplicationException(
+                    Response.status(Response.Status.CONFLICT)
+                        .entity("Cannot deactivate yourself")
+                        .type(MediaType.TEXT_PLAIN)
+                        .build());
+            }
+
+            // 2. Protection: Do not allow deactivating the last administrator
+            if (isLastAdmin(user)) {
+                 throw new WebApplicationException(
+                    Response.status(Response.Status.CONFLICT)
+                        .entity("Cannot deactivate the last administrator in the system")
+                        .type(MediaType.TEXT_PLAIN)
+                        .build());
+            }
+        }
 
         user.active = dto.active();
         user.persist();
@@ -98,7 +122,7 @@ public class UserApiResource {
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         User currentUser = userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+                .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
 
         // 1. Protection: Admin cannot remove their own admin role
         boolean isSelf = user.id.equals(currentUser.id);

@@ -65,6 +65,14 @@ class UserApiResourceTest {
                 .build();
         regularUser.addRole(userRole);
         em.persist(regularUser);
+
+        User privilegedUser = UserBuilder.aUser()
+                .withUsername("privileged_user")
+                .withEmail("privileged@example.com")
+                .withName("Privileged User")
+                .build();
+        privilegedUser.addRole(userRole); // Just give it 'user' role, @TestSecurity will add permissions
+        em.persist(privilegedUser);
         
         em.flush();
     }
@@ -109,9 +117,9 @@ class UserApiResourceTest {
                 .when().get("/api/v1/users")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(2))
-                .body("items", hasSize(2))
-                .body("items.email", hasItems("admin@example.com", "user@example.com"));
+                .body("totalCount", equalTo(3))
+                .body("items", hasSize(3))
+                .body("items.email", hasItems("admin@example.com", "user@example.com", "privileged@example.com"));
     }
 
     @Test
@@ -155,21 +163,21 @@ class UserApiResourceTest {
 
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
-    void testLockoutProtectionSelf() {
-        UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(userRole.id)); // Removing admin role from self
+    void testLockoutProtectionStatusSelf() {
+        UserUpdateDTO dto = new UserUpdateDTO(false);
 
         given()
                 .contentType(ContentType.JSON)
                 .body(dto)
-                .when().put("/api/v1/users/" + adminUser.id + "/roles")
+                .when().patch("/api/v1/users/" + adminUser.id)
                 .then()
                 .statusCode(409)
-                .body(equalTo("Cannot remove admin role from yourself"));
+                .body(equalTo("Cannot deactivate yourself"));
     }
 
     @Test
     @TestSecurity(user = "admin2", roles = {"user", "admin", "USER_MGMT_VIEW", "USER_MGMT_UPDATE"})
-    void testLockoutProtectionLastAdmin() {
+    void testUpdateAdminRolesAndSelfLockout() {
         setupSecondaryAdmin();
 
         UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(userRole.id));
@@ -190,6 +198,37 @@ class UserApiResourceTest {
                 .then()
                 .statusCode(409)
                 .body(equalTo("Cannot remove admin role from yourself"));
+    }
+
+    @Test
+    @TestSecurity(user = "privileged_user", roles = {"user", "USER_MGMT_UPDATE"})
+    void testLockoutProtectionLastAdminReal() {
+        // Here we use a user that has permission but NOT the admin role
+        // This allows them to try and demote the only admin without hitting self-lockout
+        
+        UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(userRole.id));
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().put("/api/v1/users/" + adminUser.id + "/roles")
+                .then()
+                .statusCode(409)
+                .body(equalTo("Cannot remove the last administrator from the system"));
+    }
+
+    @Test
+    @TestSecurity(user = "privileged_user", roles = {"user", "USER_MGMT_UPDATE"})
+    void testLockoutProtectionStatusLastAdmin() {
+        UserUpdateDTO dto = new UserUpdateDTO(false);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().patch("/api/v1/users/" + adminUser.id)
+                .then()
+                .statusCode(409)
+                .body(equalTo("Cannot deactivate the last administrator in the system"));
     }
 
     User secondaryAdmin;
