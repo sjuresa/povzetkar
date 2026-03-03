@@ -5,7 +5,7 @@ import com.povzetkar.quarkus.model.BackgroundJob;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "cdi")
+@Mapper(componentModel = "jakarta-cdi")
 public interface BackgroundJobMapper {
 
     @Mapping(target = "jobId", source = "id")
