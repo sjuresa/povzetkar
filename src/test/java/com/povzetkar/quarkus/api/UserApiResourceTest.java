@@ -202,6 +202,22 @@ class UserApiResourceTest {
 
     @Test
     @TestSecurity(user = "privileged_user", roles = {"user", "USER_MGMT_UPDATE"})
+    void testPrivilegeEscalationProtection() {
+        // privileged_user has USER_MGMT_UPDATE but NOT admin role
+        // Trying to grant admin role to regularUser should be FORBIDDEN
+        UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(adminRole.id, userRole.id));
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().put("/api/v1/users/" + regularUser.id + "/roles")
+                .then()
+                .statusCode(403)
+                .body(equalTo("Only an administrator can grant the admin role"));
+    }
+
+    @Test
+    @TestSecurity(user = "privileged_user", roles = {"user", "USER_MGMT_UPDATE"})
     void testLockoutProtectionLastAdminReal() {
         // Here we use a user that has permission but NOT the admin role
         // This allows them to try and demote the only admin without hitting self-lockout

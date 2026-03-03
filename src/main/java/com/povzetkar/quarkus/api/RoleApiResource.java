@@ -38,12 +38,10 @@ public class RoleApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         PanacheQuery<Role> query = Role.findAll(Sort.by("name").ascending());
-        query.page(pageIndex, pageSize);
-
-        List<RoleDTO> dtoList = query.list().stream()
+        long totalCount = query.count();
+        List<RoleDTO> dtoList = query.page(pageIndex, pageSize).list().stream()
                 .map(roleMapper::toDTO)
                 .toList();
-
-        return new PaginatedResponse<>(dtoList, query.count());
+        return new PaginatedResponse<>(dtoList, totalCount);
     }
 }

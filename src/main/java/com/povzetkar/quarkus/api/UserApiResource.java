@@ -8,7 +8,6 @@ import com.povzetkar.quarkus.api.mapper.UserMapper;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
-import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,6 +30,7 @@ import java.util.Set;
 public class UserApiResource {
 
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
+    private static final String ADMIN = "admin";
     private final UserMapper userMapper;
     private final UserContextService userContextService;
 
@@ -62,9 +62,18 @@ public class UserApiResource {
     public PaginatedResponse<UserDTO> getUsers(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
-        PanacheQuery<User> query = User.find("FROM User u LEFT JOIN FETCH u.roles ORDER BY u.name ASC");
-        long totalCount = query.count();
-        List<UserDTO> items = query.page(pageIndex, pageSize).list().stream()
+        long totalCount = User.count();
+        List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
+
+        if (usersForPage.isEmpty()) {
+            return new PaginatedResponse<>(List.of(), totalCount);
+        }
+
+        // This is the recommended pattern to work around JPA pagination limitations with joins.
+        List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
+        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
+
+        List<UserDTO> items = usersWithRoles.stream()
                 .map(userMapper::toDTO)
                 .toList();
 
@@ -126,8 +135,10 @@ public class UserApiResource {
         // 1. Protection: Admin cannot remove their own admin role
         boolean isSelf = user.id.equals(currentUser.id);
         boolean requestContainsAdmin = isRequestingAdminRole(dto.roleIds());
+        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
 
-        if (isSelf && user.roles.stream().anyMatch(r -> "admin".equalsIgnoreCase(r.name)) && !requestContainsAdmin) {
+        if (isSelf && userBeingModifiedIsAdmin && !requestContainsAdmin) {
             throw new WebApplicationException(
                 Response.status(Response.Status.CONFLICT)
                     .entity("Cannot remove admin role from yourself")
@@ -135,7 +146,16 @@ public class UserApiResource {
                     .build());
         }
 
-        // 2. Protection: Do not allow removing the last administrator
+        // 2. Protection: Only an existing admin can grant the admin role
+        if (requestContainsAdmin && !currentUserIsAdmin) {
+            throw new WebApplicationException(
+                Response.status(Response.Status.FORBIDDEN)
+                    .entity("Only an administrator can grant the admin role")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build());
+        }
+
+        // 3. Protection: Do not allow removing the last administrator
         if (!requestContainsAdmin && isLastAdmin(user)) {
              throw new WebApplicationException(
                 Response.status(Response.Status.CONFLICT)
@@ -169,7 +189,7 @@ public class UserApiResource {
 
     private boolean isLastAdmin(User userBeingModified) {
         // If the user being modified is an admin
-        boolean isAdmin = userBeingModified.roles.stream().anyMatch(r -> "admin".equalsIgnoreCase(r.name));
+        boolean isAdmin = userBeingModified.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
         if (!isAdmin) return false;
 
         // Count active admins in the system
