@@ -24,8 +24,11 @@ public abstract class UserMapper {
         if (identities == null || identities.isEmpty()) {
             return "LOCAL";
         }
-        // For now, return the first provider found, typically "google"
-        return identities.iterator().next().provider.toUpperCase();
+        // Return a sorted, comma-separated list of providers to be deterministic
+        return identities.stream()
+                .map(i -> i.provider.toUpperCase())
+                .sorted()
+                .collect(Collectors.joining(", "));
     }
 
     @Named("mapPermissions")

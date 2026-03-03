@@ -196,7 +196,7 @@ public class UserApiResource {
         if (!isAdmin) return false;
 
         // Count active admins in the system
-        long adminCount = User.find("select u from User u join u.roles r where r.name = 'admin' and u.active = true").count();
+        long adminCount = User.find("select u from User u join u.roles r where r.name = ?1 and u.active = true", ADMIN).count();
         
         return adminCount <= 1;
     }

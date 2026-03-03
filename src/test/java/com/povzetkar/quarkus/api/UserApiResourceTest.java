@@ -81,6 +81,7 @@ class UserApiResourceTest {
     @Transactional
     void teardown() {
         em.createNativeQuery("DELETE FROM user_roles").executeUpdate();
+        em.createNativeQuery("DELETE FROM user_identities").executeUpdate();
         em.createNativeQuery("DELETE FROM users").executeUpdate();
         em.createNativeQuery("DELETE FROM roles").executeUpdate();
     }
