@@ -30,6 +30,7 @@ public class UserApiResource {
 
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private static final String ADMIN = "admin";
+    private static final int MAX_PAGE_SIZE = 100;
     private final UserMapper userMapper;
     private final UserContextService userContextService;
 
@@ -61,6 +62,8 @@ public class UserApiResource {
     public PaginatedResponse<UserDTO> getUsers(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
+        
+        pageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
         long totalCount = User.count();
         List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
 
@@ -89,25 +92,22 @@ public class UserApiResource {
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        User currentUser = userContextService.getCurrentUserWithRoles()
+                .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+
+        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+
+        // 1. Protection: Only an administrator can manage another administrator account (activate/deactivate)
+        if (userBeingModifiedIsAdmin && !currentUserIsAdmin) {
+            throw new WebApplicationException(
+                Response.status(Response.Status.FORBIDDEN)
+                    .entity("Only an administrator can manage other administrators")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build());
+        }
+
         if (!dto.active()) {
-            User currentUser = userContextService.getCurrentUser()
-                    .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-
-            // Ensure we have current user roles for escalation check
-            currentUser = User.<User>find("from User u left join fetch u.roles where u.id = ?1", currentUser.id).firstResult();
-
-            boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
-            boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
-
-            // 1. Protection: Only an administrator can deactivate another administrator
-            if (userBeingModifiedIsAdmin && !currentUserIsAdmin) {
-                throw new WebApplicationException(
-                    Response.status(Response.Status.FORBIDDEN)
-                        .entity("Only an administrator can manage other administrators")
-                        .type(MediaType.TEXT_PLAIN)
-                        .build());
-            }
-
             // 2. Protection: Admin cannot deactivate themselves
             if (user.id.equals(currentUser.id)) {
                 throw new WebApplicationException(
@@ -143,11 +143,8 @@ public class UserApiResource {
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        User currentUser = userContextService.getCurrentUser()
+        User currentUser = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-
-        // Ensure we have current user roles for escalation check
-        currentUser = User.<User>find("from User u left join fetch u.roles where u.id = ?1", currentUser.id).firstResult();
 
         List<Long> requestedRoleIds = dto.roleIds() != null ? dto.roleIds() : List.of();
         List<Role> requestedRoles = Role.list("id in ?1", requestedRoleIds);

@@ -30,6 +30,8 @@ public class RoleApiResource {
         this.roleMapper = roleMapper;
     }
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     @GET
     @RolesAllowed("USER_MGMT_VIEW")
     @Operation(summary = "Get all roles", description = "Retrieves a paginated list of available roles.")
@@ -37,6 +39,7 @@ public class RoleApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
+        pageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
         PanacheQuery<Role> query = Role.findAll(Sort.by("name").ascending());
         long totalCount = query.count();
         List<RoleDTO> dtoList = query.page(pageIndex, pageSize).list().stream()

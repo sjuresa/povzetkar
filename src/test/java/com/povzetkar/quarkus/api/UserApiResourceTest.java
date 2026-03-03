@@ -218,18 +218,37 @@ class UserApiResourceTest {
 
     @Test
     @TestSecurity(user = "privileged_user", roles = {"user", "USER_MGMT_UPDATE"})
-    void testAdminDeactivationProtection() {
+    void testAdminStatusManagementProtection() {
         // privileged_user has USER_MGMT_UPDATE but NOT admin role
-        // Trying to deactivate an administrator should be FORBIDDEN
-        UserUpdateDTO dto = new UserUpdateDTO(false);
-
+        
+        // 1. Trying to deactivate an administrator should be FORBIDDEN
         given()
                 .contentType(ContentType.JSON)
-                .body(dto)
+                .body(new UserUpdateDTO(false))
                 .when().patch("/api/v1/users/" + adminUser.id)
                 .then()
                 .statusCode(403)
                 .body(equalTo("Only an administrator can manage other administrators"));
+
+        // 2. Setup deactivated admin
+        deactivateUser(adminUser);
+
+        // 3. Trying to activate an administrator should be FORBIDDEN
+        given()
+                .contentType(ContentType.JSON)
+                .body(new UserUpdateDTO(true))
+                .when().patch("/api/v1/users/" + adminUser.id)
+                .then()
+                .statusCode(403)
+                .body(equalTo("Only an administrator can manage other administrators"));
+    }
+
+    @Transactional
+    void deactivateUser(User u) {
+        User managed = em.find(User.class, u.id);
+        managed.active = false;
+        em.merge(managed);
+        em.flush();
     }
 
     @Test
