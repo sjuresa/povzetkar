@@ -11,7 +11,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "topics", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "name"})
+        @UniqueConstraint(columnNames = { "user_id", "name" })
 })
 public class Topic extends BaseAuditableEntity {
 
@@ -31,18 +31,21 @@ public class Topic extends BaseAuditableEntity {
     @JsonManagedReference
     public Set<Briefing> briefings = new HashSet<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "content_source_topics",
-               joinColumns = @JoinColumn(name = "topic_id"),
-               inverseJoinColumns = @JoinColumn(name = "content_source_id"))
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "content_source_topics", joinColumns = @JoinColumn(name = "topic_id"), inverseJoinColumns = @JoinColumn(name = "content_source_id"))
     @JsonManagedReference
     public Set<ContentSource> contentSources = new HashSet<>();
 
     @Column(nullable = false)
     public boolean enabled = true;
 
+    @Column(name = "last_run_date")
+    public java.time.Instant lastRunDate;
+
     public static List<Topic> findEnabledByUsers(List<User> users) {
-        return find("select distinct t from Topic t left join fetch t.contentSources where t.enabled = true and t.user in ?1", users).list();
+        return find(
+                "select distinct t from Topic t left join fetch t.contentSources where t.enabled = true and t.user in ?1",
+                users).list();
     }
 
     @Override

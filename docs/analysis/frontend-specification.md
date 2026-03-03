@@ -85,7 +85,7 @@ This document outlines the requirements and specifications for the standalone fr
 ### 4.5. Content Sources & Details (`/sources`)
 *   **List View:** Table of configured feeds (e.g., YouTube channels, RSS).
     *   Columns: Platform (Icon), Source Name, URL (clickable link), Status (Active, Failing).
-    *   Actions per row: Edit (opens modal or new page), Delete (Icon button).
+    *   Actions per row: Edit (requires `SOURCE_UPDATE`), Delete (requires `SOURCE_DELETE`). Note: These actions are restricted to administrative roles to prevent users from modifying or deleting globally shared sources.
     *   Search/Filter bar.
 *   **Create/Edit Modal or Page:**
     *   Fields: 
@@ -153,6 +153,8 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 | Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                           |
 | Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                           |
 | "Add Source" Button             | `SOURCE_CREATE`         | Hide from UI                                                                                          |
+| "Edit Source" Button            | `SOURCE_UPDATE`         | Hide from UI                                                                                          |
+| "Delete Source" Button          | `SOURCE_DELETE`         | Hide from UI                                                                                          |
 | View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.contentItemViewNotAllowed`). |
 | Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.summaryGenerateNotAllowed`). |
 | Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.briefingGenerateNotAllowed`). |
