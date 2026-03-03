@@ -46,9 +46,9 @@ public interface ContentSourceMapper {
 
     default String computeSourceUrl(ContentSource entity) {
         String platform = mapSourceTypeIdToPlatform(entity.sourceTypeId);
-        if ("YOUTUBE".equals(platform) && entity.sourceIdentifier != null) {
+        if (SourceTypeEnum.YOUTUBE.name().equals(platform) && entity.sourceIdentifier != null) {
             return YOUTUBE_CHANNEL_URL + entity.sourceIdentifier;
-        } else if ("BLOG".equals(platform)) {
+        } else if (SourceTypeEnum.BLOG.name().equals(platform)) {
             return entity.sourceIdentifier;
         }
         return null;

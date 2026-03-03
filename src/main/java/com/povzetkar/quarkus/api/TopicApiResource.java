@@ -36,8 +36,8 @@ import java.util.Optional;
 @Tag(name = "Topics", description = "Endpoints for managing Topics")
 public class TopicApiResource {
 
-    public static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
-    public static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
+    private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
+    private static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
     private final TopicMapper topicMapper;
     private final UserContextService userContextService;
     private final OrchestrationManager orchestrationManager;
