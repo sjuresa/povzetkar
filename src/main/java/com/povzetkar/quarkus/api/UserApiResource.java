@@ -30,7 +30,7 @@ public class UserApiResource {
 
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private static final String ADMIN = "admin";
-    private static final int MAX_PAGE_SIZE = 100;
+    public static final int MAX_PAGE_SIZE = 100;
     private final UserMapper userMapper;
     private final UserContextService userContextService;
 

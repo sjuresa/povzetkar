@@ -66,11 +66,9 @@ public class AdminApiResource {
     @RolesAllowed("ADMIN_DASHBOARD_VIEW")
     @Operation(summary = "Get job details")
     public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
-        BackgroundJob job = BackgroundJob.findById(id);
-        if (job == null) {
-            throw new NotFoundException("Job not found");
-        }
-        return backgroundJobMapper.toDTO(job);
+        return backgroundJobService.getJobById(id)
+                .map(backgroundJobMapper::toDTO)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
     }
 
     @GET

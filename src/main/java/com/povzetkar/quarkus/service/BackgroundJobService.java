@@ -14,8 +14,11 @@ import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jboss.logging.Logger;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -24,6 +27,7 @@ public class BackgroundJobService {
     private final OrchestrationManager orchestrationManager;
     private final BackgroundJobMapper backgroundJobMapper;
     private final java.time.Clock clock;
+    private static final Logger logger = Logger.getLogger(BackgroundJobService.class);
 
     @Inject
     public BackgroundJobService(OrchestrationManager orchestrationManager,
@@ -44,18 +48,18 @@ public class BackgroundJobService {
             Uni<Void> jobTask;
             switch (type) {
                 case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(), LocalDate.now(), false, false, false, true));
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
                 case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(), LocalDate.now(), false, false, true, false));
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(), LocalDate.now(), true, true, false, false));
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
                 default -> jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unknown job type: " + type));
             }
 
             jobTask.onSubscription().invoke(() -> updateStatus(job.id, JobStatus.RUNNING, null))
                    .onItem().call(() -> updateJobStatusUni(job.id, JobStatus.COMPLETED, null))
                    .onFailure().call(th -> updateJobStatusUni(job.id, JobStatus.FAILED, th.getMessage()))
-                   .subscribe().with(_ -> {}, _ -> {});
+                    .subscribe().with(item -> {}, failure -> logger.errorf(failure, "Failed to update final job status for job %s", job.id));
         });
 
         return job;
@@ -99,5 +103,9 @@ public class BackgroundJobService {
                 .toList();
 
         return new PaginatedResponse<>(items, totalCount);
+    }
+
+    public Optional<BackgroundJob> getJobById(UUID id) {
+        return BackgroundJob.findByIdOptional(id);
     }
 }

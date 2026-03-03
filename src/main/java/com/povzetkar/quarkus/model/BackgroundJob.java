@@ -31,6 +31,14 @@ public class BackgroundJob extends PanacheEntityBase {
     @Column(name = "error_message", length = 2000)
     public String errorMessage;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    public Instant createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    public Instant updatedAt;
+
     public BackgroundJob() {
         this.id = UUID.randomUUID();
         this.status = JobStatus.QUEUED;
