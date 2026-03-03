@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Implemented User and Role Management APIs (`/api/v1/users`, `/api/v1/roles`) with pagination, profile retrieval, and status/role updates.
+- **Security:** Added critical lockout protection for administrator roles, preventing self-removal of the admin role and accidental removal of the last system administrator.
 - **API:** Implemented Core REST APIs for Topics (`/api/v1/topics`) and Content Sources (`/api/v1/sources`) adhering to the Backend-For-Frontend (BFF) pattern using DTOs and MapStruct `@Mapper` interfaces. Includes pagination support for collection endpoints.
 - **Security:** Implemented Permission-Based Access Control (PBAC) foundations. Mapped database roles (`admin`, `user`) to 18 granular capabilities (e.g., `TOPIC_VIEW`, `ADMIN_DASHBOARD_VIEW`) via `RolePermissionsMap` and dynamically injected them into the `QuarkusSecurityIdentity` during OIDC authentication.
 

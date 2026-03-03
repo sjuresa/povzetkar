@@ -44,6 +44,26 @@ public class UserContextService {
     }
 
     /**
+     * Gets the currently authenticated User entity with its roles pre-fetched.
+     *
+     * @return An Optional containing the authenticated User with roles if they exist in the database, otherwise an empty Optional.
+     */
+    public Optional<User> getCurrentUserWithRoles() {
+        if (securityIdentity.isAnonymous()) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String username = securityIdentity.getPrincipal().getName();
+        if (securityIdentity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt) {
+            String provider = "google";
+            String externalId = jwt.getSubject();
+            return User.find("select u from User u left join fetch u.roles join u.identities i where i.provider = ?1 and i.externalId = ?2", provider, externalId).firstResultOptional();
+        }
+
+        return User.find("from User u left join fetch u.roles where u.username = ?1", username).firstResultOptional();
+    }
+
+    /**
      * Finds a Topic by its ID only if it is owned by the currently authenticated user.
      *
      * @param topicId The ID of the topic to find.
