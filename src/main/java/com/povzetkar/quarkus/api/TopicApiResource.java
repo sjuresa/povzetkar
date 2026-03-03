@@ -37,7 +37,7 @@ import java.util.Optional;
 public class TopicApiResource {
 
     public static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
-    public static final String USER_1_AND_NAME_2 = "user = ?1 and name = ?2";
+    public static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
     private final TopicMapper topicMapper;
     private final UserContextService userContextService;
     private final OrchestrationManager orchestrationManager;
@@ -159,7 +159,7 @@ public class TopicApiResource {
     }
 
     private void checkForDuplicateTopicName(User user, String name) {
-        Optional<Topic> existing = Topic.find(USER_1_AND_NAME_2, user, name).firstResultOptional();
+        Optional<Topic> existing = Topic.find(FIND_BY_USER_AND_NAME_QUERY, user, name).firstResultOptional();
         if (existing.isPresent()) {
             throw new WebApplicationException("A topic with this name already exists.", Response.Status.CONFLICT);
         }

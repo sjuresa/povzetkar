@@ -110,7 +110,6 @@ public class ContentSourceResource {
         } catch (IllegalArgumentException e) {
             throw new BadRequestException(e.getMessage());
         }
-
         Optional<ContentSource> existingWithSameKey = ContentSource
                 .find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
                         updateDTO.sourceIdentifier(), parsedSourceTypeId, id)
@@ -121,11 +120,7 @@ public class ContentSourceResource {
                     "Another ContentSource with the same sourceIdentifier and platform already exists.",
                     Response.Status.CONFLICT);
         }
-
-        // Update entity manually to avoid second call to mapPlatformToSourceTypeId
-        entity.sourceIdentifier = updateDTO.sourceIdentifier();
-        entity.name = updateDTO.name();
-        entity.sourceTypeId = parsedSourceTypeId;
+        contentSourceMapper.updateEntity(updateDTO, entity);
 
         return contentSourceMapper.toDTO(entity);
     }
