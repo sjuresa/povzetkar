@@ -2,7 +2,10 @@ package com.povzetkar.quarkus.builder;
 
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
+import com.povzetkar.quarkus.model.Topic;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class ContentSourceBuilder {
@@ -55,6 +58,13 @@ public class ContentSourceBuilder {
         return this;
     }
 
+    private Set<Topic> topics = new HashSet<>();
+
+    public ContentSourceBuilder withTopics(Set<com.povzetkar.quarkus.model.Topic> topics) {
+        this.topics = topics;
+        return this;
+    }
+
     public ContentSource build() {
         ContentSource source = new ContentSource();
         source.id = this.id;
@@ -63,6 +73,7 @@ public class ContentSourceBuilder {
         source.name = this.name;
         source.description = this.description;
         source.subscriberCount = this.subscriberCount;
+        source.topics = this.topics;
         return source;
     }
 }
