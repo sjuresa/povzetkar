@@ -14,6 +14,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "cdi", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ContentSourceMapper {
 
+    String YOUTUBE_CHANNEL_URL = "https://youtube.com/channel/";
+
     @Mapping(target = "platform", expression = "java(mapSourceTypeIdToPlatform(entity.sourceTypeId))")
     @Mapping(target = "sourceUrl", expression = "java(computeSourceUrl(entity))")
     ContentSourceDTO toDTO(ContentSource entity);
@@ -45,7 +47,7 @@ public interface ContentSourceMapper {
     default String computeSourceUrl(ContentSource entity) {
         String platform = mapSourceTypeIdToPlatform(entity.sourceTypeId);
         if ("YOUTUBE".equals(platform) && entity.sourceIdentifier != null) {
-            return "https://youtube.com/channel/" + entity.sourceIdentifier;
+            return YOUTUBE_CHANNEL_URL + entity.sourceIdentifier;
         } else if ("BLOG".equals(platform)) {
             return entity.sourceIdentifier;
         }

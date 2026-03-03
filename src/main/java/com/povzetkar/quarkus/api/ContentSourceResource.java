@@ -37,7 +37,7 @@ public class ContentSourceResource {
 
     @Inject
     public ContentSourceResource(ContentSourceDetailService contentSourceDetailService,
-            ContentSourceMapper contentSourceMapper) {
+                                 ContentSourceMapper contentSourceMapper) {
         this.contentSourceDetailService = contentSourceDetailService;
         this.contentSourceMapper = contentSourceMapper;
     }
@@ -100,7 +100,7 @@ public class ContentSourceResource {
     @RolesAllowed("SOURCE_UPDATE")
     @Operation(summary = "Update content source", description = "Fully replaces an existing content source.")
     public ContentSourceDTO updateContentSource(@PathParam("id") Long id,
-            @Valid @NotNull ContentSourceUpdateDTO updateDTO) {
+                                                @Valid @NotNull ContentSourceUpdateDTO updateDTO) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
@@ -122,7 +122,10 @@ public class ContentSourceResource {
                     Response.Status.CONFLICT);
         }
 
-        contentSourceMapper.updateEntity(updateDTO, entity);
+        // Update entity manually to avoid second call to mapPlatformToSourceTypeId
+        entity.sourceIdentifier = updateDTO.sourceIdentifier();
+        entity.name = updateDTO.name();
+        entity.sourceTypeId = parsedSourceTypeId;
 
         return contentSourceMapper.toDTO(entity);
     }
@@ -133,7 +136,7 @@ public class ContentSourceResource {
     @RolesAllowed("SOURCE_UPDATE")
     @Operation(summary = "Partially update content source", description = "Partially updates an existing content source.")
     public ContentSourceDTO patchContentSource(@PathParam("id") Long id,
-            @Valid @NotNull ContentSourcePatchDTO patchDTO) {
+                                               @Valid @NotNull ContentSourcePatchDTO patchDTO) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
