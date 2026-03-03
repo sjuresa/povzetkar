@@ -40,8 +40,8 @@ public class TopicApiResource {
     public static final String USER_1_AND_NAME_2 = "user = ?1 and name = ?2";
     private final TopicMapper topicMapper;
     private final UserContextService userContextService;
-    private final com.povzetkar.quarkus.service.OrchestrationManager orchestrationManager;
-    private final java.time.Clock clock;
+    private final OrchestrationManager orchestrationManager;
+    private final Clock clock;
 
     @Inject
     public TopicApiResource(TopicMapper topicMapper, UserContextService userContextService,
