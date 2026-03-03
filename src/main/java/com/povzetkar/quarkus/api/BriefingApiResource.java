@@ -80,7 +80,9 @@ public class BriefingApiResource {
     @Operation(summary = "Get briefing by ID", description = "Retrieves a specific briefing by its ID.")
     public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
-        Briefing briefing = Briefing.<Briefing>find("id = ?1 and topic.user = ?2", id, user)
+        Briefing briefing = Briefing.<Briefing>find(
+                "select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1 and b.topic.user = ?2",
+                id, user)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Briefing with id " + id + " not found."));
 

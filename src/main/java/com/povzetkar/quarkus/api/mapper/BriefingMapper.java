@@ -53,6 +53,7 @@ public abstract class BriefingMapper {
             return List.of();
         }
         return summaries.stream()
+                .sorted(Comparator.comparing(s -> s.id))
                 .map(s -> s.contentItem)
                 .map(contentItemMapper::toDTO)
                 .toList();
