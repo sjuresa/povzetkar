@@ -56,7 +56,7 @@ public class BackgroundJobService {
                 default -> jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unknown job type: " + type));
             }
 
-            jobTask.onSubscription().invoke(() -> updateStatus(job.id, JobStatus.RUNNING, null))
+            jobTask.onSubscription().call(() -> updateJobStatusUni(job.id, JobStatus.RUNNING, null))
                    .onItem().call(() -> updateJobStatusUni(job.id, JobStatus.COMPLETED, null)
                            .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
                    .onFailure().call(th -> updateJobStatusUni(job.id, JobStatus.FAILED, th.getMessage())

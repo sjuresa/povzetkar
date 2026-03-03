@@ -30,7 +30,7 @@ public class UserApiResource {
 
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private static final String ADMIN = "admin";
-    public static final int MAX_PAGE_SIZE = 100;
+
     private final UserMapper userMapper;
     private final UserContextService userContextService;
 
@@ -60,7 +60,7 @@ public class UserApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
-        pageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
+        pageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = User.count();
         List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
 

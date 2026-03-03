@@ -22,7 +22,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.net.URI;
 import java.util.UUID;
 
-import static com.povzetkar.quarkus.api.UserApiResource.MAX_PAGE_SIZE;
+import static com.povzetkar.quarkus.api.ApiConstants.MAX_PAGE_SIZE;
 
 @Path("/api/v1/admin")
 @ApplicationScoped
@@ -30,6 +30,8 @@ import static com.povzetkar.quarkus.api.UserApiResource.MAX_PAGE_SIZE;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Admin", description = "Endpoints for System Administration and Background Jobs")
 public class AdminApiResource {
+
+    private static final String JOBS_PATH = "jobs";
 
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
@@ -42,7 +44,7 @@ public class AdminApiResource {
     }
 
     @POST
-    @Path("/jobs/trigger")
+    @Path("/" + JOBS_PATH + "/trigger")
     @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
     @Operation(summary = "Trigger a background job", description = "Asynchronously starts a background job of the specified type.")
     @APIResponse(responseCode = "202", description = "Job triggered successfully")
@@ -51,7 +53,7 @@ public class AdminApiResource {
         
         URI location = uriInfo.getBaseUriBuilder()
                 .path(AdminApiResource.class)
-                .path("jobs")
+                .path(JOBS_PATH)
                 .path(job.id.toString())
                 .build();
 
@@ -62,7 +64,7 @@ public class AdminApiResource {
     }
 
     @GET
-    @Path("/jobs/{id}")
+    @Path("/" + JOBS_PATH + "/{id}")
     @RolesAllowed("ADMIN_DASHBOARD_VIEW")
     @Operation(summary = "Get job details")
     public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
@@ -72,7 +74,7 @@ public class AdminApiResource {
     }
 
     @GET
-    @Path("/jobs")
+    @Path("/" + JOBS_PATH)
     @RolesAllowed("ADMIN_DASHBOARD_VIEW")
     @Operation(summary = "List background jobs", description = "Returns a paginated list of background job history.")
     public PaginatedResponse<BackgroundJobDTO> getJobs(
