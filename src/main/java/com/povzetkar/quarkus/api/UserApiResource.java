@@ -20,7 +20,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Path("/api/v1/users")
 @ApplicationScoped
@@ -94,7 +93,22 @@ public class UserApiResource {
             User currentUser = userContextService.getCurrentUser()
                     .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
 
-            // 1. Protection: Admin cannot deactivate themselves
+            // Ensure we have current user roles for escalation check
+            currentUser = User.<User>find("from User u left join fetch u.roles where u.id = ?1", currentUser.id).firstResult();
+
+            boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+            boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+
+            // 1. Protection: Only an administrator can deactivate another administrator
+            if (userBeingModifiedIsAdmin && !currentUserIsAdmin) {
+                throw new WebApplicationException(
+                    Response.status(Response.Status.FORBIDDEN)
+                        .entity("Only an administrator can manage other administrators")
+                        .type(MediaType.TEXT_PLAIN)
+                        .build());
+            }
+
+            // 2. Protection: Admin cannot deactivate themselves
             if (user.id.equals(currentUser.id)) {
                 throw new WebApplicationException(
                     Response.status(Response.Status.CONFLICT)
@@ -103,7 +117,7 @@ public class UserApiResource {
                         .build());
             }
 
-            // 2. Protection: Do not allow deactivating the last administrator
+            // 3. Protection: Do not allow deactivating the last administrator
             if (isLastAdmin(user)) {
                  throw new WebApplicationException(
                     Response.status(Response.Status.CONFLICT)
@@ -132,12 +146,21 @@ public class UserApiResource {
         User currentUser = userContextService.getCurrentUser()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
 
-        // 1. Protection: Admin cannot remove their own admin role
-        boolean isSelf = user.id.equals(currentUser.id);
-        boolean requestContainsAdmin = isRequestingAdminRole(dto.roleIds());
+        // Ensure we have current user roles for escalation check
+        currentUser = User.<User>find("from User u left join fetch u.roles where u.id = ?1", currentUser.id).firstResult();
+
+        List<Long> requestedRoleIds = dto.roleIds() != null ? dto.roleIds() : List.of();
+        List<Role> requestedRoles = Role.list("id in ?1", requestedRoleIds);
+        if (requestedRoles.size() != new HashSet<>(requestedRoleIds).size()) {
+            throw new BadRequestException("One or more invalid role IDs provided.");
+        }
+
+        boolean requestContainsAdmin = requestedRoles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
         boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
         boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+        boolean isSelf = user.id.equals(currentUser.id);
 
+        // 1. Protection: Admin cannot remove their own admin role
         if (isSelf && userBeingModifiedIsAdmin && !requestContainsAdmin) {
             throw new WebApplicationException(
                 Response.status(Response.Status.CONFLICT)
@@ -146,17 +169,17 @@ public class UserApiResource {
                     .build());
         }
 
-        // 2. Protection: Only an existing admin can grant the admin role
-        if (requestContainsAdmin && !currentUserIsAdmin) {
+        // 2. Protection: Only an existing admin can grant or remove the admin role
+        if ((requestContainsAdmin || userBeingModifiedIsAdmin) && !currentUserIsAdmin) {
             throw new WebApplicationException(
                 Response.status(Response.Status.FORBIDDEN)
-                    .entity("Only an administrator can grant the admin role")
+                    .entity("Only an administrator can manage the admin role")
                     .type(MediaType.TEXT_PLAIN)
                     .build());
         }
 
         // 3. Protection: Do not allow removing the last administrator
-        if (!requestContainsAdmin && isLastAdmin(user)) {
+        if (userBeingModifiedIsAdmin && !requestContainsAdmin && isLastAdmin(user)) {
              throw new WebApplicationException(
                 Response.status(Response.Status.CONFLICT)
                     .entity("Cannot remove the last administrator from the system")
@@ -165,27 +188,13 @@ public class UserApiResource {
         }
 
         // Apply changes
-        List<Long> roleIds = dto.roleIds();
-        Set<Role> newRoles = new HashSet<>();
-        if (roleIds != null && !roleIds.isEmpty()) {
-            List<Role> foundRoles = Role.list("id in ?1", roleIds);
-            if (foundRoles.size() != new HashSet<>(roleIds).size()) {
-                throw new BadRequestException("One or more invalid role IDs provided.");
-            }
-            newRoles.addAll(foundRoles);
-        }
-
         user.roles.clear();
-        user.roles.addAll(newRoles);
+        user.roles.addAll(new HashSet<>(requestedRoles));
         user.persist();
 
         return userMapper.toDTO(user);
     }
 
-    private boolean isRequestingAdminRole(List<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) return false;
-        return Role.find("id in ?1 and name = 'admin'", roleIds).count() > 0;
-    }
 
     private boolean isLastAdmin(User userBeingModified) {
         // If the user being modified is an admin
