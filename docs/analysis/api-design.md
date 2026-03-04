@@ -269,6 +269,7 @@ Force an individual content item to fetch transcript and generate a summary, ove
 > 2. **(v0.12+)** Rate limiting or quota enforcement per user.
 
 **Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
+**Response (409 Conflict):** Returned if a summary already exists and is in a `COMPLETED` state.
 
 **`POST /api/v1/content-items/{id}/commands/retry`**
 Signals to the background worker to retry a failed item. Admin functionality.
