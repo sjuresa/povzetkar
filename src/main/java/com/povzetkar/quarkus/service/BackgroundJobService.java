@@ -85,7 +85,11 @@ public class BackgroundJobService {
         } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
             if (job.startedAt == null) job.startedAt = clock.instant(); // fallback
             job.endedAt = clock.instant();
-            job.errorMessage = errorMessage;
+            if (errorMessage != null && errorMessage.length() > com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
+                job.errorMessage = errorMessage.substring(0, com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
+            } else {
+                job.errorMessage = errorMessage;
+            }
         }
         job.persist();
     }

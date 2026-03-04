@@ -28,7 +28,9 @@ public class BackgroundJob extends PanacheEntityBase {
     @Column(name = "ended_at")
     public Instant endedAt;
 
-    @Column(name = "error_message", length = 2000)
+    public static final int ERROR_MESSAGE_MAX_LENGTH = 2000;
+
+    @Column(name = "error_message", length = ERROR_MESSAGE_MAX_LENGTH)
     public String errorMessage;
 
     @org.hibernate.annotations.CreationTimestamp
