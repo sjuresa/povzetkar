@@ -94,7 +94,9 @@ Invalidates the HTTP-only session cookie.
 **Response (201 Created):** Returns the created topic object.
 
 **`PATCH /api/v1/topics/{id}`**
-*Note: We exclusively use PATCH instead of PUT to avoid mass-assignment vulnerabilities and prevent unintended nullification of fields.*
+> [!WARNING]
+> **Deprecation Notice:** `PUT` operations are **no longer supported** for resource updates in this API. You must exclusively use `PATCH` to perform partial updates. `PUT` was removed globally to prevent mass-assignment vulnerabilities and prevent unintended nullification of fields.
+
 **Request Body (Partial Update):**
 ```json
 {
