@@ -59,9 +59,9 @@ public class BackgroundJobService {
             jobTask.onSubscription().call(() -> updateJobStatusUni(job.id, JobStatus.RUNNING, null))
                    .onItem().call(() -> updateJobStatusUni(job.id, JobStatus.COMPLETED, null)
                            .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
-                   .onFailure().call(th -> updateJobStatusUni(job.id, JobStatus.FAILED, th.getMessage())
+                   .onFailure().call(th -> updateJobStatusUni(job.id, JobStatus.FAILED, th.toString())
                            .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
-                    .subscribe().with(item -> {}, failure -> logger.errorf(failure, "Failed to update final job status for job %s after retries", job.id));
+                    .subscribe().with(_ -> {}, failure -> logger.errorf(failure, "Failed to update final job status for job %s after retries", job.id));
         });
 
         return job;

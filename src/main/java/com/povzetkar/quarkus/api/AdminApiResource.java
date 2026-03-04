@@ -53,9 +53,8 @@ public class AdminApiResource {
         
         URI location = uriInfo.getBaseUriBuilder()
                 .path(AdminApiResource.class)
-                .path(JOBS_PATH)
-                .path(job.id.toString())
-                .build();
+                .path(AdminApiResource.class, "getJobById")
+                .build(job.id);
 
         return Response.accepted()
                 .location(location)
