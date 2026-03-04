@@ -100,7 +100,6 @@ Invalidates the HTTP-only session cookie.
 **Request Body (Partial Update):**
 ```json
 {
-  "name": "Future of Work - Updated",
   "enabled": false
 }
 ```
@@ -409,8 +408,6 @@ Aggregated convenience endpoint for the frontend dashboard to prevent N+1 reques
     "activeTopics": 3,
     "briefingsGeneratedThisWeek": 5
   }
-}
-```
 }
 ```
 
