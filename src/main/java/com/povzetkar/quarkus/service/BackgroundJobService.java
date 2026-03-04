@@ -77,18 +77,17 @@ public class BackgroundJobService {
 
     @Transactional
     public void updateStatus(UUID jobId, JobStatus status, String errorMessage) {
-        BackgroundJob job = BackgroundJob.findById(jobId);
-        if (job != null) {
-            job.status = status;
-            if (status == JobStatus.RUNNING && job.startedAt == null) {
-                job.startedAt = clock.instant();
-            } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
-                if (job.startedAt == null) job.startedAt = clock.instant(); // fallback
-                job.endedAt = clock.instant();
-                job.errorMessage = errorMessage;
-            }
-            job.persist();
+        BackgroundJob job = BackgroundJob.<BackgroundJob>findByIdOptional(jobId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("BackgroundJob not found: " + jobId));
+        job.status = status;
+        if (status == JobStatus.RUNNING && job.startedAt == null) {
+            job.startedAt = clock.instant();
+        } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
+            if (job.startedAt == null) job.startedAt = clock.instant(); // fallback
+            job.endedAt = clock.instant();
+            job.errorMessage = errorMessage;
         }
+        job.persist();
     }
 
     public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, int pageIndex, int pageSize) {
