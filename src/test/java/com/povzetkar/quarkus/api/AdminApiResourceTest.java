@@ -1,8 +1,11 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.service.OrchestrationManager;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -14,7 +17,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
@@ -48,9 +55,11 @@ class AdminApiResourceTest {
                 .body("jobType", equalTo("SYNC_YOUTUBE_FEEDS"))
                 .body("status", equalTo("QUEUED"));
         
-        // Success callback should eventually set it to COMPLETED, but since it's async in service
-        // we might not see it immediately in this test without awaitability.
-        // But for unit testing the API, 202 is enough.
+        // Verify that the job eventually completes
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            List<BackgroundJob> jobs = QuarkusTransaction.requiringNew().call(PanacheEntityBase::listAll);
+            return jobs.size() == 1 && jobs.getFirst().status == JobStatus.COMPLETED;
+        });
     }
 
     @Test

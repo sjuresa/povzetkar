@@ -81,10 +81,11 @@ public class BackgroundJobService {
         BackgroundJob job = BackgroundJob.<BackgroundJob>findByIdOptional(jobId)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("BackgroundJob not found: " + jobId));
         job.status = status;
-        if (status == JobStatus.RUNNING && job.startedAt == null) {
-            job.startedAt = clock.instant();
+        if (status == JobStatus.RUNNING) {
+            if (job.startedAt == null) {
+                job.startedAt = clock.instant();
+            }
         } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
-            if (job.startedAt == null) job.startedAt = clock.instant(); // fallback
             job.endedAt = clock.instant();
             if (errorMessage != null) {
                 logger.errorf("Full error message: %s", errorMessage);
