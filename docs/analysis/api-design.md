@@ -264,9 +264,9 @@ Force an individual content item to fetch transcript and generate a summary, ove
 *Required Permission: `SUMMARY_GENERATE`*
 
 > [!WARNING]
-> **Abuse Mitigation (v0.12+):** Because `ContentItems` are a global resource, allowing users to override global state continuously poses a financial and consistency risk. In future iterations, this endpoint MUST be protected by:
-> 1. Rate limiting or quota enforcement per user.
-> 2. Validation preventing summary regeneration if a successful summary already exists, limiting the action to `ERROR` or `PENDING` states.
+> **Abuse Mitigation:** Because `ContentItems` are a global resource, allowing users to override global state continuously poses a financial and consistency risk. This endpoint MUST be protected by:
+> 1. **(v0.11)** Validation preventing summary regeneration if a successful summary already exists, limiting the action to `ERROR` or `PENDING` states.
+> 2. **(v0.12+)** Rate limiting or quota enforcement per user.
 
 **Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
 
