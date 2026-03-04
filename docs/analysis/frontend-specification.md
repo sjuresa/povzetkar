@@ -59,13 +59,14 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Widgets:**
     *   **Welcome Card:** User's name and role summary.
     *   **Recent Briefings (List/Cards):** Top 5 most recent reports (Title, Date, minimal abstract snippet). Clicking navigates to the briefing detail.
-    *   **Quick Stats (Optional):** Number of active topics, total briefings generated this week.
+    *   **Quick Stats:** Number of active topics, total briefings generated this week.
+*   **Data Fetching:** The entire dashboard should be hydrated using the unified BFF endpoint `GET /api/v1/dashboard` to avoid N+1 queries.
 *   **Loading State:** Skeleton loaders for widgets while data fetches.
 
 ### 4.3. Topic Management (`/topics`)
 *   **List View:**
     *   Data Table or Card Grid displaying: Name, Status (Active/Inactive), Last Run Date.
-    *   Actions per row: Edit (opens modal or new page), Trigger Run (Icon button, disabled if running), Delete (Icon button).
+    *   Actions per row: Edit (opens modal or new page), Trigger Run (Icon button, disabled if running; hits `/api/v1/topics/:id/commands/trigger-run`), Delete (Icon button).
     *   Empty State: Friendly message "No topics yet. Create your first topic to start gathering intelligence."
 *   **Create/Edit Modal or Page:**
     *   Fields: 
@@ -95,12 +96,12 @@ This document outlines the requirements and specifications for the standalone fr
     *   Must handle backend validation errors gracefully.
 *   **Detail View (`/sources/:id`):**
     *   **Header:** Source Name, Platform, Statistics.
-    *   **Content Items List:** List of individual pieces of content (e.g., YouTube videos) belonging to this source.
+    *   **Content Items List:** List of individual pieces of content (e.g., YouTube videos) belonging to this source. Fetched via `GET /api/v1/content-items?sourceId={id}`.
         *   Columns/Data: Thumbnail, Title, Published Date, Duration, Status (Pending, Completed, Error).
     *   **Actions per Item:**
-        *   View the generated summary or fetched transcript.
-        *   Force generate a new summary for a specific item.
-        *   Select multiple items or a custom date range to explicitly generate a new Briefing/Report.
+        *   View the generated summary or fetched transcript (navigates to specific `/content-items/:id` detail view fetching from `GET /api/v1/content-items/:id`).
+        *   Force generate a new summary for a specific item (hits `POST /api/v1/content-items/:id/commands/generate-summary`).
+        *   Select multiple items or a custom date range to explicitly generate a new Briefing/Report (hits `POST /api/v1/briefings`).
 
 ### 4.6. User & Role Management (`/users`)
 *   *Note: Only accessible to administrators with user management permissions.*
@@ -132,8 +133,8 @@ This document outlines the requirements and specifications for the standalone fr
         *   Must have confirmation dialogs.
         *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) if a corresponding asynchronous background job is in progress on the server. This state must be reflected both when the page loads (to account for jobs triggered by other users or schedules) and after a user triggers a job. To ensure an efficient and responsive UI, the frontend should ideally use real-time communication technologies like WebSockets or Server-Sent Events (SSE) to receive job status updates, falling back to polling a designated job status endpoint only if necessary.
     *   **Job & History Management:** 
-        *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later).
-        *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry). Requires `ADMIN_JOB_UPDATE`.
+        *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later). (Job details fetchable via `GET /api/v1/admin/jobs/:jobId`).
+        *   Ability to explicitly retry a failed item. Requires `ADMIN_JOB_UPDATE` and hits `POST /api/v1/content-items/:id/commands/retry`.
 
 ## 5. Permission-Based Access Control (PBAC) Integration
 
@@ -142,26 +143,26 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 
 ### 5.1. UI Behavior Rules Matrix
 
-| UI Component / Action           | Required Permission Key | Behavior if Missing                                                   |
-|:--------------------------------|:------------------------|:----------------------------------------------------------------------|
-| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                           |
-| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Create Topic" Button           | `TOPIC_CREATE`          | Hide from UI                                                                                          |
-| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicUpdateNotAllowed`). |
-| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicDeleteNotAllowed`). |
-| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicTriggerRunNotAllowed`). |
-| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                           |
-| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Add Source" Button             | `SOURCE_CREATE`         | Hide from UI                                                                                          |
-| "Edit Source" Button            | `SOURCE_UPDATE`         | Hide from UI                                                                                          |
-| "Delete Source" Button          | `SOURCE_DELETE`         | Hide from UI                                                                                          |
-| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.contentItemViewNotAllowed`). |
-| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.summaryGenerateNotAllowed`). |
-| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.briefingGenerateNotAllowed`). |
-| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.userMgmtUpdateNotAllowed`). |
+| UI Component / Action           | Required Permission Key | Behavior if Missing                                                                                                                                                                                  |
+|:--------------------------------|:------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| "Create Topic" Button           | `TOPIC_CREATE`          | Hide from UI                                                                                                                                                                                         |
+| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicUpdateNotAllowed`).        |
+| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicDeleteNotAllowed`).        |
+| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicTriggerRunNotAllowed`).    |
+| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| "Add Source" Button             | `SOURCE_CREATE`         | Hide from UI                                                                                                                                                                                         |
+| "Edit Source" Button            | `SOURCE_UPDATE`         | Hide from UI                                                                                                                                                                                         |
+| "Delete Source" Button          | `SOURCE_DELETE`         | Hide from UI                                                                                                                                                                                         |
+| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.contentItemViewNotAllowed`).    |
+| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.summaryGenerateNotAllowed`).    |
+| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.briefingGenerateNotAllowed`).   |
+| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.userMgmtUpdateNotAllowed`).     |
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.adminSystemTriggerNotAllowed`). |
-| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.adminJobUpdateNotAllowed`). |
+| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.adminJobUpdateNotAllowed`).     |
 
 ### 5.2. Visual Clutter Reduction in Tables
 While the standard strategy is to disable UI elements for missing permissions (promoting feature discoverability), views with many repeated disabled elements (such as an 'Actions' column in a data table) can become visually cluttered. The frontend implementation SHOULD hide a group of controls entirely (e.g., hiding the entire 'Actions' column in the Topics list) if the current user lacks *all* associated permissions required for the actions within that group.
@@ -170,7 +171,9 @@ While the standard strategy is to disable UI elements for missing permissions (p
 To adhere to the Mobile-First principle (Section 2.2), relying solely on "hover" for tooltips on disabled actions is insufficient. On touch devices where hover is unavailable, tapping or pressing a disabled UI element MUST trigger the display of the explanatory tooltip or an equivalent transient toast message, ensuring mobile users receive the same context regarding their restricted permissions as desktop users.
 
 ### 5.4. Instance-Level Authorization Expectation
-While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
+While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. 
+*   **Ownership Model:** `Topics` and `Briefings` are user-scoped (a user can only access their own). `Sources` and `ContentItems` are global.
+*   **Error Handling:** The backend is responsible for verifying ownership. If a user attempts to access a resource they do not own (e.g., `GET /api/v1/topics/123` where ID 123 belongs to someone else), the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
 
 ## 6. Frontend Stack & Technical Constraints
 *(To be decided by the frontend team, but recommendations for interfacing with this generic spec):*

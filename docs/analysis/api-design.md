@@ -16,6 +16,18 @@ This document defines the REST API contract required to support the capabilities
 Instead, the backend implementation (Task 4) MUST utilize Data Transfer Objects (DTOs) and mappers (e.g., MapStruct) to transform data:
 *   **Computed Fields:** UI elements like `status` on a `ContentSource` or `briefingText` on a `Briefing` may not exist in the database. The backend is tasked with calculating these dynamically on read (e.g., deriving `status` from recent `ContentProcessingError` logs, or assembling `briefingText` by concatenating only the associated `Summary.summaryText` entries).
 
+### 1.2 Resource Ownership & Scoping Rules
+To prevent horizontal privilege escalation and clarify data boundaries, the API enforces the following ownership model (instance-level authorization):
+*   **Topics:** User-scoped. Users can only fetch and modify their own topics.
+*   **Briefings:** User-scoped. Tied to the topic owner.
+*   **Sources:** Global. Shared across the entire system. Modifications are restricted to administrative roles.
+*   **Content Items:** Global. Tied to a specific source, not owned by individual users.
+*   **Jobs:** System-wide or user-initiated.
+*All endpoints dealing with user-scoped resources will return `403 Forbidden` if a user attempts to access an instance they do not own.*
+
+### 1.3 Enum Contract Stability
+Enum values defined in this contract (e.g., `PROCESSING_STATUS`, `JOB_TYPE`, `PLATFORM`) are part of the public API versioning. They must not be renamed or altered without corresponding frontend adjustments and versioning considerations.
+
 ## 2. Authentication & Identity (`/api/v1/auth` & `/api/v1/users/me`)
 
 ### 2.1. Get Current User Context
@@ -81,20 +93,12 @@ Invalidates the HTTP-only session cookie.
 ```
 **Response (201 Created):** Returns the created topic object.
 
-**`PUT /api/v1/topics/{id}`**
-**Request Body:**
+**`PATCH /api/v1/topics/{id}`**
+*Note: We exclusively use PATCH instead of PUT to avoid mass-assignment vulnerabilities and prevent unintended nullification of fields.*
+**Request Body (Partial Update):**
 ```json
 {
   "name": "Future of Work - Updated",
-  "enabled": false
-}
-```
-**Response (200 OK):** Returns the updated topic object. *(Note: PUT acts as a full replacement. Any omitted fields will be reset to their default values or `null`.)*
-
-**`PATCH /api/v1/topics/{id}`**
-**Request Body:**
-```json
-{
   "enabled": false
 }
 ```
@@ -103,10 +107,10 @@ Invalidates the HTTP-only session cookie.
 **`DELETE /api/v1/topics/{id}`**
 **Response (204 No Content)**
 
-**`POST /api/v1/topics/{id}/trigger-run`**
-Manually triggers a briefing generation for the topic.
+**`POST /api/v1/topics/{id}/commands/trigger-run`**
+Manually triggers an asynchronous briefing generation job for the topic.
 *Required Permission: `TOPIC_TRIGGER_RUN`*
-**Response (202 Accepted)**
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/admin/jobs/{jobId}`).
 
 ### 3.2. Briefings (`/api/v1/briefings`)
 *Required Permission: `BRIEFING_VIEW`*
@@ -153,6 +157,19 @@ Manually triggers a briefing generation for the topic.
 ```
 *(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` from `metaSummary` (e.g., via `Briefing.getExecutiveSummary()`) and assemble the `briefingText` string by concatenating only the related `Summary` markdown content. This avoids sending the executive summary content twice. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
 
+**`POST /api/v1/briefings`**
+Explicitly generate a custom briefing. Asynchronous operation.
+*Required Permission: `BRIEFING_GENERATE`*
+**Request Body:**
+```json
+{
+  "topicId": 101,
+  "startDate": "2023-10-18",
+  "endDate": "2023-10-25"
+}
+```
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status.
+
 ### 3.3. Content Sources (`/api/v1/sources`)
 *Required Permissions: `SOURCE_VIEW` (List/Get items), `SOURCE_CREATE` (POST), `SOURCE_UPDATE` (PUT/PATCH, Admin only), `SOURCE_DELETE` (DELETE, Admin only)*
 
@@ -188,36 +205,31 @@ Manually triggers a briefing generation for the topic.
 *(Note: `description` and `subscriberCount` are typically fetched by the backend during sync, not provided via POST).*
 **Response (201 Created):** Returns the created source object.
 
-**`PUT /api/v1/sources/{id}`**
-**Request Body:**
-```json
-{
-  "platform": "YOUTUBE",
-  "sourceIdentifier": "UCX6OQ3DkcsbYNE6H8uQQuVA",
-  "name": "MrBeast Tech"
-}
-```
-**Response (200 OK):** Returns the updated source object. *(Note: PUT acts as a full replacement. Any omitted fields will be reset to their default values or `null`.)*
-
 **`PATCH /api/v1/sources/{id}`**
-**Request Body:**
+*Note: Exclusive use of PATCH to prevent overwriting global fields unintentionally.*
+**Request Body (Partial Update):**
 ```json
 {
   "name": "MrBeast Tech (Renamed)"
 }
 ```
+**Response (200 OK):** Returns the updated source object.
 
 **`DELETE /api/v1/sources/{id}`**
 **Response (204 No Content)**
 
-**`GET /api/v1/sources/{id}/items`**
-List individual pieces of content under a source (Supports pagination).
+### 3.4. Content Items (`/api/v1/content-items`)
+*Required Permission: `CONTENT_ITEM_VIEW`, `SUMMARY_GENERATE`, `ADMIN_JOB_UPDATE`*
+
+**`GET /api/v1/content-items`**
+List individual pieces of content. Supports filtering via `?sourceId={id}` and pagination.
 **Response (200 OK):**
 ```json
 {
   "items": [
     {
       "id": 305,
+      "sourceId": 201,
       "title": "New AI Models compared",
       "sourceUrl": "https://www.youtube.com/watch?v=dSC1mmt-yEE",
       "publishedAt": "2023-10-24T10:00:00Z",
@@ -230,9 +242,33 @@ List individual pieces of content under a source (Supports pagination).
   "totalCount": 1
 }
 ```
-*(Backend Implementation Note: The base `ContentItem` does not contain `durationSeconds` or `thumbnailUrl`. The DTO mapper must check if the item is an `instanceof YouTubeVideo` to extract the `duration` and construct the `thumbnailUrl` using the `videoId`.)*
+*(Backend Implementation Note: The DTO mapper must check if the item is an `instanceof YouTubeVideo` to extract the `durationSeconds` and construct `thumbnailUrl`.)*
 
-### 3.4. User & Role Management (`/api/v1/users` & `/api/v1/roles`)
+**`GET /api/v1/content-items/{id}`**
+Detailed view including fetched transcript and generated summary text.
+**Response (200 OK):**
+```json
+{
+  "id": 305,
+  "sourceId": 201,
+  "title": "New AI Models compared",
+  "transcriptText": "Hello everyone today we are looking at...",
+  "summaryText": "The video compares the latest AI models emphasizing...",
+  "processingStatus": "COMPLETED"
+}
+```
+
+**`POST /api/v1/content-items/{id}/commands/generate-summary`**
+Force an individual content item to fetch transcript and generate a summary, overriding its current status. Asynchronous operation.
+*Required Permission: `SUMMARY_GENERATE`*
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status.
+
+**`POST /api/v1/content-items/{id}/commands/retry`**
+Signals to the background worker to retry a failed item. Admin functionality.
+*Required Permission: `ADMIN_JOB_UPDATE`*
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status.
+
+### 3.5. User & Role Management (`/api/v1/users` & `/api/v1/roles`)
 *Required Permission: `USER_MGMT_VIEW`, `USER_MGMT_UPDATE`*
 
 **`GET /api/v1/users`**
@@ -291,7 +327,7 @@ Deactivate or ban a user.
 ```
 **Response (200 OK):** Returns the updated user object.
 
-### 3.5. Admin Command Center (`/api/v1/admin`)
+### 3.6. Admin Command Center (`/api/v1/admin`)
 *Required Permission: `ADMIN_DASHBOARD_VIEW`, `ADMIN_SYSTEM_TRIGGER`, `ADMIN_JOB_UPDATE`*
 
 **`POST /api/v1/admin/jobs/trigger`**
@@ -330,4 +366,41 @@ Gets paginated list of background job executions. Supports query parameters `?st
   ],
   "totalCount": 1
 }
+
+**`GET /api/v1/admin/jobs/{jobId}`**
+Gets details of a specific background job execution.
+**Response (200 OK):**
+```json
+{
+  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "jobType": "SYNC_YOUTUBE_FEEDS",
+  "status": "RUNNING",
+  "startedAt": "2023-10-26T10:00:00Z",
+  "endedAt": null,
+  "errorMessage": null
+}
+```
+
+### 3.7. Dashboard BFF (`/api/v1/dashboard`)
+*Required Permission: `TOPIC_VIEW`, `BRIEFING_VIEW`*
+
+**`GET /api/v1/dashboard`**
+Aggregated convenience endpoint for the frontend dashboard to prevent N+1 requests and over-fetching.
+**Response (200 OK):**
+```json
+{
+  "recentBriefings": [
+    {
+      "id": 501,
+      "topicName": "Artificial Intelligence",
+      "title": "Weekly AI Update",
+      "briefingDate": "2023-10-25"
+    }
+  ],
+  "stats": {
+    "activeTopics": 3,
+    "briefingsGeneratedThisWeek": 5
+  }
+}
+```
 ```
