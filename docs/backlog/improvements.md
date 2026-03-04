@@ -24,3 +24,4 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Test Data Builder:** Implement a Test Data Builder pattern or factory for core entities (like `User` and `Topic`) to simplify test setup and reduce the impact of adding new mandatory fields. *(Completed for core entities in v0.11.0)*
 *   **Primary Identity Resolution:** Refactor `UserMapper` to deterministically resolve a "primary" identity/provider when multiple OIDC accounts are linked to a single user.
 *   **Job Cleanup Strategy:** Implement a background job to purge `COMPLETED` or `FAILED` job history older than X days to prevent indefinite table growth.
+*   **API Abuse Mitigation (LLM Endpoints):** Implement rate limiting/quotas per user and strict state validation (e.g., preventing regeneration of already `COMPLETED` summaries) for global mutation endpoints like `POST /api/v1/content-items/{id}/commands/generate-summary` to prevent financial risk and queue starvation.

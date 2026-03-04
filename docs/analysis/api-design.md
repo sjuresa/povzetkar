@@ -22,7 +22,7 @@ To prevent horizontal privilege escalation and clarify data boundaries, the API 
 *   **Briefings:** User-scoped. Tied to the topic owner.
 *   **Sources:** Global. Shared across the entire system. Modifications are restricted to administrative roles.
 *   **Content Items:** Global. Tied to a specific source, not owned by individual users.
-*   **Jobs:** System-wide or user-initiated.
+*   **Jobs:** System-wide (global) or user-initiated. Users can view the status of jobs they initiated (user-scoped), while admins can view all system jobs.
 *All endpoints dealing with user-scoped resources will return `403 Forbidden` if a user attempts to access an instance they do not own.*
 
 ### 1.3 Enum Contract Stability
@@ -110,7 +110,7 @@ Invalidates the HTTP-only session cookie.
 **`POST /api/v1/topics/{id}/commands/trigger-run`**
 Manually triggers an asynchronous briefing generation job for the topic.
 *Required Permission: `TOPIC_TRIGGER_RUN`*
-**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/admin/jobs/{jobId}`).
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
 
 ### 3.2. Briefings (`/api/v1/briefings`)
 *Required Permission: `BRIEFING_VIEW`*
@@ -168,7 +168,7 @@ Explicitly generate a custom briefing. Asynchronous operation.
   "endDate": "2023-10-25"
 }
 ```
-**Response (202 Accepted):** Returns a `Location` header pointing to the job status.
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
 
 ### 3.3. Content Sources (`/api/v1/sources`)
 *Required Permissions: `SOURCE_VIEW` (List/Get items), `SOURCE_CREATE` (POST), `SOURCE_UPDATE` (PUT/PATCH, Admin only), `SOURCE_DELETE` (DELETE, Admin only)*
@@ -261,7 +261,13 @@ Detailed view including fetched transcript and generated summary text.
 **`POST /api/v1/content-items/{id}/commands/generate-summary`**
 Force an individual content item to fetch transcript and generate a summary, overriding its current status. Asynchronous operation.
 *Required Permission: `SUMMARY_GENERATE`*
-**Response (202 Accepted):** Returns a `Location` header pointing to the job status.
+
+> [!WARNING]
+> **Abuse Mitigation (v0.12+):** Because `ContentItems` are a global resource, allowing users to override global state continuously poses a financial and consistency risk. In future iterations, this endpoint MUST be protected by:
+> 1. Rate limiting or quota enforcement per user.
+> 2. Validation preventing summary regeneration if a successful summary already exists, limiting the action to `ERROR` or `PENDING` states.
+
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
 
 **`POST /api/v1/content-items/{id}/commands/retry`**
 Signals to the background worker to retry a failed item. Admin functionality.
@@ -403,4 +409,22 @@ Aggregated convenience endpoint for the frontend dashboard to prevent N+1 reques
   }
 }
 ```
+}
+```
+
+### 3.8. User Background Jobs (`/api/v1/jobs`)
+*Required Permission: Valid User Session*
+
+**`GET /api/v1/jobs/{jobId}`**
+Allows regular users to track the status of asynchronous operations they initiated (e.g., generating a briefing). Users can only fetch their own jobs; attempting to fetch another user's job returns `403 Forbidden`.
+**Response (200 OK):**
+```json
+{
+  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "jobType": "GENERATE_BRIEFING",
+  "status": "RUNNING",
+  "startedAt": "2023-10-26T10:00:00Z",
+  "endedAt": null,
+  "errorMessage": null
+}
 ```
