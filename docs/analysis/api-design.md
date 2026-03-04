@@ -264,7 +264,7 @@ Force an individual content item to fetch transcript and generate a summary, ove
 
 > [!WARNING]
 > **Abuse Mitigation:** Because `ContentItems` are a global resource, allowing users to override global state continuously poses a financial and consistency risk. This endpoint MUST be protected by:
-> 1. **(v0.11)** Validation preventing summary regeneration if a successful summary already exists (i.e., the item is in a `COMPLETED` state). Attempts to do so MUST be rejected with a `409 Conflict` status code. This action is limited to items in `ERROR` or `PENDING` states.
+> 1. **(v0.11)** Validation preventing summary regeneration if a successful summary already exists (i.e., the item is in a `COMPLETED` state). Attempts to do so MUST be rejected with a `409 Conflict` status code. This action is limited to items in `FAILED`, `RETRY_LATER`, or `PENDING` states.
 > 2. **(v0.12+)** Rate limiting or quota enforcement per user.
 
 **Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
