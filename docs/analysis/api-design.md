@@ -158,13 +158,12 @@ Manually triggers an asynchronous briefing generation job for the topic.
 ```
 *(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` from `metaSummary` (e.g., via `Briefing.getExecutiveSummary()`) and assemble the `briefingText` string by concatenating only the related `Summary` markdown content. This avoids sending the executive summary content twice. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
 
-**`POST /api/v1/briefings`**
-Explicitly generate a custom briefing. Asynchronous operation.
+**`POST /api/v1/topics/{topicId}/commands/generate-briefing`**
+Explicitly generate a custom briefing for a specific topic. Asynchronous operation.
 *Required Permission: `BRIEFING_GENERATE`*
 **Request Body:**
 ```json
 {
-  "topicId": 101,
   "startDate": "2023-10-18",
   "endDate": "2023-10-25"
 }
@@ -274,7 +273,7 @@ Force an individual content item to fetch transcript and generate a summary, ove
 **`POST /api/v1/content-items/{id}/commands/retry`**
 Signals to the background worker to retry a failed item. Admin functionality.
 *Required Permission: `ADMIN_JOB_UPDATE`*
-**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
+**Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/admin/jobs/{jobId}`).
 
 ### 3.5. User & Role Management (`/api/v1/users` & `/api/v1/roles`)
 *Required Permission: `USER_MGMT_VIEW`, `USER_MGMT_UPDATE`*

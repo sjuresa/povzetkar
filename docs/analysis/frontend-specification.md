@@ -101,7 +101,7 @@ This document outlines the requirements and specifications for the standalone fr
     *   **Actions per Item:**
         *   View the generated summary or fetched transcript (navigates to specific `/content-items/:id` detail view fetching from `GET /api/v1/content-items/:id`).
         *   Force generate a new summary for a specific item (hits `POST /api/v1/content-items/:id/commands/generate-summary`).
-        *   Select multiple items or a custom date range to explicitly generate a new Briefing/Report (hits `POST /api/v1/briefings`).
+        *   Select multiple items or a custom date range to explicitly generate a new Briefing/Report (hits `POST /api/v1/topics/:id/commands/generate-briefing`).
 
 ### 4.6. User & Role Management (`/users`)
 *   *Note: Only accessible to administrators with user management permissions.*
