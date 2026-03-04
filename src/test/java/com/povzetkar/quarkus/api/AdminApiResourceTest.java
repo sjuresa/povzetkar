@@ -4,7 +4,6 @@ import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.service.OrchestrationManager;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -57,7 +56,9 @@ class AdminApiResourceTest {
         
         // Verify that the job eventually completes
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
-            List<BackgroundJob> jobs = QuarkusTransaction.requiringNew().call(PanacheEntityBase::listAll);
+            List<BackgroundJob> jobs = QuarkusTransaction.requiringNew().call(() -> 
+                em.createQuery("FROM BackgroundJob", BackgroundJob.class).getResultList()
+            );
             return jobs.size() == 1 && jobs.getFirst().status == JobStatus.COMPLETED;
         });
     }
