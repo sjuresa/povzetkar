@@ -20,17 +20,31 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Mobile App Readiness:** Design the JSON API contracts and components keeping in mind that these will likely power a native mobile application (iOS/Android) in the near future.
 *   **Accessibility (a11y):** The application must be usable by people with disabilities, adhering to WCAG 2.1 AA standards. This includes using proper semantic HTML, ensuring keyboard navigability for all interactive elements, providing `aria-*` attributes where necessary, and maintaining sufficient color contrast.
 *   **Internationalization (i18n):** Design the application with i18n in mind from the start. Store all user-facing strings in resource files (e.g., JSON), use an i18n library (like `i18next` or `vue-i18n`), and consider how layouts might change with different language string lengths.
+*   **Empty States:** Every primary list view (Topics, Briefings, Sources, Users, Jobs) MUST implement a dedicated, user-friendly "Empty State" component (illustration + informative text + primary call-to-action) when no data is returned. Do not just render an empty table.
 
-### 2.3. Error Handling & Feedback
+### 2.3. Error Handling & Resiliency
+*   **Global Error Boundaries:** The application MUST implement top-level Error Boundaries (e.g., React Error Boundary) to catch rendering errors (like Markdown parsing failures) and display a graceful fallback UI instead of crashing the entire SPA.
+*   **Optimistic UI:** For common destructive or state-toggling actions (e.g., toggling a Topic's status), the UI should optimistically update the state before the API responds. If the API returns an error, the UI must roll back to the previous state and show a toast notification.
+*   **Debouncing & Rate Limits:** Actions that trigger heavy backend orchestration (e.g., `Trigger Run`, `Generate Summary`) MUST implement client-side debouncing and visually block the action button (loading state) until a response is received, preventing accidental double-submissions.
 *   **Toast Notifications:** Used for transient success/error messages (e.g., "Topic saved successfully", "Failed to delete topic").
 *   **Form Validation:**
     *   Client-side validation (required fields, format) before submission.
     *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
 *   **Global API Errors:**
-    *   `401 Unauthorized`: For navigation-blocking API calls, clear client-side user state and redirect to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`). For background/non-critical API calls, display a modal dialog informing the user their session has expired. To prevent multiple modals from stacking during concurrent failed background requests, the application MUST manage a global state to ensure only a single session expiration modal is displayed at any given time. The modal should offer a "Login" button that redirects the current page to the login screen, preserving the original URL as a `redirect_uri` to return to after a successful login. This provides a more robust and predictable experience than complex cross-tab communication.
+    *   `401 Unauthorized`: For navigation-blocking API calls, clear client-side user state and redirect to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`). For background/non-critical API calls, display a modal dialog informing the user their session has expired. To prevent multiple modals from stacking during concurrent failed background requests, the application MUST manage a global state to ensure only a single session expiration modal is displayed at any given time.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
-    *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
+    *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page.
+    *   `429 Too Many Requests`: Handle rate limit errors by displaying a "Please wait" message and temporarily disabling the relevant action.
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
+
+### 2.4. State Management Strategy
+The frontend architecture MUST implement a predictable state management pattern to prevent race conditions and ensure data consistency:
+*   **Global Auth Store:** A centralized store (e.g., Zustand, Pinia, Redux) holding the current `user` object and raw `roles`.
+*   **Permission Resolver:** A dedicated utility/layer that computes effective UI permissions based on the `AuthStore` and the backend's PBAC matrix, rather than scattering permission calculation logic throughout components.
+*   **API Interceptor Layer:** A single global HTTP client configuration (e.g., Axios instance or fetch wrapper) responsible for attaching `X-Correlation-ID` headers, parsing the `{ data, meta, errors }` envelope, and funneling global 401/403/500 errors to the UI feedback system.
+
+### 2.5. Security & CSP
+*   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `inline-script` must be strictly forbidden via a nonce-based or hash-based policy to mitigate XSS risks deeper in the application stack.
 
 ## 3. Authentication & Routing
 

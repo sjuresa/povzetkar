@@ -25,3 +25,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Primary Identity Resolution:** Refactor `UserMapper` to deterministically resolve a "primary" identity/provider when multiple OIDC accounts are linked to a single user.
 *   **Job Cleanup Strategy:** Implement a background job to purge `COMPLETED` or `FAILED` job history older than X days to prevent indefinite table growth.
 *   **API Abuse Mitigation (LLM Endpoints):** Implement rate limiting/quotas per user and strict state validation (e.g., preventing regeneration of already `COMPLETED` summaries) for global mutation endpoints like `POST /api/v1/content-items/{id}/commands/generate-summary` to prevent financial risk and queue starvation.
+*   **Audit Logging / Activity Feed:** Create a system to track who executed critical actions (e.g., orchestration triggers, role management, manual summarize commands) and provide an administrative view.
+*   **Advanced Caching Strategies:** Investigate `ETag`, `Cache-Control`, and `Stale-while-revalidate` patterns for Dashboard and Briefings endpoints to reduce database load.
+*   **True Real-Time Architecture:** Upgrade the frontend dashboard's async polling to WebSockets or Server-Sent Events (SSE) for job monitoring, ensuring proper reconnect strategies and heartbeat handling.
+*   **Observability & Feature Flags:** Introduce a dedicated `/api/v1/admin/metrics` endpoint and implement Backend-provided Feature Flags to support progressive delivery rollouts.

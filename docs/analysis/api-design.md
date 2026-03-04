@@ -5,11 +5,16 @@ This document defines the REST API contract required to support the capabilities
 ## 1. Global API Conventions
 
 *   **Content Type:** `application/json` for all requests and responses.
+*   **Response Envelope:** All paginated list endpoints return an enveloped response.
 *   **Authentication:** `SameSite=Strict` HTTP-only Cookie.
 *   **Authorization:** Endpoints enforce PBAC; unauthorized access returns `403 Forbidden`. Unauthenticated access returns `401 Unauthorized`.
-*   **Error Format:** Standard `ProblemDetail` (RFC 7807) format for `400 Bad Request` and other errors.
+*   **Error Format:** Standard `ProblemDetail` (RFC 7807) enhanced with a machine-readable `errorCode` (e.g., `LAST_ADMIN_REMOVAL_BLOCKED`).
 *   **Date/Time Format:** ISO-8601 (e.g., `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm:ssZ`).
-*   **Pagination:** All list endpoints support 0-indexed pagination via `?page=<number>&size=<number>` query parameters. Responses for paginated lists will include `items` and `totalCount`.
+*   **Pagination Contract:** Paginated list endpoints return data wrapped in `data` and `meta` fields. The metadata strictly conforms to: `{ "page": <number>, "size": <number>, "totalElements": <number>, "totalPages": <number> }`. Endpoints accept `?page=<number>&size=<number>` parameters.
+*   **Idempotency:** State-modifying command endpoints (e.g., `POST /commands/*`) MUST accept and process an `Idempotency-Key` header to safely handle frontend retries without duplicate processing.
+*   **Observability:** Every API response MUST include an `X-Correlation-ID` header. If the client provides one in the request, it is echoed back; otherwise, the backend generates one.
+*   **Concurrency Control:** The API utilizes Optimistic Locking via a `version` field for resources like Topics and Sources. Concurrent mutation attempts on the same version return a `409 Conflict`.
+*   **Delete Strategy:** The API uses a **Hard Delete** strategy for `Topics`, `Sources`, and `Briefings`. Deleting a Topic cascades to its Briefings. Deleting a User is implemented as a "Deactivation" (`active = false`).
 
 ### 1.1 Data Transfer Objects (DTO) vs. Entities
 **CRITICAL ARCHITECTURAL DECISION:** This API strictly follows the **Backend-For-Frontend (BFF)** pattern. The returned JSON payloads below **do not represent 1:1 mappings of the internal Java Database Entities (e.g., `Briefing.java`, `ContentSource.java`).** Exposing raw JPA entities to the frontend couples the UI to the database schema, exposing internal state and creating over-fetching.
@@ -71,7 +76,7 @@ Invalidates the HTTP-only session cookie.
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     {
       "id": 101,
       "name": "Artificial Intelligence",
@@ -79,7 +84,12 @@ Invalidates the HTTP-only session cookie.
       "lastRunDate": "2023-10-25T14:30:00Z"
     }
   ],
-  "totalCount": 1
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 ```
 *(Backend Implementation Note: The `Topic` JPA entity must be updated to include a persisted `last_run_date` timestamp column, updated whenever a new Briefing is successfully generated for the topic.)*
@@ -120,7 +130,7 @@ Manually triggers an asynchronous briefing generation job for the topic.
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     {
       "id": 501,
       "topicId": 101,
@@ -129,7 +139,12 @@ Manually triggers an asynchronous briefing generation job for the topic.
       "briefingDate": "2023-10-25"
     }
   ],
-  "totalCount": 1
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 ```
 
@@ -177,7 +192,7 @@ Explicitly generate a custom briefing for a specific topic. Asynchronous operati
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     {
       "id": 201,
       "platform": "YOUTUBE", // Enum: YOUTUBE, BLOG
@@ -188,7 +203,12 @@ Explicitly generate a custom briefing for a specific topic. Asynchronous operati
       "sourceUrl": "https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA"
     }
   ],
-  "totalCount": 1
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 ```
 *(Backend Implementation Note: The DTO mapper must dynamically construct the `sourceUrl` string by combining the base platform URL (e.g., `https://youtube.com/channel/`) with the persistent `sourceIdentifier`.)*
@@ -226,7 +246,7 @@ List individual pieces of content. Supports filtering via `?sourceId={id}` and p
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     {
       "id": 305,
       "sourceId": 201,
@@ -239,7 +259,12 @@ List individual pieces of content. Supports filtering via `?sourceId={id}` and p
       "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
     }
   ],
-  "totalCount": 1
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 ```
 *(Backend Implementation Note: The DTO mapper must check if the item is an `instanceof YouTubeVideo` to extract the `durationSeconds` and construct `thumbnailUrl`.)*
@@ -282,7 +307,7 @@ Signals to the background worker to retry a failed item. Admin functionality.
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     {
       "id": 1,
       "name": "System Admin",
@@ -297,7 +322,12 @@ Signals to the background worker to retry a failed item. Admin functionality.
       ]
     }
   ],
-  "totalCount": 1
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 ```
 
@@ -306,11 +336,16 @@ Returns roles available for assignment.
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     { "id": 1, "name": "ADMIN" },
     { "id": 2, "name": "USER" }
   ],
-  "totalCount": 2
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 2,
+    "totalPages": 1
+  }
 }
 ```
 
