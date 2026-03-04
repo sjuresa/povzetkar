@@ -53,24 +53,25 @@ public class BackgroundJobService {
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
-                default -> jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unknown job type: " + type));
+                default ->
+                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unknown job type: " + type));
             }
 
             jobTask.onSubscription().call(() -> updateJobStatusUni(job.id, JobStatus.RUNNING, null))
-                   .onItem().call(() -> updateJobStatusUni(job.id, JobStatus.COMPLETED, null)
-                           .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
-                   .onFailure().call(th -> updateJobStatusUni(job.id, JobStatus.FAILED, th.toString())
-                           .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
-                    .subscribe().with(_ -> {}, failure -> logger.errorf(failure, "Failed to update final job status for job %s after retries", job.id));
+                    .onItem().call(() -> updateJobStatusUni(job.id, JobStatus.COMPLETED, null)
+                            .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
+                    .onFailure().call(th -> updateJobStatusUni(job.id, JobStatus.FAILED, th.toString())
+                            .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
+                    .subscribe().with(_ -> {
+                    }, failure -> logger.errorf(failure, "Failed to update final job status for job %s after retries", job.id));
         });
 
         return job;
     }
 
-    @Transactional
     public Uni<Void> updateJobStatusUni(UUID jobId, JobStatus status, String errorMessage) {
         return Uni.createFrom().deferred(() -> {
-            updateStatus(jobId, status, errorMessage);
+            io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> updateStatus(jobId, status, errorMessage));
             return Uni.createFrom().voidItem();
         });
     }
@@ -85,10 +86,13 @@ public class BackgroundJobService {
         } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
             if (job.startedAt == null) job.startedAt = clock.instant(); // fallback
             job.endedAt = clock.instant();
-            if (errorMessage != null && errorMessage.length() > com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
-                job.errorMessage = errorMessage.substring(0, com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
-            } else {
-                job.errorMessage = errorMessage;
+            if (errorMessage != null) {
+                logger.errorf("Full error message: %s", errorMessage);
+                if (errorMessage.length() > com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
+                    job.errorMessage = errorMessage.substring(0, com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
+                } else {
+                    job.errorMessage = errorMessage;
+                }
             }
         }
         job.persist();
