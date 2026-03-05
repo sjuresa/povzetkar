@@ -192,15 +192,11 @@ This document outlines the concrete steps for implementing the features describe
 
 ### Key Tasks & Implementation Steps:
 1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards, exposing detailed AI token usage, job failure rates, and average job durations.
-2.  **Concurrency & Idempotency (Backend Hardening):** 
-    *   Implement Optimistic Locking (`If-Match` headers + `version`) for all mutating endpoints to prevent race conditions.
-    *   Implement robust `Idempotency-Key` handling for async POST commands to safely cache and replay identical `jobId` responses.
-3.  **Caching Strategy:** Implement `ETag` and `If-None-Match` headers for high-traffic read endpoints (`GET /api/v1/dashboard`, Briefings) to reduce database load.
-4.  **Secrets Management:** Integrate a secrets management solution.
-5.  **Job Auditing & History:** Implement a robust `job_executions` or `audit_logs` table (and `GET /api/v1/admin/audit-log` endpoint) to persistently track the status, boundaries, and errors of Orchestrator jobs for UI display.
-6.  **Backup & Recovery:** Establish automated database backup/recovery.
-7.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
-8.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
+2.  **Secrets Management:** Integrate a secrets management solution.
+3.  **Job Auditing Persistent Storage:** Ensure `job_executions` are persistently stored in a database specifically for long-term historical analysis (beyond the standard `admin/audit-log` functionality provided in v0.11).
+4.  **Backup & Recovery:** Establish automated database backup/recovery.
+5.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
+6.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
 
 ---
 
