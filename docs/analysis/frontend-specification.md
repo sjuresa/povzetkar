@@ -46,7 +46,7 @@ The frontend architecture MUST implement a predictable state management pattern 
 *   **Real-Time Event Stream (SSE):** The frontend MUST connect to `GET /api/v1/events/stream` via Server-Sent Events to receive real-time updates for `JOB_STATUS_CHANGED`, `ORCHESTRATION_STARTED`, and `ORCHESTRATION_FINISHED`. The implementation MUST include exponential backoff for reconnects and heartbeat detection. Polling `/api/v1/jobs/:id` is strictly a fallback.
 
 ### 2.5. Security, CSP & Observability
-*   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `inline-script` must be strictly forbidden via a `strict-dynamic` and nonce/hash-based policy. `eval` must be disabled. Only allowlisted domains are permitted.
+*   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `script-src 'unsafe-inline'` must be strictly forbidden via a `strict-dynamic` and nonce/hash-based policy. `eval` must be disabled. Only allowlisted domains are permitted.
 *   **Structured Logging:** The application MUST utilize an error monitoring service (e.g., Sentry) to log unhandled exceptions caught by the Error Boundaries. Every logged error MUST attach the `X-Correlation-ID` received from the backend (if applicable) and the current `userId`.
 
 ## 3. Authentication & Routing
