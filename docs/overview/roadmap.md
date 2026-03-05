@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                          |
 | 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
 | 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
 | 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
@@ -190,12 +191,16 @@ This document outlines the concrete steps for implementing the features describe
 **Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
 
 ### Key Tasks & Implementation Steps:
-1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards.
-2.  **Secrets Management:** Integrate a secrets management solution.
-3.  **Job Auditing & History:** Implement a robust `job_executions` or `audit_logs` table in the database to persistently track the status, duration, and errors of Orchestrator jobs for UI display, moving beyond simple structured application logs.
-4.  **Backup & Recovery:** Establish automated database backup/recovery.
-5.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
-6.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
+1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards, exposing detailed AI token usage, job failure rates, and average job durations.
+2.  **Concurrency & Idempotency (Backend Hardening):** 
+    *   Implement Optimistic Locking (`If-Match` headers + `version`) for all mutating endpoints to prevent race conditions.
+    *   Implement robust `Idempotency-Key` handling for async POST commands to safely cache and replay identical `jobId` responses.
+3.  **Caching Strategy:** Implement `ETag` and `If-None-Match` headers for high-traffic read endpoints (`GET /api/v1/dashboard`, Briefings) to reduce database load.
+4.  **Secrets Management:** Integrate a secrets management solution.
+5.  **Job Auditing & History:** Implement a robust `job_executions` or `audit_logs` table (and `GET /api/v1/admin/audit-log` endpoint) to persistently track the status, boundaries, and errors of Orchestrator jobs for UI display.
+6.  **Backup & Recovery:** Establish automated database backup/recovery.
+7.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
+8.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
 
 ---
 

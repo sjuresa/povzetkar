@@ -21,7 +21,7 @@ This document defines the REST API contract required to support the capabilities
 *   **Authorization:** Endpoints enforce PBAC; unauthorized access returns `403 Forbidden`. Unauthenticated access returns `401 Unauthorized`.
 *   **Error Format:** Standard enveloped response where `data` is `null`, and `error` contains standard `ProblemDetail` (RFC 7807) properties extended with a machine-readable `errorCode` string.
 *   **Date/Time Format:** ISO-8601 (e.g., `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm:ssZ`).
-*   **Pagination Contract:** List endpoints accept `?page=0&size=20&sort=property,desc` parameters. Maximum size must be enforced server-side. Responses use the standard envelope, populating `meta.pagination`.
+*   **Pagination Contract:** List endpoints accept `?page=0&size=20&sort=property,desc` parameters. For multi-property sorting, the parameter can be repeated: `?sort=property1,desc&sort=property2,asc`. Maximum size must be enforced server-side. Responses use the standard envelope, populating `meta.pagination`.
 *   **Idempotency:** State-modifying command endpoints (e.g., `POST /commands/*`) MUST accept and process an `Idempotency-Key: UUID` header. The same key with the same payload returns the same `jobId`. The same key with a different payload MUST return a `409 Conflict`.
 *   **Observability:** Every API response MUST include an `X-Correlation-ID` header. If the client provides one in the request, it is echoed back; otherwise, the backend generates one.
 *   **Concurrency Control (Optimistic Locking):** The API utilizes Optimistic Locking. All mutable resources return a `version: number` in their DTO. Mutating requests (PUT/PATCH/DELETE) MUST include `If-Match: <version>`. Concurrent modifications return a `409 Conflict`.
@@ -245,11 +245,17 @@ Explicitly generate a custom briefing for a specific topic. Asynchronous operati
     }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 ```
 *(Backend Implementation Note: The DTO mapper must dynamically construct the `sourceUrl` string by combining the base platform URL (e.g., `https://youtube.com/channel/`) with the persistent `sourceIdentifier`.)*
@@ -343,8 +349,10 @@ Force an individual content item to fetch transcript and generate a summary, ove
 
 > [!WARNING]
 > **Abuse Mitigation:** Because `ContentItems` are a global resource, allowing users to override global state continuously poses a financial and consistency risk. This endpoint MUST be protected by:
-> 1. **(v0.11)** Validation preventing summary regeneration if a successful summary already exists (i.e., the item is in a `COMPLETED` state). Attempts to do so MUST be rejected with a `409 Conflict` status code. This action is limited to items in `FAILED`, `RETRY_LATER`, or `PENDING` states.
-> 2. **(v0.12+)** Rate limiting or quota enforcement per user.
+> 1. **(v0.11)** Validation preventing summary regeneration if a successful summary already exists (`COMPLETED`). Attempts to do so MUST be rejected with a `409 Conflict`.
+> 2. **(v0.11)** To prevent race conditions, triggering on items in a `PENDING` state MUST be rejected with a `409 Conflict`.
+> 3. **(v0.11)** This action is strictly allowed only for terminal items in `FAILED` or `RETRY_LATER` states. Users MAY force generation for `IGNORED` or `SKIPPED_TOO_SHORT` items.
+> 4. **(v0.12+)** Rate limiting or quota enforcement per user.
 
 **Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
 **Response (409 Conflict):** Returned if a summary already exists and is in a `COMPLETED` state.
