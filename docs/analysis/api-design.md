@@ -26,7 +26,7 @@ This document defines the REST API contract required to support the capabilities
 *   **Observability:** Every API response MUST include an `X-Correlation-ID` header. If the client provides one in the request, it is echoed back; otherwise, the backend generates one.
 *   **Concurrency Control (Optimistic Locking):** The API utilizes Optimistic Locking. All mutable resources return a `version: number` in their DTO. Mutating requests (PUT/PATCH/DELETE) MUST include `If-Match: <version>`. Concurrent modifications return a `409 Conflict`.
 *   **Delete Strategy (Soft Delete Default):** The API uses a **Soft Delete** strategy by default for `Topics`, `Sources`, and `Users` via a `deleted_at` timestamp. Global list endpoints exclude soft-deleted items by default. Hard deletes are reserved for specific admin override actions.
-*   **Asynchronous Job Standardization:** Command endpoints triggering background tasks MUST return a `202 Accepted` status with a standard Job DTO payload: `{ "data": { "jobId": "uuid", "type": "...", "status": "PENDING" } }`. Allowed state transitions are `PENDING -> RUNNING -> SUCCESS|FAILED` and `FAILED -> RETRYING -> RUNNING`. Invalid transitions return `409 Conflict`.
+*   **Asynchronous Job Standardization:** Command endpoints triggering background tasks MUST return a `202 Accepted` status with a `Location` header pointing to the job status resource (e.g., `Location: /api/v1/jobs/{jobId}`). The response body MAY contain the initial state of the job as a standard Job DTO payload: `{ "data": { "jobId": "uuid", "type": "...", "status": "PENDING" } }`. Allowed state transitions are `PENDING -> RUNNING -> SUCCESS|FAILED` and `FAILED -> RETRYING -> RUNNING`. Invalid transitions return `409 Conflict`.
 *   **Real-Time Subsystem:** The primary mechanism for monitoring jobs and orchestrations is Server-Sent Events (SSE) available at `GET /api/v1/events/stream`. This stream pushes events like `JOB_STATUS_CHANGED` and `ORCHESTRATION_STARTED`. Polling `/api/v1/jobs/{id}` is intended only as a fallback.
 *   **Caching Strategy:** `GET` endpoints for `Dashboard` and `Briefings` MUST support `ETag` and `If-None-Match` headers, returning `304 Not Modified` where appropriate to leverage short-lived caching.
 *   **GenAI Resilience:** Summary and Briefing generation MUST adhere to a strict timeout strategy (e.g., max 60s per call), backed by an exponential retry queue. Briefing generation utilizes **Partial Failure Handling**: if one content item fails summarization, the overall briefing still succeeds, with the failed item explicitly marked in the output.
@@ -56,17 +56,24 @@ Returns the profile and effective permissions for the currently authenticated us
 **Response (200 OK):**
 ```json
 {
-  "id": 1,
-  "name": "Jane Doe",
-  "email": "jane@example.com",
-  "roles": [
-    { "id": 1, "name": "ADMIN" },
-    { "id": 2, "name": "USER" }
-  ],
-  "permissions": [
-    "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
-    "ADMIN_DASHBOARD_VIEW", "USER_MGMT_UPDATE" // etc.
-  ]
+  "data": {
+    "id": 1,
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "roles": [
+      { "id": 1, "name": "ADMIN" },
+      { "id": 2, "name": "USER" }
+    ],
+    "permissions": [
+      "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+      "ADMIN_DASHBOARD_VIEW", "USER_MGMT_UPDATE" // etc.
+    ]
+  },
+  "meta": {
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
 
@@ -100,11 +107,17 @@ Invalidates the HTTP-only session cookie.
     }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 ```
 *(Backend Implementation Note: The `Topic` JPA entity must be updated to include a persisted `last_run_date` timestamp column, updated whenever a new Briefing is successfully generated for the topic.)*
@@ -155,11 +168,17 @@ Manually triggers an asynchronous briefing generation job for the topic.
     }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 ```
 
@@ -167,23 +186,30 @@ Manually triggers an asynchronous briefing generation job for the topic.
 **Response (200 OK):**
 ```json
 {
-  "id": 501,
-  "topicId": 101,
-  "topicName": "Artificial Intelligence",
-  "title": "Weekly AI Update",
-  "briefingDate": "2023-10-25",
-  "executiveSummary": "### 1. Overall Executive Summary\n...",
-  "briefingText": "# Full Markdown Body\n...",
-  "sourceContentItems": [
-    {
-      "id": 999,
-      "title": "State of AI 2023",
-      "sourceUrl": "https://youtube.com/watch?v=...",
-      "publishedAt": "2023-10-24T10:00:00Z",
-      "durationSeconds": 600,
-      "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
-    }
-  ]
+  "data": {
+    "id": 501,
+    "topicId": 101,
+    "topicName": "Artificial Intelligence",
+    "title": "Weekly AI Update",
+    "briefingDate": "2023-10-25",
+    "executiveSummary": "### 1. Overall Executive Summary\n...",
+    "briefingText": "# Full Markdown Body\n...",
+    "sourceContentItems": [
+      {
+        "id": 999,
+        "title": "State of AI 2023",
+        "sourceUrl": "https://youtube.com/watch?v=...",
+        "publishedAt": "2023-10-24T10:00:00Z",
+        "durationSeconds": 600,
+        "thumbnailUrl": "https://img.youtube.com/vi/dSC1mmt-yEE/hqdefault.jpg"
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
 *(Backend Implementation Note: The `Briefing` JPA entity only stores `metaSummary` and holds a collection of `summaries`. To satisfy this contract, the DTO mapper must extract the `executiveSummary` from `metaSummary` (e.g., via `Briefing.getExecutiveSummary()`) and assemble the `briefingText` string by concatenating only the related `Summary` markdown content. This avoids sending the executive summary content twice. It must also extract the rich inner data of the related `ContentItem` (e.g., `duration` for `YouTubeVideo`).)*
@@ -275,11 +301,17 @@ List individual pieces of content. Supports filtering via `?sourceId={id}` and p
     }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 ```
 *(Backend Implementation Note: The DTO mapper must check if the item is an `instanceof YouTubeVideo` to extract the `durationSeconds` and construct `thumbnailUrl`.)*
@@ -289,12 +321,19 @@ Detailed view including fetched transcript and generated summary text.
 **Response (200 OK):**
 ```json
 {
-  "id": 305,
-  "sourceId": 201,
-  "title": "New AI Models compared",
-  "transcriptText": "Hello everyone today we are looking at...",
-  "summaryText": "The video compares the latest AI models emphasizing...",
-  "processingStatus": "COMPLETED"
+  "data": {
+    "id": 305,
+    "sourceId": 201,
+    "title": "New AI Models compared",
+    "transcriptText": "Hello everyone today we are looking at...",
+    "summaryText": "The video compares the latest AI models emphasizing...",
+    "processingStatus": "COMPLETED"
+  },
+  "meta": {
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
 
@@ -338,11 +377,17 @@ Signals to the background worker to retry a failed item. Admin functionality.
     }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 ```
 
@@ -356,11 +401,17 @@ Returns roles available for assignment.
     { "id": 2, "name": "USER" }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 2,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 2,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 ```
 
@@ -404,12 +455,19 @@ Exposes system health and capacity metrics, including AI token usage, job failur
 **Response (202 Accepted):** Returns initial job state and `Location` header (e.g., `/api/v1/admin/jobs/{jobId}`).
 ```json
 {
-  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  "jobType": "SYNC_YOUTUBE_FEEDS",
-  "status": "QUEUED",
-  "startedAt": null,
-  "endedAt": null,
-  "errorMessage": null
+  "data": {
+    "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "jobType": "SYNC_YOUTUBE_FEEDS",
+    "status": "QUEUED",
+    "startedAt": null,
+    "endedAt": null,
+    "errorMessage": null
+  },
+  "meta": {
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
 
@@ -429,11 +487,17 @@ Gets paginated list of background job executions. Supports query parameters `?st
     }
   ],
   "meta": {
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
 }
 
 **`GET /api/v1/admin/jobs/{jobId}`**
@@ -441,12 +505,19 @@ Gets details of a specific background job execution.
 **Response (200 OK):**
 ```json
 {
-  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  "jobType": "SYNC_YOUTUBE_FEEDS",
-  "status": "RUNNING",
-  "startedAt": "2023-10-26T10:00:00Z",
-  "endedAt": null,
-  "errorMessage": null
+  "data": {
+    "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "jobType": "SYNC_YOUTUBE_FEEDS",
+    "status": "RUNNING",
+    "startedAt": "2023-10-26T10:00:00Z",
+    "endedAt": null,
+    "errorMessage": null
+  },
+  "meta": {
+    "timestamp": "2023-10-26T10:00:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
 
@@ -458,18 +529,25 @@ Aggregated convenience endpoint for the frontend dashboard to prevent N+1 reques
 **Response (200 OK):**
 ```json
 {
-  "recentBriefings": [
-    {
-      "id": 501,
-      "topicName": "Artificial Intelligence",
-      "title": "Weekly AI Update",
-      "briefingDate": "2023-10-25"
+  "data": {
+    "recentBriefings": [
+      {
+        "id": 501,
+        "topicName": "Artificial Intelligence",
+        "title": "Weekly AI Update",
+        "briefingDate": "2023-10-25"
+      }
+    ],
+    "stats": {
+      "activeTopics": 3,
+      "briefingsGeneratedThisWeek": 5
     }
-  ],
-  "stats": {
-    "activeTopics": 3,
-    "briefingsGeneratedThisWeek": 5
-  }
+  },
+  "meta": {
+    "timestamp": "2023-10-26T10:00:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
 
@@ -481,11 +559,18 @@ Allows regular users to track the status of asynchronous operations they initiat
 **Response (200 OK):**
 ```json
 {
-  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  "jobType": "GENERATE_BRIEFING",
-  "status": "RUNNING",
-  "startedAt": "2023-10-26T10:00:00Z",
-  "endedAt": null,
-  "errorMessage": null
+  "data": {
+    "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "jobType": "GENERATE_BRIEFING",
+    "status": "RUNNING",
+    "startedAt": "2023-10-26T10:00:00Z",
+    "endedAt": null,
+    "errorMessage": null
+  },
+  "meta": {
+    "timestamp": "2023-10-26T10:00:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+  },
+  "error": null
 }
 ```
