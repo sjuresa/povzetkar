@@ -29,7 +29,7 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Toast Notifications:** Used for transient success/error messages (e.g., "Topic saved successfully", "Failed to delete topic").
 *   **Form Validation:**
     *   Client-side validation (required fields, format) before submission.
-    *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
+    *   Server-side validation display: Map API `400 Bad Request` explicitly to the `fieldErrors` array (`{ "field": "...", "message": "..." }`) to display inline validation errors beneath specific form inputs.
 *   **Global API Errors:**
     *   `401 Unauthorized`: For navigation-blocking API calls, clear client-side user state and redirect to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`). For background/non-critical API calls, display a modal dialog informing the user their session has expired. To prevent multiple modals from stacking during concurrent failed background requests, the application MUST manage a global state to ensure only a single session expiration modal is displayed at any given time. The modal should offer a "Login" button that redirects the current page to the login screen, preserving the original URL as a `redirect_uri` to return to after a successful login. This provides a more robust and predictable experience than complex cross-tab communication.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
@@ -41,9 +41,12 @@ This document outlines the requirements and specifications for the standalone fr
 The frontend architecture MUST implement a predictable state management pattern to prevent race conditions and ensure data consistency:
 *   **Global Auth Store:** A centralized store (e.g., Zustand, Pinia, Redux) holding the current `user` object and raw `roles`.
 *   **Permission Resolver:** A dedicated utility/layer that computes effective UI permissions based on the `AuthStore` and the backend's PBAC matrix, rather than scattering permission calculation logic throughout components.
-*   **API Interceptor Layer:** A single global HTTP client configuration (e.g., Axios instance or fetch wrapper) responsible for attaching `X-Correlation-ID` headers, parsing the `{ data, meta, errors }` envelope, and funneling global 401/403/500 errors to the UI feedback system.
-*   **Cache Invalidation Policy:** When a mutating action succeeds (e.g., `Topic` deleted), the relevant cached collections in the data-fetching layer (e.g., React Query / SWR) MUST be explicitly invalidated to ensure immediate UI consistency without a hard refresh.
-*   **Real-Time Event Stream (SSE):** The frontend MUST connect to `GET /api/v1/events/stream` via Server-Sent Events to receive real-time updates for `JOB_STATUS_CHANGED`, `ORCHESTRATION_STARTED`, and `ORCHESTRATION_FINISHED`. The implementation MUST include exponential backoff for reconnects and heartbeat detection. Polling `/api/v1/jobs/:id` is strictly a fallback.
+*   **API Interceptor Layer:** A single global HTTP client configuration (e.g., Axios instance or fetch wrapper) responsible for attaching `X-Correlation-ID` headers, parsing the `{ data, meta, errors }` envelope, handling automatic pagination logic, and funneling global 401/403/500 errors to the UI feedback system.
+*   **Cache Invalidation Policy:** When a mutating action succeeds (e.g., `Topic` deleted), the relevant cached collections in the data-fetching layer (e.g., React Query / SWR) MUST be explicitly invalidated. Filtering and pagination (`page`, `size`) must be used as cache keys to ensure stale data is evicted correctly.
+*   **Real-Time Event Stream (SSE) & Polling:** The frontend MUST connect to `GET /api/v1/events/stream` via Server-Sent Events to receive real-time updates. If SSE fails, the frontend must gracefully degrade to polling the returned `Location` header (`GET /api/v1/jobs/{id}`) following the Async Job Contract. The implementation MUST include exponential backoff.
+*   **Performance Budgets & UX State:** The API promises `< 300 ms` for lists/details and `< 100 ms` for async triggers. Therefore:
+    *   Use **Optimistic Updates** for state toggles (e.g., enabling a Topic) since the API is fast enough to rollback without jarring the user.
+    *   Use **Skeleton Loaders** rather than full-page blocking spinners for initial list loads to maintain perceived performance.
 
 ### 2.5. Security, CSP & Observability
 *   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `script-src 'unsafe-inline'` must be strictly forbidden via a `strict-dynamic` and nonce/hash-based policy. `eval` must be disabled. Only allowlisted domains are permitted.
