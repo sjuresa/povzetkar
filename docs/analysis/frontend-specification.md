@@ -37,14 +37,17 @@ This document outlines the requirements and specifications for the standalone fr
     *   `429 Too Many Requests`: Handle rate limit errors by displaying a "Please wait" message and temporarily disabling the relevant action.
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
 
-### 2.4. State Management Strategy
+### 2.4. State Management & Real-Time Strategy
 The frontend architecture MUST implement a predictable state management pattern to prevent race conditions and ensure data consistency:
 *   **Global Auth Store:** A centralized store (e.g., Zustand, Pinia, Redux) holding the current `user` object and raw `roles`.
 *   **Permission Resolver:** A dedicated utility/layer that computes effective UI permissions based on the `AuthStore` and the backend's PBAC matrix, rather than scattering permission calculation logic throughout components.
 *   **API Interceptor Layer:** A single global HTTP client configuration (e.g., Axios instance or fetch wrapper) responsible for attaching `X-Correlation-ID` headers, parsing the `{ data, meta, errors }` envelope, and funneling global 401/403/500 errors to the UI feedback system.
+*   **Cache Invalidation Policy:** When a mutating action succeeds (e.g., `Topic` deleted), the relevant cached collections in the data-fetching layer (e.g., React Query / SWR) MUST be explicitly invalidated to ensure immediate UI consistency without a hard refresh.
+*   **Real-Time Event Stream (SSE):** The frontend MUST connect to `GET /api/v1/events/stream` via Server-Sent Events to receive real-time updates for `JOB_STATUS_CHANGED`, `ORCHESTRATION_STARTED`, and `ORCHESTRATION_FINISHED`. The implementation MUST include exponential backoff for reconnects and heartbeat detection. Polling `/api/v1/jobs/:id` is strictly a fallback.
 
-### 2.5. Security & CSP
-*   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `inline-script` must be strictly forbidden via a nonce-based or hash-based policy to mitigate XSS risks deeper in the application stack.
+### 2.5. Security, CSP & Observability
+*   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `inline-script` must be strictly forbidden via a `strict-dynamic` and nonce/hash-based policy. `eval` must be disabled. Only allowlisted domains are permitted.
+*   **Structured Logging:** The application MUST utilize an error monitoring service (e.g., Sentry) to log unhandled exceptions caught by the Error Boundaries. Every logged error MUST attach the `X-Correlation-ID` received from the backend (if applicable) and the current `userId`.
 
 ## 3. Authentication & Routing
 

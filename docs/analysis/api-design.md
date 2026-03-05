@@ -5,16 +5,31 @@ This document defines the REST API contract required to support the capabilities
 ## 1. Global API Conventions
 
 *   **Content Type:** `application/json` for all requests and responses.
-*   **Response Envelope:** All paginated list endpoints return an enveloped response.
+*   **Response Envelope:** All JSON responses (except `204 No Content`) MUST adhere strictly to the following envelope structure. The `data` field contains the resource or list, the `meta` field must contain `timestamp`, `correlationId`, and (if applicable) `pagination` objects. The `error` object must be `null` on success.
+    ```json
+    {
+      "data": { ... },
+      "meta": {
+        "timestamp": "2023-10-25T14:30:00Z",
+        "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+        "pagination": { "page": 0, "size": 20, "totalElements": 1, "totalPages": 1, "hasNext": false } // Only for list views
+      },
+      "error": null
+    }
+    ```
 *   **Authentication:** `SameSite=Strict` HTTP-only Cookie.
 *   **Authorization:** Endpoints enforce PBAC; unauthorized access returns `403 Forbidden`. Unauthenticated access returns `401 Unauthorized`.
-*   **Error Format:** Standard `ProblemDetail` (RFC 7807) enhanced with a machine-readable `errorCode` (e.g., `LAST_ADMIN_REMOVAL_BLOCKED`).
+*   **Error Format:** Standard enveloped response where `data` is `null`, and `error` contains standard `ProblemDetail` (RFC 7807) properties extended with a machine-readable `errorCode` string.
 *   **Date/Time Format:** ISO-8601 (e.g., `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm:ssZ`).
-*   **Pagination Contract:** Paginated list endpoints return data wrapped in `data` and `meta` fields. The metadata strictly conforms to: `{ "page": <number>, "size": <number>, "totalElements": <number>, "totalPages": <number> }`. Endpoints accept `?page=<number>&size=<number>` parameters.
-*   **Idempotency:** State-modifying command endpoints (e.g., `POST /commands/*`) MUST accept and process an `Idempotency-Key` header to safely handle frontend retries without duplicate processing.
+*   **Pagination Contract:** List endpoints accept `?page=0&size=20&sort=property,desc` parameters. Maximum size must be enforced server-side. Responses use the standard envelope, populating `meta.pagination`.
+*   **Idempotency:** State-modifying command endpoints (e.g., `POST /commands/*`) MUST accept and process an `Idempotency-Key: UUID` header. The same key with the same payload returns the same `jobId`. The same key with a different payload MUST return a `409 Conflict`.
 *   **Observability:** Every API response MUST include an `X-Correlation-ID` header. If the client provides one in the request, it is echoed back; otherwise, the backend generates one.
-*   **Concurrency Control:** The API utilizes Optimistic Locking via a `version` field for resources like Topics and Sources. Concurrent mutation attempts on the same version return a `409 Conflict`.
-*   **Delete Strategy:** The API uses a **Hard Delete** strategy for `Topics`, `Sources`, and `Briefings`. Deleting a Topic cascades to its Briefings. Deleting a User is implemented as a "Deactivation" (`active = false`).
+*   **Concurrency Control (Optimistic Locking):** The API utilizes Optimistic Locking. All mutable resources return a `version: number` in their DTO. Mutating requests (PUT/PATCH/DELETE) MUST include `If-Match: <version>`. Concurrent modifications return a `409 Conflict`.
+*   **Delete Strategy (Soft Delete Default):** The API uses a **Soft Delete** strategy by default for `Topics`, `Sources`, and `Users` via a `deleted_at` timestamp. Global list endpoints exclude soft-deleted items by default. Hard deletes are reserved for specific admin override actions.
+*   **Asynchronous Job Standardization:** Command endpoints triggering background tasks MUST return a `202 Accepted` status with a standard Job DTO payload: `{ "data": { "jobId": "uuid", "type": "...", "status": "PENDING" } }`. Allowed state transitions are `PENDING -> RUNNING -> SUCCESS|FAILED` and `FAILED -> RETRYING -> RUNNING`. Invalid transitions return `409 Conflict`.
+*   **Real-Time Subsystem:** The primary mechanism for monitoring jobs and orchestrations is Server-Sent Events (SSE) available at `GET /api/v1/events/stream`. This stream pushes events like `JOB_STATUS_CHANGED` and `ORCHESTRATION_STARTED`. Polling `/api/v1/jobs/{id}` is intended only as a fallback.
+*   **Caching Strategy:** `GET` endpoints for `Dashboard` and `Briefings` MUST support `ETag` and `If-None-Match` headers, returning `304 Not Modified` where appropriate to leverage short-lived caching.
+*   **GenAI Resilience:** Summary and Briefing generation MUST adhere to a strict timeout strategy (e.g., max 60s per call), backed by an exponential retry queue. Briefing generation utilizes **Partial Failure Handling**: if one content item fails summarization, the overall briefing still succeeds, with the failed item explicitly marked in the output.
 
 ### 1.1 Data Transfer Objects (DTO) vs. Entities
 **CRITICAL ARCHITECTURAL DECISION:** This API strictly follows the **Backend-For-Frontend (BFF)** pattern. The returned JSON payloads below **do not represent 1:1 mappings of the internal Java Database Entities (e.g., `Briefing.java`, `ContentSource.java`).** Exposing raw JPA entities to the frontend couples the UI to the database schema, exposing internal state and creating over-fetching.
@@ -371,6 +386,13 @@ Deactivate or ban a user.
 
 ### 3.6. Admin Command Center (`/api/v1/admin`)
 *Required Permission: `ADMIN_DASHBOARD_VIEW`, `ADMIN_SYSTEM_TRIGGER`, `ADMIN_JOB_UPDATE`*
+
+**`GET /api/v1/admin/audit-log`**
+Retrieves the enterprise audit trail tracking critical role changes, job triggers, and user deactivations.
+**Response (200 OK):** standard paginated envelope containing `actorUserId`, `actionType`, `targetType`, `timestamp`, and `correlationId`.
+
+**`GET /api/v1/admin/metrics`**
+Exposes system health and capacity metrics, including AI token usage, job failure rates, average job durations, and orchestration frequency.
 
 **`POST /api/v1/admin/jobs/trigger`**
 **Request Body:**
