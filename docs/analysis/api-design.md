@@ -396,7 +396,7 @@ Gets paginated list of background job executions. Supports query parameters `?st
 **Response (200 OK):**
 ```json
 {
-  "items": [
+  "data": [
     {
       "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
       "jobType": "SYNC_YOUTUBE_FEEDS", // Enum: SYNC_YOUTUBE_FEEDS, GENERATE_BRIEFINGS, etc.
@@ -406,7 +406,12 @@ Gets paginated list of background job executions. Supports query parameters `?st
       "errorMessage": null
     }
   ],
-  "totalCount": 1
+  "meta": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1
+  }
 }
 
 **`GET /api/v1/admin/jobs/{jobId}`**
