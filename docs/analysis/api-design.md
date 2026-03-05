@@ -448,7 +448,34 @@ Deactivate or ban a user.
 
 **`GET /api/v1/admin/audit-log`**
 Retrieves the enterprise audit trail tracking critical role changes, job triggers, and user deactivations.
-**Response (200 OK):** standard paginated envelope containing `actorUserId`, `actionType`, `targetType`, `timestamp`, and `correlationId`.
+**Response (200 OK):** 
+```json
+{
+  "data": [
+    {
+      "id": 1001,
+      "actorUserId": 1,
+      "actionType": "USER_DEACTIVATED",
+      "targetType": "USER",
+      "targetId": "5",
+      "details": "User violated terms of service",
+      "timestamp": "2023-10-26T14:00:00Z"
+    }
+  ],
+  "meta": {
+    "timestamp": "2023-10-26T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false
+    }
+  },
+  "error": null
+}
+```
 
 **`GET /api/v1/admin/metrics`**
 Exposes system health and capacity metrics, including AI token usage, job failure rates, average job durations, and orchestration frequency.
