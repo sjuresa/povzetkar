@@ -16,9 +16,8 @@ When building paginated APIs that return entities with collections (e.g., `User`
   2. Use those IDs in a secondary query with `JOIN FETCH` to eagerly load the collections.
   
   ```java
-  // Step 1: Get the paged IDs
-  List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
-  List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
+  // Step 1: Get the paged IDs (Select only IDs to avoid loading root entities)
+  List<Long> userIds = User.<Long>find("SELECT u.id FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
   
   // Step 2: Fetch the full graph for exactly those IDs
   List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
