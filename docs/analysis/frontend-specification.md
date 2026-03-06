@@ -20,17 +20,37 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Mobile App Readiness:** Design the JSON API contracts and components keeping in mind that these will likely power a native mobile application (iOS/Android) in the near future.
 *   **Accessibility (a11y):** The application must be usable by people with disabilities, adhering to WCAG 2.1 AA standards. This includes using proper semantic HTML, ensuring keyboard navigability for all interactive elements, providing `aria-*` attributes where necessary, and maintaining sufficient color contrast.
 *   **Internationalization (i18n):** Design the application with i18n in mind from the start. Store all user-facing strings in resource files (e.g., JSON), use an i18n library (like `i18next` or `vue-i18n`), and consider how layouts might change with different language string lengths.
+*   **Empty States:** Every primary list view (Topics, Briefings, Sources, Users, Jobs) MUST implement a dedicated, user-friendly "Empty State" component (illustration + informative text + primary call-to-action) when no data is returned. Do not just render an empty table.
 
-### 2.3. Error Handling & Feedback
+### 2.3. Error Handling & Resiliency
+*   **Global Error Boundaries:** The application MUST implement top-level Error Boundaries (e.g., React Error Boundary) to catch rendering errors (like Markdown parsing failures) and display a graceful fallback UI instead of crashing the entire SPA.
+*   **Optimistic UI:** For common destructive or state-toggling actions (e.g., toggling a Topic's status), the UI should optimistically update the state before the API responds. If the API returns an error, the UI must roll back to the previous state and show a toast notification.
+*   **Debouncing & Rate Limits:** Actions that trigger heavy backend orchestration (e.g., `Trigger Run`, `Generate Summary`) MUST implement client-side debouncing and visually block the action button (loading state) until a response is received, preventing accidental double-submissions.
 *   **Toast Notifications:** Used for transient success/error messages (e.g., "Topic saved successfully", "Failed to delete topic").
 *   **Form Validation:**
     *   Client-side validation (required fields, format) before submission.
-    *   Server-side validation display: Map API `400 Bad Request` (ProblemDetail format) to specific form fields.
+    *   Server-side validation display: Map API `400 Bad Request` explicitly to the `fieldErrors` array (`{ "field": "...", "message": "..." }`) to display inline validation errors beneath specific form inputs.
 *   **Global API Errors:**
     *   `401 Unauthorized`: For navigation-blocking API calls, clear client-side user state and redirect to the Login page. To improve UX, append the originally requested page URL as a query parameter (e.g., `/login?redirect_uri=/briefings/123`). For background/non-critical API calls, display a modal dialog informing the user their session has expired. To prevent multiple modals from stacking during concurrent failed background requests, the application MUST manage a global state to ensure only a single session expiration modal is displayed at any given time. The modal should offer a "Login" button that redirects the current page to the login screen, preserving the original URL as a `redirect_uri` to return to after a successful login. This provides a more robust and predictable experience than complex cross-tab communication.
     *   `403 Forbidden`: Show a generic "Access Denied" component.
     *   `404 Not Found`: When an API call for a primary resource (e.g., loading a detail view like `/briefings/:id`) returns a 404, the application should display a dedicated "Not Found" page. For other incidental API calls, the component should handle the 404 gracefully (e.g., by showing an empty state or a specific message).
+    *   `429 Too Many Requests`: Handle rate limit errors by displaying a "Please wait" message and temporarily disabling the relevant action.
     *   `500 Internal Error`: Show a fallback "Something went wrong" generic message.
+
+### 2.4. State Management & Real-Time Strategy
+The frontend architecture MUST implement a predictable state management pattern to prevent race conditions and ensure data consistency:
+*   **Global Auth Store:** A centralized store (e.g., Zustand, Pinia, Redux) holding the current `user` object and raw `roles`.
+*   **Permission Resolver:** A dedicated utility/layer that computes effective UI permissions based on the `AuthStore` and the backend's PBAC matrix, rather than scattering permission calculation logic throughout components.
+*   **API Interceptor Layer:** A single global HTTP client configuration (e.g., Axios instance or fetch wrapper) responsible for attaching `X-Correlation-ID` headers, parsing the `{ data, meta, errors }` envelope, handling automatic pagination logic, and funneling global 401/403/500 errors to the UI feedback system.
+*   **Cache Invalidation Policy:** When a mutating action succeeds (e.g., `Topic` deleted), the relevant cached collections in the data-fetching layer (e.g., React Query / SWR) MUST be explicitly invalidated. Filtering and pagination (`page`, `size`) must be used as cache keys to ensure stale data is evicted correctly.
+*   **Real-Time Event Stream (SSE) & Polling:** The frontend MUST connect to `GET /api/v1/events/stream` via Server-Sent Events to receive real-time updates. If SSE fails, the frontend must gracefully degrade to polling the returned `Location` header (`GET /api/v1/jobs/{id}`) following the Async Job Contract. The implementation MUST include exponential backoff.
+*   **Performance Budgets & UX State:** The API promises `< 300 ms` for lists/details and `< 100 ms` for async triggers. Therefore:
+    *   Use **Optimistic Updates** for state toggles (e.g., enabling a Topic) since the API is fast enough to rollback without jarring the user.
+    *   Use **Skeleton Loaders** rather than full-page blocking spinners for initial list loads to maintain perceived performance.
+
+### 2.5. Security, CSP & Observability
+*   **Content Security Policy (CSP):** The application environment MUST enforce a strict CSP. Because the app renders Markdown, `script-src 'unsafe-inline'` must be strictly forbidden via a `strict-dynamic` and nonce/hash-based policy. `eval` must be disabled. Only allowlisted domains are permitted.
+*   **Structured Logging:** The application MUST utilize an error monitoring service (e.g., Sentry) to log unhandled exceptions caught by the Error Boundaries. Every logged error MUST attach the `X-Correlation-ID` received from the backend (if applicable) and the current `userId`.
 
 ## 3. Authentication & Routing
 
@@ -59,13 +79,14 @@ This document outlines the requirements and specifications for the standalone fr
 *   **Widgets:**
     *   **Welcome Card:** User's name and role summary.
     *   **Recent Briefings (List/Cards):** Top 5 most recent reports (Title, Date, minimal abstract snippet). Clicking navigates to the briefing detail.
-    *   **Quick Stats (Optional):** Number of active topics, total briefings generated this week.
+    *   **Quick Stats:** Number of active topics, total briefings generated this week.
+*   **Data Fetching:** The entire dashboard should be hydrated using the unified BFF endpoint `GET /api/v1/dashboard` to avoid N+1 queries.
 *   **Loading State:** Skeleton loaders for widgets while data fetches.
 
 ### 4.3. Topic Management (`/topics`)
 *   **List View:**
     *   Data Table or Card Grid displaying: Name, Status (Active/Inactive), Last Run Date.
-    *   Actions per row: Edit (opens modal or new page), Trigger Run (Icon button, disabled if running), Delete (Icon button).
+    *   Actions per row: Edit (opens modal or new page), Trigger Run (Icon button, disabled if running; hits `/api/v1/topics/:id/commands/trigger-run`), Delete (Icon button).
     *   Empty State: Friendly message "No topics yet. Create your first topic to start gathering intelligence."
 *   **Create/Edit Modal or Page:**
     *   Fields: 
@@ -95,12 +116,12 @@ This document outlines the requirements and specifications for the standalone fr
     *   Must handle backend validation errors gracefully.
 *   **Detail View (`/sources/:id`):**
     *   **Header:** Source Name, Platform, Statistics.
-    *   **Content Items List:** List of individual pieces of content (e.g., YouTube videos) belonging to this source.
+    *   **Content Items List:** List of individual pieces of content (e.g., YouTube videos) belonging to this source. Fetched via `GET /api/v1/content-items?sourceId={id}`.
         *   Columns/Data: Thumbnail, Title, Published Date, Duration, Status (Pending, Completed, Error).
     *   **Actions per Item:**
-        *   View the generated summary or fetched transcript.
-        *   Force generate a new summary for a specific item.
-        *   Select multiple items or a custom date range to explicitly generate a new Briefing/Report.
+        *   View the generated summary or fetched transcript (navigates to specific `/content-items/:id` detail view fetching from `GET /api/v1/content-items/:id`).
+        *   Force generate a new summary for a specific item (hits `POST /api/v1/content-items/:id/commands/generate-summary`).
+        *   Select multiple items or a custom date range to explicitly generate a new Briefing/Report (hits `POST /api/v1/topics/:id/commands/generate-briefing`).
 
 ### 4.6. User & Role Management (`/users`)
 *   *Note: Only accessible to administrators with user management permissions.*
@@ -132,8 +153,8 @@ This document outlines the requirements and specifications for the standalone fr
         *   Must have confirmation dialogs.
         *   Buttons MUST be disabled with a visual indicator (e.g., a spinner replacing the icon) if a corresponding asynchronous background job is in progress on the server. This state must be reflected both when the page loads (to account for jobs triggered by other users or schedules) and after a user triggers a job. To ensure an efficient and responsive UI, the frontend should ideally use real-time communication technologies like WebSockets or Server-Sent Events (SSE) to receive job status updates, falling back to polling a designated job status endpoint only if necessary.
     *   **Job & History Management:** 
-        *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later).
-        *   Ability to manually change the processing status of items (e.g., mark a failed item back to `PENDING` to retry). Requires `ADMIN_JOB_UPDATE`.
+        *   A paginated table showing recent background job statuses and individual `ContentItem` processing histories (Success, Pending, Failed, Retry Later). (Job details fetchable via `GET /api/v1/admin/jobs/:jobId`).
+        *   Ability to explicitly retry a failed item. Requires `ADMIN_JOB_UPDATE` and hits `POST /api/v1/content-items/:id/commands/retry`.
 
 ## 5. Permission-Based Access Control (PBAC) Integration
 
@@ -142,26 +163,26 @@ The UI must adapt dynamically based on the current user's permissions, provided 
 
 ### 5.1. UI Behavior Rules Matrix
 
-| UI Component / Action           | Required Permission Key | Behavior if Missing                                                   |
-|:--------------------------------|:------------------------|:----------------------------------------------------------------------|
-| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                           |
-| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Create Topic" Button           | `TOPIC_CREATE`          | Hide from UI                                                                                          |
-| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicUpdateNotAllowed`). |
-| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicDeleteNotAllowed`). |
-| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicTriggerRunNotAllowed`). |
-| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                           |
-| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Add Source" Button             | `SOURCE_CREATE`         | Hide from UI                                                                                          |
-| "Edit Source" Button            | `SOURCE_UPDATE`         | Hide from UI                                                                                          |
-| "Delete Source" Button          | `SOURCE_DELETE`         | Hide from UI                                                                                          |
-| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.contentItemViewNotAllowed`). |
-| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.summaryGenerateNotAllowed`). |
-| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.briefingGenerateNotAllowed`). |
-| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)                           |
-| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.userMgmtUpdateNotAllowed`). |
+| UI Component / Action           | Required Permission Key | Behavior if Missing                                                                                                                                                                                  |
+|:--------------------------------|:------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Entire Admin Section (`/admin`) | `ADMIN_DASHBOARD_VIEW`  | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| Topics List (`/topics`)         | `TOPIC_VIEW`            | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| "Create Topic" Button           | `TOPIC_CREATE`          | Hide from UI                                                                                                                                                                                         |
+| "Edit" Button on Topic row      | `TOPIC_UPDATE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicUpdateNotAllowed`).        |
+| "Delete" Button on Topic row    | `TOPIC_DELETE`          | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicDeleteNotAllowed`).        |
+| "Trigger Run" on Topic row      | `TOPIC_TRIGGER_RUN`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.topicTriggerRunNotAllowed`).    |
+| Briefings Viewer (`/briefings`) | `BRIEFING_VIEW`         | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| Sources List (`/sources`)       | `SOURCE_VIEW`           | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| "Add Source" Button             | `SOURCE_CREATE`         | Hide from UI                                                                                                                                                                                         |
+| "Edit Source" Button            | `SOURCE_UPDATE`         | Hide from UI                                                                                                                                                                                         |
+| "Delete Source" Button          | `SOURCE_DELETE`         | Hide from UI                                                                                                                                                                                         |
+| View Transcript / Summary       | `CONTENT_ITEM_VIEW`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.contentItemViewNotAllowed`).    |
+| Generate Summary (Force)        | `SUMMARY_GENERATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.summaryGenerateNotAllowed`).    |
+| Generate Briefing (Selection)   | `BRIEFING_GENERATE`     | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.briefingGenerateNotAllowed`).   |
+| View Users List (`/users`)      | `USER_MGMT_VIEW`        | Hide from Sidebar Nav & Protect Route (403)                                                                                                                                                          |
+| "Edit User" / "Assign Role"     | `USER_MGMT_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.userMgmtUpdateNotAllowed`).     |
 | System Control Buttons (Admin)  | `ADMIN_SYSTEM_TRIGGER`  | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.adminSystemTriggerNotAllowed`). |
-| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.adminJobUpdateNotAllowed`). |
+| Change Content Job Status       | `ADMIN_JOB_UPDATE`      | Render as disabled (e.g., using `aria-disabled="true"`) and display a tooltip on hover explaining the restriction (e.g., using a specific i18n key like `permissions.adminJobUpdateNotAllowed`).     |
 
 ### 5.2. Visual Clutter Reduction in Tables
 While the standard strategy is to disable UI elements for missing permissions (promoting feature discoverability), views with many repeated disabled elements (such as an 'Actions' column in a data table) can become visually cluttered. The frontend implementation SHOULD hide a group of controls entirely (e.g., hiding the entire 'Actions' column in the Topics list) if the current user lacks *all* associated permissions required for the actions within that group.
@@ -170,7 +191,9 @@ While the standard strategy is to disable UI elements for missing permissions (p
 To adhere to the Mobile-First principle (Section 2.2), relying solely on "hover" for tooltips on disabled actions is insufficient. On touch devices where hover is unavailable, tapping or pressing a disabled UI element MUST trigger the display of the explanatory tooltip or an equivalent transient toast message, ensuring mobile users receive the same context regarding their restricted permissions as desktop users.
 
 ### 5.4. Instance-Level Authorization Expectation
-While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. The backend is responsible for verifying that a user is permitted to access a specific resource (e.g., a specific `Topic` ID at `GET /api/v1/topics/123`). If a user attempts to access a resource they do not own or are not permitted to view, the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
+While the PBAC matrix defines **feature-level** authorization (what actions a user can perform generally), the frontend must also gracefully handle **instance-level** authorization. 
+*   **Ownership Model:** `Topics` and `Briefings` are user-scoped (a user can only access their own). `Sources` and `ContentItems` are global.
+*   **Error Handling:** The backend is responsible for verifying ownership. If a user attempts to access a resource they do not own (e.g., `GET /api/v1/topics/123` where ID 123 belongs to someone else), the backend will return a `403 Forbidden` response. The frontend must intercept this response and display the generic "Access Denied" component (as defined in Section 2.3), preventing unauthorized access to specific data records.
 
 ## 6. Frontend Stack & Technical Constraints
 *(To be decided by the frontend team, but recommendations for interfacing with this generic spec):*

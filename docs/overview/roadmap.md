@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                          |
 | 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
 | 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
 | 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
@@ -190,9 +191,9 @@ This document outlines the concrete steps for implementing the features describe
 **Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
 
 ### Key Tasks & Implementation Steps:
-1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards.
+1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards, exposing detailed AI token usage, job failure rates, and average job durations.
 2.  **Secrets Management:** Integrate a secrets management solution.
-3.  **Job Auditing & History:** Implement a robust `job_executions` or `audit_logs` table in the database to persistently track the status, duration, and errors of Orchestrator jobs for UI display, moving beyond simple structured application logs.
+3.  **Job Auditing Persistent Storage:** Ensure `job_executions` are persistently stored in a database specifically for long-term historical analysis (beyond the standard `admin/audit-log` functionality provided in v0.11).
 4.  **Backup & Recovery:** Establish automated database backup/recovery.
 5.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
 6.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
