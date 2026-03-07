@@ -126,6 +126,12 @@ public class ContentItemApiResource {
         ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
 
+        if (item.processingStatus == ProcessingStatus.PENDING || item.processingStatus == ProcessingStatus.COMPLETED) {
+            throw new WebApplicationException(
+                    "Cannot retry processing for an item in status " + item.processingStatus,
+                    Response.Status.CONFLICT);
+        }
+
         BackgroundJob job = backgroundJobService.triggerItemJob(item, JobType.RETRY_ITEM_PROCESSING, user.id);
 
         // Uses AdminApiResource since this is an admin functionality and links to global jobs view (if desired)

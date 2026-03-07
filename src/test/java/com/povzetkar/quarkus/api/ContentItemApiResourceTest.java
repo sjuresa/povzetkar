@@ -132,4 +132,24 @@ class ContentItemApiResourceTest {
                 .statusCode(202)
                 .header("Location", containsString("/api/v1/admin/jobs/"));
     }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "ADMIN_JOB_UPDATE" })
+    void testRetryItemProcessing_ConflictOnCompleted() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + completedItem.id + "/commands/retry")
+                .then()
+                .statusCode(409);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "ADMIN_JOB_UPDATE" })
+    void testRetryItemProcessing_ConflictOnPending() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + pendingItem.id + "/commands/retry")
+                .then()
+                .statusCode(409);
+    }
 }
