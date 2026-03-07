@@ -27,10 +27,10 @@ When building paginated APIs that return entities with collections (e.g., `User`
   List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
   ```
 
-### 1.2 Graceful Failure & String Truncation
-When background jobs or data-sync commands fail, the exception stack trace can be massive.
-- **The Trap:** Writing an un-truncated exception message to a database column (e.g., `VARCHAR(2000)`) triggers a `DataTruncation` transaction rollback. The status update transaction fails entirely, leaving the entity/job permanently orphaned in a `RUNNING` or `PENDING` state.
-- **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception using `logger.errorf` to preserve debugging context, then securely truncate the string locally via `.substring(0, MAX_LENGTH)` before persistence.
+### 1.2 Graceful Failure, String Truncation & Error Sanitization
+When background jobs or data-sync commands fail, the exception stack trace can be massive and contain sensitive structure details.
+- **The Trap:** Writing an un-truncated exception message to a database column triggers a `DataTruncation` transaction rollback. Exposing the raw exception string to the API layer can also lead to the leakage of internal stack traces or credentials if they are part of the exception context.
+- **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception internally using `logger.errorf` to preserve debugging context, but securely sanitize the string (e.g., generic user-facing message) before persisting it to an entity exposed via API.
 
 ---
 
