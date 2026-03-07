@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import jakarta.ws.rs.*;
 import com.povzetkar.quarkus.api.dto.*;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -12,7 +13,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -80,50 +80,13 @@ public class ContentSourceResource {
             throw new BadRequestException(e.getMessage());
         }
 
-        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
-                contentSource.sourceIdentifier, contentSource.sourceTypeId).firstResultOptional();
-
-        if (existing.isPresent()) {
-            throw new WebApplicationException(
-                    "ContentSource with the same sourceIdentifier and platform already exists.",
-                    Response.Status.CONFLICT);
-        }
+        checkForDuplicateContentSource(contentSource.sourceIdentifier, contentSource.sourceTypeId, null);
 
         contentSource.persist();
         return Response.created(URI.create("/api/v1/sources/" + contentSource.id))
                 .entity(contentSourceMapper.toDTO(contentSource)).build();
     }
 
-    @PUT
-    @Path("/{id}")
-    @Transactional
-    @RolesAllowed("SOURCE_UPDATE")
-    @Operation(summary = "Update content source", description = "Fully replaces an existing content source.")
-    public ContentSourceDTO updateContentSource(@PathParam("id") Long id,
-                                                @Valid @NotNull ContentSourceUpdateDTO updateDTO) {
-        ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
-
-        Integer parsedSourceTypeId;
-        try {
-            parsedSourceTypeId = contentSourceMapper.mapPlatformToSourceTypeId(updateDTO.platform());
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        Optional<ContentSource> existingWithSameKey = ContentSource
-                .find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
-                        updateDTO.sourceIdentifier(), parsedSourceTypeId, id)
-                .firstResultOptional();
-
-        if (existingWithSameKey.isPresent()) {
-            throw new WebApplicationException(
-                    "Another ContentSource with the same sourceIdentifier and platform already exists.",
-                    Response.Status.CONFLICT);
-        }
-        contentSourceMapper.updateEntity(updateDTO, entity);
-
-        return contentSourceMapper.toDTO(entity);
-    }
 
     @PATCH
     @Path("/{id}")
@@ -136,6 +99,9 @@ public class ContentSourceResource {
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
         contentSourceMapper.patchEntity(patchDTO, entity);
+        
+        checkForDuplicateContentSource(entity.sourceIdentifier, entity.sourceTypeId, id);
+        
         return contentSourceMapper.toDTO(entity);
     }
 
@@ -168,5 +134,16 @@ public class ContentSourceResource {
         return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)
                 .orElseThrow(() -> new NotFoundException("Details for source type "
                         + SourceTypeEnum.fromId(sourceTypeId) + " with identifier " + identifier + NOT_FOUND));
+    }
+
+    private void checkForDuplicateContentSource(String sourceIdentifier, int sourceTypeId, Long excludeId) {
+        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
+                sourceIdentifier, sourceTypeId).firstResultOptional();
+
+        if (existing.isPresent() && (excludeId == null || !existing.get().id.equals(excludeId))) {
+            throw new WebApplicationException(
+                    "ContentSource with the same sourceIdentifier and platform already exists.",
+                    Response.Status.CONFLICT);
+        }
     }
 }

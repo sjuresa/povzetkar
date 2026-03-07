@@ -8,13 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Promoted `ContentItem` to a first-class resource with standard `GET` and explicit action command endpoints.
+- **API:** Added user-facing job endpoints for monitoring async operations (`GET /api/v1/jobs/{id}`).
 - **API:** Implemented Admin Command Center APIs (`/api/v1/admin/jobs`) for asynchronous background job management, including triggering, paginated history, and job detail retrieval.
 - **Security:** Added critical lockout protection for administrator roles, preventing self-removal of the admin role and accidental removal of the last system administrator.
+- **Security:** Enhanced BackgroundJob error handling to sanitize outgoing messages, hiding raw stack traces from end users.
 - **API:** Implemented Core REST APIs for Topics (`/api/v1/topics`) and Content Sources (`/api/v1/sources`) adhering to the Backend-For-Frontend (BFF) pattern using DTOs and MapStruct `@Mapper` interfaces. Includes pagination support for collection endpoints.
 - **Security:** Implemented Permission-Based Access Control (PBAC) foundations. Mapped database roles (`admin`, `user`) to granular capabilities (e.g., `TOPIC_VIEW`, `ADMIN_SYSTEM_TRIGGER`) via `RolePermissionsMap` and dynamically injected them into the `QuarkusSecurityIdentity`.
 - **Background Jobs:** Introduced a persistent job execution framework with `BackgroundJob` entity, `BackgroundJobService`, and async orchestration integration using `Infrastructure.getDefaultExecutor()`.
 
 ### Changed
+- **API:** Refactored Topics and ContentSources to use `PATCH` instead of `PUT` for updates, aligning with the core REST API contract.
+- **API:** Refactored endpoint paths for actionable commands to follow CQRS patterns (e.g., `POST /api/v1/topics/{id}/commands/generate-briefing`, `POST /api/v1/content-items/{id}/commands/retry`).
+- **API:** Enhanced `ContentSourceResource` with duplicate validation during `PATCH` operations and extracted repeated validation logic in `ContentItemApiResource` into shared helpers.
+- **API:** Extracted common user contextual resolution logic into a new `BaseApiResource` applying DRY principles to the API module.
+- **Security:** Enforced instance-level ownership authorization across Job and ContentItem APIs to ensure users only access their own resources.
 - **Testing:** Implemented the Test Data Builder pattern for core entities (`User`, `Topic`, `ContentSource`) to streamline test data generation and resolve testing brittleness. Refactored the entire test suite to use these builders.
 - **API:** Refactored `ContentSourceResource` and Admin UI to utilize the new `/api/v1/sources` standard path and DTO payloads.
 - **Database Schema:** Added `last_run_date` to the `topics` table via Flyway migration (`V14__add_last_run_date_to_topics.sql`).

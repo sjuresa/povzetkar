@@ -24,10 +24,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE" })
@@ -250,150 +250,37 @@ class ContentSourceResourceTest {
         }
 
         @Test
-        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_UPDATE", "SOURCE_DELETE" })
-        @Transactional
-        void testUpdateContentSource_Success() {
-                ContentSource existingContentSource = em.find(ContentSource.class,
-                                createdContentSourceIds.iterator().next());
-
-                com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO existingDTO = new com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO(
-                                com.povzetkar.quarkus.model.SourceTypeEnum.fromId(existingContentSource.sourceTypeId)
-                                                .name(),
-                                existingContentSource.sourceIdentifier,
-                                "Updated Name");
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .pathParam("id", existingContentSource.id)
-                                .body(existingDTO)
-                                .when().put(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(200)
-                                .body("name", is("Updated Name"));
-
-                em.flush();
-                em.clear();
-
-                ContentSource updated = em.find(ContentSource.class, existingContentSource.id);
-                assertNotNull(updated);
-                assertEquals("Updated Name", updated.name);
-        }
-
-        @Test
-        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_UPDATE" })
-        @Transactional
-        void testUpdateContentSource_NotFound() {
-                com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO nonExistentContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO(
-                                "YOUTUBE",
-                                "non-existent",
-                                "Non Existent");
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .pathParam("id", 99999L)
-                                .body(nonExistentContentSource)
-                                .when().put(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(404);
-        }
-
-        @Test
-        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_UPDATE" })
-        @Transactional
-        void testUpdateContentSource_InvalidInput() {
-                ContentSource existingContentSource = em.find(ContentSource.class,
-                                createdContentSourceIds.iterator().next());
-
-                // Case 1: name is null
-                Map<String, Object> payload = new HashMap<>();
-                payload.put("sourceIdentifier", existingContentSource.sourceIdentifier);
-                payload.put("platform", com.povzetkar.quarkus.model.SourceTypeEnum
-                                .fromId(existingContentSource.sourceTypeId).name());
-                payload.put("name", null); // Intentionally invalid
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .pathParam("id", existingContentSource.id)
-                                .body(payload)
-                                .when().put(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(400);
-
-                // Case 2: sourceIdentifier is null
-                payload.put("sourceIdentifier", null);
-                payload.put("name", existingContentSource.name);
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .pathParam("id", existingContentSource.id)
-                                .body(payload)
-                                .when().put(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(400);
-
-                // Case 3: empty JSON object
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .pathParam("id", existingContentSource.id)
-                                .body("")
-                                .when().put(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(400);
-        }
-
-        @Test
-        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_DELETE" })
-        @Transactional
-        void testDeleteContentSource_Success() {
-                ContentSource contentSourceToDelete = em.find(ContentSource.class,
-                                createdContentSourceIds.iterator().next());
-                assertNotNull(contentSourceToDelete);
-
-                given()
-                                .pathParam("id", contentSourceToDelete.id)
-                                .when().delete(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(204);
-
-                em.flush();
-                em.clear();
-
-                ContentSource deleted = em.find(ContentSource.class, contentSourceToDelete.id);
-                assertNull(deleted);
-
-                createdContentSourceIds.remove(contentSourceToDelete.id);
-        }
-
-        @Test
-        @TestSecurity(user = "admin_user", roles = { "admin", "SOURCE_DELETE" })
-        @Transactional
-        void testDeleteContentSource_NotFound() {
-                given()
-                                .pathParam("id", 99999L)
-                                .when().delete(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(404);
-        }
-
-        @Test
-        void testUpdateContentSource_Forbidden() {
-                com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO dummyDTO = new com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO(
-                                "YOUTUBE", "dummy-id", "Dummy Name");
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .pathParam("id", createdContentSourceIds.iterator().next())
-                                .body(dummyDTO)
-                                .when().put(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(403);
-        }
-
-        @Test
         void testDeleteContentSource_Forbidden() {
                 given()
                                 .pathParam("id", createdContentSourceIds.iterator().next())
                                 .when().delete(API_BASE_PATH + "/{id}")
                                 .then()
                                 .statusCode(403);
+        }
+
+        @Test
+        @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+        void testDeleteContentSource_Success() {
+                Long toDeleteId = createdContentSourceIds.iterator().next();
+                
+                given()
+                                .pathParam("id", toDeleteId)
+                                .when().delete(API_BASE_PATH + "/{id}")
+                                .then()
+                                .statusCode(204);
+                                
+                assertNull(em.find(ContentSource.class, toDeleteId));
+                createdContentSourceIds.remove(toDeleteId);
+        }
+
+        @Test
+        @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+        void testDeleteContentSource_NotFound() {
+                given()
+                                .pathParam("id", 99999L)
+                                .when().delete(API_BASE_PATH + "/{id}")
+                                .then()
+                                .statusCode(404);
         }
 
 }

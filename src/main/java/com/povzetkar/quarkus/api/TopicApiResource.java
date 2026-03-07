@@ -1,14 +1,15 @@
 package com.povzetkar.quarkus.api;
 
+import jakarta.ws.rs.*;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
-import com.povzetkar.quarkus.api.dto.TopicUpdateDTO;
+import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.TopicMapper;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
-import com.povzetkar.quarkus.service.OrchestrationManager;
+import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
@@ -18,14 +19,12 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
-import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,22 +33,23 @@ import java.util.Optional;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Topics", description = "Endpoints for managing Topics")
-public class TopicApiResource {
+public class TopicApiResource extends BaseApiResource {
 
-    private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
+    private static final String DUPLICATE_TOPIC_NAME = "A topic with this name already exists.";
+    private static final String TOPIC_NOT_FOUND = "Topic with id ";
+    private static final String NOT_FOUND_SUFFIX = " not found or does not belong to user.";
+    
     private final TopicMapper topicMapper;
-    private final UserContextService userContextService;
-    private final OrchestrationManager orchestrationManager;
-    private final Clock clock;
+    private final BackgroundJobService backgroundJobService;
+    private final BackgroundJobMapper backgroundJobMapper;
 
     @Inject
-    public TopicApiResource(TopicMapper topicMapper, UserContextService userContextService,
-            OrchestrationManager orchestrationManager, Clock clock) {
+    public TopicApiResource(TopicMapper topicMapper, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper, UserContextService userContextService) {
+        super(userContextService);
         this.topicMapper = topicMapper;
-        this.userContextService = userContextService;
-        this.orchestrationManager = orchestrationManager;
-        this.clock = clock;
+        this.backgroundJobService = backgroundJobService;
+        this.backgroundJobMapper = backgroundJobMapper;
     }
 
     @GET
@@ -96,23 +96,6 @@ public class TopicApiResource {
         return Response.created(URI.create("/api/v1/topics/" + topic.id)).entity(topicMapper.toDTO(topic)).build();
     }
 
-    @PUT
-    @Path("/{id}")
-    @Transactional
-    @RolesAllowed("TOPIC_UPDATE")
-    @Operation(summary = "Update topic", description = "Fully replaces an existing topic.")
-    public TopicDTO updateTopic(@PathParam("id") Long id, @Valid @NotNull TopicUpdateDTO updateDTO) {
-        User user = getAuthenticatedUser();
-        Topic topic = findResolvedTopic(id, user);
-
-        // Prevent duplicate names for the same user when changing name
-        if (!topic.name.equals(updateDTO.name())) {
-            checkForDuplicateTopicName(user, updateDTO.name());
-        }
-
-        topicMapper.updateEntity(updateDTO, topic);
-        return topicMapper.toDTO(topic);
-    }
 
     @PATCH
     @Path("/{id}")
@@ -144,24 +127,30 @@ public class TopicApiResource {
     }
 
     @POST
-    @Path("/{id}/trigger-run")
+    @Path("/{id}/commands/generate-briefing")
     @RolesAllowed("TOPIC_TRIGGER_RUN")
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
-    public Response triggerTopicRun(@PathParam("id") Long id) {
+    public Response triggerTopicRun(@PathParam("id") Long id, @jakarta.ws.rs.core.Context jakarta.ws.rs.core.UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 
-        // Run the orchestration process in the background
-        orchestrationManager.runOrchestrationForTopicManually(topic, java.time.LocalDate.now(clock))
-                .subscribeAsCompletionStage();
+        var job = backgroundJobService.triggerTopicBriefingJob(topic, user.id);
 
-        return Response.accepted().build();
+        URI location = uriInfo.getBaseUriBuilder()
+                .path(JobApiResource.class)
+                .path(JobApiResource.class, "getJobById")
+                .build(job.id);
+
+        return Response.accepted()
+                .location(location)
+                .entity(backgroundJobMapper.toDTO(job))
+                .build();
     }
 
     private void checkForDuplicateTopicName(User user, String name) {
         Optional<Topic> existing = Topic.find(FIND_BY_USER_AND_NAME_QUERY, user, name).firstResultOptional();
         if (existing.isPresent()) {
-            throw new WebApplicationException("A topic with this name already exists.", Response.Status.CONFLICT);
+            throw new WebApplicationException(DUPLICATE_TOPIC_NAME, Response.Status.CONFLICT);
         }
     }
 
@@ -169,11 +158,8 @@ public class TopicApiResource {
         return Topic.<Topic>find("id = ?1 and user = ?2", id, user)
                 .firstResultOptional()
                 .orElseThrow(
-                        () -> new NotFoundException("Topic with id " + id + " not found or does not belong to user."));
+                        () -> new NotFoundException(TOPIC_NOT_FOUND + id + NOT_FOUND_SUFFIX));
     }
 
-    private User getAuthenticatedUser() {
-        return userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-    }
+ 
 }

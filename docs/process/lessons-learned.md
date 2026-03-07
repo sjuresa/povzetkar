@@ -27,10 +27,10 @@ When building paginated APIs that return entities with collections (e.g., `User`
   List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
   ```
 
-### 1.2 Graceful Failure & String Truncation
-When background jobs or data-sync commands fail, the exception stack trace can be massive.
-- **The Trap:** Writing an un-truncated exception message to a database column (e.g., `VARCHAR(2000)`) triggers a `DataTruncation` transaction rollback. The status update transaction fails entirely, leaving the entity/job permanently orphaned in a `RUNNING` or `PENDING` state.
-- **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception using `logger.errorf` to preserve debugging context, then securely truncate the string locally via `.substring(0, MAX_LENGTH)` before persistence.
+### 1.2 Graceful Failure, String Truncation & Error Sanitization
+When background jobs or data-sync commands fail, the exception stack trace can be massive and contain sensitive structure details.
+- **The Trap:** Writing an un-truncated exception message to a database column triggers a `DataTruncation` transaction rollback. Exposing the raw exception string to the API layer can also lead to the leakage of internal stack traces or credentials if they are part of the exception context.
+- **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception internally using `logger.errorf` to preserve debugging context, but securely sanitize the string (e.g., generic user-facing message) before persisting it to an entity exposed via API.
 
 ---
 
@@ -45,6 +45,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 ### 2.2 Deterministic DTO Mapping (MapStruct)
 - **The Trap:** Fetching generic associations like `Set<UserIdentity> identities` lacks a guaranteed order from the database. When mapping these to a concatenated string or extracting priority fields in a DTO (`authProvider`), the sequence can flip sporadically, causing flaky integration tests and unstable UI rendering.
 - **The Standard:** Always enforce deterministic ordering using `.stream().sorted(Comparator.comparing(e -> e.id))` on collections inside custom `@Named` mapping methods before joining or extracting values. Never rely on natural `.sorted()` order unless the entity explicitly implements `Comparable`, as this can cause runtime `ClassCastException` failures.
+
+### 2.3 Dependency Injection
+- **The Trap:** Using field injection (e.g., `@Inject UserContextService userContextService;`) allows objects to be created in an invalid state, prevents fields from being `final`, and makes unit testing difficult because dependencies aren't explicitly required during instantiation.
+- **The Standard:** Always use **constructor injection** for dependencies. This ensures immutable (`final`) references, explicitly declares required dependencies, and makes the code more robust and easier to test without reflection. If a proxy-able bean requires a no-args constructor for CDI, provide a `protected` no-args constructor that sets final fields to `null`.
 
 ---
 
@@ -70,3 +74,8 @@ Testing asynchronous REST actions (e.g., a `202 Accepted` that queues a job) req
 
 ### 3.3 Accurate Timestamping & Auditing
 - **The Standard:** Do not guess timestamps retroactively (e.g., applying "fallback" `startedAt` timestamps when a job reaches `COMPLETED` if it was somehow skipped). Enforce strict state-transition boundaries. `startedAt` must ONLY be assigned precisely when the state machine transitions from `QUEUED`/`PENDING` directly into `RUNNING` to correctly preserve latency and queue duration metrics.
+
+### 3.4 Integration Testing with `@TestSecurity`
+When testing endpoints protected by `@RolesAllowed` that accept multiple roles (e.g., `@RolesAllowed({"user", "admin"})`), the `@TestSecurity` annotation must provide **all** roles expected by the authorization logic if the test relies on specific user attributes.
+- **The Trap:** Using `@TestSecurity(user = "testuser", roles = {"ADMIN_JOB_UPDATE"})` might fail with `401 Unauthorized` or `403 Forbidden` if the endpoint or surrounding security context also expects the base `"user"` role for standard operations.
+- **The Standard:** Always map the exact full suite of roles the test user hypothetically possesses: `@TestSecurity(user = "testuser", roles = {"user", "ADMIN_JOB_UPDATE"})`.
