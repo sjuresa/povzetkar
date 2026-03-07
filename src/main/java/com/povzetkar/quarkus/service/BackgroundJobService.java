@@ -104,8 +104,11 @@ public class BackgroundJobService {
         jobTask.onSubscription().call(() -> updateJobStatusUni(jobId, JobStatus.RUNNING, null))
                 .onItem().call(() -> updateJobStatusUni(jobId, JobStatus.COMPLETED, null)
                         .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
-                .onFailure().call(th -> updateJobStatusUni(jobId, JobStatus.FAILED, th.toString())
-                        .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
+                .onFailure().call(th -> {
+                    logger.errorf(th, "Job execution failed for job %s", jobId);
+                    return updateJobStatusUni(jobId, JobStatus.FAILED, "An internal error occurred during job execution.")
+                            .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3);
+                })
                 .subscribe().with(_ -> {
                 }, failure -> logger.errorf(failure, "Failed to update final job status for job %s after retries", jobId));
     }

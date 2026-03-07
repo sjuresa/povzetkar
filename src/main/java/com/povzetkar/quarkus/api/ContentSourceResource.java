@@ -80,14 +80,7 @@ public class ContentSourceResource {
             throw new BadRequestException(e.getMessage());
         }
 
-        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
-                contentSource.sourceIdentifier, contentSource.sourceTypeId).firstResultOptional();
-
-        if (existing.isPresent()) {
-            throw new WebApplicationException(
-                    "ContentSource with the same sourceIdentifier and platform already exists.",
-                    Response.Status.CONFLICT);
-        }
+        checkForDuplicateContentSource(contentSource.sourceIdentifier, contentSource.sourceTypeId, null);
 
         contentSource.persist();
         return Response.created(URI.create("/api/v1/sources/" + contentSource.id))
@@ -106,6 +99,9 @@ public class ContentSourceResource {
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
         contentSourceMapper.patchEntity(patchDTO, entity);
+        
+        checkForDuplicateContentSource(entity.sourceIdentifier, entity.sourceTypeId, id);
+        
         return contentSourceMapper.toDTO(entity);
     }
 
@@ -138,5 +134,16 @@ public class ContentSourceResource {
         return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)
                 .orElseThrow(() -> new NotFoundException("Details for source type "
                         + SourceTypeEnum.fromId(sourceTypeId) + " with identifier " + identifier + NOT_FOUND));
+    }
+
+    private void checkForDuplicateContentSource(String sourceIdentifier, int sourceTypeId, Long excludeId) {
+        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
+                sourceIdentifier, sourceTypeId).firstResultOptional();
+
+        if (existing.isPresent() && (excludeId == null || !existing.get().id.equals(excludeId))) {
+            throw new WebApplicationException(
+                    "ContentSource with the same sourceIdentifier and platform already exists.",
+                    Response.Status.CONFLICT);
+        }
     }
 }
