@@ -44,7 +44,7 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 
 ### 2.2 Deterministic DTO Mapping (MapStruct)
 - **The Trap:** Fetching generic associations like `Set<UserIdentity> identities` lacks a guaranteed order from the database. When mapping these to a concatenated string or extracting priority fields in a DTO (`authProvider`), the sequence can flip sporadically, causing flaky integration tests and unstable UI rendering.
-- **The Standard:** Always enforce deterministic ordering using `.stream().sorted()` on collections inside custom `@Named` mapping methods before joining or extracting values.
+- **The Standard:** Always enforce deterministic ordering using `.stream().sorted(Comparator.comparing(e -> e.id))` on collections inside custom `@Named` mapping methods before joining or extracting values. Never rely on natural `.sorted()` order unless the entity explicitly implements `Comparable`, as this can cause runtime `ClassCastException` failures.
 
 ---
 
