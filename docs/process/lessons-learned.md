@@ -20,7 +20,7 @@ When building paginated APIs that return entities with collections (e.g., `User`
   List<Long> userIds = User.<Long>find("SELECT u.id FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
   
   // Step 2: Fetch the full graph for exactly those IDs
-  List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
+  List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
   ```
 
 ### 1.2 Graceful Failure & String Truncation
