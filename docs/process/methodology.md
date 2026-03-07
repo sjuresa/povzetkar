@@ -58,7 +58,7 @@ Our lifecycle is divided into four distinct phases.
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
 5.  **Verify & Code Review:** The User runs the tests and performs a code review (checking for blocking code, JPA identity, etc.).
-6.  **Log:** The `CHANGELOG.md` and current retrospective are updated *immediately* after the task.
+6.  **Log:** The `CHANGELOG.md` and current retrospective are updated *immediately* after the task. Ensure `docs/process/lessons-learned.md` is updated simultaneously with any novel technical hurdles or architectural patterns discovered during execution.
 
 ### Phase 3: Version Finalization
 *Goal: Clean up and prepare for release.*
