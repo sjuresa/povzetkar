@@ -95,14 +95,7 @@ public class ContentItemApiResource {
     @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary.")
     public Response generateItemSummary(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
-        ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-
-        if (item.processingStatus == ProcessingStatus.PENDING || item.processingStatus == ProcessingStatus.COMPLETED) {
-            throw new WebApplicationException(
-                    "Cannot generate summary for an item in status " + item.processingStatus,
-                    Response.Status.CONFLICT);
-        }
+        ContentItem item = findAndValidateContentItemForAction(id);
 
         BackgroundJob job = backgroundJobService.triggerItemJob(item, JobType.GENERATE_ITEM_SUMMARY, user.id);
 
@@ -123,14 +116,7 @@ public class ContentItemApiResource {
     @Operation(summary = "Retry failed item", description = "Signals to the background worker to retry a failed item. Admin functionality.")
     public Response retryItemProcessing(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
-        ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-
-        if (item.processingStatus == ProcessingStatus.PENDING || item.processingStatus == ProcessingStatus.COMPLETED) {
-            throw new WebApplicationException(
-                    "Cannot retry processing for an item in status " + item.processingStatus,
-                    Response.Status.CONFLICT);
-        }
+        ContentItem item = findAndValidateContentItemForAction(id);
 
         BackgroundJob job = backgroundJobService.triggerItemJob(item, JobType.RETRY_ITEM_PROCESSING, user.id);
 
@@ -149,5 +135,17 @@ public class ContentItemApiResource {
     private User getAuthenticatedUser() {
         return userContextService.getCurrentUser()
                 .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+    }
+
+    private ContentItem findAndValidateContentItemForAction(Long id) {
+        ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+
+        if (item.processingStatus == ProcessingStatus.PENDING || item.processingStatus == ProcessingStatus.COMPLETED) {
+            throw new WebApplicationException(
+                    "Cannot perform this action on an item in status " + item.processingStatus,
+                    Response.Status.CONFLICT);
+        }
+        return item;
     }
 }

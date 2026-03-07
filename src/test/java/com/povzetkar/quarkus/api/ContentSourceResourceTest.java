@@ -258,4 +258,29 @@ class ContentSourceResourceTest {
                                 .statusCode(403);
         }
 
+        @Test
+        @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+        void testDeleteContentSource_Success() {
+                Long toDeleteId = createdContentSourceIds.iterator().next();
+                
+                given()
+                                .pathParam("id", toDeleteId)
+                                .when().delete(API_BASE_PATH + "/{id}")
+                                .then()
+                                .statusCode(204);
+                                
+                assertNull(em.find(ContentSource.class, toDeleteId));
+                createdContentSourceIds.remove(toDeleteId);
+        }
+
+        @Test
+        @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+        void testDeleteContentSource_NotFound() {
+                given()
+                                .pathParam("id", 99999L)
+                                .when().delete(API_BASE_PATH + "/{id}")
+                                .then()
+                                .statusCode(404);
+        }
+
 }
