@@ -16,7 +16,6 @@ import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -34,24 +33,21 @@ import java.util.Optional;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Topics", description = "Endpoints for managing Topics")
-public class TopicApiResource {
+public class TopicApiResource extends BaseApiResource {
 
-    private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
     private static final String DUPLICATE_TOPIC_NAME = "A topic with this name already exists.";
     private static final String TOPIC_NOT_FOUND = "Topic with id ";
     private static final String NOT_FOUND_SUFFIX = " not found or does not belong to user.";
     
     private final TopicMapper topicMapper;
-    private final UserContextService userContextService;
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
 
     @Inject
-    public TopicApiResource(TopicMapper topicMapper, UserContextService userContextService,
-            BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper) {
+    public TopicApiResource(TopicMapper topicMapper, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper, UserContextService userContextService) {
+        super(userContextService);
         this.topicMapper = topicMapper;
-        this.userContextService = userContextService;
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
     }
@@ -165,8 +161,5 @@ public class TopicApiResource {
                         () -> new NotFoundException(TOPIC_NOT_FOUND + id + NOT_FOUND_SUFFIX));
     }
 
-    private User getAuthenticatedUser() {
-        return userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-    }
+ 
 }

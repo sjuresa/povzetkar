@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API:** Refactored Topics and ContentSources to use `PATCH` instead of `PUT` for updates, aligning with the core REST API contract.
 - **API:** Refactored endpoint paths for actionable commands to follow CQRS patterns (e.g., `POST /api/v1/topics/{id}/commands/generate-briefing`, `POST /api/v1/content-items/{id}/commands/retry`).
 - **API:** Enhanced `ContentSourceResource` with duplicate validation during `PATCH` operations and extracted repeated validation logic in `ContentItemApiResource` into shared helpers.
+- **API:** Extracted common user contextual resolution logic into a new `BaseApiResource` applying DRY principles to the API module.
 - **Security:** Enforced instance-level ownership authorization across Job and ContentItem APIs to ensure users only access their own resources.
 - **Testing:** Implemented the Test Data Builder pattern for core entities (`User`, `Topic`, `ContentSource`) to streamline test data generation and resolve testing brittleness. Refactored the entire test suite to use these builders.
 - **API:** Refactored `ContentSourceResource` and Admin UI to utilize the new `/api/v1/sources` standard path and DTO payloads.

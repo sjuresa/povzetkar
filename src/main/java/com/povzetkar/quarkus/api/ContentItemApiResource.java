@@ -12,13 +12,11 @@ import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
-import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Sort;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import com.povzetkar.quarkus.service.UserContextService;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -35,20 +33,19 @@ import java.util.Set;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Content Items", description = "Endpoints for managing Content Items")
-public class ContentItemApiResource {
+public class ContentItemApiResource extends BaseApiResource {
 
     private static final String CONTENT_ITEM_WITH_ID = "ContentItem with id ";
     private static final String NOT_FOUND = " not found";
 
     private final ContentItemMapper contentItemMapper;
-    private final UserContextService userContextService;
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
 
     @Inject
-    public ContentItemApiResource(ContentItemMapper contentItemMapper, UserContextService userContextService, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper) {
+    public ContentItemApiResource(ContentItemMapper contentItemMapper, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper, UserContextService userContextService) {
+        super(userContextService);
         this.contentItemMapper = contentItemMapper;
-        this.userContextService = userContextService;
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
     }
@@ -61,21 +58,26 @@ public class ContentItemApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
-        PanacheQuery<ContentItem> query;
+        PanacheQuery<Long> idQuery;
         if (sourceId != null) {
             ContentSource source = ContentSource.findById(sourceId);
             if (source == null) {
                 throw new NotFoundException("Source with id " + sourceId + " not found.");
             }
-            query = ContentItem.find("contentSource", Sort.by("publishedAt").descending(), source);
+            idQuery = ContentItem.find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1 ORDER BY c.publishedAt DESC", source).project(Long.class);
         } else {
-            query = ContentItem.findAll(Sort.by("publishedAt").descending());
+            idQuery = ContentItem.find("SELECT c.id FROM ContentItem c ORDER BY c.publishedAt DESC").project(Long.class);
         }
 
-        query.page(pageIndex, pageSize);
+        long count = idQuery.count();
+        List<Long> itemIds = idQuery.page(pageIndex, pageSize).list();
 
-        List<ContentItemDTO> dtoList = query.stream().map(contentItemMapper::toDTO).toList();
-        long count = query.count();
+        if (itemIds.isEmpty()) {
+            return new PaginatedResponse<>(List.of(), count);
+        }
+
+        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource WHERE c.id IN ?1 ORDER BY c.publishedAt DESC", itemIds);
+        List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
 
         return new PaginatedResponse<>(dtoList, count);
     }
@@ -133,10 +135,7 @@ public class ContentItemApiResource {
                 .build();
     }
 
-    private User getAuthenticatedUser() {
-        return userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
-    }
+ 
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
         ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)

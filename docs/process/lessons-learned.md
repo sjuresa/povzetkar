@@ -46,6 +46,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Fetching generic associations like `Set<UserIdentity> identities` lacks a guaranteed order from the database. When mapping these to a concatenated string or extracting priority fields in a DTO (`authProvider`), the sequence can flip sporadically, causing flaky integration tests and unstable UI rendering.
 - **The Standard:** Always enforce deterministic ordering using `.stream().sorted(Comparator.comparing(e -> e.id))` on collections inside custom `@Named` mapping methods before joining or extracting values. Never rely on natural `.sorted()` order unless the entity explicitly implements `Comparable`, as this can cause runtime `ClassCastException` failures.
 
+### 2.3 Dependency Injection
+- **The Trap:** Using field injection (e.g., `@Inject UserContextService userContextService;`) allows objects to be created in an invalid state, prevents fields from being `final`, and makes unit testing difficult because dependencies aren't explicitly required during instantiation.
+- **The Standard:** Always use **constructor injection** for dependencies. This ensures immutable (`final`) references, explicitly declares required dependencies, and makes the code more robust and easier to test without reflection. If a proxy-able bean requires a no-args constructor for CDI, provide a `protected` no-args constructor that sets final fields to `null`.
+
 ---
 
 ## 3. Asynchronous Execution & System Commands

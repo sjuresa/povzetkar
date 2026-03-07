@@ -12,7 +12,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -28,19 +27,17 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Jobs", description = "Endpoints for user tracking background jobs")
-public class JobApiResource {
+public class JobApiResource extends BaseApiResource {
 
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
-    private final UserContextService userContextService;
-
     @Inject
     public JobApiResource(BackgroundJobService backgroundJobService,
                           BackgroundJobMapper backgroundJobMapper,
                           UserContextService userContextService) {
+        super(userContextService);
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
-        this.userContextService = userContextService;
     }
 
     @GET
@@ -48,8 +45,7 @@ public class JobApiResource {
     @RolesAllowed("user")
     @Operation(summary = "Get user job details", description = "Get job details for jobs initiated by the current user.")
     public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
-        User currentUser = userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+        User currentUser = getAuthenticatedUser();
 
         BackgroundJob job = backgroundJobService.getJobById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
