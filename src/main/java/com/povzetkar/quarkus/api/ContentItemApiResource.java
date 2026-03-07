@@ -28,6 +28,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 @Path("/api/v1/content-items")
 @ApplicationScoped
@@ -141,7 +142,7 @@ public class ContentItemApiResource {
         ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
 
-        if (item.processingStatus == ProcessingStatus.PENDING || item.processingStatus == ProcessingStatus.COMPLETED) {
+        if (Set.of(ProcessingStatus.PENDING, ProcessingStatus.COMPLETED).contains(item.processingStatus)) {
             throw new WebApplicationException(
                     "Cannot perform this action on an item in status " + item.processingStatus,
                     Response.Status.CONFLICT);
