@@ -1,10 +1,9 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.builder.TopicBuilder;
-import com.povzetkar.quarkus.builder.UserBuilder;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
-import com.povzetkar.quarkus.api.dto.TopicUpdateDTO;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
@@ -17,8 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 class TopicApiResourceTest {
@@ -120,21 +119,7 @@ class TopicApiResourceTest {
                 .statusCode(403);
     }
 
-    @Test
-    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
-            "TOPIC_TRIGGER_RUN" })
-    void testUpdateTopic() {
-        TopicUpdateDTO dto = new TopicUpdateDTO("Updated Topic Name", false);
 
-        given()
-                .contentType(ContentType.JSON)
-                .body(dto)
-                .when().put("/api/v1/topics/" + testTopic.id)
-                .then()
-                .statusCode(200)
-                .body("name", equalTo("Updated Topic Name"))
-                .body("enabled", equalTo(false));
-    }
 
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
@@ -173,8 +158,9 @@ class TopicApiResourceTest {
     void testTriggerTopicRun() {
         given()
                 .contentType(ContentType.JSON)
-                .when().post("/api/v1/topics/" + testTopic.id + "/trigger-run")
+                .when().post("/api/v1/topics/" + testTopic.id + "/commands/generate-briefing")
                 .then()
-                .statusCode(202);
+                .statusCode(202)
+                .header("Location", containsString("/api/v1/jobs/"));
     }
 }

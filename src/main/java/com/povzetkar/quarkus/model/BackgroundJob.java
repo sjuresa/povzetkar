@@ -1,7 +1,8 @@
 package com.povzetkar.quarkus.model;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -21,6 +22,9 @@ public class BackgroundJob extends PanacheEntityBase {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     public JobStatus status;
+
+    @Column(name = "user_id")
+    public Long userId;
 
     @Column(name = "started_at")
     public Instant startedAt;

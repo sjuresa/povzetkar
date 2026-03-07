@@ -11,6 +11,7 @@ public record BackgroundJobDTO(
     JobStatus status,
     Instant startedAt,
     Instant endedAt,
-    String errorMessage
+    String errorMessage,
+    Long userId
 ) {
 }

@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import jakarta.ws.rs.*;
 import com.povzetkar.quarkus.api.dto.*;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -12,7 +13,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -94,36 +94,6 @@ public class ContentSourceResource {
                 .entity(contentSourceMapper.toDTO(contentSource)).build();
     }
 
-    @PUT
-    @Path("/{id}")
-    @Transactional
-    @RolesAllowed("SOURCE_UPDATE")
-    @Operation(summary = "Update content source", description = "Fully replaces an existing content source.")
-    public ContentSourceDTO updateContentSource(@PathParam("id") Long id,
-                                                @Valid @NotNull ContentSourceUpdateDTO updateDTO) {
-        ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
-
-        Integer parsedSourceTypeId;
-        try {
-            parsedSourceTypeId = contentSourceMapper.mapPlatformToSourceTypeId(updateDTO.platform());
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        Optional<ContentSource> existingWithSameKey = ContentSource
-                .find("sourceIdentifier = ?1 and sourceTypeId = ?2 and id != ?3",
-                        updateDTO.sourceIdentifier(), parsedSourceTypeId, id)
-                .firstResultOptional();
-
-        if (existingWithSameKey.isPresent()) {
-            throw new WebApplicationException(
-                    "Another ContentSource with the same sourceIdentifier and platform already exists.",
-                    Response.Status.CONFLICT);
-        }
-        contentSourceMapper.updateEntity(updateDTO, entity);
-
-        return contentSourceMapper.toDTO(entity);
-    }
 
     @PATCH
     @Path("/{id}")
