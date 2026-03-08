@@ -29,4 +29,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Audit Logging / Activity Feed:** Create a system to track who executed critical actions (e.g., orchestration triggers, role management, manual summarize commands) and provide an administrative view.
 *   **Advanced Caching Strategies:** Investigate `ETag`, `Cache-Control`, and `Stale-while-revalidate` patterns for Dashboard and Briefings endpoints to reduce database load.
 *   **True Real-Time Architecture:** Upgrade the frontend dashboard's async polling to WebSockets or Server-Sent Events (SSE) for job monitoring, ensuring proper reconnect strategies and heartbeat handling.
+*   **Fully Reactive Identity Resolution:** Refactor `UserContextService.getCurrentUser()` to return a `Uni<User>`, allowing its removal from the initial JAX-RS method body and enabling the complete removal of the `@Blocking` annotation from reactive endpoints.
+*   **Standardize Reactive Transaction Helpers:** Extract the `executeInTransactionIf` pattern from `DashboardApiResource` into a shared utility or base class for all reactive resources requiring parallel database queries.
 *   **Observability & Feature Flags:** Introduce a dedicated `/api/v1/admin/metrics` endpoint and implement Backend-provided Feature Flags to support progressive delivery rollouts.

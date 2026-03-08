@@ -88,3 +88,21 @@ When asserting logic bound to rolling windows (e.g., "last 7 days") or specific 
 ### 3.6 Declarative Authorization Semantics (`@RolesAllowed`)
 When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_B"})` in Quarkus:
 - **The Standard:** Remember that passing an array of roles evaluates as a logical **OR** condition, meaning the user only needs *at least one* of the specified roles to gain access to the method. Do not natively assume an `AND` condition or strip declarative annotations for manual `if` block checks unless specifically building complex, field-level access control within the method scope itself.
+
+---
+
+## 4. Reactive Programming (Mutiny)
+
+### 4.1 Separation of I/O and Transformation
+When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you should strictly separate blocking operations from data transformations.
+- **The Trap:** Mixing database queries and DTO mapping within the same worker-thread block (e.g., inside `QuarkusTransaction.requiringNew().call(...)`) obscures the pipeline's structure and can keep worker threads occupied with CPU-bound mapping logic longer than necessary.
+- **The Standard:** Use worker threads purely for the blocking I/O (the database query) and use `.map()` or `.onItem().transform()` on the event loop for the subsequent data transformation.
+  
+  ```java
+  Uni<List<MyDTO>> result = executeInTransaction(() -> em.find(...)) // I/O on Worker Thread
+      .map(entities -> entities.stream().map(mapper::toDTO).toList()); // Transformation on Event Loop
+  ```
+
+### 4.2 Blocking Initial Logic in Reactive Endpoints
+- **The Trap:** Assuming that a method returning `Uni` is automatically "safe" from blocking the event loop. The method body itself starts execution on the event loop.
+- **The Standard:** If any logic *before* the first asynchronous operation in the method is blocking (e.g., resolving the current user from the database), you must either use `@Blocking` on the method or explicitly offload the initial logic using `Uni.createFrom().item(() -> blockingCall()).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`.

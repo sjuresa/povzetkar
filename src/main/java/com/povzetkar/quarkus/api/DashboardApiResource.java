@@ -71,15 +71,14 @@ public class DashboardApiResource extends BaseApiResource {
 
         Uni<List<BriefingSummaryDTO>> recentBriefingsUni = executeInTransactionIf(
                 hasBriefingView,
-                () -> {
-                    List<Briefing> recentEntities = Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
-                            .page(0, RECENT_BRIEFINGS_LIMIT)
-                            .list();
-                    return recentEntities.stream()
-                            .map(briefingMapper::toSummaryDTO)
-                            .toList();
-                },
-                List.of()
+                () -> Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
+                        .page(0, RECENT_BRIEFINGS_LIMIT)
+                        .list(),
+                List.<Briefing>of()
+        ).map(recentEntities ->
+                recentEntities.stream()
+                        .map(briefingMapper::toSummaryDTO)
+                        .toList()
         );
 
         return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
