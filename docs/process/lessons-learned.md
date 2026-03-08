@@ -32,6 +32,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Writing an un-truncated exception message to a database column triggers a `DataTruncation` transaction rollback. Exposing the raw exception string to the API layer can also lead to the leakage of internal stack traces or credentials if they are part of the exception context.
 - **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception internally using `logger.errorf` to preserve debugging context, but securely sanitize the string (e.g., generic user-facing message) before persisting it to an entity exposed via API.
 
+### 1.3 Stable Identity (Equals & HashCode)
+- **The Trap:** Relying on default `Object.equals()` or standard JPA identity can cause entities to be treated as different objects when reloaded across transaction boundaries or passed into asynchronous collection-based task queues.
+- **The Standard:** Always implement stable `equals()` and `hashCode()` using **Business Keys** (e.g., `slug`, `username`, `videoId`). This guarantees consistent object identity across different Hibernate sessions and prevents the creation of logical duplicates in sets or maps during background processing.
+
 ---
 
 ## 2. API Design & Consistency
@@ -104,5 +108,26 @@ When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you shoul
   ```
 
 ### 4.2 Blocking Initial Logic in Reactive Endpoints
-- **The Trap:** Assuming that a method returning `Uni` is automatically "safe" from blocking the event loop. The method body itself starts execution on the event loop.
-- **The Standard:** If any logic *before* the first asynchronous operation in the method is blocking (e.g., resolving the current user from the database), you must either use `@Blocking` on the method or explicitly offload the initial logic using `Uni.createFrom().item(() -> blockingCall()).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`.
+- **The Trap:** Assuming that a method returning `Uni` is automatically "safe" from blocking the event loop. The method body itself starts execution on the event loop thread.
+- **The Standard:** If any logic *before* the first asynchronous operation in the method is blocking (e.g., resolving the current user from the database), you must either use `@Blocking` on the method or explicitly offload the initial logic: `Uni.createFrom().item(this::getBlockingData).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`.
+
+### 4.3 Parallelizing Independent Queries (BFF Aggregation)
+When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch multiple disjoint datasets:
+- **The Trap:** Executing database queries sequentially within a method leads to additive latency (Total Time = Query A + Query B + Query C).
+- **The Standard:** Leverage `Uni.combine().all().unis(u1, u2, u3).asTuple()` to execute independent, worker-offloaded queries in parallel. This reduces the total response time to the duration of the single slowest query.
+
+### 4.4 Transaction Type Safety in Pipelines
+- **The Trap:** Assuming `QuarkusTransaction.requiringNew().call(Supplier<T>)` returns a reactive `Uni<T>`. In the standard Hibernate ORM (blocking) extension, it returns the raw type `T`.
+- **The Standard:** When integrating blocking transactions into a Mutiny pipeline, you must manually wrap the call: `Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(supplier::get)).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`. This ensures the blocking transaction starts and ends on the correct worker thread.
+
+---
+
+## 5. Development Process & Architecture
+
+### 5.1 Spec-First API Design
+- **The Trap:** Starting with backend implementation (Entities/Repositories) often leads to an API that exposes internal database structures, resulting in a non-idiomatic "Backend-for-Frontend" (BFF) experience.
+- **The Standard:** Always finalize the **Frontend Specification** and **API Contract** *before* beginning backend implementation. This ensures the API is tailored to UI requirements, defines consistent envelope contracts, and catches design inconsistencies (pagination, enums, error models) during the design phase rather than implementation.
+
+### 5.2 Test Data Builder Pattern
+- **The Trap:** Manually instantiating complex entities in every test file leads to brittle test suites. Adding a new mandatory field to an entity requires a "mass-fix" across hundreds of test lines.
+- **The Standard:** Implement the **Test Data Builder Pattern**. Centralize entity creation in fluent builders (e.g., `TopicBuilder`, `BriefingBuilder`) with sensible defaults and `.withId()` capabilities. This decouples the test logic from entity structural changes and significantly reduces boilerplate.
