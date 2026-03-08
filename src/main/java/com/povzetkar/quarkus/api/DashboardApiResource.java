@@ -11,7 +11,6 @@ import com.povzetkar.quarkus.service.UserContextService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -26,7 +25,6 @@ import java.util.List;
 @Path("/api/v1/dashboard")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Dashboard", description = "Endpoints for frontend dashboard aggregation")
 public class DashboardApiResource extends BaseApiResource {
 
