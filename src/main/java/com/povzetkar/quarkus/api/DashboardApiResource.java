@@ -25,6 +25,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Path("/api/v1/dashboard")
 @ApplicationScoped
@@ -53,28 +54,33 @@ public class DashboardApiResource extends BaseApiResource {
         boolean hasTopicView = securityIdentity.hasRole("TOPIC_VIEW");
         boolean hasBriefingView = securityIdentity.hasRole("BRIEFING_VIEW");
 
-        Uni<Long> activeTopicsUni = hasTopicView
-                ? Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(() -> Topic.count("user = ?1 and enabled = true", user)))
-                        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                : Uni.createFrom().item(0L);
+        Uni<Long> activeTopicsUni = executeInTransactionIf(
+                hasTopicView,
+                () -> Topic.count("user = ?1 and enabled = true", user),
+                0L
+        );
 
-        Uni<Long> briefingsLast7DaysUni = hasBriefingView
-                ? Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(() -> {
+        Uni<Long> briefingsLast7DaysUni = executeInTransactionIf(
+                hasBriefingView,
+                () -> {
                     LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
                     return Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
-                })).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                : Uni.createFrom().item(0L);
+                },
+                0L
+        );
 
-        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = hasBriefingView
-                ? Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(() -> {
+        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = executeInTransactionIf(
+                hasBriefingView,
+                () -> {
                     List<Briefing> recentEntities = Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
                             .page(0, RECENT_BRIEFINGS_LIMIT)
                             .list();
                     return recentEntities.stream()
                             .map(briefingMapper::toSummaryDTO)
                             .toList();
-                })).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                : Uni.createFrom().item(List.of());
+                },
+                List.of()
+        );
 
         return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
                 .asTuple()
@@ -86,5 +92,13 @@ public class DashboardApiResource extends BaseApiResource {
                     DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, briefingsLast7Days);
                     return new DashboardDTO(recentBriefings, stats);
                 });
+    }
+
+    private <T> Uni<T> executeInTransactionIf(boolean hasPermission, Supplier<T> supplier, T defaultValue) {
+        if (!hasPermission) {
+            return Uni.createFrom().item(defaultValue);
+        }
+        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(supplier::get))
+                .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 }
