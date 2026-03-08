@@ -30,6 +30,9 @@ class DashboardApiResourceTest {
     Briefing briefingYesterday;
     Briefing briefingOld;
     Briefing topic2Briefing;
+    Briefing extra1;
+    Briefing extra2;
+    Briefing extra3;
 
     @BeforeEach
     @Transactional
@@ -86,6 +89,30 @@ class DashboardApiResourceTest {
                 .withBriefingDate(now.minusDays(10))
                 .build();
         briefingOld.persistAndFlush();
+
+        extra1 = BriefingBuilder.aBriefing()
+                .withTopic(activeTopic2)
+                .withTitle("Extra 1")
+                .withMetaSummary("Extra 1 summary")
+                .withBriefingDate(now.minusDays(1))
+                .build();
+        extra1.persistAndFlush();
+
+        extra2 = BriefingBuilder.aBriefing()
+                .withTopic(activeTopic2)
+                .withTitle("Extra 2")
+                .withMetaSummary("Extra 2 summary")
+                .withBriefingDate(now.minusDays(2))
+                .build();
+        extra2.persistAndFlush();
+
+        extra3 = BriefingBuilder.aBriefing()
+                .withTopic(activeTopic2)
+                .withTitle("Extra 3")
+                .withMetaSummary("Extra 3 summary")
+                .withBriefingDate(now.minusDays(4))
+                .build();
+        extra3.persistAndFlush();
     }
 
     @AfterEach
@@ -105,11 +132,10 @@ class DashboardApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("stats.activeTopics", equalTo(2)) // 2 enabled topics
-                .body("stats.briefingsGeneratedLast7Days", equalTo(3)) // today, yesterday, 3 days ago
-                .body("recentBriefings", hasSize(4)) // top 5 including old
+                .body("stats.briefingsGeneratedLast7Days", equalTo(6)) // today, yesterday(x2), 2days, 3days, 4days
+                .body("recentBriefings", hasSize(5)) // capped at 5
                 .body("recentBriefings[0].title", equalTo("Briefing Today"))
-                .body("recentBriefings[0].topicName", equalTo("Active 1"))
-                .body("recentBriefings[3].title", equalTo("Briefing Old")); // ordered correctly
+                .body("recentBriefings[0].topicName", equalTo("Active 1")); 
     }
 
     @Test
@@ -134,8 +160,8 @@ class DashboardApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("stats.activeTopics", equalTo(0)) // No role
-                .body("stats.briefingsGeneratedLast7Days", equalTo(3)) // today, yesterday, 3 days ago
-                .body("recentBriefings", hasSize(4)); // top 5 including old
+                .body("stats.briefingsGeneratedLast7Days", equalTo(6)) 
+                .body("recentBriefings", hasSize(5)); // Capped at 5 maximum limit
     }
 
     @Test

@@ -54,7 +54,7 @@ public class DashboardApiResource extends BaseApiResource {
         List<BriefingSummaryDTO> recentBriefings = List.of();
         
         if (securityIdentity.hasRole("BRIEFING_VIEW")) {
-            LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(7);
+            LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(6);
             weeklyBriefings = Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
 
             List<Briefing> recentEntities = Briefing.<Briefing>find("topic.user = ?1 order by briefingDate desc", user)
