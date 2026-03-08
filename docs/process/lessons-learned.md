@@ -84,3 +84,7 @@ When testing endpoints protected by `@RolesAllowed` that accept multiple roles (
 When asserting logic bound to rolling windows (e.g., "last 7 days") or specific dates, relying on the system default timezone is fragile.
 - **The Trap:** Using `LocalDate.now()` in both the application and the test suite can lead to inconsistent behavior across different environments (local vs CI) or when tests run across midnight boundaries.
 - **The Standard:** Always instantiate dates and timestamps explicitly relative to UTC. Use `LocalDate.now(java.time.ZoneOffset.UTC)` for server-side logic and identically in the test builder setup to guarantee deterministic evaluation.
+
+### 3.6 Declarative Authorization Semantics (`@RolesAllowed`)
+When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_B"})` in Quarkus:
+- **The Standard:** Remember that passing an array of roles evaluates as a logical **OR** condition, meaning the user only needs *at least one* of the specified roles to gain access to the method. Do not natively assume an `AND` condition or strip declarative annotations for manual `if` block checks unless specifically building complex, field-level access control within the method scope itself.
