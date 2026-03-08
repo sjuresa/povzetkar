@@ -49,12 +49,12 @@ public class DashboardApiResource extends BaseApiResource {
             activeTopics = Topic.count("user = ?1 and enabled = true", user);
         }
         
-        long weeklyBriefings = 0;
+        long briefingsGeneratedLast7Days = 0;
         List<BriefingSummaryDTO> recentBriefings = List.of();
         
         if (securityIdentity.hasRole("BRIEFING_VIEW")) {
             LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(6);
-            weeklyBriefings = Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
+            briefingsGeneratedLast7Days = Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
 
             List<Briefing> recentEntities = Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
                     .page(0, 5)
@@ -65,7 +65,7 @@ public class DashboardApiResource extends BaseApiResource {
                     .toList();
         }
 
-        DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, weeklyBriefings);
+        DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, briefingsGeneratedLast7Days);
         return new DashboardDTO(recentBriefings, stats);
     }
 }
