@@ -74,7 +74,8 @@ public class DashboardApiResource extends BaseApiResource {
                                     .page(0, RECENT_BRIEFINGS_LIMIT)
                                     .list(),
                             List.<Briefing>of()
-                    ).map(recentEntities ->
+                    ).emitOn(Infrastructure.getDefaultExecutor())
+                    .map(recentEntities ->
                             recentEntities.stream()
                                     .map(briefingMapper::toSummaryDTO)
                                     .toList()
@@ -82,6 +83,7 @@ public class DashboardApiResource extends BaseApiResource {
 
                     return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
                             .asTuple()
+                            .emitOn(Infrastructure.getDefaultExecutor())
                             .map(tuple -> {
                                 long activeTopics = tuple.getItem1();
                                 long briefingsLast7Days = tuple.getItem2();
