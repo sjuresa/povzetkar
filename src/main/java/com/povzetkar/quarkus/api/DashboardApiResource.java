@@ -8,9 +8,10 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
-import jakarta.annotation.security.RolesAllowed;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -41,9 +42,12 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed({"TOPIC_VIEW", "BRIEFING_VIEW"})
     @Operation(summary = "Get Dashboard Data", description = "Aggregated convenience endpoint for the frontend dashboard to prevent N+1 requests.")
     public DashboardDTO getDashboard() {
+        if (!securityIdentity.hasRole("TOPIC_VIEW") && !securityIdentity.hasRole("BRIEFING_VIEW")) {
+            throw new ForbiddenException("User must have TOPIC_VIEW or BRIEFING_VIEW role");
+        }
+
         User user = getAuthenticatedUser();
 
         long activeTopics = 0;
