@@ -6,16 +6,14 @@ import com.povzetkar.quarkus.api.dto.DashboardStatsDTO;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Topic;
-import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.smallrye.common.annotation.Blocking;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -46,50 +44,52 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     @GET
-    @Blocking
     @RolesAllowed({"TOPIC_VIEW", "BRIEFING_VIEW"})
     @Operation(summary = "Get Dashboard Data", description = "Aggregated convenience endpoint for the frontend dashboard to prevent N+1 requests.")
     public Uni<DashboardDTO> getDashboard() {
-        User user = getAuthenticatedUser();
-        boolean hasTopicView = securityIdentity.hasRole("TOPIC_VIEW");
-        boolean hasBriefingView = securityIdentity.hasRole("BRIEFING_VIEW");
+        return Uni.createFrom().item(this::getAuthenticatedUser)
+                .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+                .flatMap(user -> {
+                    boolean hasTopicView = securityIdentity.hasRole("TOPIC_VIEW");
+                    boolean hasBriefingView = securityIdentity.hasRole("BRIEFING_VIEW");
 
-        Uni<Long> activeTopicsUni = executeInTransactionIf(
-                hasTopicView,
-                () -> Topic.count("user = ?1 and enabled = true", user),
-                0L
-        );
+                    Uni<Long> activeTopicsUni = executeInTransactionIf(
+                            hasTopicView,
+                            () -> Topic.count("user = ?1 and enabled = true", user),
+                            0L
+                    );
 
-        Uni<Long> briefingsLast7DaysUni = executeInTransactionIf(
-                hasBriefingView,
-                () -> {
-                    LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
-                    return Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
-                },
-                0L
-        );
+                    Uni<Long> briefingsLast7DaysUni = executeInTransactionIf(
+                            hasBriefingView,
+                            () -> {
+                                LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
+                                return Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
+                            },
+                            0L
+                    );
 
-        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = executeInTransactionIf(
-                hasBriefingView,
-                () -> Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
-                        .page(0, RECENT_BRIEFINGS_LIMIT)
-                        .list(),
-                List.<Briefing>of()
-        ).map(recentEntities ->
-                recentEntities.stream()
-                        .map(briefingMapper::toSummaryDTO)
-                        .toList()
-        );
+                    Uni<List<BriefingSummaryDTO>> recentBriefingsUni = executeInTransactionIf(
+                            hasBriefingView,
+                            () -> Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
+                                    .page(0, RECENT_BRIEFINGS_LIMIT)
+                                    .list(),
+                            List.<Briefing>of()
+                    ).map(recentEntities ->
+                            recentEntities.stream()
+                                    .map(briefingMapper::toSummaryDTO)
+                                    .toList()
+                    );
 
-        return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
-                .asTuple()
-                .map(tuple -> {
-                    long activeTopics = tuple.getItem1();
-                    long briefingsLast7Days = tuple.getItem2();
-                    List<BriefingSummaryDTO> recentBriefings = tuple.getItem3();
+                    return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
+                            .asTuple()
+                            .map(tuple -> {
+                                long activeTopics = tuple.getItem1();
+                                long briefingsLast7Days = tuple.getItem2();
+                                List<BriefingSummaryDTO> recentBriefings = tuple.getItem3();
 
-                    DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, briefingsLast7Days);
-                    return new DashboardDTO(recentBriefings, stats);
+                                DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, briefingsLast7Days);
+                                return new DashboardDTO(recentBriefings, stats);
+                            });
                 });
     }
 
