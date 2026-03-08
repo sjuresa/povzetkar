@@ -47,8 +47,9 @@ public class DashboardApiResource extends BaseApiResource {
     @RolesAllowed({"TOPIC_VIEW", "BRIEFING_VIEW"})
     @Operation(summary = "Get Dashboard Data", description = "Aggregated convenience endpoint for the frontend dashboard to prevent N+1 requests.")
     public Uni<DashboardDTO> getDashboard() {
-        return Uni.createFrom().item(this::getAuthenticatedUser)
+        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+                .emitOn(Infrastructure.getDefaultExecutor())
                 .flatMap(user -> {
                     boolean hasTopicView = securityIdentity.hasRole("TOPIC_VIEW");
                     boolean hasBriefingView = securityIdentity.hasRole("BRIEFING_VIEW");
