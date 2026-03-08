@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Implemented Backend-For-Frontend (BFF) Dashboard endpoint (`GET /api/v1/dashboard`) aggregating user-specific active topics and weekly briefing generation statistics, securely preventing frontend N+1 queries.
 - **API:** Promoted `ContentItem` to a first-class resource with standard `GET` and explicit action command endpoints.
 - **API:** Added user-facing job endpoints for monitoring async operations (`GET /api/v1/jobs/{id}`).
 - **API:** Implemented Admin Command Center APIs (`/api/v1/admin/jobs`) for asynchronous background job management, including triggering, paginated history, and job detail retrieval.
