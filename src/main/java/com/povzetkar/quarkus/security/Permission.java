@@ -36,6 +36,6 @@ public enum Permission {
     // Content Items
     CONTENT_ITEM_VIEW;
 
-    public static final String TOPIC_VIEW_NAME = "TOPIC_VIEW";
-    public static final String BRIEFING_VIEW_NAME = "BRIEFING_VIEW";
+    public static final String V_TOPIC_VIEW = "TOPIC_VIEW";
+    public static final String V_BRIEFING_VIEW = "BRIEFING_VIEW";
 }

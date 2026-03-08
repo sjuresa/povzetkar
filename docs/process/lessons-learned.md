@@ -58,6 +58,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Using field injection (e.g., `@Inject UserContextService userContextService;`) allows objects to be created in an invalid state, prevents fields from being `final`, and makes unit testing difficult because dependencies aren't explicitly required during instantiation.
 - **The Standard:** Always use **constructor injection** for dependencies. This ensures immutable (`final`) references, explicitly declares required dependencies, and makes the code more robust and easier to test without reflection. If a proxy-able bean requires a no-args constructor for CDI, provide a `protected` no-args constructor that sets final fields to `null`.
 
+### 2.4 Centralized Security Constants
+- **The Trap:** Using raw string literals (e.g., `@RolesAllowed("ADMIN")`) or manual `Permission.ROLE.name()` calls inconsistently across the app. Raw strings are prone to typos, and while `Enum.name()` is safe for logic, it CANNOT be used in annotations like `@RolesAllowed` because they require compile-time constants.
+- **The Standard:** In your `Permission` enum, provide `public static final String` constants prefixed with `V_` (e.g., `V_ADMIN = "ADMIN"`) specifically for use in annotations. For all programmatic logic (e.g., `identity.hasRole(...)`), always use the idiomatic `Permission.ADMIN.name()`. This ensures absolute sync between the enum definition, the security metadata, and the execution logic.
+
 ---
 
 ## 3. Asynchronous Execution & System Commands
@@ -118,8 +122,8 @@ When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you shoul
 
 ### 4.3 Parallelizing Independent Queries (BFF Aggregation)
 When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch multiple disjoint datasets:
-- **The Trap:** Executing database queries sequentially within a method leads to additive latency (Total Time = Query A + Query B + Query C).
-- **The Standard:** Leverage `Uni.combine().all().unis(u1, u2, u3).asTuple()` to execute independent, worker-offloaded queries in parallel. This reduces the total response time to the duration of the single slowest query.
+- **The Trap:** Executing database queries sequentially leads to additive latency, and aggregating results via positional access (e.g., `tuple.getItem1()`) is fragile and lacks type safety.
+- **The Standard:** Use `Uni.combine().all().unis(u1, u2, u3).with(this::assemble)` to execute independent, worker-offloaded queries in parallel. The `with()` method provides a fully typed signature for the aggregation function (Function3, etc.), and using a **method reference** (e.g., `this::assemble`) is the most idiomatic way to handle the result aggregation while and avoiding positional indexing or manual casting.
 
 ### 4.4 Transaction Type Safety in Pipelines
 - **The Trap:** Assuming `QuarkusTransaction.requiringNew().call(Supplier<T>)` returns a reactive `Uni<T>`. In the standard Hibernate ORM (blocking) extension, it returns the raw type `T`.

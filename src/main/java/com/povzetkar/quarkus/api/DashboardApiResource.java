@@ -12,7 +12,6 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.smallrye.mutiny.tuples.Tuple3;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -44,7 +43,7 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed({Permission.TOPIC_VIEW_NAME, Permission.BRIEFING_VIEW_NAME})
+    @RolesAllowed({Permission.V_TOPIC_VIEW, Permission.V_BRIEFING_VIEW})
     @Operation(summary = "Get Dashboard Data", description = "Aggregated convenience endpoint for the frontend dashboard to prevent N+1 requests.")
     public Uni<DashboardDTO> getDashboard() {
         return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
@@ -54,17 +53,16 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     private Uni<DashboardDTO> fetchDashboardData(User user) {
-        boolean hasTopicView = securityIdentity.hasRole(Permission.TOPIC_VIEW_NAME);
-        boolean hasBriefingView = securityIdentity.hasRole(Permission.BRIEFING_VIEW_NAME);
+        boolean hasTopicView = securityIdentity.hasRole(Permission.TOPIC_VIEW.name());
+        boolean hasBriefingView = securityIdentity.hasRole(Permission.BRIEFING_VIEW.name());
 
         Uni<Long> activeTopicsUni = getActiveTopicsUni(user, hasTopicView);
         Uni<Long> briefingsLast7DaysUni = getBriefingStatsUni(user, hasBriefingView);
         Uni<List<BriefingSummaryDTO>> recentBriefingsUni = getRecentBriefingsUni(user, hasBriefingView);
 
         return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
-                .asTuple()
-                .emitOn(Infrastructure.getDefaultExecutor())
-                .map(this::assembleDashboard);
+                .with(this::assembleDashboard)
+                .emitOn(Infrastructure.getDefaultExecutor());
     }
 
     private Uni<Long> getActiveTopicsUni(User user, boolean hasPermission) {
@@ -101,11 +99,7 @@ public class DashboardApiResource extends BaseApiResource {
         );
     }
 
-    private DashboardDTO assembleDashboard(Tuple3<Long, Long, List<BriefingSummaryDTO>> tuple) {
-        long activeTopics = tuple.getItem1();
-        long briefingsLast7Days = tuple.getItem2();
-        List<BriefingSummaryDTO> recentBriefings = tuple.getItem3();
-
+    private DashboardDTO assembleDashboard(Long activeTopics, Long briefingsLast7Days, List<BriefingSummaryDTO> recentBriefings) {
         DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, briefingsLast7Days);
         return new DashboardDTO(recentBriefings, stats);
     }
