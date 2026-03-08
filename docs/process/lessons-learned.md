@@ -29,7 +29,7 @@ When building paginated APIs that return entities with collections (e.g., `User`
 
 ### 1.2 Graceful Failure, String Truncation & Error Sanitization
 When background jobs or data-sync commands fail, the exception stack trace can be massive and contain sensitive structure details.
-- **The Trap:** Writing an un-truncated exception message to a database column triggers a `DataTruncation` transaction rollback. Exposing the raw exception string to the API layer can also lead to the leakage of internal stack traces or credentials if they are part of the exception context.
+*   Returning a `Uni` from a JAX-RS method makes the *response* asynchronous, but the method body still begins execution on the caller thread (event loop). If the initial logic (e.g., getting the authenticated user) is blocking, you must either use the `@Blocking` annotation or explicitly offload the blocking call to a worker pool to prevent `BlockingOperationNotAllowedException`.
 - **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception internally using `logger.errorf` to preserve debugging context, but securely sanitize the string (e.g., generic user-facing message) before persisting it to an entity exposed via API.
 
 ### 1.3 JPQL Constructor Projections
