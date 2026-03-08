@@ -32,7 +32,11 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Writing an un-truncated exception message to a database column triggers a `DataTruncation` transaction rollback. Exposing the raw exception string to the API layer can also lead to the leakage of internal stack traces or credentials if they are part of the exception context.
 - **The Standard:** Always assert string lengths against an explicitly defined entity constant (e.g., `BackgroundJob.ERROR_MESSAGE_MAX_LENGTH`). Log the full unfiltered exception internally using `logger.errorf` to preserve debugging context, but securely sanitize the string (e.g., generic user-facing message) before persisting it to an entity exposed via API.
 
-### 1.3 Stable Identity (Equals & HashCode)
+### 1.3 JPQL Constructor Projections
+- **The Trap:** Fetching full Hibernate entities and their associations (via `JOIN FETCH`) only to map them to DTOs in the application layer. This causes "over-fetching" (retrieving data from the DB that is never used) and high memory allocation.
+- **The Standard:** Use JPQL constructor expressions (`SELECT NEW com.dto.MyDTO(p.id, p.name) FROM ...`) for read-only aggregation or summary endpoints. This moves the mapping logic to the database level, significantly reduces I/O traffic, and lowers the memory footprint of the application.
+
+### 1.4 Stable Identity (Equals & HashCode)
 - **The Trap:** Relying on default `Object.equals()` or standard JPA identity can cause entities to be treated as different objects when reloaded across transaction boundaries or passed into asynchronous collection-based task queues.
 - **The Standard:** Always implement stable `equals()` and `hashCode()` using **Business Keys** (e.g., `slug`, `username`, `videoId`). This guarantees consistent object identity across different Hibernate sessions and prevents the creation of logical duplicates in sets or maps during background processing.
 

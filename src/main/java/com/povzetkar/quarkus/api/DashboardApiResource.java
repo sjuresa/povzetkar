@@ -3,7 +3,6 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.DashboardDTO;
 import com.povzetkar.quarkus.api.dto.DashboardStatsDTO;
-import com.povzetkar.quarkus.api.mapper.BriefingMapper;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -33,13 +32,11 @@ public class DashboardApiResource extends BaseApiResource {
     private static final int BRIEFING_STATS_DAYS = 7;
     private static final int RECENT_BRIEFINGS_LIMIT = 5;
 
-    private final BriefingMapper briefingMapper;
     private final SecurityIdentity securityIdentity;
 
     @Inject
-    public DashboardApiResource(UserContextService userContextService, BriefingMapper briefingMapper, SecurityIdentity securityIdentity) {
+    public DashboardApiResource(UserContextService userContextService, SecurityIdentity securityIdentity) {
         super(userContextService);
-        this.briefingMapper = briefingMapper;
         this.securityIdentity = securityIdentity;
     }
 
@@ -71,15 +68,15 @@ public class DashboardApiResource extends BaseApiResource {
 
                     Uni<List<BriefingSummaryDTO>> recentBriefingsUni = executeInTransactionIf(
                             hasBriefingView,
-                            () -> Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
-                                    .page(0, RECENT_BRIEFINGS_LIMIT)
-                                    .list(),
-                            List.<Briefing>of()
-                    ).emitOn(Infrastructure.getDefaultExecutor())
-                    .map(recentEntities ->
-                            recentEntities.stream()
-                                    .map(briefingMapper::toSummaryDTO)
-                                    .toList()
+                            () -> Briefing.getEntityManager().createQuery(
+                                            "select new com.povzetkar.quarkus.api.dto.BriefingSummaryDTO(b.id, b.topic.id, b.topic.name, b.title, b.briefingDate) " +
+                                            "from Briefing b where b.topic.user = ?1 order by b.briefingDate desc",
+                                            BriefingSummaryDTO.class)
+                                    .setParameter(1, user)
+                                    .setFirstResult(0)
+                                    .setMaxResults(RECENT_BRIEFINGS_LIMIT)
+                                    .getResultList(),
+                            List.of()
                     );
 
                     return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
