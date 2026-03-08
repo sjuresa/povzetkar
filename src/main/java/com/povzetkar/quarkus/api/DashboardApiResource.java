@@ -12,6 +12,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -30,10 +31,10 @@ import java.util.List;
 public class DashboardApiResource extends BaseApiResource {
 
     private final BriefingMapper briefingMapper;
-    private final io.quarkus.security.identity.SecurityIdentity securityIdentity;
+    private final SecurityIdentity securityIdentity;
 
     @Inject
-    public DashboardApiResource(UserContextService userContextService, BriefingMapper briefingMapper, io.quarkus.security.identity.SecurityIdentity securityIdentity) {
+    public DashboardApiResource(UserContextService userContextService, BriefingMapper briefingMapper, SecurityIdentity securityIdentity) {
         super(userContextService);
         this.briefingMapper = briefingMapper;
         this.securityIdentity = securityIdentity;
