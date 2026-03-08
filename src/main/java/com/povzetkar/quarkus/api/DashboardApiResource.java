@@ -30,11 +30,13 @@ import java.util.List;
 public class DashboardApiResource extends BaseApiResource {
 
     private final BriefingMapper briefingMapper;
+    private final io.quarkus.security.identity.SecurityIdentity securityIdentity;
 
     @Inject
-    public DashboardApiResource(UserContextService userContextService, BriefingMapper briefingMapper) {
+    public DashboardApiResource(UserContextService userContextService, BriefingMapper briefingMapper, io.quarkus.security.identity.SecurityIdentity securityIdentity) {
         super(userContextService);
         this.briefingMapper = briefingMapper;
+        this.securityIdentity = securityIdentity;
     }
 
     @GET
@@ -43,18 +45,26 @@ public class DashboardApiResource extends BaseApiResource {
     public DashboardDTO getDashboard() {
         User user = getAuthenticatedUser();
 
-        long activeTopics = Topic.count("user = ?1 and enabled = true", user);
+        long activeTopics = 0;
+        if (securityIdentity.hasRole("TOPIC_VIEW")) {
+            activeTopics = Topic.count("user = ?1 and enabled = true", user);
+        }
         
-        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
-        long weeklyBriefings = Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
+        long weeklyBriefings = 0;
+        List<BriefingSummaryDTO> recentBriefings = List.of();
+        
+        if (securityIdentity.hasRole("BRIEFING_VIEW")) {
+            LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(7);
+            weeklyBriefings = Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
 
-        List<Briefing> recentEntities = Briefing.<Briefing>find("topic.user = ?1 order by briefingDate desc", user)
-                .page(0, 5)
-                .list();
+            List<Briefing> recentEntities = Briefing.<Briefing>find("topic.user = ?1 order by briefingDate desc", user)
+                    .page(0, 5)
+                    .list();
 
-        List<BriefingSummaryDTO> recentBriefings = recentEntities.stream()
-                .map(briefingMapper::toSummaryDTO)
-                .toList();
+            recentBriefings = recentEntities.stream()
+                    .map(briefingMapper::toSummaryDTO)
+                    .toList();
+        }
 
         DashboardStatsDTO stats = new DashboardStatsDTO(activeTopics, weeklyBriefings);
         return new DashboardDTO(recentBriefings, stats);

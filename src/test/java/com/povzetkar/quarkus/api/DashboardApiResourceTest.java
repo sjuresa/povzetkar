@@ -53,11 +53,13 @@ class DashboardApiResourceTest {
         inactiveTopic.enabled = false;
         inactiveTopic.persistAndFlush();
 
+        final var now = LocalDate.now(java.time.ZoneOffset.UTC);
+
         briefingToday = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic1)
                 .withTitle("Briefing Today")
                 .withMetaSummary("Meta Today")
-                .withBriefingDate(LocalDate.now())
+                .withBriefingDate(now)
                 .build();
         briefingToday.persistAndFlush();
 
@@ -65,7 +67,7 @@ class DashboardApiResourceTest {
                 .withTopic(activeTopic1)
                 .withTitle("Briefing Yesterday")
                 .withMetaSummary("Meta Yesterday")
-                .withBriefingDate(LocalDate.now().minusDays(1))
+                .withBriefingDate(now.minusDays(1))
                 .build();
         briefingYesterday.persistAndFlush();
 
@@ -73,7 +75,7 @@ class DashboardApiResourceTest {
                 .withTopic(activeTopic2)
                 .withTitle("Topic 2 Briefing")
                 .withMetaSummary("Meta Topic 2")
-                .withBriefingDate(LocalDate.now().minusDays(3))
+                .withBriefingDate(now.minusDays(3))
                 .build();
         topic2Briefing.persistAndFlush();
 
@@ -81,7 +83,7 @@ class DashboardApiResourceTest {
                 .withTopic(activeTopic1)
                 .withTitle("Briefing Old")
                 .withMetaSummary("Meta Old")
-                .withBriefingDate(LocalDate.now().minusDays(10))
+                .withBriefingDate(now.minusDays(10))
                 .build();
         briefingOld.persistAndFlush();
     }
@@ -103,11 +105,37 @@ class DashboardApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("stats.activeTopics", equalTo(2)) // 2 enabled topics
-                .body("stats.briefingsGeneratedThisWeek", equalTo(3)) // today, yesterday, 3 days ago
+                .body("stats.briefingsGeneratedLast7Days", equalTo(3)) // today, yesterday, 3 days ago
                 .body("recentBriefings", hasSize(4)) // top 5 including old
                 .body("recentBriefings[0].title", equalTo("Briefing Today"))
                 .body("recentBriefings[0].topicName", equalTo("Active 1"))
                 .body("recentBriefings[3].title", equalTo("Briefing Old")); // ordered correctly
+    }
+
+    @Test
+    @TestSecurity(user = "dashuser", roles = { "user", "TOPIC_VIEW" })
+    void testGetDashboardTopicViewOnly() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().get("/api/v1/dashboard")
+                .then()
+                .statusCode(200)
+                .body("stats.activeTopics", equalTo(2)) // 2 enabled topics
+                .body("stats.briefingsGeneratedLast7Days", equalTo(0)) // No role
+                .body("recentBriefings", hasSize(0)); // No role
+    }
+
+    @Test
+    @TestSecurity(user = "dashuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetDashboardBriefingViewOnly() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().get("/api/v1/dashboard")
+                .then()
+                .statusCode(200)
+                .body("stats.activeTopics", equalTo(0)) // No role
+                .body("stats.briefingsGeneratedLast7Days", equalTo(3)) // today, yesterday, 3 days ago
+                .body("recentBriefings", hasSize(4)); // top 5 including old
     }
 
     @Test
