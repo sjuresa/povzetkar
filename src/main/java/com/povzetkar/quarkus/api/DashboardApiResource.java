@@ -27,6 +27,8 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Dashboard", description = "Endpoints for frontend dashboard aggregation")
 public class DashboardApiResource extends BaseApiResource {
+    private static final int BRIEFING_STATS_DAYS = 7;
+    private static final int RECENT_BRIEFINGS_LIMIT = 5;
 
     private final BriefingMapper briefingMapper;
     private final SecurityIdentity securityIdentity;
@@ -53,11 +55,11 @@ public class DashboardApiResource extends BaseApiResource {
         List<BriefingSummaryDTO> recentBriefings = List.of();
         
         if (securityIdentity.hasRole("BRIEFING_VIEW")) {
-            LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(6);
+            LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
             briefingsGeneratedLast7Days = Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
 
             List<Briefing> recentEntities = Briefing.<Briefing>find("from Briefing b join fetch b.topic where b.topic.user = ?1 order by b.briefingDate desc", user)
-                    .page(0, 5)
+                    .page(0, RECENT_BRIEFINGS_LIMIT)
                     .list();
 
             recentBriefings = recentEntities.stream()

@@ -22,43 +22,32 @@ import static io.restassured.RestAssured.given;
 @QuarkusTest
 class DashboardApiResourceTest {
 
-    User testUser;
-    Topic activeTopic1;
-    Topic activeTopic2;
-    Topic inactiveTopic;
-    Briefing briefingToday;
-    Briefing briefingYesterday;
-    Briefing briefingOld;
-    Briefing topic2Briefing;
-    Briefing extra1;
-    Briefing extra2;
-    Briefing extra3;
 
     @BeforeEach
     @Transactional
     void setup() {
-        testUser = UserBuilder.aUser()
+        User testUser = UserBuilder.aUser()
                 .withEmail("dash@example.com")
                 .withName("Dashboard User")
                 .withUsername("dashuser")
                 .build();
         testUser.persistAndFlush();
 
-        activeTopic1 = TopicBuilder.aTopic().withName("Active 1").withUser(testUser).build();
+        Topic activeTopic1 = TopicBuilder.aTopic().withName("Active 1").withUser(testUser).build();
         activeTopic1.enabled = true;
         activeTopic1.persistAndFlush();
 
-        activeTopic2 = TopicBuilder.aTopic().withName("Active 2").withUser(testUser).build();
+        Topic activeTopic2 = TopicBuilder.aTopic().withName("Active 2").withUser(testUser).build();
         activeTopic2.enabled = true;
         activeTopic2.persistAndFlush();
 
-        inactiveTopic = TopicBuilder.aTopic().withName("Inactive 1").withUser(testUser).build();
+        Topic inactiveTopic = TopicBuilder.aTopic().withName("Inactive 1").withUser(testUser).build();
         inactiveTopic.enabled = false;
         inactiveTopic.persistAndFlush();
 
         final var now = LocalDate.now(java.time.ZoneOffset.UTC);
 
-        briefingToday = BriefingBuilder.aBriefing()
+        Briefing briefingToday = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic1)
                 .withTitle("Briefing Today")
                 .withMetaSummary("Meta Today")
@@ -66,7 +55,7 @@ class DashboardApiResourceTest {
                 .build();
         briefingToday.persistAndFlush();
 
-        briefingYesterday = BriefingBuilder.aBriefing()
+        Briefing briefingYesterday = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic1)
                 .withTitle("Briefing Yesterday")
                 .withMetaSummary("Meta Yesterday")
@@ -74,7 +63,7 @@ class DashboardApiResourceTest {
                 .build();
         briefingYesterday.persistAndFlush();
 
-        topic2Briefing = BriefingBuilder.aBriefing()
+        Briefing topic2Briefing = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic2)
                 .withTitle("Topic 2 Briefing")
                 .withMetaSummary("Meta Topic 2")
@@ -82,7 +71,7 @@ class DashboardApiResourceTest {
                 .build();
         topic2Briefing.persistAndFlush();
 
-        briefingOld = BriefingBuilder.aBriefing()
+        Briefing briefingOld = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic1)
                 .withTitle("Briefing Old")
                 .withMetaSummary("Meta Old")
@@ -90,7 +79,7 @@ class DashboardApiResourceTest {
                 .build();
         briefingOld.persistAndFlush();
 
-        extra1 = BriefingBuilder.aBriefing()
+        Briefing extra1 = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic2)
                 .withTitle("Extra 1")
                 .withMetaSummary("Extra 1 summary")
@@ -98,7 +87,7 @@ class DashboardApiResourceTest {
                 .build();
         extra1.persistAndFlush();
 
-        extra2 = BriefingBuilder.aBriefing()
+        Briefing extra2 = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic2)
                 .withTitle("Extra 2")
                 .withMetaSummary("Extra 2 summary")
@@ -106,7 +95,7 @@ class DashboardApiResourceTest {
                 .build();
         extra2.persistAndFlush();
 
-        extra3 = BriefingBuilder.aBriefing()
+        Briefing extra3 = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic2)
                 .withTitle("Extra 3")
                 .withMetaSummary("Extra 3 summary")
