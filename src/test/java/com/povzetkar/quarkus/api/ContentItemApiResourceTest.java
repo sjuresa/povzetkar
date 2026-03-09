@@ -87,8 +87,8 @@ class ContentItemApiResourceTest {
                 .when().get("/api/v1/content-items")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(3))
-                .body("items", hasSize(3));
+                .body("meta.pagination.totalElements", equalTo(3))
+                .body("data", hasSize(3));
     }
 
     @Test

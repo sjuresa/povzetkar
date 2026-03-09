@@ -1,6 +1,6 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.UserDTO;
 import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
 import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
@@ -12,10 +12,25 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.HashSet;
@@ -45,18 +60,27 @@ public class UserApiResource {
     @RolesAllowed("user")
     @Transactional
     @Operation(summary = "Get current user profile", description = "Returns the profile and permissions for the authenticated user.")
-    public UserDTO getCurrentUser() {
+    @APIResponse(
+            responseCode = "200",
+            description = "User profile retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+    )
+    public ApiEnvelopeDTO<UserDTO> getCurrentUser() {
         User user = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-        
-        return userMapper.toDTO(user);
+        return ApiEnvelopeDTO.success(userMapper.toDTO(user));
     }
 
     @GET
     @RolesAllowed("USER_MGMT_VIEW")
     @Transactional
     @Operation(summary = "List all users", description = "Returns a paginated list of users for administration.")
-    public PaginatedResponse<UserDTO> getUsers(
+    @APIResponse(
+            responseCode = "200",
+            description = "List of users retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserListEnvelope.class))
+    )
+    public ApiEnvelopeDTO<List<UserDTO>> getUsers(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
@@ -65,7 +89,7 @@ public class UserApiResource {
         List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
 
         if (usersForPage.isEmpty()) {
-            return new PaginatedResponse<>(List.of(), totalCount);
+            return ApiEnvelopeDTO.paginated(List.of(), totalCount, pageIndex, pageSize);
         }
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
@@ -76,7 +100,7 @@ public class UserApiResource {
                 .map(userMapper::toDTO)
                 .toList();
 
-        return new PaginatedResponse<>(items, totalCount);
+        return ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, pageSize);
     }
 
     @PATCH
@@ -84,7 +108,12 @@ public class UserApiResource {
     @RolesAllowed("USER_MGMT_UPDATE")
     @Transactional
     @Operation(summary = "Update user status", description = "Activate or deactivate a user.")
-    public UserDTO updateUserStatus(@PathParam("id") Long id, UserUpdateDTO dto) {
+    @APIResponse(
+            responseCode = "200",
+            description = "User status updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+    )
+    public ApiEnvelopeDTO<UserDTO> updateUserStatus(@PathParam("id") Long id, UserUpdateDTO dto) {
         User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -127,7 +156,7 @@ public class UserApiResource {
         user.active = dto.active();
         user.persist();
 
-        return userMapper.toDTO(user);
+        return ApiEnvelopeDTO.success(userMapper.toDTO(user));
     }
 
     @PUT
@@ -135,7 +164,12 @@ public class UserApiResource {
     @RolesAllowed("USER_MGMT_UPDATE")
     @Transactional
     @Operation(summary = "Update user roles", description = "Assign or remove roles for a user.")
-    public UserDTO updateUserRoles(@PathParam("id") Long id, UserRoleUpdateDTO dto) {
+    @APIResponse(
+            responseCode = "200",
+            description = "User roles updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+    )
+    public ApiEnvelopeDTO<UserDTO> updateUserRoles(@PathParam("id") Long id, UserRoleUpdateDTO dto) {
         User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -186,7 +220,7 @@ public class UserApiResource {
         user.roles.addAll(new HashSet<>(requestedRoles));
         user.persist();
 
-        return userMapper.toDTO(user);
+        return ApiEnvelopeDTO.success(userMapper.toDTO(user));
     }
 
 
@@ -200,4 +234,8 @@ public class UserApiResource {
         
         return adminCount <= 1;
     }
+
+    // Helper classes for OpenAPI documentation
+    private static class UserEnvelope extends ApiEnvelopeDTO<UserDTO> {}
+    private static class UserListEnvelope extends ApiEnvelopeDTO<List<UserDTO>> {}
 }

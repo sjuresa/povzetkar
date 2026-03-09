@@ -1,14 +1,19 @@
 package com.povzetkar.quarkus.api.dto;
 
 import com.povzetkar.quarkus.model.ProcessingStatus;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import java.time.Instant;
 
+@Schema(name = "ContentItem", description = "Represents an individual content piece (e.g., YouTube video)")
 public record ContentItemDTO(
         Long id,
         String title,
+        @Schema(description = "Link to the original content")
         String sourceUrl,
         Instant publishedAt,
+        @Schema(description = "current lifecycle state of the item")
         ProcessingStatus processingStatus,
+        @Schema(description = "Error code if status is FAILED")
         String errorCode,
         Long durationSeconds,
         String thumbnailUrl

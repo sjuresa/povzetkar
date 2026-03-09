@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 class BriefingApiResourceTest {
@@ -93,9 +93,9 @@ class BriefingApiResourceTest {
                 .when().get("/api/v1/briefings")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(1))
-                .body("items[0].title", equalTo("Weekly AI Update"))
-                .body("items[0].topicName", equalTo("AI News"));
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("Weekly AI Update"))
+                .body("data[0].topicName", equalTo("AI News"));
     }
 
     @Test
@@ -105,12 +105,12 @@ class BriefingApiResourceTest {
                 .when().get("/api/v1/briefings/" + testBriefing.id)
                 .then()
                 .statusCode(200)
-                .body("title", equalTo("Weekly AI Update"))
-                .body("executiveSummary", containsString("Summary of everything"))
-                .body("briefingText", containsString("Full markdown text here."))
-                .body("sourceContentItems", hasSize(1))
-                .body("sourceContentItems[0].title", equalTo("AI Breakthrough"))
-                .body("sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
+                .body("data.title", equalTo("Weekly AI Update"))
+                .body("data.executiveSummary", containsString("Summary of everything"))
+                .body("data.briefingText", containsString("Full markdown text here."))
+                .body("data.sourceContentItems", hasSize(1))
+                .body("data.sourceContentItems[0].title", equalTo("AI Breakthrough"))
+                .body("data.sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
     }
 
     @Test

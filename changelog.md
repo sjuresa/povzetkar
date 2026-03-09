@@ -4,14 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
 
 ### Added
+- **API:** Configured `quarkus-smallrye-openapi` to automatically generate API specifications and expose Swagger UI for local development.
+- **API:** Added comprehensive OpenAPI annotations to all JAX-RS resource classes, including specific response envelope schemas (`ApiEnvelopeDTO`) and status codes.
 - **API:** Implemented Backend-For-Frontend (BFF) Dashboard endpoint (`GET /api/v1/dashboard`) aggregating user-specific active topics and weekly briefing generation statistics, securely preventing frontend N+1 queries.
 - **API:** Promoted `ContentItem` to a first-class resource with standard `GET` and explicit action command endpoints.
 - **API:** Added user-facing job endpoints for monitoring async operations (`GET /api/v1/jobs/{id}`).
 - **API:** Implemented Admin Command Center APIs (`/api/v1/admin/jobs`) for asynchronous background job management, including triggering, paginated history, and job detail retrieval.
+- **Security:** Explicitly disabled Swagger UI in the production profile for enhanced security.
 - **Security:** Added critical lockout protection for administrator roles, preventing self-removal of the admin role and accidental removal of the last system administrator.
 - **Security:** Enhanced BackgroundJob error handling to sanitize outgoing messages, hiding raw stack traces from end users.
 - **API:** Implemented Core REST APIs for Topics (`/api/v1/topics`) and Content Sources (`/api/v1/sources`) adhering to the Backend-For-Frontend (BFF) pattern using DTOs and MapStruct `@Mapper` interfaces. Includes pagination support for collection endpoints.

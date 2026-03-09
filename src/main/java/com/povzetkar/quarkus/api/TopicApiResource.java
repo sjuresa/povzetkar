@@ -1,7 +1,7 @@
 package com.povzetkar.quarkus.api;
 
-import jakarta.ws.rs.*;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
@@ -19,9 +19,24 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
@@ -55,7 +70,12 @@ public class TopicApiResource extends BaseApiResource {
     @GET
     @RolesAllowed("TOPIC_VIEW")
     @Operation(summary = "Get all topics", description = "Retrieves a paginated list of topics for the current user.")
-    public PaginatedResponse<TopicDTO> getTopics(
+    @APIResponse(
+            responseCode = "200",
+            description = "List of topics retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicListEnvelope.class))
+    )
+    public ApiEnvelopeDTO<List<TopicDTO>> getTopics(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
@@ -67,23 +87,33 @@ public class TopicApiResource extends BaseApiResource {
         List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
 
-        return new PaginatedResponse<>(dtoList, count);
+        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
     }
 
     @GET
     @Path("/{id}")
     @RolesAllowed("TOPIC_VIEW")
     @Operation(summary = "Get topic by ID", description = "Retrieves a specific topic by its ID.")
-    public TopicDTO getTopic(@PathParam("id") Long id) {
+    @APIResponse(
+            responseCode = "200",
+            description = "Topic retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+    )
+    @APIResponse(responseCode = "404", description = "Topic not found")
+    public ApiEnvelopeDTO<TopicDTO> getTopic(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
-        return topicMapper.toDTO(topic);
+        return ApiEnvelopeDTO.success(topicMapper.toDTO(topic));
     }
 
     @POST
     @Transactional
     @RolesAllowed("TOPIC_CREATE")
-    @Operation(summary = "Create topic", description = "Creates a new topic for the current user.")
+    @APIResponse(
+            responseCode = "201",
+            description = "Topic created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+    )
     public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO) {
         User user = getAuthenticatedUser();
 
@@ -93,7 +123,9 @@ public class TopicApiResource extends BaseApiResource {
         topic.user = user;
         topic.persist();
 
-        return Response.created(URI.create("/api/v1/topics/" + topic.id)).entity(topicMapper.toDTO(topic)).build();
+        return Response.created(URI.create("/api/v1/topics/" + topic.id))
+                .entity(ApiEnvelopeDTO.success(topicMapper.toDTO(topic)))
+                .build();
     }
 
 
@@ -101,8 +133,12 @@ public class TopicApiResource extends BaseApiResource {
     @Path("/{id}")
     @Transactional
     @RolesAllowed("TOPIC_UPDATE")
-    @Operation(summary = "Partially update topic", description = "Partially updates an existing topic.")
-    public TopicDTO patchTopic(@PathParam("id") Long id, @Valid @NotNull TopicPatchDTO patchDTO) {
+    @APIResponse(
+            responseCode = "200",
+            description = "Topic updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+    )
+    public ApiEnvelopeDTO<TopicDTO> patchTopic(@PathParam("id") Long id, @Valid @NotNull TopicPatchDTO patchDTO) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 
@@ -111,7 +147,7 @@ public class TopicApiResource extends BaseApiResource {
         }
 
         topicMapper.patchEntity(patchDTO, topic);
-        return topicMapper.toDTO(topic);
+        return ApiEnvelopeDTO.success(topicMapper.toDTO(topic));
     }
 
     @DELETE
@@ -130,6 +166,13 @@ public class TopicApiResource extends BaseApiResource {
     @Path("/{id}/commands/generate-briefing")
     @RolesAllowed("TOPIC_TRIGGER_RUN")
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
+    @APIResponse(
+            responseCode = "202",
+            description = "Briefing generation triggered",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+    )
+    @APIResponse(responseCode = "404", description = "Topic not found")
+    @APIResponse(responseCode = "409", description = "Conflict or already running")
     public Response triggerTopicRun(@PathParam("id") Long id, @jakarta.ws.rs.core.Context jakarta.ws.rs.core.UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
@@ -143,7 +186,7 @@ public class TopicApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(backgroundJobMapper.toDTO(job))
+                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
                 .build();
     }
 
@@ -161,5 +204,8 @@ public class TopicApiResource extends BaseApiResource {
                         () -> new NotFoundException(TOPIC_NOT_FOUND + id + NOT_FOUND_SUFFIX));
     }
 
- 
+    // Helper classes for OpenAPI documentation
+    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
+    private static class TopicEnvelope extends ApiEnvelopeDTO<TopicDTO> {}
+    private static class TopicListEnvelope extends ApiEnvelopeDTO<List<TopicDTO>> {}
 }

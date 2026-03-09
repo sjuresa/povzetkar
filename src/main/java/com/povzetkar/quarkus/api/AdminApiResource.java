@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
@@ -10,16 +11,27 @@ import com.povzetkar.quarkus.service.BackgroundJobService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 import static com.povzetkar.quarkus.api.ApiConstants.MAX_PAGE_SIZE;
@@ -47,7 +59,11 @@ public class AdminApiResource {
     @Path("/" + JOBS_PATH + "/trigger")
     @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
     @Operation(summary = "Trigger a background job", description = "Asynchronously starts a background job of the specified type.")
-    @APIResponse(responseCode = "202", description = "Job triggered successfully")
+    @APIResponse(
+            responseCode = "202",
+            description = "Job triggered successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobEnvelope.class))
+    )
     public Response triggerJob(JobTriggerRequest request, @Context UriInfo uriInfo) {
         BackgroundJob job = backgroundJobService.triggerJob(request.jobType());
         
@@ -58,7 +74,7 @@ public class AdminApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(backgroundJobMapper.toDTO(job))
+                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
                 .build();
     }
 
@@ -66,9 +82,16 @@ public class AdminApiResource {
     @Path("/" + JOBS_PATH + "/{id}")
     @RolesAllowed("ADMIN_DASHBOARD_VIEW")
     @Operation(summary = "Get job details")
-    public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
+    @APIResponse(
+            responseCode = "200",
+            description = "Job details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobEnvelope.class))
+    )
+    @APIResponse(responseCode = "404", description = "Job not found")
+    public ApiEnvelopeDTO<BackgroundJobDTO> getJobById(@PathParam("id") UUID id) {
         return backgroundJobService.getJobById(id)
                 .map(backgroundJobMapper::toDTO)
+                .map(ApiEnvelopeDTO::success)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
     }
 
@@ -76,7 +99,12 @@ public class AdminApiResource {
     @Path("/" + JOBS_PATH)
     @RolesAllowed("ADMIN_DASHBOARD_VIEW")
     @Operation(summary = "List background jobs", description = "Returns a paginated list of background job history.")
-    public PaginatedResponse<BackgroundJobDTO> getJobs(
+    @APIResponse(
+            responseCode = "200",
+            description = "List of jobs retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobListEnvelope.class))
+    )
+    public ApiEnvelopeDTO<List<BackgroundJobDTO>> getJobs(
             @QueryParam("status") JobStatus status,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -84,6 +112,11 @@ public class AdminApiResource {
         // Apply pageSize limits as per CR5 in previous task
         pageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
         
-        return backgroundJobService.getJobList(status, pageIndex, pageSize);
+        PaginatedResponse<BackgroundJobDTO> response = backgroundJobService.getJobList(status, pageIndex, pageSize);
+        return ApiEnvelopeDTO.paginated(response.items(), response.totalCount(), pageIndex, pageSize);
     }
+
+    // Helper classes for OpenAPI documentation
+    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
+    private static class JobListEnvelope extends ApiEnvelopeDTO<List<BackgroundJobDTO>> {}
 }
