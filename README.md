@@ -77,3 +77,12 @@ To get a local copy up and running, follow these simple steps.
 ## Documentation
 
 For more detailed information, please refer to the documents in the [`/docs`](docs) folder.
+
+### API Documentation (Swagger UI)
+
+When running in development mode, you can access the interactive API documentation at:
+*   **Swagger UI:** [http://localhost:8080/q/swagger-ui](http://localhost:8080/q/swagger-ui)
+*   **OpenAPI Schema:** [http://localhost:8080/q/openapi](http://localhost:8080/q/openapi)
+
+> [!IMPORTANT]
+> Swagger UI is strictly **disabled** in the production profile for security.

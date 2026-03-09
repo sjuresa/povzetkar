@@ -100,6 +100,14 @@ With the database running, you can start the Quarkus application in development 
 `http://localhost:8080/q/health/live`
 `http://localhost:8080/q/health`
 
+### 6.1 API Documentation (Swagger UI)
+
+In development mode, the application generates an OpenAPI specification and provides a Swagger UI:
+*   **Swagger UI:** `http://localhost:8080/q/swagger-ui`
+*   **OpenAPI Specification:** `http://localhost:8080/q/openapi`
+
+**Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
+
 ## 7. Running Tests
 To run the test suite:
 ```bash

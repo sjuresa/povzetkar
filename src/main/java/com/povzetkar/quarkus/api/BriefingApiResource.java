@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
@@ -13,9 +14,20 @@ import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
@@ -40,6 +52,11 @@ public class BriefingApiResource {
     @GET
     @RolesAllowed("BRIEFING_VIEW")
     @Operation(summary = "Get all briefings", description = "Retrieves a paginated list of briefings for the current user.")
+    @APIResponse(
+            responseCode = "200",
+            description = "List of briefings retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingListEnvelope.class))
+    )
     public PaginatedResponse<BriefingSummaryDTO> getBriefings(
             @QueryParam("topicId") Long topicId,
             @QueryParam("startDate") LocalDate startDate,
@@ -78,6 +95,12 @@ public class BriefingApiResource {
     @Path("/{id}")
     @RolesAllowed("BRIEFING_VIEW")
     @Operation(summary = "Get briefing by ID", description = "Retrieves a specific briefing by its ID.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Briefing details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingEnvelope.class))
+    )
+    @APIResponse(responseCode = "404", description = "Briefing not found")
     public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Briefing briefing = Briefing.<Briefing>find(
@@ -93,4 +116,8 @@ public class BriefingApiResource {
         return userContextService.getCurrentUser()
                 .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
     }
+
+    // Helper classes for OpenAPI documentation
+    private static class BriefingEnvelope extends ApiEnvelopeDTO<BriefingDetailDTO> {}
+    private static class BriefingListEnvelope extends ApiEnvelopeDTO<List<BriefingSummaryDTO>> {}
 }

@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.UserDTO;
 import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
@@ -12,10 +13,25 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.HashSet;
@@ -45,6 +61,11 @@ public class UserApiResource {
     @RolesAllowed("user")
     @Transactional
     @Operation(summary = "Get current user profile", description = "Returns the profile and permissions for the authenticated user.")
+    @APIResponse(
+            responseCode = "200",
+            description = "User profile retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+    )
     public UserDTO getCurrentUser() {
         User user = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
@@ -56,6 +77,11 @@ public class UserApiResource {
     @RolesAllowed("USER_MGMT_VIEW")
     @Transactional
     @Operation(summary = "List all users", description = "Returns a paginated list of users for administration.")
+    @APIResponse(
+            responseCode = "200",
+            description = "List of users retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserListEnvelope.class))
+    )
     public PaginatedResponse<UserDTO> getUsers(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -200,4 +226,8 @@ public class UserApiResource {
         
         return adminCount <= 1;
     }
+
+    // Helper classes for OpenAPI documentation
+    private static class UserEnvelope extends ApiEnvelopeDTO<UserDTO> {}
+    private static class UserListEnvelope extends ApiEnvelopeDTO<List<UserDTO>> {}
 }

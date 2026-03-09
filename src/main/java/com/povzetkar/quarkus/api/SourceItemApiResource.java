@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
@@ -12,9 +13,20 @@ import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
@@ -39,6 +51,12 @@ public class SourceItemApiResource {
     @Path("/{id}/items")
     @RolesAllowed("SOURCE_VIEW")
     @Operation(summary = "Get items by source", description = "Retrieves a paginated list of content items for a specific source.")
+    @APIResponse(
+            responseCode = "200",
+            description = "List of source items retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemListEnvelope.class))
+    )
+    @APIResponse(responseCode = "404", description = "Source not found")
     public PaginatedResponse<ContentItemDTO> getSourceItems(
             @PathParam("id") Long sourceId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
@@ -64,4 +82,7 @@ public class SourceItemApiResource {
         return userContextService.getCurrentUser()
                 .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
     }
+
+    // Helper classes for OpenAPI documentation
+    private static class ContentItemListEnvelope extends ApiEnvelopeDTO<List<ContentItemDTO>> {}
 }

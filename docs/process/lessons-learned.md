@@ -143,3 +143,19 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ### 5.2 Test Data Builder Pattern
 - **The Trap:** Manually instantiating complex entities in every test file leads to brittle test suites. Adding a new mandatory field to an entity requires a "mass-fix" across hundreds of test lines.
 - **The Standard:** Implement the **Test Data Builder Pattern**. Centralize entity creation in fluent builders (e.g., `TopicBuilder`, `BriefingBuilder`) with sensible defaults and `.withId()` capabilities. This decouples the test logic from entity structural changes and significantly reduces boilerplate.
+
+---
+
+## 6. API Documentation (OpenAPI / Swagger)
+
+### 6.1 Documentation as Truth
+- **The Standard:** Use `quarkus-smallrye-openapi` to generate the API contract directly from the code. This ensures the documentation never drifts from the actual implementation ("Code is Truth").
+- **Implementation:** 
+  - Annotate JAX-RS methods with `@Operation` for summaries and descriptions.
+  - Use `@APIResponse` and `@Content` (with `@Schema`) to document specific response bodies and status codes.
+  - For complex generic responses like `ApiEnvelopeDTO<T>`, create `private static` inner helper classes that extend the generic DTO with a specific type and use them in the `@Schema(implementation = ...)` attribute. This allows OpenAPI to generate precise schemas for each endpoint's response envelope.
+
+### 6.2 Production Security
+- **The Trap:** Accidentally exposing Swagger UI in production provides a detailed map of your API to potential attackers.
+- **The Standard:** Always explicitly disable Swagger UI in the production profile.
+- **Configuration:** Use `%prod.quarkus.swagger-ui.always-include=false` in `application.properties`. This is a critical security measure to minimize the attack surface of the application.

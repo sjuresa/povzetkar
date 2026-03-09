@@ -1,6 +1,6 @@
 package com.povzetkar.quarkus.api;
 
-import jakarta.ws.rs.*;
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
@@ -12,16 +12,29 @@ import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
+import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import com.povzetkar.quarkus.service.UserContextService;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
@@ -53,6 +66,11 @@ public class ContentItemApiResource extends BaseApiResource {
     @GET
     @RolesAllowed("CONTENT_ITEM_VIEW")
     @Operation(summary = "Get all content items", description = "Retrieves a paginated list of all content items, optionally filtered by sourceId.")
+    @APIResponse(
+            responseCode = "200",
+            description = "List of content items retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemListEnvelope.class))
+    )
     public PaginatedResponse<ContentItemDTO> getAllContentItems(
             @QueryParam("sourceId") Long sourceId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
@@ -86,6 +104,12 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}")
     @RolesAllowed("CONTENT_ITEM_VIEW")
     @Operation(summary = "Get content item by ID", description = "Retrieves a specific content item by its ID.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Content item details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemEnvelope.class))
+    )
+    @APIResponse(responseCode = "404", description = "Content item not found")
     public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
         ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
@@ -96,6 +120,9 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}/commands/generate-summary")
     @RolesAllowed("SUMMARY_GENERATE")
     @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary.")
+    @APIResponse(responseCode = "202", description = "Summary generation triggered")
+    @APIResponse(responseCode = "404", description = "Content item not found")
+    @APIResponse(responseCode = "409", description = "Conflict or already processing")
     public Response generateItemSummary(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         ContentItem item = findAndValidateContentItemForAction(id);
@@ -117,6 +144,9 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}/commands/retry")
     @RolesAllowed("ADMIN_JOB_UPDATE")
     @Operation(summary = "Retry failed item", description = "Signals to the background worker to retry a failed item. Admin functionality.")
+    @APIResponse(responseCode = "202", description = "Retry triggered")
+    @APIResponse(responseCode = "404", description = "Content item not found")
+    @APIResponse(responseCode = "409", description = "Conflict or invalid state")
     public Response retryItemProcessing(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         ContentItem item = findAndValidateContentItemForAction(id);
@@ -148,4 +178,8 @@ public class ContentItemApiResource extends BaseApiResource {
         }
         return item;
     }
+
+    // Helper classes for OpenAPI documentation
+    private static class ContentItemEnvelope extends ApiEnvelopeDTO<ContentItemDTO> {}
+    private static class ContentItemListEnvelope extends ApiEnvelopeDTO<List<ContentItemDTO>> {}
 }

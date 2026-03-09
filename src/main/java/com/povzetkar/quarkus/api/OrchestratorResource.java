@@ -10,10 +10,14 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
 
 @Path("/api/v1/orchestrator")
+@Tag(name = "Orchestrator", description = "Endpoints for manual system orchestration")
 public class OrchestratorResource {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(OrchestratorResource.class);
@@ -29,6 +33,9 @@ public class OrchestratorResource {
 
     @POST
     @Path("/run")
+    @Operation(summary = "Run orchestration manually", description = "Triggers the full orchestration flow (fetch, summarize, briefing) for a given date range.")
+    @APIResponse(responseCode = "202", description = "Orchestration process started")
+    @APIResponse(responseCode = "400", description = "Invalid date range or parameters")
     public Response runOrchestrationManually(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
         try {
             // The orchestration is intentionally not awaited here.
@@ -62,6 +69,8 @@ public class OrchestratorResource {
 
     @POST
     @Path("/preview")
+    @Operation(summary = "Preview orchestration", description = "Analyzes how many items would be processed without actually starting the run.")
+    @APIResponse(responseCode = "200", description = "Preview results")
     public Uni<Response> runOrchestrationPreview(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
         LocalDate startDate = request.startDate() != null ? request.startDate() : LocalDate.now();
         LocalDate endDate = request.endDate() != null ? request.endDate() : startDate;

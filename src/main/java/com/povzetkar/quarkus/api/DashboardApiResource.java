@@ -1,5 +1,8 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
+import com.povzetkar.quarkus.api.dto.ApiMetaDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.DashboardDTO;
 import com.povzetkar.quarkus.api.dto.DashboardStatsDTO;
@@ -20,6 +23,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
@@ -46,6 +52,11 @@ public class DashboardApiResource extends BaseApiResource {
     @GET
     @RolesAllowed({Permission.V_TOPIC_VIEW, Permission.V_BRIEFING_VIEW})
     @Operation(summary = "Get Dashboard Data", description = "Aggregated convenience endpoint for the frontend dashboard to prevent N+1 requests.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Dashboard data retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DashboardEnvelope.class))
+    )
     public Uni<DashboardDTO> getDashboard() {
         return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
@@ -88,5 +99,12 @@ public class DashboardApiResource extends BaseApiResource {
         }
         return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(supplier::get))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+    }
+
+    // Helper class for OpenAPI documentation of the enveloped response
+    private static class DashboardEnvelope extends ApiEnvelopeDTO<DashboardDTO> {
+        public DashboardEnvelope(DashboardDTO data, ApiMetaDTO meta, ApiErrorDTO error) {
+            super(data, meta, error);
+        }
     }
 }
