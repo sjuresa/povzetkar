@@ -1,7 +1,6 @@
 package com.povzetkar.quarkus.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.time.Instant;
@@ -10,7 +9,6 @@ import java.util.List;
 @Schema(description = "Standard API response envelope")
 public class ApiEnvelopeDTO<T> {
     @Schema(description = "The actual response data")
-    @JsonUnwrapped
     private T data;
     
     @Schema(description = "Metadata about the response")

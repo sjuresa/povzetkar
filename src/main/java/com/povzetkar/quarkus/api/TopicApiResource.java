@@ -109,7 +109,11 @@ public class TopicApiResource extends BaseApiResource {
     @POST
     @Transactional
     @RolesAllowed("TOPIC_CREATE")
-    @Operation(summary = "Create topic", description = "Creates a new topic for the current user.")
+    @APIResponse(
+            responseCode = "201",
+            description = "Topic created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+    )
     public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO) {
         User user = getAuthenticatedUser();
 
@@ -119,7 +123,9 @@ public class TopicApiResource extends BaseApiResource {
         topic.user = user;
         topic.persist();
 
-        return Response.created(URI.create("/api/v1/topics/" + topic.id)).entity(topicMapper.toDTO(topic)).build();
+        return Response.created(URI.create("/api/v1/topics/" + topic.id))
+                .entity(ApiEnvelopeDTO.success(topicMapper.toDTO(topic)))
+                .build();
     }
 
 
@@ -127,8 +133,12 @@ public class TopicApiResource extends BaseApiResource {
     @Path("/{id}")
     @Transactional
     @RolesAllowed("TOPIC_UPDATE")
-    @Operation(summary = "Partially update topic", description = "Partially updates an existing topic.")
-    public TopicDTO patchTopic(@PathParam("id") Long id, @Valid @NotNull TopicPatchDTO patchDTO) {
+    @APIResponse(
+            responseCode = "200",
+            description = "Topic updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+    )
+    public ApiEnvelopeDTO<TopicDTO> patchTopic(@PathParam("id") Long id, @Valid @NotNull TopicPatchDTO patchDTO) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 
@@ -137,7 +147,7 @@ public class TopicApiResource extends BaseApiResource {
         }
 
         topicMapper.patchEntity(patchDTO, topic);
-        return topicMapper.toDTO(topic);
+        return ApiEnvelopeDTO.success(topicMapper.toDTO(topic));
     }
 
     @DELETE

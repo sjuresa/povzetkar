@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -57,7 +56,7 @@ public class SourceItemApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemListEnvelope.class))
     )
     @APIResponse(responseCode = "404", description = "Source not found")
-    public PaginatedResponse<ContentItemDTO> getSourceItems(
+    public ApiEnvelopeDTO<List<ContentItemDTO>> getSourceItems(
             @PathParam("id") Long sourceId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -75,7 +74,7 @@ public class SourceItemApiResource {
         List<ContentItemDTO> dtoList = query.stream().map(contentItemMapper::toDTO).toList();
         long count = query.count();
 
-        return new PaginatedResponse<>(dtoList, count);
+        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
     }
 
     private User getAuthenticatedUser() {

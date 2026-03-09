@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 class BriefingApiResourceTest {
@@ -105,12 +105,12 @@ class BriefingApiResourceTest {
                 .when().get("/api/v1/briefings/" + testBriefing.id)
                 .then()
                 .statusCode(200)
-                .body("title", equalTo("Weekly AI Update"))
-                .body("executiveSummary", containsString("Summary of everything"))
-                .body("briefingText", containsString("Full markdown text here."))
-                .body("sourceContentItems", hasSize(1))
-                .body("sourceContentItems[0].title", equalTo("AI Breakthrough"))
-                .body("sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
+                .body("items.title", equalTo("Weekly AI Update"))
+                .body("items.executiveSummary", containsString("Summary of everything"))
+                .body("items.briefingText", containsString("Full markdown text here."))
+                .body("items.sourceContentItems", hasSize(1))
+                .body("items.sourceContentItems[0].title", equalTo("AI Breakthrough"))
+                .body("items.sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
     }
 
     @Test

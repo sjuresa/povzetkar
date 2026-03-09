@@ -72,7 +72,7 @@ class TopicApiResourceTest {
                 .when().get("/api/v1/topics/" + testTopic.id)
                 .then()
                 .statusCode(200)
-                .body("name", equalTo("Initial Setup Topic"));
+                .body("items.name", equalTo("Initial Setup Topic"));
     }
 
     @Test
@@ -88,8 +88,8 @@ class TopicApiResourceTest {
                 .then()
                 .statusCode(201)
                 .header("Location", containsString("/api/v1/topics/"))
-                .body("name", equalTo("New Topic"))
-                .body("enabled", equalTo(true)); // Matches Topic default value
+                .body("items.name", equalTo("New Topic"))
+                .body("items.enabled", equalTo(true)); // Matches Topic default value
     }
 
     @Test
@@ -133,8 +133,8 @@ class TopicApiResourceTest {
                 .when().patch("/api/v1/topics/" + testTopic.id)
                 .then()
                 .statusCode(200)
-                .body("name", equalTo("Initial Setup Topic"))
-                .body("enabled", equalTo(false));
+                .body("items.name", equalTo("Initial Setup Topic"))
+                .body("items.enabled", equalTo(false));
     }
 
     @Test

@@ -122,11 +122,11 @@ class DashboardApiResourceTest {
                 .when().get("/api/v1/dashboard")
                 .then()
                 .statusCode(200)
-                .body("stats.activeTopics", equalTo(2)) // 2 enabled topics
-                .body("stats.briefingsGeneratedLast7Days", equalTo(6)) // today, yesterday(x2), 2days, 3days, 4days
-                .body("recentBriefings", hasSize(5)) // capped at 5
-                .body("recentBriefings[0].title", equalTo("Briefing Today"))
-                .body("recentBriefings[0].topicName", equalTo("Active 1")); 
+                .body("items.stats.activeTopics", equalTo(2)) // 2 enabled topics
+                .body("items.stats.briefingsGeneratedLast7Days", equalTo(6)) // today, yesterday(x2), 2days, 3days, 4days
+                .body("items.recentBriefings", hasSize(5)) // capped at 5
+                .body("items.recentBriefings[0].title", equalTo("Briefing Today"))
+                .body("items.recentBriefings[0].topicName", equalTo("Active 1")); 
     }
 
     @Test
@@ -137,9 +137,9 @@ class DashboardApiResourceTest {
                 .when().get("/api/v1/dashboard")
                 .then()
                 .statusCode(200)
-                .body("stats.activeTopics", equalTo(2)) // 2 enabled topics
-                .body("stats.briefingsGeneratedLast7Days", equalTo(0)) // No role
-                .body("recentBriefings", hasSize(0)); // No role
+                .body("items.stats.activeTopics", equalTo(2)) // 2 enabled topics
+                .body("items.stats.briefingsGeneratedLast7Days", equalTo(0)) // No role
+                .body("items.recentBriefings", hasSize(0)); // No role
     }
 
     @Test
@@ -150,9 +150,9 @@ class DashboardApiResourceTest {
                 .when().get("/api/v1/dashboard")
                 .then()
                 .statusCode(200)
-                .body("stats.activeTopics", equalTo(0)) // No role
-                .body("stats.briefingsGeneratedLast7Days", equalTo(6)) 
-                .body("recentBriefings", hasSize(5)); // Capped at 5 maximum limit
+                .body("items.stats.activeTopics", equalTo(0)) // No role
+                .body("items.stats.briefingsGeneratedLast7Days", equalTo(6)) 
+                .body("items.recentBriefings", hasSize(5)); // Capped at 5 maximum limit
     }
 
     @Test

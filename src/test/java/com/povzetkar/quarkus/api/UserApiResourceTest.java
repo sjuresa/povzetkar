@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 class UserApiResourceTest {
@@ -93,9 +93,9 @@ class UserApiResourceTest {
                 .when().get("/api/v1/users/me")
                 .then()
                 .statusCode(200)
-                .body("email", equalTo("admin@example.com"))
-                .body("roles.name", hasItem("admin"))
-                .body("permissions", hasItems("USER_MGMT_VIEW", "USER_MGMT_UPDATE", "TOPIC_CREATE"));
+                .body("items.email", equalTo("admin@example.com"))
+                .body("items.roles.name", hasItem("admin"))
+                .body("items.permissions", hasItems("USER_MGMT_VIEW", "USER_MGMT_UPDATE", "TOPIC_CREATE"));
     }
 
     @Test
@@ -105,10 +105,10 @@ class UserApiResourceTest {
                 .when().get("/api/v1/users/me")
                 .then()
                 .statusCode(200)
-                .body("email", equalTo("user@example.com"))
-                .body("roles.name", hasItem("user"))
-                .body("permissions", hasItem("TOPIC_VIEW"))
-                .body("permissions", not(hasItem("USER_MGMT_VIEW")));
+                .body("items.email", equalTo("user@example.com"))
+                .body("items.roles.name", hasItem("user"))
+                .body("items.permissions", hasItem("TOPIC_VIEW"))
+                .body("items.permissions", not(hasItem("USER_MGMT_VIEW")));
     }
 
     @Test
@@ -145,7 +145,7 @@ class UserApiResourceTest {
                 .when().patch("/api/v1/users/" + regularUser.id)
                 .then()
                 .statusCode(200)
-                .body("active", equalTo(false));
+                .body("items.active", equalTo(false));
     }
 
     @Test
@@ -159,7 +159,7 @@ class UserApiResourceTest {
                 .when().put("/api/v1/users/" + regularUser.id + "/roles")
                 .then()
                 .statusCode(200)
-                .body("roles.name", hasItems("admin", "user"));
+                .body("items.roles.name", hasItems("admin", "user"));
     }
 
     @Test
@@ -279,7 +279,7 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"user", "admin", "USER_MGMT_UPDATE"})
     void testLockoutProtectionStatusLastAdmin() {
-        // currentUser is admin_user. We setup another admin.
+        // currentUser is admin_user. We set up another admin.
         setupSecondaryAdmin();
         
         // Deactivate secondaryAdmin -> Succeeds

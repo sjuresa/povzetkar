@@ -62,7 +62,7 @@ class JobApiResourceTest {
                 .when().get("/api/v1/jobs/" + user1Job.id)
                 .then()
                 .statusCode(200)
-                .body("userId", equalTo(testUser1.id.intValue()));
+                .body("items.userId", equalTo(testUser1.id.intValue()));
     }
 
     @Test

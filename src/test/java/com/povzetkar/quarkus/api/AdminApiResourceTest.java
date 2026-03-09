@@ -19,9 +19,9 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
 class AdminApiResourceTest {
@@ -51,8 +51,8 @@ class AdminApiResourceTest {
                 .then()
                 .statusCode(202)
                 .header("Location", containsString("/api/v1/admin/jobs/"))
-                .body("jobType", equalTo("SYNC_YOUTUBE_FEEDS"))
-                .body("status", equalTo("QUEUED"));
+                .body("items.jobType", equalTo("SYNC_YOUTUBE_FEEDS"))
+                .body("items.status", equalTo("QUEUED"));
         
         // Verify that the job eventually completes
         await().atMost(5, TimeUnit.SECONDS).until(() -> {

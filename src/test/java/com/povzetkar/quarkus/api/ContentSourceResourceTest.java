@@ -137,6 +137,7 @@ class ContentSourceResourceTest {
                                 .when().get(API_BASE_PATH)
                                 .then()
                                 .statusCode(200)
+                                .body("totalCount", is((int) expectedSize))
                                 .body("items", hasSize(Math.toIntExact(expectedSize)));
         }
 
@@ -150,7 +151,7 @@ class ContentSourceResourceTest {
                                 .when().get(API_BASE_PATH + "/{id}")
                                 .then()
                                 .statusCode(200)
-                                .body("name", is(existingContentSource.name));
+                                .body("items.name", is(existingContentSource.name));
         }
 
         @Test
@@ -170,14 +171,16 @@ class ContentSourceResourceTest {
                                 "new-source-id-" + UUID.randomUUID(),
                                 "New Content Source");
 
-                com.povzetkar.quarkus.api.dto.ContentSourceDTO created = given()
+                io.restassured.response.Response response = given()
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .body(newContentSource)
                                 .when().post(API_BASE_PATH)
                                 .then()
                                 .statusCode(201)
-                                .body("name", is("New Content Source"))
-                                .extract().as(com.povzetkar.quarkus.api.dto.ContentSourceDTO.class);
+                                .body("items.name", is("New Content Source"))
+                                .extract().response();
+
+                com.povzetkar.quarkus.api.dto.ContentSourceDTO created = response.jsonPath().getObject("items", com.povzetkar.quarkus.api.dto.ContentSourceDTO.class);
 
                 createdContentSourceIds.add(created.id());
 

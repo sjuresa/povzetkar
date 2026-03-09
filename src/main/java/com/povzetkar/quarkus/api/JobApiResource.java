@@ -55,7 +55,7 @@ public class JobApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "403", description = "Forbidden")
     @APIResponse(responseCode = "404", description = "Job not found")
-    public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
+    public ApiEnvelopeDTO<BackgroundJobDTO> getJobById(@PathParam("id") UUID id) {
         User currentUser = getAuthenticatedUser();
 
         BackgroundJob job = backgroundJobService.getJobById(id)
@@ -65,7 +65,7 @@ public class JobApiResource extends BaseApiResource {
             throw new ForbiddenException("You do not have permission to view this job.");
         }
 
-        return backgroundJobMapper.toDTO(job);
+        return ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job));
     }
 
     // Helper classes for OpenAPI documentation

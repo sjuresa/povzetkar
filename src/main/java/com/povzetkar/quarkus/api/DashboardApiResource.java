@@ -55,10 +55,11 @@ public class DashboardApiResource extends BaseApiResource {
             description = "Dashboard data retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = DashboardEnvelope.class))
     )
-    public Uni<DashboardDTO> getDashboard() {
+    public Uni<ApiEnvelopeDTO<com.povzetkar.quarkus.api.dto.DashboardDTO>> getDashboard() {
         return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                .flatMap(this::fetchDashboardData);
+                .flatMap(this::fetchDashboardData)
+                .map(ApiEnvelopeDTO::success);
     }
 
     private Uni<DashboardDTO> fetchDashboardData(User user) {
@@ -100,5 +101,5 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     // Helper class for OpenAPI documentation of the enveloped response
-    private static class DashboardEnvelope extends ApiEnvelopeDTO<DashboardDTO> {}
+    private static class DashboardEnvelope extends ApiEnvelopeDTO<com.povzetkar.quarkus.api.dto.DashboardDTO> {}
 }
