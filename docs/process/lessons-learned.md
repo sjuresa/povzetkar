@@ -132,6 +132,10 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 - **The Trap:** Assuming `QuarkusTransaction.requiringNew().call(Supplier<T>)` returns a reactive `Uni<T>`. In the standard Hibernate ORM (blocking) extension, it returns the raw type `T`.
 - **The Standard:** When integrating blocking transactions into a Mutiny pipeline, you must manually wrap the call: `Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(supplier::get)).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`. This ensures the blocking transaction starts and ends on the correct worker thread.
 
+### 4.5 Collection Type Safety in Mutiny
+- **The Trap:** Using `List.of()` as a default value in a reactive pipeline (e.g., in `recoverWithItem()` or as a fallback in a generic method). Without explicit type arguments, `List.of()` creates an empty `List<Object>`. Due to type erasure, this can be unsafely wrapped in a `Uni<List<T>>`, only to fail with a `ClassCastException` at runtime when the pipeline tries to consume the item as a `List<T>`.
+- **The Standard:** Always prefer **`Collections.emptyList()`** for empty collection defaults in reactive chains. It allows for better type inference and prevents runtime casting failures. If the compiler still struggles, provide an explicit generic hint at the method call site (e.g., `this.<List<T>>executeInTransactionIf(...)`).
+
 ---
 
 ## 5. Development Process & Architecture
