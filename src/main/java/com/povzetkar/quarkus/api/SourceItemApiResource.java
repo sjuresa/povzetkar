@@ -65,13 +65,14 @@ public class SourceItemApiResource extends BaseApiResource {
             throw new NotFoundException("Source with id " + sourceId + " not found.");
         }
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<ContentItem> query = ContentItem.find("contentSource", Sort.by("publishedAt").descending(), source);
-        query.page(pageIndex, pageSize);
+        query.page(pageIndex, clampedPageSize);
 
         List<ContentItemDTO> dtoList = query.stream().map(contentItemMapper::toDTO).toList();
         long count = query.count();
  
-        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
 }

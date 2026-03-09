@@ -74,7 +74,8 @@ When background jobs or data-sync commands fail, the exception stack trace can b
   2. The server must check this version against the database version before proceeding.
   3. If the header is missing, return **`428 Precondition Required`**.
   4. If the versions mismatch, return **`409 Conflict`** (or a specific Optimistic Lock error).
-  5. In JAX-RS resources, use a helper method (e.g., `baseApiResource.checkOptimisticLock(entity, ifMatch)`) to centralize this check.
+  5. If the header is malformed (e.g., not an integer), return **`400 Bad Request`**.
+  6. In JAX-RS resources, use a helper method (e.g., `baseApiResource.checkOptimisticLock(entity, ifMatch)`) to centralize the version comparison check, while presence validation is handled globally by `OptimisticLockingFilter`.
 
 ---
 

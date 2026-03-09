@@ -8,7 +8,6 @@ import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -64,28 +63,30 @@ public class BriefingApiResource extends BaseApiResource {
         User user = getAuthenticatedUser();
 
         StringBuilder queryBuilder = new StringBuilder("topic.user = :user");
-        Parameters params = Parameters.with("user", user);
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("user", user);
 
         if (topicId != null) {
             queryBuilder.append(" and topic.id = :topicId");
-            params.and("topicId", topicId);
+            params.put("topicId", topicId);
         }
         if (startDate != null) {
             queryBuilder.append(" and briefingDate >= :startDate");
-            params.and("startDate", startDate);
+            params.put("startDate", startDate);
         }
         if (endDate != null) {
             queryBuilder.append(" and briefingDate <= :endDate");
-            params.and("endDate", endDate);
+            params.put("endDate", endDate);
         }
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<Briefing> query = Briefing.find(queryBuilder.toString(), Sort.by("briefingDate").descending(), params);
-        query.page(pageIndex, pageSize);
+        query.page(pageIndex, clampedPageSize);
 
         List<BriefingSummaryDTO> dtoList = query.stream().map(briefingMapper::toSummaryDTO).toList();
         long count = query.count();
  
-        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET

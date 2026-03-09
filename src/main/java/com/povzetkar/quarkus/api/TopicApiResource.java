@@ -81,15 +81,15 @@ public class TopicApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
-
         PanacheQuery<Topic> query = Topic.find("user", Sort.by("id"), user);
-        query.page(pageIndex, pageSize);
+        query.page(pageIndex, clampedPageSize);
 
         List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
 
-        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET

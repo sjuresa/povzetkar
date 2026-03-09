@@ -7,6 +7,7 @@ import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
+import com.povzetkar.quarkus.api.ApiConstants;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -144,6 +145,7 @@ public class BackgroundJobService {
     }
 
     public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, int pageIndex, int pageSize) {
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<BackgroundJob> query;
         if (status != null) {
             query = BackgroundJob.find("status = ?1", Sort.by("startedAt").descending(), status);
@@ -152,11 +154,11 @@ public class BackgroundJobService {
         }
 
         long totalCount = query.count();
-        List<BackgroundJobDTO> items = query.page(pageIndex, pageSize).list().stream()
+        List<BackgroundJobDTO> items = query.page(pageIndex, clampedPageSize).list().stream()
                 .map(backgroundJobMapper::toDTO)
                 .toList();
 
-        return new PaginatedResponse<>(items, totalCount, pageIndex, pageSize);
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
     }
 
     public Optional<BackgroundJob> getJobById(UUID id) {

@@ -76,6 +76,7 @@ public class ContentItemApiResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<Long> idQuery;
         if (sourceId != null) {
             ContentSource source = ContentSource.findById(sourceId);
@@ -88,15 +89,15 @@ public class ContentItemApiResource extends BaseApiResource {
         }
 
         long count = idQuery.count();
-        List<Long> itemIds = idQuery.page(pageIndex, pageSize).list();
+        List<Long> itemIds = idQuery.page(pageIndex, clampedPageSize).list();
 
         if (itemIds.isEmpty()) {
-            return new PaginatedResponse<>(List.of(), count, pageIndex, pageSize);
+            return new PaginatedResponse<>(List.of(), count, pageIndex, clampedPageSize);
         }
 
         List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource WHERE c.id IN ?1 ORDER BY c.publishedAt DESC", itemIds);
         List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
-        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET

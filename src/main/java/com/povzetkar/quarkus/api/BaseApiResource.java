@@ -24,10 +24,12 @@ public abstract class BaseApiResource {
     }
 
     protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
-        if (ifMatchHeader == null || ifMatchHeader.isBlank()) {
-            throw new jakarta.ws.rs.WebApplicationException("If-Match header is required for this operation.", jakarta.ws.rs.core.Response.Status.PRECONDITION_REQUIRED);
+        // Validation of header presence is handled by OptimisticLockingFilter globally.
+        // As a final safeguard for internal calls if any, we ensure it's not null before parsing.
+        if (ifMatchHeader == null) {
+            return;
         }
-        
+
         String cleanVersion = ifMatchHeader.replace("\"", "").trim();
         try {
             int clientVersion = Integer.parseInt(cleanVersion);
@@ -35,8 +37,8 @@ public abstract class BaseApiResource {
                 throw new OptimisticLockException("Entity version mismatch. Expected: " + entity.version + ", but got: " + clientVersion);
             }
         } catch (NumberFormatException _) {
-            // If the header isn't a valid integer, reject it
-            throw new OptimisticLockException("Invalid If-Match header format");
+            // If the header isn't a valid integer, reject it as a bad request.
+            throw new jakarta.ws.rs.BadRequestException("Invalid If-Match header format. Expected an integer version.");
         }
     }
 }

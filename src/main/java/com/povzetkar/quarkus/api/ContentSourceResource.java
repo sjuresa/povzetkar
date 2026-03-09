@@ -76,13 +76,14 @@ public class ContentSourceResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<ContentSource> query = ContentSource.findAll(Sort.by("id"));
-        query.page(pageIndex, pageSize);
+        query.page(pageIndex, clampedPageSize);
 
         List<ContentSourceDTO> dtoList = query.stream().map(contentSourceMapper::toDTO).toList();
         long count = query.count();
  
-        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET

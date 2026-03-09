@@ -11,7 +11,7 @@ import java.io.IOException;
 public class OptimisticLockingFilter implements ContainerRequestFilter {
 
     private static final String IF_MATCH_HEADER = "If-Match";
-    private static final String UI_PATH_PREFIX = "/ui/";
+    private static final String UI_PATH_PREFIX = "ui/";
     private static final String ERROR_MSG = "Missing 'If-Match' header for optimistic locking";
 
     @Override
