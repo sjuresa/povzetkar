@@ -1,7 +1,7 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
@@ -75,7 +75,7 @@ public class TopicApiResource extends BaseApiResource {
             description = "List of topics retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicListEnvelope.class))
     )
-    public PaginatedResponse<TopicDTO> getTopics(
+    public ApiEnvelopeDTO<List<TopicDTO>> getTopics(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
@@ -87,7 +87,7 @@ public class TopicApiResource extends BaseApiResource {
         List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
 
-        return new PaginatedResponse<>(dtoList, count);
+        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
     }
 
     @GET
@@ -100,10 +100,10 @@ public class TopicApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
     )
     @APIResponse(responseCode = "404", description = "Topic not found")
-    public TopicDTO getTopic(@PathParam("id") Long id) {
+    public ApiEnvelopeDTO<TopicDTO> getTopic(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
-        return topicMapper.toDTO(topic);
+        return ApiEnvelopeDTO.success(topicMapper.toDTO(topic));
     }
 
     @POST
@@ -156,7 +156,11 @@ public class TopicApiResource extends BaseApiResource {
     @Path("/{id}/commands/generate-briefing")
     @RolesAllowed("TOPIC_TRIGGER_RUN")
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
-    @APIResponse(responseCode = "202", description = "Briefing generation triggered")
+    @APIResponse(
+            responseCode = "202",
+            description = "Briefing generation triggered",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+    )
     @APIResponse(responseCode = "404", description = "Topic not found")
     @APIResponse(responseCode = "409", description = "Conflict or already running")
     public Response triggerTopicRun(@PathParam("id") Long id, @jakarta.ws.rs.core.Context jakarta.ws.rs.core.UriInfo uriInfo) {
@@ -172,7 +176,7 @@ public class TopicApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(backgroundJobMapper.toDTO(job))
+                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
                 .build();
     }
 
@@ -191,6 +195,7 @@ public class TopicApiResource extends BaseApiResource {
     }
 
     // Helper classes for OpenAPI documentation
+    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
     private static class TopicEnvelope extends ApiEnvelopeDTO<TopicDTO> {}
     private static class TopicListEnvelope extends ApiEnvelopeDTO<List<TopicDTO>> {}
 }

@@ -1,8 +1,8 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
@@ -71,7 +71,7 @@ public class ContentItemApiResource extends BaseApiResource {
             description = "List of content items retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemListEnvelope.class))
     )
-    public PaginatedResponse<ContentItemDTO> getAllContentItems(
+    public ApiEnvelopeDTO<List<ContentItemDTO>> getAllContentItems(
             @QueryParam("sourceId") Long sourceId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -91,13 +91,12 @@ public class ContentItemApiResource extends BaseApiResource {
         List<Long> itemIds = idQuery.page(pageIndex, pageSize).list();
 
         if (itemIds.isEmpty()) {
-            return new PaginatedResponse<>(List.of(), count);
+            return ApiEnvelopeDTO.paginated(List.of(), count, pageIndex, pageSize);
         }
 
         List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource WHERE c.id IN ?1 ORDER BY c.publishedAt DESC", itemIds);
         List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
-
-        return new PaginatedResponse<>(dtoList, count);
+        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
     }
 
     @GET
@@ -110,17 +109,21 @@ public class ContentItemApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemEnvelope.class))
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
-    public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
+    public ApiEnvelopeDTO<ContentItemDTO> getContentItemById(@PathParam("id") Long id) {
         ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        return contentItemMapper.toDTO(entity);
+        return ApiEnvelopeDTO.success(contentItemMapper.toDTO(entity));
     }
 
     @POST
     @Path("/{id}/commands/generate-summary")
     @RolesAllowed("SUMMARY_GENERATE")
     @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary.")
-    @APIResponse(responseCode = "202", description = "Summary generation triggered")
+    @APIResponse(
+            responseCode = "202",
+            description = "Summary generation triggered",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+    )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @APIResponse(responseCode = "409", description = "Conflict or already processing")
     public Response generateItemSummary(@PathParam("id") Long id, @Context UriInfo uriInfo) {
@@ -136,7 +139,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(backgroundJobMapper.toDTO(job))
+                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
                 .build();
     }
 
@@ -144,7 +147,11 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}/commands/retry")
     @RolesAllowed("ADMIN_JOB_UPDATE")
     @Operation(summary = "Retry failed item", description = "Signals to the background worker to retry a failed item. Admin functionality.")
-    @APIResponse(responseCode = "202", description = "Retry triggered")
+    @APIResponse(
+            responseCode = "202",
+            description = "Retry triggered",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+    )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @APIResponse(responseCode = "409", description = "Conflict or invalid state")
     public Response retryItemProcessing(@PathParam("id") Long id, @Context UriInfo uriInfo) {
@@ -161,7 +168,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(backgroundJobMapper.toDTO(job))
+                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
                 .build();
     }
 
@@ -180,6 +187,7 @@ public class ContentItemApiResource extends BaseApiResource {
     }
 
     // Helper classes for OpenAPI documentation
+    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
     private static class ContentItemEnvelope extends ApiEnvelopeDTO<ContentItemDTO> {}
     private static class ContentItemListEnvelope extends ApiEnvelopeDTO<List<ContentItemDTO>> {}
 }

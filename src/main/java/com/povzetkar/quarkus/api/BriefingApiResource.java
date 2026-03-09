@@ -3,7 +3,6 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
@@ -57,7 +56,7 @@ public class BriefingApiResource {
             description = "List of briefings retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingListEnvelope.class))
     )
-    public PaginatedResponse<BriefingSummaryDTO> getBriefings(
+    public ApiEnvelopeDTO<List<BriefingSummaryDTO>> getBriefings(
             @QueryParam("topicId") Long topicId,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
@@ -88,7 +87,7 @@ public class BriefingApiResource {
         List<BriefingSummaryDTO> dtoList = query.stream().map(briefingMapper::toSummaryDTO).toList();
         long count = query.count();
 
-        return new PaginatedResponse<>(dtoList, count);
+        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
     }
 
     @GET
@@ -101,7 +100,7 @@ public class BriefingApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingEnvelope.class))
     )
     @APIResponse(responseCode = "404", description = "Briefing not found")
-    public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
+    public ApiEnvelopeDTO<BriefingDetailDTO> getBriefing(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Briefing briefing = Briefing.<Briefing>find(
                 "select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1 and b.topic.user = ?2",
@@ -109,7 +108,7 @@ public class BriefingApiResource {
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Briefing with id " + id + " not found."));
 
-        return briefingMapper.toDetailDTO(briefing);
+        return ApiEnvelopeDTO.success(briefingMapper.toDetailDTO(briefing));
     }
 
     private User getAuthenticatedUser() {

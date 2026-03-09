@@ -74,7 +74,7 @@ public class AdminApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(backgroundJobMapper.toDTO(job))
+                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
                 .build();
     }
 
@@ -88,9 +88,10 @@ public class AdminApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobEnvelope.class))
     )
     @APIResponse(responseCode = "404", description = "Job not found")
-    public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
+    public ApiEnvelopeDTO<BackgroundJobDTO> getJobById(@PathParam("id") UUID id) {
         return backgroundJobService.getJobById(id)
                 .map(backgroundJobMapper::toDTO)
+                .map(ApiEnvelopeDTO::success)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
     }
 
@@ -103,7 +104,7 @@ public class AdminApiResource {
             description = "List of jobs retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobListEnvelope.class))
     )
-    public PaginatedResponse<BackgroundJobDTO> getJobs(
+    public ApiEnvelopeDTO<List<BackgroundJobDTO>> getJobs(
             @QueryParam("status") JobStatus status,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -111,7 +112,8 @@ public class AdminApiResource {
         // Apply pageSize limits as per CR5 in previous task
         pageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
         
-        return backgroundJobService.getJobList(status, pageIndex, pageSize);
+        PaginatedResponse<BackgroundJobDTO> response = backgroundJobService.getJobList(status, pageIndex, pageSize);
+        return ApiEnvelopeDTO.paginated(response.items(), response.totalCount(), pageIndex, pageSize);
     }
 
     // Helper classes for OpenAPI documentation
