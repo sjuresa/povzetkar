@@ -91,12 +91,12 @@ public class ContentItemApiResource extends BaseApiResource {
         List<Long> itemIds = idQuery.page(pageIndex, pageSize).list();
 
         if (itemIds.isEmpty()) {
-            return new PaginatedResponse<>(List.of(), count);
+            return new PaginatedResponse<>(List.of(), count, pageIndex, pageSize);
         }
 
         List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource WHERE c.id IN ?1 ORDER BY c.publishedAt DESC", itemIds);
         List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
-        return new PaginatedResponse<>(dtoList, count);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
     }
 
     @GET

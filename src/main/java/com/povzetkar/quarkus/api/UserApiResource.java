@@ -89,7 +89,7 @@ public class UserApiResource extends BaseApiResource {
         List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
-            return new PaginatedResponse<>(List.of(), totalCount);
+            return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
         }
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
@@ -100,7 +100,7 @@ public class UserApiResource extends BaseApiResource {
                 .map(userMapper::toDTO)
                 .toList();
 
-        return new PaginatedResponse<>(items, totalCount);
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
     }
 
     @PATCH

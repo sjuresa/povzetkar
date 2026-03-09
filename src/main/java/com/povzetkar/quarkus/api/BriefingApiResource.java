@@ -85,7 +85,7 @@ public class BriefingApiResource extends BaseApiResource {
         List<BriefingSummaryDTO> dtoList = query.stream().map(briefingMapper::toSummaryDTO).toList();
         long count = query.count();
  
-        return new PaginatedResponse<>(dtoList, count);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
     }
 
     @GET

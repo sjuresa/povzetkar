@@ -24,7 +24,9 @@ public abstract class BaseApiResource {
     }
 
     protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
-        if (ifMatchHeader == null) return;
+        if (ifMatchHeader == null || ifMatchHeader.isBlank()) {
+            throw new jakarta.ws.rs.WebApplicationException("If-Match header is required for this operation.", jakarta.ws.rs.core.Response.Status.PRECONDITION_REQUIRED);
+        }
         
         String cleanVersion = ifMatchHeader.replace("\"", "").trim();
         try {

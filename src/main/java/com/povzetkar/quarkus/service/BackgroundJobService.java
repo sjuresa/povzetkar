@@ -156,7 +156,7 @@ public class BackgroundJobService {
                 .map(backgroundJobMapper::toDTO)
                 .toList();
 
-        return new PaginatedResponse<>(items, totalCount);
+        return new PaginatedResponse<>(items, totalCount, pageIndex, pageSize);
     }
 
     public Optional<BackgroundJob> getJobById(UUID id) {

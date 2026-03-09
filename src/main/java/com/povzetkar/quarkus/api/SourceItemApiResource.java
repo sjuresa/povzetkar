@@ -71,7 +71,7 @@ public class SourceItemApiResource extends BaseApiResource {
         List<ContentItemDTO> dtoList = query.stream().map(contentItemMapper::toDTO).toList();
         long count = query.count();
  
-        return new PaginatedResponse<>(dtoList, count);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
     }
 
 }

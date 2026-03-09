@@ -89,7 +89,7 @@ public class TopicApiResource extends BaseApiResource {
         List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
 
-        return new PaginatedResponse<>(dtoList, count);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, pageSize);
     }
 
     @GET

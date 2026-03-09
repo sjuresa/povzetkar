@@ -42,13 +42,7 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
         }
 
         // Handle PaginatedResponse wrapping
-        if (entity instanceof PaginatedResponse<?> (var items, var totalCount)) {
-            String pageStr = requestContext.getUriInfo().getQueryParameters().getFirst("page");
-            String sizeStr = requestContext.getUriInfo().getQueryParameters().getFirst("size");
-            
-            int pageIndex = pageStr != null ? Integer.parseInt(pageStr) : 0;
-            int pageSize = sizeStr != null ? Integer.parseInt(sizeStr) : 20;
-            
+        if (entity instanceof PaginatedResponse<?> (var items, var totalCount, var pageIndex, var pageSize)) {
             responseContext.setEntity(ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, pageSize));
         } else {
             // Standard success wrap for raw DTOs or Lists

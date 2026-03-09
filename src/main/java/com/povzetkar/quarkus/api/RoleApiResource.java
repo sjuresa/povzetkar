@@ -56,6 +56,6 @@ public class RoleApiResource {
         List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).list().stream()
                 .map(roleMapper::toDTO)
                 .toList();
-        return new PaginatedResponse<>(dtoList, totalCount);
+        return new PaginatedResponse<>(dtoList, totalCount, pageIndex, clampedPageSize);
     }
 }
