@@ -74,12 +74,10 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     private Uni<Long> getBriefingStatsUni(User user, boolean hasPermission) {
+        final LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
         return executeInTransactionIf(
                 hasPermission,
-                () -> {
-                    LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
-                    return Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo);
-                },
+                () -> Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo),
                 0L
         );
     }
