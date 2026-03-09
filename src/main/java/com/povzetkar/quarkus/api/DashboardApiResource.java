@@ -1,8 +1,6 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
-import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
-import com.povzetkar.quarkus.api.dto.ApiMetaDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.DashboardDTO;
 import com.povzetkar.quarkus.api.dto.DashboardStatsDTO;
@@ -102,9 +100,5 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     // Helper class for OpenAPI documentation of the enveloped response
-    private static class DashboardEnvelope extends ApiEnvelopeDTO<DashboardDTO> {
-        public DashboardEnvelope(DashboardDTO data, ApiMetaDTO meta, ApiErrorDTO error) {
-            super(data, meta, error);
-        }
-    }
+    private static class DashboardEnvelope extends ApiEnvelopeDTO<DashboardDTO> {}
 }

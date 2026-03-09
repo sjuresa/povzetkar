@@ -5,13 +5,13 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(description = "Standard API response envelope")
 public class ApiEnvelopeDTO<T> {
     @Schema(description = "The actual response data")
-    public T data;
+    private T data;
     
     @Schema(description = "Metadata about the response")
-    public ApiMetaDTO meta;
+    private ApiMetaDTO meta;
     
     @Schema(description = "Error details, null if successful")
-    public ApiErrorDTO error;
+    private ApiErrorDTO error;
 
     public ApiEnvelopeDTO() {}
 
@@ -23,5 +23,17 @@ public class ApiEnvelopeDTO<T> {
 
     public static <T> ApiEnvelopeDTO<T> success(T data, ApiMetaDTO meta) {
         return new ApiEnvelopeDTO<>(data, meta, null);
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public ApiMetaDTO getMeta() {
+        return meta;
+    }
+
+    public ApiErrorDTO getError() {
+        return error;
     }
 }
