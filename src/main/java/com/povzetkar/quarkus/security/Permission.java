@@ -34,5 +34,8 @@ public enum Permission {
     SOURCE_DELETE,
 
     // Content Items
-    CONTENT_ITEM_VIEW
+    CONTENT_ITEM_VIEW;
+
+    public static final String V_TOPIC_VIEW = "TOPIC_VIEW";
+    public static final String V_BRIEFING_VIEW = "BRIEFING_VIEW";
 }
