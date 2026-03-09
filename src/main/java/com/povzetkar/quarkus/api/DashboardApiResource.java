@@ -52,44 +52,28 @@ public class DashboardApiResource extends BaseApiResource {
     }
 
     private Uni<DashboardDTO> fetchDashboardData(User user) {
-        boolean hasTopicView = securityIdentity.hasRole(Permission.TOPIC_VIEW.name());
-        boolean hasBriefingView = securityIdentity.hasRole(Permission.BRIEFING_VIEW.name());
+        Uni<Long> activeTopicsUni = executeInTransactionIf(
+                securityIdentity.hasRole(Permission.TOPIC_VIEW.name()),
+                () -> Topic.count("user = ?1 and enabled = true", user),
+                0L
+        ).onFailure().recoverWithItem(0L);
 
-        Uni<Long> activeTopicsUni = getActiveTopicsUni(user, hasTopicView)
-                .onFailure().recoverWithItem(0L);
-        Uni<Long> briefingsLast7DaysUni = getBriefingStatsUni(user, hasBriefingView)
-                .onFailure().recoverWithItem(0L);
-        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = getRecentBriefingsUni(user, hasBriefingView)
-                .onFailure().recoverWithItem(List.of());
+        final LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
+        Uni<Long> briefingsLast7DaysUni = executeInTransactionIf(
+                securityIdentity.hasRole(Permission.BRIEFING_VIEW.name()),
+                () -> Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo),
+                0L
+        ).onFailure().recoverWithItem(0L);
+
+        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = this.<List<BriefingSummaryDTO>>executeInTransactionIf(
+                securityIdentity.hasRole(Permission.BRIEFING_VIEW.name()),
+                () -> Briefing.findRecentBriefingSummaries(user, RECENT_BRIEFINGS_LIMIT),
+                List.of()
+        ).onFailure().recoverWithItem(List.of());
 
         return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
                 .with(this::assembleDashboard)
                 .emitOn(Infrastructure.getDefaultExecutor());
-    }
-
-    private Uni<Long> getActiveTopicsUni(User user, boolean hasPermission) {
-        return executeInTransactionIf(
-                hasPermission,
-                () -> Topic.count("user = ?1 and enabled = true", user),
-                0L
-        );
-    }
-
-    private Uni<Long> getBriefingStatsUni(User user, boolean hasPermission) {
-        final LocalDate sevenDaysAgo = LocalDate.now(java.time.ZoneOffset.UTC).minusDays(BRIEFING_STATS_DAYS - 1L);
-        return executeInTransactionIf(
-                hasPermission,
-                () -> Briefing.count("topic.user = ?1 and briefingDate >= ?2", user, sevenDaysAgo),
-                0L
-        );
-    }
-
-    private Uni<List<BriefingSummaryDTO>> getRecentBriefingsUni(User user, boolean hasPermission) {
-        return executeInTransactionIf(
-                hasPermission,
-                () -> Briefing.findRecentBriefingSummaries(user, RECENT_BRIEFINGS_LIMIT),
-                List.of()
-        );
     }
 
     private DashboardDTO assembleDashboard(Long activeTopics, Long briefingsLast7Days, List<BriefingSummaryDTO> recentBriefings) {
