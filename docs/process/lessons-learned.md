@@ -163,3 +163,15 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 - **The Trap:** Accidentally exposing Swagger UI in production provides a detailed map of your API to potential attackers.
 - **The Standard:** Always explicitly disable Swagger UI in the production profile.
 - **Configuration:** Use `%prod.quarkus.swagger-ui.always-include=false` in `application.properties`. This is a critical security measure to minimize the attack surface of the application.
+
+---
+
+## 7. Automated Security Scanning (CI & SAST)
+
+### 7.1 Static Application Security Testing (SAST)
+- **The Trap:** Integrating tools like SpotBugs into a legacy or actively evolving codebase without configuring severity thresholds can cause the build to fail on dozens of pre-existing, low-severity warnings. This instantly blocks the CI pipeline and halts development momentum.
+- **The Standard:** Always explicitly configure the threshold (e.g., `<threshold>High</threshold>` in `pom.xml`) for SAST tools to block only critical violations while progressively addressing lower-severity technical debt. Additionally, be aware that mutating inputs sequentially can trigger "dead store" false positives during bytecode analysis.
+
+### 7.2 Dependency Vulnerability Scanning
+- **The Trap:** Relying solely on local dependency checks introduces developer friction and lacks centralized visibility of inherited security issues.
+- **The Standard:** Integrate vulnerability scanning directly into the CI/CD pipeline. Configure explicit exit codes (e.g., `exit-code: '1'`) and severity levels (e.g., `severity: 'CRITICAL,HIGH'`) to unconditionally break the build logically when actionable CVEs are discovered, guaranteeing insecure code is never merged into the main branch.
