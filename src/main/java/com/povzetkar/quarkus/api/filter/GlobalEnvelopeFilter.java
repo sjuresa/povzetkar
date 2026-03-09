@@ -18,6 +18,11 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+        // Only wrap successful (2xx) responses. Errors should be handled by ExceptionMappers.
+        if (responseContext.getStatus() < 200 || responseContext.getStatus() >= 300) {
+            return;
+        }
+
         String path = requestContext.getUriInfo().getPath();
 
         // Skip non-API paths (UI, Swagger UI, OpenAPI spec, etc.)

@@ -33,8 +33,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.net.URI;
 import java.util.UUID;
 
-import static com.povzetkar.quarkus.api.ApiConstants.MAX_PAGE_SIZE;
-
 @Path("/api/v1/admin")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -109,9 +107,6 @@ public class AdminApiResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
-        // Apply pageSize limits as per CR5 in previous task
-        int clampedPageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
-        
-        return backgroundJobService.getJobList(status, pageIndex, clampedPageSize);
+        return backgroundJobService.getJobList(status, pageIndex, pageSize);
     }
 }
