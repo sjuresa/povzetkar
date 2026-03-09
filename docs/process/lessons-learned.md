@@ -123,7 +123,8 @@ When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you shoul
 ### 4.3 Parallelizing Independent Queries (BFF Aggregation)
 When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch multiple disjoint datasets:
 - **The Trap:** Executing database queries sequentially leads to additive latency, and aggregating results via positional access (e.g., `tuple.getItem1()`) is fragile and lacks type safety.
-- **The Standard:** Use `Uni.combine().all().unis(u1, u2, u3).with(this::assemble)` to execute independent, worker-offloaded queries in parallel. The `with()` method provides a fully typed signature for the aggregation function (Function3, etc.), and using a **method reference** (e.g., `this::assemble`) is the most idiomatic way to handle the result aggregation while and avoiding positional indexing or manual casting.
+- **The Standard:** Use `Uni.combine().all().unis(u1, u2, u3).with(this::assemble)` to execute independent, worker-offloaded queries in parallel. The `with()` method provides a fully typed signature for the aggregation function (Function3, etc.), and using a **method reference** (e.g., `this::assemble`) is the most idiomatic way to handle the result aggregation.
+- **Resilience:** For high-visibility dashboards, wrap each individual `Uni` with `.onFailure().recoverWithItem(defaultValue)` before combining. This implements **graceful degradation**, ensuring that a single failing background query doesn't crash the entire request, allowing the UI to display partial data.
 
 ### 4.4 Transaction Type Safety in Pipelines
 - **The Trap:** Assuming `QuarkusTransaction.requiringNew().call(Supplier<T>)` returns a reactive `Uni<T>`. In the standard Hibernate ORM (blocking) extension, it returns the raw type `T`.

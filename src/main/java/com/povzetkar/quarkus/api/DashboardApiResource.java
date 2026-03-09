@@ -56,9 +56,12 @@ public class DashboardApiResource extends BaseApiResource {
         boolean hasTopicView = securityIdentity.hasRole(Permission.TOPIC_VIEW.name());
         boolean hasBriefingView = securityIdentity.hasRole(Permission.BRIEFING_VIEW.name());
 
-        Uni<Long> activeTopicsUni = getActiveTopicsUni(user, hasTopicView);
-        Uni<Long> briefingsLast7DaysUni = getBriefingStatsUni(user, hasBriefingView);
-        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = getRecentBriefingsUni(user, hasBriefingView);
+        Uni<Long> activeTopicsUni = getActiveTopicsUni(user, hasTopicView)
+                .onFailure().recoverWithItem(0L);
+        Uni<Long> briefingsLast7DaysUni = getBriefingStatsUni(user, hasBriefingView)
+                .onFailure().recoverWithItem(0L);
+        Uni<List<BriefingSummaryDTO>> recentBriefingsUni = getRecentBriefingsUni(user, hasBriefingView)
+                .onFailure().recoverWithItem(List.of());
 
         return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
                 .with(this::assembleDashboard)
