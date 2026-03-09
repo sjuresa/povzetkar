@@ -87,13 +87,7 @@ public class DashboardApiResource extends BaseApiResource {
     private Uni<List<BriefingSummaryDTO>> getRecentBriefingsUni(User user, boolean hasPermission) {
         return executeInTransactionIf(
                 hasPermission,
-                () -> Briefing.getEntityManager().createQuery(
-                                Briefing.RECENT_BRIEFINGS_QUERY,
-                                BriefingSummaryDTO.class)
-                        .setParameter(1, user)
-                        .setFirstResult(0)
-                        .setMaxResults(RECENT_BRIEFINGS_LIMIT)
-                        .getResultList(),
+                () -> Briefing.findRecentBriefingSummaries(user, RECENT_BRIEFINGS_LIMIT),
                 List.of()
         );
     }

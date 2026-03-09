@@ -15,9 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 
-import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 class DashboardApiResourceTest {
@@ -45,7 +47,7 @@ class DashboardApiResourceTest {
         inactiveTopic.enabled = false;
         inactiveTopic.persistAndFlush();
 
-        final var now = LocalDate.now(java.time.ZoneOffset.UTC);
+        final var now = LocalDate.now(ZoneOffset.UTC);
 
         Briefing briefingToday = BriefingBuilder.aBriefing()
                 .withTopic(activeTopic1)

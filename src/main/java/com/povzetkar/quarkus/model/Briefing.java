@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -26,6 +27,14 @@ public class Briefing extends BaseAuditableEntity {
     @JoinColumn(name = "topic_id", nullable = false)
     @JsonBackReference
     public Topic topic;
+
+    public static List<com.povzetkar.quarkus.api.dto.BriefingSummaryDTO> findRecentBriefingSummaries(User user, int limit) {
+        return getEntityManager().createQuery(RECENT_BRIEFINGS_QUERY, com.povzetkar.quarkus.api.dto.BriefingSummaryDTO.class)
+                .setParameter(1, user)
+                .setFirstResult(0)
+                .setMaxResults(limit)
+                .getResultList();
+    }
 
     @Column(nullable = false)
     public String title;
