@@ -50,12 +50,13 @@ public class RoleApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<Role> query = Role.findAll(Sort.by("name").ascending());
         long totalCount = query.count();
-        List<RoleDTO> dtoList = query.page(pageIndex, Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE)).list().stream()
+        List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).list().stream()
                 .map(roleMapper::toDTO)
                 .toList();
-        return ApiEnvelopeDTO.paginated(dtoList, totalCount, pageIndex, Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE));
+        return ApiEnvelopeDTO.paginated(dtoList, totalCount, pageIndex, clampedPageSize);
     }
 
     // Helper classes for OpenAPI documentation
