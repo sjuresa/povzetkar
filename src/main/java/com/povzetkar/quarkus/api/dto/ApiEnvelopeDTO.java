@@ -41,21 +41,13 @@ public class ApiEnvelopeDTO<T> {
         return new ApiEnvelopeDTO<>(data, meta, null);
     }
 
-    @JsonProperty("items")
-    public T getItems() {
+    @JsonProperty("data")
+    public T getData() {
         return data;
     }
 
     public ApiMetaDTO getMeta() {
         return meta;
-    }
-
-    @JsonProperty("totalCount")
-    public Long getTotalCount() {
-        if (meta != null && meta.pagination() != null) {
-            return meta.pagination().totalElements();
-        }
-        return null;
     }
 
     public ApiErrorDTO getError() {

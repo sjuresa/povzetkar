@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 class SourceItemApiResourceTest {
@@ -58,10 +58,10 @@ class SourceItemApiResourceTest {
                 .when().get("/api/v1/sources/" + testSource.id + "/items")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(1))
-                .body("items[0].title", equalTo("AI Breakthrough"))
-                .body("items[0].durationSeconds", is(300))
-                .body("items[0].thumbnailUrl", containsString("vid123"));
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("AI Breakthrough"))
+                .body("data[0].durationSeconds", is(300))
+                .body("data[0].thumbnailUrl", containsString("vid123"));
     }
 
     @Test

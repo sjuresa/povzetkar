@@ -51,8 +51,8 @@ class AdminApiResourceTest {
                 .then()
                 .statusCode(202)
                 .header("Location", containsString("/api/v1/admin/jobs/"))
-                .body("items.jobType", equalTo("SYNC_YOUTUBE_FEEDS"))
-                .body("items.status", equalTo("QUEUED"));
+                .body("data.jobType", equalTo("SYNC_YOUTUBE_FEEDS"))
+                .body("data.status", equalTo("QUEUED"));
         
         // Verify that the job eventually completes
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
@@ -87,9 +87,9 @@ class AdminApiResourceTest {
                 .when().get("/api/v1/admin/jobs")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(2))
-                .body("items", hasSize(2))
-                .body("items.jobType", containsInAnyOrder("GENERATE_BRIEFINGS", "SYNC_YOUTUBE_FEEDS"));
+                .body("meta.pagination.totalElements", equalTo(2))
+                .body("data", hasSize(2))
+                .body("data.jobType", containsInAnyOrder("GENERATE_BRIEFINGS", "SYNC_YOUTUBE_FEEDS"));
     }
 
     @Test
@@ -103,8 +103,8 @@ class AdminApiResourceTest {
                 .when().get("/api/v1/admin/jobs")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(1))
-                .body("items[0].status", equalTo("FAILED"));
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].status", equalTo("FAILED"));
     }
 
     @Transactional

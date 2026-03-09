@@ -93,9 +93,9 @@ class UserApiResourceTest {
                 .when().get("/api/v1/users/me")
                 .then()
                 .statusCode(200)
-                .body("items.email", equalTo("admin@example.com"))
-                .body("items.roles.name", hasItem("admin"))
-                .body("items.permissions", hasItems("USER_MGMT_VIEW", "USER_MGMT_UPDATE", "TOPIC_CREATE"));
+                .body("data.email", equalTo("admin@example.com"))
+                .body("data.roles.name", hasItem("admin"))
+                .body("data.permissions", hasItems("USER_MGMT_VIEW", "USER_MGMT_UPDATE", "TOPIC_CREATE"));
     }
 
     @Test
@@ -105,10 +105,10 @@ class UserApiResourceTest {
                 .when().get("/api/v1/users/me")
                 .then()
                 .statusCode(200)
-                .body("items.email", equalTo("user@example.com"))
-                .body("items.roles.name", hasItem("user"))
-                .body("items.permissions", hasItem("TOPIC_VIEW"))
-                .body("items.permissions", not(hasItem("USER_MGMT_VIEW")));
+                .body("data.email", equalTo("user@example.com"))
+                .body("data.roles.name", hasItem("user"))
+                .body("data.permissions", hasItem("TOPIC_VIEW"))
+                .body("data.permissions", not(hasItem("USER_MGMT_VIEW")));
     }
 
     @Test
@@ -118,9 +118,9 @@ class UserApiResourceTest {
                 .when().get("/api/v1/users")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(3))
-                .body("items", hasSize(3))
-                .body("items.email", hasItems("admin@example.com", "user@example.com", "privileged@example.com"));
+                .body("meta.pagination.totalElements", equalTo(3))
+                .body("data", hasSize(3))
+                .body("data.email", hasItems("admin@example.com", "user@example.com", "privileged@example.com"));
     }
 
     @Test
@@ -130,8 +130,8 @@ class UserApiResourceTest {
                 .when().get("/api/v1/roles")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(2))
-                .body("items.name", hasItems("admin", "user"));
+                .body("meta.pagination.totalElements", equalTo(2))
+                .body("data.name", hasItems("admin", "user"));
     }
 
     @Test
@@ -145,7 +145,7 @@ class UserApiResourceTest {
                 .when().patch("/api/v1/users/" + regularUser.id)
                 .then()
                 .statusCode(200)
-                .body("items.active", equalTo(false));
+                .body("data.active", equalTo(false));
     }
 
     @Test
@@ -159,7 +159,7 @@ class UserApiResourceTest {
                 .when().put("/api/v1/users/" + regularUser.id + "/roles")
                 .then()
                 .statusCode(200)
-                .body("items.roles.name", hasItems("admin", "user"));
+                .body("data.roles.name", hasItems("admin", "user"));
     }
 
     @Test

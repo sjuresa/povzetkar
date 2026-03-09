@@ -93,9 +93,9 @@ class BriefingApiResourceTest {
                 .when().get("/api/v1/briefings")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(1))
-                .body("items[0].title", equalTo("Weekly AI Update"))
-                .body("items[0].topicName", equalTo("AI News"));
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("Weekly AI Update"))
+                .body("data[0].topicName", equalTo("AI News"));
     }
 
     @Test
@@ -105,12 +105,12 @@ class BriefingApiResourceTest {
                 .when().get("/api/v1/briefings/" + testBriefing.id)
                 .then()
                 .statusCode(200)
-                .body("items.title", equalTo("Weekly AI Update"))
-                .body("items.executiveSummary", containsString("Summary of everything"))
-                .body("items.briefingText", containsString("Full markdown text here."))
-                .body("items.sourceContentItems", hasSize(1))
-                .body("items.sourceContentItems[0].title", equalTo("AI Breakthrough"))
-                .body("items.sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
+                .body("data.title", equalTo("Weekly AI Update"))
+                .body("data.executiveSummary", containsString("Summary of everything"))
+                .body("data.briefingText", containsString("Full markdown text here."))
+                .body("data.sourceContentItems", hasSize(1))
+                .body("data.sourceContentItems[0].title", equalTo("AI Breakthrough"))
+                .body("data.sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
     }
 
     @Test

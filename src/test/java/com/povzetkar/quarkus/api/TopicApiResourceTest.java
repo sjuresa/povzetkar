@@ -58,10 +58,10 @@ class TopicApiResourceTest {
                 .when().get("/api/v1/topics")
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(1))
-                .body("items", hasSize(1))
-                .body("items[0].name", equalTo("Initial Setup Topic"))
-                .body("items[0].enabled", equalTo(true));
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data", hasSize(1))
+                .body("data[0].name", equalTo("Initial Setup Topic"))
+                .body("data[0].enabled", equalTo(true));
     }
 
     @Test
@@ -72,7 +72,7 @@ class TopicApiResourceTest {
                 .when().get("/api/v1/topics/" + testTopic.id)
                 .then()
                 .statusCode(200)
-                .body("items.name", equalTo("Initial Setup Topic"));
+                .body("data.name", equalTo("Initial Setup Topic"));
     }
 
     @Test
@@ -88,8 +88,8 @@ class TopicApiResourceTest {
                 .then()
                 .statusCode(201)
                 .header("Location", containsString("/api/v1/topics/"))
-                .body("items.name", equalTo("New Topic"))
-                .body("items.enabled", equalTo(true)); // Matches Topic default value
+                .body("data.name", equalTo("New Topic"))
+                .body("data.enabled", equalTo(true)); // Matches Topic default value
     }
 
     @Test
@@ -133,8 +133,8 @@ class TopicApiResourceTest {
                 .when().patch("/api/v1/topics/" + testTopic.id)
                 .then()
                 .statusCode(200)
-                .body("items.name", equalTo("Initial Setup Topic"))
-                .body("items.enabled", equalTo(false));
+                .body("data.name", equalTo("Initial Setup Topic"))
+                .body("data.enabled", equalTo(false));
     }
 
     @Test
