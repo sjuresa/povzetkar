@@ -109,6 +109,7 @@ When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_
 When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you should strictly separate blocking operations from data transformations.
 - **The Trap:** Mixing database queries and DTO mapping within the same worker-thread block (e.g., inside `QuarkusTransaction.requiringNew().call(...)`) obscures the pipeline's structure and can keep worker threads occupied with CPU-bound mapping logic longer than necessary.
 - **The Standard:** Use worker threads purely for the blocking I/O (the database query) and explicitly switch back to the event loop using `.emitOn(Infrastructure.getDefaultExecutor())` before performing CPU-bound data transformations (like DTO mapping) via `.map()`. This ensures worker threads are released as soon as the I/O is complete.
+- **Optimization:** Avoid redundant `.emitOn(...)` switches if the "orchestration" logic (e.g., a `flatMap`) simply dispatches more worker pool tasks. Context switches have a non-trivial cost; staying on the worker thread for a few milliseconds of dispatching logic is more efficient than switching back to the event loop just to immediately switch away again.
   
   ```java
   Uni<List<MyDTO>> result = executeInTransaction(() -> em.find(...)) // I/O on Worker Thread

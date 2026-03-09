@@ -48,7 +48,6 @@ public class DashboardApiResource extends BaseApiResource {
     public Uni<DashboardDTO> getDashboard() {
         return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                .emitOn(Infrastructure.getDefaultExecutor())
                 .flatMap(this::fetchDashboardData);
     }
 
