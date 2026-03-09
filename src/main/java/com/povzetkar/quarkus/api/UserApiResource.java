@@ -84,12 +84,11 @@ public class UserApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
-        pageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = User.count();
-        List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, pageSize).list();
+        List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE)).list();
 
         if (usersForPage.isEmpty()) {
-            return ApiEnvelopeDTO.paginated(List.of(), totalCount, pageIndex, pageSize);
+            return ApiEnvelopeDTO.paginated(List.of(), totalCount, pageIndex, Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE));
         }
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
@@ -100,7 +99,7 @@ public class UserApiResource {
                 .map(userMapper::toDTO)
                 .toList();
 
-        return ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, pageSize);
+        return ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE));
     }
 
     @PATCH
