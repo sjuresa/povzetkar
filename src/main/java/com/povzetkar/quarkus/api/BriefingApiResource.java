@@ -1,8 +1,8 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
@@ -16,7 +16,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -37,15 +36,14 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Briefings", description = "Endpoints for viewing Briefings")
-public class BriefingApiResource {
+public class BriefingApiResource extends BaseApiResource {
 
     private final BriefingMapper briefingMapper;
-    private final UserContextService userContextService;
 
     @Inject
     public BriefingApiResource(BriefingMapper briefingMapper, UserContextService userContextService) {
+        super(userContextService);
         this.briefingMapper = briefingMapper;
-        this.userContextService = userContextService;
     }
 
     @GET
@@ -54,9 +52,9 @@ public class BriefingApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of briefings retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<BriefingSummaryDTO>> getBriefings(
+    public PaginatedResponse<BriefingSummaryDTO> getBriefings(
             @QueryParam("topicId") Long topicId,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
@@ -86,8 +84,8 @@ public class BriefingApiResource {
 
         List<BriefingSummaryDTO> dtoList = query.stream().map(briefingMapper::toSummaryDTO).toList();
         long count = query.count();
-
-        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
+ 
+        return new PaginatedResponse<>(dtoList, count);
     }
 
     @GET
@@ -97,10 +95,10 @@ public class BriefingApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Briefing details retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingDetailDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Briefing not found")
-    public ApiEnvelopeDTO<BriefingDetailDTO> getBriefing(@PathParam("id") Long id) {
+    public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Briefing briefing = Briefing.<Briefing>find(
                 "select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1 and b.topic.user = ?2",
@@ -108,15 +106,6 @@ public class BriefingApiResource {
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Briefing with id " + id + " not found."));
 
-        return ApiEnvelopeDTO.success(briefingMapper.toDetailDTO(briefing));
+        return briefingMapper.toDetailDTO(briefing);
     }
-
-    private User getAuthenticatedUser() {
-        return userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
-    }
-
-    // Helper classes for OpenAPI documentation
-    private static class BriefingEnvelope extends ApiEnvelopeDTO<BriefingDetailDTO> {}
-    private static class BriefingListEnvelope extends ApiEnvelopeDTO<List<BriefingSummaryDTO>> {}
 }

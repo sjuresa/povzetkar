@@ -140,6 +140,7 @@ class UserApiResourceTest {
         UserUpdateDTO dto = new UserUpdateDTO(false);
 
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().patch("/api/v1/users/" + regularUser.id)
@@ -150,10 +151,24 @@ class UserApiResourceTest {
 
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
+    void testUpdateUserStatusMissingIfMatch() {
+        UserUpdateDTO dto = new UserUpdateDTO(false);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().patch("/api/v1/users/" + regularUser.id)
+                .then()
+                .statusCode(428); // Precondition Required
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testUpdateUserRoles() {
         UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(adminRole.id, userRole.id));
 
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().put("/api/v1/users/" + regularUser.id + "/roles")
@@ -168,6 +183,7 @@ class UserApiResourceTest {
         UserUpdateDTO dto = new UserUpdateDTO(false);
 
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().patch("/api/v1/users/" + adminUser.id)
@@ -185,6 +201,7 @@ class UserApiResourceTest {
 
         // admin2 modifies adminUser -> Succeeds (2 admins exist)
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().put("/api/v1/users/" + adminUser.id + "/roles")
@@ -193,6 +210,7 @@ class UserApiResourceTest {
 
         // admin2 tries to modify self -> Fails (Self protection)
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().put("/api/v1/users/" + secondaryAdmin.id + "/roles")
@@ -209,6 +227,7 @@ class UserApiResourceTest {
         UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(adminRole.id, userRole.id));
 
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().put("/api/v1/users/" + regularUser.id + "/roles")
@@ -224,6 +243,7 @@ class UserApiResourceTest {
         
         // 1. Trying to deactivate an administrator should be FORBIDDEN
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(new UserUpdateDTO(false))
                 .when().patch("/api/v1/users/" + adminUser.id)
@@ -236,6 +256,7 @@ class UserApiResourceTest {
 
         // 3. Trying to activate an administrator should be FORBIDDEN
         given()
+                .header("If-Match", "\"1\"") // Version incremented after deactivateUser (merge+flush)
                 .contentType(ContentType.JSON)
                 .body(new UserUpdateDTO(true))
                 .when().patch("/api/v1/users/" + adminUser.id)
@@ -265,12 +286,12 @@ class UserApiResourceTest {
         UserRoleUpdateDTO dto = new UserRoleUpdateDTO(List.of(userRole.id));
 
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().put("/api/v1/users/" + secondaryAdmin.id + "/roles")
                 .then()
                 .statusCode(200);
-
         // Now only admin_user remains. If they try to demote themselves, they hit self-lockout.
         // If we had a third user (privileged_user) they would hit the 403 non-admin check.
         // To test "last administrator" specifically, we need an admin demoting the sole other admin.
@@ -284,6 +305,7 @@ class UserApiResourceTest {
         
         // Deactivate secondaryAdmin -> Succeeds
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(new UserUpdateDTO(false))
                 .when().patch("/api/v1/users/" + secondaryAdmin.id)
@@ -293,6 +315,7 @@ class UserApiResourceTest {
         // Now only admin_user is active admin.
         // If admin_user tries to deactivate themselves -> 409 Self
         given()
+                .header("If-Match", "\"0\"") // adminUser version is still 0
                 .contentType(ContentType.JSON)
                 .body(new UserUpdateDTO(false))
                 .when().patch("/api/v1/users/" + adminUser.id)

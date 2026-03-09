@@ -1,7 +1,7 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
@@ -23,6 +23,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
@@ -73,11 +74,12 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of topics retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<TopicDTO>> getTopics(
+    public PaginatedResponse<TopicDTO> getTopics(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
+
 
         User user = getAuthenticatedUser();
 
@@ -87,7 +89,7 @@ public class TopicApiResource extends BaseApiResource {
         List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
 
-        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count);
     }
 
     @GET
@@ -97,13 +99,13 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Topic retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Topic not found")
-    public ApiEnvelopeDTO<TopicDTO> getTopic(@PathParam("id") Long id) {
+    public TopicDTO getTopic(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
-        return ApiEnvelopeDTO.success(topicMapper.toDTO(topic));
+        return topicMapper.toDTO(topic);
     }
 
     @POST
@@ -112,7 +114,7 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "201",
             description = "Topic created successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
     public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO) {
         User user = getAuthenticatedUser();
@@ -124,7 +126,7 @@ public class TopicApiResource extends BaseApiResource {
         topic.persist();
 
         return Response.created(URI.create("/api/v1/topics/" + topic.id))
-                .entity(ApiEnvelopeDTO.success(topicMapper.toDTO(topic)))
+                .entity(topicMapper.toDTO(topic))
                 .build();
     }
 
@@ -136,18 +138,24 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Topic updated successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
-    public ApiEnvelopeDTO<TopicDTO> patchTopic(@PathParam("id") Long id, @Valid @NotNull TopicPatchDTO patchDTO) {
+    public TopicDTO patchTopic(
+            @PathParam("id") Long id,
+            @HeaderParam("If-Match") String ifMatch,
+            @Valid @NotNull TopicPatchDTO patchDTO) {
+        
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
+        
+        checkOptimisticLock(topic, ifMatch);
 
         if (patchDTO.name() != null && !topic.name.equals(patchDTO.name())) {
             checkForDuplicateTopicName(user, patchDTO.name());
         }
 
         topicMapper.patchEntity(patchDTO, topic);
-        return ApiEnvelopeDTO.success(topicMapper.toDTO(topic));
+        return topicMapper.toDTO(topic);
     }
 
     @DELETE
@@ -155,9 +163,12 @@ public class TopicApiResource extends BaseApiResource {
     @Transactional
     @RolesAllowed("TOPIC_DELETE")
     @Operation(summary = "Delete topic", description = "Deletes a specific topic.")
-    public Response deleteTopic(@PathParam("id") Long id) {
+    public Response deleteTopic(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
+        
+        checkOptimisticLock(topic, ifMatch);
+        
         topic.delete();
         return Response.noContent().build();
     }
@@ -169,7 +180,7 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "202",
             description = "Briefing generation triggered",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Topic not found")
     @APIResponse(responseCode = "409", description = "Conflict or already running")
@@ -186,7 +197,7 @@ public class TopicApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
+                .entity(backgroundJobMapper.toDTO(job))
                 .build();
     }
 
@@ -204,8 +215,4 @@ public class TopicApiResource extends BaseApiResource {
                         () -> new NotFoundException(TOPIC_NOT_FOUND + id + NOT_FOUND_SUFFIX));
     }
 
-    // Helper classes for OpenAPI documentation
-    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
-    private static class TopicEnvelope extends ApiEnvelopeDTO<TopicDTO> {}
-    private static class TopicListEnvelope extends ApiEnvelopeDTO<List<TopicDTO>> {}
 }

@@ -1,7 +1,9 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.model.BaseAuditableEntity;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
+import jakarta.persistence.OptimisticLockException;
 
 
 public abstract class BaseApiResource {
@@ -19,5 +21,20 @@ public abstract class BaseApiResource {
     protected User getAuthenticatedUser() {
         return userContextService.getCurrentUser()
                 .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException("User must be authenticated"));
+    }
+
+    protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
+        if (ifMatchHeader == null) return;
+        
+        String cleanVersion = ifMatchHeader.replace("\"", "").trim();
+        try {
+            int clientVersion = Integer.parseInt(cleanVersion);
+            if (entity.version == null || entity.version != clientVersion) {
+                throw new OptimisticLockException("Entity version mismatch. Expected: " + entity.version + ", but got: " + clientVersion);
+            }
+        } catch (NumberFormatException _) {
+            // If the header isn't a valid integer, reject it
+            throw new OptimisticLockException("Invalid If-Match header format");
+        }
     }
 }

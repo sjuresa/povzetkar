@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -163,31 +162,33 @@ class ContentSourceResourceTest {
                                 .statusCode(404);
         }
 
-        @Test
-        @Transactional
-        void testCreateContentSource_Success() {
-                com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO newContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO(
-                                "YOUTUBE",
-                                "new-source-id-" + UUID.randomUUID(),
-                                "New Content Source");
+    @Test
+    @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE" })
+    void testCreateContentSource_Success() {
+        com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO newContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO(
+                        "YOUTUBE",
+                        "new-source-id-" + UUID.randomUUID(),
+                        "New Content Source");
 
-                io.restassured.response.Response response = given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(newContentSource)
-                                .when().post(API_BASE_PATH)
-                                .then()
-                                .statusCode(201)
-                                .body("data.name", is("New Content Source"))
-                                .extract().response();
+        io.restassured.response.Response response = given()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(newContentSource)
+                        .when().post(API_BASE_PATH)
+                        .then()
+                        .statusCode(201)
+                        .body("data.name", is("New Content Source"))
+                        .extract().response();
 
-                com.povzetkar.quarkus.api.dto.ContentSourceDTO created = response.jsonPath().getObject("data", com.povzetkar.quarkus.api.dto.ContentSourceDTO.class);
+        com.povzetkar.quarkus.api.dto.ContentSourceDTO created = response.jsonPath().getObject("data", com.povzetkar.quarkus.api.dto.ContentSourceDTO.class);
+        createdContentSourceIds.add(created.id());
 
-                createdContentSourceIds.add(created.id());
-
-                ContentSource found = em.find(ContentSource.class, created.id());
-                assertNotNull(found);
-                assertEquals("New Content Source", found.name);
-        }
+        given()
+                .pathParam("id", created.id())
+                .when().get(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(200)
+                .body("data.name", is("New Content Source"));
+    }
 
         @Test
         @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW" })
@@ -252,38 +253,70 @@ class ContentSourceResourceTest {
                                 .statusCode(409);
         }
 
-        @Test
-        void testDeleteContentSource_Forbidden() {
-                given()
-                                .pathParam("id", createdContentSourceIds.iterator().next())
-                                .when().delete(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(403);
-        }
+    @Test
+    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+    void testDeleteContentSource_MissingIfMatchHeader_PreconditionRequired() {
+        given()
+                .pathParam("id", createdContentSourceIds.iterator().next())
+                .when().delete(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(428); // Precondition Required
+    }
 
-        @Test
-        @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
-        void testDeleteContentSource_Success() {
-                Long toDeleteId = createdContentSourceIds.iterator().next();
+    @Test
+    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+    void testDeleteContentSource_Conflict_VersionMismatch() {
+        given()
+                .pathParam("id", createdContentSourceIds.iterator().next())
+                .header("If-Match", "\"999\"") // Version mismatch
+                .when().delete(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(409);
+    }
+
+    @Test
+    @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW" })
+    void testDeleteContentSource_Forbidden() {
+        given()
+                .pathParam("id", createdContentSourceIds.iterator().next())
+                .header("If-Match", "\"0\"")
+                .when().delete(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE", "SOURCE_VIEW" })
+    void testDeleteContentSource_Success() {
+        ContentSource toDelete = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
+        Long toDeleteId = toDelete.id;
+        
+        given()
+                .pathParam("id", toDeleteId)
+                .header("If-Match", "\"" + toDelete.version + "\"")
+                .when().delete(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(204);
                 
-                given()
-                                .pathParam("id", toDeleteId)
-                                .when().delete(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(204);
-                                
-                assertNull(em.find(ContentSource.class, toDeleteId));
-                createdContentSourceIds.remove(toDeleteId);
-        }
+        // Verify via API
+        given()
+                .pathParam("id", toDeleteId)
+                .when().get(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(404);
+                
+        createdContentSourceIds.remove(toDeleteId);
+    }
 
-        @Test
-        @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
-        void testDeleteContentSource_NotFound() {
-                given()
-                                .pathParam("id", 99999L)
-                                .when().delete(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(404);
-        }
+    @Test
+    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
+    void testDeleteContentSource_NotFound() {
+        given()
+                .pathParam("id", 99999L)
+                .header("If-Match", "\"0\"")
+                .when().delete(API_BASE_PATH + "/{id}")
+                .then()
+                .statusCode(404);
+    }
 
 }

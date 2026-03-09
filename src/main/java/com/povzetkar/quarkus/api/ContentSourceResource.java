@@ -1,13 +1,14 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourcePatchDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
+import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
@@ -46,7 +48,7 @@ import java.util.Optional;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Content Sources", description = "Endpoints for managing Content Sources")
-public class ContentSourceResource {
+public class ContentSourceResource extends BaseApiResource {
 
     public static final String CONTENT_SOURCE_WITH_ID = "ContentSource with id ";
     public static final String NOT_FOUND = " not found";
@@ -55,7 +57,9 @@ public class ContentSourceResource {
 
     @Inject
     public ContentSourceResource(ContentSourceDetailService contentSourceDetailService,
-                                 ContentSourceMapper contentSourceMapper) {
+                                 ContentSourceMapper contentSourceMapper,
+                                 UserContextService userContextService) {
+        super(userContextService);
         this.contentSourceDetailService = contentSourceDetailService;
         this.contentSourceMapper = contentSourceMapper;
     }
@@ -66,9 +70,9 @@ public class ContentSourceResource {
     @APIResponse(
             responseCode = "200",
             description = "List of content sources retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<ContentSourceDTO>> getAllContentSources(
+    public PaginatedResponse<ContentSourceDTO> getAllContentSources(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
@@ -77,24 +81,24 @@ public class ContentSourceResource {
 
         List<ContentSourceDTO> dtoList = query.stream().map(contentSourceMapper::toDTO).toList();
         long count = query.count();
-
-        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
+ 
+        return new PaginatedResponse<>(dtoList, count);
     }
 
     @GET
     @Path("/{id}")
     @RolesAllowed("SOURCE_VIEW")
-    @Operation(summary = "Get content source by ID", description = "Retrieves a specific content source by its ID.")
+    @Operation(summary = "Get content source by ID", description = "Retrieves details of a specific content source.")
     @APIResponse(
             responseCode = "200",
             description = "Content source retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Source not found")
-    public ApiEnvelopeDTO<ContentSourceDTO> getContentSourceById(@PathParam("id") Long id) {
+    public ContentSourceDTO getContentSourceById(@PathParam("id") Long id) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
-        return ApiEnvelopeDTO.success(contentSourceMapper.toDTO(entity));
+        return contentSourceMapper.toDTO(entity);
     }
 
     @POST
@@ -104,7 +108,7 @@ public class ContentSourceResource {
     @APIResponse(
             responseCode = "201",
             description = "Content source created successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceDTO.class))
     )
     public Response createContentSource(@Valid @NotNull ContentSourceCreateDTO createDTO) {
         ContentSource contentSource;
@@ -118,7 +122,7 @@ public class ContentSourceResource {
 
         contentSource.persist();
         return Response.created(URI.create("/api/v1/sources/" + contentSource.id))
-                .entity(ApiEnvelopeDTO.success(contentSourceMapper.toDTO(contentSource)))
+                .entity(contentSourceMapper.toDTO(contentSource))
                 .build();
     }
 
@@ -129,20 +133,22 @@ public class ContentSourceResource {
     @RolesAllowed("SOURCE_UPDATE")
     @Operation(summary = "Partially update content source", description = "Partially updates an existing content source.")
     @APIResponse(
-            responseCode = "200",
-            description = "Content source patched successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceEnvelope.class))
-    )
-    public ApiEnvelopeDTO<ContentSourceDTO> patchContentSource(@PathParam("id") Long id,
-                                               @Valid @NotNull ContentSourcePatchDTO patchDTO) {
+           responseCode = "200",
+           description = "Content source patched successfully",
+           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceDTO.class))
+   )
+   public ContentSourceDTO patchContentSource(@PathParam("id") Long id,
+                                              @HeaderParam("If-Match") String ifMatch,
+                                              @Valid @NotNull ContentSourcePatchDTO patchDTO) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
 
+        checkOptimisticLock(entity, ifMatch);
         contentSourceMapper.patchEntity(patchDTO, entity);
         
         checkForDuplicateContentSource(entity.sourceIdentifier, entity.sourceTypeId, id);
         
-        return ApiEnvelopeDTO.success(contentSourceMapper.toDTO(entity));
+        return contentSourceMapper.toDTO(entity);
     }
 
     @DELETE
@@ -150,10 +156,13 @@ public class ContentSourceResource {
     @Transactional
     @RolesAllowed("SOURCE_DELETE")
     @Operation(summary = "Delete content source", description = "Deletes a specific content source.")
-    public Response deleteContentSource(@PathParam("id") Long id) {
-        if (!ContentSource.deleteById(id)) {
-            throw new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND);
-        }
+    public Response deleteContentSource(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
+                
+        checkOptimisticLock(entity, ifMatch);
+        
+        entity.delete();
         return Response.noContent().build();
     }
 
@@ -187,7 +196,4 @@ public class ContentSourceResource {
         }
     }
 
-    // Helper classes for OpenAPI documentation
-    private static class ContentSourceEnvelope extends ApiEnvelopeDTO<ContentSourceDTO> {}
-    private static class ContentSourceListEnvelope extends ApiEnvelopeDTO<List<ContentSourceDTO>> {}
 }

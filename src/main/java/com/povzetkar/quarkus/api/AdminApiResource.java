@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
@@ -8,6 +7,7 @@ import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.service.BackgroundJobService;
+import com.povzetkar.quarkus.service.UserContextService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,7 +31,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 import static com.povzetkar.quarkus.api.ApiConstants.MAX_PAGE_SIZE;
@@ -41,7 +40,7 @@ import static com.povzetkar.quarkus.api.ApiConstants.MAX_PAGE_SIZE;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Admin", description = "Endpoints for System Administration and Background Jobs")
-public class AdminApiResource {
+public class AdminApiResource extends BaseApiResource {
 
     private static final String JOBS_PATH = "jobs";
 
@@ -50,7 +49,9 @@ public class AdminApiResource {
 
     @Inject
     public AdminApiResource(BackgroundJobService backgroundJobService,
-                           BackgroundJobMapper backgroundJobMapper) {
+                           BackgroundJobMapper backgroundJobMapper,
+                           UserContextService userContextService) {
+        super(userContextService);
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
     }
@@ -62,7 +63,7 @@ public class AdminApiResource {
     @APIResponse(
             responseCode = "202",
             description = "Job triggered successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     public Response triggerJob(JobTriggerRequest request, @Context UriInfo uriInfo) {
         BackgroundJob job = backgroundJobService.triggerJob(request.jobType());
@@ -74,7 +75,7 @@ public class AdminApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
+                .entity(backgroundJobMapper.toDTO(job))
                 .build();
     }
 
@@ -85,13 +86,12 @@ public class AdminApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Job details retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Job not found")
-    public ApiEnvelopeDTO<BackgroundJobDTO> getJobById(@PathParam("id") UUID id) {
+    public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
         return backgroundJobService.getJobById(id)
                 .map(backgroundJobMapper::toDTO)
-                .map(ApiEnvelopeDTO::success)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
     }
 
@@ -102,21 +102,16 @@ public class AdminApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of jobs retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<BackgroundJobDTO>> getJobs(
+    public PaginatedResponse<BackgroundJobDTO> getJobs(
             @QueryParam("status") JobStatus status,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
         // Apply pageSize limits as per CR5 in previous task
-        pageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
+        int clampedPageSize = Math.clamp(pageSize, 1, MAX_PAGE_SIZE);
         
-        PaginatedResponse<BackgroundJobDTO> response = backgroundJobService.getJobList(status, pageIndex, pageSize);
-        return ApiEnvelopeDTO.paginated(response.items(), response.totalCount(), pageIndex, pageSize);
+        return backgroundJobService.getJobList(status, pageIndex, clampedPageSize);
     }
-
-    // Helper classes for OpenAPI documentation
-    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
-    private static class JobListEnvelope extends ApiEnvelopeDTO<List<BackgroundJobDTO>> {}
 }
