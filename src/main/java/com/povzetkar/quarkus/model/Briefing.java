@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.ui.util.TextUtils;
 import jakarta.persistence.*;
 
@@ -28,7 +29,7 @@ public class Briefing extends BaseAuditableEntity {
     @JsonBackReference
     public Topic topic;
 
-    public static List<com.povzetkar.quarkus.api.dto.BriefingSummaryDTO> findRecentBriefingSummaries(User user, int limit) {
+    public static List<BriefingSummaryDTO> findRecentBriefingSummaries(User user, int limit) {
         return getEntityManager().createQuery(RECENT_BRIEFINGS_QUERY, com.povzetkar.quarkus.api.dto.BriefingSummaryDTO.class)
                 .setParameter(1, user)
                 .setFirstResult(0)
