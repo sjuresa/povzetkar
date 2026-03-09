@@ -27,9 +27,23 @@ public class OptimisticLockingFilter implements ContainerRequestFilter {
         if ("PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method)) {
             String ifMatch = requestContext.getHeaderString(IF_MATCH_HEADER);
             if (ifMatch == null || ifMatch.trim().isEmpty()) {
+                var errorDto = new com.povzetkar.quarkus.api.dto.ApiErrorDTO(
+                        "/errors/precondition-required",
+                        "Precondition Required",
+                        Response.Status.PRECONDITION_REQUIRED.getStatusCode(),
+                        ERROR_MSG,
+                        "PRECONDITION_REQUIRED",
+                        null
+                );
+                var envelope = new com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO<>(
+                        null,
+                        new com.povzetkar.quarkus.api.dto.ApiMetaDTO(java.time.Instant.now(), null, null),
+                        errorDto
+                );
                 requestContext.abortWith(
                         Response.status(Response.Status.PRECONDITION_REQUIRED)
-                                .entity(java.util.Collections.singletonMap("error", ERROR_MSG))
+                                .entity(envelope)
+                                .type(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
                                 .build()
                 );
             }
