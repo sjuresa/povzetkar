@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 @Entity
 @Table(name = "briefings")
 public class Briefing extends BaseAuditableEntity {
+    public static final String RECENT_BRIEFINGS_QUERY = 
+            "select new com.povzetkar.quarkus.api.dto.BriefingSummaryDTO(b.id, b.topic.id, b.topic.name, b.title, b.briefingDate) " +
+            "from Briefing b where b.topic.user = ?1 order by b.briefingDate desc";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

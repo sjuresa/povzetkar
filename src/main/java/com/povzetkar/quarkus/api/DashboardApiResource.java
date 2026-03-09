@@ -89,8 +89,7 @@ public class DashboardApiResource extends BaseApiResource {
         return executeInTransactionIf(
                 hasPermission,
                 () -> Briefing.getEntityManager().createQuery(
-                                "select new com.povzetkar.quarkus.api.dto.BriefingSummaryDTO(b.id, b.topic.id, b.topic.name, b.title, b.briefingDate) " +
-                                "from Briefing b where b.topic.user = ?1 order by b.briefingDate desc",
+                                Briefing.RECENT_BRIEFINGS_QUERY,
                                 BriefingSummaryDTO.class)
                         .setParameter(1, user)
                         .setFirstResult(0)
