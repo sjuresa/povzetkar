@@ -25,3 +25,5 @@ Before generating any commit message, I **must** follow this exact sequence:
     *   **`chore:`** Changes to the build process or auxiliary tools.
 
 4.  **Conciseness is Key (The "Lazy Developer" Principle).** My goal is a single-line commit message if possible. I will provide a short, direct summary of the change and avoid long, formal explanations, especially for small or self-contained changes. I will follow the "lazy developer" principle you have taught me.
+
+5.  **No Links in Commit Messages.** Never include links (e.g., Markdown links `[text](url)` or IDE-specific navigation links like `[Class](cci:2://...)`) in the proposed commit messages. They make the git history messy, are often unreadable in external tools, and create unnecessary noise. Use plain text names for classes and files instead (e.g., `UserApiResource.java`).
