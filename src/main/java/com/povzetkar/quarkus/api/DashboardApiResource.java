@@ -23,6 +23,7 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -68,8 +69,8 @@ public class DashboardApiResource extends BaseApiResource {
         Uni<List<BriefingSummaryDTO>> recentBriefingsUni = this.<List<BriefingSummaryDTO>>executeInTransactionIf(
                 securityIdentity.hasRole(Permission.BRIEFING_VIEW.name()),
                 () -> Briefing.findRecentBriefingSummaries(user, RECENT_BRIEFINGS_LIMIT),
-                List.of()
-        ).onFailure().recoverWithItem(List.of());
+                Collections.emptyList()
+        ).onFailure().recoverWithItem(Collections.emptyList());
 
         return Uni.combine().all().unis(activeTopicsUni, briefingsLast7DaysUni, recentBriefingsUni)
                 .with(this::assembleDashboard)
