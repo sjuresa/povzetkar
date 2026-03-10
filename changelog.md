@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Implemented global ExceptionMappers to translate all errors (`ConstraintViolationException`, `SecurityException`, `WebApplicationException`, and uncaught system errors) into the standard `ApiEnvelopeDTO` using the RFC 7807 problem details structure.
 - **API:** Introduced `MessageDTO` for standardized simple message responses.
 - **API:** Configured `quarkus-smallrye-openapi` to automatically generate API specifications and expose Swagger UI for local development.
 - **API:** Added comprehensive OpenAPI annotations to all JAX-RS resource classes, including specific response envelope schemas (`ApiEnvelopeDTO`) and status codes.
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
 
 ### Changed
+- **API:** Replaced ad-hoc `BadRequestExceptionMapper` and manual error responses with a unified, centralized exception handling architecture to ensure complete API response envelope coverage and to properly sanitize internal error messages (500 Internal Server Error) from reaching the client.
 - **API:** Refactored Topics and ContentSources to use `PATCH` instead of `PUT` for updates, aligning with the core REST API contract.
 - **API:** Refactored endpoint paths for actionable commands to follow CQRS patterns (e.g., `POST /api/v1/topics/{id}/commands/generate-briefing`, `POST /api/v1/content-items/{id}/commands/retry`).
 - **API:** Enhanced `ContentSourceResource` with duplicate validation during `PATCH` operations and extracted repeated validation logic in `ContentItemApiResource` into shared helpers.
