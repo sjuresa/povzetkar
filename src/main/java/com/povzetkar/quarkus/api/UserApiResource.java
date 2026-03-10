@@ -1,5 +1,5 @@
 package com.povzetkar.quarkus.api;
- 
+
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.UserDTO;
 import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
@@ -7,9 +7,11 @@ import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.UserMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -37,7 +39,10 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Path("/api/v1/users")
 @ApplicationScoped
@@ -90,7 +95,7 @@ public class UserApiResource extends BaseApiResource {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = User.count();
-        io.quarkus.panache.common.Sort panacheSort = com.povzetkar.quarkus.api.util.QueryParser.parseSort(sort, io.quarkus.panache.common.Sort.by("name").ascending());
+        Sort panacheSort = QueryParser.parseSort(sort, io.quarkus.panache.common.Sort.by("name").ascending(), java.util.Set.of("id", "name", "email", "active", "updatedAt"));
         List<User> usersForPage = User.<User>findAll(panacheSort).page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
@@ -108,7 +113,7 @@ public class UserApiResource extends BaseApiResource {
         
         // ensure we preserve the pagination ordering by mapping from the correctly ordered userIds
         java.util.Map<Long, User> userMap = usersWithRoles.stream().collect(
-                java.util.stream.Collectors.toMap(u -> u.id, java.util.function.Function.identity(), (u1, u2) -> u1, java.util.LinkedHashMap::new)
+                Collectors.toMap(u -> u.id, Function.identity(), (u1, u2) -> u1, LinkedHashMap::new)
         );
         
         List<UserDTO> items = usersForPage.stream()

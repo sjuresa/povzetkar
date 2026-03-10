@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.TopicMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
@@ -88,7 +89,7 @@ public class TopicApiResource extends BaseApiResource {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
-        io.quarkus.panache.common.Sort panacheSort = com.povzetkar.quarkus.api.util.QueryParser.parseSort(sort, Sort.by("id"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("id"), java.util.Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"));
         PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)

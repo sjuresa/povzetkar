@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -73,7 +74,7 @@ public class BriefingApiResource extends BaseApiResource {
         filterBuilder.and("briefingDate <= :endDate", "endDate", endDate);
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        io.quarkus.panache.common.Sort panacheSort = com.povzetkar.quarkus.api.util.QueryParser.parseSort(sort, Sort.by("briefingDate").descending());
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), java.util.Set.of("id", "briefingDate", "topic.id", "status"));
         PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
         long count = query.count();
         List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
