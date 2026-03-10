@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
-@TestSecurity(user = "orchestrator_test_user", roles = { "user", "admin" })
+@TestSecurity(user = "orchestrator_test_user", roles = { "user", "admin", "ADMIN_SYSTEM_TRIGGER" })
 class OrchestratorResourceTest {
 
     @InjectMock

@@ -1,7 +1,5 @@
 package com.povzetkar.quarkus.api;
- 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
-import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
+
 import com.povzetkar.quarkus.api.dto.MessageDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.service.ContentItemService;
@@ -10,9 +8,12 @@ import com.povzetkar.quarkus.util.LogKeys;
 import com.povzetkar.quarkus.util.StructuredLogger;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -21,7 +22,7 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
- 
+
 import java.time.LocalDate;
  
 @Path("/api/v1/orchestrator")
@@ -45,6 +46,7 @@ public class OrchestratorResource {
 
     @POST
     @Path("/run")
+    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
     @Operation(summary = "Run orchestration manually", description = "Triggers the full orchestration flow (fetch, summarize, briefing) for a given date range.")
     @APIResponse(responseCode = "202", description = "Orchestration process started")
     @APIResponse(responseCode = "400", description = "Invalid date range or parameters")
@@ -70,18 +72,7 @@ public class OrchestratorResource {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (IllegalArgumentException e) {
-            var error = new ApiErrorDTO(
-                "/errors/bad-request",
-                "Bad Request",
-                Response.Status.BAD_REQUEST.getStatusCode(),
-                e.getMessage(),
-                "INVALID_ARGUMENT",
-                null
-            );
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ApiEnvelopeDTO.error(error))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
+            throw new BadRequestException(e.getMessage());
         } catch (Exception e) {
             logger.error(e,
                     LogKeys.ACTION, LogKeys.ORCHESTRATION_MANUAL,
@@ -89,23 +80,13 @@ public class OrchestratorResource {
                     LogKeys.MESSAGE, "Error starting manual orchestration",
                     LogKeys.ERROR_MESSAGE, e.getMessage()
             );
-            var error = new ApiErrorDTO(
-                "/errors/internal-server-error",
-                "Internal Server Error",
-                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
-                "Error starting manual orchestration: " + e.getMessage(),
-                "INTERNAL_ERROR",
-                null
-            );
-            return Response.serverError()
-                    .entity(ApiEnvelopeDTO.error(error))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
+            throw new InternalServerErrorException("An internal error occurred while starting the orchestration process.");
         }
     }
 
     @POST
     @Path("/preview")
+    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
     @Operation(summary = "Preview orchestration", description = "Analyzes how many items would be processed without actually starting the run.")
     @APIResponse(responseCode = "200", description = "Preview results")
     public Uni<Response> runOrchestrationPreview(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
@@ -130,19 +111,9 @@ public class OrchestratorResource {
                             .type(MediaType.APPLICATION_JSON)
                             .build();
                 })
-                .onFailure().recoverWithItem(failure -> {
-                        var error = new ApiErrorDTO(
-                            "/errors/internal-server-error",
-                            "Internal Server Error",
-                            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
-                            "Preview failed: " + failure.getMessage(),
-                            "INTERNAL_ERROR",
-                            null
-                        );
-                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(ApiEnvelopeDTO.error(error))
-                                .type(MediaType.APPLICATION_JSON)
-                                .build();
+                .onFailure().transform(failure -> {
+                    logger.error(failure, "Preview failed");
+                    return new InternalServerErrorException("An internal error occurred during orchestration preview.");
                 });
     }
 }
