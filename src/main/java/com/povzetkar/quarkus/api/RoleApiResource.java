@@ -1,7 +1,8 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.RoleDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.RoleMapper;
 import com.povzetkar.quarkus.model.Role;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -21,13 +22,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
+ 
 import java.util.List;
-
+ 
 @Path("/api/v1/roles")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Roles", description = "Endpoints for Role management")
 public class RoleApiResource {
 
@@ -44,9 +46,9 @@ public class RoleApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of roles retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<RoleDTO>> getRoles(
+    public PaginatedResponse<RoleDTO> getRoles(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
@@ -56,9 +58,6 @@ public class RoleApiResource {
         List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).list().stream()
                 .map(roleMapper::toDTO)
                 .toList();
-        return ApiEnvelopeDTO.paginated(dtoList, totalCount, pageIndex, clampedPageSize);
+        return new PaginatedResponse<>(dtoList, totalCount, pageIndex, clampedPageSize);
     }
-
-    // Helper classes for OpenAPI documentation
-    private static class RoleListEnvelope extends ApiEnvelopeDTO<List<RoleDTO>> {}
 }

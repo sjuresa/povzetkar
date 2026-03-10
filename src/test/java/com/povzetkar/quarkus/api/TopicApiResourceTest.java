@@ -128,6 +128,7 @@ class TopicApiResourceTest {
         TopicPatchDTO dto = new TopicPatchDTO(null, false);
 
         given()
+                .header("If-Match", "\"0\"")
                 .contentType(ContentType.JSON)
                 .body(dto)
                 .when().patch("/api/v1/topics/" + testTopic.id)
@@ -140,8 +141,38 @@ class TopicApiResourceTest {
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
             "TOPIC_TRIGGER_RUN" })
+    void testPatchTopicMissingIfMatch() {
+        TopicPatchDTO dto = new TopicPatchDTO(null, false);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().patch("/api/v1/topics/" + testTopic.id)
+                .then()
+                .statusCode(428); // Precondition Required
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
+    void testPatchTopicWrongIfMatch() {
+        TopicPatchDTO dto = new TopicPatchDTO(null, false);
+
+        given()
+                .header("If-Match", "\"999\"")
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when().patch("/api/v1/topics/" + testTopic.id)
+                .then()
+                .statusCode(409); // Conflict (Optimistic Lock Exception)
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
+            "TOPIC_TRIGGER_RUN" })
     void testDeleteTopic() {
         given()
+                .header("If-Match", "\"0\"")
                 .when().delete("/api/v1/topics/" + testTopic.id)
                 .then()
                 .statusCode(204);

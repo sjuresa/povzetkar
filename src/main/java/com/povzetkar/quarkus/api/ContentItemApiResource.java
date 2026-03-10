@@ -1,8 +1,9 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
@@ -45,6 +46,7 @@ import java.util.Set;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Content Items", description = "Endpoints for managing Content Items")
 public class ContentItemApiResource extends BaseApiResource {
 
@@ -69,13 +71,14 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of content items retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<ContentItemDTO>> getAllContentItems(
+    public PaginatedResponse<ContentItemDTO> getAllContentItems(
             @QueryParam("sourceId") Long sourceId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<Long> idQuery;
         if (sourceId != null) {
             ContentSource source = ContentSource.findById(sourceId);
@@ -88,15 +91,15 @@ public class ContentItemApiResource extends BaseApiResource {
         }
 
         long count = idQuery.count();
-        List<Long> itemIds = idQuery.page(pageIndex, pageSize).list();
+        List<Long> itemIds = idQuery.page(pageIndex, clampedPageSize).list();
 
         if (itemIds.isEmpty()) {
-            return ApiEnvelopeDTO.paginated(List.of(), count, pageIndex, pageSize);
+            return new PaginatedResponse<>(List.of(), count, pageIndex, clampedPageSize);
         }
 
         List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource WHERE c.id IN ?1 ORDER BY c.publishedAt DESC", itemIds);
         List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
-        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET
@@ -106,13 +109,13 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Content item details retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
-    public ApiEnvelopeDTO<ContentItemDTO> getContentItemById(@PathParam("id") Long id) {
+    public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
         ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        return ApiEnvelopeDTO.success(contentItemMapper.toDTO(entity));
+        return contentItemMapper.toDTO(entity);
     }
 
     @POST
@@ -122,7 +125,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "202",
             description = "Summary generation triggered",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @APIResponse(responseCode = "409", description = "Conflict or already processing")
@@ -139,7 +142,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
+                .entity(backgroundJobMapper.toDTO(job))
                 .build();
     }
 
@@ -150,7 +153,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "202",
             description = "Retry triggered",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = JobEnvelope.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @APIResponse(responseCode = "409", description = "Conflict or invalid state")
@@ -168,11 +171,9 @@ public class ContentItemApiResource extends BaseApiResource {
 
         return Response.accepted()
                 .location(location)
-                .entity(ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job)))
+                .entity(backgroundJobMapper.toDTO(job))
                 .build();
     }
-
- 
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
         ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
@@ -185,9 +186,4 @@ public class ContentItemApiResource extends BaseApiResource {
         }
         return item;
     }
-
-    // Helper classes for OpenAPI documentation
-    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
-    private static class ContentItemEnvelope extends ApiEnvelopeDTO<ContentItemDTO> {}
-    private static class ContentItemListEnvelope extends ApiEnvelopeDTO<List<ContentItemDTO>> {}
 }

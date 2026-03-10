@@ -1,11 +1,11 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
-import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
@@ -15,7 +15,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -27,23 +26,23 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
+ 
 import java.util.List;
-
+ 
 @Path("/api/v1/sources")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Content Items", description = "Endpoints for viewing Content Items under Sources")
-public class SourceItemApiResource {
+public class SourceItemApiResource extends BaseApiResource {
 
     private final ContentItemMapper contentItemMapper;
-    private final UserContextService userContextService;
 
     @Inject
     public SourceItemApiResource(ContentItemMapper contentItemMapper, UserContextService userContextService) {
+        super(userContextService);
         this.contentItemMapper = contentItemMapper;
-        this.userContextService = userContextService;
     }
 
     @GET
@@ -53,10 +52,10 @@ public class SourceItemApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of source items retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
     @APIResponse(responseCode = "404", description = "Source not found")
-    public ApiEnvelopeDTO<List<ContentItemDTO>> getSourceItems(
+    public PaginatedResponse<ContentItemDTO> getSourceItems(
             @PathParam("id") Long sourceId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -68,20 +67,15 @@ public class SourceItemApiResource {
             throw new NotFoundException("Source with id " + sourceId + " not found.");
         }
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<ContentItem> query = ContentItem.find("contentSource", Sort.by("publishedAt").descending(), source);
-        query.page(pageIndex, pageSize);
-
-        List<ContentItemDTO> dtoList = query.stream().map(contentItemMapper::toDTO).toList();
         long count = query.count();
-
-        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
+        List<ContentItemDTO> dtoList = query.page(pageIndex, clampedPageSize)
+                .stream()
+                .map(contentItemMapper::toDTO)
+                .toList();
+ 
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
-    private User getAuthenticatedUser() {
-        return userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
-    }
-
-    // Helper classes for OpenAPI documentation
-    private static class ContentItemListEnvelope extends ApiEnvelopeDTO<List<ContentItemDTO>> {}
 }

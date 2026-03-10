@@ -1,7 +1,7 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.User;
@@ -23,13 +23,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
+ 
 import java.util.UUID;
-
+ 
 @Path("/api/v1/jobs")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Jobs", description = "Endpoints for user tracking background jobs")
 public class JobApiResource extends BaseApiResource {
 
@@ -51,11 +52,11 @@ public class JobApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Job details retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JobEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     @APIResponse(responseCode = "403", description = "Forbidden")
     @APIResponse(responseCode = "404", description = "Job not found")
-    public ApiEnvelopeDTO<BackgroundJobDTO> getJobById(@PathParam("id") UUID id) {
+    public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
         User currentUser = getAuthenticatedUser();
 
         BackgroundJob job = backgroundJobService.getJobById(id)
@@ -65,9 +66,6 @@ public class JobApiResource extends BaseApiResource {
             throw new ForbiddenException("You do not have permission to view this job.");
         }
 
-        return ApiEnvelopeDTO.success(backgroundJobMapper.toDTO(job));
+        return backgroundJobMapper.toDTO(job);
     }
-
-    // Helper classes for OpenAPI documentation
-    private static class JobEnvelope extends ApiEnvelopeDTO<BackgroundJobDTO> {}
 }

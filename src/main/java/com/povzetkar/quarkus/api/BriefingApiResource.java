@@ -1,14 +1,14 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,7 +16,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -30,22 +29,24 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Path("/api/v1/briefings")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Briefings", description = "Endpoints for viewing Briefings")
-public class BriefingApiResource {
+public class BriefingApiResource extends BaseApiResource {
 
     private final BriefingMapper briefingMapper;
-    private final UserContextService userContextService;
 
     @Inject
     public BriefingApiResource(BriefingMapper briefingMapper, UserContextService userContextService) {
+        super(userContextService);
         this.briefingMapper = briefingMapper;
-        this.userContextService = userContextService;
     }
 
     @GET
@@ -54,9 +55,9 @@ public class BriefingApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of briefings retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<BriefingSummaryDTO>> getBriefings(
+    public PaginatedResponse<BriefingSummaryDTO> getBriefings(
             @QueryParam("topicId") Long topicId,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
@@ -66,28 +67,31 @@ public class BriefingApiResource {
         User user = getAuthenticatedUser();
 
         StringBuilder queryBuilder = new StringBuilder("topic.user = :user");
-        Parameters params = Parameters.with("user", user);
+        Map<String, Object> params = new HashMap<>();
+        params.put("user", user);
 
         if (topicId != null) {
             queryBuilder.append(" and topic.id = :topicId");
-            params.and("topicId", topicId);
+            params.put("topicId", topicId);
         }
         if (startDate != null) {
             queryBuilder.append(" and briefingDate >= :startDate");
-            params.and("startDate", startDate);
+            params.put("startDate", startDate);
         }
         if (endDate != null) {
             queryBuilder.append(" and briefingDate <= :endDate");
-            params.and("endDate", endDate);
+            params.put("endDate", endDate);
         }
 
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<Briefing> query = Briefing.find(queryBuilder.toString(), Sort.by("briefingDate").descending(), params);
-        query.page(pageIndex, pageSize);
-
-        List<BriefingSummaryDTO> dtoList = query.stream().map(briefingMapper::toSummaryDTO).toList();
         long count = query.count();
-
-        return ApiEnvelopeDTO.paginated(dtoList, count, pageIndex, pageSize);
+        List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
+                .stream()
+                .map(briefingMapper::toSummaryDTO)
+                .toList();
+ 
+        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET
@@ -97,10 +101,10 @@ public class BriefingApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Briefing details retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingDetailDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Briefing not found")
-    public ApiEnvelopeDTO<BriefingDetailDTO> getBriefing(@PathParam("id") Long id) {
+    public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Briefing briefing = Briefing.<Briefing>find(
                 "select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1 and b.topic.user = ?2",
@@ -108,15 +112,6 @@ public class BriefingApiResource {
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Briefing with id " + id + " not found."));
 
-        return ApiEnvelopeDTO.success(briefingMapper.toDetailDTO(briefing));
+        return briefingMapper.toDetailDTO(briefing);
     }
-
-    private User getAuthenticatedUser() {
-        return userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
-    }
-
-    // Helper classes for OpenAPI documentation
-    private static class BriefingEnvelope extends ApiEnvelopeDTO<BriefingDetailDTO> {}
-    private static class BriefingListEnvelope extends ApiEnvelopeDTO<List<BriefingSummaryDTO>> {}
 }

@@ -20,13 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security:** Enhanced BackgroundJob error handling to sanitize outgoing messages, hiding raw stack traces from end users.
 - **API:** Implemented Core REST APIs for Topics (`/api/v1/topics`) and Content Sources (`/api/v1/sources`) adhering to the Backend-For-Frontend (BFF) pattern using DTOs and MapStruct `@Mapper` interfaces. Includes pagination support for collection endpoints.
 - **Security:** Implemented Permission-Based Access Control (PBAC) foundations. Mapped database roles (`admin`, `user`) to granular capabilities (e.g., `TOPIC_VIEW`, `ADMIN_SYSTEM_TRIGGER`) via `RolePermissionsMap` and dynamically injected them into the `QuarkusSecurityIdentity`.
+- **API:** Implemented a global JAX-RS `ContainerResponseFilter` (`GlobalResponseEnvelopeFilter`) to automatically wrap all successful JSON responses in a standard `{ data, meta, error }` envelope, improving consistency and reducing boilerplate.
+- **Security:** Implemented Optimistic Locking using the `@Version` field on all auditable entities. The API now requires valid quotes `If-Match` headers for all `PATCH`, `PUT`, and `DELETE` state mutations, returning `428 Precondition Required` or `409 Conflict` appropriately.
 - **Background Jobs:** Introduced a persistent job execution framework with `BackgroundJob` entity, `BackgroundJobService`, and async orchestration integration using `Infrastructure.getDefaultExecutor()`.
 
 ### Changed
 - **API:** Refactored Topics and ContentSources to use `PATCH` instead of `PUT` for updates, aligning with the core REST API contract.
 - **API:** Refactored endpoint paths for actionable commands to follow CQRS patterns (e.g., `POST /api/v1/topics/{id}/commands/generate-briefing`, `POST /api/v1/content-items/{id}/commands/retry`).
 - **API:** Enhanced `ContentSourceResource` with duplicate validation during `PATCH` operations and extracted repeated validation logic in `ContentItemApiResource` into shared helpers.
-- **API:** Extracted common user contextual resolution logic into a new `BaseApiResource` applying DRY principles to the API module.
+- **API:** Refactored all REST API resources (`Topic`, `ContentSource`, `User`, `Role`, `Job`, `Admin`, `Dashboard`, `Briefing`, `SourceItem`, `ContentItem`) to return raw DTOs or `PaginatedResponse` objects, delegating envelope wrapping to the centralized filter.
+- **API:** Refactored `BaseApiResource` and all derived resource classes to use **Constructor Injection** for `UserContextService` and other dependencies, aligning with architectural best practices and improving testability.
+- **API:** Optimized `DashboardApiResource` by inlining query orchestration logic and fixing type safety issues in the reactive pipeline recovery handlers.
 - **Security:** Enforced instance-level ownership authorization across Job and ContentItem APIs to ensure users only access their own resources.
 - **Testing:** Implemented the Test Data Builder pattern for core entities (`User`, `Topic`, `ContentSource`) to streamline test data generation and resolve testing brittleness. Refactored the entire test suite to use these builders.
 - **API:** Refactored `ContentSourceResource` and Admin UI to utilize the new `/api/v1/sources` standard path and DTO payloads.

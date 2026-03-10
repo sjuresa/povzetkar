@@ -1,9 +1,11 @@
 package com.povzetkar.quarkus.api;
-
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+ 
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.UserDTO;
 import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
 import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.UserMapper;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
@@ -16,6 +18,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
@@ -40,19 +43,19 @@ import java.util.List;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Users", description = "Endpoints for User management")
-public class UserApiResource {
+public class UserApiResource extends BaseApiResource {
 
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
     private static final String ADMIN = "admin";
 
     private final UserMapper userMapper;
-    private final UserContextService userContextService;
 
     @Inject
     public UserApiResource(UserMapper userMapper, UserContextService userContextService) {
+        super(userContextService);
         this.userMapper = userMapper;
-        this.userContextService = userContextService;
     }
 
     @GET
@@ -63,12 +66,12 @@ public class UserApiResource {
     @APIResponse(
             responseCode = "200",
             description = "User profile retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
     )
-    public ApiEnvelopeDTO<UserDTO> getCurrentUser() {
+    public UserDTO getCurrentUser() {
         User user = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-        return ApiEnvelopeDTO.success(userMapper.toDTO(user));
+        return userMapper.toDTO(user);
     }
 
     @GET
@@ -78,9 +81,9 @@ public class UserApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of users retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserListEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
-    public ApiEnvelopeDTO<List<UserDTO>> getUsers(
+    public PaginatedResponse<UserDTO> getUsers(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
@@ -89,7 +92,7 @@ public class UserApiResource {
         List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
-            return ApiEnvelopeDTO.paginated(List.of(), totalCount, pageIndex, clampedPageSize);
+            return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
         }
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
@@ -100,7 +103,7 @@ public class UserApiResource {
                 .map(userMapper::toDTO)
                 .toList();
 
-        return ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, clampedPageSize);
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
     }
 
     @PATCH
@@ -111,15 +114,18 @@ public class UserApiResource {
     @APIResponse(
             responseCode = "200",
             description = "User status updated successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
     )
-    public ApiEnvelopeDTO<UserDTO> updateUserStatus(@PathParam("id") Long id, UserUpdateDTO dto) {
+    @OptimisticLocking
+    public UserDTO updateUserStatus(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch, UserUpdateDTO dto) {
         User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         User currentUser = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+        
+        checkOptimisticLock(user, ifMatch);
 
         boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
         boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
@@ -156,7 +162,7 @@ public class UserApiResource {
         user.active = dto.active();
         user.persist();
 
-        return ApiEnvelopeDTO.success(userMapper.toDTO(user));
+        return userMapper.toDTO(user);
     }
 
     @PUT
@@ -167,15 +173,18 @@ public class UserApiResource {
     @APIResponse(
             responseCode = "200",
             description = "User roles updated successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
     )
-    public ApiEnvelopeDTO<UserDTO> updateUserRoles(@PathParam("id") Long id, UserRoleUpdateDTO dto) {
+    @OptimisticLocking
+    public UserDTO updateUserRoles(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch, UserRoleUpdateDTO dto) {
         User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         User currentUser = userContextService.getCurrentUserWithRoles()
                 .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
+                
+        checkOptimisticLock(user, ifMatch);
 
         List<Long> requestedRoleIds = dto.roleIds() != null ? dto.roleIds() : List.of();
         List<Role> requestedRoles = Role.list("id in ?1", requestedRoleIds);
@@ -220,7 +229,7 @@ public class UserApiResource {
         user.roles.addAll(new HashSet<>(requestedRoles));
         user.persist();
 
-        return ApiEnvelopeDTO.success(userMapper.toDTO(user));
+        return userMapper.toDTO(user);
     }
 
 
@@ -235,7 +244,4 @@ public class UserApiResource {
         return adminCount <= 1;
     }
 
-    // Helper classes for OpenAPI documentation
-    private static class UserEnvelope extends ApiEnvelopeDTO<UserDTO> {}
-    private static class UserListEnvelope extends ApiEnvelopeDTO<List<UserDTO>> {}
 }

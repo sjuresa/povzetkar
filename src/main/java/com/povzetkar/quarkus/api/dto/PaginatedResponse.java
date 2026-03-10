@@ -4,5 +4,7 @@ import java.util.List;
 
 public record PaginatedResponse<T>(
         List<T> items,
-        long totalCount) {
+        long totalCount,
+        int pageIndex,
+        int pageSize) {
 }

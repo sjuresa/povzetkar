@@ -1,9 +1,9 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.DashboardDTO;
 import com.povzetkar.quarkus.api.dto.DashboardStatsDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 @Path("/api/v1/dashboard")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Dashboard", description = "Endpoints for frontend dashboard aggregation")
 public class DashboardApiResource extends BaseApiResource {
     private static final int BRIEFING_STATS_DAYS = 7;
@@ -53,13 +54,12 @@ public class DashboardApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Dashboard data retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DashboardEnvelope.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DashboardDTO.class))
     )
-    public Uni<ApiEnvelopeDTO<DashboardDTO>> getDashboard() {
+    public Uni<DashboardDTO> getDashboard() {
         return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                .flatMap(this::fetchDashboardData)
-                .map(ApiEnvelopeDTO::success);
+                .flatMap(this::fetchDashboardData);
     }
 
     private Uni<DashboardDTO> fetchDashboardData(User user) {
@@ -100,6 +100,4 @@ public class DashboardApiResource extends BaseApiResource {
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
-    // Helper class for OpenAPI documentation of the enveloped response
-    private static class DashboardEnvelope extends ApiEnvelopeDTO<DashboardDTO> {}
 }

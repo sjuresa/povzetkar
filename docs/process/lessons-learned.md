@@ -62,6 +62,21 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Using raw string literals (e.g., `@RolesAllowed("ADMIN")`) or manual `Permission.ROLE.name()` calls inconsistently across the app. Raw strings are prone to typos, and while `Enum.name()` is safe for logic, it CANNOT be used in annotations like `@RolesAllowed` because they require compile-time constants.
 - **The Standard:** In your `Permission` enum, provide `public static final String` constants prefixed with `V_` (e.g., `V_ADMIN = "ADMIN"`) specifically for use in annotations. For all programmatic logic (e.g., `identity.hasRole(...)`), always use the idiomatic `Permission.ADMIN.name()`. This ensures absolute sync between the enum definition, the security metadata, and the execution logic.
 
+### 2.5 Global Response Envelopes
+- **The Trap:** Manually wrapping every API response in an `ApiEnvelopeDTO` (e.g., `return Response.ok(new ApiEnvelopeDTO<>(dto)).build()`) is repetitive, error-prone, and clutters the resource logic. It also makes it difficult to change the envelope structure globally.
+- **The Standard:** Use a JAX-RS `ContainerResponseFilter` (e.g., `GlobalResponseEnvelopeFilter`) to automatically wrap all successful responses in a standard envelope. API resources should return the **raw DTO** or **`PaginatedResponse`** directly. This keeps the resource code clean and ensures a consistent response structure across the entire API.
+- **Exception:** Do not wrap responses that are already envelopes (like `ApiErrorDTO`) or those that should not have an envelope (e.g., raw file downloads or non-JSON responses).
+
+### 2.6 Optimistic Locking (Concurrency Control)
+- **The Trap:** Deleting or updating entities based solely on their ID without version checks can lead to the "lost update" problem, where concurrent changes by different users overwrite each other or an entity is deleted while another user is trying to update it.
+- **The Standard:** Implement **Optimistic Locking** using the `@Version` field on entities. 
+  1. For `PATCH`, `PUT`, and `DELETE` operations, the client **MUST** send the current version of the entity in the **`If-Match`** header (usually in quotes, e.g., `If-Match: "5"`).
+  2. The server must check this version against the database version before proceeding.
+  3. If the header is missing, return **`428 Precondition Required`**.
+  4. If the versions mismatch, return **`409 Conflict`** (or a specific Optimistic Lock error).
+  5. If the header is malformed (e.g., not an integer), return **`400 Bad Request`**.
+  6. In JAX-RS resources, use a helper method (e.g., `baseApiResource.checkOptimisticLock(entity, ifMatch)`) to centralize the version comparison check, while presence validation is handled globally by `OptimisticLockingFilter`.
+
 ---
 
 ## 3. Asynchronous Execution & System Commands
