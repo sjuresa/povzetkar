@@ -32,8 +32,10 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -79,7 +81,6 @@ public class TopicApiResource extends BaseApiResource {
     public PaginatedResponse<TopicDTO> getTopics(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
-
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
@@ -131,7 +132,6 @@ public class TopicApiResource extends BaseApiResource {
                 .type(MediaType.APPLICATION_JSON)
                 .build();
     }
-
 
     @PATCH
     @Path("/{id}")
@@ -186,7 +186,7 @@ public class TopicApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Topic not found")
     @APIResponse(responseCode = "409", description = "Conflict or already running")
-    public Response triggerTopicRun(@PathParam("id") Long id, @jakarta.ws.rs.core.Context jakarta.ws.rs.core.UriInfo uriInfo) {
+    public Response triggerTopicRun(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
 

@@ -1,10 +1,12 @@
 package com.povzetkar.quarkus.api;
-
+ 
 import com.povzetkar.quarkus.model.BaseAuditableEntity;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import jakarta.persistence.OptimisticLockException;
-
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
 
 public abstract class BaseApiResource {
 
@@ -20,14 +22,14 @@ public abstract class BaseApiResource {
 
     protected User getAuthenticatedUser() {
         return userContextService.getCurrentUser()
-                .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException("User must be authenticated"));
+                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
     }
 
     protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
         if (ifMatchHeader == null || ifMatchHeader.isBlank()) {
             // The OptimisticLockingFilter should have already caught this for external requests.
             // This indicates a programming error (e.g., filter not registered, or internal call missing header).
-            throw new jakarta.ws.rs.InternalServerErrorException("Programming error: checkOptimisticLock called without If-Match header.");
+            throw new InternalServerErrorException("Programming error: checkOptimisticLock called without If-Match header.");
         }
 
         String cleanVersion = ifMatchHeader.replace("\"", "").trim();
@@ -38,7 +40,7 @@ public abstract class BaseApiResource {
             }
         } catch (NumberFormatException _) {
             // If the header isn't a valid integer, reject it as a bad request.
-            throw new jakarta.ws.rs.BadRequestException("Invalid If-Match header format. Expected an integer version.");
+            throw new BadRequestException("Invalid If-Match header format. Expected an integer version.");
         }
     }
 }
