@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -29,9 +30,10 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 
 @Path("/api/v1/briefings")
 @ApplicationScoped
@@ -61,30 +63,22 @@ public class BriefingApiResource extends BaseApiResource {
             @QueryParam("topicId") Long topicId,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         User user = getAuthenticatedUser();
 
-        StringBuilder queryBuilder = new StringBuilder("topic.user = :user");
-        Map<String, Object> params = new HashMap<>();
-        params.put("user", user);
+        FilterBuilder filterBuilder = new FilterBuilder("topic.user = :user")
+            .withParam("user", user);
 
-        if (topicId != null) {
-            queryBuilder.append(" and topic.id = :topicId");
-            params.put("topicId", topicId);
-        }
-        if (startDate != null) {
-            queryBuilder.append(" and briefingDate >= :startDate");
-            params.put("startDate", startDate);
-        }
-        if (endDate != null) {
-            queryBuilder.append(" and briefingDate <= :endDate");
-            params.put("endDate", endDate);
-        }
+        filterBuilder.and("topic.id = :topicId", "topicId", topicId);
+        filterBuilder.and("briefingDate >= :startDate", "startDate", startDate);
+        filterBuilder.and("briefingDate <= :endDate", "endDate", endDate);
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<Briefing> query = Briefing.find(queryBuilder.toString(), Sort.by("briefingDate").descending(), params);
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "status"));
+        PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
         long count = query.count();
         List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()

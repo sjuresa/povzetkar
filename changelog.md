@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API:** Standardized error response structure using `ApiEnvelopeDTO.error()` across all exception mappers, including `BadRequestExceptionMapper` and `OptimisticLockExceptionMapper`.
 - **API:** Refactored `OrchestratorResource` to utilize standard JAX-RS exception mappers for error responses, improving internal error sanitization.
 - **API:** Centralized `pageSize` clamping logic in `AdminApiResource` for consistency across paginated resources.
+- **API:** Implemented systemic sorting and filtering across all list endpoints (e.g., `Topic`, `Briefing`, `User`) using generic `FilterBuilder` and `QueryParser` to safely parse `?sort=` fields without HQL injection vulnerabilities.
 - **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
 
 ### Changed

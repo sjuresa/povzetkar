@@ -5,10 +5,12 @@ import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,6 +34,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Path("/api/v1/admin")
@@ -107,10 +111,12 @@ public class AdminApiResource extends BaseApiResource {
     )
     public PaginatedResponse<BackgroundJobDTO> getJobs(
             @QueryParam("status") JobStatus status,
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        return backgroundJobService.getJobList(status, pageIndex, clampedPageSize);
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
+        return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
     }
 }

@@ -1,5 +1,5 @@
 package com.povzetkar.quarkus.api;
- 
+
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.UserDTO;
 import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
@@ -7,9 +7,11 @@ import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.UserMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -37,7 +39,12 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Path("/api/v1/users")
 @ApplicationScoped
@@ -84,12 +91,14 @@ public class UserApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
     public PaginatedResponse<UserDTO> getUsers(
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = User.count();
-        List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, clampedPageSize).list();
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), Set.of("id", "name", "email", "active", "updatedAt"));
+        List<User> usersForPage = User.<User>findAll(panacheSort).page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
             return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
@@ -97,9 +106,15 @@ public class UserApiResource extends BaseApiResource {
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
         List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
-        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
-
-        List<UserDTO> items = usersWithRoles.stream()
+        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
+        
+        // ensure we preserve the pagination ordering by mapping from the correctly ordered userIds
+        Map<Long, User> userMap = usersWithRoles.stream().collect(
+                Collectors.toMap(u -> u.id, Function.identity(), (u1, u2) -> u1, LinkedHashMap::new)
+        );
+        
+        List<UserDTO> items = usersForPage.stream()
+                .map(u -> userMap.get(u.id))
                 .map(userMapper::toDTO)
                 .toList();
 

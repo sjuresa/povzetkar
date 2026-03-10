@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.RoleDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.RoleMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Role;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
@@ -22,8 +23,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
- 
+
 import java.util.List;
+import java.util.Set;
  
 @Path("/api/v1/roles")
 @ApplicationScoped
@@ -49,11 +51,13 @@ public class RoleApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
     public PaginatedResponse<RoleDTO> getRoles(
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<Role> query = Role.findAll(Sort.by("name").ascending());
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), Set.of("id", "name"));
+        PanacheQuery<Role> query = Role.findAll(panacheSort);
         long totalCount = query.count();
         List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).list().stream()
                 .map(roleMapper::toDTO)

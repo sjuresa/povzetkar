@@ -144,13 +144,13 @@ public class BackgroundJobService {
         job.persist();
     }
 
-    public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, int pageIndex, int pageSize) {
+    public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, Sort sort, int pageIndex, int pageSize) {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<BackgroundJob> query;
         if (status != null) {
-            query = BackgroundJob.find("status = ?1", Sort.by("startedAt").descending(), status);
+            query = BackgroundJob.find("status = ?1", sort, status);
         } else {
-            query = BackgroundJob.findAll(Sort.by("startedAt").descending());
+            query = BackgroundJob.findAll(sort);
         }
 
         long totalCount = query.count();

@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.TopicMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
@@ -47,6 +48,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Path("/api/v1/topics")
 @ApplicationScoped
@@ -82,12 +84,14 @@ public class TopicApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
     public PaginatedResponse<TopicDTO> getTopics(
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
-        PanacheQuery<Topic> query = Topic.find("user", Sort.by("id"), user);
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"));
+        PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()

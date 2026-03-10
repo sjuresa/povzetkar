@@ -85,6 +85,14 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Standard:** A catch-all `ExceptionMapper<Exception>` MUST be used to intercept unexpected 500 errors. It must log the raw stack trace internally using `StructuredLogger.error(...)` to preserve debug context, but emit a sanitized, generic error message (e.g., "An unexpected error occurred") inside the API envelope to prevent infrastructure leaks.
 - **The Standard:** For simple confirmation messages (e.g., "Operation started"), use a dedicated `MessageDTO` instead of `Map.of("message", ...)`. This provides a stable OpenAPI schema and improved type safety.
 
+### 2.8 Systemic Pagination & Filtering
+- **The Trap:** Manually building filter components (e.g., `startDate >= :start`) inside each resource file creates repetitive string manipulation logic that is difficult to maintain and potentially susceptible to injection if parameters aren't safely mapped. Relying on default panache sorts without `?sort` parameter parsing limits API flexibility. Dynamically parsing sort columns from user input without validation opens up HQL sort-injection vulnerabilities.
+- **The Standard:** Use central utility builders like `FilterBuilder` to perform conditional `AND` logic safely with map-based parameter binding. Parse sequential `?sort` HTTP parameters centrally into `io.quarkus.panache.common.Sort` objects (using `QueryParser`) before handing them off to the repository layer. **Always** pass a strict allow-list `Set<String>` of permitted entity fields to `QueryParser.parseSort` to prevent HQL injection in `ORDER BY` clauses.
+
+### 2.9 Code Style & Readability: Imports over Fully Qualified Names
+- **The Trap:** Using fully qualified class names (e.g., `java.util.Set`, `io.quarkus.panache.common.Sort`) inline within method bodies clutters the code, reduces readability, and makes the logical flow harder to scan.
+- **The Standard:** Always use standard `import` statements at the top of the file for all external classes and interfaces. Reserve fully qualified names strictly for resolving explicit class name collisions within the same file.
+
 ---
 
 ## 3. Asynchronous Execution & System Commands
