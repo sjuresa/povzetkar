@@ -17,8 +17,8 @@ public class WebApplicationExceptionMapper implements ExceptionMapper<WebApplica
         Response.StatusType statusInfo = response.getStatusInfo();
         
         String title = statusInfo.getReasonPhrase();
-        String type = "/errors/" + title.toLowerCase().replace(" ", "-");
-        String errorCode = title.toUpperCase().replace(" ", "_");
+        String type = "/errors/" + title.toLowerCase().replaceAll("\\W+", "-");
+        String errorCode = title.toUpperCase().replaceAll("\\W+", "_");
         
         String detail = exception.getMessage();
         if (status >= 500 || detail == null || detail.isBlank() || detail.startsWith("HTTP ")) {
