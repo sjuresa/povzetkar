@@ -84,12 +84,14 @@ public class UserApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
     public PaginatedResponse<UserDTO> getUsers(
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = User.count();
-        List<User> usersForPage = User.<User>find("FROM User u ORDER BY u.name ASC").page(pageIndex, clampedPageSize).list();
+        io.quarkus.panache.common.Sort panacheSort = com.povzetkar.quarkus.api.util.QueryParser.parseSort(sort, io.quarkus.panache.common.Sort.by("name").ascending());
+        List<User> usersForPage = User.<User>findAll(panacheSort).page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
             return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
@@ -97,9 +99,20 @@ public class UserApiResource extends BaseApiResource {
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
         List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
-        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
-
-        List<UserDTO> items = usersWithRoles.stream()
+        // apply the same manual ordering or let the second query omit it
+        // since we already ordered the page, returning users in IDs order is fine
+        // HQL doesn't easily support ORDER BY FIELD(id, ...), but this is standard. 
+        // Best approach is ordering the final result stream exactly as the usersForPage lists, or just sorting normally.
+        // For simplicity we will re-sort the final list or keep as is.
+        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
+        
+        // ensure we preserve the pagination ordering by mapping from the correctly ordered userIds
+        java.util.Map<Long, User> userMap = usersWithRoles.stream().collect(
+                java.util.stream.Collectors.toMap(u -> u.id, java.util.function.Function.identity(), (u1, u2) -> u1, java.util.LinkedHashMap::new)
+        );
+        
+        List<UserDTO> items = usersForPage.stream()
+                .map(u -> userMap.get(u.id))
                 .map(userMapper::toDTO)
                 .toList();
 

@@ -85,6 +85,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Standard:** A catch-all `ExceptionMapper<Exception>` MUST be used to intercept unexpected 500 errors. It must log the raw stack trace internally using `StructuredLogger.error(...)` to preserve debug context, but emit a sanitized, generic error message (e.g., "An unexpected error occurred") inside the API envelope to prevent infrastructure leaks.
 - **The Standard:** For simple confirmation messages (e.g., "Operation started"), use a dedicated `MessageDTO` instead of `Map.of("message", ...)`. This provides a stable OpenAPI schema and improved type safety.
 
+### 2.8 Systemic Pagination & Filtering
+- **The Trap:** Manually building filter components (e.g., `startDate >= :start`) inside each resource file creates repetitive string manipulation logic that is difficult to maintain and potentially susceptible to injection if parameters aren't safely mapped. Relying on default panache sorts without `?sort` parameter parsing limits API flexibility.
+- **The Standard:** Use central utility builders like `FilterBuilder` to perform conditional `AND` logic safely with map-based parameter binding. Parse sequential `?sort` HTTP parameters centrally into `io.quarkus.panache.common.Sort` objects (using `QueryParser`) before handing them off to the repository layer.
+
 ---
 
 ## 3. Asynchronous Execution & System Commands

@@ -82,12 +82,14 @@ public class TopicApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
     )
     public PaginatedResponse<TopicDTO> getTopics(
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
-        PanacheQuery<Topic> query = Topic.find("user", Sort.by("id"), user);
+        io.quarkus.panache.common.Sort panacheSort = com.povzetkar.quarkus.api.util.QueryParser.parseSort(sort, Sort.by("id"));
+        PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()

@@ -32,6 +32,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @Path("/api/v1/admin")
@@ -107,10 +108,12 @@ public class AdminApiResource extends BaseApiResource {
     )
     public PaginatedResponse<BackgroundJobDTO> getJobs(
             @QueryParam("status") JobStatus status,
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        return backgroundJobService.getJobList(status, pageIndex, clampedPageSize);
+        io.quarkus.panache.common.Sort panacheSort = com.povzetkar.quarkus.api.util.QueryParser.parseSort(sort, io.quarkus.panache.common.Sort.by("startedAt").descending());
+        return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
     }
 }
