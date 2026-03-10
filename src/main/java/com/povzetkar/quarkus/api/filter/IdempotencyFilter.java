@@ -110,7 +110,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                     QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId).firstResult();
 
             if (existingRequest != null) {
-                if (requestHash != null && !requestHash.equals(existingRequest.requestHash)) {
+                if (!java.util.Objects.equals(requestHash, existingRequest.requestHash)) {
                     log.warnf("Idempotency key %s reused with different payload", idempotencyKey);
                     return false;
                 }
@@ -152,7 +152,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 responseBuilder.entity(jsonNode).type(MediaType.APPLICATION_JSON_TYPE);
             } catch (JsonProcessingException e) {
                 log.errorf(e, "Failed to parse cached response body for idempotency key: %s", idempotencyKey);
-                responseBuilder.entity(cachedRequest.responseBody).type(MediaType.APPLICATION_JSON_TYPE);
+                throw new InternalServerErrorException("Failed to process cached response.", e);
             }
         }
 

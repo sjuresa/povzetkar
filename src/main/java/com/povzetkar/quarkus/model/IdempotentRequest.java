@@ -60,11 +60,12 @@ public class IdempotentRequest extends PanacheEntityBase {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdempotentRequest that = (IdempotentRequest) o;
-        return Objects.equals(this.idempotencyKey, that.idempotencyKey);
+        return Objects.equals(idempotencyKey, that.idempotencyKey) &&
+               Objects.equals(user, that.user);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(idempotencyKey);
+        return Objects.hash(idempotencyKey, user);
     }
 }
