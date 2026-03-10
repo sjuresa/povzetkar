@@ -2,13 +2,10 @@ package com.povzetkar.quarkus.api.exceptionmapper;
 
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
-import com.povzetkar.quarkus.api.dto.ApiMetaDTO;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-
-import java.time.Instant;
 
 @Provider
 public class OptimisticLockExceptionMapper implements ExceptionMapper<OptimisticLockException> {
@@ -24,11 +21,7 @@ public class OptimisticLockExceptionMapper implements ExceptionMapper<Optimistic
                 null
         );
 
-        ApiEnvelopeDTO<Void> envelope = new ApiEnvelopeDTO<>(
-                null,
-                new ApiMetaDTO(Instant.now(), null, null),
-                error
-        );
+        ApiEnvelopeDTO<Void> envelope = ApiEnvelopeDTO.error(error);
 
         return Response.status(Response.Status.CONFLICT)
                 .entity(envelope)

@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.api;
  
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
+import com.povzetkar.quarkus.api.dto.MessageDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.service.OrchestrationManager;
@@ -32,7 +33,6 @@ import java.time.LocalDate;
 public class OrchestratorResource {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(OrchestratorResource.class);
-    private static final String MESSAGE = "message";
 
     private final OrchestrationManager orchestrationManager;
     private final ContentItemService contentItemService;
@@ -48,7 +48,6 @@ public class OrchestratorResource {
     @Operation(summary = "Run orchestration manually", description = "Triggers the full orchestration flow (fetch, summarize, briefing) for a given date range.")
     @APIResponse(responseCode = "202", description = "Orchestration process started")
     @APIResponse(responseCode = "400", description = "Invalid date range or parameters")
-    @Enveloped
     public Response runOrchestrationManually(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
         try {
             // The orchestration is intentionally not awaited here.
@@ -67,7 +66,7 @@ public class OrchestratorResource {
                     // We subscribe but intentionally ignore the result. This is a fire-and-forget operation.
                     .subscribeAsCompletionStage();
             return Response.status(Response.Status.ACCEPTED)
-                    .entity(java.util.Map.of(MESSAGE, "Orchestration process started."))
+                    .entity(new MessageDTO("Orchestration process started."))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (IllegalArgumentException e) {
@@ -109,7 +108,6 @@ public class OrchestratorResource {
     @Path("/preview")
     @Operation(summary = "Preview orchestration", description = "Analyzes how many items would be processed without actually starting the run.")
     @APIResponse(responseCode = "200", description = "Preview results")
-    @Enveloped
     public Uni<Response> runOrchestrationPreview(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
         LocalDate startDate = request.startDate() != null ? request.startDate() : LocalDate.now();
         LocalDate endDate = request.endDate() != null ? request.endDate() : startDate;
@@ -128,7 +126,7 @@ public class OrchestratorResource {
                         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool()))
                 .onItem().transform(pendingCount -> {
                     String message = "Preview finished. Found " + pendingCount + " pending items.";
-                    return Response.ok(java.util.Map.of(MESSAGE, message))
+                    return Response.ok(new MessageDTO(message))
                             .type(MediaType.APPLICATION_JSON)
                             .build();
                 })
