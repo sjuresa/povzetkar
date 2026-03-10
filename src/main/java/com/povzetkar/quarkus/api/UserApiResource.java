@@ -41,6 +41,8 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,7 +97,7 @@ public class UserApiResource extends BaseApiResource {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = User.count();
-        Sort panacheSort = QueryParser.parseSort(sort, io.quarkus.panache.common.Sort.by("name").ascending(), java.util.Set.of("id", "name", "email", "active", "updatedAt"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), Set.of("id", "name", "email", "active", "updatedAt"));
         List<User> usersForPage = User.<User>findAll(panacheSort).page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
@@ -104,15 +106,10 @@ public class UserApiResource extends BaseApiResource {
 
         // This is the recommended pattern to work around JPA pagination limitations with joins.
         List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
-        // apply the same manual ordering or let the second query omit it
-        // since we already ordered the page, returning users in IDs order is fine
-        // HQL doesn't easily support ORDER BY FIELD(id, ...), but this is standard. 
-        // Best approach is ordering the final result stream exactly as the usersForPage lists, or just sorting normally.
-        // For simplicity we will re-sort the final list or keep as is.
         List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
         
         // ensure we preserve the pagination ordering by mapping from the correctly ordered userIds
-        java.util.Map<Long, User> userMap = usersWithRoles.stream().collect(
+        Map<Long, User> userMap = usersWithRoles.stream().collect(
                 Collectors.toMap(u -> u.id, Function.identity(), (u1, u2) -> u1, LinkedHashMap::new)
         );
         

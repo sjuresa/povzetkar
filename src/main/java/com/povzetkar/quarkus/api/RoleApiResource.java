@@ -25,6 +25,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Set;
  
 @Path("/api/v1/roles")
 @ApplicationScoped
@@ -55,7 +56,7 @@ public class RoleApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), java.util.Set.of("id", "name"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), Set.of("id", "name"));
         PanacheQuery<Role> query = Role.findAll(panacheSort);
         long totalCount = query.count();
         List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).list().stream()

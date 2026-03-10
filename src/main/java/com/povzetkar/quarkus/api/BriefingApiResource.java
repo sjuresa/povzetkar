@@ -31,6 +31,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 
 @Path("/api/v1/briefings")
 @ApplicationScoped
@@ -66,15 +69,15 @@ public class BriefingApiResource extends BaseApiResource {
 
         User user = getAuthenticatedUser();
 
-        com.povzetkar.quarkus.api.util.FilterBuilder filterBuilder = new com.povzetkar.quarkus.api.util.FilterBuilder("topic.user = :user");
-        filterBuilder.getParams().put("user", user);
+        FilterBuilder filterBuilder = new FilterBuilder("topic.user = :user")
+            .withParam("user", user);
 
         filterBuilder.and("topic.id = :topicId", "topicId", topicId);
         filterBuilder.and("briefingDate >= :startDate", "startDate", startDate);
         filterBuilder.and("briefingDate <= :endDate", "endDate", endDate);
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), java.util.Set.of("id", "briefingDate", "topic.id", "status"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "status"));
         PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
         long count = query.count();
         List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)

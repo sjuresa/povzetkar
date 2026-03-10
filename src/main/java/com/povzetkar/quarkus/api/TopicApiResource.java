@@ -48,6 +48,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Path("/api/v1/topics")
 @ApplicationScoped
@@ -89,7 +90,7 @@ public class TopicApiResource extends BaseApiResource {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("id"), java.util.Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"));
         PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)

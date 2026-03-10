@@ -35,6 +35,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Path("/api/v1/admin")
@@ -115,7 +116,7 @@ public class AdminApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, io.quarkus.panache.common.Sort.by("startedAt").descending(), java.util.Set.of("id", "jobType", "status", "startedAt", "endedAt"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
         return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
     }
 }

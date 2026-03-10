@@ -14,6 +14,13 @@ public class FilterBuilder {
         }
     }
 
+    public FilterBuilder withParam(String name, Object value) {
+        if (value != null) {
+            params.put(name, value);
+        }
+        return this;
+    }
+
     public FilterBuilder and(String condition, String paramName, Object paramValue) {
         if (paramValue != null) {
             if (!query.isEmpty()) {
