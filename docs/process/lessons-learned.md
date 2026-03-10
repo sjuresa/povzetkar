@@ -93,6 +93,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Using fully qualified class names (e.g., `java.util.Set`, `io.quarkus.panache.common.Sort`) inline within method bodies clutters the code, reduces readability, and makes the logical flow harder to scan.
 - **The Standard:** Always use standard `import` statements at the top of the file for all external classes and interfaces. Reserve fully qualified names strictly for resolving explicit class name collisions within the same file.
 
+### 2.10 Idempotency & Caching Response Filters
+- **The Trap:** When implementing idempotency caching with JAX-RS `ContainerResponseFilter`, writing the DTO to a cache and later fetching it as a `JsonNode` (via `ObjectMapper`) can cause it to be processed *again* by global envelope filters (like `GlobalEnvelopeFilter`). This leads to nested `"data": {"data": ...}` "double enveloping".
+- **The Standard:** Use `@NameBinding` annotations (e.g., `@Idempotent`) to restrict where caching filters apply. Additionally, ensure global filters like `GlobalEnvelopeFilter` are smart enough to bypass generic `com.fasterxml.jackson.databind.JsonNode` objects or ensure filter execution priorities (`@Priority`) explicitly execute caching *after* enveloping.
+
 ---
 
 ## 3. Asynchronous Execution & System Commands

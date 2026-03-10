@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Implemented JAX-RS `IdempotencyFilter` utilizing an `@Idempotent` name binding to safely cache and replay async `POST /commands/*` responses based on the `Idempotency-Key` header without redundant processing.
 - **API:** Implemented global ExceptionMappers to translate all errors (`ConstraintViolationException`, `SecurityException`, `WebApplicationException`, and uncaught system errors) into the standard `ApiEnvelopeDTO` using the RFC 7807 problem details structure.
 - **API:** Introduced `MessageDTO` for standardized simple message responses.
 - **API:** Configured `quarkus-smallrye-openapi` to automatically generate API specifications and expose Swagger UI for local development.

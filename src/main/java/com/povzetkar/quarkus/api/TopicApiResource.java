@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.TopicMapper;
@@ -187,6 +188,7 @@ public class TopicApiResource extends BaseApiResource {
     @POST
     @Path("/{id}/commands/generate-briefing")
     @RolesAllowed("TOPIC_TRIGGER_RUN")
+    @Idempotent
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
     @APIResponse(
             responseCode = "202",

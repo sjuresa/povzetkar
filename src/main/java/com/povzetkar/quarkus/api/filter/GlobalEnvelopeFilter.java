@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api.filter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -29,7 +30,7 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
         }
 
         Object entity = responseContext.getEntity();
-        if (entity == null || entity instanceof ApiEnvelopeDTO) {
+        if (entity == null || entity instanceof ApiEnvelopeDTO || entity instanceof JsonNode) {
             return;
         }
 
