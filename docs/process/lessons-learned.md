@@ -81,7 +81,8 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 
 ### 2.7 Exception Mapping vs Custom Responses
 - **The Trap:** Manually constructing `ApiEnvelopeDTO.error(...)` within resource catch blocks leads to fragmented error logic and risks exposing sensitive internal details.
-- **The Standard:** Always prefer throwing standard JAX-RS exceptions (e.g., `BadRequestException`, `InternalServerErrorException`) and let centralized `ExceptionMapper`s handle the envelope creation and generic error message sanitization.
+- **The Standard:** Always prefer throwing standard JAX-RS exceptions (e.g., `BadRequestException`, `NotFoundException`, `ForbiddenException`) and let centralized `ExceptionMapper`s handle the translation into the standard RFC 7807 global envelope.
+- **The Standard:** A catch-all `ExceptionMapper<Exception>` MUST be used to intercept unexpected 500 errors. It must log the raw stack trace internally using `StructuredLogger.error(...)` to preserve debug context, but emit a sanitized, generic error message (e.g., "An unexpected error occurred") inside the API envelope to prevent infrastructure leaks.
 - **The Standard:** For simple confirmation messages (e.g., "Operation started"), use a dedicated `MessageDTO` instead of `Map.of("message", ...)`. This provides a stable OpenAPI schema and improved type safety.
 
 ---
