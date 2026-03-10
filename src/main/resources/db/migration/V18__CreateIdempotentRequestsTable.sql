@@ -5,7 +5,7 @@ CREATE TABLE idempotent_requests (
     request_hash VARCHAR(64),
     response_body TEXT,
     response_status INTEGER,
-    response_location VARCHAR(255),
+    response_location TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_user_idempotency_key UNIQUE (user_id, idempotency_key),
     CONSTRAINT fk_idempotent_requests_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

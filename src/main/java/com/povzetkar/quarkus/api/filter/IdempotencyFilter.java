@@ -9,6 +9,9 @@ import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -16,7 +19,6 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import jakarta.ws.rs.BadRequestException;
 import org.jboss.logging.Logger;
 
 import java.io.ByteArrayInputStream;
@@ -95,7 +97,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             byte[] hashBytes = digest.digest(bytes);
             return Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
         } catch (NoSuchAlgorithmException e) {
-            throw new jakarta.ws.rs.InternalServerErrorException("Failed to initialize SHA-256 algorithm", e);
+            throw new InternalServerErrorException("Failed to initialize SHA-256 algorithm", e);
         }
     }
 
@@ -130,7 +132,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 newRequest.requestHash = requestHash;
                 newRequest.persistAndFlush();
                 return true;
-            } catch (jakarta.persistence.PersistenceException _) {
+            } catch (PersistenceException _) {
                 log.warnf("Race condition encountered when persisting idempotent request lock for key: %s.", idempotencyKey);
                 return false;
             }
