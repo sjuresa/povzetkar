@@ -31,8 +31,8 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
         }
 
         // Only wrap JSON responses
-        if (responseContext.getMediaType() != null && 
-            !responseContext.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+        MediaType mediaType = responseContext.getMediaType();
+        if (mediaType == null || !mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
             return;
         }
 

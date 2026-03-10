@@ -28,7 +28,9 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Path("/api/v1/briefings")
 @ApplicationScoped
@@ -63,7 +65,7 @@ public class BriefingApiResource extends BaseApiResource {
         User user = getAuthenticatedUser();
 
         StringBuilder queryBuilder = new StringBuilder("topic.user = :user");
-        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        Map<String, Object> params = new HashMap<>();
         params.put("user", user);
 
         if (topicId != null) {
@@ -81,10 +83,11 @@ public class BriefingApiResource extends BaseApiResource {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         PanacheQuery<Briefing> query = Briefing.find(queryBuilder.toString(), Sort.by("briefingDate").descending(), params);
-        query.page(pageIndex, clampedPageSize);
-
-        List<BriefingSummaryDTO> dtoList = query.stream().map(briefingMapper::toSummaryDTO).toList();
         long count = query.count();
+        List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
+                .stream()
+                .map(briefingMapper::toSummaryDTO)
+                .toList();
  
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }

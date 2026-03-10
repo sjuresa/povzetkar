@@ -84,10 +84,11 @@ public class TopicApiResource extends BaseApiResource {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
         PanacheQuery<Topic> query = Topic.find("user", Sort.by("id"), user);
-        query.page(pageIndex, clampedPageSize);
-
-        List<TopicDTO> dtoList = query.stream().map(topicMapper::toDTO).toList();
         long count = query.count();
+        List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
+                .stream()
+                .map(topicMapper::toDTO)
+                .toList();
 
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
@@ -127,6 +128,7 @@ public class TopicApiResource extends BaseApiResource {
 
         return Response.created(URI.create("/api/v1/topics/" + topic.id))
                 .entity(topicMapper.toDTO(topic))
+                .type(MediaType.APPLICATION_JSON)
                 .build();
     }
 

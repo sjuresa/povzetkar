@@ -26,8 +26,8 @@ public abstract class BaseApiResource {
     protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
         if (ifMatchHeader == null || ifMatchHeader.isBlank()) {
             // The OptimisticLockingFilter should have already caught this for external requests.
-            // This indicates a programming error if called without a header.
-            throw new jakarta.ws.rs.BadRequestException("If-Match header is required for optimistic locking.");
+            // This indicates a programming error (e.g., filter not registered, or internal call missing header).
+            throw new jakarta.ws.rs.InternalServerErrorException("Programming error: checkOptimisticLock called without If-Match header.");
         }
 
         String cleanVersion = ifMatchHeader.replace("\"", "").trim();
