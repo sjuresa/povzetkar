@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "idempotent_requests", uniqueConstraints = {
@@ -32,6 +33,9 @@ public class IdempotentRequest extends PanacheEntityBase {
     @Column(name = "idempotency_key", nullable = false, length = 128)
     public String idempotencyKey;
 
+    @Column(name = "request_hash", length = 64)
+    public String requestHash;
+
     @Column(name = "response_body", columnDefinition = "TEXT")
     public String responseBody;
 
@@ -49,5 +53,19 @@ public class IdempotentRequest extends PanacheEntityBase {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IdempotentRequest that = (IdempotentRequest) o;
+        return user != null && user.id != null && idempotencyKey != null &&
+               user.id.equals(that.user.id) && idempotencyKey.equals(that.idempotencyKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(user != null ? user.id : null, idempotencyKey);
     }
 }

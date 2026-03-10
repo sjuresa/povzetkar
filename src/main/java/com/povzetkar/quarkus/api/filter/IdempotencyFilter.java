@@ -19,8 +19,13 @@ import jakarta.ws.rs.ext.Provider;
 import jakarta.ws.rs.BadRequestException;
 import org.jboss.logging.Logger;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 @Provider
 @Idempotent
@@ -32,6 +37,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     private static final String PROPERTY_IDEMPOTENCY_KEY = "internal.idempotency.key";
     private static final String PROPERTY_IDEMPOTENCY_USER = "internal.idempotency.user";
     private static final int MAX_KEY_LENGTH = 128;
+    private static final String QUERY_IDEMPOTENCY_KEY_AND_USER = "idempotencyKey = ?1 and user.id = ?2";
 
     private final ObjectMapper objectMapper;
     private final UserContextService userContextService;
@@ -55,21 +61,80 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         }
 
         User user = userContextService.getCurrentUser().orElse(null);
-        if (user == null) {
+        if (user == null || user.id == null) {
             return; // User is not authenticated, bypass idempotency
         }
 
         requestContext.setProperty(PROPERTY_IDEMPOTENCY_KEY, idempotencyKey);
-        requestContext.setProperty(PROPERTY_IDEMPOTENCY_USER, user);
+        requestContext.setProperty(PROPERTY_IDEMPOTENCY_USER, user.id); // store ID to avoid detached entity issues
 
-        IdempotentRequest cachedRequest = QuarkusTransaction.requiringNew().call(() ->
-                IdempotentRequest.<IdempotentRequest>find("idempotencyKey = ?1 and user = ?2", idempotencyKey, user).firstResult()
-        );
+        String requestHash = extractAndHashBody(requestContext);
 
-        if (cachedRequest != null && cachedRequest.responseStatus != null) {
-            log.infof("Idempotency cache hit for key: %s", idempotencyKey);
-            serveCachedResponse(requestContext, cachedRequest, idempotencyKey);
+        boolean lockAcquiredOrServed = attemptLockOrServe(requestContext, idempotencyKey, user.id, requestHash);
+        if (!lockAcquiredOrServed) {
+             // Abort if unable to lock and didn't serve cached response (e.g. processing or conflict)
+             requestContext.abortWith(Response.status(Response.Status.CONFLICT)
+                     .entity("{\"error\":\"Conflict or concurrent request processing for this Idempotency-Key\"}")
+                     .type(MediaType.APPLICATION_JSON_TYPE)
+                     .build());
         }
+    }
+
+    private String extractAndHashBody(ContainerRequestContext requestContext) throws IOException {
+        InputStream is = requestContext.getEntityStream();
+        if (is == null) {
+            return null;
+        }
+        byte[] bytes = is.readAllBytes();
+        requestContext.setEntityStream(new ByteArrayInputStream(bytes));
+        if (bytes.length == 0) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(bytes);
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new jakarta.ws.rs.InternalServerErrorException("Failed to initialize SHA-256 algorithm", e);
+        }
+    }
+
+    private boolean attemptLockOrServe(ContainerRequestContext requestContext, String idempotencyKey, Long userId, String requestHash) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            User managedUser = User.findById(userId);
+            if (managedUser == null) return false;
+
+            IdempotentRequest existingRequest = IdempotentRequest.<IdempotentRequest>find(
+                    QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId).firstResult();
+
+            if (existingRequest != null) {
+                if (requestHash != null && !requestHash.equals(existingRequest.requestHash)) {
+                    log.warnf("Idempotency key %s reused with different payload", idempotencyKey);
+                    return false;
+                }
+
+                if (existingRequest.responseStatus != null) {
+                    log.infof("Idempotency cache hit for key: %s", idempotencyKey);
+                    serveCachedResponse(requestContext, existingRequest, idempotencyKey);
+                    return true;
+                } else {
+                    log.infof("Idempotency key %s is currently processing", idempotencyKey);
+                    return false;
+                }
+            }
+
+            try {
+                IdempotentRequest newRequest = new IdempotentRequest();
+                newRequest.idempotencyKey = idempotencyKey;
+                newRequest.user = managedUser;
+                newRequest.requestHash = requestHash;
+                newRequest.persistAndFlush();
+                return true;
+            } catch (jakarta.persistence.PersistenceException _) {
+                log.warnf("Race condition encountered when persisting idempotent request lock for key: %s.", idempotencyKey);
+                return false;
+            }
+        });
     }
 
     private void serveCachedResponse(ContainerRequestContext requestContext, IdempotentRequest cachedRequest, String idempotencyKey) {
@@ -95,16 +160,18 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
         String idempotencyKey = (String) requestContext.getProperty(PROPERTY_IDEMPOTENCY_KEY);
-        User user = (User) requestContext.getProperty(PROPERTY_IDEMPOTENCY_USER);
+        Long userId = (Long) requestContext.getProperty(PROPERTY_IDEMPOTENCY_USER);
 
-        if (idempotencyKey == null || user == null) {
+        if (idempotencyKey == null || userId == null) {
             return; // No key or user was present in the request
         }
 
         int status = responseContext.getStatus();
         
         if (isSuccessful(status)) {
-            cacheResponse(idempotencyKey, user, status, responseContext);
+            updateLockWithResponse(idempotencyKey, userId, status, responseContext);
+        } else {
+            removeLock(idempotencyKey, userId);
         }
     }
 
@@ -112,11 +179,25 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         return status >= 200 && status < 300;
     }
 
-    private void cacheResponse(String idempotencyKey, User user, int status, ContainerResponseContext responseContext) {
+    private void updateLockWithResponse(String idempotencyKey, Long userId, int status, ContainerResponseContext responseContext) {
         String responseBody = extractResponseBody(responseContext, idempotencyKey);
         String locationStr = extractLocation(responseContext);
 
-        persistIdempotentRequestAsync(idempotencyKey, user, status, responseBody, locationStr);
+        QuarkusTransaction.requiringNew().run(() -> {
+            IdempotentRequest request = IdempotentRequest.<IdempotentRequest>find(
+                    QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId).firstResult();
+            
+            if (request != null) {
+                request.responseStatus = status;
+                request.responseBody = responseBody;
+                request.responseLocation = locationStr;
+                request.persist();
+            }
+        });
+    }
+
+    private void removeLock(String idempotencyKey, Long userId) {
+        QuarkusTransaction.requiringNew().run(() -> IdempotentRequest.delete(QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId));
     }
     
     private String extractResponseBody(ContainerResponseContext responseContext, String idempotencyKey) {
@@ -136,25 +217,5 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             return responseContext.getLocation().toString();
         }
         return null;
-    }
-
-    private void persistIdempotentRequestAsync(String idempotencyKey, User user, int status, String responseBody, String locationStr) {
-        QuarkusTransaction.requiringNew().run(() -> {
-            if (IdempotentRequest.find("idempotencyKey = ?1 and user = ?2", idempotencyKey, user).firstResult() != null) {
-                return; // Another request already cached the response.
-            }
-
-            try {
-                IdempotentRequest request = new IdempotentRequest();
-                request.idempotencyKey = idempotencyKey;
-                request.user = user;
-                request.responseStatus = status;
-                request.responseBody = responseBody;
-                request.responseLocation = locationStr;
-                request.persistAndFlush(); 
-            } catch (jakarta.persistence.PersistenceException _) {
-                log.warnf("Race condition encountered when persisting idempotent request for key: %s. Another request likely succeeded.", idempotencyKey);
-            }
-        });
     }
 }

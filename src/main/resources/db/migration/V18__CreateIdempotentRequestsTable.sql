@@ -2,6 +2,7 @@ CREATE TABLE idempotent_requests (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     idempotency_key VARCHAR(128) NOT NULL,
+    request_hash VARCHAR(64),
     response_body TEXT,
     response_status INTEGER,
     response_location VARCHAR(255),
