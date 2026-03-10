@@ -19,8 +19,8 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
                 .map(violation -> {
                     String path = violation.getPropertyPath().toString();
                     // Extract just the field name from the path if possible (e.g. from "method.arg0.fieldName" to "fieldName")
-                    String[] parts = path.split("\\.");
-                    String fieldName = parts[parts.length - 1];
+                    int lastDotIndex = path.lastIndexOf('.');
+                    String fieldName = (lastDotIndex != -1) ? path.substring(lastDotIndex + 1) : path;
                     return new FieldErrorDTO(fieldName, violation.getMessage());
                 })
                 .toList();

@@ -13,42 +13,34 @@ public class SecurityExceptionMapper implements ExceptionMapper<SecurityExceptio
 
     @Override
     public Response toResponse(SecurityException exception) {
-        int status;
-        String title;
-        String type;
-        String errorCode;
-        String detail;
+        ApiErrorDTO error = switch (exception) {
+            case UnauthorizedException _ -> new ApiErrorDTO(
+                    "/errors/unauthorized",
+                    "Unauthorized",
+                    Response.Status.UNAUTHORIZED.getStatusCode(),
+                    "Authentication is required and has failed or has not yet been provided.",
+                    "UNAUTHORIZED",
+                    null
+            );
+            case ForbiddenException _ -> new ApiErrorDTO(
+                    "/errors/forbidden",
+                    "Forbidden",
+                    Response.Status.FORBIDDEN.getStatusCode(),
+                    "The server understood the request but refuses to authorize it.",
+                    "FORBIDDEN",
+                    null
+            );
+            default -> new ApiErrorDTO(
+                    "/errors/forbidden",
+                    "Forbidden",
+                    Response.Status.FORBIDDEN.getStatusCode(),
+                    "Access denied.",
+                    "FORBIDDEN",
+                    null
+            );
+        };
 
-        if (exception instanceof UnauthorizedException) {
-            status = Response.Status.UNAUTHORIZED.getStatusCode();
-            title = "Unauthorized";
-            type = "/errors/unauthorized";
-            errorCode = "UNAUTHORIZED";
-            detail = "Authentication is required and has failed or has not yet been provided.";
-        } else if (exception instanceof ForbiddenException) {
-            status = Response.Status.FORBIDDEN.getStatusCode();
-            title = "Forbidden";
-            type = "/errors/forbidden";
-            errorCode = "FORBIDDEN";
-            detail = "The server understood the request but refuses to authorize it.";
-        } else {
-            status = Response.Status.FORBIDDEN.getStatusCode();
-            title = "Forbidden";
-            type = "/errors/forbidden";
-            errorCode = "FORBIDDEN";
-            detail = "Access denied.";
-        }
-
-        ApiErrorDTO error = new ApiErrorDTO(
-                type,
-                title,
-                status,
-                detail,
-                errorCode,
-                null
-        );
-
-        return Response.status(status)
+        return Response.status(error.status())
                 .entity(ApiEnvelopeDTO.error(error))
                 .build();
     }
