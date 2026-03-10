@@ -9,27 +9,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.Provider;
 
 import java.io.IOException;
+import java.util.List;
 
 @Provider
+@Enveloped
 public class GlobalEnvelopeFilter implements ContainerResponseFilter {
-
-    private static final String UI_PATH_PREFIX = "ui/";
-    private static final String Q_PATH_PREFIX = "q/";
 
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
-        // Only wrap successful (2xx) responses. Errors should be handled by ExceptionMappers.
-        if (responseContext.getStatus() < 200 || responseContext.getStatus() >= 300) {
-            return;
-        }
-
-        String path = requestContext.getUriInfo().getPath();
-
-        // Skip non-API paths (UI, Swagger UI, OpenAPI spec, etc.)
-        if (path.startsWith(UI_PATH_PREFIX) || path.startsWith(Q_PATH_PREFIX)) {
-            return;
-        }
-
         // Only wrap JSON responses
         MediaType mediaType = responseContext.getMediaType();
         if (mediaType == null || !mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
@@ -37,17 +24,14 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
         }
 
         Object entity = responseContext.getEntity();
-        if (entity == null) {
-            return;
-        }
-
-        // If the entity is already an envelope (e.g. from an exception mapper or legacy manual wrap), skip it
-        if (entity instanceof ApiEnvelopeDTO) {
+        if (entity == null || entity instanceof ApiEnvelopeDTO) {
             return;
         }
 
         // Handle PaginatedResponse wrapping
-        if (entity instanceof PaginatedResponse<?> (var items, var totalCount, var pageIndex, var pageSize)) {
+        if (entity instanceof PaginatedResponse<?>(
+                List<?> items, long totalCount, int pageIndex, int pageSize
+        )) {
             responseContext.setEntity(ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, pageSize));
         } else {
             // Standard success wrap for raw DTOs or Lists

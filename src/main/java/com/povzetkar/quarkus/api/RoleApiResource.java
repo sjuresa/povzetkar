@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.RoleDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.RoleMapper;
 import com.povzetkar.quarkus.model.Role;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -21,13 +22,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
+ 
 import java.util.List;
-
+ 
 @Path("/api/v1/roles")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Roles", description = "Endpoints for Role management")
 public class RoleApiResource {
 

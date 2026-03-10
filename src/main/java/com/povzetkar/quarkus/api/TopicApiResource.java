@@ -5,6 +5,8 @@ import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.TopicMapper;
 import com.povzetkar.quarkus.model.Topic;
@@ -50,6 +52,7 @@ import java.util.Optional;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Topics", description = "Endpoints for managing Topics")
 public class TopicApiResource extends BaseApiResource {
 
@@ -142,6 +145,7 @@ public class TopicApiResource extends BaseApiResource {
             description = "Topic updated successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
+    @OptimisticLocking
     public TopicDTO patchTopic(
             @PathParam("id") Long id,
             @HeaderParam("If-Match") String ifMatch,
@@ -164,6 +168,7 @@ public class TopicApiResource extends BaseApiResource {
     @Path("/{id}")
     @Transactional
     @RolesAllowed("TOPIC_DELETE")
+    @OptimisticLocking
     @Operation(summary = "Delete topic", description = "Deletes a specific topic.")
     public Response deleteTopic(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
         User user = getAuthenticatedUser();

@@ -4,6 +4,8 @@ import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourcePatchDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
@@ -47,6 +49,7 @@ import java.util.Optional;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Content Sources", description = "Endpoints for managing Content Sources")
 public class ContentSourceResource extends BaseApiResource {
 
@@ -140,6 +143,7 @@ public class ContentSourceResource extends BaseApiResource {
            description = "Content source patched successfully",
            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceDTO.class))
    )
+   @OptimisticLocking
    public ContentSourceDTO patchContentSource(@PathParam("id") Long id,
                                               @HeaderParam("If-Match") String ifMatch,
                                               @Valid @NotNull ContentSourcePatchDTO patchDTO) {
@@ -158,6 +162,7 @@ public class ContentSourceResource extends BaseApiResource {
     @Path("/{id}")
     @Transactional
     @RolesAllowed("SOURCE_DELETE")
+    @OptimisticLocking
     @Operation(summary = "Delete content source", description = "Deletes a specific content source.")
     public Response deleteContentSource(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)

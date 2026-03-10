@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
@@ -37,6 +38,7 @@ import java.util.UUID;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Admin", description = "Endpoints for System Administration and Background Jobs")
 public class AdminApiResource extends BaseApiResource {
 
@@ -74,6 +76,7 @@ public class AdminApiResource extends BaseApiResource {
         return Response.accepted()
                 .location(location)
                 .entity(backgroundJobMapper.toDTO(job))
+                .type(MediaType.APPLICATION_JSON)
                 .build();
     }
 

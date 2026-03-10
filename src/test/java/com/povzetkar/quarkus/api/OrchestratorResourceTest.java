@@ -42,7 +42,7 @@ class OrchestratorResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
-                .body("data", is("Orchestration process started."));
+                .body("data.message", is("Orchestration process started."));
 
         verify(orchestrationManager).runOrchestrationManually(request);
     }
@@ -58,7 +58,7 @@ class OrchestratorResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
-                .body("data", is("Orchestration process started."));
+                .body("data.message", is("Orchestration process started."));
 
         verify(orchestrationManager).runOrchestrationManually(request);
     }
@@ -75,7 +75,7 @@ class OrchestratorResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
-                .body("data", is("Orchestration process started."));
+                .body("data.message", is("Orchestration process started."));
 
         verify(orchestrationManager).runOrchestrationManually(request);
     }
@@ -94,7 +94,7 @@ class OrchestratorResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(400)
-                .body("data", is("Orchestration cannot be run for future dates."));
+                .body("data.message", is("Orchestration cannot be run for future dates."));
 
         verify(orchestrationManager).runOrchestrationManually(request);
     }
@@ -110,7 +110,7 @@ class OrchestratorResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(202)
-                .body("data", is("Orchestration process started."));
+                .body("data.message", is("Orchestration process started."));
 
         verify(orchestrationManager).runOrchestrationManually(request);
     }

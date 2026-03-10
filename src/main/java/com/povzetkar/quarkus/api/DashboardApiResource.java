@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.DashboardDTO;
 import com.povzetkar.quarkus.api.dto.DashboardStatsDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
@@ -33,6 +34,7 @@ import java.util.function.Supplier;
 @Path("/api/v1/dashboard")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Dashboard", description = "Endpoints for frontend dashboard aggregation")
 public class DashboardApiResource extends BaseApiResource {
     private static final int BRIEFING_STATS_DAYS = 7;

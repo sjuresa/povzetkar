@@ -1,9 +1,11 @@
 package com.povzetkar.quarkus.api;
-
+ 
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.UserDTO;
 import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
 import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.UserMapper;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
@@ -41,6 +43,7 @@ import java.util.List;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Users", description = "Endpoints for User management")
 public class UserApiResource extends BaseApiResource {
 
@@ -113,6 +116,7 @@ public class UserApiResource extends BaseApiResource {
             description = "User status updated successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
     )
+    @OptimisticLocking
     public UserDTO updateUserStatus(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch, UserUpdateDTO dto) {
         User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
                 .firstResultOptional()
@@ -171,6 +175,7 @@ public class UserApiResource extends BaseApiResource {
             description = "User roles updated successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
     )
+    @OptimisticLocking
     public UserDTO updateUserRoles(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch, UserRoleUpdateDTO dto) {
         User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
                 .firstResultOptional()

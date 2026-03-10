@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.User;
@@ -22,13 +23,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
+ 
 import java.util.UUID;
-
+ 
 @Path("/api/v1/jobs")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
 @Tag(name = "Jobs", description = "Endpoints for user tracking background jobs")
 public class JobApiResource extends BaseApiResource {
 
