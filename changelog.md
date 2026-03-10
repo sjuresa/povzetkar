@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Introduced `MessageDTO` for standardized simple message responses.
 - **API:** Configured `quarkus-smallrye-openapi` to automatically generate API specifications and expose Swagger UI for local development.
 - **API:** Added comprehensive OpenAPI annotations to all JAX-RS resource classes, including specific response envelope schemas (`ApiEnvelopeDTO`) and status codes.
 - **API:** Implemented Backend-For-Frontend (BFF) Dashboard endpoint (`GET /api/v1/dashboard`) aggregating user-specific active topics and weekly briefing generation statistics, securely preventing frontend N+1 queries.
@@ -23,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API:** Implemented a global JAX-RS `ContainerResponseFilter` (`GlobalResponseEnvelopeFilter`) to automatically wrap all successful JSON responses in a standard `{ data, meta, error }` envelope, improving consistency and reducing boilerplate.
 - **Security:** Implemented Optimistic Locking using the `@Version` field on all auditable entities. The API now requires valid quotes `If-Match` headers for all `PATCH`, `PUT`, and `DELETE` state mutations, returning `428 Precondition Required` or `409 Conflict` appropriately.
 - **Background Jobs:** Introduced a persistent job execution framework with `BackgroundJob` entity, `BackgroundJobService`, and async orchestration integration using `Infrastructure.getDefaultExecutor()`.
+- **API:** Standardized error response structure using `ApiEnvelopeDTO.error()` across all exception mappers, including `BadRequestExceptionMapper` and `OptimisticLockExceptionMapper`.
+- **API:** Refactored `OrchestratorResource` to utilize standard JAX-RS exception mappers for error responses, improving internal error sanitization.
+- **API:** Centralized `pageSize` clamping logic in `AdminApiResource` for consistency across paginated resources.
+- **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
 
 ### Changed
 - **API:** Refactored Topics and ContentSources to use `PATCH` instead of `PUT` for updates, aligning with the core REST API contract.

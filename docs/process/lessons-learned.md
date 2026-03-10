@@ -66,6 +66,8 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Trap:** Manually wrapping every API response in an `ApiEnvelopeDTO` (e.g., `return Response.ok(new ApiEnvelopeDTO<>(dto)).build()`) is repetitive, error-prone, and clutters the resource logic. It also makes it difficult to change the envelope structure globally.
 - **The Standard:** Use a JAX-RS `ContainerResponseFilter` (e.g., `GlobalResponseEnvelopeFilter`) to automatically wrap all successful responses in a standard envelope. API resources should return the **raw DTO** or **`PaginatedResponse`** directly. This keeps the resource code clean and ensures a consistent response structure across the entire API.
 - **Exception:** Do not wrap responses that are already envelopes (like `ApiErrorDTO`) or those that should not have an envelope (e.g., raw file downloads or non-JSON responses).
+- **Filter Precision:** Enveloping filters must strictly target successful (2xx) status codes. Wrapping error responses (4xx/5xx) leads to inconsistent "double-enveloped" structures that break client-side error handling logic.
+- **Name Binding:** Prefer JAX-RS Name Binding (custom annotations like `@Enveloped`) over URL path prefix scanning to target filters. URL scanning is brittle and prone to bypasses as new resources are added.
 
 ### 2.6 Optimistic Locking (Concurrency Control)
 - **The Trap:** Deleting or updating entities based solely on their ID without version checks can lead to the "lost update" problem, where concurrent changes by different users overwrite each other or an entity is deleted while another user is trying to update it.
@@ -76,6 +78,11 @@ When background jobs or data-sync commands fail, the exception stack trace can b
   4. If the versions mismatch, return **`409 Conflict`** (or a specific Optimistic Lock error).
   5. If the header is malformed (e.g., not an integer), return **`400 Bad Request`**.
   6. In JAX-RS resources, use a helper method (e.g., `baseApiResource.checkOptimisticLock(entity, ifMatch)`) to centralize the version comparison check, while presence validation is handled globally by `OptimisticLockingFilter`.
+
+### 2.7 Exception Mapping vs Custom Responses
+- **The Trap:** Manually constructing `ApiEnvelopeDTO.error(...)` within resource catch blocks leads to fragmented error logic and risks exposing sensitive internal details.
+- **The Standard:** Always prefer throwing standard JAX-RS exceptions (e.g., `BadRequestException`, `InternalServerErrorException`) and let centralized `ExceptionMapper`s handle the envelope creation and generic error message sanitization.
+- **The Standard:** For simple confirmation messages (e.g., "Operation started"), use a dedicated `MessageDTO` instead of `Map.of("message", ...)`. This provides a stable OpenAPI schema and improved type safety.
 
 ---
 
