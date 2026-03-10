@@ -60,12 +60,14 @@ public class IdempotentRequest extends PanacheEntityBase {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdempotentRequest that = (IdempotentRequest) o;
+        // Using user.id is safer for lazy associations to avoid unintended fetches or exceptions.
         return Objects.equals(idempotencyKey, that.idempotencyKey) &&
-               Objects.equals(user, that.user);
+               user != null && that.user != null && Objects.equals(user.id, that.user.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idempotencyKey, user);
+        // Using user.id is safer for lazy associations.
+        return Objects.hash(idempotencyKey, user != null ? user.id : null);
     }
 }

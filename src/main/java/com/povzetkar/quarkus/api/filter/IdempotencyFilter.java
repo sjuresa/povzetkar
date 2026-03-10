@@ -3,6 +3,8 @@ package com.povzetkar.quarkus.api.filter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
 import com.povzetkar.quarkus.model.IdempotentRequest;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -38,7 +40,9 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     private static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
     private static final String PROPERTY_IDEMPOTENCY_KEY = "internal.idempotency.key";
     private static final String PROPERTY_IDEMPOTENCY_USER = "internal.idempotency.user";
+    private static final String PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED = "internal.idempotency.lock.acquired";
     private static final int MAX_KEY_LENGTH = 128;
+    private static final int MAX_PAYLOAD_SIZE = 10 * 1024 * 1024; // 10MB
     private static final String QUERY_IDEMPOTENCY_KEY_AND_USER = "idempotencyKey = ?1 and user.id = ?2";
 
     private final ObjectMapper objectMapper;
@@ -76,7 +80,8 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         if (!lockAcquiredOrServed) {
              // Abort if unable to lock and didn't serve cached response (e.g. processing or conflict)
              requestContext.abortWith(Response.status(Response.Status.CONFLICT)
-                     .entity("{\"error\":\"Conflict or concurrent request processing for this Idempotency-Key\"}")
+                     .entity(ApiEnvelopeDTO.error(new ApiErrorDTO(
+                             null, "Conflict", 409, "Conflict or concurrent request processing for this Idempotency-Key", "CONCURRENT_REQUEST", null)))
                      .type(MediaType.APPLICATION_JSON_TYPE)
                      .build());
         }
@@ -87,7 +92,10 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         if (is == null) {
             return null;
         }
-        byte[] bytes = is.readAllBytes();
+        byte[] bytes = is.readNBytes(MAX_PAYLOAD_SIZE + 1);
+        if (bytes.length > MAX_PAYLOAD_SIZE) {
+            throw new BadRequestException("Request payload exceeds maximum allowed size for idempotency check.");
+        }
         requestContext.setEntityStream(new ByteArrayInputStream(bytes));
         if (bytes.length == 0) {
             return null;
@@ -131,6 +139,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 newRequest.user = managedUser;
                 newRequest.requestHash = requestHash;
                 newRequest.persistAndFlush();
+                requestContext.setProperty(PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED, Boolean.TRUE);
                 return true;
             } catch (PersistenceException _) {
                 log.warnf("Race condition encountered when persisting idempotent request lock for key: %s.", idempotencyKey);
@@ -163,9 +172,10 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
         String idempotencyKey = (String) requestContext.getProperty(PROPERTY_IDEMPOTENCY_KEY);
         Long userId = (Long) requestContext.getProperty(PROPERTY_IDEMPOTENCY_USER);
+        Boolean lockAcquired = (Boolean) requestContext.getProperty(PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED);
 
-        if (idempotencyKey == null || userId == null) {
-            return; // No key or user was present in the request
+        if (idempotencyKey == null || userId == null || !Boolean.TRUE.equals(lockAcquired)) {
+            return; // No key, user, or we are not the lock owner
         }
 
         int status = responseContext.getStatus();
