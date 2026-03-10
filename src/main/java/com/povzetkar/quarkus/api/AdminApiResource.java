@@ -110,6 +110,7 @@ public class AdminApiResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         
-        return backgroundJobService.getJobList(status, pageIndex, pageSize);
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
+        return backgroundJobService.getJobList(status, pageIndex, clampedPageSize);
     }
 }

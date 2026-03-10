@@ -17,6 +17,11 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+        // Only wrap successful (2xx) responses. Errors should be handled by ExceptionMappers.
+        if (responseContext.getStatus() < 200 || responseContext.getStatus() >= 300) {
+            return;
+        }
+
         // Only wrap JSON responses
         MediaType mediaType = responseContext.getMediaType();
         if (mediaType == null || !mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {

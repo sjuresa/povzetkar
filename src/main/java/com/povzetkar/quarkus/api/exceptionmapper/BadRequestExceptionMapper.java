@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.api.exceptionmapper;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -10,9 +12,17 @@ public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestExce
 
     @Override
     public Response toResponse(BadRequestException exception) {
-        var errorResponse = java.util.Collections.singletonMap("error", exception.getMessage());
+        ApiErrorDTO error = new ApiErrorDTO(
+                "/errors/bad-request",
+                "Bad Request",
+                Response.Status.BAD_REQUEST.getStatusCode(),
+                exception.getMessage(),
+                "BAD_REQUEST",
+                null
+        );
+ 
         return Response.status(Response.Status.BAD_REQUEST)
-                .entity(errorResponse)
+                .entity(ApiEnvelopeDTO.error(error))
                 .build();
     }
 }

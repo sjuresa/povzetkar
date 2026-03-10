@@ -41,6 +41,10 @@ public class ApiEnvelopeDTO<T> {
         return new ApiEnvelopeDTO<>(data, meta, null);
     }
 
+    public static <T> ApiEnvelopeDTO<T> error(ApiErrorDTO error) {
+        return new ApiEnvelopeDTO<>(null, new ApiMetaDTO(Instant.now(), null, null), error);
+    }
+
     @JsonProperty("data")
     public T getData() {
         return data;

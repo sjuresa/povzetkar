@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.api;
  
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.service.OrchestrationManager;
@@ -69,8 +71,16 @@ public class OrchestratorResource {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (IllegalArgumentException e) {
+            var error = new ApiErrorDTO(
+                "/errors/bad-request",
+                "Bad Request",
+                Response.Status.BAD_REQUEST.getStatusCode(),
+                e.getMessage(),
+                "INVALID_ARGUMENT",
+                null
+            );
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(MESSAGE, e.getMessage()))
+                    .entity(ApiEnvelopeDTO.error(error))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {
@@ -80,8 +90,16 @@ public class OrchestratorResource {
                     LogKeys.MESSAGE, "Error starting manual orchestration",
                     LogKeys.ERROR_MESSAGE, e.getMessage()
             );
+            var error = new ApiErrorDTO(
+                "/errors/internal-server-error",
+                "Internal Server Error",
+                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                "Error starting manual orchestration: " + e.getMessage(),
+                "INTERNAL_ERROR",
+                null
+            );
             return Response.serverError()
-                    .entity(java.util.Map.of(MESSAGE, "Error starting manual orchestration: " + e.getMessage()))
+                    .entity(ApiEnvelopeDTO.error(error))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -114,11 +132,19 @@ public class OrchestratorResource {
                             .type(MediaType.APPLICATION_JSON)
                             .build();
                 })
-                .onFailure().recoverWithItem(failure ->
-                        Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(java.util.Map.of(MESSAGE, "Preview failed: " + failure.getMessage()))
+                .onFailure().recoverWithItem(failure -> {
+                        var error = new ApiErrorDTO(
+                            "/errors/internal-server-error",
+                            "Internal Server Error",
+                            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                            "Preview failed: " + failure.getMessage(),
+                            "INTERNAL_ERROR",
+                            null
+                        );
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(ApiEnvelopeDTO.error(error))
                                 .type(MediaType.APPLICATION_JSON)
-                                .build()
-                );
+                                .build();
+                });
     }
 }

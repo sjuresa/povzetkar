@@ -94,7 +94,7 @@ class OrchestratorResourceTest {
                 .when().post("/api/v1/orchestrator/run")
                 .then()
                 .statusCode(400)
-                .body("data.message", is("Orchestration cannot be run for future dates."));
+                .body("error.detail", is("Orchestration cannot be run for future dates."));
 
         verify(orchestrationManager).runOrchestrationManually(request);
     }
