@@ -39,7 +39,7 @@ class ConstraintViolationExceptionMapperTest {
         assertThat(error.type()).isEqualTo("/errors/validation");
         assertThat(error.title()).isEqualTo("Validation Error");
         assertThat(error.status()).isEqualTo(400);
-        assertThat(error.detail()).isEqualTo("Validation failed");
+        assertThat(error.detail()).isEqualTo("One or more constraints have been violated.");
         assertThat(error.errorCode()).isEqualTo("VALIDATION_ERROR");
         
         assertThat(error.fieldErrors()).hasSize(1);

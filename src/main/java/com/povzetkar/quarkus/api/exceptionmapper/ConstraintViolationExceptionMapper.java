@@ -29,7 +29,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
                 "/errors/validation",
                 "Validation Error",
                 Response.Status.BAD_REQUEST.getStatusCode(),
-                exception.getMessage() != null && !exception.getMessage().isBlank() ? exception.getMessage() : "One or more constraints have been violated.",
+                "One or more constraints have been violated.",
                 "VALIDATION_ERROR",
                 fieldErrors.isEmpty() ? null : fieldErrors
         );

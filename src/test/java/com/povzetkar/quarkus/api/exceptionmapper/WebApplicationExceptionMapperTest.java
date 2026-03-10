@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api.exceptionmapper;
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
@@ -47,5 +48,24 @@ class WebApplicationExceptionMapperTest {
         assertThat(error.detail()).isEqualTo("Resource not found");
         assertThat(error.errorCode()).isEqualTo("NOT_FOUND");
         assertThat(error.type()).isEqualTo("/errors/not-found");
+    }
+
+    @Test
+    void testToResponse_InternalServerError() {
+        WebApplicationExceptionMapper mapper = new WebApplicationExceptionMapper();
+        InternalServerErrorException exception = new InternalServerErrorException("Sensitive database connection refused message");
+
+        Response response = mapper.toResponse(exception);
+
+        assertThat(response.getStatus()).isEqualTo(500);
+
+        ApiEnvelopeDTO<?> envelope = (ApiEnvelopeDTO<?>) response.getEntity();
+        ApiErrorDTO error = envelope.getError();
+        
+        assertThat(error.status()).isEqualTo(500);
+        assertThat(error.title()).isEqualTo("Internal Server Error");
+        assertThat(error.detail()).isEqualTo("Internal Server Error"); // Should be sanitized to title
+        assertThat(error.errorCode()).isEqualTo("INTERNAL_SERVER_ERROR");
+        assertThat(error.type()).isEqualTo("/errors/internal-server-error");
     }
 }

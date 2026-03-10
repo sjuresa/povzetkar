@@ -21,7 +21,7 @@ public class WebApplicationExceptionMapper implements ExceptionMapper<WebApplica
         String errorCode = title.toUpperCase().replace(" ", "_");
         
         String detail = exception.getMessage();
-        if (detail == null || detail.isBlank() || detail.startsWith("HTTP ")) {
+        if (status >= 500 || detail == null || detail.isBlank() || detail.startsWith("HTTP ")) {
             detail = title;
         }
 
