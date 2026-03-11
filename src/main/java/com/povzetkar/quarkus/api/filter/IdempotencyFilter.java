@@ -146,8 +146,8 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 newRequest.persistAndFlush();
                 requestContext.setProperty(PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED, Boolean.TRUE);
                 return true;
-            } catch (PersistenceException _) {
-                log.warnf("Race condition encountered when persisting idempotent request lock for key: %s.", idempotencyKey);
+            } catch (PersistenceException e) {
+                log.warnf(e, "Race condition encountered when persisting idempotent request lock for key: %s.", idempotencyKey);
                 return false;
             }
         });

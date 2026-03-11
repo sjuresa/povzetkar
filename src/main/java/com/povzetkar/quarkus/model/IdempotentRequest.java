@@ -18,7 +18,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "idempotent_requests", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "idempotency_key" })
+        @UniqueConstraint(columnNames = { "user_id", "idempotency_key", "request_path" })
 })
 public class IdempotentRequest extends PanacheEntityBase {
 
@@ -33,7 +33,7 @@ public class IdempotentRequest extends PanacheEntityBase {
     @Column(name = "idempotency_key", nullable = false, length = 128)
     public String idempotencyKey;
 
-    @Column(name = "request_path", nullable = false, length = 255)
+    @Column(name = "request_path", nullable = false, length = 2048)
     public String requestPath;
 
     @Column(name = "request_hash", length = 64)
@@ -63,15 +63,14 @@ public class IdempotentRequest extends PanacheEntityBase {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdempotentRequest that = (IdempotentRequest) o;
-        // Using user.id is safer for lazy associations to avoid unintended fetches or exceptions.
+        // Using user.username is more robust given the User entity business key patterns.
         return Objects.equals(idempotencyKey, that.idempotencyKey) &&
                Objects.equals(requestPath, that.requestPath) &&
-               user != null && that.user != null && Objects.equals(user.id, that.user.id);
+               user != null && that.user != null && Objects.equals(user.username, that.user.username);
     }
 
     @Override
     public int hashCode() {
-        // Using user.id is safer for lazy associations.
-        return Objects.hash(idempotencyKey, requestPath, user != null ? user.id : null);
+        return Objects.hash(idempotencyKey, requestPath, user != null ? user.username : null);
     }
 }
