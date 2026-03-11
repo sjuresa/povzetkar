@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.AdminMetricsDTO;
+import com.povzetkar.quarkus.api.dto.AuditLogEntryDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
@@ -7,8 +9,13 @@ import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
+import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.IdempotentRequest;
 import com.povzetkar.quarkus.model.JobStatus;
+import com.povzetkar.quarkus.model.Topic;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.panache.common.Sort;
@@ -120,5 +127,55 @@ public class AdminApiResource extends BaseApiResource {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
         return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
+    }
+
+    @GET
+    @Path("/audit-log")
+    @RolesAllowed(Permission.V_ADMIN_AUDIT_LOG_VIEW)
+    @Operation(summary = "List audit log entries", description = "Returns a paginated list of API request audit log entries, sorted by most recent first.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Audit log entries retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+    )
+    @APIResponse(responseCode = "403", description = "Forbidden")
+    public PaginatedResponse<AuditLogEntryDTO> getAuditLog(
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize) {
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
+        Sort auditSort = Sort.by("createdAt").descending();
+        long totalCount = AuditLog.count();
+        List<AuditLogEntryDTO> items = AuditLog.findAll(auditSort)
+                .page(pageIndex, clampedPageSize)
+                .<AuditLog>list()
+                .stream()
+                .map(e -> new AuditLogEntryDTO(
+                        e.id, e.correlationId, e.userId,
+                        e.httpMethod, e.requestPath, e.responseStatus,
+                        e.durationMs, e.userAgent, e.createdAt))
+                .toList();
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
+    }
+
+    @GET
+    @Path("/metrics")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "Get system metrics", description = "Returns live aggregate counts for system health monitoring.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Metrics retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AdminMetricsDTO.class))
+    )
+    @APIResponse(responseCode = "403", description = "Forbidden")
+    public AdminMetricsDTO getMetrics() {
+        return new AdminMetricsDTO(
+                BackgroundJob.count(),
+                BackgroundJob.count("status", JobStatus.RUNNING),
+                BackgroundJob.count("status", JobStatus.FAILED),
+                Topic.count(),
+                Topic.count("enabled", true),
+                ContentItem.count(),
+                IdempotentRequest.count()
+        );
     }
 }

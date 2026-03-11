@@ -223,3 +223,29 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ### 7.2 Dependency Vulnerability Scanning
 - **The Trap:** Relying solely on local dependency checks introduces developer friction and lacks centralized visibility of inherited security issues.
 - **The Standard:** Integrate vulnerability scanning directly into the CI/CD pipeline. Configure explicit exit codes (e.g., `exit-code: '1'`) and severity levels (e.g., `severity: 'CRITICAL,HIGH'`) to unconditionally break the build logically when actionable CVEs are discovered, guaranteeing insecure code is never merged into the main branch.
+
+---
+
+## 8. Observability & Request Tracing
+
+### 8.1 MDC Propagation to Background Threads
+- **The Trap:** Assuming that MDC values set on a request thread (e.g., a `correlationId` from a JAX-RS `ContainerRequestFilter`) are automatically available in background tasks dispatched via `Infrastructure.getDefaultExecutor().execute(...)`. MDC is inherently thread-local — it does NOT propagate to worker threads spawned by blocking executors.
+- **The Standard:** Always explicitly capture MDC values on the request thread *before* dispatching the background task:
+  ```java
+  final String correlationId = MDC.get("correlationId");
+  Infrastructure.getDefaultExecutor().execute(() -> {
+      MDC.put("correlationId", correlationId);
+      try {
+          // ... background work ...
+      } finally {
+          MDC.remove("correlationId");
+      }
+  });
+  ```
+- **Note:** MDC *does* propagate transparently across Vert.x event loop hops (reactive chains via `Uni`/`Multi`), so this pattern is only needed for explicit worker thread dispatches.
+
+### 8.2 Audit Logging via ContainerResponseFilter
+- **The Trap:** Trying to capture the HTTP response status in a `ContainerRequestFilter` (it's not available yet) or in the business service layer (which doesn't have HTTP context).
+- **The Standard:** Use a `@Provider`-annotated `ContainerResponseFilter` to persist audit records. This is the only place in the JAX-RS pipeline where both the request context (method, path, user) and the final response status are simultaneously available.
+- **Isolation:** Always wrap audit persistence in `QuarkusTransaction.requiringNew()` to ensure the audit write is independent of any business transaction that may have already committed or rolled back.
+- **Resilience:** The audit filter must `catch (Exception e)` and log a warning, never re-throwing. Audit failures must never propagate as API errors to clients.
