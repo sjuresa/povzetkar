@@ -33,6 +33,9 @@ public class IdempotentRequest extends PanacheEntityBase {
     @Column(name = "idempotency_key", nullable = false, length = 128)
     public String idempotencyKey;
 
+    @Column(name = "request_path", nullable = false, length = 255)
+    public String requestPath;
+
     @Column(name = "request_hash", length = 64)
     public String requestHash;
 
@@ -62,12 +65,13 @@ public class IdempotentRequest extends PanacheEntityBase {
         IdempotentRequest that = (IdempotentRequest) o;
         // Using user.id is safer for lazy associations to avoid unintended fetches or exceptions.
         return Objects.equals(idempotencyKey, that.idempotencyKey) &&
+               Objects.equals(requestPath, that.requestPath) &&
                user != null && that.user != null && Objects.equals(user.id, that.user.id);
     }
 
     @Override
     public int hashCode() {
         // Using user.id is safer for lazy associations.
-        return Objects.hash(idempotencyKey, user != null ? user.id : null);
+        return Objects.hash(idempotencyKey, requestPath, user != null ? user.id : null);
     }
 }

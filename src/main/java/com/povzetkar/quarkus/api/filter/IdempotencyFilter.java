@@ -41,9 +41,10 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     private static final String PROPERTY_IDEMPOTENCY_KEY = "internal.idempotency.key";
     private static final String PROPERTY_IDEMPOTENCY_USER = "internal.idempotency.user";
     private static final String PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED = "internal.idempotency.lock.acquired";
+    private static final String PROPERTY_IDEMPOTENCY_PATH = "internal.idempotency.path";
     private static final int MAX_KEY_LENGTH = 128;
     private static final int MAX_PAYLOAD_SIZE = 10 * 1024 * 1024; // 10MB
-    private static final String QUERY_IDEMPOTENCY_KEY_AND_USER = "idempotencyKey = ?1 and user.id = ?2";
+    private static final String QUERY_IDEMPOTENCY_KEY_USER_AND_PATH = "idempotencyKey = ?1 and user.id = ?2 and requestPath = ?3";
 
     private final ObjectMapper objectMapper;
     private final UserContextService userContextService;
@@ -74,9 +75,12 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         requestContext.setProperty(PROPERTY_IDEMPOTENCY_KEY, idempotencyKey);
         requestContext.setProperty(PROPERTY_IDEMPOTENCY_USER, user.id); // store ID to avoid detached entity issues
 
+        String requestPath = requestContext.getUriInfo().getPath();
+        requestContext.setProperty(PROPERTY_IDEMPOTENCY_PATH, requestPath);
+
         String requestHash = extractAndHashBody(requestContext);
 
-        boolean lockAcquiredOrServed = attemptLockOrServe(requestContext, idempotencyKey, user.id, requestHash);
+        boolean lockAcquiredOrServed = attemptLockOrServe(requestContext, idempotencyKey, user.id, requestHash, requestPath);
         if (!lockAcquiredOrServed) {
              // Abort if unable to lock and didn't serve cached response (e.g. processing or conflict)
              requestContext.abortWith(Response.status(Response.Status.CONFLICT)
@@ -109,13 +113,13 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         }
     }
 
-    private boolean attemptLockOrServe(ContainerRequestContext requestContext, String idempotencyKey, Long userId, String requestHash) {
+    private boolean attemptLockOrServe(ContainerRequestContext requestContext, String idempotencyKey, Long userId, String requestHash, String requestPath) {
         return QuarkusTransaction.requiringNew().call(() -> {
             User managedUser = User.findById(userId);
             if (managedUser == null) return false;
 
             IdempotentRequest existingRequest = IdempotentRequest.<IdempotentRequest>find(
-                    QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId).firstResult();
+                    QUERY_IDEMPOTENCY_KEY_USER_AND_PATH, idempotencyKey, userId, requestPath).firstResult();
 
             if (existingRequest != null) {
                 if (!java.util.Objects.equals(requestHash, existingRequest.requestHash)) {
@@ -138,6 +142,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 newRequest.idempotencyKey = idempotencyKey;
                 newRequest.user = managedUser;
                 newRequest.requestHash = requestHash;
+                newRequest.requestPath = requestPath;
                 newRequest.persistAndFlush();
                 requestContext.setProperty(PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED, Boolean.TRUE);
                 return true;
@@ -173,17 +178,24 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         String idempotencyKey = (String) requestContext.getProperty(PROPERTY_IDEMPOTENCY_KEY);
         Long userId = (Long) requestContext.getProperty(PROPERTY_IDEMPOTENCY_USER);
         Boolean lockAcquired = (Boolean) requestContext.getProperty(PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED);
+        String requestPath = (String) requestContext.getProperty(PROPERTY_IDEMPOTENCY_PATH);
 
-        if (idempotencyKey == null || userId == null || !Boolean.TRUE.equals(lockAcquired)) {
+        if (idempotencyKey == null || userId == null || requestPath == null || !Boolean.TRUE.equals(lockAcquired)) {
             return; // No key, user, or we are not the lock owner
         }
 
         int status = responseContext.getStatus();
         
-        if (isSuccessful(status)) {
-            updateLockWithResponse(idempotencyKey, userId, status, responseContext);
-        } else {
-            removeLock(idempotencyKey, userId);
+        try {
+            if (isSuccessful(status)) {
+                updateLockWithResponse(idempotencyKey, userId, requestPath, status, responseContext);
+            } else {
+                removeLock(idempotencyKey, userId, requestPath);
+            }
+        } catch (JsonProcessingException e) {
+            log.errorf(e, "Failed to serialize response body for idempotency key: %s", idempotencyKey);
+            removeLock(idempotencyKey, userId, requestPath);
+            throw new InternalServerErrorException("Failed to serialize response for idempotency cache", e);
         }
     }
 
@@ -191,13 +203,13 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         return status >= 200 && status < 300;
     }
 
-    private void updateLockWithResponse(String idempotencyKey, Long userId, int status, ContainerResponseContext responseContext) {
-        String responseBody = extractResponseBody(responseContext, idempotencyKey);
+    private void updateLockWithResponse(String idempotencyKey, Long userId, String requestPath, int status, ContainerResponseContext responseContext) throws JsonProcessingException {
+        String responseBody = extractResponseBody(responseContext);
         String locationStr = extractLocation(responseContext);
 
         QuarkusTransaction.requiringNew().run(() -> {
             IdempotentRequest request = IdempotentRequest.<IdempotentRequest>find(
-                    QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId).firstResult();
+                    QUERY_IDEMPOTENCY_KEY_USER_AND_PATH, idempotencyKey, userId, requestPath).firstResult();
             
             if (request != null) {
                 request.responseStatus = status;
@@ -208,18 +220,14 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         });
     }
 
-    private void removeLock(String idempotencyKey, Long userId) {
-        QuarkusTransaction.requiringNew().run(() -> IdempotentRequest.delete(QUERY_IDEMPOTENCY_KEY_AND_USER, idempotencyKey, userId));
+    private void removeLock(String idempotencyKey, Long userId, String requestPath) {
+        QuarkusTransaction.requiringNew().run(() -> IdempotentRequest.delete(QUERY_IDEMPOTENCY_KEY_USER_AND_PATH, idempotencyKey, userId, requestPath));
     }
     
-    private String extractResponseBody(ContainerResponseContext responseContext, String idempotencyKey) {
+    private String extractResponseBody(ContainerResponseContext responseContext) throws JsonProcessingException {
         Object entity = responseContext.getEntity();
         if (entity != null) {
-            try {
-                return objectMapper.writeValueAsString(entity);
-            } catch (JsonProcessingException e) {
-                log.errorf(e, "Failed to serialize response body for idempotency key: %s", idempotencyKey);
-            }
+            return objectMapper.writeValueAsString(entity);
         }
         return null;
     }
