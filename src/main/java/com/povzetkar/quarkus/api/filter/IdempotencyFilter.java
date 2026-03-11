@@ -23,8 +23,10 @@ import jakarta.ws.rs.ext.Provider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +44,8 @@ import java.util.Set;
 @Idempotent
 @ApplicationScoped
 public class IdempotencyFilter implements ContainerRequestFilter, ContainerResponseFilter {
+
+    private static class ResponseSizeExceededException extends IOException {}
 
     private static final Logger log = Logger.getLogger(IdempotencyFilter.class);
     private static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
@@ -284,10 +288,19 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         return status >= 200 && status < 300;
     }
 
-    private boolean updateLockWithResponse(String idempotencyKey, Long userId, String requestPath, String requestMethod, int status, ContainerResponseContext responseContext) throws JsonProcessingException {
-        String responseBody = extractResponseBody(responseContext);
-        if (responseBody != null && responseBody.length() > maxResponseSize) {
-            return false;
+    private boolean updateLockWithResponse(String idempotencyKey, Long userId, String requestPath, String requestMethod, int status, ContainerResponseContext responseContext) throws Exception {
+        String responseBody;
+        try {
+            responseBody = extractResponseBodySafe(responseContext);
+        } catch (Exception e) {
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof ResponseSizeExceededException) {
+                    return false;
+                }
+                cause = cause.getCause();
+            }
+            throw e;
         }
         
         String locationStr = extractLocation(responseContext);
@@ -310,12 +323,32 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         QuarkusTransaction.requiringNew().run(() -> IdempotentRequest.delete(QUERY_IDEMPOTENCY_LOOKUP, idempotencyKey, userId, requestPath, requestMethod));
     }
     
-    private String extractResponseBody(ContainerResponseContext responseContext) throws JsonProcessingException {
+    private String extractResponseBodySafe(ContainerResponseContext responseContext) throws Exception {
         Object entity = responseContext.getEntity();
-        if (entity != null) {
-            return objectMapper.writeValueAsString(entity);
+        if (entity == null) {
+            return null;
         }
-        return null;
+        
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            OutputStream boundedOs = new OutputStream() {
+                private int count = 0;
+
+                @Override
+                public void write(int b) throws IOException {
+                    if (++count > maxResponseSize) throw new ResponseSizeExceededException();
+                    baos.write(b);
+                }
+
+                @Override
+                public void write(byte[] b, int off, int len) throws IOException {
+                    count += len;
+                    if (count > maxResponseSize) throw new ResponseSizeExceededException();
+                    baos.write(b, off, len);
+                }
+            };
+            objectMapper.writeValue(boundedOs, entity);
+            return baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+        }
     }
 
     private String extractLocation(ContainerResponseContext responseContext) {
