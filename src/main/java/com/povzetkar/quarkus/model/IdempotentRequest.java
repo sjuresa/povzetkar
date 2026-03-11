@@ -63,14 +63,13 @@ public class IdempotentRequest extends PanacheEntityBase {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdempotentRequest that = (IdempotentRequest) o;
-        // Using user.username is more robust given the User entity business key patterns.
+        // Use user.id to avoid lazy loading and align with the database unique constraint.
         return Objects.equals(idempotencyKey, that.idempotencyKey) &&
-               Objects.equals(requestPath, that.requestPath) &&
-               user != null && that.user != null && Objects.equals(user.username, that.user.username);
+                Objects.equals(requestPath, that.requestPath) &&
+                user != null && that.user != null && Objects.equals(user.id, that.user.id);
     }
-
     @Override
     public int hashCode() {
-        return Objects.hash(idempotencyKey, requestPath, user != null ? user.username : null);
+        return Objects.hash(idempotencyKey, requestPath, user != null ? user.id : null);
     }
 }

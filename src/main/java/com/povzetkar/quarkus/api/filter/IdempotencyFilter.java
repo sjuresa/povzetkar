@@ -32,6 +32,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Objects;
 
 @Provider
 @Idempotent
@@ -140,7 +141,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                     QUERY_IDEMPOTENCY_KEY_USER_AND_PATH, idempotencyKey, userId, requestPath).firstResult();
 
             if (existingRequest != null) {
-                if (!java.util.Objects.equals(requestHash, existingRequest.requestHash)) {
+                if (!Objects.equals(requestHash, existingRequest.requestHash)) {
                     log.warn("Idempotency key reused with different payload");
                     return false;
                 }
