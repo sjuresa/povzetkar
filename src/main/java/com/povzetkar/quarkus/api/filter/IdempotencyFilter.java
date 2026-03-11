@@ -114,7 +114,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
 
     private String sanitizeLogKey(String key) {
         if (key == null) return null;
-        return key.replace('\n', '_').replace('\r', '_');
+        return key.replaceAll("\\p{Cntrl}", "_");
     }
 
     private String extractAndHashBody(ContainerRequestContext requestContext) throws IOException {
@@ -126,9 +126,15 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(is, digest);
-            FileAttribute<Set<PosixFilePermission>> attr =
-                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
-            Path tempFile = Files.createTempFile("idemp-req-", ".tmp", attr);
+            Path tempFile;
+            try {
+                FileAttribute<Set<PosixFilePermission>> attr =
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+                tempFile = Files.createTempFile("idemp-req-", ".tmp", attr);
+            } catch (UnsupportedOperationException e) {
+                log.debug("POSIX file permissions not supported, created temp file with default permissions.");
+                tempFile = Files.createTempFile("idemp-req-", ".tmp");
+            }
             requestContext.setProperty(PROPERTY_IDEMPOTENCY_TEMP_FILE, tempFile);
             
             int totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
