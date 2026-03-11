@@ -18,7 +18,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "idempotent_requests", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "idempotency_key", "request_path" })
+        @UniqueConstraint(columnNames = { "user_id", "idempotency_key", "request_path", "request_method" })
 })
 public class IdempotentRequest extends PanacheEntityBase {
 
@@ -35,6 +35,9 @@ public class IdempotentRequest extends PanacheEntityBase {
 
     @Column(name = "request_path", nullable = false, length = 2048)
     public String requestPath;
+
+    @Column(name = "request_method", nullable = false, length = 16)
+    public String requestMethod;
 
     @Column(name = "request_hash", length = 64)
     public String requestHash;
@@ -66,10 +69,11 @@ public class IdempotentRequest extends PanacheEntityBase {
         // Use user.id to avoid lazy loading and align with the database unique constraint.
         return Objects.equals(idempotencyKey, that.idempotencyKey) &&
                 Objects.equals(requestPath, that.requestPath) &&
+                Objects.equals(requestMethod, that.requestMethod) &&
                 user != null && that.user != null && Objects.equals(user.id, that.user.id);
     }
     @Override
     public int hashCode() {
-        return Objects.hash(idempotencyKey, requestPath, user != null ? user.id : null);
+        return Objects.hash(idempotencyKey, requestPath, requestMethod, user != null ? user.id : null);
     }
 }

@@ -136,6 +136,19 @@ When asserting logic bound to rolling windows (e.g., "last 7 days") or specific 
 When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_B"})` in Quarkus:
 - **The Standard:** Remember that passing an array of roles evaluates as a logical **OR** condition, meaning the user only needs *at least one* of the specified roles to gain access to the method. Do not natively assume an `AND` condition or strip declarative annotations for manual `if` block checks unless specifically building complex, field-level access control within the method scope itself.
 
+### 3.7 Asynchronous Testing: Avoiding `Thread.sleep`
+- **The Trap:** Using `Thread.sleep()` to wait for asynchronous operations in tests (e.g., waiting for a background job to finish or a lock to appear in the database). This leads to flaky tests, slow execution, and brittle code that fails unpredictably depending on environmental load.
+- **The Standard:** Always use **Awaitility** to poll for the expected state change. Awaitility provides built-in support for timeouts, polling intervals, and clear failure messages.
+  ```java
+  // Correct way to wait for async state change
+  await().atMost(5, TimeUnit.SECONDS).until(() -> {
+      return QuarkusTransaction.requiringNew().call(() -> 
+          IdempotentRequest.count("idempotencyKey = ?1", key) > 0
+      );
+  });
+  ```
+- **Note:** If you need to simulate a "slow" operation in a test-only resource, use a busy-wait loop that respects thread interruption (`Thread.onSpinWait()`) rather than blocking the thread via `sleep()`.
+
 ---
 
 ## 4. Reactive Programming (Mutiny)
