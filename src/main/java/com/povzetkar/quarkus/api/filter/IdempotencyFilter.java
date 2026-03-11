@@ -210,10 +210,12 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             } else {
                 removeLock(idempotencyKey, userId, requestPath);
             }
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize response body for idempotency cache", e);
+        } catch (Exception e) {
+            log.error("Failed to process response for idempotency cache for key: " + idempotencyKey, e);
+            // Attempt to remove the lock to prevent it from becoming stale.
             removeLock(idempotencyKey, userId, requestPath);
-            throw new InternalServerErrorException("Failed to serialize response for idempotency cache", e);
+            // Re-throw to ensure the client receives an error.
+            throw new InternalServerErrorException("Failed to process response for idempotency cache", e);
         }
     }
 
