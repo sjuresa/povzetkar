@@ -119,6 +119,8 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(is, digest);
             Path tempFile = Files.createTempFile("idemp-req-", ".tmp");
+            tempFile.toFile().setReadable(false, false);
+            tempFile.toFile().setReadable(true, true);
             requestContext.setProperty(PROPERTY_IDEMPOTENCY_TEMP_FILE, tempFile);
             
             int totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
@@ -152,11 +154,20 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             }
             return totalBytesRead;
         } catch (IOException | RuntimeException e) {
-            Files.deleteIfExists(tempFile);
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException | RuntimeException deleteEx) {
+                e.addSuppressed(deleteEx);
+            }
             throw e;
         } catch (Exception e) {
-            Files.deleteIfExists(tempFile);
-            throw new IOException(e);
+            IOException ioException = new IOException(e);
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException | RuntimeException deleteEx) {
+                ioException.addSuppressed(deleteEx);
+            }
+            throw ioException;
         }
     }
 
