@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
@@ -121,6 +122,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @POST
     @Path("/{id}/commands/generate-summary")
     @RolesAllowed("SUMMARY_GENERATE")
+    @Idempotent
     @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary.")
     @APIResponse(
             responseCode = "202",
@@ -149,6 +151,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @POST
     @Path("/{id}/commands/retry")
     @RolesAllowed("ADMIN_JOB_UPDATE")
+    @Idempotent
     @Operation(summary = "Retry failed item", description = "Signals to the background worker to retry a failed item. Admin functionality.")
     @APIResponse(
             responseCode = "202",

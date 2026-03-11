@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.BackgroundJob;
@@ -63,6 +64,7 @@ public class AdminApiResource extends BaseApiResource {
     @POST
     @Path("/" + JOBS_PATH + "/trigger")
     @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
+    @Idempotent
     @Operation(summary = "Trigger a background job", description = "Asynchronously starts a background job of the specified type.")
     @APIResponse(
             responseCode = "202",
