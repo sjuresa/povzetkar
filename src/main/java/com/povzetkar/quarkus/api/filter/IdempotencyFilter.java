@@ -21,12 +21,15 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -42,9 +45,13 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     private static final String PROPERTY_IDEMPOTENCY_USER = "internal.idempotency.user";
     private static final String PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED = "internal.idempotency.lock.acquired";
     private static final String PROPERTY_IDEMPOTENCY_PATH = "internal.idempotency.path";
-    private static final int MAX_KEY_LENGTH = 128;
-    private static final int MAX_PAYLOAD_SIZE = 10 * 1024 * 1024; // 10MB
     private static final String QUERY_IDEMPOTENCY_KEY_USER_AND_PATH = "idempotencyKey = ?1 and user.id = ?2 and requestPath = ?3";
+
+    @ConfigProperty(name = "povzetkar.idempotency.max-key-length", defaultValue = "128")
+    int maxKeyLength;
+    
+    @ConfigProperty(name = "povzetkar.idempotency.max-payload-size", defaultValue = "10485760") // 10MB
+    int maxPayloadSize;
 
     private final ObjectMapper objectMapper;
     private final UserContextService userContextService;
@@ -63,8 +70,8 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             return; // No key provided, bypass idempotency
         }
 
-        if (idempotencyKey.length() > MAX_KEY_LENGTH) {
-            throw new BadRequestException("Idempotency-Key exceeds maximum length of " + MAX_KEY_LENGTH + " characters");
+        if (idempotencyKey.length() > maxKeyLength) {
+            throw new BadRequestException("Idempotency-Key exceeds maximum length of " + maxKeyLength + " characters");
         }
 
         User user = userContextService.getCurrentUser().orElse(null);
@@ -96,17 +103,31 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         if (is == null) {
             return null;
         }
-        byte[] bytes = is.readNBytes(MAX_PAYLOAD_SIZE + 1);
-        if (bytes.length > MAX_PAYLOAD_SIZE) {
-            throw new BadRequestException("Request payload exceeds maximum allowed size for idempotency check.");
-        }
-        requestContext.setEntityStream(new ByteArrayInputStream(bytes));
-        if (bytes.length == 0) {
-            return null;
-        }
+
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(bytes);
+            DigestInputStream digestInputStream = new DigestInputStream(is, digest);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            
+            byte[] buffer = new byte[8192];
+            int totalBytesRead = 0;
+            int bytesRead;
+            
+            while ((bytesRead = digestInputStream.read(buffer)) != -1) {
+                totalBytesRead += bytesRead;
+                if (totalBytesRead > maxPayloadSize) {
+                    throw new BadRequestException("Request payload exceeds maximum allowed size for idempotency check.");
+                }
+                baos.write(buffer, 0, bytesRead);
+            }
+            
+            byte[] bytes = baos.toByteArray();
+            requestContext.setEntityStream(new ByteArrayInputStream(bytes));
+            if (bytes.length == 0) {
+                return null;
+            }
+            
+            byte[] hashBytes = digest.digest();
             return Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
         } catch (NoSuchAlgorithmException e) {
             throw new InternalServerErrorException("Failed to initialize SHA-256 algorithm", e);
@@ -123,16 +144,16 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
 
             if (existingRequest != null) {
                 if (!java.util.Objects.equals(requestHash, existingRequest.requestHash)) {
-                    log.warnf("Idempotency key %s reused with different payload", idempotencyKey);
+                    log.warn("Idempotency key reused with different payload");
                     return false;
                 }
 
                 if (existingRequest.responseStatus != null) {
-                    log.infof("Idempotency cache hit for key: %s", idempotencyKey);
-                    serveCachedResponse(requestContext, existingRequest, idempotencyKey);
+                    log.info("Idempotency cache hit");
+                    serveCachedResponse(requestContext, existingRequest);
                     return true;
                 } else {
-                    log.infof("Idempotency key %s is currently processing", idempotencyKey);
+                    log.info("Idempotency key is currently processing");
                     return false;
                 }
             }
@@ -147,13 +168,13 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 requestContext.setProperty(PROPERTY_IDEMPOTENCY_LOCK_ACQUIRED, Boolean.TRUE);
                 return true;
             } catch (PersistenceException e) {
-                log.warnf(e, "Race condition encountered when persisting idempotent request lock for key: %s.", idempotencyKey);
+                log.warn("Race condition encountered when persisting idempotent request lock", e);
                 return false;
             }
         });
     }
 
-    private void serveCachedResponse(ContainerRequestContext requestContext, IdempotentRequest cachedRequest, String idempotencyKey) {
+    private void serveCachedResponse(ContainerRequestContext requestContext, IdempotentRequest cachedRequest) {
         Response.ResponseBuilder responseBuilder = Response.status(cachedRequest.responseStatus);
         
         if (cachedRequest.responseLocation != null) {
@@ -165,7 +186,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 JsonNode jsonNode = objectMapper.readTree(cachedRequest.responseBody);
                 responseBuilder.entity(jsonNode).type(MediaType.APPLICATION_JSON_TYPE);
             } catch (JsonProcessingException e) {
-                log.errorf(e, "Failed to parse cached response body for idempotency key: %s", idempotencyKey);
+                log.error("Failed to parse cached response body for idempotency key", e);
                 throw new InternalServerErrorException("Failed to process cached response.", e);
             }
         }
@@ -193,7 +214,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 removeLock(idempotencyKey, userId, requestPath);
             }
         } catch (JsonProcessingException e) {
-            log.errorf(e, "Failed to serialize response body for idempotency key: %s", idempotencyKey);
+            log.error("Failed to serialize response body for idempotency cache", e);
             removeLock(idempotencyKey, userId, requestPath);
             throw new InternalServerErrorException("Failed to serialize response for idempotency cache", e);
         }
