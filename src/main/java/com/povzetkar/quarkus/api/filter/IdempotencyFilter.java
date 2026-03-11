@@ -135,23 +135,24 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             return null;
         }
 
-        try {
+        try (TempFileResource tfr = new TempFileResource(createTempFile())) {
+            Path tempFile = tfr.getPath();
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(is, digest);
-            Path tempFile = createTempFile();
             requestContext.setProperty(PROPERTY_IDEMPOTENCY_TEMP_FILE, tempFile);
             
             long totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
             
             if (totalBytesRead == 0) {
-                Files.deleteIfExists(tempFile);
                 return null;
             }
             
             requestContext.setEntityStream(Files.newInputStream(tempFile));
             
             byte[] hashBytes = digest.digest();
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
+            String hash = Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
+            tfr.keep();
+            return hash;
         } catch (NoSuchAlgorithmException e) {
             throw new InternalServerErrorException("Failed to initialize SHA-256 algorithm", e);
         }
@@ -171,13 +172,6 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 os.write(buffer, 0, bytesRead);
             }
             return totalBytesRead;
-        } catch (IOException | RuntimeException e) {
-            try {
-                Files.deleteIfExists(tempFile);
-            } catch (IOException | RuntimeException deleteEx) {
-                e.addSuppressed(deleteEx);
-            }
-            throw e;
         }
     }
 
@@ -365,5 +359,29 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             return responseContext.getLocation().toString();
         }
         return null;
+    }
+
+    private static class TempFileResource implements AutoCloseable {
+        private final Path path;
+        private boolean keep = false;
+
+        TempFileResource(Path path) {
+            this.path = path;
+        }
+
+        Path getPath() {
+            return path;
+        }
+
+        void keep() {
+            this.keep = true;
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (!keep) {
+                Files.deleteIfExists(path);
+            }
+        }
     }
 }
