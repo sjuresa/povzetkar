@@ -3,8 +3,6 @@ package com.povzetkar.quarkus.api.filter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
-import com.povzetkar.quarkus.api.dto.ApiErrorDTO;
 import com.povzetkar.quarkus.model.IdempotentRequest;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -14,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -83,18 +82,16 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         requestContext.setProperty(PROPERTY_IDEMPOTENCY_USER, user.id); // store ID to avoid detached entity issues
 
         String requestPath = requestContext.getUriInfo().getPath();
+        if (requestPath.length() > 1 && requestPath.endsWith("/")) {
+            requestPath = requestPath.substring(0, requestPath.length() - 1);
+        }
         requestContext.setProperty(PROPERTY_IDEMPOTENCY_PATH, requestPath);
 
         String requestHash = extractAndHashBody(requestContext);
 
         boolean lockAcquiredOrServed = attemptLockOrServe(requestContext, idempotencyKey, user.id, requestHash, requestPath);
         if (!lockAcquiredOrServed) {
-             // Abort if unable to lock and didn't serve cached response (e.g. processing or conflict)
-             requestContext.abortWith(Response.status(Response.Status.CONFLICT)
-                     .entity(ApiEnvelopeDTO.error(new ApiErrorDTO(
-                             null, "Conflict", 409, "Conflict or concurrent request processing for this Idempotency-Key", "CONCURRENT_REQUEST", null)))
-                     .type(MediaType.APPLICATION_JSON_TYPE)
-                     .build());
+             throw new WebApplicationException("Conflict or concurrent request processing for this Idempotency-Key", Response.Status.CONFLICT);
         }
     }
 
