@@ -28,11 +28,15 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Set;
 
 @Provider
 @Idempotent
@@ -118,9 +122,9 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(is, digest);
-            Path tempFile = Files.createTempFile("idemp-req-", ".tmp");
-            tempFile.toFile().setReadable(false, false);
-            tempFile.toFile().setReadable(true, true);
+            FileAttribute<Set<PosixFilePermission>> attr =
+                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+            Path tempFile = Files.createTempFile("idemp-req-", ".tmp", attr);
             requestContext.setProperty(PROPERTY_IDEMPOTENCY_TEMP_FILE, tempFile);
             
             int totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
@@ -153,21 +157,19 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 os.write(buffer, 0, bytesRead);
             }
             return totalBytesRead;
-        } catch (IOException | RuntimeException e) {
+        } catch (Exception e) {
             try {
                 Files.deleteIfExists(tempFile);
             } catch (IOException | RuntimeException deleteEx) {
                 e.addSuppressed(deleteEx);
             }
-            throw e;
-        } catch (Exception e) {
-            IOException ioException = new IOException(e);
-            try {
-                Files.deleteIfExists(tempFile);
-            } catch (IOException | RuntimeException deleteEx) {
-                ioException.addSuppressed(deleteEx);
+            if (e instanceof IOException ioException) {
+                throw ioException;
             }
-            throw ioException;
+            if (e instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new IOException(e);
         }
     }
 
