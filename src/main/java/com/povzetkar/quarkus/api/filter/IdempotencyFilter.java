@@ -7,6 +7,7 @@ import com.povzetkar.quarkus.model.IdempotentRequest;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -117,6 +118,17 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         return key.replaceAll("\\p{Cntrl}", "_");
     }
 
+    private Path createTempFile() throws IOException {
+        try {
+            FileAttribute<Set<PosixFilePermission>> attr =
+                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+            return Files.createTempFile("idemp-req-", ".tmp", attr);
+        } catch (UnsupportedOperationException _) {
+            log.debug("POSIX file permissions not supported, created temp file with default permissions.");
+            return Files.createTempFile("idemp-req-", ".tmp");
+        }
+    }
+
     private String extractAndHashBody(ContainerRequestContext requestContext) throws IOException {
         InputStream is = requestContext.getEntityStream();
         if (is == null) {
@@ -126,15 +138,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(is, digest);
-            Path tempFile;
-            try {
-                FileAttribute<Set<PosixFilePermission>> attr =
-                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
-                tempFile = Files.createTempFile("idemp-req-", ".tmp", attr);
-            } catch (UnsupportedOperationException _) {
-                log.debug("POSIX file permissions not supported, created temp file with default permissions.");
-                tempFile = Files.createTempFile("idemp-req-", ".tmp");
-            }
+            Path tempFile = createTempFile();
             requestContext.setProperty(PROPERTY_IDEMPOTENCY_TEMP_FILE, tempFile);
             
             int totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
@@ -330,7 +334,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         QuarkusTransaction.requiringNew().run(() -> IdempotentRequest.delete(QUERY_IDEMPOTENCY_LOOKUP, idempotencyKey, userId, requestPath, requestMethod));
     }
     
-    private String extractResponseBodySafe(ContainerResponseContext responseContext) throws Exception {
+    private String extractResponseBodySafe(ContainerResponseContext responseContext) throws IOException {
         Object entity = responseContext.getEntity();
         if (entity == null) {
             return null;
@@ -342,14 +346,19 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
 
                 @Override
                 public void write(int b) throws IOException {
-                    if (++count > maxResponseSize) throw new ResponseSizeExceededException();
+                    if (count >= maxResponseSize) {
+                        throw new ResponseSizeExceededException();
+                    }
+                    count++;
                     baos.write(b);
                 }
 
                 @Override
-                public void write(byte[] b, int off, int len) throws IOException {
+                public void write(@Nonnull byte[] b, int off, int len) throws IOException {
+                    if (len > maxResponseSize - count) {
+                        throw new ResponseSizeExceededException();
+                    }
                     count += len;
-                    if (count > maxResponseSize) throw new ResponseSizeExceededException();
                     baos.write(b, off, len);
                 }
             };
