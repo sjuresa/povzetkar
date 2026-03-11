@@ -178,13 +178,6 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 e.addSuppressed(deleteEx);
             }
             throw e;
-        } catch (Exception e) {
-            try {
-                Files.deleteIfExists(tempFile);
-            } catch (IOException | RuntimeException deleteEx) {
-                e.addSuppressed(deleteEx);
-            }
-            throw new IOException("Unexpected error during stream writing", e);
         }
     }
 
@@ -299,11 +292,11 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         return status >= 200 && status < 300;
     }
 
-    private boolean updateLockWithResponse(String idempotencyKey, Long userId, String requestPath, String requestMethod, int status, ContainerResponseContext responseContext) throws Exception {
+    private boolean updateLockWithResponse(String idempotencyKey, Long userId, String requestPath, String requestMethod, int status, ContainerResponseContext responseContext) throws IOException {
         String responseBody;
         try {
             responseBody = extractResponseBodySafe(responseContext);
-        } catch (Exception e) {
+        } catch (IOException e) {
             Throwable cause = e;
             while (cause != null) {
                 if (cause instanceof ResponseSizeExceededException) {
