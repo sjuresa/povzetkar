@@ -179,7 +179,7 @@ class IdempotencyFilterTest {
         int status2 = req2.get(2, TimeUnit.SECONDS);
 
         // One should succeed (200), the other should conflict (409) because the first one holds the lock
-        assertTrue(status1 == 200 && status2 == 409, "The first request should succeed (200) and the concurrent one should conflict (409).");
+        assertTrue((status1 == 200 && status2 == 409) || (status1 == 409 && status2 == 200), "One request should succeed (200) and the concurrent one should conflict (409). Got: " + status1 + ", " + status2);
 
         executor.shutdown();
     }

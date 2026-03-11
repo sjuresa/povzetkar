@@ -141,7 +141,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
             Path tempFile = createTempFile();
             requestContext.setProperty(PROPERTY_IDEMPOTENCY_TEMP_FILE, tempFile);
             
-            int totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
+            long totalBytesRead = writeStreamToTempFile(digestInputStream, tempFile);
             
             if (totalBytesRead == 0) {
                 Files.deleteIfExists(tempFile);
@@ -157,9 +157,9 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         }
     }
 
-    private int writeStreamToTempFile(DigestInputStream digestInputStream, Path tempFile) throws IOException {
+    private long writeStreamToTempFile(DigestInputStream digestInputStream, Path tempFile) throws IOException {
         byte[] buffer = new byte[8192];
-        int totalBytesRead = 0;
+        long totalBytesRead = 0;
         int bytesRead;
         
         try (java.io.OutputStream os = Files.newOutputStream(tempFile)) {
@@ -342,7 +342,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             OutputStream boundedOs = new OutputStream() {
-                private int count = 0;
+                private long count = 0;
 
                 @Override
                 public void write(int b) throws IOException {
