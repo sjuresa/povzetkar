@@ -214,7 +214,12 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
         } catch (Exception e) {
             log.error("Failed to process response for idempotency cache for key: " + idempotencyKey, e);
             // Attempt to remove the lock to prevent it from becoming stale.
-            removeLock(idempotencyKey, userId, requestPath);
+            try {
+                removeLock(idempotencyKey, userId, requestPath);
+            } catch (Exception cleanupEx) {
+                log.error("Failed to remove stale idempotency lock for key: " + idempotencyKey, cleanupEx);
+                e.addSuppressed(cleanupEx);
+            }
             // Re-throw to ensure the client receives an error.
             throw new InternalServerErrorException("Failed to process response for idempotency cache", e);
         }
