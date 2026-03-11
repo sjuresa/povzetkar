@@ -131,7 +131,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 FileAttribute<Set<PosixFilePermission>> attr =
                     PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
                 tempFile = Files.createTempFile("idemp-req-", ".tmp", attr);
-            } catch (UnsupportedOperationException e) {
+            } catch (UnsupportedOperationException _) {
                 log.debug("POSIX file permissions not supported, created temp file with default permissions.");
                 tempFile = Files.createTempFile("idemp-req-", ".tmp");
             }
@@ -167,19 +167,20 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 os.write(buffer, 0, bytesRead);
             }
             return totalBytesRead;
+        } catch (IOException | RuntimeException e) {
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException | RuntimeException deleteEx) {
+                e.addSuppressed(deleteEx);
+            }
+            throw e;
         } catch (Exception e) {
             try {
                 Files.deleteIfExists(tempFile);
             } catch (IOException | RuntimeException deleteEx) {
                 e.addSuppressed(deleteEx);
             }
-            if (e instanceof IOException ioException) {
-                throw ioException;
-            }
-            if (e instanceof RuntimeException runtimeException) {
-                throw runtimeException;
-            }
-            throw new IOException(e);
+            throw new IOException("Unexpected error during stream writing", e);
         }
     }
 
