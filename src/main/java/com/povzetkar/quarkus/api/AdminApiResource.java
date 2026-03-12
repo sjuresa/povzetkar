@@ -11,10 +11,7 @@ import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.model.BackgroundJob;
-import com.povzetkar.quarkus.model.ContentItem;
-import com.povzetkar.quarkus.model.IdempotentRequest;
 import com.povzetkar.quarkus.model.JobStatus;
-import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -22,6 +19,7 @@ import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -58,14 +56,17 @@ public class AdminApiResource extends BaseApiResource {
 
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
+    private final EntityManager em;
 
     @Inject
     public AdminApiResource(BackgroundJobService backgroundJobService,
                            BackgroundJobMapper backgroundJobMapper,
-                           UserContextService userContextService) {
+                           UserContextService userContextService,
+                           EntityManager em) {
         super(userContextService);
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
+        this.em = em;
     }
 
     @POST
@@ -143,17 +144,15 @@ public class AdminApiResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort auditSort = Sort.by("createdAt").descending();
         long totalCount = AuditLog.count();
-        List<AuditLogEntryDTO> items = AuditLog.findAll(auditSort)
-                .page(pageIndex, clampedPageSize)
-                .<AuditLog>list()
-                .stream()
-                .map(e -> new AuditLogEntryDTO(
-                        e.id, e.correlationId, e.userId,
-                        e.httpMethod, e.requestPath, e.responseStatus,
-                        e.durationMs, e.userAgent, e.createdAt))
-                .toList();
+        List<AuditLogEntryDTO> items = em.createQuery(
+                        "SELECT NEW com.povzetkar.quarkus.api.dto.AuditLogEntryDTO(" +
+                                "e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath, " +
+                                "e.responseStatus, e.durationMs, e.userAgent, e.createdAt) " +
+                                "FROM AuditLog e ORDER BY e.createdAt DESC", AuditLogEntryDTO.class)
+                .setFirstResult(pageIndex * clampedPageSize)
+                .setMaxResults(clampedPageSize)
+                .getResultList();
         return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
     }
 
@@ -168,14 +167,25 @@ public class AdminApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "403", description = "Forbidden")
     public AdminMetricsDTO getMetrics() {
+        Object[] result = (Object[]) em.createNativeQuery(
+                        "SELECT " +
+                                "(SELECT COUNT(*) FROM background_jobs), " +
+                                "(SELECT COUNT(*) FROM background_jobs WHERE status = 'RUNNING'), " +
+                                "(SELECT COUNT(*) FROM background_jobs WHERE status = 'FAILED'), " +
+                                "(SELECT COUNT(*) FROM topics), " +
+                                "(SELECT COUNT(*) FROM topics WHERE enabled = true), " +
+                                "(SELECT COUNT(*) FROM content_items), " +
+                                "(SELECT COUNT(*) FROM idempotent_requests)")
+                .getSingleResult();
+
         return new AdminMetricsDTO(
-                BackgroundJob.count(),
-                BackgroundJob.count("status", JobStatus.RUNNING),
-                BackgroundJob.count("status", JobStatus.FAILED),
-                Topic.count(),
-                Topic.count("enabled", true),
-                ContentItem.count(),
-                IdempotentRequest.count()
+                ((Number) result[0]).longValue(),
+                ((Number) result[1]).longValue(),
+                ((Number) result[2]).longValue(),
+                ((Number) result[3]).longValue(),
+                ((Number) result[4]).longValue(),
+                ((Number) result[5]).longValue(),
+                ((Number) result[6]).longValue()
         );
     }
 }

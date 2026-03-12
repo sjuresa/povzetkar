@@ -10,6 +10,7 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
+import org.jboss.logging.Logger;
 import org.jboss.logging.MDC;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ import java.io.IOException;
 @ApplicationScoped
 public class AuditLogFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final String API_PATH_PREFIX = "/api/v1/";
+    private static final Logger logger = Logger.getLogger(AuditLogFilter.class);
     private static final String PROPERTY_START_TIME = "internal.audit.startTime";
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
@@ -42,7 +43,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         String path = requestContext.getUriInfo().getPath();
-        if (!path.startsWith(API_PATH_PREFIX) && !path.equals("/api/v1")) {
+        if (!path.startsWith("/api/v1")) {
             return; // Only audit API paths
         }
         requestContext.setProperty(PROPERTY_START_TIME, System.currentTimeMillis());
@@ -101,8 +102,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
             });
         } catch (Exception e) {
             // Audit failures must never affect the actual response — log and swallow
-            org.jboss.logging.Logger.getLogger(AuditLogFilter.class)
-                    .warnf(e, "Failed to persist audit log entry for [%s] %s", httpMethod, finalRequestPath);
+            logger.warnf(e, "Failed to persist audit log entry for [%s] %s", httpMethod, finalRequestPath);
         }
     }
 }

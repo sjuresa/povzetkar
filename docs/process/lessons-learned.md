@@ -42,6 +42,21 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 
 ---
 
+### 1.5 Consolidated Count Queries
+
+When multiple aggregate counts are needed at once (e.g., for a dashboard or metrics endpoint), avoid multiple roundtrips with `count()`. Use a single native query with sub-selects to collapse them into one result row.
+
+```java
+Object[] result = (Object[]) em.createNativeQuery(
+        "SELECT " +
+                "(SELECT COUNT(*) FROM table_a), " +
+                "(SELECT COUNT(*) FROM table_b WHERE flag = true)")
+        .getSingleResult();
+// Map results using result[0], result[1], etc.
+```
+
+---
+
 ## 2. API Design & Consistency
 
 ### 2.1 Database DoS Protection
@@ -245,7 +260,18 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 - **Note:** MDC *does* propagate transparently across Vert.x event loop hops (reactive chains via `Uni`/`Multi`), so this pattern is only needed for explicit worker thread dispatches.
 
 ### 8.2 Audit Logging via ContainerResponseFilter
-- **The Trap:** Trying to capture the HTTP response status in a `ContainerRequestFilter` (it's not available yet) or in the business service layer (which doesn't have HTTP context).
+
+Persisting audit records in a `ContainerResponseFilter` ensures that:
+- The final HTTP response status is captured correctly (even after exception mappers run).
+- Auditing is decoupled from business logic.
+- Using `QuarkusTransaction.requiringNew()` prevents auditing failures from rolling back the main transaction and vice versa.
+
+### 8.3 Correlation ID Propagation
+
+Always use a `ContainerRequestFilter` to inject a correlation ID into the MDC. For background threads:
+1. Capture the correlation ID from MDC on the request thread.
+2. Manually restore it in the thread wrapper (e.g., using a custom `Runnable` wrapper or explicit `MDC.put` inside the lambda).
+3. Ensure cleanup in a `finally` block to prevent leaks to subsequent pooled thread runs.
 - **The Standard:** Use a `@Provider`-annotated `ContainerResponseFilter` to persist audit records. This is the only place in the JAX-RS pipeline where both the request context (method, path, user) and the final response status are simultaneously available.
 - **Isolation:** Always wrap audit persistence in `QuarkusTransaction.requiringNew()` to ensure the audit write is independent of any business transaction that may have already committed or rolled back.
 - **Resilience:** The audit filter must `catch (Exception e)` and log a warning, never re-throwing. Audit failures must never propagate as API errors to clients.

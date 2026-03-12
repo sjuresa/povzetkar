@@ -85,9 +85,9 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        final String correlationId2 = CorrelationIdFilter.currentCorrelationId();
+        final String correlationId = CorrelationIdFilter.currentCorrelationId();
         Infrastructure.getDefaultExecutor().execute(() -> {
-            CorrelationIdFilter.setCorrelationId(correlationId2);
+            CorrelationIdFilter.setCorrelationId(correlationId);
             try {
                 Uni<Void> jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
                 executeJobLifecycle(job.id, jobTask);
@@ -105,9 +105,9 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        final String correlationId3 = CorrelationIdFilter.currentCorrelationId();
+        final String correlationId = CorrelationIdFilter.currentCorrelationId();
         Infrastructure.getDefaultExecutor().execute(() -> {
-            CorrelationIdFilter.setCorrelationId(correlationId3);
+            CorrelationIdFilter.setCorrelationId(correlationId);
             try {
                 Uni<Void> jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
                 executeJobLifecycle(job.id, jobTask);
