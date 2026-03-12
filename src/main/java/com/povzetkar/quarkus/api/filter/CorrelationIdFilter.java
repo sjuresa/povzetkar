@@ -38,6 +38,8 @@ public class CorrelationIdFilter implements ContainerRequestFilter, ContainerRes
         String correlationId = requestContext.getHeaderString(HEADER_CORRELATION_ID);
         if (correlationId == null || correlationId.isBlank()) {
             correlationId = UUID.randomUUID().toString();
+        } else if (correlationId.length() > 36) {
+            correlationId = correlationId.substring(0, 36);
         }
 
         // Store for response filter to read

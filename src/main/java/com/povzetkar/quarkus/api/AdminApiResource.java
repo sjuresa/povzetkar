@@ -146,7 +146,7 @@ public class AdminApiResource extends BaseApiResource {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = AuditLog.count();
         List<AuditLogEntryDTO> items = em.createQuery("""
-                        SELECT NEW com.povzetkar.quarkus.api.dto.AuditLogEntryDTO(
+                        SELECT NEW AuditLogEntryDTO(
                                 e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath,
                                 e.responseStatus, e.durationMs, e.userAgent, e.createdAt)
                                 FROM AuditLog e ORDER BY e.createdAt DESC""", AuditLogEntryDTO.class)

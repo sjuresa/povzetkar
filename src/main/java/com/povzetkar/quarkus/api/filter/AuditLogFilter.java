@@ -11,7 +11,6 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
-import org.jboss.logging.MDC;
 
 import java.io.IOException;
 
@@ -55,27 +54,18 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         if (startTime == null) {
             return; // Not an audited path — skip
         }
-
         long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-
-        String correlationId = null;
-        Object mdcValue = MDC.get(CorrelationIdFilter.MDC_CORRELATION_ID);
-        if (mdcValue != null) {
-            correlationId = mdcValue.toString();
-        }
-
+        String correlationId = CorrelationIdFilter.currentCorrelationId();
         Long userId = null;
         try {
             userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
         } catch (IllegalStateException  _) {
             // User may not be resolvable in all contexts (e.g., unauthenticated requests)
         }
-
         String rawPath = requestContext.getUriInfo().getPath();
         String requestPath = rawPath.length() > 1 && rawPath.endsWith("/")
                 ? rawPath.substring(0, rawPath.length() - 1)
                 : rawPath;
-
         String rawUserAgent = requestContext.getHeaderString("User-Agent");
         String userAgent = rawUserAgent != null && rawUserAgent.length() > USER_AGENT_MAX_LENGTH
                 ? rawUserAgent.substring(0, USER_AGENT_MAX_LENGTH)
@@ -87,17 +77,10 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         final String finalRequestPath = requestPath;
 
         try {
-            QuarkusTransaction.requiringNew().run(() -> {
-                AuditLog entry = new AuditLog();
-                entry.correlationId = finalCorrelationId;
-                entry.userId = finalUserId;
-                entry.httpMethod = httpMethod;
-                entry.requestPath = finalRequestPath;
-                entry.responseStatus = responseContext.getStatus();
-                entry.durationMs = durationMs;
-                entry.userAgent = userAgent;
-                entry.persist();
-            });
+            QuarkusTransaction.requiringNew().run(() ->
+                    new AuditLog(finalCorrelationId, finalUserId, httpMethod, finalRequestPath,
+                            responseContext.getStatus(), durationMs, userAgent).persist()
+            );
         } catch (Exception e) {
             // Audit failures must never affect the actual response — log and swallow
             logger.warnf(e, "Failed to persist audit log entry for [%s] %s", httpMethod, finalRequestPath);

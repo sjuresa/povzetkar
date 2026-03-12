@@ -24,6 +24,19 @@ public class AuditLog extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    public AuditLog() {
+    }
+
+    public AuditLog(String correlationId, Long userId, String httpMethod, String requestPath, Integer responseStatus, Long durationMs, String userAgent) {
+        this.correlationId = correlationId;
+        this.userId = userId;
+        this.httpMethod = httpMethod;
+        this.requestPath = requestPath;
+        this.responseStatus = responseStatus;
+        this.durationMs = durationMs;
+        this.userAgent = userAgent;
+    }
+
     @Column(name = "correlation_id", length = 36)
     public String correlationId;
 
