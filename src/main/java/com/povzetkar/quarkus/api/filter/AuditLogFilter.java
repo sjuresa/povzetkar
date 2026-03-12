@@ -11,8 +11,8 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.jboss.logging.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
@@ -29,7 +29,7 @@ import java.io.IOException;
 @ApplicationScoped
 public class AuditLogFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final Logger logger = Logger.getLogger(AuditLogFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuditLogFilter.class);
     private static final String PROPERTY_START_TIME = "internal.audit.startTime";
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
@@ -59,10 +59,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         }
         long durationMs = (System.nanoTime() - startTime) / 1_000_000;
         String correlationId = CorrelationIdFilter.currentCorrelationId();
-        Long userId = null;
-        if (!securityIdentity.isAnonymous()) {
-            userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
-        }
+
         String rawPath = requestContext.getUriInfo().getPath();
         String requestPath = rawPath.length() > 1 && rawPath.endsWith("/")
                 ? rawPath.substring(0, rawPath.length() - 1)
@@ -72,19 +69,26 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
                 ? rawUserAgent.substring(0, USER_AGENT_MAX_LENGTH)
                 : rawUserAgent;
 
-        final String finalCorrelationId = correlationId;
-        final Long finalUserId = userId;
         final String httpMethod = requestContext.getMethod();
-        final String finalRequestPath = requestPath;
+        final int responseStatus = responseContext.getStatus();
 
+        // Capture security context details
+        final boolean isAnonymous = securityIdentity.isAnonymous();
+
+        Long userId = null;
+        if (!isAnonymous) {
+            userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
+        }
+
+        final Long finalUserId = userId;
         try {
             QuarkusTransaction.requiringNew().run(() ->
-                    new AuditLog(finalCorrelationId, finalUserId, httpMethod, finalRequestPath,
-                            responseContext.getStatus(), durationMs, userAgent).persist()
+                    new AuditLog(correlationId, finalUserId, httpMethod, requestPath,
+                            responseStatus, durationMs, userAgent).persist()
             );
         } catch (Exception e) {
             // Audit failures must never affect the actual response — log and swallow
-            logger.warnf(e, "Failed to persist audit log entry for [%s] %s", httpMethod, finalRequestPath);
+            logger.warn("Failed to persist audit log entry for [{}] {}", httpMethod, requestPath, e);
         }
     }
 }

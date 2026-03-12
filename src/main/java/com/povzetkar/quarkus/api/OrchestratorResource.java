@@ -2,13 +2,14 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.MessageDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.service.OrchestrationManager;
 import com.povzetkar.quarkus.util.LogKeys;
 import com.povzetkar.quarkus.util.StructuredLogger;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -88,6 +89,7 @@ public class OrchestratorResource {
     @POST
     @Path("/preview")
     @RolesAllowed(Permission.V_ADMIN_SYSTEM_TRIGGER)
+    @Blocking
     @Operation(summary = "Preview orchestration", description = "Analyzes how many items would be processed without actually starting the run.")
     @APIResponse(responseCode = "200", description = "Preview results")
     public Uni<Response> runOrchestrationPreview(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {
