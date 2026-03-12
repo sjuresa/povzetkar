@@ -10,7 +10,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
-import java.util.Objects;
 
 /**
  * Represents a single API request audit record.
@@ -64,6 +63,6 @@ public class AuditLog extends PanacheEntityBase {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return getClass().hashCode();
     }
 }
