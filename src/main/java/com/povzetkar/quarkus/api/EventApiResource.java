@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.api.dto.SseEventDTO;
 import com.povzetkar.quarkus.service.EventBroadcaster;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.smallrye.mutiny.Multi;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -33,7 +34,7 @@ public class EventApiResource extends BaseApiResource {
     @GET
     @Path("/stream")
     @Produces(MediaType.SERVER_SENT_EVENTS)
-    @RolesAllowed("user")
+    @RolesAllowed(Permission.ROLE_USER)
     @Operation(summary = "Real-time event stream", description = "Get a real-time stream of system events (job changes, pulses).")
     public Multi<OutboundSseEvent> stream(@Context Sse sse) {
         return eventBroadcaster.getEventStream()

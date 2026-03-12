@@ -15,6 +15,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
+import com.povzetkar.quarkus.security.Permission;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -67,7 +68,7 @@ public class ContentItemApiResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed("CONTENT_ITEM_VIEW")
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
     @Operation(summary = "Get all content items", description = "Retrieves a paginated list of all content items, optionally filtered by sourceId.")
     @APIResponse(
             responseCode = "200",
@@ -105,7 +106,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed("CONTENT_ITEM_VIEW")
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
     @Operation(summary = "Get content item by ID", description = "Retrieves a specific content item by its ID.")
     @APIResponse(
             responseCode = "200",
@@ -121,7 +122,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
     @POST
     @Path("/{id}/commands/generate-summary")
-    @RolesAllowed("SUMMARY_GENERATE")
+    @RolesAllowed(Permission.V_SUMMARY_GENERATE)
     @Idempotent
     @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary.")
     @APIResponse(
@@ -150,7 +151,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
     @POST
     @Path("/{id}/commands/retry")
-    @RolesAllowed("ADMIN_JOB_UPDATE")
+    @RolesAllowed(Permission.V_ADMIN_JOB_UPDATE)
     @Idempotent
     @Operation(summary = "Retry failed item", description = "Signals to the background worker to retry a failed item. Admin functionality.")
     @APIResponse(

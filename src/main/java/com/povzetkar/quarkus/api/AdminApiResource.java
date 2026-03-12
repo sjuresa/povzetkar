@@ -71,7 +71,7 @@ public class AdminApiResource extends BaseApiResource {
 
     @POST
     @Path("/" + JOBS_PATH + "/trigger")
-    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
+    @RolesAllowed(Permission.V_ADMIN_SYSTEM_TRIGGER)
     @Idempotent
     @Operation(summary = "Trigger a background job", description = "Asynchronously starts a background job of the specified type.")
     @APIResponse(
@@ -96,7 +96,7 @@ public class AdminApiResource extends BaseApiResource {
 
     @GET
     @Path("/" + JOBS_PATH + "/{id}")
-    @RolesAllowed("ADMIN_DASHBOARD_VIEW")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
     @Operation(summary = "Get job details")
     @APIResponse(
             responseCode = "200",
@@ -112,7 +112,7 @@ public class AdminApiResource extends BaseApiResource {
 
     @GET
     @Path("/" + JOBS_PATH)
-    @RolesAllowed("ADMIN_DASHBOARD_VIEW")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
     @Operation(summary = "List background jobs", description = "Returns a paginated list of background job history.")
     @APIResponse(
             responseCode = "200",
