@@ -145,11 +145,11 @@ public class AdminApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         long totalCount = AuditLog.count();
-        List<AuditLogEntryDTO> items = em.createQuery(
-                        "SELECT NEW com.povzetkar.quarkus.api.dto.AuditLogEntryDTO(" +
-                                "e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath, " +
-                                "e.responseStatus, e.durationMs, e.userAgent, e.createdAt) " +
-                                "FROM AuditLog e ORDER BY e.createdAt DESC", AuditLogEntryDTO.class)
+        List<AuditLogEntryDTO> items = em.createQuery("""
+                        SELECT NEW com.povzetkar.quarkus.api.dto.AuditLogEntryDTO(
+                                e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath,
+                                e.responseStatus, e.durationMs, e.userAgent, e.createdAt)
+                                FROM AuditLog e ORDER BY e.createdAt DESC""", AuditLogEntryDTO.class)
                 .setFirstResult(pageIndex * clampedPageSize)
                 .setMaxResults(clampedPageSize)
                 .getResultList();
@@ -167,15 +167,15 @@ public class AdminApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "403", description = "Forbidden")
     public AdminMetricsDTO getMetrics() {
-        Object[] result = (Object[]) em.createNativeQuery(
-                        "SELECT " +
-                                "(SELECT COUNT(*) FROM background_jobs), " +
-                                "(SELECT COUNT(*) FROM background_jobs WHERE status = 'RUNNING'), " +
-                                "(SELECT COUNT(*) FROM background_jobs WHERE status = 'FAILED'), " +
-                                "(SELECT COUNT(*) FROM topics), " +
-                                "(SELECT COUNT(*) FROM topics WHERE enabled = true), " +
-                                "(SELECT COUNT(*) FROM content_items), " +
-                                "(SELECT COUNT(*) FROM idempotent_requests)")
+        Object[] result = (Object[]) em.createNativeQuery("""
+                        SELECT
+                                (SELECT COUNT(*) FROM background_jobs),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = 'RUNNING'),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = 'FAILED'),
+                                (SELECT COUNT(*) FROM topics),
+                                (SELECT COUNT(*) FROM topics WHERE enabled = true),
+                                (SELECT COUNT(*) FROM content_items),
+                                (SELECT COUNT(*) FROM idempotent_requests)""")
                 .getSingleResult();
 
         return new AdminMetricsDTO(
