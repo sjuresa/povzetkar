@@ -46,7 +46,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         if (!path.startsWith("/api/v1")) {
             return; // Only audit API paths
         }
-        requestContext.setProperty(PROPERTY_START_TIME, System.currentTimeMillis());
+        requestContext.setProperty(PROPERTY_START_TIME, System.nanoTime());
     }
 
     @Override
