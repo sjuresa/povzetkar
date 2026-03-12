@@ -56,7 +56,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
             return; // Not an audited path — skip
         }
 
-        long durationMs = System.currentTimeMillis() - startTime;
+        long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 
         String correlationId = null;
         Object mdcValue = MDC.get(CorrelationIdFilter.MDC_CORRELATION_ID);

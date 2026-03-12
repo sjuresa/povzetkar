@@ -55,25 +55,19 @@ public class BackgroundJobService {
         job.persist();
 
         // Trigger asynchronously outside of the current transaction
-        final String correlationId = CorrelationIdFilter.currentCorrelationId();
-        Infrastructure.getDefaultExecutor().execute(() -> {
-            CorrelationIdFilter.setCorrelationId(correlationId);
-            try {
-                Uni<Void> jobTask;
-                switch (type) {
-                    case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
-                            new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
-                    case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
-                            new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
-                    case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
-                            new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
-                    default ->
-                            jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + type));
-                }
-                executeJobLifecycle(job.id, jobTask);
-            } finally {
-                CorrelationIdFilter.clearCorrelationId();
+        executeInBackgroundWithMdc(() -> {
+            Uni<Void> jobTask;
+            switch (type) {
+                case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
+                case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
+                case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
+                default ->
+                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + type));
             }
+            executeJobLifecycle(job.id, jobTask);
         });
 
         return job;
@@ -85,15 +79,9 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        final String correlationId = CorrelationIdFilter.currentCorrelationId();
-        Infrastructure.getDefaultExecutor().execute(() -> {
-            CorrelationIdFilter.setCorrelationId(correlationId);
-            try {
-                Uni<Void> jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
-                executeJobLifecycle(job.id, jobTask);
-            } finally {
-                CorrelationIdFilter.clearCorrelationId();
-            }
+        executeInBackgroundWithMdc(() -> {
+            Uni<Void> jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
+            executeJobLifecycle(job.id, jobTask);
         });
 
         return job;
@@ -105,18 +93,24 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
+        executeInBackgroundWithMdc(() -> {
+            Uni<Void> jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
+            executeJobLifecycle(job.id, jobTask);
+        });
+
+        return job;
+    }
+
+    private void executeInBackgroundWithMdc(Runnable task) {
         final String correlationId = CorrelationIdFilter.currentCorrelationId();
         Infrastructure.getDefaultExecutor().execute(() -> {
             CorrelationIdFilter.setCorrelationId(correlationId);
             try {
-                Uni<Void> jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
-                executeJobLifecycle(job.id, jobTask);
+                task.run();
             } finally {
                 CorrelationIdFilter.clearCorrelationId();
             }
         });
-
-        return job;
     }
 
     private void executeJobLifecycle(UUID jobId, Uni<Void> jobTask) {
