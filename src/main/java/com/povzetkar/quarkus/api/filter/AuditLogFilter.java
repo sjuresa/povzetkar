@@ -83,10 +83,8 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
 
         final String finalCorrelationId = correlationId;
         final Long finalUserId = userId;
-        final String finalRequestPath = requestPath;
-        final String finalUserAgent = userAgent;
-        final int responseStatus = responseContext.getStatus();
         final String httpMethod = requestContext.getMethod();
+        final String finalRequestPath = requestPath;
 
         try {
             QuarkusTransaction.requiringNew().run(() -> {
@@ -95,9 +93,9 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
                 entry.userId = finalUserId;
                 entry.httpMethod = httpMethod;
                 entry.requestPath = finalRequestPath;
-                entry.responseStatus = responseStatus;
+                entry.responseStatus = responseContext.getStatus();
                 entry.durationMs = durationMs;
-                entry.userAgent = finalUserAgent;
+                entry.userAgent = userAgent;
                 entry.persist();
             });
         } catch (Exception e) {
