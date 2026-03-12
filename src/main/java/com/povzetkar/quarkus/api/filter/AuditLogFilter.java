@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api.filter;
 import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -33,10 +34,12 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
     private final UserContextService userContextService;
+    private final SecurityIdentity securityIdentity;
 
     @Inject
-    public AuditLogFilter(UserContextService userContextService) {
+    public AuditLogFilter(UserContextService userContextService, SecurityIdentity securityIdentity) {
         this.userContextService = userContextService;
+        this.securityIdentity = securityIdentity;
     }
 
     @Override
@@ -57,10 +60,8 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         long durationMs = (System.nanoTime() - startTime) / 1_000_000;
         String correlationId = CorrelationIdFilter.currentCorrelationId();
         Long userId = null;
-        try {
+        if (!securityIdentity.isAnonymous()) {
             userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
-        } catch (IllegalStateException  _) {
-            // User may not be resolvable in all contexts (e.g., unauthenticated requests)
         }
         String rawPath = requestContext.getUriInfo().getPath();
         String requestPath = rawPath.length() > 1 && rawPath.endsWith("/")
