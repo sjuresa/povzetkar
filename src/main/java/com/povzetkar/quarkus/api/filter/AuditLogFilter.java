@@ -67,7 +67,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         Long userId = null;
         try {
             userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
-        } catch (Exception _) {
+        } catch (IllegalStateException  _) {
             // User may not be resolvable in all contexts (e.g., unauthenticated requests)
         }
 
