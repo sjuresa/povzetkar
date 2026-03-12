@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                             |
 | 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                          |
 | 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
 | 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
@@ -155,7 +156,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.11: API-First & Advanced Security
 
 **Goal:** Decouple the frontend by establishing a comprehensive REST API and implementing fine-grained security (PBAC) to support advanced user interactions.
-**Status:** 🏃 In Progress
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Frontend Specification:**

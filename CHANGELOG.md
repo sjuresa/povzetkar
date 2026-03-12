@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [v0.11.0] - 2026-03-12
+
+### Summary
+
+Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for live job updates, comprehensive API request auditing, and a centralized permission-based access control system. Operational improvements include JPQL projection optimizations, consolidated health metrics, and standardized error handling across the entire API layer. The integration of static analysis and vulnerability scanning further hardens the application's security posture.
+
 ### Added
 - **API:** Implemented a Real-Time Server-Sent Events (SSE) stream endpoint (`GET /api/v1/events/stream`) providing live updates for `JOB_STATUS_CHANGED` and periodic system `PULSE` events.
 - **API:** Introduced `EventBroadcaster`, a reactive service using Mutiny `BroadcastProcessor` to manage multi-subscriber SSE broadcasting with automatic pulse heartbeats.
@@ -18,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database:** Added `V19__CreateAuditLogTable.sql` Flyway migration creating the `audit_log` table with a soft FK to `users (ON DELETE SET NULL)` and indexes on `created_at` and `user_id`.
 - **Security:** Added `ADMIN_AUDIT_LOG_VIEW` granular permission to `Permission` enum (automatically granted to `admin` role via `EnumSet.allOf`).
 - **Observability:** MDC `correlationId` is now explicitly propagated to background worker threads spawned by `Infrastructure.getDefaultExecutor()` in `BackgroundJobService`, ensuring all background job logs include the originating request's correlation ID.
-- **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
+- **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes (standardized error handling and dashboard observability).
 - **API:** Implemented JAX-RS `IdempotencyFilter` utilizing an `@Idempotent` name binding to safely cache and replay async `POST /commands/*` responses based on the `Idempotency-Key` header without redundant processing.
 - **API:** Implemented global ExceptionMappers to translate all errors (`ConstraintViolationException`, `SecurityException`, `WebApplicationException`, and uncaught system errors) into the standard `ApiEnvelopeDTO` using the RFC 7807 problem details structure.
 - **API:** Introduced `MessageDTO` for standardized simple message responses.
@@ -42,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API:** Refactored `OrchestratorResource` to utilize standard JAX-RS exception mappers for error responses, improving internal error sanitization.
 - **API:** Centralized `pageSize` clamping logic in `AdminApiResource` for consistency across paginated resources.
 - **API:** Implemented systemic sorting and filtering across all list endpoints (e.g., `Topic`, `Briefing`, `User`) using generic `FilterBuilder` and `QueryParser` to safely parse `?sort=` fields without HQL injection vulnerabilities.
-- **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
 
 ### Refactored
 - **API:** Optimized `AdminApiResource.getAuditLog` using JPQL Constructor Projection (`SELECT NEW ...`) to eliminate full entity hydration and improve database-level projection efficiency.
