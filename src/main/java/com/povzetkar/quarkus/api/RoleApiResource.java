@@ -8,6 +8,7 @@ import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Role;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -43,7 +44,7 @@ public class RoleApiResource {
     }
 
     @GET
-    @RolesAllowed("USER_MGMT_VIEW")
+    @RolesAllowed(Permission.V_USER_MGMT_VIEW)
     @Operation(summary = "Get all roles", description = "Retrieves a paginated list of available roles.")
     @APIResponse(
             responseCode = "200",

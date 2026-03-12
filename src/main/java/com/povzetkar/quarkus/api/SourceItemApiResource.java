@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -47,7 +48,7 @@ public class SourceItemApiResource extends BaseApiResource {
 
     @GET
     @Path("/{id}/items")
-    @RolesAllowed("SOURCE_VIEW")
+    @RolesAllowed(Permission.V_SOURCE_VIEW)
     @Operation(summary = "Get items by source", description = "Retrieves a paginated list of content items for a specific source.")
     @APIResponse(
             responseCode = "200",

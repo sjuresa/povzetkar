@@ -31,8 +31,8 @@ public class RolePermissionsMap {
             Permission.CONTENT_ITEM_VIEW);
 
     private static final Map<String, Set<Permission>> ROLE_PERMISSIONS = Map.of(
-            "admin", ADMIN_PERMISSIONS,
-            "user", USER_PERMISSIONS);
+            Permission.ROLE_ADMIN, ADMIN_PERMISSIONS,
+            Permission.ROLE_USER, USER_PERMISSIONS);
 
     /**
      * Resolves the granular permissions for a given system role.

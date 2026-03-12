@@ -8,6 +8,7 @@ import com.povzetkar.quarkus.util.LogKeys;
 import com.povzetkar.quarkus.util.StructuredLogger;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -46,7 +47,7 @@ public class OrchestratorResource {
 
     @POST
     @Path("/run")
-    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
+    @RolesAllowed(Permission.V_ADMIN_SYSTEM_TRIGGER)
     @Operation(summary = "Run orchestration manually", description = "Triggers the full orchestration flow (fetch, summarize, briefing) for a given date range.")
     @APIResponse(responseCode = "202", description = "Orchestration process started")
     @APIResponse(responseCode = "400", description = "Invalid date range or parameters")
@@ -86,7 +87,7 @@ public class OrchestratorResource {
 
     @POST
     @Path("/preview")
-    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
+    @RolesAllowed(Permission.V_ADMIN_SYSTEM_TRIGGER)
     @Operation(summary = "Preview orchestration", description = "Analyzes how many items would be processed without actually starting the run.")
     @APIResponse(responseCode = "200", description = "Preview results")
     public Uni<Response> runOrchestrationPreview(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrchestrationRequest request) {

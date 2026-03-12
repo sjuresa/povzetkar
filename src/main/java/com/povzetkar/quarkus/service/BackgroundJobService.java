@@ -11,9 +11,11 @@ import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.api.ApiConstants;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.service.event.JobStatusChangedEvent;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
@@ -30,17 +32,20 @@ public class BackgroundJobService {
     private final BackgroundJobMapper backgroundJobMapper;
     private final java.time.Clock clock;
     private final JustInTimeSummarizationScheduler summarizationScheduler;
+    private final Event<JobStatusChangedEvent> jobStatusEvent;
     private static final Logger logger = Logger.getLogger(BackgroundJobService.class);
 
     @Inject
     public BackgroundJobService(OrchestrationManager orchestrationManager,
                                 BackgroundJobMapper backgroundJobMapper,
                                 java.time.Clock clock,
-                                JustInTimeSummarizationScheduler summarizationScheduler) {
+                                JustInTimeSummarizationScheduler summarizationScheduler,
+                                Event<JobStatusChangedEvent> jobStatusEvent) {
         this.orchestrationManager = orchestrationManager;
         this.backgroundJobMapper = backgroundJobMapper;
         this.clock = clock;
         this.summarizationScheduler = summarizationScheduler;
+        this.jobStatusEvent = jobStatusEvent;
     }
 
     @Transactional
@@ -154,6 +159,7 @@ public class BackgroundJobService {
             }
         }
         job.persist();
+        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type));
     }
 
     public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, Sort sort, int pageIndex, int pageSize) {

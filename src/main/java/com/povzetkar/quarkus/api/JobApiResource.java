@@ -7,6 +7,7 @@ import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -47,7 +48,7 @@ public class JobApiResource extends BaseApiResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed("user")
+    @RolesAllowed(Permission.ROLE_USER)
     @Operation(summary = "Get user job details", description = "Get job details for jobs initiated by the current user.")
     @APIResponse(
             responseCode = "200",

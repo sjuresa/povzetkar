@@ -17,6 +17,7 @@ import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -77,7 +78,7 @@ public class TopicApiResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed("TOPIC_VIEW")
+    @RolesAllowed(Permission.V_TOPIC_VIEW)
     @Operation(summary = "Get all topics", description = "Retrieves a paginated list of topics for the current user.")
     @APIResponse(
             responseCode = "200",
@@ -104,7 +105,7 @@ public class TopicApiResource extends BaseApiResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed("TOPIC_VIEW")
+    @RolesAllowed(Permission.V_TOPIC_VIEW)
     @Operation(summary = "Get topic by ID", description = "Retrieves a specific topic by its ID.")
     @APIResponse(
             responseCode = "200",
@@ -120,7 +121,7 @@ public class TopicApiResource extends BaseApiResource {
 
     @POST
     @Transactional
-    @RolesAllowed("TOPIC_CREATE")
+    @RolesAllowed(Permission.V_TOPIC_CREATE)
     @APIResponse(
             responseCode = "201",
             description = "Topic created successfully",
@@ -144,7 +145,7 @@ public class TopicApiResource extends BaseApiResource {
     @PATCH
     @Path("/{id}")
     @Transactional
-    @RolesAllowed("TOPIC_UPDATE")
+    @RolesAllowed(Permission.V_TOPIC_UPDATE)
     @APIResponse(
             responseCode = "200",
             description = "Topic updated successfully",
@@ -172,7 +173,7 @@ public class TopicApiResource extends BaseApiResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed("TOPIC_DELETE")
+    @RolesAllowed(Permission.V_TOPIC_DELETE)
     @OptimisticLocking
     @Operation(summary = "Delete topic", description = "Deletes a specific topic.")
     public Response deleteTopic(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
@@ -187,7 +188,7 @@ public class TopicApiResource extends BaseApiResource {
 
     @POST
     @Path("/{id}/commands/generate-briefing")
-    @RolesAllowed("TOPIC_TRIGGER_RUN")
+    @RolesAllowed(Permission.V_TOPIC_TRIGGER_RUN)
     @Idempotent
     @Operation(summary = "Trigger Topic run", description = "Manually triggers a briefing generation for the topic.")
     @APIResponse(

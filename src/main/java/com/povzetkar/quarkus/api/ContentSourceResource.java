@@ -13,6 +13,7 @@ import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -68,7 +69,7 @@ public class ContentSourceResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed("SOURCE_VIEW")
+    @RolesAllowed(Permission.V_SOURCE_VIEW)
     @Operation(summary = "Get all content sources", description = "Retrieves a paginated list of all content sources.")
     @APIResponse(
             responseCode = "200",
@@ -92,7 +93,7 @@ public class ContentSourceResource extends BaseApiResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed("SOURCE_VIEW")
+    @RolesAllowed(Permission.V_SOURCE_VIEW)
     @Operation(summary = "Get content source by ID", description = "Retrieves details of a specific content source.")
     @APIResponse(
             responseCode = "200",
@@ -108,7 +109,7 @@ public class ContentSourceResource extends BaseApiResource {
 
     @POST
     @Transactional
-    @RolesAllowed("SOURCE_CREATE")
+    @RolesAllowed(Permission.V_SOURCE_CREATE)
     @Operation(summary = "Create content source", description = "Creates a new content source.")
     @APIResponse(
             responseCode = "201",
@@ -136,7 +137,7 @@ public class ContentSourceResource extends BaseApiResource {
     @PATCH
     @Path("/{id}")
     @Transactional
-    @RolesAllowed("SOURCE_UPDATE")
+    @RolesAllowed(Permission.V_SOURCE_UPDATE)
     @Operation(summary = "Partially update content source", description = "Partially updates an existing content source.")
     @APIResponse(
            responseCode = "200",
@@ -161,7 +162,7 @@ public class ContentSourceResource extends BaseApiResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed("SOURCE_DELETE")
+    @RolesAllowed(Permission.V_SOURCE_DELETE)
     @OptimisticLocking
     @Operation(summary = "Delete content source", description = "Deletes a specific content source.")
     public Response deleteContentSource(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
@@ -177,7 +178,7 @@ public class ContentSourceResource extends BaseApiResource {
     // Maintain existing enrich functionality for compatibility
     @POST
     @Path("/enrich")
-    @RolesAllowed("ADMIN_SYSTEM_TRIGGER")
+    @RolesAllowed(Permission.V_ADMIN_SYSTEM_TRIGGER)
     public Response enrichContentSources() {
         contentSourceDetailService.enrichContentSources();
         return Response.accepted().entity("Content sources enrichment started.").build();
@@ -185,7 +186,7 @@ public class ContentSourceResource extends BaseApiResource {
 
     @GET
     @Path("/details/{sourceTypeId}/{identifier}")
-    @RolesAllowed("SOURCE_VIEW")
+    @RolesAllowed(Permission.V_SOURCE_VIEW)
     public ContentSourceDetailService.ContentSourceDetails getContentSourceDetails(
             @PathParam("sourceTypeId") int sourceTypeId, @PathParam("identifier") String identifier) {
         return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)

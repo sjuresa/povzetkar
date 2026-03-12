@@ -11,6 +11,7 @@ import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -52,7 +53,7 @@ public class BriefingApiResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed("BRIEFING_VIEW")
+    @RolesAllowed(Permission.V_BRIEFING_VIEW)
     @Operation(summary = "Get all briefings", description = "Retrieves a paginated list of briefings for the current user.")
     @APIResponse(
             responseCode = "200",
@@ -90,7 +91,7 @@ public class BriefingApiResource extends BaseApiResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed("BRIEFING_VIEW")
+    @RolesAllowed(Permission.V_BRIEFING_VIEW)
     @Operation(summary = "Get briefing by ID", description = "Retrieves a specific briefing by its ID.")
     @APIResponse(
             responseCode = "200",

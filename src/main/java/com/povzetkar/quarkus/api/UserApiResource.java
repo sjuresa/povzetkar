@@ -12,6 +12,7 @@ import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -55,7 +56,6 @@ import java.util.stream.Collectors;
 public class UserApiResource extends BaseApiResource {
 
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
-    private static final String ADMIN = "admin";
 
     private final UserMapper userMapper;
 
@@ -67,7 +67,7 @@ public class UserApiResource extends BaseApiResource {
 
     @GET
     @Path("/me")
-    @RolesAllowed("user")
+    @RolesAllowed(Permission.ROLE_USER)
     @Transactional
     @Operation(summary = "Get current user profile", description = "Returns the profile and permissions for the authenticated user.")
     @APIResponse(
@@ -82,7 +82,7 @@ public class UserApiResource extends BaseApiResource {
     }
 
     @GET
-    @RolesAllowed("USER_MGMT_VIEW")
+    @RolesAllowed(Permission.V_USER_MGMT_VIEW)
     @Transactional
     @Operation(summary = "List all users", description = "Returns a paginated list of users for administration.")
     @APIResponse(
@@ -123,7 +123,7 @@ public class UserApiResource extends BaseApiResource {
 
     @PATCH
     @Path("/{id}")
-    @RolesAllowed("USER_MGMT_UPDATE")
+    @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
     @Operation(summary = "Update user status", description = "Activate or deactivate a user.")
     @APIResponse(
@@ -142,8 +142,8 @@ public class UserApiResource extends BaseApiResource {
         
         checkOptimisticLock(user, ifMatch);
 
-        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
-        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
+        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
 
         // 1. Protection: Only an administrator can manage another administrator account (activate/deactivate)
         if (userBeingModifiedIsAdmin && !currentUserIsAdmin) {
@@ -182,7 +182,7 @@ public class UserApiResource extends BaseApiResource {
 
     @PUT
     @Path("/{id}/roles")
-    @RolesAllowed("USER_MGMT_UPDATE")
+    @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
     @Operation(summary = "Update user roles", description = "Assign or remove roles for a user.")
     @APIResponse(
@@ -207,9 +207,9 @@ public class UserApiResource extends BaseApiResource {
             throw new BadRequestException("One or more invalid role IDs provided.");
         }
 
-        boolean requestContainsAdmin = requestedRoles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
-        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
-        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+        boolean requestContainsAdmin = requestedRoles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
+        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
+        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
         boolean isSelf = user.id.equals(currentUser.id);
 
         // 1. Protection: Admin cannot remove their own admin role
@@ -250,11 +250,11 @@ public class UserApiResource extends BaseApiResource {
 
     private boolean isLastAdmin(User userBeingModified) {
         // If the user being modified is an admin
-        boolean isAdmin = userBeingModified.roles.stream().anyMatch(r -> ADMIN.equalsIgnoreCase(r.name));
+        boolean isAdmin = userBeingModified.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
         if (!isAdmin) return false;
 
         // Count active admins in the system
-        long adminCount = User.find("select u from User u join u.roles r where r.name = ?1 and u.active = true", ADMIN).count();
+        long adminCount = User.find("select u from User u join u.roles r where r.name = ?1 and u.active = true", Permission.ROLE_ADMIN).count();
         
         return adminCount <= 1;
     }
