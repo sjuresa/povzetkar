@@ -170,13 +170,13 @@ public class AdminApiResource extends BaseApiResource {
         Object[] result = (Object[]) em.createNativeQuery("""
                         SELECT
                                 (SELECT COUNT(*) FROM background_jobs),
-                                (SELECT COUNT(*) FROM background_jobs WHERE status = 'RUNNING'),
-                                (SELECT COUNT(*) FROM background_jobs WHERE status = 'FAILED'),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = :runningStatus),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = :failedStatus),
                                 (SELECT COUNT(*) FROM topics),
                                 (SELECT COUNT(*) FROM topics WHERE enabled = true),
                                 (SELECT COUNT(*) FROM content_items),
                                 (SELECT COUNT(*) FROM idempotent_requests)""")
-                .getSingleResult();
+                .setParameter("runningStatus", JobStatus.RUNNING.name()).setParameter("failedStatus", JobStatus.FAILED.name()).getSingleResult();
 
         return new AdminMetricsDTO(
                 ((Number) result[0]).longValue(),
