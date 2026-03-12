@@ -264,6 +264,36 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 - **Isolation:** Always wrap audit persistence in `QuarkusTransaction.requiringNew()` to ensure the audit write is independent of any business transaction that may have already committed or rolled back. This decouples auditing from business logic.
 - **Resilience:** The audit filter must `catch (Exception e)` and log a warning, never re-throwing. Audit failures must never propagate as API errors to clients.
 
+---
+
+## 9. Server-Sent Events (SSE) & Real-Time Updates
+
+### 9.1 Resource Management (@PreDestroy)
+- **The Trap:** Opening a `BroadcastProcessor` or other resource in a `@Singleton` or `@ApplicationScoped` bean without an explicit cleanup hook. This can lead to resource leaks (e.g., active threads or open streams) particularly during hot reloads or application shutdown.
+- **The Standard:** Always implement a `@PreDestroy` method to explicitly close or complete the processor:
+  ```java
+  @PreDestroy
+  void shutdown() {
+      processor.onComplete();
+  }
+  ```
+
+### 9.2 SSE Event Order in Integration Tests
+- **The Trap:** Firing business events (like `onJobStatusChanged`) immediately after starting an `SseEventSource` in a test. This often results in race conditions where the event is missed because the client discovery/handshake isn't finished.
+- **The Standard:** Always push an initial `CONNECTED` event (or similar) from the `GET` stream endpoint and use `await().until(...)` in the test to verify receipt of this event before triggering any business logic that produces subsequent events. This guarantees the subscriber is active and listening.
+
+### 9.3 Client Factory Discovery
+- **The Trap:** In tests, `ClientBuilder.newClient()` may fail with a "provider not found" error if the JAX-RS implementation is not correctly discovered by the `FactoryFinder`.
+- **The Standard:** Ensure that correctly scoped dependencies (like `quarkus-rest-client-jackson` in `test` scope) are present. Avoid using `SseEventSource` if you can't guarantee a clean provider lookup; however, for Quarkus integration tests, standard Resteasy Reactive clients should work if the classpath is correct.
+
+---
+
+## 10. Observability & Request Tracing (Extended)
+
+### 10.1 Logger Consistency
+- **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments.
+- **The Standard:** Always use `org.jboss.logging.Logger`. In tests, this ensures that logs follow the test-profile configuration and are correctly captured by the build tool (e.g. Maven/Surefire).
+
 ### 8.3 Correlation ID Propagation
 
 Always use a `ContainerRequestFilter` to inject a correlation ID into the MDC. For background threads:
