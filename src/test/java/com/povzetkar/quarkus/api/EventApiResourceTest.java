@@ -12,6 +12,7 @@ import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.common.http.TestHTTPResource;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jboss.logging.Logger;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -32,6 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 class EventApiResourceTest {
+
+    private static final Logger LOG = Logger.getLogger(EventApiResourceTest.class);
 
     @Inject
     BackgroundJobService backgroundJobService;
@@ -69,11 +72,10 @@ class EventApiResourceTest {
 
         try (SseEventSource source = SseEventSource.target(target).build()) {
             source.register(event -> {
-                System.out.println("Received event: " + event.getName());
+                LOG.infof("Received event: %s", event.getName());
                 receivedEventNames.add(event.getName());
             }, thr -> {
-                System.err.println("SSE Error: " + thr.getMessage());
-                thr.printStackTrace();
+                LOG.error("SSE Error", thr);
             });
             source.open();
 
@@ -90,7 +92,7 @@ class EventApiResourceTest {
             });
 
             // Trigger a job status change
-            backgroundJobService.updateJobStatusUni(jobId, JobStatus.RUNNING, null).subscribe().with(v -> System.out.println("Fired job status change event for " + jobId));
+            backgroundJobService.updateJobStatusUni(jobId, JobStatus.RUNNING, null).subscribe().with(v -> LOG.infof("Fired job status change event for %s", jobId));
 
             await().atMost(10, TimeUnit.SECONDS).until(() -> receivedEventNames.contains("JOB_STATUS_CHANGED"));
         } finally {
