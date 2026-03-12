@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
@@ -26,7 +27,7 @@ public class EventBroadcaster {
                 );
     }
 
-    public void onJobStatusChanged(@Observes JobStatusChangedEvent event) {
+    public void onJobStatusChanged(@Observes(during = TransactionPhase.AFTER_SUCCESS) JobStatusChangedEvent event) {
         logger.debugf("Broadcasting job status change for job %s: %s", event.jobId(), event.status());
         processor.onNext(SseEventDTO.of("JOB_STATUS_CHANGED", event));
     }
