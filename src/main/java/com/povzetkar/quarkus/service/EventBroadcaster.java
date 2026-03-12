@@ -1,0 +1,33 @@
+package com.povzetkar.quarkus.service;
+
+import com.povzetkar.quarkus.api.dto.SseEventDTO;
+import com.povzetkar.quarkus.service.event.JobStatusChangedEvent;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import org.jboss.logging.Logger;
+
+import java.time.Duration;
+
+@ApplicationScoped
+public class EventBroadcaster {
+
+    private static final Logger logger = Logger.getLogger(EventBroadcaster.class);
+    private final BroadcastProcessor<SseEventDTO> processor = BroadcastProcessor.create();
+
+    public Multi<SseEventDTO> getEventStream() {
+        return Multi.createBy().merging()
+                .streams(
+                        Multi.createFrom().item(SseEventDTO.of("CONNECTED", "Stream established")),
+                        processor,
+                        Multi.createFrom().ticks().every(Duration.ofSeconds(30))
+                                .map(tick -> SseEventDTO.of("PULSE", "Still alive"))
+                );
+    }
+
+    public void onJobStatusChanged(@Observes JobStatusChangedEvent event) {
+        logger.debugf("Broadcasting job status change for job %s: %s", event.jobId(), event.status());
+        processor.onNext(SseEventDTO.of("JOB_STATUS_CHANGED", event));
+    }
+}
