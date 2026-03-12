@@ -10,6 +10,7 @@ public enum Permission {
     ADMIN_DASHBOARD_VIEW,
     ADMIN_SYSTEM_TRIGGER,
     ADMIN_JOB_UPDATE,
+    ADMIN_AUDIT_LOG_VIEW,
 
     // User Management
     USER_MGMT_VIEW,
@@ -38,4 +39,6 @@ public enum Permission {
 
     public static final String V_TOPIC_VIEW = "TOPIC_VIEW";
     public static final String V_BRIEFING_VIEW = "BRIEFING_VIEW";
+    public static final String V_ADMIN_DASHBOARD_VIEW = "ADMIN_DASHBOARD_VIEW";
+    public static final String V_ADMIN_AUDIT_LOG_VIEW = "ADMIN_AUDIT_LOG_VIEW";
 }

@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.AdminMetricsDTO;
+import com.povzetkar.quarkus.api.dto.AuditLogEntryDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
@@ -7,14 +9,17 @@ import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
+import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -51,14 +56,17 @@ public class AdminApiResource extends BaseApiResource {
 
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
+    private final EntityManager em;
 
     @Inject
     public AdminApiResource(BackgroundJobService backgroundJobService,
                            BackgroundJobMapper backgroundJobMapper,
-                           UserContextService userContextService) {
+                           UserContextService userContextService,
+                           EntityManager em) {
         super(userContextService);
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
+        this.em = em;
     }
 
     @POST
@@ -120,5 +128,64 @@ public class AdminApiResource extends BaseApiResource {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
         return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
+    }
+
+    @GET
+    @Path("/audit-log")
+    @RolesAllowed(Permission.V_ADMIN_AUDIT_LOG_VIEW)
+    @Operation(summary = "List audit log entries", description = "Returns a paginated list of API request audit log entries, sorted by most recent first.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Audit log entries retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+    )
+    @APIResponse(responseCode = "403", description = "Forbidden")
+    public PaginatedResponse<AuditLogEntryDTO> getAuditLog(
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize) {
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
+        long totalCount = AuditLog.count();
+        List<AuditLogEntryDTO> items = em.createQuery("""
+                        SELECT NEW AuditLogEntryDTO(
+                                e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath,
+                                e.responseStatus, e.durationMs, e.userAgent, e.createdAt)
+                                FROM AuditLog e ORDER BY e.createdAt DESC""", AuditLogEntryDTO.class)
+                .setFirstResult(pageIndex * clampedPageSize)
+                .setMaxResults(clampedPageSize)
+                .getResultList();
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
+    }
+
+    @GET
+    @Path("/metrics")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "Get system metrics", description = "Returns live aggregate counts for system health monitoring.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Metrics retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AdminMetricsDTO.class))
+    )
+    @APIResponse(responseCode = "403", description = "Forbidden")
+    public AdminMetricsDTO getMetrics() {
+        Object[] result = (Object[]) em.createNativeQuery("""
+                        SELECT
+                                (SELECT COUNT(*) FROM background_jobs),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = :runningStatus),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = :failedStatus),
+                                (SELECT COUNT(*) FROM topics),
+                                (SELECT COUNT(*) FROM topics WHERE enabled = true),
+                                (SELECT COUNT(*) FROM content_items),
+                                (SELECT COUNT(*) FROM idempotent_requests)""")
+                .setParameter("runningStatus", JobStatus.RUNNING.name()).setParameter("failedStatus", JobStatus.FAILED.name()).getSingleResult();
+
+        return new AdminMetricsDTO(
+                ((Number) result[0]).longValue(),
+                ((Number) result[1]).longValue(),
+                ((Number) result[2]).longValue(),
+                ((Number) result[3]).longValue(),
+                ((Number) result[4]).longValue(),
+                ((Number) result[5]).longValue(),
+                ((Number) result[6]).longValue()
+        );
     }
 }

@@ -42,6 +42,21 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 
 ---
 
+### 1.5 Consolidated Count Queries
+
+When multiple aggregate counts are needed at once (e.g., for a dashboard or metrics endpoint), avoid multiple roundtrips with `count()`. Use a single native query with sub-selects to collapse them into one result row.
+
+```java
+Object[] result = (Object[]) em.createNativeQuery(
+        "SELECT " +
+                "(SELECT COUNT(*) FROM table_a), " +
+                "(SELECT COUNT(*) FROM table_b WHERE flag = true)")
+        .getSingleResult();
+// Map results using result[0], result[1], etc.
+```
+
+---
+
 ## 2. API Design & Consistency
 
 ### 2.1 Database DoS Protection
@@ -223,3 +238,35 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ### 7.2 Dependency Vulnerability Scanning
 - **The Trap:** Relying solely on local dependency checks introduces developer friction and lacks centralized visibility of inherited security issues.
 - **The Standard:** Integrate vulnerability scanning directly into the CI/CD pipeline. Configure explicit exit codes (e.g., `exit-code: '1'`) and severity levels (e.g., `severity: 'CRITICAL,HIGH'`) to unconditionally break the build logically when actionable CVEs are discovered, guaranteeing insecure code is never merged into the main branch.
+
+---
+
+## 8. Observability & Request Tracing
+
+### 8.1 MDC Propagation to Background Threads
+- **The Trap:** Assuming that MDC values set on a request thread (e.g., a `correlationId` from a JAX-RS `ContainerRequestFilter`) are automatically available in background tasks dispatched via `Infrastructure.getDefaultExecutor().execute(...)`. MDC is inherently thread-local — it does NOT propagate to worker threads spawned by blocking executors.
+- **The Standard:** Always explicitly capture MDC values on the request thread *before* dispatching the background task:
+  ```java
+  final String correlationId = MDC.get("correlationId");
+  Infrastructure.getDefaultExecutor().execute(() -> {
+      MDC.put("correlationId", correlationId);
+      try {
+          // ... background work ...
+      } finally {
+          MDC.remove("correlationId");
+      }
+  });
+  ```
+- **Note:** MDC *does* propagate transparently across Vert.x event loop hops (reactive chains via `Uni`/`Multi`), so this pattern is only needed for explicit worker thread dispatches.
+
+### 8.2 Audit Logging via ContainerResponseFilter
+- **The Standard:** Use a `@Provider`-annotated `ContainerResponseFilter` to persist audit records. This is the only place in the JAX-RS pipeline where both the request context and the final response status are simultaneously available, ensuring the final HTTP status is captured correctly even after exception mappers run.
+- **Isolation:** Always wrap audit persistence in `QuarkusTransaction.requiringNew()` to ensure the audit write is independent of any business transaction that may have already committed or rolled back. This decouples auditing from business logic.
+- **Resilience:** The audit filter must `catch (Exception e)` and log a warning, never re-throwing. Audit failures must never propagate as API errors to clients.
+
+### 8.3 Correlation ID Propagation
+
+Always use a `ContainerRequestFilter` to inject a correlation ID into the MDC. For background threads:
+1. Capture the correlation ID from MDC on the request thread.
+2. Manually restore it in the thread wrapper (e.g., using a custom `Runnable` wrapper or explicit `MDC.put` inside the lambda).
+3. Ensure cleanup in a `finally` block to prevent leaks to subsequent pooled thread runs.

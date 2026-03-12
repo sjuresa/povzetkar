@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API:** Implemented `CorrelationIdFilter`, a global JAX-RS filter that reads or auto-generates an `X-Correlation-ID` UUID for every request, injects it into the MDC for structured log correlation, and echoes it back in the response header.
+- **API:** Implemented `AuditLogFilter`, a global JAX-RS `ContainerResponseFilter` that persists one `AuditLog` record per `/api/v1/` request (HTTP method, path, response status, duration, authenticated user, correlation ID) in an isolated transaction. Audit failures are silently logged and never surface as API errors.
+- **API:** Exposed `GET /api/v1/admin/audit-log` — a paginated, admin-only endpoint returning API request audit log entries sorted by most recent first, secured with the new `ADMIN_AUDIT_LOG_VIEW` permission.
+- **API:** Exposed `GET /api/v1/admin/metrics` — an admin-only endpoint returning live aggregate system health counts (total/running/failed jobs, topics, content items, idempotency cache entries), secured with `ADMIN_DASHBOARD_VIEW`.
+- **Database:** Added `V19__CreateAuditLogTable.sql` Flyway migration creating the `audit_log` table with a soft FK to `users (ON DELETE SET NULL)` and indexes on `created_at` and `user_id`.
+- **Security:** Added `ADMIN_AUDIT_LOG_VIEW` granular permission to `Permission` enum (automatically granted to `admin` role via `EnumSet.allOf`).
+- **Observability:** MDC `correlationId` is now explicitly propagated to background worker threads spawned by `Infrastructure.getDefaultExecutor()` in `BackgroundJobService`, ensuring all background job logs include the originating request's correlation ID.
+- **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
 - **API:** Implemented JAX-RS `IdempotencyFilter` utilizing an `@Idempotent` name binding to safely cache and replay async `POST /commands/*` responses based on the `Idempotency-Key` header without redundant processing.
 - **API:** Implemented global ExceptionMappers to translate all errors (`ConstraintViolationException`, `SecurityException`, `WebApplicationException`, and uncaught system errors) into the standard `ApiEnvelopeDTO` using the RFC 7807 problem details structure.
 - **API:** Introduced `MessageDTO` for standardized simple message responses.
@@ -31,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API:** Centralized `pageSize` clamping logic in `AdminApiResource` for consistency across paginated resources.
 - **API:** Implemented systemic sorting and filtering across all list endpoints (e.g., `Topic`, `Briefing`, `User`) using generic `FilterBuilder` and `QueryParser` to safely parse `?sort=` fields without HQL injection vulnerabilities.
 - **UI:** Updated `admin.js` to correctly handle and display messages from the standardized `{ data, error }` response envelopes.
+
+### Refactored
+- **API:** Optimized `AdminApiResource.getAuditLog` using JPQL Constructor Projection (`SELECT NEW ...`) to eliminate full entity hydration and improve database-level projection efficiency.
+- **API:** Consolidated `AdminApiResource.getMetrics` endpoint logic to use a single native query with sub-selects, reducing database roundtrips from 7 to 1.
+- **API:** Cleaned up unused entity imports in `AdminApiResource` after transitioning to native and specialized JPQL queries.
 
 ### Changed
 - **API:** Replaced ad-hoc `BadRequestExceptionMapper` and manual error responses with a unified, centralized exception handling architecture to ensure complete API response envelope coverage and to properly sanitize internal error messages (500 Internal Server Error) from reaching the client.
