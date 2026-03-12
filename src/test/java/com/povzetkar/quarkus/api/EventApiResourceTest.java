@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.service.BackgroundJobService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.common.http.TestHTTPResource;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.client.Client;
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,6 +35,9 @@ class EventApiResourceTest {
 
     @Inject
     BackgroundJobService backgroundJobService;
+
+    @TestHTTPResource("/api/v1/events/stream")
+    URL streamUrl;
 
     User testUser;
 
@@ -55,9 +61,9 @@ class EventApiResourceTest {
 
     @Test
     @TestSecurity(user = "sseuser", roles = { "user" })
-    void testEventStream() {
+    void testEventStream() throws URISyntaxException {
         Client client = ClientBuilder.newClient();
-        WebTarget target = client.target("http://localhost:8081/api/v1/events/stream");
+        WebTarget target = client.target(streamUrl.toURI());
 
         List<String> receivedEventNames = new CopyOnWriteArrayList<>();
 
