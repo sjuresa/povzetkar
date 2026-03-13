@@ -464,9 +464,17 @@ All REST API responses (except for special streams like SSE) are wrapped in a st
 {
   "data": { ... payload ... },
   "meta": {
-    "pagination": { "page": 0, "size": 20, "totalCount": 100 },
-    "correlationId": "..."
-  }
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": {
+      "page": 0,
+      "size": 20,
+      "totalElements": 100,
+      "totalPages": 5,
+      "hasNext": true
+    }
+  },
+  "error": null
 }
 ```
 
@@ -479,9 +487,13 @@ Errors follow the **RFC 7807** (Problem Details) structure:
     "title": "Validation Failed",
     "status": 400,
     "detail": "The 'name' field cannot be empty.",
-    "fieldErrors": {
-      "name": "must not be empty"
-    }
+    "errorCode": "VALIDATION_ERROR",
+    "fieldErrors": [
+      {
+        "field": "name",
+        "message": "must not be empty"
+      }
+    ]
   }
 }
 ```
