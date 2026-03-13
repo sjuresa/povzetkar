@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Documentation
-- **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture supports SEO through build-time Pre-rendering (SSG) for the Landing Page, ensuring 100% type-safety and real-time SSE updates without the complexity of a full SSR server.
+- **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
 
 ### Planned
 - Monorepo restructuring for Frontend/Backend co-location (POV-135).
