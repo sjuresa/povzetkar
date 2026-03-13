@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.security.UserSecurityDetails;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -81,7 +82,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
 
     private void persistAuditLogAsync(String correlationId, UserSecurityDetails security, String httpMethod,
                                      int status, String path, long durationMs, String userAgent) {
-        io.smallrye.mutiny.infrastructure.Infrastructure.getDefaultExecutor().execute(() -> {
+        Infrastructure.getDefaultExecutor().execute(() -> {
             try {
                 final Long userId = userContextService.findUserId(security);
                 QuarkusTransaction.requiringNew().run(() ->

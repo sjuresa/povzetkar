@@ -4,6 +4,8 @@ import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.UserIdentity;
+import com.povzetkar.quarkus.security.UserSecurityDetails;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -133,12 +135,12 @@ public class UserContextService {
      * Looks up a User ID based on captured security details. This method is designed to
      * be run on a worker thread where the original SecurityIdentity might not be active.
      */
-    public Long findUserId(com.povzetkar.quarkus.security.UserSecurityDetails details) {
+    public Long findUserId(UserSecurityDetails details) {
         if (details == null || details.principalName() == null) {
             return null;
         }
 
-        return io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().call(() -> {
+        return QuarkusTransaction.requiringNew().call(() -> {
             if (details.jwtSub() != null) {
                 var identity = UserIdentity.findByProviderAndExternalId(PROVIDER_GOOGLE, details.jwtSub()).orElse(null);
                 if (identity != null) return identity.user.id;

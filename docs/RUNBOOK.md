@@ -430,10 +430,17 @@ The project has standardized on **SLF4J** for logging and uses a `StructuredLogg
 
 *   **Standard Logger:** `private static final Logger logger = LoggerFactory.getLogger(YourClass.class);`
 *   **Structured Logger:** `private static final StructuredLogger logger = StructuredLogger.getLogger(YourClass.class);`
-*   **Usage Example:**
-    ```java
-    logger.info("event", "job_started", "job_id", jobId);
-    ```
+*   **Usage Examples:**
+    *   **Standard Logger (for formatted messages):**
+        ```java
+        // In a class with: private static final Logger logger = LoggerFactory.getLogger(YourClass.class);
+        logger.info("Processing item with ID: {}", itemId);
+        ```
+    *   **Structured Logger (for key-value pairs):**
+        ```java
+        // In a class with: private static final StructuredLogger logger = StructuredLogger.getLogger(YourClass.class);
+        logger.info("event", "job_started", "job_id", jobId);
+        ```
 
 ## 11. Real-Time Event Stream (SSE)
 
