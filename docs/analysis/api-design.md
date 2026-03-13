@@ -452,19 +452,21 @@ Deactivate or ban a user.
 *Required Permission: `ADMIN_DASHBOARD_VIEW`, `ADMIN_SYSTEM_TRIGGER`, `ADMIN_JOB_UPDATE`*
 
 **`GET /api/v1/admin/audit-log`**
-Retrieves the enterprise audit trail tracking critical role changes, job triggers, and user deactivations.
+Retrieves the technical request audit trail tracking API calls, response statuses, and durations.
 **Response (200 OK):** 
 ```json
 {
   "data": [
     {
       "id": 1001,
-      "actorUserId": 1,
-      "actionType": "USER_DEACTIVATED",
-      "targetType": "USER",
-      "targetId": "5",
-      "details": "User violated terms of service",
-      "timestamp": "2023-10-26T14:00:00Z"
+      "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "userId": 1,
+      "httpMethod": "POST",
+      "requestPath": "/api/v1/admin/jobs/trigger",
+      "responseStatus": 202,
+      "durationMs": 145,
+      "userAgent": "Mozilla/5.0...",
+      "createdAt": "2023-10-26T14:00:00Z"
     }
   ],
   "meta": {

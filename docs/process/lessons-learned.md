@@ -243,9 +243,9 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 
 ## 8. Observability & Request Tracing
 
-### 8.1 MDC Propagation to Background Threads
+### 8.1 MDC Propagation to Background Threads & Correlation IDs
 - **The Trap:** Assuming that MDC values set on a request thread (e.g., a `correlationId` from a JAX-RS `ContainerRequestFilter`) are automatically available in background tasks dispatched via `Infrastructure.getDefaultExecutor().execute(...)`. MDC is inherently thread-local — it does NOT propagate to worker threads spawned by blocking executors.
-- **The Standard:** Always explicitly capture MDC values on the request thread *before* dispatching the background task:
+- **The Standard:** Always explicitly capture MDC values (specifically the `correlationId`) on the request thread *before* dispatching the background task and restore them inside the worker lambda:
   ```java
   final String correlationId = MDC.get("correlationId");
   Infrastructure.getDefaultExecutor().execute(() -> {
@@ -253,11 +253,11 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
       try {
           // ... background work ...
       } finally {
-          MDC.remove("correlationId");
+          MDC.remove("correlationId"); // Prevent leaks to pooled threads
       }
   });
   ```
-- **Note:** MDC *does* propagate transparently across Vert.x event loop hops (reactive chains via `Uni`/`Multi`), so this pattern is only needed for explicit worker thread dispatches.
+- **Note:** MDC *does* propagate transparently across Vert.x event loop hops (reactive chains via `Uni`/`Multi`), so this manual pattern is only needed for explicit worker thread dispatches (blocking code).
 
 ### 8.2 Audit Logging via ContainerResponseFilter
 - **The Standard:** Use a `@Provider`-annotated `ContainerResponseFilter` to persist audit records. This is the only place in the JAX-RS pipeline where both the request context and the final response status are simultaneously available, ensuring the final HTTP status is captured correctly even after exception mappers run.
@@ -291,12 +291,6 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ## 10. Observability & Request Tracing (Extended)
 
 ### 10.1 Logger Consistency
-- **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments.
-- **The Standard:** Always use `org.jboss.logging.Logger`. In tests, this ensures that logs follow the test-profile configuration and are correctly captured by the build tool (e.g. Maven/Surefire).
-
-### 8.3 Correlation ID Propagation
-
-Always use a `ContainerRequestFilter` to inject a correlation ID into the MDC. For background threads:
-1. Capture the correlation ID from MDC on the request thread.
-2. Manually restore it in the thread wrapper (e.g., using a custom `Runnable` wrapper or explicit `MDC.put` inside the lambda).
-3. Ensure cleanup in a `finally` block to prevent leaks to subsequent pooled thread runs.
+- **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments. Mixing `org.jboss.logging.Logger` and `slf4j` facades in the same project can lead to confusing configuration and inconsistent MDC behavior.
+- **The Standard:** Always standardize on **SLF4J (`org.slf4j.Logger`)** as the primary logging facade for maximum compatibility and consistency with `RUNBOOK.md`. For structured logging with key-value pairs, use the custom `StructuredLogger` helper.
+
