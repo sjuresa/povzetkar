@@ -1,0 +1,46 @@
+package com.povzetkar.quarkus.api;
+ 
+import com.povzetkar.quarkus.model.BaseAuditableEntity;
+import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.service.UserContextService;
+import jakarta.persistence.OptimisticLockException;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
+
+public abstract class BaseApiResource {
+
+    protected final UserContextService userContextService;
+
+    protected BaseApiResource() {
+        this.userContextService = null;
+    }
+
+    protected BaseApiResource(UserContextService userContextService) {
+        this.userContextService = userContextService;
+    }
+
+    protected User getAuthenticatedUser() {
+        return userContextService.getCurrentUser()
+                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+    }
+
+    protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
+        if (ifMatchHeader == null || ifMatchHeader.isBlank()) {
+            // The OptimisticLockingFilter should have already caught this for external requests.
+            // This indicates a programming error (e.g., filter not registered, or internal call missing header).
+            throw new InternalServerErrorException("Programming error: checkOptimisticLock called without If-Match header.");
+        }
+
+        String cleanVersion = ifMatchHeader.replace("\"", "").trim();
+        try {
+            int clientVersion = Integer.parseInt(cleanVersion);
+            if (entity.version == null || entity.version != clientVersion) {
+                throw new OptimisticLockException("Entity version mismatch. Expected: " + entity.version + ", but got: " + clientVersion);
+            }
+        } catch (NumberFormatException _) {
+            // If the header isn't a valid integer, reject it as a bad request.
+            throw new BadRequestException("Invalid If-Match header format. Expected an integer version.");
+        }
+    }
+}

@@ -1,5 +1,8 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -30,17 +33,19 @@ class ContentSourceResourceTest {
         tearDown();
         QuarkusTransaction.requiringNew().run(() -> {
             // Data creation only
-            testUser = new User();
-            testUser.name = "testuser";
-            testUser.username = "cs_resource_test_user";
-            testUser.email = "cs_resource_test_user@example.com";
-            testUser.active = true;
+            testUser = UserBuilder.aUser()
+                    .withName("testuser")
+                    .withUsername("cs_resource_test_user")
+                    .withEmail("cs_resource_test_user@example.com")
+                    .build();
+
             testUser.persist();
 
             // Create test topic
-            testTopic = new Topic();
-            testTopic.name = "Test Topic";
-            testTopic.user = testUser;
+            testTopic = TopicBuilder.aTopic()
+                    .withName("Test Topic")
+                    .withUser(testUser)
+                    .build();
             testTopic.persist();
         });
     }
@@ -168,10 +173,11 @@ class ContentSourceResourceTest {
     void testAddContentSource_toAnotherUsersTopic_returns404() {
         QuarkusTransaction.requiringNew().run(() -> {
             // Create another user
-            User anotherUser = new User();
-            anotherUser.name = "Another User";
-            anotherUser.username = "another_user";
-            anotherUser.email = "another_user@example.com";
+            User anotherUser = UserBuilder.aUser()
+                .withName("Another User")
+                .withUsername("another_user")
+                .withEmail("another_user@example.com")
+                .build();
             anotherUser.persist();
         });
 

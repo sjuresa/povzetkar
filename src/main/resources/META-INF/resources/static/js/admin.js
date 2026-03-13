@@ -30,7 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let message = responseBody;
             try {
                 const json = JSON.parse(responseBody);
-                if (json.message) message = json.message;
+                if (json.data && json.data.message) {
+                    message = json.data.message;
+                } else if (json.error && json.error.detail) {
+                    message = json.error.detail;
+                } else if (json.message) {
+                    message = json.message;
+                }
             } catch (e) {
                 // Not JSON, use text
             }
@@ -65,11 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const responseData = await response.json(); // Expecting JSON response with "message"
 
                 if (response.ok) {
-                    displayFlashMessage(responseData.message || 'Operation successful', 'success');
+                    const msg = responseData.data?.message || responseData.message || 'Operation successful';
+                    displayFlashMessage(msg, 'success');
                     // Reload after a short delay to show the message and update the UI.
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    displayFlashMessage(responseData.message || 'Operation failed', 'danger');
+                    const errMsg = responseData.error?.detail || responseData.message || 'Operation failed';
+                    displayFlashMessage(errMsg, 'danger');
                 }
             } catch (error) {
                 console.error('Error submitting form:', error);
@@ -133,7 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                 } else {
                     const errorData = await response.json();
-                    displayFlashMessage(`Error: ${errorData.message || 'Unknown error'}`, 'danger');
+                    const errMsg = errorData.error?.detail || errorData.message || 'Unknown error';
+                    displayFlashMessage(`Error: ${errMsg}`, 'danger');
                     this.textContent = 'Failed';
                     setTimeout(() => {
                         this.disabled = false;

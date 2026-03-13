@@ -41,7 +41,7 @@ public class SystemInfoResource {
     private static final Parser MARKDOWN_PARSER = Parser.builder(MARKDOWN_OPTIONS).build();
     private static final HtmlRenderer MARKDOWN_RENDERER = HtmlRenderer.builder(MARKDOWN_OPTIONS).build();
 
-    private static final String CHANGELOG_RESOURCE_PATH = "changelog.md";
+    private static final String CHANGELOG_RESOURCE_PATH = "CHANGELOG.md";
     private static final String ROADMAP_RESOURCE_PATH = "docs/overview/roadmap.md";
 
     private final Template changelog;

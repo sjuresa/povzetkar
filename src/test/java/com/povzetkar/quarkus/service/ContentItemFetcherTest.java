@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
@@ -45,8 +47,9 @@ class ContentItemFetcherTest {
     @Test
     void testFetchItemsForYouTubeContentSource() {
         // Given
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+                .build();
         LocalDate fetchDate = LocalDate.now();
         Long maxTotal = 10L;
         String stopAtVideoId = "someVideoId";
@@ -73,8 +76,9 @@ class ContentItemFetcherTest {
     @Test
     void testFetchItemsForOtherContentSource() {
         // Given
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceTypeId = OTHER_SOURCE_TYPE_ID;
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceTypeId(OTHER_SOURCE_TYPE_ID)
+                .build();
         LocalDate fetchDate = LocalDate.now();
         Long maxTotal = 10L;
         String stopAtVideoId = "someVideoId";

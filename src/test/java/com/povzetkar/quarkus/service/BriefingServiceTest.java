@@ -1,5 +1,9 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
@@ -49,22 +53,26 @@ class BriefingServiceTest {
     }
 
     void setupTestData() {
-        User testUser = new User();
-        testUser.username = "test_user_" + UUID.randomUUID();
-        testUser.email = testUser.username + "@example.com";
-        testUser.name = "Test User";
-        testUser.active = true;
+        String uName = "test_user_" + UUID.randomUUID();
+        User testUser = UserBuilder.aUser()
+                .withUsername(uName)
+                .withEmail(uName + "@example.com")
+                .withName("Test User")
+                .build();
+
         testUser.persist();
 
-        testTopic = new Topic();
-        testTopic.name = "Test Topic";
-        testTopic.user = testUser;
+        testTopic = TopicBuilder.aTopic()
+                .withName("Test Topic")
+                .withUser(testUser)
+                .build();
         testTopic.persist();
 
-        testContentSource = new ContentSource();
-        testContentSource.sourceIdentifier = "test_channel_id_" + UUID.randomUUID();
-        testContentSource.sourceTypeId = SourceTypeEnum.YOUTUBE.getId();
-        testContentSource.name = "Test Channel";
+        testContentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("test_channel_id_" + UUID.randomUUID())
+                .withSourceTypeId(SourceTypeEnum.YOUTUBE.getId())
+                .withName("Test Channel")
+                .build();
         testContentSource.persist();
 
         testTopic.contentSources.add(testContentSource);
@@ -93,7 +101,7 @@ class BriefingServiceTest {
         contentItem.publishedAt = Instant.now();
         contentItem.title = "Test Title";
         contentItem.contentSource = testContentSource;
-        
+
         Summary summary = new Summary("Summary text 1.", contentItem, briefingDate);
 
         QuarkusTransaction.requiringNew().run(() -> {

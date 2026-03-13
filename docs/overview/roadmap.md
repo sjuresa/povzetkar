@@ -3,6 +3,8 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                             |
+| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                          |
 | 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
 | 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
 | 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
@@ -154,7 +156,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.11: API-First & Advanced Security
 
 **Goal:** Decouple the frontend by establishing a comprehensive REST API and implementing fine-grained security (PBAC) to support advanced user interactions.
-**Status:** 🏃 In Progress
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Frontend Specification:**
@@ -190,11 +192,12 @@ This document outlines the concrete steps for implementing the features describe
 **Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
 
 ### Key Tasks & Implementation Steps:
-1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards.
+1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards, exposing detailed AI token usage, job failure rates, and average job durations.
 2.  **Secrets Management:** Integrate a secrets management solution.
-3.  **Backup & Recovery:** Establish automated database backup/recovery.
-4.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
-5.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
+3.  **Job Auditing Persistent Storage:** Ensure `job_executions` are persistently stored in a database specifically for long-term historical analysis (beyond the standard `admin/audit-log` functionality provided in v0.11).
+4.  **Backup & Recovery:** Establish automated database backup/recovery.
+5.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
+6.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
 
 ---
 

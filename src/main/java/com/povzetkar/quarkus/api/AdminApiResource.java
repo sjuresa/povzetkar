@@ -1,0 +1,191 @@
+package com.povzetkar.quarkus.api;
+
+import com.povzetkar.quarkus.api.dto.AdminMetricsDTO;
+import com.povzetkar.quarkus.api.dto.AuditLogEntryDTO;
+import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
+import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.api.filter.Idempotent;
+import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
+import com.povzetkar.quarkus.api.util.QueryParser;
+import com.povzetkar.quarkus.model.AuditLog;
+import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.JobStatus;
+import com.povzetkar.quarkus.security.Permission;
+import com.povzetkar.quarkus.service.BackgroundJobService;
+import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.panache.common.Sort;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+@Path("/api/v1/admin")
+@ApplicationScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Enveloped
+@Tag(name = "Admin", description = "Endpoints for System Administration and Background Jobs")
+public class AdminApiResource extends BaseApiResource {
+
+    private static final String JOBS_PATH = "jobs";
+
+    private final BackgroundJobService backgroundJobService;
+    private final BackgroundJobMapper backgroundJobMapper;
+    private final EntityManager em;
+
+    @Inject
+    public AdminApiResource(BackgroundJobService backgroundJobService,
+                           BackgroundJobMapper backgroundJobMapper,
+                           UserContextService userContextService,
+                           EntityManager em) {
+        super(userContextService);
+        this.backgroundJobService = backgroundJobService;
+        this.backgroundJobMapper = backgroundJobMapper;
+        this.em = em;
+    }
+
+    @POST
+    @Path("/" + JOBS_PATH + "/trigger")
+    @RolesAllowed(Permission.V_ADMIN_SYSTEM_TRIGGER)
+    @Idempotent
+    @Operation(summary = "Trigger a background job", description = "Asynchronously starts a background job of the specified type.")
+    @APIResponse(
+            responseCode = "202",
+            description = "Job triggered successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class))
+    )
+    public Response triggerJob(JobTriggerRequest request, @Context UriInfo uriInfo) {
+        BackgroundJob job = backgroundJobService.triggerJob(request.jobType());
+        
+        URI location = uriInfo.getBaseUriBuilder()
+                .path(AdminApiResource.class)
+                .path(AdminApiResource.class, "getJobById")
+                .build(job.id);
+
+        return Response.accepted()
+                .location(location)
+                .entity(backgroundJobMapper.toDTO(job))
+                .type(MediaType.APPLICATION_JSON)
+                .build();
+    }
+
+    @GET
+    @Path("/" + JOBS_PATH + "/{id}")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "Get job details")
+    @APIResponse(
+            responseCode = "200",
+            description = "Job details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class))
+    )
+    @APIResponse(responseCode = "404", description = "Job not found")
+    public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
+        return backgroundJobService.getJobById(id)
+                .map(backgroundJobMapper::toDTO)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
+    }
+
+    @GET
+    @Path("/" + JOBS_PATH)
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "List background jobs", description = "Returns a paginated list of background job history.")
+    @APIResponse(
+            responseCode = "200",
+            description = "List of jobs retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+    )
+    public PaginatedResponse<BackgroundJobDTO> getJobs(
+            @QueryParam("status") JobStatus status,
+            @QueryParam("sort") List<String> sort,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize) {
+        
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
+        return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
+    }
+
+    @GET
+    @Path("/audit-log")
+    @RolesAllowed(Permission.V_ADMIN_AUDIT_LOG_VIEW)
+    @Operation(summary = "List audit log entries", description = "Returns a paginated list of API request audit log entries, sorted by most recent first.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Audit log entries retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+    )
+    @APIResponse(responseCode = "403", description = "Forbidden")
+    public PaginatedResponse<AuditLogEntryDTO> getAuditLog(
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize) {
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
+        long totalCount = AuditLog.count();
+        List<AuditLogEntryDTO> items = em.createQuery("""
+                        SELECT NEW AuditLogEntryDTO(
+                                e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath,
+                                e.responseStatus, e.durationMs, e.userAgent, e.createdAt)
+                                FROM AuditLog e ORDER BY e.createdAt DESC""", AuditLogEntryDTO.class)
+                .setFirstResult(pageIndex * clampedPageSize)
+                .setMaxResults(clampedPageSize)
+                .getResultList();
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
+    }
+
+    @GET
+    @Path("/metrics")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "Get system metrics", description = "Returns live aggregate counts for system health monitoring.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Metrics retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AdminMetricsDTO.class))
+    )
+    @APIResponse(responseCode = "403", description = "Forbidden")
+    public AdminMetricsDTO getMetrics() {
+        Object[] result = (Object[]) em.createNativeQuery("""
+                        SELECT
+                                (SELECT COUNT(*) FROM background_jobs),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = :runningStatus),
+                                (SELECT COUNT(*) FROM background_jobs WHERE status = :failedStatus),
+                                (SELECT COUNT(*) FROM topics),
+                                (SELECT COUNT(*) FROM topics WHERE enabled = true),
+                                (SELECT COUNT(*) FROM content_items),
+                                (SELECT COUNT(*) FROM idempotent_requests)""")
+                .setParameter("runningStatus", JobStatus.RUNNING.name()).setParameter("failedStatus", JobStatus.FAILED.name()).getSingleResult();
+
+        return new AdminMetricsDTO(
+                ((Number) result[0]).longValue(),
+                ((Number) result[1]).longValue(),
+                ((Number) result[2]).longValue(),
+                ((Number) result[3]).longValue(),
+                ((Number) result[4]).longValue(),
+                ((Number) result[5]).longValue(),
+                ((Number) result[6]).longValue()
+        );
+    }
+}

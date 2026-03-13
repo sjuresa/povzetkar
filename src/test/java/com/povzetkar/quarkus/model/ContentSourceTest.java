@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.model;
 
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -15,11 +17,12 @@ class ContentSourceTest {
     @Test
     @Transactional
     void testContentSourceDefaultsAndPrePersist() {
-        ContentSource contentSource = new ContentSource();
-        contentSource.sourceIdentifier = "testContentSourceId" + UUID.randomUUID();
-        contentSource.sourceTypeId = 1;
-        contentSource.name = "Test ContentSource";
-        contentSource.description = "A test description";
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier("testContentSourceId" + UUID.randomUUID())
+                .withSourceTypeId(1)
+                .withName("Test ContentSource")
+                .withDescription("A test description")
+                .build();
         contentSource.persist();
 
         assertNotNull(contentSource.createdAt);
@@ -29,13 +32,14 @@ class ContentSourceTest {
     @Test
     @Transactional
     void testCreateAndPersistContentSource() {
-        ContentSource contentSource = new ContentSource();
         String sourceIdentifier = "test-content-source-id" + UUID.randomUUID();
-        contentSource.sourceIdentifier = sourceIdentifier;
-        contentSource.sourceTypeId = 1;
-        contentSource.name = "Test ContentSource";
-        contentSource.description = "Description";
-        contentSource.subscriberCount = 1000;
+        ContentSource contentSource = ContentSourceBuilder.aContentSource()
+                .withSourceIdentifier(sourceIdentifier)
+                .withSourceTypeId(1)
+                .withName("Test ContentSource")
+                .withDescription("Description")
+                .withSubscriberCount(1000)
+                .build();
         contentSource.persist();
 
         ContentSource retrievedContentSource = ContentSource.find("sourceIdentifier", sourceIdentifier).firstResult();

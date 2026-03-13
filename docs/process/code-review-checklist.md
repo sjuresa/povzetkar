@@ -55,6 +55,7 @@ This document is the mandatory checklist to be mentally reviewed before any code
 *   [ ] **Dangling Pointer Check:** Have all internal references (e.g., "see Section VI") been updated to point to the new file paths (e.g., `docs/protocols/verification.md`)?
 *   [ ] **Document Structure:** Does each modular document start with a Level 1 heading (`#`) and have a logical heading structure?
 *   [ ] **Index Accuracy:** Does the description of a file in any index accurately reflect its contents?
+*   [ ] **Knowledge Base Update:** Have any major architectural workarounds, bug fixes, or new integration patterns discovered during this task been added to `docs/process/lessons-learned.md`?
 
 ## 7. Agent-Specific Protocols (AI Context)
 

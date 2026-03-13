@@ -4,6 +4,8 @@ import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.UserIdentity;
+import com.povzetkar.quarkus.security.UserSecurityDetails;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -13,6 +15,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class UserContextService {
 
+    public static final String PROVIDER_GOOGLE = "google";
     private final SecurityIdentity securityIdentity;
 
     public UserContextService(SecurityIdentity securityIdentity) {
@@ -31,9 +34,9 @@ public class UserContextService {
         }
 
         if (securityIdentity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt) {
-            String provider = "google"; // Default provider mapped in augmentor
+            // Default provider mapped in augmentor
             String externalId = jwt.getSubject();
-            Optional<UserIdentity> identityOpt = UserIdentity.findByProviderAndExternalId(provider, externalId);
+            Optional<UserIdentity> identityOpt = UserIdentity.findByProviderAndExternalId(PROVIDER_GOOGLE, externalId);
             if (identityOpt.isPresent()) {
                 return Optional.of(identityOpt.get().user);
             }
@@ -41,6 +44,25 @@ public class UserContextService {
 
         String username = securityIdentity.getPrincipal().getName();
         return User.find("username", username).firstResultOptional();
+    }
+
+    /**
+     * Gets the currently authenticated User entity with its roles pre-fetched.
+     *
+     * @return An Optional containing the authenticated User with roles if they exist in the database, otherwise an empty Optional.
+     */
+    public Optional<User> getCurrentUserWithRoles() {
+        if (securityIdentity.isAnonymous()) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String username = securityIdentity.getPrincipal().getName();
+        if (securityIdentity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt) {
+            String externalId = jwt.getSubject();
+            return User.find("select u from User u left join fetch u.roles join u.identities i where i.provider = ?1 and i.externalId = ?2", PROVIDER_GOOGLE, externalId).firstResultOptional();
+        }
+
+        return User.find("from User u left join fetch u.roles where u.username = ?1", username).firstResultOptional();
     }
 
     /**
@@ -107,5 +129,25 @@ public class UserContextService {
         identity.externalId = externalId;
         identity.email = email;
         user.addIdentity(identity);
+    }
+
+    /**
+     * Looks up a User ID based on captured security details. This method is designed to
+     * be run on a worker thread where the original SecurityIdentity might not be active.
+     */
+    public Long findUserId(UserSecurityDetails details) {
+        if (details == null || details.principalName() == null) {
+            return null;
+        }
+
+        return QuarkusTransaction.requiringNew().call(() -> {
+            if (details.jwtSub() != null) {
+                var identity = UserIdentity.findByProviderAndExternalId(PROVIDER_GOOGLE, details.jwtSub()).orElse(null);
+                if (identity != null) return identity.user.id;
+            }
+            return User.find("username", details.principalName())
+                    .<User>firstResultOptional()
+                    .map(u -> u.id).orElse(null);
+        });
     }
 }

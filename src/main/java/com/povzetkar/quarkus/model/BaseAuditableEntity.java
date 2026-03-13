@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Version;
 import java.time.Instant;
 
 @MappedSuperclass
@@ -15,6 +16,10 @@ public abstract class BaseAuditableEntity extends PanacheEntityBase {
 
     @Column(name = "updated_at", nullable = false)
     public Instant updatedAt;
+
+    @Version
+    @Column(nullable = false)
+    public Integer version = 0;
 
     @PrePersist
     void prePersist() {

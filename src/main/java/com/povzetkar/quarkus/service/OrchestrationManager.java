@@ -31,6 +31,7 @@ public class OrchestrationManager {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(OrchestrationManager.class);
     private static final String ORCHESTRATION_PREVIEW = "orchestration_preview";
+    public static final String ORCHESTRATION_MANUAL_TOPIC = "orchestration_manual_topic";
 
     private final OrchestrationLockService orchestrationLockService;
     private final TopicProcessor topicProcessor;
@@ -383,53 +384,7 @@ public class OrchestrationManager {
         );
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
-                .map(topic -> Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
-                    try {
-                        // Step 1: Read data in a transaction
-                        List<Summary> availableSummaries = briefingService.getSummariesForBriefing(topic, briefingDate);
-                        Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
-
-                        Set<Long> existingBriefingSummaryIds = QuarkusTransaction.requiringNew().call(() ->
-                                Briefing.findByTopicAndDate(topic, briefingDate)
-                                        .map(briefing -> briefing.summaries.stream().map(summary -> summary.id).collect(Collectors.toSet()))
-                                        .orElse(Collections.emptySet())
-                        );
-
-                        if (availableSummaryIds.equals(existingBriefingSummaryIds)) {
-                            logger.info(
-                                LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
-                                LogKeys.STATUS, LogKeys.SKIPPED,
-                                LogKeys.TOPIC_NAME, topic.name,
-                                LogKeys.DATE, briefingDate,
-                                LogKeys.REASON, "up_to_date",
-                                LogKeys.MESSAGE, "Briefing is up-to-date. Skipping generation."
-                            );
-                            return;
-                        }
-
-                        // Step 2: Perform blocking AI call outside of any transaction
-                        logger.info(
-                            LogKeys.ACTION, LogKeys.META_SUMMARY_GENERATION,
-                            LogKeys.STATUS, LogKeys.STARTED,
-                            LogKeys.TOPIC_NAME, topic.name,
-                            LogKeys.DATE, briefingDate,
-                            LogKeys.MESSAGE, "Briefing needs to be regenerated. Generating meta-summary."
-                        );
-                        String metaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
-
-                        // Step 3: Write data in a new transaction
-                        QuarkusTransaction.requiringNew().run(() -> briefingService.generateBriefing(topic, briefingDate, availableSummaries, metaSummary));
-
-                    } catch (Exception e) {
-                        logger.error(e,
-                            LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
-                            LogKeys.STATUS, LogKeys.FAILED,
-                            LogKeys.TOPIC_NAME, topic.name,
-                            LogKeys.DATE, briefingDate,
-                            LogKeys.MESSAGE, "An unexpected error occurred during briefing generation."
-                        );
-                    }
-                })))
+                .map(topic -> generateBriefingForTopicUni(topic, briefingDate))
                 .toList();
 
         return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()
@@ -445,5 +400,74 @@ public class OrchestrationManager {
                     LogKeys.DATE, briefingDate,
                     LogKeys.MESSAGE, "Parallel briefing generation failed unexpectedly"
                 ));
+    }
+
+    public Uni<Void> generateBriefingForTopicUni(Topic topic, LocalDate briefingDate) {
+        return Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
+            try {
+                // Step 1: Read data in a transaction
+                List<Summary> availableSummaries = briefingService.getSummariesForBriefing(topic, briefingDate);
+                Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
+
+                Set<Long> existingBriefingSummaryIds = QuarkusTransaction.requiringNew()
+                        .call(() -> Briefing.findByTopicAndDate(topic, briefingDate)
+                                .map(briefing -> briefing.summaries.stream().map(summary -> summary.id)
+                                        .collect(Collectors.toSet()))
+                                .orElse(Collections.emptySet()));
+
+                if (availableSummaryIds.equals(existingBriefingSummaryIds)) {
+                    logger.info(
+                            LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                            LogKeys.STATUS, LogKeys.SKIPPED,
+                            LogKeys.TOPIC_NAME, topic.name,
+                            LogKeys.DATE, briefingDate,
+                            LogKeys.REASON, "up_to_date",
+                            LogKeys.MESSAGE, "Briefing is up-to-date. Skipping generation.");
+                    return;
+                }
+
+                // Step 2: Perform blocking AI call outside of any transaction
+                logger.info(
+                        LogKeys.ACTION, LogKeys.META_SUMMARY_GENERATION,
+                        LogKeys.STATUS, LogKeys.STARTED,
+                        LogKeys.TOPIC_NAME, topic.name,
+                        LogKeys.DATE, briefingDate,
+                        LogKeys.MESSAGE, "Briefing needs to be regenerated. Generating meta-summary.");
+                String metaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
+
+                // Step 3: Write data in a new transaction
+                QuarkusTransaction.requiringNew().run(
+                        () -> briefingService.generateBriefing(topic, briefingDate, availableSummaries, metaSummary));
+
+            } catch (Exception e) {
+                logger.error(e,
+                        LogKeys.ACTION, LogKeys.BRIEFING_GENERATION,
+                        LogKeys.STATUS, LogKeys.FAILED,
+                        LogKeys.TOPIC_NAME, topic.name,
+                        LogKeys.DATE, briefingDate,
+                        LogKeys.MESSAGE, "An unexpected error occurred during briefing generation.");
+            }
+        }));
+    }
+
+    public Uni<Void> runOrchestrationForTopicManually(Topic topic, LocalDate date) {
+        logger.info(
+                LogKeys.ACTION, ORCHESTRATION_MANUAL_TOPIC,
+                LogKeys.STATUS, LogKeys.STARTED,
+                LogKeys.TOPIC_NAME, topic.name,
+                LogKeys.DATE, date,
+                LogKeys.MESSAGE, "Manual orchestration triggered for single topic.");
+        return topicProcessor.processTopicUni(topic, date)
+                .chain(() -> generateBriefingForTopicUni(topic, date))
+                .onItem().invoke(() -> logger.info(
+                        LogKeys.ACTION, ORCHESTRATION_MANUAL_TOPIC,
+                        LogKeys.STATUS, LogKeys.FINISHED,
+                        LogKeys.TOPIC_NAME, topic.name,
+                        LogKeys.MESSAGE, "Manual orchestration finished for single topic."))
+                .onFailure().invoke(ex -> logger.error(ex,
+                        LogKeys.ACTION, ORCHESTRATION_MANUAL_TOPIC,
+                        LogKeys.STATUS, LogKeys.FAILED,
+                        LogKeys.TOPIC_NAME, topic.name,
+                        LogKeys.MESSAGE, "Manual orchestration failed unexpectedly for single topic."));
     }
 }

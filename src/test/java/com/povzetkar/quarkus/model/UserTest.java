@@ -1,5 +1,8 @@
 package com.povzetkar.quarkus.model;
 
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
+
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -19,11 +22,11 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithNullNameThrowsException() {
-        User user = new User();
-        user.username = "testuser_nullname";
-        user.email = "testuser_nullname@example.com";
-        user.active = true;
-        user.name = null;
+        User user = UserBuilder.aUser()
+                .withUsername("testuser_nullname")
+                .withEmail("testuser_nullname@example.com")
+                .withName(null)
+                .build();
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user),
                 "Persisting a User with a null name should throw PersistenceException");
@@ -32,16 +35,18 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithDuplicateUsernameThrowsException() {
-        User user1 = new User();
-        user1.username = "duplicate_user";
-        user1.email = "duplicate_user1@example.com";
-        user1.name = "User One";
+        User user1 = UserBuilder.aUser()
+            .withUsername("duplicate_user")
+            .withEmail("duplicate_user1@example.com")
+            .withName("User One")
+            .build();
         persistAndFlush(user1);
 
-        User user2 = new User();
-        user2.username = "duplicate_user";
-        user2.email = "duplicate_user2@example.com";
-        user2.name = "User Two";
+        User user2 = UserBuilder.aUser()
+            .withUsername("duplicate_user")
+            .withEmail("duplicate_user2@example.com")
+            .withName("User Two")
+            .build();
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user2),
                 "Persisting a User with a duplicate username should throw PersistenceException");
@@ -50,16 +55,18 @@ class UserTest {
     @Test
     @Transactional
     void testPersistUserWithDuplicateEmailThrowsException() {
-        User user1 = new User();
-        user1.username = "user1";
-        user1.email = "duplicate_email@example.com";
-        user1.name = "User One";
+        User user1 = UserBuilder.aUser()
+            .withUsername("user1")
+            .withEmail("duplicate_email@example.com")
+            .withName("User One")
+            .build();
         persistAndFlush(user1);
 
-        User user2 = new User();
-        user2.username = "user2";
-        user2.email = "duplicate_email@example.com";
-        user2.name = "User Two";
+        User user2 = UserBuilder.aUser()
+            .withUsername("user2")
+            .withEmail("duplicate_email@example.com")
+            .withName("User Two")
+            .build();
 
         assertThrows(PersistenceException.class, () -> persistAndFlush(user2),
                 "Persisting a User with a duplicate email should throw PersistenceException");
@@ -68,10 +75,11 @@ class UserTest {
     @Test
     @Transactional
     void testUserActiveDefaultValue() {
-        User user = new User();
-        user.username = "testuser_active";
-        user.email = "testuser_active@example.com";
-        user.name = "Test User";
+        User user = UserBuilder.aUser()
+            .withUsername("testuser_active")
+            .withEmail("testuser_active@example.com")
+            .withName("Test User")
+            .build();
         persistAndFlush(user);
 
         User retrievedUser = em.find(User.class, user.id);
@@ -82,11 +90,12 @@ class UserTest {
     @Test
     @Transactional
     void testPersistAndRetrieveUser() {
-        User user = new User();
-        user.username = "testuser_retrieve";
-        user.email = "testuser_retrieve@example.com";
-        user.name = "Another Test User";
-        user.active = false;
+        User user = UserBuilder.aUser()
+            .withUsername("testuser_retrieve")
+            .withEmail("testuser_retrieve@example.com")
+            .withName("Another Test User")
+            .inactive()
+            .build();
         persistAndFlush(user);
 
         User retrievedUser = em.find(User.class, user.id);
@@ -102,20 +111,23 @@ class UserTest {
     @Test
     @Transactional
     void testUserHasTopics() {
-        User user = new User();
-        user.username = "user_with_topics";
-        user.email = "user_with_topics@example.com";
-        user.name = "User With Topics";
+        User user = UserBuilder.aUser()
+            .withUsername("user_with_topics")
+            .withEmail("user_with_topics@example.com")
+            .withName("User With Topics")
+            .build();
         persistAndFlush(user);
 
-        Topic topic1 = new Topic();
-        topic1.name = "Topic 1";
-        topic1.user = user;
+        Topic topic1 = TopicBuilder.aTopic()
+            .withName("Topic 1")
+            .withUser(user)
+            .build();
         em.persist(topic1);
 
-        Topic topic2 = new Topic();
-        topic2.name = "Topic 2";
-        topic2.user = user;
+        Topic topic2 = TopicBuilder.aTopic()
+            .withName("Topic 2")
+            .withUser(user)
+            .build();
         em.persist(topic2);
 
         em.flush();
@@ -135,10 +147,11 @@ class UserTest {
         Role role = new Role("test_role");
         em.persist(role);
 
-        User user = new User();
-        user.username = "user_with_roles";
-        user.email = "user_with_roles@example.com";
-        user.name = "User With Roles";
+        User user = UserBuilder.aUser()
+            .withUsername("user_with_roles")
+            .withEmail("user_with_roles@example.com")
+            .withName("User With Roles")
+            .build();
         user.addRole(role);
         persistAndFlush(user);
 
