@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api.filter;
 import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.security.UserSecurityDetails;
 import com.povzetkar.quarkus.service.UserContextService;
+import com.povzetkar.quarkus.util.StructuredLogger;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -13,8 +14,6 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -32,7 +31,7 @@ import java.io.IOException;
 @ApplicationScoped
 public class AuditLogFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuditLogFilter.class);
+    private static final StructuredLogger  logger = StructuredLogger.getLogger(AuditLogFilter.class);
     private static final String PROPERTY_START_TIME = "internal.audit.startTime";
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
@@ -89,7 +88,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
                         new AuditLog(correlationId, userId, httpMethod, path, status, durationMs, userAgent).persist()
                 );
             } catch (Exception e) {
-                logger.warn("Failed to persist audit log entry for [{}] {}", httpMethod, path, e);
+                logger.warn(e, "event", "audit_log_persistence_failed", "httpMethod", httpMethod, "path", path);
             }
         });
     }
