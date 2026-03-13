@@ -177,13 +177,17 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.12: Advanced Content Capabilities
+## v0.12: Frontend MVP & Monorepo Foundations
 
-**Goal:** Implement advanced AI features that were deferred. This includes sophisticated rate limiting and handling large data volumes.
+**Goal:** Establish a functional, deployable frontend integrated into a monorepo structure.
 
 ### Key Tasks & Implementation Steps:
-1.  **Recursive Briefings:** Implement "Map-Reduce" summarization for long time periods.
-2.  **Advanced Rate Limiting:** Implement strict TPM limits for GenAI.
+1.  **Frontend Architecture ADR:** Formally decide on the FE stack (Framework, CSS, State).
+2.  **Monorepo Transition:** Restructure project into `/backend` and `/frontend` sub-modules.
+3.  **Dashboard MVP:** First functional screen integrated with the v0.11 BFF.
+4.  **SSE Real-time Job Tracking:** Live UI updates for background orchestration.
+5.  **Audit Log Admin UI:** Administrative visibility for technical request logs.
+6.  **Production Orchestration & Scanning:** Multi-stage Docker optimization and integration of frontend dependency scanning into CI/CD.
 
 ---
 
@@ -196,8 +200,7 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Secrets Management:** Integrate a secrets management solution.
 3.  **Job Auditing Persistent Storage:** Ensure `job_executions` are persistently stored in a database specifically for long-term historical analysis (beyond the standard `admin/audit-log` functionality provided in v0.11).
 4.  **Backup & Recovery:** Establish automated database backup/recovery.
-5.  **Dependency & Container Scanning:** Integrate automated scanning (e.g., Trivy, Snyk) into the CI pipeline.
-6.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
+5.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
 
 ---
 
