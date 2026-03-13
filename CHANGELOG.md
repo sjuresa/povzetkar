@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### Documentation
+- **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture supports SEO through build-time Pre-rendering (SSG) for the Landing Page, ensuring 100% type-safety and real-time SSE updates without the complexity of a full SSR server.
+
 ### Planned
-- Monorepo restructuring for Frontend/Backend co-location.
-- Frontend Architecture ADR (Vite/Next.js).
-- Dashboard MVP with BFF integration.
-- SSE Real-time Job Tracking.
-- Audit Log Admin UI.
+- Monorepo restructuring for Frontend/Backend co-location (POV-135).
+- Frontend Project Initialization (POV-136).
+- Dashboard MVP with BFF integration (POV-137).
+- SSE Real-time Job Tracking (POV-138).
+- Audit Log Admin UI (POV-140).
 
 ## [v0.11.0] - 2026-03-12
 

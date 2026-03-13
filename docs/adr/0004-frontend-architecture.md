@@ -1,0 +1,60 @@
+# ADR-0004: Frontend Architecture & Technology Stack
+
+**Status:** Accepted
+**Date:** 2026-03-13
+
+## Context
+Project **Povzetkar** is moving to a Backend-for-Frontend (BFF) architecture. The frontend must be:
+1.  **Production-Ready**: High maintainability and 100% type-safety.
+2.  **Contract-First**: Driven by the backend OpenAPI specification.
+3.  **Flexible**: Easy to redesign or theme in later stages.
+4.  **Highly Interactive**: Supporting real-time updates (SSE) and complex state.
+
+## Decision
+We will implement the frontend using a **Monorepo** structure and the following technology stack:
+
+### 1. Monorepo Strategy: NPM Workspaces
+*   **Structure**: `/backend` (Quarkus) and `/frontend` (Vite).
+*   **Package Manager**: NPM with Workspaces defined in the root `package.json`.
+*   **Rationale**: Simplifies dependency management and ensures all components are in a single repository while remaining logically decoupled.
+
+### 2. Core Framework: React + Vite + TypeScript
+*   **Vite**: For superior developer experience and build speed.
+*   **TypeScript**: Mandatory for end-to-end type safety.
+*   **SEO Strategy (Pre-rendering)**: To satisfy the requirement for an indexable Landing Page without the complexity of a full SSR framework (like Vike or Next.js), we will use a **Pre-rendering plugin** (e.g., `vite-plugin-prerender`) at build time. This renders targeted routes into static HTML files that are served to search engines, while the application remains a standard SPA for the authenticated dashboard.
+
+### 3. Styling: Tailwind CSS + Shadcn/UI
+*   **Tailwind CSS**: Uses design tokens (via CSS variables) allowing for easy global theme/design changes later.
+*   **Shadcn/UI**: High-quality, accessible components that we "own" (code is copied into the project), allowing for total customization without library lock-in.
+
+### 4. Data Fetching & Contract: Orval + TanStack Query
+*   **Orval**: Automatically generates TypeScript types and TanStack Query hooks from the backend `/openapi-spec.json`.
+*   **TanStack Query**: Manages all server state, caching, and background refetching.
+*   **API Client Resilience**: A global Axios interceptor will be implemented to:
+    *   Inject `X-Correlation-ID` for request tracing.
+    *   Handle `If-Match` headers for Optimistic Locking using the `@Version` field from DTOs.
+    *   Standardize error handling for 401 (Unauthorized), 403 (Forbidden), and 429 (Rate Limit) responses.
+
+### 5. Routing: TanStack Router
+*   **Decision**: We chose **TanStack Router** over React Router for its **100% type-safe routing**.
+*   **Rationale**: Links, parameters, and search queries are checked at compile-time, preventing runtime navigation errors.
+
+### 6. Local State & i18n
+*   **Zustand**: Used for client-only state (e.g., UI preferences).
+*   **i18next**: Standard library for internationalization, ensuring all strings are manageable outside of component logic.
+
+### 7. Real-Time: SSE (Server-Sent Events)
+*   Implemented via a custom React hook (e.g., `useEventSource`) to consume job status streams defined in v0.11.
+
+### 8. Testing Strategy
+*   **Unit/Integration**: **Vitest** for component and logic testing.
+*   **End-to-End (E2E)**: **Playwright** for verifying critical user flows (Login, Topic Creation, Briefing Generation).
+
+## Consequences
+*   **Positive**:
+    - **Compile-time validation** of the entire application flow (API -> State -> Router -> UI).
+    - **SEO Compliance**: Static pre-rendering ensures public pages (like the Landing Page) are easily indexable without server-side overhead.
+    - **Consistency**: The "TanStack" ecosystem ensures highly predictable state and routing behavior.
+*   **Negative**:
+    - **Onboarding cost**: Significant learning curve for TanStack Router and Orval integration.
+    - **Build Complexity**: Monorepo setup requires careful CI/CD configuration.
