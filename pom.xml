@@ -302,7 +302,7 @@
                                 <resource>
                                     <directory>${project.basedir}</directory>
                                     <includes>
-                                        <include>changelog.md</include>
+                                        <include>CHANGELOG.md</include>
                                         <include>docs/overview/roadmap.md</include>
                                     </includes>
                                 </resource>
