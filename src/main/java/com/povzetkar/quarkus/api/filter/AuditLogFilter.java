@@ -1,6 +1,8 @@
 package com.povzetkar.quarkus.api.filter;
 
 import com.povzetkar.quarkus.model.AuditLog;
+import com.povzetkar.quarkus.security.UserSecurityDetails;
+import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,10 +36,12 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
     private final SecurityIdentity securityIdentity;
+    private final UserContextService userContextService;
 
     @Inject
-    public AuditLogFilter(SecurityIdentity securityIdentity) {
+    public AuditLogFilter(SecurityIdentity securityIdentity, UserContextService userContextService) {
         this.securityIdentity = securityIdentity;
+        this.userContextService = userContextService;
     }
 
     @Override
@@ -59,7 +63,7 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         String requestPath = getNormalizedPath(requestContext);
         String userAgent = getBoundedUserAgent(requestContext);
 
-        SecurityDetails security = SecurityDetails.capture(securityIdentity);
+        UserSecurityDetails security = UserSecurityDetails.capture(securityIdentity);
 
         persistAuditLogAsync(correlationId, security, requestContext.getMethod(),
                 responseContext.getStatus(), requestPath, durationMs, userAgent);
@@ -75,11 +79,11 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         return agent != null && agent.length() > USER_AGENT_MAX_LENGTH ? agent.substring(0, USER_AGENT_MAX_LENGTH) : agent;
     }
 
-    private void persistAuditLogAsync(String correlationId, SecurityDetails security, String httpMethod,
+    private void persistAuditLogAsync(String correlationId, UserSecurityDetails security, String httpMethod,
                                      int status, String path, long durationMs, String userAgent) {
         io.smallrye.mutiny.infrastructure.Infrastructure.getDefaultExecutor().execute(() -> {
             try {
-                final Long userId = lookupUserId(security);
+                final Long userId = userContextService.findUserId(security);
                 QuarkusTransaction.requiringNew().run(() ->
                         new AuditLog(correlationId, userId, httpMethod, path, status, durationMs, userAgent).persist()
                 );
@@ -87,30 +91,5 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
                 logger.warn("Failed to persist audit log entry for [{}] {}", httpMethod, path, e);
             }
         });
-    }
-
-    private Long lookupUserId(SecurityDetails security) {
-        if (security.principalName() == null) return null;
-
-        return QuarkusTransaction.requiringNew().call(() -> {
-            if (security.jwtSub() != null) {
-                var identity = com.povzetkar.quarkus.model.UserIdentity
-                        .findByProviderAndExternalId("google", security.jwtSub()).orElse(null);
-                if (identity != null) return identity.user.id;
-            }
-            return com.povzetkar.quarkus.model.User.find("username", security.principalName())
-                    .<com.povzetkar.quarkus.model.User>firstResultOptional()
-                    .map(u -> u.id).orElse(null);
-        });
-    }
-
-    private record SecurityDetails(String principalName, String jwtSub) {
-        static SecurityDetails capture(SecurityIdentity identity) {
-            if (identity.isAnonymous()) return new SecurityDetails(null, null);
-            String name = identity.getPrincipal().getName();
-            String sub = (identity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt)
-                    ? jwt.getSubject() : null;
-            return new SecurityDetails(name, sub);
-        }
     }
 }
