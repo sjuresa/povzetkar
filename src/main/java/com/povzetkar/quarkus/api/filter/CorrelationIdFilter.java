@@ -6,7 +6,7 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.jboss.logging.MDC;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.util.UUID;

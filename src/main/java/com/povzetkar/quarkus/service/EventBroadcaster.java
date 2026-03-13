@@ -8,14 +8,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.annotation.PreDestroy;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
 @ApplicationScoped
 public class EventBroadcaster {
 
-    private static final Logger logger = Logger.getLogger(EventBroadcaster.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventBroadcaster.class);
     private final BroadcastProcessor<SseEventDTO> processor = BroadcastProcessor.create();
 
     public Multi<SseEventDTO> getEventStream() {
@@ -29,7 +30,7 @@ public class EventBroadcaster {
     }
 
     public void onJobStatusChanged(@Observes(during = TransactionPhase.AFTER_SUCCESS) JobStatusChangedEvent event) {
-        logger.debugf("Broadcasting job status change for job %s: %s", event.jobId(), event.status());
+        logger.debug("Broadcasting job status change for job {}: {}", event.jobId(), event.status());
         processor.onNext(SseEventDTO.of("JOB_STATUS_CHANGED", event));
     }
 

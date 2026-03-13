@@ -2,13 +2,13 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.MessageDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.ContentItemService;
 import com.povzetkar.quarkus.service.OrchestrationManager;
 import com.povzetkar.quarkus.util.LogKeys;
 import com.povzetkar.quarkus.util.StructuredLogger;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

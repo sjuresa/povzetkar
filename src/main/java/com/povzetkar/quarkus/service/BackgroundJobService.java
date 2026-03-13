@@ -18,7 +18,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,7 +34,7 @@ public class BackgroundJobService {
     private final java.time.Clock clock;
     private final JustInTimeSummarizationScheduler summarizationScheduler;
     private final Event<JobStatusChangedEvent> jobStatusEvent;
-    private static final Logger logger = Logger.getLogger(BackgroundJobService.class);
+    private static final Logger logger = LoggerFactory.getLogger(BackgroundJobService.class);
 
     @Inject
     public BackgroundJobService(OrchestrationManager orchestrationManager,
@@ -123,12 +124,12 @@ public class BackgroundJobService {
                 .onItem().call(() -> updateJobStatusUni(jobId, JobStatus.COMPLETED, null)
                         .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3))
                 .onFailure().call(th -> {
-                    logger.errorf(th, "Job execution failed for job %s", jobId);
+                    logger.error("Job execution failed for job [{}]", jobId, th);
                     return updateJobStatusUni(jobId, JobStatus.FAILED, "An internal error occurred during job execution.")
                             .onFailure().retry().withBackOff(java.time.Duration.ofSeconds(1)).atMost(3);
                 })
                 .subscribe().with(_ -> {
-                }, failure -> logger.errorf(failure, "Failed to update final job status for job %s after retries", jobId));
+                }, failure -> logger.error("Failed to update final job status for job [{}] after retries", jobId, failure));
     }
 
     public Uni<Void> updateJobStatusUni(UUID jobId, JobStatus status, String errorMessage) {
@@ -150,7 +151,7 @@ public class BackgroundJobService {
         } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
             job.endedAt = clock.instant();
             if (errorMessage != null) {
-                logger.errorf("Full error message: %s", errorMessage);
+                logger.error("Job [{}] failed with error: {}", jobId, errorMessage);
                 if (errorMessage.length() > com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
                     job.errorMessage = errorMessage.substring(0, com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
                 } else {

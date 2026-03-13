@@ -1,9 +1,11 @@
 package com.povzetkar.quarkus.api.filter;
 
 import com.povzetkar.quarkus.model.AuditLog;
+import com.povzetkar.quarkus.security.UserSecurityDetails;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -11,7 +13,8 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -29,17 +32,17 @@ import java.io.IOException;
 @ApplicationScoped
 public class AuditLogFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final Logger logger = Logger.getLogger(AuditLogFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuditLogFilter.class);
     private static final String PROPERTY_START_TIME = "internal.audit.startTime";
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
-    private final UserContextService userContextService;
     private final SecurityIdentity securityIdentity;
+    private final UserContextService userContextService;
 
     @Inject
-    public AuditLogFilter(UserContextService userContextService, SecurityIdentity securityIdentity) {
-        this.userContextService = userContextService;
+    public AuditLogFilter(SecurityIdentity securityIdentity, UserContextService userContextService) {
         this.securityIdentity = securityIdentity;
+        this.userContextService = userContextService;
     }
 
     @Override
@@ -54,37 +57,40 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
         Long startTime = (Long) requestContext.getProperty(PROPERTY_START_TIME);
-        if (startTime == null) {
-            return; // Not an audited path — skip
-        }
+        if (startTime == null) return;
+
         long durationMs = (System.nanoTime() - startTime) / 1_000_000;
         String correlationId = CorrelationIdFilter.currentCorrelationId();
-        Long userId = null;
-        if (!securityIdentity.isAnonymous()) {
-            userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
-        }
-        String rawPath = requestContext.getUriInfo().getPath();
-        String requestPath = rawPath.length() > 1 && rawPath.endsWith("/")
-                ? rawPath.substring(0, rawPath.length() - 1)
-                : rawPath;
-        String rawUserAgent = requestContext.getHeaderString("User-Agent");
-        String userAgent = rawUserAgent != null && rawUserAgent.length() > USER_AGENT_MAX_LENGTH
-                ? rawUserAgent.substring(0, USER_AGENT_MAX_LENGTH)
-                : rawUserAgent;
+        String requestPath = getNormalizedPath(requestContext);
+        String userAgent = getBoundedUserAgent(requestContext);
 
-        final String finalCorrelationId = correlationId;
-        final Long finalUserId = userId;
-        final String httpMethod = requestContext.getMethod();
-        final String finalRequestPath = requestPath;
+        UserSecurityDetails security = UserSecurityDetails.capture(securityIdentity);
 
-        try {
-            QuarkusTransaction.requiringNew().run(() ->
-                    new AuditLog(finalCorrelationId, finalUserId, httpMethod, finalRequestPath,
-                            responseContext.getStatus(), durationMs, userAgent).persist()
-            );
-        } catch (Exception e) {
-            // Audit failures must never affect the actual response — log and swallow
-            logger.warnf(e, "Failed to persist audit log entry for [%s] %s", httpMethod, finalRequestPath);
-        }
+        persistAuditLogAsync(correlationId, security, requestContext.getMethod(),
+                responseContext.getStatus(), requestPath, durationMs, userAgent);
+    }
+
+    private String getNormalizedPath(ContainerRequestContext requestContext) {
+        String path = requestContext.getUriInfo().getPath();
+        return path.length() > 1 && path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+    }
+
+    private String getBoundedUserAgent(ContainerRequestContext requestContext) {
+        String agent = requestContext.getHeaderString("User-Agent");
+        return agent != null && agent.length() > USER_AGENT_MAX_LENGTH ? agent.substring(0, USER_AGENT_MAX_LENGTH) : agent;
+    }
+
+    private void persistAuditLogAsync(String correlationId, UserSecurityDetails security, String httpMethod,
+                                     int status, String path, long durationMs, String userAgent) {
+        Infrastructure.getDefaultExecutor().execute(() -> {
+            try {
+                final Long userId = userContextService.findUserId(security);
+                QuarkusTransaction.requiringNew().run(() ->
+                        new AuditLog(correlationId, userId, httpMethod, path, status, durationMs, userAgent).persist()
+                );
+            } catch (Exception e) {
+                logger.warn("Failed to persist audit log entry for [{}] {}", httpMethod, path, e);
+            }
+        });
     }
 }

@@ -22,7 +22,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,7 +49,7 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
 
     private static class ResponseSizeExceededException extends IOException {}
 
-    private static final Logger log = Logger.getLogger(IdempotencyFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(IdempotencyFilter.class);
     private static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
     private static final String PROPERTY_IDEMPOTENCY_KEY = "internal.idempotency.key";
     private static final String PROPERTY_IDEMPOTENCY_USER = "internal.idempotency.user";
@@ -228,8 +229,8 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 JsonNode jsonNode = objectMapper.readTree(cachedRequest.responseBody);
                 responseBuilder.entity(jsonNode).type(MediaType.APPLICATION_JSON_TYPE);
             } catch (JsonProcessingException e) {
-                log.error("Failed to parse cached response body for idempotency key", e);
-                throw new InternalServerErrorException("Failed to process cached response.", e);
+                log.error("Failed to parse cached response body for idempotency key: {}", sanitizeLogKey(cachedRequest.idempotencyKey), e);
+                throw new InternalServerErrorException("Failed to process cached response for key: " + sanitizeLogKey(cachedRequest.idempotencyKey), e);
             }
         }
 
@@ -269,16 +270,17 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
                 removeLock(idempotencyKey, userId, requestPath, requestMethod);
             }
         } catch (Exception e) {
-            log.error("Failed to process response for idempotency cache for key: " + sanitizeLogKey(idempotencyKey), e);
+            log.error("Failed to process response for idempotency cache for key: {} [user={}, path={}]", 
+                    sanitizeLogKey(idempotencyKey), userId, requestPath, e);
             // Attempt to remove the lock to prevent it from becoming stale.
             try {
                 removeLock(idempotencyKey, userId, requestPath, requestMethod);
             } catch (Exception cleanupEx) {
-                log.error("Failed to remove stale idempotency lock for key: " + sanitizeLogKey(idempotencyKey), cleanupEx);
+                log.error("Failed to remove stale idempotency lock for key: {}", sanitizeLogKey(idempotencyKey), cleanupEx);
                 e.addSuppressed(cleanupEx);
             }
             // Re-throw to ensure the client receives an error.
-            throw new InternalServerErrorException("Failed to process response for idempotency cache", e);
+            throw new InternalServerErrorException("Failed to process response for idempotency cache for key: " + sanitizeLogKey(idempotencyKey), e);
         }
     }
 
