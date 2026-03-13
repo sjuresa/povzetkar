@@ -1,7 +1,6 @@
 package com.povzetkar.quarkus.api.filter;
 
 import com.povzetkar.quarkus.model.AuditLog;
-import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -13,6 +12,7 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 /**
@@ -33,12 +33,10 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
     private static final String PROPERTY_START_TIME = "internal.audit.startTime";
     private static final int USER_AGENT_MAX_LENGTH = 512;
 
-    private final UserContextService userContextService;
     private final SecurityIdentity securityIdentity;
 
     @Inject
-    public AuditLogFilter(UserContextService userContextService, SecurityIdentity securityIdentity) {
-        this.userContextService = userContextService;
+    public AuditLogFilter(SecurityIdentity securityIdentity) {
         this.securityIdentity = securityIdentity;
     }
 
@@ -54,41 +52,65 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
         Long startTime = (Long) requestContext.getProperty(PROPERTY_START_TIME);
-        if (startTime == null) {
-            return; // Not an audited path — skip
-        }
+        if (startTime == null) return;
+
         long durationMs = (System.nanoTime() - startTime) / 1_000_000;
         String correlationId = CorrelationIdFilter.currentCorrelationId();
+        String requestPath = getNormalizedPath(requestContext);
+        String userAgent = getBoundedUserAgent(requestContext);
 
-        String rawPath = requestContext.getUriInfo().getPath();
-        String requestPath = rawPath.length() > 1 && rawPath.endsWith("/")
-                ? rawPath.substring(0, rawPath.length() - 1)
-                : rawPath;
-        String rawUserAgent = requestContext.getHeaderString("User-Agent");
-        String userAgent = rawUserAgent != null && rawUserAgent.length() > USER_AGENT_MAX_LENGTH
-                ? rawUserAgent.substring(0, USER_AGENT_MAX_LENGTH)
-                : rawUserAgent;
+        SecurityDetails security = SecurityDetails.capture(securityIdentity);
 
-        final String httpMethod = requestContext.getMethod();
-        final int responseStatus = responseContext.getStatus();
+        persistAuditLogAsync(correlationId, security, requestContext.getMethod(),
+                responseContext.getStatus(), requestPath, durationMs, userAgent);
+    }
 
-        // Capture security context details
-        final boolean isAnonymous = securityIdentity.isAnonymous();
+    private String getNormalizedPath(ContainerRequestContext requestContext) {
+        String path = requestContext.getUriInfo().getPath();
+        return path.length() > 1 && path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+    }
 
-        Long userId = null;
-        if (!isAnonymous) {
-            userId = userContextService.getCurrentUser().map(u -> u.id).orElse(null);
-        }
+    private String getBoundedUserAgent(ContainerRequestContext requestContext) {
+        String agent = requestContext.getHeaderString("User-Agent");
+        return agent != null && agent.length() > USER_AGENT_MAX_LENGTH ? agent.substring(0, USER_AGENT_MAX_LENGTH) : agent;
+    }
 
-        final Long finalUserId = userId;
-        try {
-            QuarkusTransaction.requiringNew().run(() ->
-                    new AuditLog(correlationId, finalUserId, httpMethod, requestPath,
-                            responseStatus, durationMs, userAgent).persist()
-            );
-        } catch (Exception e) {
-            // Audit failures must never affect the actual response — log and swallow
-            logger.warn("Failed to persist audit log entry for [{}] {}", httpMethod, requestPath, e);
+    private void persistAuditLogAsync(String correlationId, SecurityDetails security, String httpMethod,
+                                     int status, String path, long durationMs, String userAgent) {
+        io.smallrye.mutiny.infrastructure.Infrastructure.getDefaultExecutor().execute(() -> {
+            try {
+                final Long userId = lookupUserId(security);
+                QuarkusTransaction.requiringNew().run(() ->
+                        new AuditLog(correlationId, userId, httpMethod, path, status, durationMs, userAgent).persist()
+                );
+            } catch (Exception e) {
+                logger.warn("Failed to persist audit log entry for [{}] {}", httpMethod, path, e);
+            }
+        });
+    }
+
+    private Long lookupUserId(SecurityDetails security) {
+        if (security.principalName() == null) return null;
+
+        return QuarkusTransaction.requiringNew().call(() -> {
+            if (security.jwtSub() != null) {
+                var identity = com.povzetkar.quarkus.model.UserIdentity
+                        .findByProviderAndExternalId("google", security.jwtSub()).orElse(null);
+                if (identity != null) return identity.user.id;
+            }
+            return com.povzetkar.quarkus.model.User.find("username", security.principalName())
+                    .<com.povzetkar.quarkus.model.User>firstResultOptional()
+                    .map(u -> u.id).orElse(null);
+        });
+    }
+
+    private record SecurityDetails(String principalName, String jwtSub) {
+        static SecurityDetails capture(SecurityIdentity identity) {
+            if (identity.isAnonymous()) return new SecurityDetails(null, null);
+            String name = identity.getPrincipal().getName();
+            String sub = (identity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt)
+                    ? jwt.getSubject() : null;
+            return new SecurityDetails(name, sub);
         }
     }
 }
