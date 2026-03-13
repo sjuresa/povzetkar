@@ -28,7 +28,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **Shadcn/UI**: High-quality, accessible components that we "own" (code is copied into the project), allowing for total customization without library lock-in.
 
 ### 4. Data Fetching & Contract: Orval + TanStack Query
-*   **Orval**: Automatically generates TypeScript types and TanStack Query hooks from the backend `/openapi-spec.json`.
+*   **Orval**: Automatically generates TypeScript types and TanStack Query hooks from the backend `/q/openapi`.
 *   **TanStack Query**: Manages all server state, caching, and background refetching.
 *   **API Client Resilience**: A global Axios interceptor will be implemented to:
     *   Inject `X-Correlation-ID` for request tracing.
