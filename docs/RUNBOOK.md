@@ -191,7 +191,7 @@ This will:
 
 The application can be packaged as a container image using Jib. This image is OCI-compliant and can be run with Docker or Podman.
 
-### 8.1 Building the Container Image
+### 9.1 Building the Container Image
 
 To build the container image, run the following Maven command:
 
@@ -201,7 +201,7 @@ To build the container image, run the following Maven command:
 
 This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by default).
 
-### 8.2 Running the Container
+### 9.2 Running the Container
 
 The application requires several environment variables to function correctly. These must be passed to the container at runtime.
 
@@ -243,9 +243,9 @@ podman run -it --rm \
   si.jumis/povzetkar:latest
 ```
 
-## 9. Application Usage
+## 10. Application Usage
 
-### 9.1 Content Source Management
+### 10.1 Content Source Management
 
 The `ContentSourceDetailService` is responsible for enriching and refreshing details (like name, description, and subscriber count) for content sources in the database. This service can be triggered on-demand or runs on a schedule.
 
@@ -414,9 +414,9 @@ The circuit breaker for GenAI API calls prevents repeated attempts to a failing 
 
 If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.
 
-## 10. Compliance & Monitoring
+## 11. Compliance & Monitoring
 
-### 10.1 Correlation IDs & Request Tracing
+### 11.1 Correlation IDs & Request Tracing
 
 Every request to the `/api/v1/*` endpoints is assigned a **Correlation ID** to allow end-to-end tracing across logs and the database.
 
@@ -500,7 +500,7 @@ The project has standardized on **SLF4J** for logging and uses a `StructuredLogg
         logger.info("event", "job_started", "job_id", jobId);
         ```
 
-## 11. Real-Time Event Stream (SSE)
+## 12. Real-Time Event Stream (SSE)
 
 The application provides a centralized **Server-Sent Events (SSE)** endpoint for real-time system monitoring. This is the preferred method for frontends to track background job completion.
 
@@ -513,7 +513,7 @@ The application provides a centralized **Server-Sent Events (SSE)** endpoint for
     curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events/stream
     ```
 
-## 12. API Response Structure (Envelopes)
+## 13. API Response Structure (Envelopes)
 
 All REST API responses (except for special streams like SSE) are wrapped in a standard **JSON Envelope** to ensure consistency across the platform.
 
