@@ -21,6 +21,10 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.util.List;
 import java.util.Map;
@@ -123,6 +127,7 @@ public class AdminResource {
 
     @Route(path = "/api/v1/admin/content-items/:id/fetch-transcript", methods = Route.HttpMethod.POST)
     @Blocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void fetchTranscript(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
                 msg -> context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, msg).encode()));
@@ -166,6 +171,7 @@ public class AdminResource {
 
     @Route(path = "/api/v1/admin/content-items/:id/status", methods = Route.HttpMethod.POST)
     @Blocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, schema = @Schema(type = SchemaType.INTEGER))
     public void updateContentItemStatus(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
                 msg -> context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, msg).encode()));

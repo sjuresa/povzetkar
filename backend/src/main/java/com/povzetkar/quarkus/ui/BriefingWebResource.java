@@ -14,6 +14,10 @@ import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.util.Comparator;
 import java.util.List;
@@ -45,6 +49,7 @@ public class BriefingWebResource {
 
     @Route(path = "/ui/briefings/:briefingId", methods = Route.HttpMethod.GET)
     @Blocking
+    @Parameter(name = "briefingId", in = ParameterIn.PATH, required = true, schema = @Schema(type = SchemaType.INTEGER))
     public void showBriefing(RoutingContext context) {
         Optional<Long> briefingIdOptional = WebUtils.getLongPathParam(context, "briefingId", INVALID_BRIEFING_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (briefingIdOptional.isEmpty()) {

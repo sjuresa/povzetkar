@@ -18,6 +18,10 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,6 +192,7 @@ public class TopicResource {
 
     @Route(path = TOPIC_EDIT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, schema = @Schema(type = SchemaType.INTEGER))
     public void showEditForm(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
@@ -209,6 +214,7 @@ public class TopicResource {
     @Route(path = TOPIC_UPDATE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void updateTopic(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
@@ -247,6 +253,7 @@ public class TopicResource {
     @Route(path = TOPIC_DELETE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void deleteTopic(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
@@ -266,6 +273,7 @@ public class TopicResource {
     @Route(path = TOPIC_TOGGLE_ENABLED_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void toggleTopicEnabled(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, PARAM_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (idOptional.isEmpty()) {
@@ -285,6 +293,7 @@ public class TopicResource {
 
     @Route(path = TOPIC_BRIEFINGS_PATH, methods = Route.HttpMethod.GET)
     @Blocking
+    @Parameter(name = "topicId", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void listBriefingsByTopic(RoutingContext context) {
         Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {
@@ -355,6 +364,8 @@ public class TopicResource {
     @Route(path = TOPIC_ADD_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
+    @Parameter(name = "topicId", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
+    @Parameter(name = "contentSourceId", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void addContentSourceToTopic(RoutingContext context) {
         findTopicAndContentSource(context).ifPresent(pair -> {
             pair.topic.contentSources.add(pair.contentSource);
@@ -368,6 +379,8 @@ public class TopicResource {
     @Route(path = TOPIC_REMOVE_SOURCE_PATH, methods = Route.HttpMethod.POST)
     @Transactional
     @Blocking
+    @Parameter(name = "topicId", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
+    @Parameter(name = "contentSourceId", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void removeContentSourceFromTopic(RoutingContext context) {
         findTopicAndContentSource(context).ifPresent(pair -> {
             pair.topic.contentSources.remove(pair.contentSource);
@@ -380,6 +393,7 @@ public class TopicResource {
 
     @Route(path = TOPIC_SELECT_SOURCE_PATH, methods = Route.HttpMethod.GET)
     @Blocking
+    @Parameter(name = "topicId", in = ParameterIn.PATH, required = true, schema = @Schema(type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.INTEGER))
     public void selectContentSource(RoutingContext context) {
         Optional<Long> topicIdOptional = WebUtils.getLongPathParam(context, PARAM_TOPIC_ID, INVALID_TOPIC_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (topicIdOptional.isEmpty()) {

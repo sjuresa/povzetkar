@@ -16,6 +16,10 @@ import io.smallrye.common.annotation.Blocking;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -51,6 +55,7 @@ public class SummaryResource {
 
     @Route(path = "/ui/summaries/:summaryId", methods = Route.HttpMethod.GET)
     @Blocking
+    @Parameter(name = "summaryId", in = ParameterIn.PATH, required = true, schema = @Schema(type = SchemaType.INTEGER))
     public void showSummary(RoutingContext context) {
         Optional<Long> summaryIdOptional = WebUtils.getLongPathParam(context, "summaryId", INVALID_SUMMARY_ID_FORMAT, msg -> context.response().setStatusCode(400).end(msg));
         if (summaryIdOptional.isEmpty()) {
