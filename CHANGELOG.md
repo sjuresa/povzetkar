@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Infrastructure:** Restructured the repository into a monorepo by migrating all backend code, configurations, and resources into a dedicated `/backend` module.
 - **Infrastructure:** Introduced a root-level aggregator `pom.xml` to manage the project's parent-child relationship and shared dependency management.
+- **Frontend:** Initialized the React/Vite/TypeScript frontend project in `/frontend` with Tailwind CSS 4, Shadcn/UI foundations, and `vite-react-ssg` for SEO pre-rendering.
+- **Frontend:** Configured Vitest and Playwright testing frameworks with initial smoke tests.
+- **Infrastructure:** Established root-level `package.json` for monorepo-wide script orchestration (dev, build, lint, test).
 - **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
 
 ### Changed
@@ -23,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend:** Simplified `backend/pom.xml` by removing redundant versions and execution blocks inherited from the root POM.
 
 ### Planned
-- Frontend Project Initialization (POV-136).
 - Dashboard MVP with BFF integration (POV-137).
 - SSE Real-time Job Tracking (POV-138).
 - Audit Log Admin UI (POV-140).

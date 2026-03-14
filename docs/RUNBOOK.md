@@ -5,6 +5,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                 |
 |---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 2.1     | March 14, 2026     | Povzetkar AI | Updated for Monorepo, Frontend Initialization (POV-136), and Vite 8. |
 | 2.0     | March 13, 2026     | Povzetkar AI | Added documentation for Task 17 (SSE Stream) and Task 18 (Admin/Audit). |
 | 1.9     | March 13, 2026     | Povzetkar AI | Added documentation for Idempotency, Optimistic Locking, SSE, and Envelopes. |
 | 1.8     | March 13, 2026     | Povzetkar AI | Added documentation for Correlation IDs, Audit Logs, and Metrics.       |
@@ -22,6 +23,8 @@ This document provides all the necessary instructions for setting up the local d
 It is the primary technical guide for developers working on the project.
 ## 2. Prerequisites
 - **Java:** JDK 21 or later.
+- **Node.js:** v25.8.0 or later.
+- **NPM:** v10.x or later.
 - **Maven:** Version 3.8.x or later.
 - **Docker & Docker Compose:** For running the local development environment.
 - **IDE:** IntelliJ IDEA or VS Code are recommended.
@@ -94,14 +97,37 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 
 ## 6. Running the Application
 
-With the database running, you can start the Quarkus application in development mode:
+With the database running, you can start the full stack (Backend + Frontend) using the root-level orchestration:
+
+```bash
+npm run dev
+```
+
+This command uses `npm-run-all` to simultaneously boot:
+- **Backend (Quarkus):** `http://localhost:8080` (API & Dev UI)
+- **Frontend (Vite 8):** `http://localhost:5173` (React SPA)
+
+### 6.1 Individual Service Execution
+
+If you need to run services separately:
+
+**Backend only:**
 ```bash
 ./mvnw quarkus:dev -pl backend
 ```
 
-**Access the Endpoint:**
-`http://localhost:8080/q/health/live`
-`http://localhost:8080/q/health`
+**Frontend only:**
+```bash
+cd frontend
+npm run dev
+```
+
+### 6.2 Application Entry Points
+
+- **Frontend SPA:** `http://localhost:5173`
+- **Backend Health:** `http://localhost:8080/q/health`
+- **Backend API Docs:** `http://localhost:8080/q/swagger-ui`
+- **Legacy Admin UI (Qute):** `http://localhost:8080/ui/admin`
 
 ### 6.1 API Documentation (Swagger UI)
 
@@ -112,9 +138,29 @@ In development mode, the application generates an OpenAPI specification and prov
 **Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
 
 ## 7. Running Tests
-To run the test suite:
+To run the full-stack test suite (Backend JUnit + Frontend Vitest + Playwright):
+
+```bash
+npm run test
+```
+
+### 7.1 Individual Testing Commands
+
+**Backend (Maven):**
 ```bash
 ./mvnw test -pl backend
+```
+
+**Frontend (Vitest):**
+```bash
+cd frontend
+npm run test
+```
+
+**Frontend (Playwright E2E):**
+```bash
+cd frontend
+npx playwright test
 ```
 
 ## 8. Security & Code Quality
@@ -129,11 +175,23 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ### 8.2 Dependency Scanning (Trivy)
 Third-party dependencies are scanned for known vulnerabilities (CVEs). While this is primarily integrated into the GitHub Actions CI pipeline, you can run a local container scan if needed (requires [Trivy](https://trivy.dev/) installed).
 
+## 8. Building the Full Stack
+
+To build both the frontend and backend in one command:
+
+```bash
+npm run build
+```
+
+This will:
+1.  Build the React frontend and place artifacts in `frontend/dist`.
+2.  Build the Quarkus backend and run standard JAR packaging.
+
 ## 9. Containerized Execution (Docker/Podman)
 
 The application can be packaged as a container image using Jib. This image is OCI-compliant and can be run with Docker or Podman.
 
-### 8.1 Building the Container Image
+### 9.1 Building the Container Image
 
 To build the container image, run the following Maven command:
 
@@ -143,7 +201,7 @@ To build the container image, run the following Maven command:
 
 This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by default).
 
-### 8.2 Running the Container
+### 9.2 Running the Container
 
 The application requires several environment variables to function correctly. These must be passed to the container at runtime.
 
@@ -185,9 +243,9 @@ podman run -it --rm \
   si.jumis/povzetkar:latest
 ```
 
-## 9. Application Usage
+## 10. Application Usage
 
-### 9.1 Content Source Management
+### 10.1 Content Source Management
 
 The `ContentSourceDetailService` is responsible for enriching and refreshing details (like name, description, and subscriber count) for content sources in the database. This service can be triggered on-demand or runs on a schedule.
 
@@ -356,9 +414,9 @@ The circuit breaker for GenAI API calls prevents repeated attempts to a failing 
 
 If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.
 
-## 10. Compliance & Monitoring
+## 11. Compliance & Monitoring
 
-### 10.1 Correlation IDs & Request Tracing
+### 11.1 Correlation IDs & Request Tracing
 
 Every request to the `/api/v1/*` endpoints is assigned a **Correlation ID** to allow end-to-end tracing across logs and the database.
 
@@ -442,7 +500,7 @@ The project has standardized on **SLF4J** for logging and uses a `StructuredLogg
         logger.info("event", "job_started", "job_id", jobId);
         ```
 
-## 11. Real-Time Event Stream (SSE)
+## 12. Real-Time Event Stream (SSE)
 
 The application provides a centralized **Server-Sent Events (SSE)** endpoint for real-time system monitoring. This is the preferred method for frontends to track background job completion.
 
@@ -455,7 +513,7 @@ The application provides a centralized **Server-Sent Events (SSE)** endpoint for
     curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events/stream
     ```
 
-## 12. API Response Structure (Envelopes)
+## 13. API Response Structure (Envelopes)
 
 All REST API responses (except for special streams like SSE) are wrapped in a standard **JSON Envelope** to ensure consistency across the platform.
 

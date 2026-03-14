@@ -1,4 +1,4 @@
-name: Java CI with Maven
+name: Full Stack CI
 
 on:
   push:
@@ -17,16 +17,26 @@ jobs:
           POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASS }}
         ports:
-          - 5433:5432 # Map container port 5432 to host port 5433
+          - 5433:5432
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up JDK 25
       uses: actions/setup-java@v4
       with:
         java-version: '25'
         distribution: 'temurin'
         cache: maven
+
+    - name: Set up Node.js 25.8
+      uses: actions/setup-node@v4
+      with:
+        node-version: '25.8'
+        cache: 'npm'
+
+    - name: Install dependencies (root + frontend)
+      run: npm install && cd frontend && npm install --legacy-peer-deps
 
     - name: Make mvnw executable
       run: chmod +x mvnw
@@ -42,14 +52,34 @@ jobs:
         PGPASSWORD: ${{ secrets.TEST_DB_PASS }}
         PGDATABASE: ${{ secrets.TEST_DB_NAME }}
       run: |
-        # Wait until the postgres service is ready
         until pg_isready -q; do
           echo "Waiting for database connection..."
           sleep 2
         done
 
-    - name: Build and test with Maven
-      run: ./mvnw verify
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps chromium
+      working-directory: ./frontend
+
+    - name: Full Stack Test (Backend + Frontend Unit)
+      run: npm run test
+      env:
+        TEST_DB_KIND: ${{ secrets.TEST_DB_KIND }}
+        TEST_JDBC_URL: jdbc:postgresql://localhost:5433/${{ secrets.TEST_DB_NAME }}
+        TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
+        TEST_DB_PASS: ${{ secrets.TEST_DB_PASS }}
+
+    - name: E2E Tests (Playwright)
+      run: npm run test:e2e
+      env:
+        # Playwright webServer needs these to start backend during E2E if configured
+        TEST_DB_KIND: ${{ secrets.TEST_DB_KIND }}
+        TEST_JDBC_URL: jdbc:postgresql://localhost:5433/${{ secrets.TEST_DB_NAME }}
+        TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
+        TEST_DB_PASS: ${{ secrets.TEST_DB_PASS }}
+
+    - name: Backend Quality Audit (SpotBugs + Verify)
+      run: ./mvnw verify -pl backend -am
       env:
         TEST_DB_KIND: ${{ secrets.TEST_DB_KIND }}
         TEST_JDBC_URL: jdbc:postgresql://localhost:5433/${{ secrets.TEST_DB_NAME }}
