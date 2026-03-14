@@ -33,6 +33,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **API Client Resilience**: A global Axios interceptor will be implemented to:
     *   Inject `X-Correlation-ID` for request tracing.
     *   Handle `If-Match` headers for Optimistic Locking using the `@Version` field from DTOs.
+    *   Handle `Idempotency-Key` headers for idempotent command submissions (`POST /commands/*`).
     *   Standardize error handling for 401 (Unauthorized), 403 (Forbidden), and 429 (Rate Limit) responses.
 
 ### 5. Routing: TanStack Router
@@ -58,3 +59,4 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **Negative**:
     - **Onboarding cost**: Significant learning curve for TanStack Router and Orval integration.
     - **Build Complexity**: Monorepo setup requires careful CI/CD configuration.
+    - **Limited Code Sharing**: The absence of a root-level package manager (like NPM workspaces) makes it difficult to share code or dependencies between potential future frontend projects without duplication.
