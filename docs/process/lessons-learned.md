@@ -293,4 +293,24 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ### 10.1 Logger Consistency
 - **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments. Mixing `org.jboss.logging.Logger` and `slf4j` facades in the same project can lead to confusing configuration and inconsistent MDC behavior.
 - **The Standard:** Always standardize on **SLF4J (`org.slf4j.Logger`)** as the primary logging facade for maximum compatibility and consistency with `RUNBOOK.md`. For structured logging with key-value pairs, use the custom `StructuredLogger` helper.
+
+---
+
+## 11. Monorepo & Multi-module Maven
+
+### 11.1 Cross-module Resource Loading
+- **The Trap:** Using `${project.basedir}` in a submodule `pom.xml` to refer to resources located at the monorepo root (e.g., `CHANGELOG.md` or global docs). Using relative paths like `${project.basedir}/..` is a common but brittle workaround that breaks if the module structure becomes deeper.
+- **The Standard:** To provide a stable reference point to the monorepo root from any submodule, define a property in the root `pom.xml` using Maven's built-in `${maven.multiModuleProjectDirectory}` property (e.g., `<project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>`). Use this property in submodules to access root-level resources. This approach is more robust than using relative paths like `${project.basedir}/..`.
+
+### 11.2 Aggregator vs. Parent POM
+- **The Trap:** Conflating the role of the "Aggregator" (the `pom.xml` that lists `<modules>`) and the "Parent" (the `pom.xml` that submodule `<parent>` blocks inherit from).
+- **The Standard:** In a clean monorepo, the root `pom.xml` should serve both roles. It defines the modules for orchestration and provides the `<dependencyManagement>` and `<properties>` shared by all modules. Submodules should explicitly point to the root via `<parent>` to ensure unified versioning and configuration.
+
+### 11.3 Targeted Module Execution
+- **The Standard:** When working in a monorepo, avoid running full builds from the root for every change. Use the `-pl <module-name>` (project list) and `-am` (also make dependencies) flags to target specific modules:
+  ```bash
+  ./mvnw quarkus:dev -pl backend
+  ./mvnw clean package -pl backend -am
+  ```
+  This speeds up the development loop and prevents unnecessary re-building of unrelated modules (like the future frontend).
 
