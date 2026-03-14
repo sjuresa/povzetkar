@@ -96,7 +96,7 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 
 With the database running, you can start the Quarkus application in development mode:
 ```bash
-./mvnw quarkus:dev
+./mvnw quarkus:dev -pl backend
 ```
 
 **Access the Endpoint:**
@@ -114,7 +114,7 @@ In development mode, the application generates an OpenAPI specification and prov
 ## 7. Running Tests
 To run the test suite:
 ```bash
-./mvnw test
+./mvnw test -pl backend
 ```
 
 ## 8. Security & Code Quality
@@ -138,7 +138,7 @@ The application can be packaged as a container image using Jib. This image is OC
 To build the container image, run the following Maven command:
 
 ```bash
-./mvnw clean package -Dquarkus.container-image.build=true
+./mvnw clean package -Dquarkus.container-image.build=true -pl backend -am
 ```
 
 This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by default).
@@ -207,7 +207,7 @@ To manually trigger the enrichment process for all content sources that are miss
 The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
 
 *   **Configuration Property:** `quarkus.scheduler.enrich-content-sources.cron`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
@@ -221,7 +221,7 @@ The `OrchestratorService` is responsible for the end-to-end process of fetching 
 The orchestration process is configured to run periodically. By default, it runs daily at midnight.
 
 *   **Configuration Property:** `povzetkar.orchestrator.cron`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 * * ?` (daily at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
@@ -341,7 +341,7 @@ All tables include a '#' column for row numbering and display dates in the confi
 The history tables on the Admin UI page are paginated. The number of items displayed per page can be configured in `application.properties`.
 
 *   **Configuration Property:** `povzetkar.ui.admin.page-size`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `20`
 
 You can modify this value to control how many items appear on each page of the history tables.
@@ -351,7 +351,7 @@ You can modify this value to control how many items appear on each page of the h
 The circuit breaker for GenAI API calls prevents repeated attempts to a failing service. It tracks consecutive 503 (Service Unavailable) errors per API key.
 
 *   **Configuration Property:** `povzetkar.orchestrator.circuit-breaker.threshold`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `3`
 
 If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.

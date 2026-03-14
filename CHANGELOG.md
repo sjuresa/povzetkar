@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
 
+### Added
+- **Infrastructure:** Restructured the repository into a monorepo by migrating all backend code, configurations, and resources into a dedicated `/backend` module.
+- **Infrastructure:** Introduced a root-level aggregator `pom.xml` to manage the project's parent-child relationship and shared dependency management.
+- **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
+
+### Changed
+- **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
+
 ### Planned
-- Monorepo restructuring for Frontend/Backend co-location (POV-135).
 - Frontend Project Initialization (POV-136).
 - Dashboard MVP with BFF integration (POV-137).
 - SSE Real-time Job Tracking (POV-138).

@@ -71,7 +71,7 @@ To get a local copy up and running, follow these simple steps.
 4.  **Run the Quarkus Application:**
     In a separate terminal, run the Quarkus application in development mode.
     ```sh
-    ./mvnw quarkus:dev
+    ./mvnw quarkus:dev -pl backend
     ```
 
 ## Documentation
