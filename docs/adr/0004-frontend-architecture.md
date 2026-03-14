@@ -57,4 +57,4 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **Negative**:
     - **Onboarding cost**: Significant learning curve for TanStack Router and Orval integration.
     - **Build Complexity**: Monorepo setup requires careful CI/CD configuration.
-    - **Limited Code Sharing**: The absence of a root-level package manager (like NPM workspaces) makes it difficult to share code or dependencies between potential future frontend projects without duplication. (Mitigation: If multiple frontend projects are added, this can be addressed by publishing shared libraries to a private NPM registry).
+    - **Limited Code Sharing**: The absence of a root-level package manager (like NPM workspaces) makes it difficult to share code or dependencies between potential future frontend projects without duplication. (Mitigation: If multiple frontend projects are added, this can be addressed via lightweight `file:` protocol dependencies, adopting **PNPM Workspaces**, or eventually publishing to a private NPM registry).
