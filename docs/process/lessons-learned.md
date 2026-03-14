@@ -299,8 +299,8 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ## 11. Monorepo & Multi-module Maven
 
 ### 11.1 Cross-module Resource Loading
-- **The Trap:** Using `${project.basedir}` in a submodule `pom.xml` to refer to resources located at the monorepo root (e.g., `CHANGELOG.md` or global docs). When the module is moved or the build is executed from a different directory, the resource lookup fails.
-- **The Standard:** Use `${project.basedir}/..` to reference the parent directory in submodule resource configurations. If the monorepo grows deeper, consider defining a Maven property in the root `pom.xml` (e.g., `<project.root>${maven.multiModuleProjectDirectory}</project.root>`) to provide a stable reference point regardless of module depth.
+- **The Trap:** Using `${project.basedir}` in a submodule `pom.xml` to refer to resources located at the monorepo root (e.g., `CHANGELOG.md` or global docs). Using relative paths like `${project.basedir}/..` is a common but brittle workaround that breaks if the module structure becomes deeper.
+- **The Standard:** To provide a stable reference point to the monorepo root from any submodule, define a property in the root `pom.xml` using Maven's built-in `${maven.multiModuleProjectDirectory}` property (e.g., `<project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>`). Use this property in submodules to access root-level resources. This approach is more robust than using relative paths like `${project.basedir}/..`.
 
 ### 11.2 Aggregator vs. Parent POM
 - **The Trap:** Conflating the role of the "Aggregator" (the `pom.xml` that lists `<modules>`) and the "Parent" (the `pom.xml` that submodule `<parent>` blocks inherit from).
