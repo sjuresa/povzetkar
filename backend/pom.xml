@@ -15,9 +15,6 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
 
         <!-- Centralized Dependency Versions -->
@@ -28,10 +25,6 @@
         <assertj.version>3.27.7</assertj.version>
         <youtube-transcript-api.version>0.4.0</youtube-transcript-api.version>
 
-        <!-- Quarkus Specific Properties -->
-        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.32.3</quarkus.platform.version>
         <flexmark-all.version>0.64.8</flexmark-all.version>
 
         <!-- Centralized Plugin Versions -->
@@ -42,13 +35,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>${quarkus.platform.artifact-id}</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>io.github.thoroldvix</groupId>
                 <artifactId>youtube-transcript-api</artifactId>
