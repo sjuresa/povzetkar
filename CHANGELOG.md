@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
+- **Backend:** Centralized all `<properties>` and `<dependencyManagement>` entries in the root `pom.xml` to ensure a single source of truth for versioning across future modules.
+- **Backend:** Refined `backend/pom.xml` to remove redundant properties and dependency management sections inherited from the root POM, adhering to multi-module Maven best practices.
 
 ### Planned
 - Frontend Project Initialization (POV-136).
