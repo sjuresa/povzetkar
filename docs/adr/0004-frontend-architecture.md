@@ -45,7 +45,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **i18next**: Standard library for internationalization, ensuring all strings are manageable outside of component logic.
 
 ### 7. Real-Time: SSE (Server-Sent Events)
-*   Implemented via a custom React hook (e.g., `useEventSource`) to consume job status streams defined in v0.11.
+*   Implementation will use a custom React hook (e.g., `useEventSource`) to consume job status streams defined in v0.11.
 
 ### 8. Testing Strategy
 *   **Unit/Integration**: **Vitest** for component and logic testing.
