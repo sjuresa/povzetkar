@@ -319,7 +319,7 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ## 12. Frontend Development (React / Vite)
 
 ### 12.1 ViteSSG & Beta Compatibility
-Vite's ecosystem (especially SSG plugins) moves fast. When using plugins like ite-react-ssg, you may encounter type mismatches with the latest eact, eact-router-dom, or ite versions.
+Vite's ecosystem (especially SSG plugins) moves fast. When using plugins like vite-react-ssg, you may encounter type mismatches with the latest React, react-router-dom, or Vite versions.
 - **The Trap:** Spending hours trying to perfectly align @types/* versions when the plugin itself has internally mismatched peer dependencies or hardcoded types in its dist.
 - **The Standard:** If a required import like ViteReactSSG is clearly exported in the source but triggers a [MISSING_EXPORT] error or TS type error during build, verify the exact export name in node_modules. If types are the only blocker, use // @ts-expect-error - <reason> with a specific explanation. This keeps the build passing while acknowledging the technical debt.
 
