@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  // @ts-ignore - ssgOptions is handled by vite-react-ssg
+  // @ts-expect-error - ssgOptions is not in the base Vite config type but handled by vite-react-ssg
   ssgOptions: {
     script: 'async',
     formatting: 'minify',
