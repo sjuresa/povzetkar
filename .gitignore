@@ -6,5 +6,4 @@ target
 /.run/
 .env
 .env.*
-/agent_logs
 .vscode
