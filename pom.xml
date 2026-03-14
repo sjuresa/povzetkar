@@ -101,6 +101,21 @@
                 <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>com.vladsch.flexmark</groupId>
+                <artifactId>flexmark-all</artifactId>
+                <version>${flexmark-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.quarkiverse.mapstruct</groupId>
+                <artifactId>quarkus-mapstruct</artifactId>
+                <version>${quarkus-mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
