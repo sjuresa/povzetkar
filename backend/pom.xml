@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>povzetkar-backend</artifactId>
-    <packaging>jar</packaging>
+    <packaging>quarkus</packaging>
 
     <dependencies>
         <dependency>

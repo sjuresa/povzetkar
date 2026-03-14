@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend:** Switched to `${project.root.basedir}` (using `maven.multiModuleProjectDirectory`) for stable cross-module resource loading, independent of directory depth.
 - **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
 - **Backend:** Centralized all `<properties>`, `<dependencyManagement>`, and `<pluginManagement>` entries (including Quarkus and Maven plugins) in the root `pom.xml`.
+- **Backend:** Switched `backend/pom.xml` to `<packaging>quarkus</packaging>` to leverage standard lifecycle bindings and eliminate redundant plugin executions.
 - **Backend:** Unified plugin and dependency versions using new properties in the root POM.
 - **Backend:** Simplified `backend/pom.xml` by removing redundant versions and execution blocks inherited from the root POM.
 
