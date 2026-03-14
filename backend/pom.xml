@@ -190,7 +190,7 @@
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/..</directory>
+                                    <directory>${project.root.basedir}</directory>
                                     <includes>
                                         <include>CHANGELOG.md</include>
                                         <include>docs/overview/roadmap.md</include>

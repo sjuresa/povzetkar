@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
 
 ### Changed
+- **Backend:** Switched to `${project.root.basedir}` (using `maven.multiModuleProjectDirectory`) for stable cross-module resource loading, independent of directory depth.
 - **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
 - **Backend:** Centralized all `<properties>`, `<dependencyManagement>`, and `<pluginManagement>` entries in the root `pom.xml` to ensure a single source of truth for versioning across all modules.
 - **Backend:** Unified plugin versions using new properties (e.g., `${compiler.plugin.version}`, `${resources.plugin.version}`) in the root POM.

@@ -44,6 +44,7 @@
         <javadoc.plugin.version>3.6.3</javadoc.plugin.version>
         <compiler.plugin.version>3.13.0</compiler.plugin.version>
         <resources.plugin.version>3.3.1</resources.plugin.version>
+        <project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>
     </properties>
 
     <dependencyManagement>
