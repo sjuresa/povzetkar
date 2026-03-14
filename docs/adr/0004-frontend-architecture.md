@@ -28,7 +28,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **Shadcn/UI**: High-quality, accessible components that we "own" (code is copied into the project), allowing for total customization without library lock-in.
 
 ### 4. Data Fetching & Contract: Orval + TanStack Query
-*   **Orval**: Automatically generates TypeScript types and TanStack Query hooks from the backend's OpenAPI specification. For CI/CD, the backend build will copy the generated `openapi.json` to `/frontend/openapi.json` (or a predictable subdirectory), which the Orval script will consume to ensure decoupled builds.
+*   **Orval**: Automatically generates TypeScript types and TanStack Query hooks from the backend's OpenAPI specification. For CI/CD, the backend build will copy the generated `openapi.json` to `/frontend/openapi.json` (or a predictable subdirectory), which the Orval script will consume. This co-location simplifies the build process within the monorepo.
 *   **TanStack Query**: Manages all server state, caching, and background refetching.
 *   **API Client Resilience**: A global Axios interceptor will be implemented to:
     *   Inject `X-Correlation-ID` for request tracing.
@@ -59,4 +59,4 @@ We will implement the frontend using a **Monorepo** structure and the following 
 *   **Negative**:
     - **Onboarding cost**: Significant learning curve for TanStack Router and Orval integration.
     - **Build Complexity**: Monorepo setup requires careful CI/CD configuration.
-    - **Limited Code Sharing**: The absence of a root-level package manager (like NPM workspaces) makes it difficult to share code or dependencies between potential future frontend projects without duplication.
+    - **Limited Code Sharing**: The absence of a root-level package manager (like NPM workspaces) makes it difficult to share code or dependencies between potential future frontend projects without duplication. (Mitigation: If multiple frontend projects are added, this can be addressed by publishing shared libraries to a private NPM registry).
