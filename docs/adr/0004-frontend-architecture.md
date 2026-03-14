@@ -21,7 +21,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 ### 2. Core Framework: React + Vite + TypeScript
 *   **Vite**: For superior developer experience and build speed.
 *   **TypeScript**: Mandatory for end-to-end type safety.
-*   **SEO Strategy (Pre-rendering)**: To satisfy the requirement for an indexable Landing Page without the complexity of a full SSR framework (like Vike or Next.js), we will use a **Pre-rendering plugin** (e.g., `vite-plugin-prerender`) at build time. This renders targeted routes into static HTML files that are served to search engines, while the application remains a standard SPA for the authenticated dashboard.
+*   **SEO Strategy (Pre-rendering)**: To satisfy the requirement for an indexable Landing Page without the complexity of a full SSR framework, we will use a **Static Site Generation (SSG)** approach (e.g., using `vite-react-ssg`) at build time. This renders targeted routes into static HTML files that are served to search engines, while the application remains a standard SPA for the authenticated dashboard.
 
 ### 3. Styling: Tailwind CSS + Shadcn/UI
 *   **Tailwind CSS**: Uses design tokens (via CSS variables) allowing for easy global theme/design changes later.
