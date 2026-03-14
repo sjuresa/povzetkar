@@ -15,7 +15,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 
 ### 1. Monorepo Strategy: Hybrid Directory Structure
 *   **Structure**: `/backend` (Quarkus/Maven) and `/frontend` (Vite/NPM).
-*   **Management**: No root-level package manager. Each sub-project remains independent within its own ecosystem. This prevents "ecosystem leakage" and root-level clutter in a hybrid Java/JS repository.
+*   **Management**: No root-level package manager for dependency sharing. Each sub-project remains independent within its own ecosystem. To improve Developer Experience (DX), a minimal root-level `package.json` with scripts (e.g., using `npm-run-all`) may be used to execute cross-project tasks (linting, testing) without the complexity of workspaces.
 *   **Integration**: Deployment artifacts will be orchestrated via a multi-stage Dockerfile or the `frontend-maven-plugin` within the backend build.
 
 ### 2. Core Framework: React + Vite + TypeScript
@@ -30,11 +30,9 @@ We will implement the frontend using a **Monorepo** structure and the following 
 ### 4. Data Fetching & Contract: Orval + TanStack Query
 *   **Orval**: Automatically generates TypeScript types and TanStack Query hooks from the backend's OpenAPI specification. For CI/CD, the backend build will copy the generated `openapi.json` to `/frontend/openapi.json` (or a predictable subdirectory), which the Orval script will consume. This co-location simplifies the build process within the monorepo.
 *   **TanStack Query**: Manages all server state, caching, and background refetching.
-*   **API Client Resilience**: A global Axios interceptor will be implemented to:
-    *   Inject `X-Correlation-ID` for request tracing.
-    *   Handle `If-Match` headers for Optimistic Locking using the `@Version` field from DTOs.
-    *   Handle `Idempotency-Key` headers for idempotent command submissions (`POST /commands/*`).
-    *   Standardize error handling for 401 (Unauthorized), 403 (Forbidden), 429 (Rate Limit), and 503 (Service Unavailable). For 429 and 503, the client will explicitly respect the `Retry-After` header to implement intelligent backoff.
+*   **API Client Resilience**: A global Axios interceptor will handle request-level concerns, while resource-specific state logic will handle mutations:
+    *   **Global Interceptor**: Injects `X-Correlation-ID` and `Idempotency-Key` (for `POST /commands/*`), and standardizes error handling for 401, 403, 429, and 503 (respecting `Retry-After`).
+    *   **Mutation Layer**: TanStack Query's `mutationFn` is responsible for injecting `If-Match` headers for Optimistic Locking, as it has access to the resource's current `@Version` state.
 
 ### 5. Routing: TanStack Router
 *   **Decision**: We chose **TanStack Router** over React Router for its **100% type-safe routing**.
