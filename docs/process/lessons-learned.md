@@ -313,4 +313,22 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
   ./mvnw clean package -pl backend -am
   ```
   This speeds up the development loop and prevents unnecessary re-building of unrelated modules (like the future frontend).
-
+
+---
+
+## 12. Frontend Development (React / Vite)
+
+### 12.1 ViteSSG & Beta Compatibility
+Vite's ecosystem (especially SSG plugins) moves fast. When using plugins like ite-react-ssg, you may encounter type mismatches with the latest eact, eact-router-dom, or ite versions.
+- **The Trap:** Spending hours trying to perfectly align @types/* versions when the plugin itself has internally mismatched peer dependencies or hardcoded types in its dist.
+- **The Standard:** If a required import like ViteReactSSG is clearly exported in the source but triggers a [MISSING_EXPORT] error or TS type error during build, verify the exact export name in node_modules. If types are the only blocker, use // @ts-expect-error - <reason> with a specific explanation. This keeps the build passing while acknowledging the technical debt.
+
+### 12.2 Tailwind 4 & Mono-CSS
+Tailwind CSS 4 introduces a 'CSS-first' approach.
+- **The Trap:** Trying to configure Tailwind 4 using a legacy tailwind.config.js with internal plugins that haven't been ported yet.
+- **The Standard:** Leverage @tailwindcss/vite and import Tailwind directly in your CSS: @import 'tailwindcss';. Keep configurations in CSS variables where possible.
+
+### 12.3 Monorepo Orchestration (NPM + Maven)
+In a monorepo containing both Maven (Java) and NPM (JavaScript) projects:
+- **The Trap:** Relying on developers to manually run npm install and mvn compile in separate folders, leading to mismatched build states.
+- **The Standard:** Use a root-level package.json with npm-run-all or simple shell scripts to orchestrate cross-project commands. High-level commands like npm run dev should ideally start both the backend and frontend simultaneously.
