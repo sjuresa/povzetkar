@@ -34,7 +34,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
     *   Inject `X-Correlation-ID` for request tracing.
     *   Handle `If-Match` headers for Optimistic Locking using the `@Version` field from DTOs.
     *   Handle `Idempotency-Key` headers for idempotent command submissions (`POST /commands/*`).
-    *   Standardize error handling for 401 (Unauthorized), 403 (Forbidden), and 429 (Rate Limit) responses.
+    *   Standardize error handling for 401 (Unauthorized), 403 (Forbidden), 429 (Rate Limit), and 503 (Service Unavailable). For 429 and 503, the client will explicitly respect the `Retry-After` header to implement intelligent backoff.
 
 ### 5. Routing: TanStack Router
 *   **Decision**: We chose **TanStack Router** over React Router for its **100% type-safe routing**.
