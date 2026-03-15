@@ -10,7 +10,7 @@ export default tseslint.config(
       ignores: ['dist', 'src/api/generated', 'eslint_error.txt'],
     },
     {
-      files: ['**/*.{ts,tsx}'],
+      files: ['src/**/*.{ts,tsx}'],
       extends: [
         js.configs.recommended,
         ...tseslint.configs.recommendedTypeChecked,
@@ -23,12 +23,23 @@ export default tseslint.config(
         ecmaVersion: 2023,
         globals: globals.browser,
         parserOptions: {
-          projectService: true,
+          project: ['./tsconfig.app.json', './tsconfig.node.json'],
           tsconfigRootDir: import.meta.dirname,
         },
       },
       rules: {
         ...reactHooks.configs.recommended.rules,
+      },
+    },
+    {
+      files: ['e2e/**/*.ts'],
+      extends: [
+        js.configs.recommended,
+        ...tseslint.configs.recommended,
+      ],
+      languageOptions: {
+        ecmaVersion: 2023,
+        globals: globals.node,
       },
     },
   ],
