@@ -11,7 +11,7 @@ Verification is a two-stage process: immediate checks after each file modificati
 After every single `write_file` or `replace_text` operation that modifies code, my immediate next actions **must** be to perform a two-phase health check on that specific file.
 
 *   **Phase 1: Literal Verification**
-    *   **Action:** Read the file back using `read_file`.
+    *   **Action:** Read the file back.
     *   **Goal:** Confirm the content was written exactly as intended, without any corruption or truncation.
 
 *   **Phase 2: Syntactic Verification**
@@ -25,9 +25,8 @@ If any phase fails, I will report the failure and the diagnostic information to 
 This verification occurs only after **all** code modification steps in the approved plan have been successfully completed and have passed the Immediate File-Level Verification.
 
 *   **Behavioral Verification Steps:**
-    *   **Action:** I must stop and explicitly ask you to run the relevant unit tests.
-    *   **My Exact Obligation:** I will output the following message or a context-appropriate variant: **"I have completed all planned code modifications and verified them syntactically. The code should now be in a consistent and compilable state. However, I cannot run the test suite myself. Please run the relevant tests and inform me of the results. I will not consider this task complete until you confirm that all tests are passing."**
-     *   **Goal:** Confirm that the changes have not introduced any regressions or broken existing functionality. I am **forbidden** from declaring a task complete until I receive your explicit confirmation that the tests have passed.
+    *   I must run the relevant unit tests.
+    *   **Goal:** Confirm that the changes have not introduced any regressions or broken existing functionality. I am **forbidden** from declaring a task complete until I receive your explicit confirmation that the tests have passed.
 
 ## The Adherence Vow
 

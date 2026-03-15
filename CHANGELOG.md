@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
 
 ### Added
+- **Frontend (POV-138):** Implemented authentication foundations using **Zustand** and the BFF pattern (Session Cookies).
+- **Frontend (POV-138):** Integrated **TanStack Router** with type-safe context and `protectedRoute` auth guards.
+- **Frontend (POV-138):** Fabricated a premium **AppShell** with a collapsible "Midnight Slate" sidebar, glassmorphic header, and smooth transitions.
+- **Frontend (POV-138):** Implemented high-conversion **Landing Page** and protected **Dashboard** shell.
+- **Frontend:** Implemented type-safe API foundations (POV-137) using Orval and TanStack Query, automated from the backend OpenAPI specification.
+- **Frontend:** Implemented a global Axios interceptor for the standard API envelope (`{ data, meta, error }`), request tracing (`X-Correlation-ID`), and idempotency (`Idempotency-Key` for command endpoints).
+- **Frontend:** Standardized global error handling in the API client to translate backend error codes into typed frontend exceptions.
 - **Infrastructure:** Restructured the repository into a monorepo by migrating all backend code, configurations, and resources into a dedicated `/backend` module.
 - **Infrastructure:** Introduced a root-level aggregator `pom.xml` to manage the project's parent-child relationship and shared dependency management.
 - **Frontend:** Initialized the React/Vite/TypeScript frontend project in `/frontend` with Tailwind CSS 4, Shadcn/UI foundations, and `vite-react-ssg` for SEO pre-rendering.
@@ -18,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
 
 ### Changed
+- **Infrastructure (POV-138):** Stabilized the frontend stack by pinning **Vite 6** and **Tailwind 4** (stable) to resolve peer dependency conflicts.
 - **Backend:** Switched to `${project.root.basedir}` (using `maven.multiModuleProjectDirectory`) for stable cross-module resource loading, independent of directory depth.
 - **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
 - **Backend:** Centralized all `<properties>`, `<dependencyManagement>`, and `<pluginManagement>` entries (including Quarkus and Maven plugins) in the root `pom.xml`.
@@ -26,9 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend:** Simplified `backend/pom.xml` by removing redundant versions and execution blocks inherited from the root POM.
 
 ### Planned
-- Dashboard MVP with BFF integration (POV-137).
-- SSE Real-time Job Tracking (POV-138).
-- Audit Log Admin UI (POV-140).
+- Dashboard MVP with data fetching (POV-139).
+- SSE Real-time Job Tracking (POV-140).
+- CD & Scanning Hardening (POV-141).
+- Audit Log Admin UI (POV-142).
 
 ## [v0.11.0] - 2026-03-12
 

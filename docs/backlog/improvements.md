@@ -13,6 +13,8 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **OIDC Session Mismatch Handling:** Investigate and implement a graceful fallback when the local Quarkus session cookie exists but the upstream OIDC provider (Google) session has expired or been revoked, currently leading to potential endless redirect loops or `401 Unauthorized` errors on secured pages.
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
+*   **Automatic Optimistic Locking in Orval mutator:** Enhance `customInstance` in `client.ts` to automatically extract a `version` or `meta.version` field from request data and inject the `If-Match` header for mutation methods (PATCH, PUT, DELETE), reducing manual boilerplate in TanStack Query hooks.
+*   **Axios Retry Strategy:** Implement a standard retry mechanism for transient network errors (e.g., using `axios-retry`) to improve frontend resilience during intermittent connectivity.
 
 ### Backend & Architecture
 
@@ -37,3 +39,4 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Decouple Filter Logic from URL Paths:** Migrate remaining URL-prefix-based exclusions in `GlobalResponseEnvelopeFilter` and `OptimisticLockingFilter` to JAX-RS Name Binding (`@Enveloped`, `@OptimisticLocking`) across the entire codebase to eliminate brittle path-scanning and improve security robustness.
 *   **Internationalization (i18n) for Exception Mappers:** Extract hardcoded error messages in `GlobalExceptionMapper` and `SecurityExceptionMapper` into a dedicated `messages.properties` file or ResourceBundle to support multi-language API error responses.
 *   **Standardized Background Job Pattern:** Standardize the `BackgroundJob` pattern (including MDC propagation and reactive orchestration) for other long-running tasks like OCR, embedding generation, or trend analysis.
+*   **Vite 8 Multi-File Patching:** Re-evaluate upgrading to Vite 8 once `@tailwindcss/vite` and `vitest` have released stable versions supporting it, to leverage improved build performance.
