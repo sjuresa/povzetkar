@@ -6,7 +6,7 @@ import logger from '../util/logger';
 /**
  * Custom request config to support idempotency keys and other metadata
  */
-export interface CustomRequestConfig extends InternalAxiosRequestConfig {
+export interface CustomRequestConfig extends InternalAxiosRequestConfig<unknown> {
   idempotencyKey?: string;
   skipEnvelopeUnwrap?: boolean;
 }
@@ -14,21 +14,21 @@ export interface CustomRequestConfig extends InternalAxiosRequestConfig {
 /**
  * Standard API Envelope structure used by the backend
  */
-export interface ApiEnvelope<T = any> {
+export interface ApiEnvelope<T = unknown> {
   data: T;
   meta: {
     timestamp: string;
     version?: number | string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   error: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   } | null;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || 'http://localhost:8080';
 
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -67,17 +67,21 @@ client.interceptors.response.use(
   (response: AxiosResponse) => {
     const config = response.config as CustomRequestConfig;
     if (config.skipEnvelopeUnwrap) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return response.data;
     }
 
-    const data = response.data as ApiEnvelope;
+    const data = response.data as ApiEnvelope<unknown>;
     // The custom mutator is responsible for unwrapping the response envelope.
     if (data?.error) {
       // If the API returns a 2xx status but includes an error in the envelope,
-      // treat it as a failed request.
-      return Promise.reject(data.error);
+      // treat it as a failed request. Wrap in an Error to satisfy linting.
+      const error = new Error(data.error.message);
+      (error as Error & { code?: string }).code = data.error.code;
+      return Promise.reject(error);
     }
-    return data?.data;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+    return data?.data as any;
   },
   async (error: AxiosError<ApiEnvelope>) => {
     const { response } = error;
@@ -92,21 +96,23 @@ client.interceptors.response.use(
         case 403:
           logger.error('[API] Forbidden - Insufficient permissions', { status: response.status });
           break;
-        case 429:
+        case 429: {
           logger.warn('[API] Rate Limited', { status: response.status });
           // Handle Retry-After if present
-          const retryAfter = response.headers['retry-after'] as string | undefined;
+          const retryAfter = response.headers ? (response.headers['retry-after'] as string | undefined) : undefined;
           if (retryAfter) {
             logger.warn(`[API] Should retry after ${retryAfter} seconds`, { retryAfter });
           }
           break;
+        }
         case 503:
           logger.error('[API] Service Unavailable', { status: response.status });
           break;
-        default:
+        default: {
           // Extract error message from envelope if available
-          const errorMessage = response.data?.error?.message || error.message;
-          logger.error(`[API] Error ${response.status}: ${errorMessage}`, { status: response.status, code: response.data?.error?.code });
+          const errorMessage = (response.data as ApiEnvelope | undefined)?.error?.message || error.message;
+          logger.error(`[API] Error ${response.status}: ${errorMessage}`, { status: response.status, code: (response.data as ApiEnvelope | undefined)?.error?.code });
+        }
       }
     } else {
       logger.error('[API] Network Error or Timeout', { message: error.message });
@@ -128,9 +134,9 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
     return obj;
   }
   if (Array.isArray(headers)) {
-    return Object.fromEntries(headers as [string, string][]);
+    return Object.fromEntries(headers);
   }
-  return headers as Record<string, string>;
+  return headers;
 };
 
 /**
@@ -145,11 +151,12 @@ export const customInstance = <T>(
   
   let data = body;
   if (typeof body === 'string') {
-    const requestHeaders = new Headers(headers as HeadersInit);
+    const requestHeaders = new Headers(headers);
     const contentType = requestHeaders.get('Content-Type');
     
     if (contentType?.includes('application/json')) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data = JSON.parse(body);
       } catch (e) {
         logger.error('[API] Failed to parse JSON body', { error: e, url });
@@ -160,9 +167,9 @@ export const customInstance = <T>(
   return client({
     url,
     method,
-    headers: toAxiosHeaders(headers as HeadersInit),
+    headers: toAxiosHeaders(headers),
     data,
-    params: params as any,
+    params: params as Record<string, unknown>,
     signal: signal || undefined,
   }) as unknown as Promise<T>;
 };
