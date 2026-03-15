@@ -31,8 +31,12 @@ const renderWithRouter = (ui: React.ReactElement) => {
 
 describe('DashboardPage', () => {
   it('renders loading state initially', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: true,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     renderWithRouter(<DashboardPage />);
@@ -41,9 +45,12 @@ describe('DashboardPage', () => {
   });
 
   it('renders empty state when there is no data', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     renderWithRouter(<DashboardPage />);
@@ -52,14 +59,18 @@ describe('DashboardPage', () => {
   });
 
   it('renders real data when available', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
+       
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: {
         stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
         recentBriefings: [
           { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
         ],
       } as any,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     } as any);
 
     renderWithRouter(<DashboardPage />);
@@ -71,10 +82,13 @@ describe('DashboardPage', () => {
 
   it('triggers refetch when refresh button is clicked', () => {
     const refetch = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: { stats: { activeTopics: 5 } } as any,
       refetch,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     } as any);
 
     renderWithRouter(<DashboardPage />);

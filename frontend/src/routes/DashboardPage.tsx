@@ -5,6 +5,7 @@ import { RecentBriefingList, BriefingListSkeleton } from '../components/dashboar
 import type { DashboardDTO } from '../api/generated/model';
 
 export function DashboardPage() {
+   
   const { data: rawResponse, isLoading, isError, refetch, isRefetching } = useGetApiV1Dashboard({
     query: {
       refetchOnWindowFocus: true,
@@ -13,6 +14,7 @@ export function DashboardPage() {
   });
 
   // Handle the unwrapped payload from customInstance
+   
   const data = rawResponse as unknown as DashboardDTO;
 
   if (isLoading) {
@@ -44,7 +46,10 @@ export function DashboardPage() {
         <h3 className="text-xl font-bold text-white">Oops! Something went wrong</h3>
         <p className="text-slate-400">Failed to load dashboard data. Please try again.</p>
         <button 
-          onClick={() => void refetch()} 
+          onClick={() => {
+             
+            void refetch();
+          }} 
           className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors"
         >
           Retry
@@ -65,7 +70,10 @@ export function DashboardPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-4xl font-extrabold tracking-tight text-white text-glow">Dashboard</h2>
         <button
-          onClick={() => void refetch()}
+          onClick={() => {
+             
+            void refetch();
+          }}
           disabled={isRefetching}
           className={`p-2 rounded-xl glass hover:bg-slate-800 transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
           title="Refresh Dashboard"

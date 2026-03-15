@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         } else {
           set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
         }
-      } catch (err) {
+      } catch {
         // Only log serious failures, 401 is "normal" for unauthenticated
         set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
       } finally {

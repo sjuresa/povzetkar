@@ -37,6 +37,7 @@ const indexRoute = createRoute({
     
     // If definitely authenticated, skip landing and go to dashboard
     if (context.auth.isAuthenticated) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/dashboard' });
     }
   },
@@ -55,6 +56,7 @@ const protectedLayoutRoute = createRoute({
     
     // Final check - if still not authenticated, redirect to landing
     if (!context.auth.isAuthenticated) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/' });
     }
   },

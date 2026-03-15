@@ -58,7 +58,7 @@ client.interceptors.request.use(
 
     return config;
   },
-  (error: AxiosError) => Promise.reject(error)
+  (_error: AxiosError) => Promise.reject(_error)
 );
 
 /**
@@ -141,9 +141,10 @@ export const customInstance = <T>(
     
     if (contentType?.includes('application/json')) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data = JSON.parse(body);
-      } catch (e) {
-        logger.error('[API] Failed to parse JSON body', { error: e, url });
+      } catch (_e) {
+        logger.error('[API] Failed to parse JSON body', { error: _e, url });
       }
     }
   }
