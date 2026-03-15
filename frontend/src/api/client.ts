@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import logger from '../util/logger';
 
 /**
  * Custom request config to support idempotency keys and other metadata
@@ -82,30 +83,30 @@ client.interceptors.response.use(
       // Handle standard status codes
       switch (response.status) {
         case 401:
-          console.error('[API] Unauthorized - Redirecting to login or clearing session');
+          logger.error('[API] Unauthorized - Redirecting to login or clearing session', { status: response.status });
           // TODO: Implement OIDC logout / redirect
           break;
         case 403:
-          console.error('[API] Forbidden - Insufficient permissions');
+          logger.error('[API] Forbidden - Insufficient permissions', { status: response.status });
           break;
         case 429:
-          console.warn('[API] Rate Limited');
+          logger.warn('[API] Rate Limited', { status: response.status });
           // Handle Retry-After if present
-          const retryAfter = response.headers['retry-after'];
+          const retryAfter = response.headers['retry-after'] as string | undefined;
           if (retryAfter) {
-            console.warn(`[API] Should retry after ${retryAfter} seconds`);
+            logger.warn(`[API] Should retry after ${retryAfter} seconds`, { retryAfter });
           }
           break;
         case 503:
-          console.error('[API] Service Unavailable');
+          logger.error('[API] Service Unavailable', { status: response.status });
           break;
         default:
           // Extract error message from envelope if available
           const errorMessage = response.data?.error?.message || error.message;
-          console.error(`[API] Error ${response.status}: ${errorMessage}`);
+          logger.error(`[API] Error ${response.status}: ${errorMessage}`, { status: response.status, code: response.data?.error?.code });
       }
     } else {
-      console.error('[API] Network Error or Timeout');
+      logger.error('[API] Network Error or Timeout', { message: error.message });
     }
 
     return Promise.reject(error);
@@ -120,13 +121,15 @@ export const customInstance = <T>(
   url: string,
   options: any // This is essentially RequestInit | { method, headers, ... }
 ): Promise<T> => {
+  const { method, headers, body, params, ...rest } = options;
+  
   return client({
     url,
-    method: options.method,
-    headers: options.headers,
-    data: options.body ? JSON.parse(options.body) : undefined,
-    params: options.params,
-    ...options,
+    method,
+    headers,
+    data: body ? JSON.parse(body as string) : undefined,
+    params,
+    ...rest,
   }) as unknown as Promise<T>;
 };
 
