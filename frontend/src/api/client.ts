@@ -29,13 +29,14 @@ export interface ApiEnvelope<T = unknown> {
   } | null;
 }
 
-const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
 
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
 
