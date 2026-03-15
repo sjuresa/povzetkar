@@ -332,3 +332,50 @@ Tailwind CSS 4 introduces a 'CSS-first' approach.
 In a monorepo containing both Maven (Java) and NPM (JavaScript) projects:
 - **The Trap:** Relying on developers to manually run npm install and mvn compile in separate folders, leading to mismatched build states.
 - **The Standard:** Use a root-level package.json with npm-run-all or simple shell scripts to orchestrate cross-project commands. High-level commands like npm run dev should ideally start both the backend and frontend simultaneously.
+
+---
+
+## 13. API Integration (Orval & Axios)
+
+### 13.1 Strict Linting in API Clients
+When building production-grade API clients with strict ESLint rules (2025 standards):
+- **The Trap:** Using `any` for raw JSON payloads from `JSON.parse` or environment variables (e.g., `import.meta.env`). This triggers `no-unsafe-assignment` and `no-unsafe-return` warnings.
+- **The Standard:** Always use `unknown` as the initial type and perform explicit casting via specialized interfaces or `Record<string, string>`. For environment variables, use `(import.meta.env as Record<string, string>)`.
+  
+### 13.2 Type-Safe Error Handling in Envelopes
+Our backend returns all errors wrapped in an `ApiEnvelope` containing a `code` and `message`.
+- **The Standard:** In the Axios response interceptor, when an envelope error is detected, reject the promise with a proper `Error` object. To preserve the API error code, use an intersection type `(error as Error & { code?: string }).code = apiCode;`. This allows downstream components to use the standard `error.message` while still having access to the specific error code for conditional logic (e.g., showing a specific modal for `TOPIC_LIMIT_EXCEEDED`).
+
+### 13.3 Header Normalization for Axios
+Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `string[][]`, or `Record<string, string>`). Axios expects a plain object.
+- **The Standard:** Always use a normalization helper in the custom fetcher:
+  ```typescript
+  const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string> => {
+      if (!headers) return {};
+      if (headers instanceof Headers) {
+          const obj: Record<string, string> = {};
+          headers.forEach((v, k) => obj[k] = v);
+          return obj;
+      }
+      return Array.isArray(headers) ? Object.fromEntries(headers) : (headers as Record<string, string>);
+  };
+  ```
+
+### 13.4 Idempotency Key Injection
+- **The Standard:** The global interceptor should automatically inject an `Idempotency-Key` UUID for all `POST /commands/*` requests. If the request already has one (e.g., passed manually to handle retries), the interceptor must preserve the existing one.
+
+---
+
+## 14. Frontend Routing & Auth (TanStack Router + Zustand)
+
+### 14.1 Eliminating "Flash of Unauthenticated Content" (FOUC)
+- **The Trap:** Checking auth status only inside components causes the "Unauthenticated" view (like a Landing Page) to flicker for a few milliseconds before the app realizes the user is logged in.
+- **The Standard:** Use TanStack Router's `beforeLoad` hook in combination with a state-based "isLoaded" flag. Perform the silent auth check (`GET /api/v1/users/me`) inside `beforeLoad` if the state is not yet loaded. Using `throw redirect(...)` inside `beforeLoad` ensures the route transition never completes into the wrong state.
+
+### 14.2 ESLint & TanStack Router Redirects
+- **The Trap:** TanStack Router's `redirect()` function returns a special object intended to be thrown. Some ESLint configurations (like `@typescript-eslint/only-throw-error`) will flag this as an error because it's not a subclass of `Error`.
+- **The Standard:** Use `// eslint-disable-next-line @typescript-eslint/only-throw-error` for lines throwing `redirect()`. This acknowledges the framework's intent while keeping strict linting for actual application errors.
+
+### 14.3 Vite & Beta-Plugin Stability
+- **The Trap:** Using the absolute latest version of Vite (e.g., Vite 8) while the ecosystem (Tailwind 4, Vitest) is still providing beta-grade support for the previous major version results in severe peer dependency conflicts and build failures.
+- **The Standard:** When using bleeding-edge ecosystems like Tailwind 4, pin the build tool (Vite) to the version currently targeted by the plugins. "Bleeding edge" + "Bleeding edge" often equals a broken dev environment.
