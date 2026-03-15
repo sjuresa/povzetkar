@@ -37,6 +37,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -104,16 +106,16 @@ export const getGetApiV1AdminAuditLogQueryKey = (params?: GetApiV1AdminAuditLogP
     }
 
     
-export const getGetApiV1AdminAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError = void>(params?: GetApiV1AdminAuditLogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError, TData>>, }
+export const getGetApiV1AdminAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError = void>(params?: GetApiV1AdminAuditLogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1AdminAuditLogQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>> = ({ signal }) => getApiV1AdminAuditLog(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>> = ({ signal }) => getApiV1AdminAuditLog(params, { signal, ...requestOptions });
 
       
 
@@ -133,7 +135,7 @@ export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getAp
           TError,
           Awaited<ReturnType<typeof getApiV1AdminAuditLog>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError = void>(
@@ -143,11 +145,11 @@ export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getAp
           TError,
           Awaited<ReturnType<typeof getApiV1AdminAuditLog>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError = void>(
- params?: GetApiV1AdminAuditLogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError, TData>>, }
+ params?: GetApiV1AdminAuditLogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -155,7 +157,7 @@ export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getAp
  */
 
 export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError = void>(
- params?: GetApiV1AdminAuditLogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError, TData>>, }
+ params?: GetApiV1AdminAuditLogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminAuditLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -234,16 +236,16 @@ export const getGetApiV1AdminJobsQueryKey = (params?: GetApiV1AdminJobsParams,) 
     }
 
     
-export const getGetApiV1AdminJobsQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError = void>(params?: GetApiV1AdminJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError, TData>>, }
+export const getGetApiV1AdminJobsQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError = void>(params?: GetApiV1AdminJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1AdminJobsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminJobs>>> = ({ signal }) => getApiV1AdminJobs(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminJobs>>> = ({ signal }) => getApiV1AdminJobs(params, { signal, ...requestOptions });
 
       
 
@@ -263,7 +265,7 @@ export function useGetApiV1AdminJobs<TData = Awaited<ReturnType<typeof getApiV1A
           TError,
           Awaited<ReturnType<typeof getApiV1AdminJobs>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminJobs<TData = Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError = void>(
@@ -273,11 +275,11 @@ export function useGetApiV1AdminJobs<TData = Awaited<ReturnType<typeof getApiV1A
           TError,
           Awaited<ReturnType<typeof getApiV1AdminJobs>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminJobs<TData = Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError = void>(
- params?: GetApiV1AdminJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError, TData>>, }
+ params?: GetApiV1AdminJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -285,7 +287,7 @@ export function useGetApiV1AdminJobs<TData = Awaited<ReturnType<typeof getApiV1A
  */
 
 export function useGetApiV1AdminJobs<TData = Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError = void>(
- params?: GetApiV1AdminJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError, TData>>, }
+ params?: GetApiV1AdminJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -356,15 +358,15 @@ export const postApiV1AdminJobsTrigger = async (jobTriggerRequest: JobTriggerReq
 
 
 export const getPostApiV1AdminJobsTriggerMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>, TError,{data: JobTriggerRequest}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>, TError,{data: JobTriggerRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>, TError,{data: JobTriggerRequest}, TContext> => {
 
 const mutationKey = ['postApiV1AdminJobsTrigger'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -372,7 +374,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>, {data: JobTriggerRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1AdminJobsTrigger(data,)
+          return  postApiV1AdminJobsTrigger(data,requestOptions)
         }
 
 
@@ -390,7 +392,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Trigger a background job
  */
 export const usePostApiV1AdminJobsTrigger = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>, TError,{data: JobTriggerRequest}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>, TError,{data: JobTriggerRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiV1AdminJobsTrigger>>,
         TError,
@@ -461,16 +463,16 @@ export const getGetApiV1AdminJobsIdQueryKey = (id: Uuid,) => {
     }
 
     
-export const getGetApiV1AdminJobsIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError = void>(id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError, TData>>, }
+export const getGetApiV1AdminJobsIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError = void>(id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1AdminJobsIdQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminJobsId>>> = ({ signal }) => getApiV1AdminJobsId(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminJobsId>>> = ({ signal }) => getApiV1AdminJobsId(id, { signal, ...requestOptions });
 
       
 
@@ -490,7 +492,7 @@ export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV
           TError,
           Awaited<ReturnType<typeof getApiV1AdminJobsId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError = void>(
@@ -500,11 +502,11 @@ export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV
           TError,
           Awaited<ReturnType<typeof getApiV1AdminJobsId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError = void>(
- id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError, TData>>, }
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -512,7 +514,7 @@ export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV
  */
 
 export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError = void>(
- id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError, TData>>, }
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -584,16 +586,16 @@ export const getGetApiV1AdminMetricsQueryKey = () => {
     }
 
     
-export const getGetApiV1AdminMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError, TData>>, }
+export const getGetApiV1AdminMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1AdminMetricsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminMetrics>>> = ({ signal }) => getApiV1AdminMetrics({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminMetrics>>> = ({ signal }) => getApiV1AdminMetrics({ signal, ...requestOptions });
 
       
 
@@ -613,7 +615,7 @@ export function useGetApiV1AdminMetrics<TData = Awaited<ReturnType<typeof getApi
           TError,
           Awaited<ReturnType<typeof getApiV1AdminMetrics>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminMetrics<TData = Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError = void>(
@@ -623,11 +625,11 @@ export function useGetApiV1AdminMetrics<TData = Awaited<ReturnType<typeof getApi
           TError,
           Awaited<ReturnType<typeof getApiV1AdminMetrics>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1AdminMetrics<TData = Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -635,7 +637,7 @@ export function useGetApiV1AdminMetrics<TData = Awaited<ReturnType<typeof getApi
  */
 
 export function useGetApiV1AdminMetrics<TData = Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminMetrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

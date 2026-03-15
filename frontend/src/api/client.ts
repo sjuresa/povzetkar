@@ -27,7 +27,7 @@ export interface ApiEnvelope<T = any> {
   } | null;
 }
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

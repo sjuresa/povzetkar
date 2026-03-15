@@ -28,6 +28,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -93,16 +95,16 @@ export const getGetApiV1JobsIdQueryKey = (id: Uuid,) => {
     }
 
     
-export const getGetApiV1JobsIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1JobsId>>, TError = void>(id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsId>>, TError, TData>>, }
+export const getGetApiV1JobsIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1JobsId>>, TError = void>(id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1JobsIdQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1JobsId>>> = ({ signal }) => getApiV1JobsId(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1JobsId>>> = ({ signal }) => getApiV1JobsId(id, { signal, ...requestOptions });
 
       
 
@@ -122,7 +124,7 @@ export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1Jobs
           TError,
           Awaited<ReturnType<typeof getApiV1JobsId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1JobsId>>, TError = void>(
@@ -132,11 +134,11 @@ export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1Jobs
           TError,
           Awaited<ReturnType<typeof getApiV1JobsId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1JobsId>>, TError = void>(
- id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsId>>, TError, TData>>, }
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -144,7 +146,7 @@ export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1Jobs
  */
 
 export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1JobsId>>, TError = void>(
- id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsId>>, TError, TData>>, }
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

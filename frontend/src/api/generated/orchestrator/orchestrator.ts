@@ -22,6 +22,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -74,15 +76,15 @@ export const postApiV1OrchestratorPreview = async (orchestrationRequest: Orchest
 
 
 export const getPostApiV1OrchestratorPreviewMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>, TError,{data: OrchestrationRequest}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>, TError,{data: OrchestrationRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>, TError,{data: OrchestrationRequest}, TContext> => {
 
 const mutationKey = ['postApiV1OrchestratorPreview'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -90,7 +92,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>, {data: OrchestrationRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1OrchestratorPreview(data,)
+          return  postApiV1OrchestratorPreview(data,requestOptions)
         }
 
 
@@ -108,7 +110,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Preview orchestration
  */
 export const usePostApiV1OrchestratorPreview = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>, TError,{data: OrchestrationRequest}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>, TError,{data: OrchestrationRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiV1OrchestratorPreview>>,
         TError,
@@ -174,15 +176,15 @@ export const postApiV1OrchestratorRun = async (orchestrationRequest: Orchestrati
 
 
 export const getPostApiV1OrchestratorRunMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorRun>>, TError,{data: OrchestrationRequest}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorRun>>, TError,{data: OrchestrationRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorRun>>, TError,{data: OrchestrationRequest}, TContext> => {
 
 const mutationKey = ['postApiV1OrchestratorRun'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -190,7 +192,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1OrchestratorRun>>, {data: OrchestrationRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1OrchestratorRun(data,)
+          return  postApiV1OrchestratorRun(data,requestOptions)
         }
 
 
@@ -208,7 +210,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Run orchestration manually
  */
 export const usePostApiV1OrchestratorRun = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorRun>>, TError,{data: OrchestrationRequest}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1OrchestratorRun>>, TError,{data: OrchestrationRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiV1OrchestratorRun>>,
         TError,

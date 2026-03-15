@@ -36,6 +36,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -103,16 +105,16 @@ export const getGetApiV1SourcesQueryKey = (params?: GetApiV1SourcesParams,) => {
     }
 
     
-export const getGetApiV1SourcesQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1Sources>>, TError = void>(params?: GetApiV1SourcesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Sources>>, TError, TData>>, }
+export const getGetApiV1SourcesQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1Sources>>, TError = void>(params?: GetApiV1SourcesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Sources>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1SourcesQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Sources>>> = ({ signal }) => getApiV1Sources(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Sources>>> = ({ signal }) => getApiV1Sources(params, { signal, ...requestOptions });
 
       
 
@@ -132,7 +134,7 @@ export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sou
           TError,
           Awaited<ReturnType<typeof getApiV1Sources>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sources>>, TError = void>(
@@ -142,11 +144,11 @@ export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sou
           TError,
           Awaited<ReturnType<typeof getApiV1Sources>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sources>>, TError = void>(
- params?: GetApiV1SourcesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Sources>>, TError, TData>>, }
+ params?: GetApiV1SourcesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Sources>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -154,7 +156,7 @@ export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sou
  */
 
 export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sources>>, TError = void>(
- params?: GetApiV1SourcesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Sources>>, TError, TData>>, }
+ params?: GetApiV1SourcesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Sources>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -225,15 +227,15 @@ export const postApiV1Sources = async (contentSourceCreate: ContentSourceCreate,
 
 
 export const getPostApiV1SourcesMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1Sources>>, TError,{data: ContentSourceCreate}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1Sources>>, TError,{data: ContentSourceCreate}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiV1Sources>>, TError,{data: ContentSourceCreate}, TContext> => {
 
 const mutationKey = ['postApiV1Sources'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -241,7 +243,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1Sources>>, {data: ContentSourceCreate}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1Sources(data,)
+          return  postApiV1Sources(data,requestOptions)
         }
 
 
@@ -259,7 +261,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Create content source
  */
 export const usePostApiV1Sources = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1Sources>>, TError,{data: ContentSourceCreate}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1Sources>>, TError,{data: ContentSourceCreate}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiV1Sources>>,
         TError,
@@ -329,16 +331,16 @@ export const getGetApiV1SourcesDetailsSourceTypeIdIdentifierQueryKey = (sourceTy
 
     
 export const getGetApiV1SourcesDetailsSourceTypeIdIdentifierQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError = void>(sourceTypeId: number,
-    identifier: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError, TData>>, }
+    identifier: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1SourcesDetailsSourceTypeIdIdentifierQueryKey(sourceTypeId,identifier);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>> = ({ signal }) => getApiV1SourcesDetailsSourceTypeIdIdentifier(sourceTypeId,identifier, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>> = ({ signal }) => getApiV1SourcesDetailsSourceTypeIdIdentifier(sourceTypeId,identifier, { signal, ...requestOptions });
 
       
 
@@ -359,7 +361,7 @@ export function useGetApiV1SourcesDetailsSourceTypeIdIdentifier<TData = Awaited<
           TError,
           Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1SourcesDetailsSourceTypeIdIdentifier<TData = Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError = void>(
@@ -370,12 +372,12 @@ export function useGetApiV1SourcesDetailsSourceTypeIdIdentifier<TData = Awaited<
           TError,
           Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1SourcesDetailsSourceTypeIdIdentifier<TData = Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError = void>(
  sourceTypeId: number,
-    identifier: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError, TData>>, }
+    identifier: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -384,7 +386,7 @@ export function useGetApiV1SourcesDetailsSourceTypeIdIdentifier<TData = Awaited<
 
 export function useGetApiV1SourcesDetailsSourceTypeIdIdentifier<TData = Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError = void>(
  sourceTypeId: number,
-    identifier: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError, TData>>, }
+    identifier: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesDetailsSourceTypeIdIdentifier>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -448,15 +450,15 @@ export const postApiV1SourcesEnrich = async ( options?: RequestInit): Promise<po
 
 
 export const getPostApiV1SourcesEnrichMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1SourcesEnrich>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1SourcesEnrich>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postApiV1SourcesEnrich>>, TError,void, TContext> => {
 
 const mutationKey = ['postApiV1SourcesEnrich'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -464,7 +466,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1SourcesEnrich>>, void> = () => {
           
 
-          return  postApiV1SourcesEnrich()
+          return  postApiV1SourcesEnrich(requestOptions)
         }
 
 
@@ -482,7 +484,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Enrich Content Sources
  */
 export const usePostApiV1SourcesEnrich = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1SourcesEnrich>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1SourcesEnrich>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiV1SourcesEnrich>>,
         TError,
@@ -544,15 +546,15 @@ export const patchApiV1SourcesId = async (id: number,
 
 
 export const getPatchApiV1SourcesIdMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1SourcesId>>, TError,{id: number;data: ContentSourcePatch}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1SourcesId>>, TError,{id: number;data: ContentSourcePatch}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof patchApiV1SourcesId>>, TError,{id: number;data: ContentSourcePatch}, TContext> => {
 
 const mutationKey = ['patchApiV1SourcesId'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -560,7 +562,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchApiV1SourcesId>>, {id: number;data: ContentSourcePatch}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  patchApiV1SourcesId(id,data,)
+          return  patchApiV1SourcesId(id,data,requestOptions)
         }
 
 
@@ -578,7 +580,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Partially update content source
  */
 export const usePatchApiV1SourcesId = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1SourcesId>>, TError,{id: number;data: ContentSourcePatch}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1SourcesId>>, TError,{id: number;data: ContentSourcePatch}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof patchApiV1SourcesId>>,
         TError,
@@ -650,16 +652,16 @@ export const getGetApiV1SourcesIdQueryKey = (id: number,) => {
     }
 
     
-export const getGetApiV1SourcesIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1SourcesId>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesId>>, TError, TData>>, }
+export const getGetApiV1SourcesIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1SourcesId>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1SourcesIdQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1SourcesId>>> = ({ signal }) => getApiV1SourcesId(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1SourcesId>>> = ({ signal }) => getApiV1SourcesId(id, { signal, ...requestOptions });
 
       
 
@@ -679,7 +681,7 @@ export function useGetApiV1SourcesId<TData = Awaited<ReturnType<typeof getApiV1S
           TError,
           Awaited<ReturnType<typeof getApiV1SourcesId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1SourcesId<TData = Awaited<ReturnType<typeof getApiV1SourcesId>>, TError = void>(
@@ -689,11 +691,11 @@ export function useGetApiV1SourcesId<TData = Awaited<ReturnType<typeof getApiV1S
           TError,
           Awaited<ReturnType<typeof getApiV1SourcesId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1SourcesId<TData = Awaited<ReturnType<typeof getApiV1SourcesId>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesId>>, TError, TData>>, }
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -701,7 +703,7 @@ export function useGetApiV1SourcesId<TData = Awaited<ReturnType<typeof getApiV1S
  */
 
 export function useGetApiV1SourcesId<TData = Awaited<ReturnType<typeof getApiV1SourcesId>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesId>>, TError, TData>>, }
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1SourcesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -766,15 +768,15 @@ export const deleteApiV1SourcesId = async (id: number, options?: RequestInit): P
 
 
 export const getDeleteApiV1SourcesIdMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiV1SourcesId>>, TError,{id: number}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiV1SourcesId>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteApiV1SourcesId>>, TError,{id: number}, TContext> => {
 
 const mutationKey = ['deleteApiV1SourcesId'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -782,7 +784,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteApiV1SourcesId>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  deleteApiV1SourcesId(id,)
+          return  deleteApiV1SourcesId(id,requestOptions)
         }
 
 
@@ -800,7 +802,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Delete content source
  */
 export const useDeleteApiV1SourcesId = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiV1SourcesId>>, TError,{id: number}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiV1SourcesId>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteApiV1SourcesId>>,
         TError,

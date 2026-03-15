@@ -35,8 +35,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -114,6 +117,7 @@ public class ContentItemApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentItemDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
         ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
@@ -132,6 +136,7 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @APIResponse(responseCode = "409", description = "Conflict or already processing")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to generate summary for", schema = @Schema(type = SchemaType.INTEGER))
     public Response generateItemSummary(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         ContentItem item = findAndValidateContentItemForAction(id);
@@ -161,6 +166,7 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @APIResponse(responseCode = "409", description = "Conflict or invalid state")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to retry", schema = @Schema(type = SchemaType.INTEGER))
     public Response retryItemProcessing(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         ContentItem item = findAndValidateContentItemForAction(id);

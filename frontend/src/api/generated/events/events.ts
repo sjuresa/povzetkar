@@ -27,6 +27,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -87,16 +89,16 @@ export const getGetApiV1EventsStreamQueryKey = () => {
     }
 
     
-export const getGetApiV1EventsStreamQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1EventsStream>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1EventsStream>>, TError, TData>>, }
+export const getGetApiV1EventsStreamQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1EventsStream>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1EventsStream>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1EventsStreamQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1EventsStream>>> = ({ signal }) => getApiV1EventsStream({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1EventsStream>>> = ({ signal }) => getApiV1EventsStream({ signal, ...requestOptions });
 
       
 
@@ -116,7 +118,7 @@ export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApi
           TError,
           Awaited<ReturnType<typeof getApiV1EventsStream>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApiV1EventsStream>>, TError = void>(
@@ -126,11 +128,11 @@ export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApi
           TError,
           Awaited<ReturnType<typeof getApiV1EventsStream>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApiV1EventsStream>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1EventsStream>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1EventsStream>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -138,7 +140,7 @@ export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApi
  */
 
 export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApiV1EventsStream>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1EventsStream>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1EventsStream>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

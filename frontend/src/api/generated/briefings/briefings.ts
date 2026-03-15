@@ -29,6 +29,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -96,16 +98,16 @@ export const getGetApiV1BriefingsQueryKey = (params?: GetApiV1BriefingsParams,) 
     }
 
     
-export const getGetApiV1BriefingsQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1Briefings>>, TError = void>(params?: GetApiV1BriefingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Briefings>>, TError, TData>>, }
+export const getGetApiV1BriefingsQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1Briefings>>, TError = void>(params?: GetApiV1BriefingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Briefings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1BriefingsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Briefings>>> = ({ signal }) => getApiV1Briefings(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Briefings>>> = ({ signal }) => getApiV1Briefings(params, { signal, ...requestOptions });
 
       
 
@@ -125,7 +127,7 @@ export function useGetApiV1Briefings<TData = Awaited<ReturnType<typeof getApiV1B
           TError,
           Awaited<ReturnType<typeof getApiV1Briefings>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1Briefings<TData = Awaited<ReturnType<typeof getApiV1Briefings>>, TError = void>(
@@ -135,11 +137,11 @@ export function useGetApiV1Briefings<TData = Awaited<ReturnType<typeof getApiV1B
           TError,
           Awaited<ReturnType<typeof getApiV1Briefings>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1Briefings<TData = Awaited<ReturnType<typeof getApiV1Briefings>>, TError = void>(
- params?: GetApiV1BriefingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Briefings>>, TError, TData>>, }
+ params?: GetApiV1BriefingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Briefings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -147,7 +149,7 @@ export function useGetApiV1Briefings<TData = Awaited<ReturnType<typeof getApiV1B
  */
 
 export function useGetApiV1Briefings<TData = Awaited<ReturnType<typeof getApiV1Briefings>>, TError = void>(
- params?: GetApiV1BriefingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Briefings>>, TError, TData>>, }
+ params?: GetApiV1BriefingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Briefings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -224,16 +226,16 @@ export const getGetApiV1BriefingsIdQueryKey = (id: number,) => {
     }
 
     
-export const getGetApiV1BriefingsIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError, TData>>, }
+export const getGetApiV1BriefingsIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1BriefingsIdQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1BriefingsId>>> = ({ signal }) => getApiV1BriefingsId(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1BriefingsId>>> = ({ signal }) => getApiV1BriefingsId(id, { signal, ...requestOptions });
 
       
 
@@ -253,7 +255,7 @@ export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV
           TError,
           Awaited<ReturnType<typeof getApiV1BriefingsId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError = void>(
@@ -263,11 +265,11 @@ export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV
           TError,
           Awaited<ReturnType<typeof getApiV1BriefingsId>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError, TData>>, }
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -275,7 +277,7 @@ export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV
  */
 
 export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError, TData>>, }
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1BriefingsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

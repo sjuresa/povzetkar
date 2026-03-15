@@ -35,6 +35,8 @@ import type {
 import { customInstance } from '../../client';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
 
 /**
@@ -102,16 +104,16 @@ export const getGetApiV1UsersQueryKey = (params?: GetApiV1UsersParams,) => {
     }
 
     
-export const getGetApiV1UsersQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1Users>>, TError = void>(params?: GetApiV1UsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>>, }
+export const getGetApiV1UsersQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1Users>>, TError = void>(params?: GetApiV1UsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1UsersQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Users>>> = ({ signal }) => getApiV1Users(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Users>>> = ({ signal }) => getApiV1Users(params, { signal, ...requestOptions });
 
       
 
@@ -131,7 +133,7 @@ export function useGetApiV1Users<TData = Awaited<ReturnType<typeof getApiV1Users
           TError,
           Awaited<ReturnType<typeof getApiV1Users>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1Users<TData = Awaited<ReturnType<typeof getApiV1Users>>, TError = void>(
@@ -141,11 +143,11 @@ export function useGetApiV1Users<TData = Awaited<ReturnType<typeof getApiV1Users
           TError,
           Awaited<ReturnType<typeof getApiV1Users>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1Users<TData = Awaited<ReturnType<typeof getApiV1Users>>, TError = void>(
- params?: GetApiV1UsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>>, }
+ params?: GetApiV1UsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -153,7 +155,7 @@ export function useGetApiV1Users<TData = Awaited<ReturnType<typeof getApiV1Users
  */
 
 export function useGetApiV1Users<TData = Awaited<ReturnType<typeof getApiV1Users>>, TError = void>(
- params?: GetApiV1UsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>>, }
+ params?: GetApiV1UsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -225,16 +227,16 @@ export const getGetApiV1UsersMeQueryKey = () => {
     }
 
     
-export const getGetApiV1UsersMeQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>>, }
+export const getGetApiV1UsersMeQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetApiV1UsersMeQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1UsersMe>>> = ({ signal }) => getApiV1UsersMe({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1UsersMe>>> = ({ signal }) => getApiV1UsersMe({ signal, ...requestOptions });
 
       
 
@@ -254,7 +256,7 @@ export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1Use
           TError,
           Awaited<ReturnType<typeof getApiV1UsersMe>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = void>(
@@ -264,11 +266,11 @@ export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1Use
           TError,
           Awaited<ReturnType<typeof getApiV1UsersMe>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -276,7 +278,7 @@ export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1Use
  */
 
 export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -343,15 +345,15 @@ export const patchApiV1UsersId = async (id: number,
 
 
 export const getPatchApiV1UsersIdMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext> => {
 
 const mutationKey = ['patchApiV1UsersId'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -359,7 +361,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchApiV1UsersId>>, {id: number;data: UserUpdateDTO}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  patchApiV1UsersId(id,data,)
+          return  patchApiV1UsersId(id,data,requestOptions)
         }
 
 
@@ -377,7 +379,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Update user status
  */
 export const usePatchApiV1UsersId = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof patchApiV1UsersId>>,
         TError,
@@ -444,15 +446,15 @@ export const putApiV1UsersIdRoles = async (id: number,
 
 
 export const getPutApiV1UsersIdRolesMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext> => {
 
 const mutationKey = ['putApiV1UsersIdRoles'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -460,7 +462,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, {id: number;data: UserRoleUpdateDTO}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  putApiV1UsersIdRoles(id,data,)
+          return  putApiV1UsersIdRoles(id,data,requestOptions)
         }
 
 
@@ -478,7 +480,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Update user roles
  */
 export const usePutApiV1UsersIdRoles = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof putApiV1UsersIdRoles>>,
         TError,
