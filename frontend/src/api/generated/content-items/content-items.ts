@@ -79,7 +79,7 @@ export const getGetApiV1ContentItemsUrl = (params?: GetApiV1ContentItemsParams,)
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/content-items?${stringifiedParams}` : `http://localhost:8080/api/v1/content-items`
+  return stringifiedParams.length > 0 ? `/api/v1/content-items?${stringifiedParams}` : `/api/v1/content-items`
 }
 
 export const getApiV1ContentItems = async (params?: GetApiV1ContentItemsParams, options?: RequestInit): Promise<getApiV1ContentItemsResponse> => {
@@ -99,7 +99,7 @@ export const getApiV1ContentItems = async (params?: GetApiV1ContentItemsParams, 
 
 export const getGetApiV1ContentItemsQueryKey = (params?: GetApiV1ContentItemsParams,) => {
     return [
-    `http://localhost:8080/api/v1/content-items`, ...(params ? [params] : [])
+    `/api/v1/content-items`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -207,7 +207,7 @@ export const getGetApiV1ContentItemsIdUrl = (id: number,) => {
 
   
 
-  return `http://localhost:8080/api/v1/content-items/${id}`
+  return `/api/v1/content-items/${id}`
 }
 
 export const getApiV1ContentItemsId = async (id: number, options?: RequestInit): Promise<getApiV1ContentItemsIdResponse> => {
@@ -227,7 +227,7 @@ export const getApiV1ContentItemsId = async (id: number, options?: RequestInit):
 
 export const getGetApiV1ContentItemsIdQueryKey = (id: number,) => {
     return [
-    `http://localhost:8080/api/v1/content-items/${id}`
+    `/api/v1/content-items/${id}`
     ] as const;
     }
 
@@ -340,7 +340,7 @@ export const getPostApiV1ContentItemsIdCommandsGenerateSummaryUrl = (id: number,
 
   
 
-  return `http://localhost:8080/api/v1/content-items/${id}/commands/generate-summary`
+  return `/api/v1/content-items/${id}/commands/generate-summary`
 }
 
 export const postApiV1ContentItemsIdCommandsGenerateSummary = async (id: number, options?: RequestInit): Promise<postApiV1ContentItemsIdCommandsGenerateSummaryResponse> => {
@@ -444,7 +444,7 @@ export const getPostApiV1ContentItemsIdCommandsRetryUrl = (id: number,) => {
 
   
 
-  return `http://localhost:8080/api/v1/content-items/${id}/commands/retry`
+  return `/api/v1/content-items/${id}/commands/retry`
 }
 
 export const postApiV1ContentItemsIdCommandsRetry = async (id: number, options?: RequestInit): Promise<postApiV1ContentItemsIdCommandsRetryResponse> => {
@@ -551,7 +551,7 @@ export const getGetApiV1SourcesIdItemsUrl = (id: number,
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/sources/${id}/items?${stringifiedParams}` : `http://localhost:8080/api/v1/sources/${id}/items`
+  return stringifiedParams.length > 0 ? `/api/v1/sources/${id}/items?${stringifiedParams}` : `/api/v1/sources/${id}/items`
 }
 
 export const getApiV1SourcesIdItems = async (id: number,
@@ -573,7 +573,7 @@ export const getApiV1SourcesIdItems = async (id: number,
 export const getGetApiV1SourcesIdItemsQueryKey = (id: number,
     params?: GetApiV1SourcesIdItemsParams,) => {
     return [
-    `http://localhost:8080/api/v1/sources/${id}/items`, ...(params ? [params] : [])
+    `/api/v1/sources/${id}/items`, ...(params ? [params] : [])
     ] as const;
     }
 

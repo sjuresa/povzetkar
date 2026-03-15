@@ -57,7 +57,7 @@ export const getPostApiV1OrchestratorPreviewUrl = () => {
 
   
 
-  return `http://localhost:8080/api/v1/orchestrator/preview`
+  return `/api/v1/orchestrator/preview`
 }
 
 export const postApiV1OrchestratorPreview = async (orchestrationRequest: OrchestrationRequest, options?: RequestInit): Promise<postApiV1OrchestratorPreviewResponse> => {
@@ -157,7 +157,7 @@ export const getPostApiV1OrchestratorRunUrl = () => {
 
   
 
-  return `http://localhost:8080/api/v1/orchestrator/run`
+  return `/api/v1/orchestrator/run`
 }
 
 export const postApiV1OrchestratorRun = async (orchestrationRequest: OrchestrationRequest, options?: RequestInit): Promise<postApiV1OrchestratorRunResponse> => {

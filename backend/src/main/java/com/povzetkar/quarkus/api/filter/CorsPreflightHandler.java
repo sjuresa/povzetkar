@@ -6,6 +6,7 @@ import io.vertx.ext.web.Router;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Low-level Vert.x handler to catch OPTIONS requests before OIDC interrupts them.
@@ -17,10 +18,13 @@ public class CorsPreflightHandler {
     @Inject
     Router router;
 
+    @ConfigProperty(name = "povzetkar.frontend.origin")
+    String frontendOrigin;
+
     void onStart(@Observes StartupEvent ev) {
         router.route().order(-10000).handler(rc -> {
             String origin = rc.request().getHeader("Origin");
-            boolean isFromFrontend = "http://localhost:5173".equals(origin);
+            boolean isFromFrontend = frontendOrigin.equals(origin);
 
             if (isFromFrontend) {
                 // Ensure CORS headers are ALWAYS present on any response to the frontend

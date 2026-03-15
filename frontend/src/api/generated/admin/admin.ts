@@ -81,7 +81,7 @@ export const getGetApiV1AdminAuditLogUrl = (params?: GetApiV1AdminAuditLogParams
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/admin/audit-log?${stringifiedParams}` : `http://localhost:8080/api/v1/admin/audit-log`
+  return stringifiedParams.length > 0 ? `/api/v1/admin/audit-log?${stringifiedParams}` : `/api/v1/admin/audit-log`
 }
 
 export const getApiV1AdminAuditLog = async (params?: GetApiV1AdminAuditLogParams, options?: RequestInit): Promise<getApiV1AdminAuditLogResponse> => {
@@ -101,7 +101,7 @@ export const getApiV1AdminAuditLog = async (params?: GetApiV1AdminAuditLogParams
 
 export const getGetApiV1AdminAuditLogQueryKey = (params?: GetApiV1AdminAuditLogParams,) => {
     return [
-    `http://localhost:8080/api/v1/admin/audit-log`, ...(params ? [params] : [])
+    `/api/v1/admin/audit-log`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -211,7 +211,7 @@ export const getGetApiV1AdminJobsUrl = (params?: GetApiV1AdminJobsParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/admin/jobs?${stringifiedParams}` : `http://localhost:8080/api/v1/admin/jobs`
+  return stringifiedParams.length > 0 ? `/api/v1/admin/jobs?${stringifiedParams}` : `/api/v1/admin/jobs`
 }
 
 export const getApiV1AdminJobs = async (params?: GetApiV1AdminJobsParams, options?: RequestInit): Promise<getApiV1AdminJobsResponse> => {
@@ -231,7 +231,7 @@ export const getApiV1AdminJobs = async (params?: GetApiV1AdminJobsParams, option
 
 export const getGetApiV1AdminJobsQueryKey = (params?: GetApiV1AdminJobsParams,) => {
     return [
-    `http://localhost:8080/api/v1/admin/jobs`, ...(params ? [params] : [])
+    `/api/v1/admin/jobs`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -339,7 +339,7 @@ export const getPostApiV1AdminJobsTriggerUrl = () => {
 
   
 
-  return `http://localhost:8080/api/v1/admin/jobs/trigger`
+  return `/api/v1/admin/jobs/trigger`
 }
 
 export const postApiV1AdminJobsTrigger = async (jobTriggerRequest: JobTriggerRequest, options?: RequestInit): Promise<postApiV1AdminJobsTriggerResponse> => {
@@ -438,7 +438,7 @@ export const getGetApiV1AdminJobsIdUrl = (id: Uuid,) => {
 
   
 
-  return `http://localhost:8080/api/v1/admin/jobs/${id}`
+  return `/api/v1/admin/jobs/${id}`
 }
 
 export const getApiV1AdminJobsId = async (id: Uuid, options?: RequestInit): Promise<getApiV1AdminJobsIdResponse> => {
@@ -458,7 +458,7 @@ export const getApiV1AdminJobsId = async (id: Uuid, options?: RequestInit): Prom
 
 export const getGetApiV1AdminJobsIdQueryKey = (id: Uuid,) => {
     return [
-    `http://localhost:8080/api/v1/admin/jobs/${id}`
+    `/api/v1/admin/jobs/${id}`
     ] as const;
     }
 
@@ -561,7 +561,7 @@ export const getGetApiV1AdminMetricsUrl = () => {
 
   
 
-  return `http://localhost:8080/api/v1/admin/metrics`
+  return `/api/v1/admin/metrics`
 }
 
 export const getApiV1AdminMetrics = async ( options?: RequestInit): Promise<getApiV1AdminMetricsResponse> => {
@@ -581,7 +581,7 @@ export const getApiV1AdminMetrics = async ( options?: RequestInit): Promise<getA
 
 export const getGetApiV1AdminMetricsQueryKey = () => {
     return [
-    `http://localhost:8080/api/v1/admin/metrics`
+    `/api/v1/admin/metrics`
     ] as const;
     }
 

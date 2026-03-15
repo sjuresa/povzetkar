@@ -73,7 +73,7 @@ export const getGetApiV1BriefingsUrl = (params?: GetApiV1BriefingsParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/briefings?${stringifiedParams}` : `http://localhost:8080/api/v1/briefings`
+  return stringifiedParams.length > 0 ? `/api/v1/briefings?${stringifiedParams}` : `/api/v1/briefings`
 }
 
 export const getApiV1Briefings = async (params?: GetApiV1BriefingsParams, options?: RequestInit): Promise<getApiV1BriefingsResponse> => {
@@ -93,7 +93,7 @@ export const getApiV1Briefings = async (params?: GetApiV1BriefingsParams, option
 
 export const getGetApiV1BriefingsQueryKey = (params?: GetApiV1BriefingsParams,) => {
     return [
-    `http://localhost:8080/api/v1/briefings`, ...(params ? [params] : [])
+    `/api/v1/briefings`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -201,7 +201,7 @@ export const getGetApiV1BriefingsIdUrl = (id: number,) => {
 
   
 
-  return `http://localhost:8080/api/v1/briefings/${id}`
+  return `/api/v1/briefings/${id}`
 }
 
 export const getApiV1BriefingsId = async (id: number, options?: RequestInit): Promise<getApiV1BriefingsIdResponse> => {
@@ -221,7 +221,7 @@ export const getApiV1BriefingsId = async (id: number, options?: RequestInit): Pr
 
 export const getGetApiV1BriefingsIdQueryKey = (id: number,) => {
     return [
-    `http://localhost:8080/api/v1/briefings/${id}`
+    `/api/v1/briefings/${id}`
     ] as const;
     }
 

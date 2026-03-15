@@ -10,6 +10,7 @@ export default defineConfig({
       target: 'src/api/generated',
       schemas: 'src/api/generated/model',
       client: 'react-query',
+      baseUrl: '',
       prettier: true,
       override: {
         mutator: {

@@ -80,7 +80,7 @@ export const getGetApiV1SourcesUrl = (params?: GetApiV1SourcesParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/sources?${stringifiedParams}` : `http://localhost:8080/api/v1/sources`
+  return stringifiedParams.length > 0 ? `/api/v1/sources?${stringifiedParams}` : `/api/v1/sources`
 }
 
 export const getApiV1Sources = async (params?: GetApiV1SourcesParams, options?: RequestInit): Promise<getApiV1SourcesResponse> => {
@@ -100,7 +100,7 @@ export const getApiV1Sources = async (params?: GetApiV1SourcesParams, options?: 
 
 export const getGetApiV1SourcesQueryKey = (params?: GetApiV1SourcesParams,) => {
     return [
-    `http://localhost:8080/api/v1/sources`, ...(params ? [params] : [])
+    `/api/v1/sources`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -208,7 +208,7 @@ export const getPostApiV1SourcesUrl = () => {
 
   
 
-  return `http://localhost:8080/api/v1/sources`
+  return `/api/v1/sources`
 }
 
 export const postApiV1Sources = async (contentSourceCreate: ContentSourceCreate, options?: RequestInit): Promise<postApiV1SourcesResponse> => {
@@ -303,7 +303,7 @@ export const getGetApiV1SourcesDetailsSourceTypeIdIdentifierUrl = (sourceTypeId:
 
   
 
-  return `http://localhost:8080/api/v1/sources/details/${sourceTypeId}/${identifier}`
+  return `/api/v1/sources/details/${sourceTypeId}/${identifier}`
 }
 
 export const getApiV1SourcesDetailsSourceTypeIdIdentifier = async (sourceTypeId: number,
@@ -325,7 +325,7 @@ export const getApiV1SourcesDetailsSourceTypeIdIdentifier = async (sourceTypeId:
 export const getGetApiV1SourcesDetailsSourceTypeIdIdentifierQueryKey = (sourceTypeId: number,
     identifier: string,) => {
     return [
-    `http://localhost:8080/api/v1/sources/details/${sourceTypeId}/${identifier}`
+    `/api/v1/sources/details/${sourceTypeId}/${identifier}`
     ] as const;
     }
 
@@ -432,7 +432,7 @@ export const getPostApiV1SourcesEnrichUrl = () => {
 
   
 
-  return `http://localhost:8080/api/v1/sources/enrich`
+  return `/api/v1/sources/enrich`
 }
 
 export const postApiV1SourcesEnrich = async ( options?: RequestInit): Promise<postApiV1SourcesEnrichResponse> => {
@@ -526,7 +526,7 @@ export const getPatchApiV1SourcesIdUrl = (id: number,) => {
 
   
 
-  return `http://localhost:8080/api/v1/sources/${id}`
+  return `/api/v1/sources/${id}`
 }
 
 export const patchApiV1SourcesId = async (id: number,
@@ -627,7 +627,7 @@ export const getGetApiV1SourcesIdUrl = (id: number,) => {
 
   
 
-  return `http://localhost:8080/api/v1/sources/${id}`
+  return `/api/v1/sources/${id}`
 }
 
 export const getApiV1SourcesId = async (id: number, options?: RequestInit): Promise<getApiV1SourcesIdResponse> => {
@@ -647,7 +647,7 @@ export const getApiV1SourcesId = async (id: number, options?: RequestInit): Prom
 
 export const getGetApiV1SourcesIdQueryKey = (id: number,) => {
     return [
-    `http://localhost:8080/api/v1/sources/${id}`
+    `/api/v1/sources/${id}`
     ] as const;
     }
 
@@ -750,7 +750,7 @@ export const getDeleteApiV1SourcesIdUrl = (id: number,) => {
 
   
 
-  return `http://localhost:8080/api/v1/sources/${id}`
+  return `/api/v1/sources/${id}`
 }
 
 export const deleteApiV1SourcesId = async (id: number, options?: RequestInit): Promise<deleteApiV1SourcesIdResponse> => {
