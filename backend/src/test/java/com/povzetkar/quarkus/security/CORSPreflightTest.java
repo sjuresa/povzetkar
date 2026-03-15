@@ -16,6 +16,7 @@ class CORSPreflightTest {
         .when()
             .options("/api/v1/users/me")
         .then()
-            .log().all();
+            .statusCode(200)
+            .header("Access-Control-Allow-Origin", "http://localhost:5173");
     }
 }

@@ -41,7 +41,7 @@ export function EmptyState() {
           Add Your First Topic
         </Link>
         <p className="text-sm text-slate-500">
-          Need help? <a href="#" className="text-blue-400 hover:underline">Read the Quickstart Guide</a>
+          Need help? <span className="text-slate-500 italic">Quickstart Guide coming soon</span>
         </p>
       </div>
     </div>

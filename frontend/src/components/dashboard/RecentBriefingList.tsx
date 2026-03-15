@@ -21,11 +21,11 @@ export function RecentBriefingList({ briefings }: RecentBriefingListProps) {
       </div>
 
       <div className="grid gap-4">
-        {briefings.map((briefing) => (
+        {briefings.filter((b) => b.id != null).map((briefing) => (
           <Link
             key={briefing.id}
             to="/briefings/$briefingId"
-            params={{ briefingId: briefing.id?.toString() || '' }}
+            params={{ briefingId: briefing.id!.toString() }}
             className="glass-elevated p-5 rounded-2xl flex items-center justify-between group transition-all hover:bg-slate-800/80 hover:border-slate-600 border-transparent border"
           >
             <div className="flex items-center space-x-5">
