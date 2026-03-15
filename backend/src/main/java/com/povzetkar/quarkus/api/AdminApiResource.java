@@ -34,8 +34,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -104,6 +106,7 @@ public class AdminApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Job not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the background job to retrieve")
     public BackgroundJobDTO getJobById(@PathParam("id") UUID id) {
         return backgroundJobService.getJobById(id)
                 .map(backgroundJobMapper::toDTO)

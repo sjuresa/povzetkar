@@ -21,6 +21,7 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,7 @@ public class AdminResource {
 
     @Route(path = ADMIN_REDIRECT_PATH, methods = Route.HttpMethod.GET)
     @Blocking
+    @Operation(hidden = true)
     public void getAdminPage(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
         data.put("dateTimeService", dateTimeService);
@@ -123,6 +125,7 @@ public class AdminResource {
 
     @Route(path = "/api/v1/admin/content-items/:id/fetch-transcript", methods = Route.HttpMethod.POST)
     @Blocking
+    @Operation(hidden = true)
     public void fetchTranscript(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
                 msg -> context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, msg).encode()));
@@ -166,6 +169,7 @@ public class AdminResource {
 
     @Route(path = "/api/v1/admin/content-items/:id/status", methods = Route.HttpMethod.POST)
     @Blocking
+    @Operation(hidden = true)
     public void updateContentItemStatus(RoutingContext context) {
         Optional<Long> idOptional = WebUtils.getLongPathParam(context, "id", "Invalid content item ID format.",
                 msg -> context.response().setStatusCode(400).end(new JsonObject().put(MESSAGE_KEY, msg).encode()));

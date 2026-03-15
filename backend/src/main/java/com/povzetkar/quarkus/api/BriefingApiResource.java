@@ -25,8 +25,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -99,6 +102,7 @@ public class BriefingApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingDetailDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Briefing not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the briefing to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Briefing briefing = Briefing.<Briefing>find(

@@ -13,7 +13,8 @@
     "test:backend": "./mvnw test",
     "test:frontend": "npm run test --prefix frontend",
     "test:e2e": "npm run test:e2e --prefix frontend",
-    "test:full": "npm-run-all test test:e2e"
+    "test:full": "npm-run-all test test:e2e",
+    "gen:api": "npm run gen:api --prefix frontend"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

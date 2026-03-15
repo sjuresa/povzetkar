@@ -42,8 +42,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -113,6 +116,7 @@ public class TopicApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
     @APIResponse(responseCode = "404", description = "Topic not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public TopicDTO getTopic(@PathParam("id") Long id) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
@@ -152,6 +156,7 @@ public class TopicApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
     @OptimisticLocking
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to update", schema = @Schema(type = SchemaType.INTEGER))
     public TopicDTO patchTopic(
             @PathParam("id") Long id,
             @HeaderParam("If-Match") String ifMatch,
@@ -176,6 +181,7 @@ public class TopicApiResource extends BaseApiResource {
     @RolesAllowed(Permission.V_TOPIC_DELETE)
     @OptimisticLocking
     @Operation(summary = "Delete topic", description = "Deletes a specific topic.")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to delete", schema = @Schema(type = SchemaType.INTEGER))
     public Response deleteTopic(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
@@ -198,6 +204,7 @@ public class TopicApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Topic not found")
     @APIResponse(responseCode = "409", description = "Conflict or already running")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to trigger", schema = @Schema(type = SchemaType.INTEGER))
     public Response triggerTopicRun(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
