@@ -11,7 +11,6 @@ export default defineConfig({
       schemas: 'src/api/generated/model',
       client: 'react-query',
       prettier: true,
-      baseUrl: 'http://localhost:8080',
       override: {
         mutator: {
           path: './src/api/client.ts',
