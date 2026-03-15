@@ -64,7 +64,7 @@ export const getGetApiV1DashboardUrl = () => {
 
   
 
-  return `/api/v1/dashboard`
+  return `http://localhost:8080/api/v1/dashboard`
 }
 
 export const getApiV1Dashboard = async ( options?: RequestInit): Promise<getApiV1DashboardResponse> => {
@@ -84,7 +84,7 @@ export const getApiV1Dashboard = async ( options?: RequestInit): Promise<getApiV
 
 export const getGetApiV1DashboardQueryKey = () => {
     return [
-    `/api/v1/dashboard`
+    `http://localhost:8080/api/v1/dashboard`
     ] as const;
     }
 

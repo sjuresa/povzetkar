@@ -70,7 +70,7 @@ export const getGetApiV1JobsIdUrl = (id: Uuid,) => {
 
   
 
-  return `/api/v1/jobs/${id}`
+  return `http://localhost:8080/api/v1/jobs/${id}`
 }
 
 export const getApiV1JobsId = async (id: Uuid, options?: RequestInit): Promise<getApiV1JobsIdResponse> => {
@@ -90,7 +90,7 @@ export const getApiV1JobsId = async (id: Uuid, options?: RequestInit): Promise<g
 
 export const getGetApiV1JobsIdQueryKey = (id: Uuid,) => {
     return [
-    `/api/v1/jobs/${id}`
+    `http://localhost:8080/api/v1/jobs/${id}`
     ] as const;
     }
 

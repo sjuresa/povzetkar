@@ -2,20 +2,17 @@ import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
 import { StatCard, StatCardSkeleton } from '../components/dashboard/StatCard';
 import { EmptyState } from '../components/dashboard/EmptyState';
 import { RecentBriefingList, BriefingListSkeleton } from '../components/dashboard/RecentBriefingList';
-import type { DashboardDTO } from '../api/generated/model';
 
 export function DashboardPage() {
    
-  const { data: rawResponse, isLoading, isError, refetch, isRefetching } = useGetApiV1Dashboard({
+  const { data: response, isLoading, isError, refetch, isRefetching } = useGetApiV1Dashboard({
     query: {
       refetchOnWindowFocus: true,
       staleTime: 30000, // 30 seconds
     }
   });
 
-  // Handle the unwrapped payload from customInstance
-   
-  const data = rawResponse as unknown as DashboardDTO;
+  const data = response?.data;
 
   if (isLoading) {
     return (

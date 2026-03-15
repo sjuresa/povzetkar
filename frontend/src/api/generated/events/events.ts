@@ -64,7 +64,7 @@ export const getGetApiV1EventsStreamUrl = () => {
 
   
 
-  return `/api/v1/events/stream`
+  return `http://localhost:8080/api/v1/events/stream`
 }
 
 export const getApiV1EventsStream = async ( options?: RequestInit): Promise<getApiV1EventsStreamResponse> => {
@@ -84,7 +84,7 @@ export const getApiV1EventsStream = async ( options?: RequestInit): Promise<getA
 
 export const getGetApiV1EventsStreamQueryKey = () => {
     return [
-    `/api/v1/events/stream`
+    `http://localhost:8080/api/v1/events/stream`
     ] as const;
     }
 

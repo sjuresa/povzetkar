@@ -79,7 +79,7 @@ export const getGetApiV1UsersUrl = (params?: GetApiV1UsersParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/users?${stringifiedParams}` : `/api/v1/users`
+  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/users?${stringifiedParams}` : `http://localhost:8080/api/v1/users`
 }
 
 export const getApiV1Users = async (params?: GetApiV1UsersParams, options?: RequestInit): Promise<getApiV1UsersResponse> => {
@@ -99,7 +99,7 @@ export const getApiV1Users = async (params?: GetApiV1UsersParams, options?: Requ
 
 export const getGetApiV1UsersQueryKey = (params?: GetApiV1UsersParams,) => {
     return [
-    `/api/v1/users`, ...(params ? [params] : [])
+    `http://localhost:8080/api/v1/users`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -202,7 +202,7 @@ export const getGetApiV1UsersMeUrl = () => {
 
   
 
-  return `/api/v1/users/me`
+  return `http://localhost:8080/api/v1/users/me`
 }
 
 export const getApiV1UsersMe = async ( options?: RequestInit): Promise<getApiV1UsersMeResponse> => {
@@ -222,7 +222,7 @@ export const getApiV1UsersMe = async ( options?: RequestInit): Promise<getApiV1U
 
 export const getGetApiV1UsersMeQueryKey = () => {
     return [
-    `/api/v1/users/me`
+    `http://localhost:8080/api/v1/users/me`
     ] as const;
     }
 
@@ -325,7 +325,7 @@ export const getPatchApiV1UsersIdUrl = (id: number,) => {
 
   
 
-  return `/api/v1/users/${id}`
+  return `http://localhost:8080/api/v1/users/${id}`
 }
 
 export const patchApiV1UsersId = async (id: number,
@@ -426,7 +426,7 @@ export const getPutApiV1UsersIdRolesUrl = (id: number,) => {
 
   
 
-  return `/api/v1/users/${id}/roles`
+  return `http://localhost:8080/api/v1/users/${id}/roles`
 }
 
 export const putApiV1UsersIdRoles = async (id: number,

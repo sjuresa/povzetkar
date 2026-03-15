@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { DashboardPage } from './DashboardPage';
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
+import type { getApiV1DashboardResponse } from '../api/generated/dashboard/dashboard';
 import { 
   createRootRoute, 
   createRoute, 
@@ -31,13 +32,17 @@ const renderWithRouter = (ui: React.ReactElement) => {
 
 describe('DashboardPage', () => {
   it('renders loading state initially', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: true,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+      isError: false,
+      isRefetching: false,
+      data: { 
+        data: { stats: { activeTopics: 0 }, recentBriefings: [] },
+        status: 200,
+        headers: new Headers(),
+      } as getApiV1DashboardResponse,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
     renderWithRouter(<DashboardPage />);
     // We expect to see skeletons
@@ -45,13 +50,17 @@ describe('DashboardPage', () => {
   });
 
   it('renders empty state when there is no data', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+      isError: false,
+      isRefetching: false,
+      data: { 
+        data: { stats: { activeTopics: 0 }, recentBriefings: [] },
+        status: 200,
+        headers: new Headers(),
+      } as getApiV1DashboardResponse,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
     renderWithRouter(<DashboardPage />);
     expect(screen.getByText(/Welcome to/i)).toBeInTheDocument();
@@ -59,19 +68,22 @@ describe('DashboardPage', () => {
   });
 
   it('renders real data when available', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
-       
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      isError: false,
+      isRefetching: false,
       data: {
-        stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
-        recentBriefings: [
-          { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
-        ],
-      } as any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    } as any);
+        data: {
+          stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
+          recentBriefings: [
+            { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
+          ],
+        },
+        status: 200,
+        headers: new Headers(),
+      } as getApiV1DashboardResponse,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
     renderWithRouter(<DashboardPage />);
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -82,14 +94,17 @@ describe('DashboardPage', () => {
 
   it('triggers refetch when refresh button is clicked', () => {
     const refetch = vi.fn();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data: { stats: { activeTopics: 5 } } as any,
+      isError: false,
+      isRefetching: false,
+      data: { 
+        data: { stats: { activeTopics: 5 } },
+        status: 200,
+        headers: new Headers(),
+      } as getApiV1DashboardResponse,
       refetch,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    } as any);
+    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
     renderWithRouter(<DashboardPage />);
     const refreshBtn = screen.getByTitle('Refresh Dashboard');

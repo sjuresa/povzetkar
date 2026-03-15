@@ -68,8 +68,7 @@ client.interceptors.response.use(
   (response: AxiosResponse) => {
     const config = response.config as CustomRequestConfig;
     if (config.skipEnvelopeUnwrap) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return response.data;
+      return response;
     }
 
     const data = response.data as ApiEnvelope<unknown>;
@@ -78,8 +77,12 @@ client.interceptors.response.use(
       (error as Error & { code?: string }).code = data.error.code;
       return Promise.reject(error);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-    return data?.data as any;
+    
+    // Replace the response.data with the unwrapped inner data (the actual DTO)
+    // This aligns with Orval's expectation that AxiosResponse.data contains the model.
+    response.data = data?.data;
+    
+    return response;
   },
   async (error: AxiosError<ApiEnvelope>) => {
     const { response } = error;
@@ -131,7 +134,7 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
 export const customInstance = <T>(
   url: string,
   options: RequestInit & { params?: unknown }
-): Promise<T> => {
+): Promise<AxiosResponse<T>> => {
   const { method, headers, body, params, signal } = options;
   
   let data = body;
@@ -156,7 +159,7 @@ export const customInstance = <T>(
     data,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }) as unknown as Promise<T>;
+  });
 };
 
 export default client;

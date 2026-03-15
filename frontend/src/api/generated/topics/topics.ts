@@ -80,7 +80,7 @@ export const getGetApiV1TopicsUrl = (params?: GetApiV1TopicsParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/topics?${stringifiedParams}` : `/api/v1/topics`
+  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/topics?${stringifiedParams}` : `http://localhost:8080/api/v1/topics`
 }
 
 export const getApiV1Topics = async (params?: GetApiV1TopicsParams, options?: RequestInit): Promise<getApiV1TopicsResponse> => {
@@ -100,7 +100,7 @@ export const getApiV1Topics = async (params?: GetApiV1TopicsParams, options?: Re
 
 export const getGetApiV1TopicsQueryKey = (params?: GetApiV1TopicsParams,) => {
     return [
-    `/api/v1/topics`, ...(params ? [params] : [])
+    `http://localhost:8080/api/v1/topics`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -207,7 +207,7 @@ export const getPostApiV1TopicsUrl = () => {
 
   
 
-  return `/api/v1/topics`
+  return `http://localhost:8080/api/v1/topics`
 }
 
 export const postApiV1Topics = async (topicCreate: TopicCreate, options?: RequestInit): Promise<postApiV1TopicsResponse> => {
@@ -301,7 +301,7 @@ export const getPatchApiV1TopicsIdUrl = (id: number,) => {
 
   
 
-  return `/api/v1/topics/${id}`
+  return `http://localhost:8080/api/v1/topics/${id}`
 }
 
 export const patchApiV1TopicsId = async (id: number,
@@ -402,7 +402,7 @@ export const getGetApiV1TopicsIdUrl = (id: number,) => {
 
   
 
-  return `/api/v1/topics/${id}`
+  return `http://localhost:8080/api/v1/topics/${id}`
 }
 
 export const getApiV1TopicsId = async (id: number, options?: RequestInit): Promise<getApiV1TopicsIdResponse> => {
@@ -422,7 +422,7 @@ export const getApiV1TopicsId = async (id: number, options?: RequestInit): Promi
 
 export const getGetApiV1TopicsIdQueryKey = (id: number,) => {
     return [
-    `/api/v1/topics/${id}`
+    `http://localhost:8080/api/v1/topics/${id}`
     ] as const;
     }
 
@@ -525,7 +525,7 @@ export const getDeleteApiV1TopicsIdUrl = (id: number,) => {
 
   
 
-  return `/api/v1/topics/${id}`
+  return `http://localhost:8080/api/v1/topics/${id}`
 }
 
 export const deleteApiV1TopicsId = async (id: number, options?: RequestInit): Promise<deleteApiV1TopicsIdResponse> => {
@@ -629,7 +629,7 @@ export const getPostApiV1TopicsIdCommandsGenerateBriefingUrl = (id: number,) => 
 
   
 
-  return `/api/v1/topics/${id}/commands/generate-briefing`
+  return `http://localhost:8080/api/v1/topics/${id}/commands/generate-briefing`
 }
 
 export const postApiV1TopicsIdCommandsGenerateBriefing = async (id: number, options?: RequestInit): Promise<postApiV1TopicsIdCommandsGenerateBriefingResponse> => {

@@ -72,7 +72,7 @@ export const getGetApiV1RolesUrl = (params?: GetApiV1RolesParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/roles?${stringifiedParams}` : `/api/v1/roles`
+  return stringifiedParams.length > 0 ? `http://localhost:8080/api/v1/roles?${stringifiedParams}` : `http://localhost:8080/api/v1/roles`
 }
 
 export const getApiV1Roles = async (params?: GetApiV1RolesParams, options?: RequestInit): Promise<getApiV1RolesResponse> => {
@@ -92,7 +92,7 @@ export const getApiV1Roles = async (params?: GetApiV1RolesParams, options?: Requ
 
 export const getGetApiV1RolesQueryKey = (params?: GetApiV1RolesParams,) => {
     return [
-    `/api/v1/roles`, ...(params ? [params] : [])
+    `http://localhost:8080/api/v1/roles`, ...(params ? [params] : [])
     ] as const;
     }
 
