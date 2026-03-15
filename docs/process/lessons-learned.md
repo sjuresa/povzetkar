@@ -379,3 +379,6 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
 ### 14.3 Vite & Beta-Plugin Stability
 - **The Trap:** Using the absolute latest version of Vite (e.g., Vite 8) while the ecosystem (Tailwind 4, Vitest) is still providing beta-grade support for the previous major version results in severe peer dependency conflicts and build failures.
 - **The Standard:** When using bleeding-edge ecosystems like Tailwind 4, pin the build tool (Vite) to the version currently targeted by the plugins. "Bleeding edge" + "Bleeding edge" often equals a broken dev environment.
+### 14.4 Standardizing Linting Suppressions (ESLint 9+)
+- **The Trap:** Using deprecated or inconsistent suppression rules (e.g., `@typescript-eslint/no-throw-literal`) leads to build warnings and unpredictable linting behavior in modern environments.
+- **The Standard:** Always use the latest rule names (e.g., `@typescript-eslint/only-throw-error`). When dealing with framework-specific patterns that use `any` (like test mocks or API response handling), prefer `@typescript-eslint/no-unsafe-assignment` or `@typescript-eslint/no-unsafe-return` over a blanket `no-explicit-any`, as it provides more granular oversight.
