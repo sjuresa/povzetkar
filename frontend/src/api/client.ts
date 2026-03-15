@@ -119,17 +119,31 @@ client.interceptors.response.use(
  */
 export const customInstance = <T>(
   url: string,
-  options: any // This is essentially RequestInit | { method, headers, ... }
+  options: RequestInit & { params?: unknown }
 ): Promise<T> => {
-  const { method, headers, body, params, ...rest } = options;
+  const { method, headers, body, params, signal } = options;
   
+  let data = body;
+  if (typeof body === 'string') {
+    const contentType = (headers as Record<string, string> | undefined)?.['Content-Type'] || 
+                        (headers as Record<string, string> | undefined)?.['content-type'];
+    
+    if (contentType?.includes('application/json')) {
+      try {
+        data = JSON.parse(body);
+      } catch (e) {
+        logger.error('[API] Failed to parse JSON body', { error: e, url });
+      }
+    }
+  }
+
   return client({
     url,
     method,
-    headers,
-    data: body ? JSON.parse(body as string) : undefined,
-    params,
-    ...rest,
+    headers: headers as any,
+    data,
+    params: params as any,
+    signal: signal || undefined,
   }) as unknown as Promise<T>;
 };
 
