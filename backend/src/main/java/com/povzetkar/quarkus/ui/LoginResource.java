@@ -9,6 +9,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,12 @@ public class LoginResource {
     private final SecurityIdentity securityIdentity;
     private final io.quarkus.oidc.OidcSession oidcSession;
 
+    @ConfigProperty(name = "povzetkar.auth.post-login-uri", defaultValue = TopicResource.TOPICS_PATH)
+    String postLoginUri;
+
+    @ConfigProperty(name = "povzetkar.auth.post-logout-uri", defaultValue = LOGIN_PATH)
+    String postLogoutUri;
+
     @Inject
     public LoginResource(@Location("login.html") Template login,
             SecurityIdentity securityIdentity,
@@ -37,7 +44,7 @@ public class LoginResource {
     @Operation(hidden = true)
     public void login(RoutingContext context) {
         if (!securityIdentity.isAnonymous()) {
-            redirect(context, TopicResource.TOPICS_PATH);
+            redirect(context, postLoginUri);
             return;
         }
         login.instance().createUni().subscribe()
@@ -45,29 +52,42 @@ public class LoginResource {
                         context::fail);
     }
 
+    @Route(path = "/auth/login", methods = HttpMethod.GET)
+    @Operation(hidden = true)
+    public void authLogin(RoutingContext context) {
+        // This path is protected by OIDC in application.properties.
+        // Once here, the user is authenticated.
+        String dynamicRedirect = context.request().getParam("redirect");
+        String destination = (dynamicRedirect != null && !dynamicRedirect.isBlank()) 
+                ? dynamicRedirect 
+                : postLoginUri;
+                
+        redirect(context, destination);
+    }
+
     @Route(path = "/logout", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void logout(RoutingContext context) {
         if (securityIdentity.isAnonymous()) {
-            redirect(context, LOGIN_PATH);
+            redirect(context, postLogoutUri);
             return;
         }
 
         oidcSession.logout().subscribe().with(
                 _ -> {
                     logger.info("Successfully destroyed local application session.");
-                    redirect(context, LOGIN_PATH);
+                    redirect(context, postLogoutUri);
                 },
                 err -> {
                     logger.error("Failed to perform local OIDC logout", err);
-                    redirect(context, LOGIN_PATH);
+                    redirect(context, postLogoutUri);
                 });
     }
 
     @Route(path = "/", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void index(RoutingContext context) {
-        String location = securityIdentity.isAnonymous() ? LOGIN_PATH : TopicResource.TOPICS_PATH;
+        String location = securityIdentity.isAnonymous() ? postLogoutUri : postLoginUri;
         redirect(context, location);
     }
 
