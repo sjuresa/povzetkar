@@ -110,6 +110,23 @@ client.interceptors.response.use(
   }
 );
 
+const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string> => {
+  if (!headers) {
+    return {};
+  }
+  if (headers instanceof Headers) {
+    const obj: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      obj[key] = value;
+    });
+    return obj;
+  }
+  if (Array.isArray(headers)) {
+    return Object.fromEntries(headers as [string, string][]);
+  }
+  return headers as Record<string, string>;
+};
+
 /**
  * Custom fetcher for Orval integration.
  * Maps Orval's fetch-style call to our Axios instance.
@@ -137,7 +154,7 @@ export const customInstance = <T>(
   return client({
     url,
     method,
-    headers: headers as any,
+    headers: toAxiosHeaders(headers as HeadersInit),
     data,
     params: params as any,
     signal: signal || undefined,
