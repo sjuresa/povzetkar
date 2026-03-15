@@ -110,7 +110,7 @@ client.interceptors.response.use(
           break;
         default: {
           const errorMessage = (response.data as ApiEnvelope | undefined)?.error?.message || error.message;
-          logger.error(`[API] Error ${response.status}: ${errorMessage}`, { status: response.status });
+          logger.error(`[API] Error ${response.status}: ${errorMessage}`, { status: response.status, code: (response.data as ApiEnvelope | undefined)?.error?.code });
         }
       }
     } else {

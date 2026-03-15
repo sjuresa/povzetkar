@@ -41,8 +41,13 @@ public class CorsPreflightHandler {
                     .putHeader("Access-Control-Allow-Origin", isFromFrontend ? origin : "*")
                     .putHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH")
                     .putHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Correlation-ID, Idempotency-Key, If-Match, Accept")
-                    .putHeader("Access-Control-Allow-Credentials", "true")
-                    .putHeader("Access-Control-Max-Age", "3600")
+                    .putHeader("Access-Control-Max-Age", "3600");
+
+                if (isFromFrontend) {
+                    rc.response().putHeader("Access-Control-Allow-Credentials", "true");
+                }
+
+                rc.response()
                     .setStatusCode(200)
                     .end();
             } else {
