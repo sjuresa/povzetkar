@@ -65,16 +65,9 @@ client.interceptors.request.use(
  */
 client.interceptors.response.use(
   (response: AxiosResponse<ApiEnvelope>) => {
-    const config = response.config as CustomRequestConfig;
-    
-    // If we want the full envelope (e.g. to access meta), we can skip unwrapping
-    if (config.skipEnvelopeUnwrap) {
-      return response;
-    }
-
-    // Unwrap the backend envelope: { data, meta, error } -> data
-    // The data is what the generated hooks expect
-    return response.data.data as any;
+    // We strictly pass the response through. 
+    // Unwrapping is now handled by Orval via 'override.response.data'.
+    return response;
   },
   async (error: AxiosError<ApiEnvelope>) => {
     const { response } = error;
@@ -125,8 +118,8 @@ export const customInstance = <T>(
   
   let data = body;
   if (typeof body === 'string') {
-    const contentType = (headers as Record<string, string> | undefined)?.['Content-Type'] || 
-                        (headers as Record<string, string> | undefined)?.['content-type'];
+    const requestHeaders = new Headers(headers as HeadersInit);
+    const contentType = requestHeaders.get('Content-Type');
     
     if (contentType?.includes('application/json')) {
       try {
