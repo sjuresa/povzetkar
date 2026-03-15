@@ -64,14 +64,20 @@ client.interceptors.request.use(
  * Response Interceptor: Envelope Unwrapping & Global Error Handling
  */
 client.interceptors.response.use(
-  (response: AxiosResponse<ApiEnvelope>) => {
+  (response: AxiosResponse) => {
+    const config = response.config as CustomRequestConfig;
+    if (config.skipEnvelopeUnwrap) {
+      return response.data;
+    }
+
+    const data = response.data as ApiEnvelope;
     // The custom mutator is responsible for unwrapping the response envelope.
-    if (response.data?.error) {
+    if (data?.error) {
       // If the API returns a 2xx status but includes an error in the envelope,
       // treat it as a failed request.
-      return Promise.reject(response.data.error);
+      return Promise.reject(data.error);
     }
-    return response.data?.data;
+    return data?.data;
   },
   async (error: AxiosError<ApiEnvelope>) => {
     const { response } = error;

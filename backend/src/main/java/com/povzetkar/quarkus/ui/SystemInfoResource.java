@@ -20,6 +20,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,6 +93,7 @@ public class SystemInfoResource {
     @GET
     @Path("/changelog")
     @Produces(MediaType.TEXT_HTML)
+    @Operation(hidden = true)
     public TemplateInstance getChangelog() {
         return renderPage(changelog, cachedChangelog, "Changelog", "/ui/system/changelog");
     }
@@ -99,6 +101,7 @@ public class SystemInfoResource {
     @GET
     @Path("/roadmap")
     @Produces(MediaType.TEXT_HTML)
+    @Operation(hidden = true)
     public TemplateInstance getRoadmap() {
         return renderPage(roadmap, cachedRoadmap, "Roadmap", "/ui/system/roadmap");
     }

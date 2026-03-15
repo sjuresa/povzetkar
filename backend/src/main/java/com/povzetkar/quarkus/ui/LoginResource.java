@@ -9,6 +9,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class LoginResource {
     }
 
     @Route(path = "/login", methods = HttpMethod.GET)
+    @Operation(hidden = true)
     public void login(RoutingContext context) {
         if (!securityIdentity.isAnonymous()) {
             redirect(context, TopicResource.TOPICS_PATH);
@@ -44,6 +46,7 @@ public class LoginResource {
     }
 
     @Route(path = "/logout", methods = HttpMethod.GET)
+    @Operation(hidden = true)
     public void logout(RoutingContext context) {
         if (securityIdentity.isAnonymous()) {
             redirect(context, LOGIN_PATH);
@@ -62,6 +65,7 @@ public class LoginResource {
     }
 
     @Route(path = "/", methods = HttpMethod.GET)
+    @Operation(hidden = true)
     public void index(RoutingContext context) {
         String location = securityIdentity.isAnonymous() ? LOGIN_PATH : TopicResource.TOPICS_PATH;
         redirect(context, location);
