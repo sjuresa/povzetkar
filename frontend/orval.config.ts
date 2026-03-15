@@ -16,9 +16,6 @@ export default defineConfig({
           path: './src/api/client.ts',
           name: 'customInstance',
         },
-        response: {
-          data: 'data.data',
-        },
       },
     },
   },

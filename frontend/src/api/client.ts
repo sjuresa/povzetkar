@@ -65,9 +65,13 @@ client.interceptors.request.use(
  */
 client.interceptors.response.use(
   (response: AxiosResponse<ApiEnvelope>) => {
-    // We strictly pass the response through. 
-    // Unwrapping is now handled by Orval via 'override.response.data'.
-    return response;
+    // The custom mutator is responsible for unwrapping the response envelope.
+    if (response.data?.error) {
+      // If the API returns a 2xx status but includes an error in the envelope,
+      // treat it as a failed request.
+      return Promise.reject(response.data.error);
+    }
+    return response.data?.data;
   },
   async (error: AxiosError<ApiEnvelope>) => {
     const { response } = error;
