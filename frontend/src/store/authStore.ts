@@ -6,37 +6,47 @@ interface AuthState {
   user: UserDTO | null;
   isAuthenticated: boolean;
   isLoaded: boolean;
+  isLoading: boolean;
   sidebarCollapsed: boolean;
   checkAuth: () => Promise<void>;
   login: () => void;
   logout: () => void;
   toggleSidebar: () => void;
+  clearAuth: () => void;
 }
 
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || 'http://localhost:8080';
+
+let checkAuthPromise: Promise<void> | null = null;
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoaded: false,
+  isLoading: false,
   sidebarCollapsed: false,
   checkAuth: async () => {
-    try {
-      const response = await getApiV1UsersMe();
-      // Orval customInstance returns data directly if status is 200, 
-      // but if typed with Response objects, we check status.
-      // Based on generated code: export const getApiV1UsersMe = async ( options?: RequestInit): Promise<getApiV1UsersMeResponse>
-      // and getApiV1UsersMeResponse = (getApiV1UsersMeResponseSuccess | getApiV1UsersMeResponseError)
-      // Success is { data: UserDTO, status: 200, headers: Headers }
-      
-      if (response && response.status === 200 && response.data) {
-        set({ user: response.data, isAuthenticated: true, isLoaded: true });
-      } else {
-        set({ user: null, isAuthenticated: false, isLoaded: true });
+    // If a check is already in progress, return the existing promise
+    if (checkAuthPromise) return checkAuthPromise;
+
+    checkAuthPromise = (async () => {
+      set({ isLoading: true });
+      try {
+        const user = await getApiV1UsersMe() as unknown as UserDTO;
+        if (user && user.id) {
+          set({ user, isAuthenticated: true, isLoaded: true, isLoading: false });
+        } else {
+          set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
+        }
+      } catch (err) {
+        // Only log serious failures, 401 is "normal" for unauthenticated
+        set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
+      } finally {
+        checkAuthPromise = null;
       }
-    } catch {
-      set({ user: null, isAuthenticated: false, isLoaded: true });
-    }
+    })();
+
+    return checkAuthPromise;
   },
   login: () => {
     window.location.href = `${API_BASE_URL}/login`;
@@ -44,5 +54,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     window.location.href = `${API_BASE_URL}/logout`;
   },
+  clearAuth: () => set({ user: null, isAuthenticated: false, isLoaded: true }),
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 }));
