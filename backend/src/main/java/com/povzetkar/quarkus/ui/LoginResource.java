@@ -60,8 +60,16 @@ public class LoginResource {
         String dynamicRedirect = context.request().getParam("redirect");
         String destination = postLoginUri;
         // Prevent open redirect vulnerability. The path must be local and not protocol-relative (//).
-        if (dynamicRedirect != null && !dynamicRedirect.isBlank() && dynamicRedirect.startsWith("/") && !dynamicRedirect.startsWith("//") && !dynamicRedirect.contains("..")) {
-            destination = dynamicRedirect;
+        if (dynamicRedirect != null && !dynamicRedirect.isBlank() && dynamicRedirect.startsWith("/") && !dynamicRedirect.startsWith("//")) {
+            try {
+                // Normalize the path to resolve ".." and prevent path traversal vulnerabilities.
+                String normalizedPath = new java.net.URI(dynamicRedirect).normalize().getPath();
+                if (normalizedPath != null && !normalizedPath.startsWith("/..")) {
+                    destination = dynamicRedirect;
+                }
+            } catch (java.net.URISyntaxException e) {
+                logger.warn("Ignoring malformed redirect parameter: {}", dynamicRedirect, e);
+            }
         }
                 
         redirect(context, destination);

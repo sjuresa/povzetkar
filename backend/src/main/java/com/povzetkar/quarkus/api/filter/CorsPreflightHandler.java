@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api.filter;
 import io.quarkus.runtime.StartupEvent;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
+import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -19,7 +20,7 @@ public class CorsPreflightHandler {
     Router router;
 
     @ConfigProperty(name = "povzetkar.frontend.origin")
-    String frontendOrigin;
+    List<String> allowedOrigins;
 
     @ConfigProperty(name = "povzetkar.cors.allowed-methods")
     String allowedMethods;
@@ -31,8 +32,11 @@ public class CorsPreflightHandler {
         router.route().order(-10000).handler(rc -> {
             String origin = rc.request().getHeader("Origin");
 
-            // Not a request from our frontend, let other handlers deal with it.
-            if (!frontendOrigin.equals(origin)) {
+            // Not a request from one of our allowed frontend origins, let other handlers deal with it.
+            boolean isAllowed = origin != null && allowedOrigins.stream()
+                    .anyMatch(ao -> ao.equalsIgnoreCase(origin));
+
+            if (!isAllowed) {
                 rc.next();
                 return;
             }
