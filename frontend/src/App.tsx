@@ -11,7 +11,6 @@ function App() {
       isAuthenticated: state.isAuthenticated,
       isLoaded: state.isLoaded,
       checkAuth: state.checkAuth,
-      clearAuth: state.clearAuth,
     }))
   );
 
