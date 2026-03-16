@@ -6,13 +6,17 @@ import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.Route.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @ApplicationScoped
 public class LoginResource {
@@ -60,14 +64,22 @@ public class LoginResource {
         String dynamicRedirect = context.request().getParam("redirect");
         String destination = postLoginUri;
         // Prevent open redirect vulnerability. The path must be local and not protocol-relative (//).
-        if (dynamicRedirect != null && !dynamicRedirect.isBlank() && dynamicRedirect.startsWith("/") && !dynamicRedirect.startsWith("//")) {
+        if (dynamicRedirect != null && !dynamicRedirect.isBlank() && dynamicRedirect.startsWith("/")) {
             try {
-                // Normalize the path to resolve ".." and prevent path traversal vulnerabilities.
-                String normalizedPath = new java.net.URI(dynamicRedirect).normalize().getPath();
-                if (normalizedPath != null && !normalizedPath.startsWith("/..")) {
-                    destination = normalizedPath;
+                // Decode the path to prevent bypasses using URL-encoded characters.
+                String decodedPath = URLDecoder.decode(dynamicRedirect, StandardCharsets.UTF_8);
+
+                // After decoding, a protocol-relative URL attack would start with "//".
+                if (decodedPath.startsWith("//")) {
+                    logger.warn("Ignoring redirect parameter attempting protocol-relative redirect: {}", dynamicRedirect);
+                } else {
+                    // It's safe to normalize the original path now, as the main vector is checked.
+                    String normalizedPath = new URI(dynamicRedirect).normalize().getPath();
+                    if (normalizedPath != null && !normalizedPath.startsWith("/..")) {
+                        destination = normalizedPath;
+                    }
                 }
-            } catch (java.net.URISyntaxException e) {
+            } catch (IllegalArgumentException | URISyntaxException e) {
                 logger.warn("Ignoring malformed redirect parameter: {}", dynamicRedirect, e);
             }
         }
