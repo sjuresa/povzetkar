@@ -37,22 +37,22 @@ public class CorsPreflightHandler {
             }
 
             if (rc.request().method() == HttpMethod.OPTIONS) {
-                rc.response()
-                    .putHeader("Access-Control-Allow-Origin", isFromFrontend ? origin : "*")
-                    .putHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH")
-                    .putHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Correlation-ID, Idempotency-Key, If-Match, Accept")
-                    .putHeader("Access-Control-Max-Age", "3600");
-
                 if (isFromFrontend) {
-                    rc.response().putHeader("Access-Control-Allow-Credentials", "true");
+                    rc.response()
+                        .putHeader("Access-Control-Allow-Origin", origin)
+                        .putHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH")
+                        .putHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Correlation-ID, Idempotency-Key, If-Match, Accept")
+                        .putHeader("Access-Control-Max-Age", "3600")
+                        .putHeader("Access-Control-Allow-Credentials", "true")
+                        .setStatusCode(200)
+                        .end();
+                } else {
+                    // For other origins, let another handler deal with it.
+                    rc.next();
                 }
-
-                rc.response()
-                    .setStatusCode(200)
-                    .end();
             } else {
-                // For AJAX requests, convert OIDC redirects (302) to 401 Unauthorized
-                if ("XMLHttpRequest".equalsIgnoreCase(rc.request().getHeader("X-Requested-With"))) {
+                // For AJAX requests from the frontend, convert OIDC redirects (302) to 401 Unauthorized
+                if (isFromFrontend && "XMLHttpRequest".equalsIgnoreCase(rc.request().getHeader("X-Requested-With"))) {
                     rc.addHeadersEndHandler(v -> {
                         if (rc.response().getStatusCode() == 302) {
                             rc.response().setStatusCode(401);
