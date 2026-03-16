@@ -5,9 +5,9 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { useAuthStore } from './store/authStore';
 import { LandingPage } from './routes/LandingPage';
 import { DashboardPage } from './routes/DashboardPage';
+import { BriefingDetailPage } from './routes/BriefingDetailPage';
 import { AppShell } from './components/layout/AppShell';
 
 // Define context for the router to enable type-safe auth guards
@@ -30,11 +30,13 @@ const indexRoute = createRoute({
   path: '/',
   component: LandingPage,
   beforeLoad: async ({ context }) => {
-    // If we're already logged in, skip landing and go to dashboard
+    // If we haven't checked auth yet, do it once
     if (!context.auth.isLoaded) {
       await context.auth.checkAuth();
     }
-    if (useAuthStore.getState().isAuthenticated) {
+    
+    // If definitely authenticated, skip landing and go to dashboard
+    if (context.auth.isAuthenticated) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/dashboard' });
     }
@@ -47,14 +49,13 @@ const protectedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'authenticated',
   beforeLoad: async ({ context }) => {
-    // Perform auth check if not already done
+    // If we haven't checked auth yet, do it once
     if (!context.auth.isLoaded) {
       await context.auth.checkAuth();
     }
     
     // Final check - if still not authenticated, redirect to landing
-    const isAuth = useAuthStore.getState().isAuthenticated;
-    if (!isAuth) {
+    if (!context.auth.isAuthenticated) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/' });
     }
@@ -73,10 +74,44 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
+// Topics Placeholder
+const topicsRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/topics',
+  component: () => (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 italic">
+      Topics management coming soon
+    </div>
+  ),
+});
+
+// Briefings Placeholder
+const briefingsRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/briefings',
+  component: () => (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 italic">
+      All briefings list coming soon
+    </div>
+  ),
+});
+
+// 5. Briefing Detail Route
+const briefingDetailRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/briefings/$briefingId',
+  component: BriefingDetailPage,
+});
+
 // 5. Create Route Tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  protectedLayoutRoute.addChildren([dashboardRoute]),
+  protectedLayoutRoute.addChildren([
+    dashboardRoute,
+    topicsRoute,
+    briefingsRoute,
+    briefingDetailRoute,
+  ]),
 ]);
 
 // 6. Create Router Instance

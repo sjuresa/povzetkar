@@ -8,6 +8,7 @@
 # Project / Monorepo
 .env
 .env.*
+!.env.example
 .DS_Store
 
 # Java / Backend (Maven/Quarkus)

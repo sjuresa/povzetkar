@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useAuthStore } from '../../store/authStore';
+import { useShallow } from 'zustand/react/shallow';
 import { Link, useLocation } from '@tanstack/react-router';
 
 interface AppShellProps {
@@ -7,7 +8,14 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore();
+  const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
+    useShallow((state) => ({
+      user: state.user,
+      logout: state.logout,
+      sidebarCollapsed: state.sidebarCollapsed,
+      toggleSidebar: state.toggleSidebar,
+    }))
+  );
   const location = useLocation();
 
   const navItems = [
