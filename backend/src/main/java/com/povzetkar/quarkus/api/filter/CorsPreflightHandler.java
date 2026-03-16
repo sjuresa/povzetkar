@@ -21,6 +21,12 @@ public class CorsPreflightHandler {
     @ConfigProperty(name = "povzetkar.frontend.origin")
     String frontendOrigin;
 
+    @ConfigProperty(name = "povzetkar.cors.allowed-methods")
+    String allowedMethods;
+
+    @ConfigProperty(name = "povzetkar.cors.allowed-headers")
+    String allowedHeaders;
+
     void onStart(@Observes StartupEvent ev) {
         router.route().order(-10000).handler(rc -> {
             String origin = rc.request().getHeader("Origin");
@@ -43,8 +49,8 @@ public class CorsPreflightHandler {
                 // Handle CORS preflight request.
                 rc.response()
                         .putHeader("Access-Control-Allow-Origin", origin)
-                        .putHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH")
-                        .putHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Correlation-ID, Idempotency-Key, If-Match, Accept")
+                        .putHeader("Access-Control-Allow-Methods", allowedMethods)
+                        .putHeader("Access-Control-Allow-Headers", allowedHeaders)
                         .putHeader("Access-Control-Max-Age", "3600")
                         .putHeader("Access-Control-Allow-Credentials", "true")
                         .setStatusCode(200)

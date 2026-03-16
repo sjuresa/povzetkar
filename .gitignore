@@ -6,8 +6,9 @@
 .zed
 
 # Project / Monorepo
-.env.old
-backend/.env.example
+.env
+.env.*
+!.env.example
 .DS_Store
 
 # Java / Backend (Maven/Quarkus)

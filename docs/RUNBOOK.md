@@ -223,6 +223,8 @@ The application requires several environment variables to function correctly. Th
 | `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                                                                                |
 | `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                                                                                |
 | `FRONTEND_URL`    | Frontend origin and redirect base URL   | `http://localhost:5173`                                                                                                    |
+| `CORS_METHODS`    | Allowed HTTP methods for CORS           | `GET, POST, ...`                                                                                                           |
+| `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 
 **Docker Run Example:**
 
