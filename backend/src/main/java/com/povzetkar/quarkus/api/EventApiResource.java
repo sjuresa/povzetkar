@@ -24,6 +24,7 @@ import jakarta.ws.rs.sse.OutboundSseEvent;
 import jakarta.ws.rs.sse.Sse;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jboss.logging.Logger;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -33,6 +34,7 @@ import java.util.UUID;
 @Tag(name = "Events", description = "Real-time event streams")
 public class EventApiResource extends BaseApiResource {
 
+    private static final Logger logger = Logger.getLogger(EventApiResource.class);
     private final EventBroadcaster eventBroadcaster;
 
     @Inject
@@ -66,12 +68,18 @@ public class EventApiResource extends BaseApiResource {
         eventBroadcaster.broadcast(SseEventDTO.of("JOB_STATUS_CHANGED", 
             new JobStatusChangedEvent(jobId, JobStatus.RUNNING, JobType.GENERATE_TOPIC_BRIEFING)));
         
-        // 2. Schedule COMPLETED event after 2 seconds
-        Uni.createFrom().item(jobId)
-            .onItem().delayIt().by(Duration.ofSeconds(2))
-            .emitOn(Infrastructure.getDefaultExecutor())
-            .subscribe().with(id -> eventBroadcaster.broadcast(SseEventDTO.of("JOB_STATUS_CHANGED",
-                new JobStatusChangedEvent(id, JobStatus.COMPLETED, JobType.GENERATE_TOPIC_BRIEFING))));
+        // Broadcast a COMPLETED event after 2 seconds to simulate job finishing
+        Infrastructure.getDefaultWorkerPool().execute(() -> {
+            Uni.createFrom().item(jobId)
+               .onItem().delayIt().by(Duration.ofSeconds(2))
+               .subscribe().with(
+                   id -> {
+                       JobStatusChangedEvent completedEvent = new JobStatusChangedEvent(id, JobStatus.COMPLETED, JobType.GENERATE_TOPIC_BRIEFING);
+                       eventBroadcaster.broadcast(SseEventDTO.of("JOB_STATUS_CHANGED", completedEvent));
+                   },
+                   failure -> logger.error("Failed to broadcast test pulse completion", failure)
+               );
+        });
 
         return Response.ok().build();
     }

@@ -2,7 +2,7 @@ import * as React from "react"
 
 const TOAST_LIMIT = 5
 const TOAST_DISMISS_DELAY = 5000
-const TOAST_REMOVE_DELAY = 1000
+export const TOAST_REMOVE_DELAY = 1000
 
 type ToadType = "default" | "destructive" | "success" | "info"
 
@@ -16,7 +16,7 @@ interface Toast {
   onOpenChange?: (open: boolean) => void
 }
 
-const actionTypes = {
+export const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
   DISMISS_TOAST: "DISMISS_TOAST",
@@ -52,23 +52,8 @@ interface State {
   toasts: Toast[]
 }
 
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-
-const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
-    return
-  }
-
-  const timeout = setTimeout(() => {
-    toastTimeouts.delete(toastId)
-    dispatch({
-      type: actionTypes.REMOVE_TOAST,
-      toastId: toastId,
-    })
-  }, TOAST_REMOVE_DELAY)
-
-  toastTimeouts.set(toastId, timeout)
-}
+// Side effects like timeouts are now handled by the UI components (Toaster.tsx)
+// instead of the reducer, to keep the state transitions pure.
 
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -88,15 +73,6 @@ export const reducer = (state: State, action: Action): State => {
 
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action
-
-      // ! Side effect ! - This should be executed in a useEffect or similar.
-      if (toastId) {
-        addToRemoveQueue(toastId)
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
-        })
-      }
 
       return {
         ...state,
@@ -128,7 +104,7 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
-function dispatch(action: Action) {
+export function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
     listener(memoryState)
@@ -184,6 +160,7 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId }),
+    dismissAll: () => dispatch({ type: actionTypes.DISMISS_TOAST }),
   }
 }
 

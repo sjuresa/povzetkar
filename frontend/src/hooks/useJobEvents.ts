@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useEventStore, type JobStatusChangedEvent } from '../store/eventStore';
 import { useToast } from './use-toast';
+import logger from '../util/logger'; // Added import for logger
 
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
 
@@ -22,20 +23,20 @@ export function useJobEvents() {
     if (eventSourceRef.current) return;
 
     const url = `${API_BASE_URL}/api/v1/events/stream`;
-    console.log(`[SSE] Connecting to ${url}...`);
+    logger.info(`[SSE] Connecting to ${url}...`); // Replaced console.log with logger.info
     setConnectionStatus('connecting');
     
     const es = new EventSource(url, { withCredentials: true });
     eventSourceRef.current = es;
 
     es.onopen = () => {
-      console.log('[SSE] Connection established');
+      logger.info('[SSE] Connection established'); // Replaced console.log with logger.info
       setLastEvent('CONNECTED');
       setConnectionStatus('connected');
     };
 
     es.onerror = (e) => {
-      console.error('[SSE] Connection error:', e);
+      logger.error('[SSE] Connection error', { detail: e }); // Replaced console.error with logger.error
       setLastEvent('ERROR');
       setConnectionStatus('disconnected');
     };
@@ -45,10 +46,10 @@ export function useJobEvents() {
       try {
         const payload = JSON.parse(event.data);
         const data: JobStatusChangedEvent = payload.data;
-        console.log('[SSE] Job status changed:', data);
+        logger.info('[SSE] Job status changed', { jobData: data }); // Replaced console.log with logger.info
         
         if (!data || !data.jobId) {
-          console.warn('[SSE] Received malformed JOB_STATUS_CHANGED event', payload);
+          logger.warn('[SSE] Received malformed JOB_STATUS_CHANGED event', { payload }); // Replaced console.warn with logger.warn
           return;
         }
 
@@ -75,7 +76,7 @@ export function useJobEvents() {
           });
         }
       } catch (err) {
-        console.error('[SSE] Failed to parse job event:', err);
+        logger.error('[SSE] Failed to parse JOB_STATUS_CHANGED event', { error: err as Error }); // Replaced console.error with logger.error
       }
     });
 
@@ -84,12 +85,12 @@ export function useJobEvents() {
     });
 
     return () => {
-      console.log('[SSE] Closing connection');
+      logger.info('[SSE] Closing connection'); // Replaced console.log with logger.info
       es.close();
       eventSourceRef.current = null;
       setConnectionStatus('disconnected');
     };
-  }, [updateJobStatus, setLastEvent, toast]);
+  }, [updateJobStatus, setLastEvent, toast, setConnectionStatus]); // Added setConnectionStatus to dependency array
 
   return { isConnected: !!eventSourceRef.current };
 }

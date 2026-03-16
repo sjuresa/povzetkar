@@ -1,7 +1,22 @@
-import { useToast } from "../../hooks/use-toast"
+import { useEffect } from "react"
+import { useToast, actionTypes, dispatch, TOAST_REMOVE_DELAY } from "../../hooks/use-toast"
 
 export function Toaster() {
   const { toasts } = useToast()
+
+  useEffect(() => {
+    toasts.forEach((toast) => {
+      if (toast.open === false) {
+        const timer = setTimeout(() => {
+          dispatch({
+            type: actionTypes.REMOVE_TOAST,
+            toastId: toast.id,
+          })
+        }, TOAST_REMOVE_DELAY)
+        return () => clearTimeout(timer)
+      }
+    })
+  }, [toasts])
 
   return (
     <div className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
@@ -10,6 +25,7 @@ export function Toaster() {
                       : type === 'success' ? 'bg-green-600 border-green-500'
                       : type === 'info' ? 'bg-blue-600 border-blue-500'
                       : 'bg-slate-800 border-slate-700';
+// ... rest of component
                       
         return (
           <div
