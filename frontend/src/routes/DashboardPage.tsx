@@ -58,6 +58,8 @@ export function DashboardPage() {
   // Determine if we are in an empty state
   const hasNoData = !data?.stats?.activeTopics && (!data?.recentBriefings || data.recentBriefings.length === 0);
 
+  const latestBriefingDate = data?.recentBriefings?.[0]?.briefingDate;
+
   if (hasNoData) {
     return <EmptyState />;
   }
@@ -96,7 +98,7 @@ export function DashboardPage() {
         />
         <StatCard 
           label="Latest Activity" 
-          value={data.recentBriefings?.[0]?.briefingDate ? new Date(data.recentBriefings[0].briefingDate).toLocaleDateString() : undefined} 
+          value={latestBriefingDate ? new Date(latestBriefingDate).toLocaleDateString() : undefined} 
           icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
           description="Last briefing generated"
         />
