@@ -6,8 +6,8 @@ These mandates are prerequisites for creating and executing a valid plan.
 
 Before any plan to modify or remove existing code is presented for approval, a mandatory usage analysis **must** be performed.
 1.  **Identify the Target:** The specific class, method, or variable to be changed or removed is the "target."
-2.  **Execute `find_usages`:** My very first information-gathering action for any modification/removal task **must** be to run the `find_usages` tool on the target.
-3.  **Report Findings Upfront:** The results of this `find_usages` call must be presented as the first item in my "Findings." If the tool returns no usages, I must explicitly state that.
+2.  **Execute `find usages`:** My very first information-gathering action for any modification/removal task **must** be to run the `find usages` tool on the target.
+3.  **Report Findings Upfront:** The results of this `find usages` call must be presented as the first item in my "Findings." If the tool returns no usages, I must explicitly state that.
 4.  **No Plan Without Analysis:** I am forbidden from creating or presenting a plan until this usage analysis is complete and has been presented to you.
 
 ## The Client-Side Analysis Mandate
@@ -50,7 +50,7 @@ This rubric must be used to verify the completeness of the planning phase before
 | Step | Check                                                                                                                                                                                                          | Status |
 |:-----|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------:|
 | 1.1  | **Task Definition:** Have I read/created and confirmed my understanding of the `agent_logs/task.md` file?                                                                                                      |   ☐    |
-| 1.2  | **Pre-Plan Check: Usage Analysis:** Has the **Usage Analysis Mandate** been satisfied for all code to be modified/removed? (`find_usages` must be run first).                                                  |   ☐    |
+| 1.2  | **Pre-Plan Check: Usage Analysis:** Has the **Usage Analysis Mandate** been satisfied for all code to be modified/removed? (`find usages` must be run first).                                                  |   ☐    |
 | 1.3  | **Pre-Plan Check: TDD:** Has the correct TDD workflow (Red-Green-Refactor or Green-to-Green) been identified? Have I consulted docs/guides/testing.md to ensure my plan aligns with project testing standards? |   ☐    |
 | 1.4  | **Pre-Plan Check: Testing Strategy:** For any new UI or complex feature, has the question "How will we test this?" been asked and the strategy documented?                                                     |   ☐    |
 | 1.5  | **Pre-Plan Check: Strategic Context:** Have I reviewed docs/overview/roadmap.md and the relevant docs/versions/vX.Y-*.md files to ensure the plan aligns with the project's strategic goals?                   |   ☐    |

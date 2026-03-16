@@ -6,16 +6,20 @@
  * OpenAPI spec version: 0.11.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -154,3 +158,98 @@ export function useGetApiV1EventsStream<TData = Awaited<ReturnType<typeof getApi
 
 
 
+/**
+ * Simulates a mock job status change event for testing purposes.
+ * @summary Trigger test pulse
+ */
+export type postApiV1EventsTestPulseResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type postApiV1EventsTestPulseResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1EventsTestPulseResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1EventsTestPulseResponseSuccess = (postApiV1EventsTestPulseResponse200) & {
+  headers: Headers;
+};
+export type postApiV1EventsTestPulseResponseError = (postApiV1EventsTestPulseResponse401 | postApiV1EventsTestPulseResponse403) & {
+  headers: Headers;
+};
+
+export type postApiV1EventsTestPulseResponse = (postApiV1EventsTestPulseResponseSuccess | postApiV1EventsTestPulseResponseError)
+
+export const getPostApiV1EventsTestPulseUrl = () => {
+
+
+  
+
+  return `/api/v1/events/test-pulse`
+}
+
+export const postApiV1EventsTestPulse = async ( options?: RequestInit): Promise<postApiV1EventsTestPulseResponse> => {
+  
+  return customInstance<postApiV1EventsTestPulseResponse>(getPostApiV1EventsTestPulseUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1EventsTestPulseMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1EventsTestPulse>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1EventsTestPulse>>, TError,void, TContext> => {
+
+const mutationKey = ['postApiV1EventsTestPulse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1EventsTestPulse>>, void> = () => {
+          
+
+          return  postApiV1EventsTestPulse(requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1EventsTestPulseMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1EventsTestPulse>>>
+    
+    export type PostApiV1EventsTestPulseMutationError = void
+
+    /**
+ * @summary Trigger test pulse
+ */
+export const usePostApiV1EventsTestPulse = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1EventsTestPulse>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1EventsTestPulse>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getPostApiV1EventsTestPulseMutationOptions(options), queryClient);
+    }
+    

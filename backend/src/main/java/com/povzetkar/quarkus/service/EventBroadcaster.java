@@ -31,7 +31,11 @@ public class EventBroadcaster {
 
     public void onJobStatusChanged(@Observes(during = TransactionPhase.AFTER_SUCCESS) JobStatusChangedEvent event) {
         logger.debug("Broadcasting job status change for job {}: {}", event.jobId(), event.status());
-        processor.onNext(SseEventDTO.of("JOB_STATUS_CHANGED", event));
+        broadcast(SseEventDTO.of("JOB_STATUS_CHANGED", event));
+    }
+
+    public void broadcast(SseEventDTO event) {
+        processor.onNext(event);
     }
 
     @PreDestroy

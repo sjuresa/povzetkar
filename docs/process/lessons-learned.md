@@ -364,6 +364,16 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
 ### 13.4 Idempotency Key Injection
 - **The Standard:** The global interceptor should automatically inject an `Idempotency-Key` UUID for all `POST /commands/*` requests. If the request already has one (e.g., passed manually to handle retries), the interceptor must preserve the existing one.
 
+### 13.5 Axios Cancellation & Global Logging
+- **The Trap:** Logging all failed requests in a global Axios interceptor without checking for cancellations. In React 18 (Strict Mode) and TanStack Query, requests are frequently aborted by design (e.g., component unmount, rapid re-renders). Logging these as "Errors" leads to confusing console noise and false alarms about network stability.
+- **The Standard:** Always check `axios.isCancel(error)` in the error interceptor. These should be ignored or logged at `debug` level, never as `error`.
+  ```typescript
+  if (axios.isCancel(error)) {
+      return Promise.reject(error); // Reject silently
+  }
+  logger.error('[API] Network Error', { message: error.message });
+  ```
+
 ---
 
 ## 14. Frontend Routing & Auth (TanStack Router + Zustand)
@@ -382,3 +392,43 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
 ### 14.4 Standardizing Linting Suppressions (ESLint 9+)
 - **The Trap:** Using deprecated or inconsistent suppression rules (e.g., `@typescript-eslint/no-throw-literal`) leads to build warnings and unpredictable linting behavior in modern environments.
 - **The Standard:** Always use the latest rule names (e.g., `@typescript-eslint/only-throw-error`). When dealing with framework-specific patterns that use `any` (like test mocks or API response handling), prefer `@typescript-eslint/no-unsafe-assignment` or `@typescript-eslint/no-unsafe-return` over a blanket `no-explicit-any`, as it provides more granular oversight.
+
+---
+
+## 15. Frontend Real-time & Notifications (SSE)
+
+### 15.1 EventSource Lifecycle Management
+- **The Trap:** Initializing `EventSource` directly in a component body or incorrectly in a `useEffect` without proper cleanup and ref guards. In React Strict Mode, this leads to double-connections on mount, which can exhaust backend connection pools and cause "Ghost Toast" effects in the UI.
+- **The Standard:** Always use a `useRef<EventSource | null>(null)` guard alongside `useEffect`. The ref ensures that if an instance exists (due to a double-mount in dev), we don't spawn a second stream. Always return a cleanup function that calls `es.close()`.
+  ```typescript
+  const esRef = useRef<EventSource | null>(null);
+  useEffect(() => {
+      if (esRef.current) return; // Prevent double-init
+      const es = new EventSource(url);
+      esRef.current = es;
+      // ... bindings ...
+      return () => {
+          es.close();
+          esRef.current = null;
+      };
+  }, []);
+  ```
+
+### 15.2 State-Driven Notifications vs Imparative Logic
+- **The Trap:** Triggering `toast()` calls directly within a generic API fetcher. This makes it difficult to silence notifications for specific routes or to aggregate multiple rapid events into a single summary.
+- **The Standard:** Decouple event processing from notification display using a store (e.g., Zustand `eventStore`). Let the UI components or a specialized "Coordinator Hook" (`useJobEvents`) subscribe to the store and trigger notifications based on state transitions (e.g., `status` changing from `QUEUED` to `RUNNING`).
+
+### 15.3 Minimalist Custom Notification Systems
+- **The Trap:** Pulling in heavy external libraries (like `react-toastify`) for simple, themed notifications. This increases bundle size and often requires overriding complex CSS to match a premium design system like "Midnight Slate".
+- **The Standard:** Implement a minimal "Shadcn-style" notification system using a simple pub/sub pattern in a hook (e.g., `use-toast.ts`). This allows 100% aesthetic control using standard Tailwind classes and ensures the notification component (`Toaster.tsx`) is perfectly co-located with the application shell.
+
+### 15.4 Unstable Selectors & useSyncExternalStore
+- **The Trap:** Creating selectors that return new objects or arrays (e.g., `.filter()`) inside a store hook without an equality function. In React 18+, this causes `useSyncExternalStore` to detect a "change" on every single re-render or store update (even unrelated ones), leading to infinite render loops or "Maximum update depth exceeded" errors.
+- **The Standard:** Always use `useShallow` from `zustand/react/shallow` when return a non-primitive or a new collection from a selector. For effects, always use a dedicated selector to extract only the stable actions needed, rather than subscribing to the entire state.
+  ```typescript
+  // BAD: Returns new array ref every time store changes
+  const active = useStore((s) => s.items.filter(i => i.active));
+  
+  // GOOD: Only re-renders if array content actually changes
+  const active = useStore(useShallow((s) => s.items.filter(i => i.active)));
+  ```
