@@ -113,6 +113,9 @@ client.interceptors.response.use(
           logger.error(`[API] Error ${response.status}: ${errorMessage}`, { status: response.status, code: (response.data as ApiEnvelope | undefined)?.error?.code });
         }
       }
+    } else if (axios.isCancel(error)) {
+      // SILENTLY IGNORE: Cancellation is expected in React 18 / TanStack Query
+      logger.debug('[API] Request canceled', { message: error.message });
     } else {
       logger.error('[API] Network Error or Timeout', { message: error.message });
     }

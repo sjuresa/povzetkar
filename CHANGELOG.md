@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
 
 ### Added
+- **Frontend (POV-140):** Integrated real-time **SSE Job Tracking** (`GET /api/v1/events/stream`) into the UI with a dedicated Zustand `eventStore`.
+- **Frontend (POV-140):** Implemented a lightweight **Toast Notification system** providing instant feedback on orchestration success, failures, and heartbeat (PULSE) status.
+- **Frontend (POV-140):** Integrated **Real-time Status Badges** into the Dashboard Hub, reflecting live "Processing" states for background jobs without page refreshes.
 - **Frontend (POV-139):** Implemented the interactive **Dashboard Hub** fetching real-time data from the `GET /api/v1/dashboard` BFF endpoint.
 - **Frontend (POV-139):** Fabricated glassmorphic **Stat Widgets** for Active Topics, Weekly Output, and Latest Activity with `text-glow` effects.
 - **Frontend (POV-139):** Integrated an **Empty State "Getting Started" guide** for new users to facilitate onboarding (Source → Topic → Briefing).
@@ -40,9 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend:** Simplified `backend/pom.xml` by removing redundant versions and execution blocks inherited from the root POM.
 
 ### Planned
-- SSE Real-time Job Tracking (POV-140).
 - CD & Scanning Hardening (POV-141).
 - Audit Log Admin UI (POV-142).
+- Finalize v0.12.0 Release.
 
 ## [v0.11.0] - 2026-03-12
 

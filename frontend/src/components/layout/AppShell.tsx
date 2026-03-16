@@ -2,12 +2,18 @@ import type { ReactNode } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, useLocation } from '@tanstack/react-router';
+import { Toaster } from '../ui/Toaster';
+import { useJobEvents } from '../../hooks/useJobEvents';
+import { useEventStore } from '../../store/eventStore';
 
 interface AppShellProps {
   children: ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  // Initialize SSE event stream for jobs
+  useJobEvents();
+
   const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
       user: state.user,
@@ -16,6 +22,8 @@ export function AppShell({ children }: AppShellProps) {
       toggleSidebar: state.toggleSidebar,
     }))
   );
+
+  const connectionStatus = useEventStore((state) => state.connectionStatus);
   const location = useLocation();
 
   const navItems = [
@@ -102,7 +110,19 @@ export function AppShell({ children }: AppShellProps) {
         {/* Header */}
         <header className="h-16 flex items-center justify-between px-8 bg-slate-900/50 border-b border-slate-800 backdrop-blur-md z-40">
           <div className="flex items-center space-x-4">
-             {/* Mobile menu toggle would go here */}
+             {/* Connection Status Indicator */}
+             <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50" title={`Real-time Stream: ${connectionStatus}`}>
+               <span className="relative flex h-2 w-2">
+                 {connectionStatus === 'connected' && (
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                 )}
+                 <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                   connectionStatus === 'connected' ? 'bg-emerald-500' : 
+                   connectionStatus === 'connecting' ? 'bg-amber-500 animate-pulse' : 'bg-red-500'
+                 }`}></span>
+               </span>
+               <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-500">Live</span>
+             </div>
           </div>
 
           <div className="flex items-center space-x-6">
@@ -134,6 +154,8 @@ export function AppShell({ children }: AppShellProps) {
           <div className="fixed bottom-0 right-0 w-1/2 h-1/2 bg-blue-900/5 rounded-full blur-[120px] pointer-events-none -z-10 translate-x-1/4 translate-y-1/4"></div>
         </main>
       </div>
+
+      <Toaster />
     </div>
   );
 }
