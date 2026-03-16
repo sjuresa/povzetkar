@@ -5,6 +5,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                 |
 |---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 2.2     | March 16, 2026     | Povzetkar AI | Added Documentation for FRONTEND_URL and Open Redirect protection. |
 | 2.1     | March 14, 2026     | Povzetkar AI | Updated for Monorepo, Frontend Initialization (POV-136), and Vite 8. |
 | 2.0     | March 13, 2026     | Povzetkar AI | Added documentation for Task 17 (SSE Stream) and Task 18 (Admin/Audit). |
 | 1.9     | March 13, 2026     | Povzetkar AI | Added documentation for Idempotency, Optimistic Locking, SSE, and Envelopes. |
@@ -31,11 +32,11 @@ It is the primary technical guide for developers working on the project.
 - **Git:** For version control.
 
 ## 3. Local Environment Setup
-The entire local environment is managed by Docker Compose.
+The local database environment is managed by Docker Compose and is located in the `backend/` directory.
 
 1.  **Create the Environment File:**
-The application requires a `.env` file in the project root for database credentials and API keys. The
-`docker-compose.yml` uses these to configure the PostgreSQL container, and the Quarkus application is configured to use
+The application requires a `.env` file in the `backend/` directory for database credentials and API keys. The
+`backend/docker-compose.yml` uses these to configure the PostgreSQL container.
 them for its database connection.
 
     ```properties
@@ -53,11 +54,13 @@ them for its database connection.
     # For the Quarkus application
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
+    FRONTEND_URL=http://localhost:5173
     ```
 
 2.  **Start the Database:**
-    This command starts the PostgreSQL database in a Docker container.
+    Navigate to the backend directory and start the PostgreSQL database.
     ```bash
+    cd backend
     docker compose up -d
     ```
 
@@ -67,6 +70,7 @@ PostgreSQL initialization scripts (like the one that enables the `pgvector` exte
 
 1.  **Destroy the existing containers and volumes:**
     ```bash
+    cd backend
     docker compose down -v
     ```
 2.  **Recreate the environment:**
@@ -85,6 +89,7 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 1.  **Connect to the development database container:**
     This command executes a shell inside the container to correctly access the environment variables set by Docker Compose (`POSTGRES_USER` and `POSTGRES_DB`).
     ```bash
+    cd backend
     docker compose exec postgres-dev sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
     ```
 
@@ -217,6 +222,7 @@ The application requires several environment variables to function correctly. Th
 | `DB_PASS`         | Database password                       | `your_db_password`                                                                                                         |
 | `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                                                                                |
 | `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                                                                                |
+| `FRONTEND_URL`    | Frontend origin and redirect base URL   | `http://localhost:5173`                                                                                                    |
 
 **Docker Run Example:**
 

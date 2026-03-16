@@ -58,7 +58,7 @@ public class LoginResource {
         // This path is protected by OIDC in application.properties.
         // Once here, the user is authenticated.
         String dynamicRedirect = context.request().getParam("redirect");
-        String destination = (dynamicRedirect != null && !dynamicRedirect.isBlank()) 
+        String destination = (dynamicRedirect != null && !dynamicRedirect.isBlank() && dynamicRedirect.startsWith("/") && !dynamicRedirect.contains("..")) 
                 ? dynamicRedirect 
                 : postLoginUri;
                 

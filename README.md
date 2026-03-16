@@ -60,13 +60,14 @@ To get a local copy up and running, follow these simple steps.
     ```
 
 2.  **Start the Database:**
-    This command will start the PostgreSQL database in a Docker container.
+    Navigate to the backend directory and start the PostgreSQL database.
     ```bash
+    cd backend
     docker compose up -d
     ```
 
 3.  **Set Environment Variables:**
-    Create a `.env` file in the project root with the necessary credentials. See `RUNBOOK.md` for details.
+    Create a `.env` file in the `backend/` directory with the necessary credentials. See `RUNBOOK.md` for details.
 
 4.  **Run the Quarkus Application:**
     In a separate terminal, run the Quarkus application in development mode.
