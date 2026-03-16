@@ -15,7 +15,7 @@ interface AuthState {
   clearAuth: () => void;
 }
 
-const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL;
 
 let checkAuthPromise: Promise<void> | null = null;
 
@@ -49,10 +49,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     return checkAuthPromise;
   },
   login: () => {
-    window.location.href = `${API_BASE_URL}/login`;
+    globalThis.location.href = `${API_BASE_URL}/login`;
   },
   logout: () => {
-    window.location.href = `${API_BASE_URL}/logout`;
+    globalThis.location.href = `${API_BASE_URL}/logout`;
   },
   clearAuth: () => set({ user: null, isAuthenticated: false, isLoaded: true }),
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),

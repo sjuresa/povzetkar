@@ -65,7 +65,7 @@ public class LoginResource {
                 // Normalize the path to resolve ".." and prevent path traversal vulnerabilities.
                 String normalizedPath = new java.net.URI(dynamicRedirect).normalize().getPath();
                 if (normalizedPath != null && !normalizedPath.startsWith("/..")) {
-                    destination = dynamicRedirect;
+                    destination = normalizedPath;
                 }
             } catch (java.net.URISyntaxException e) {
                 logger.warn("Ignoring malformed redirect parameter: {}", dynamicRedirect, e);
