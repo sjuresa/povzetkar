@@ -39,7 +39,7 @@ export function RecentBriefingList({ briefings }: RecentBriefingListProps) {
                 <div className="flex items-center space-x-2 text-xs text-slate-500">
                   <span className="font-medium text-slate-400">{briefing.topicName}</span>
                   <span>•</span>
-                  <span>{briefing.briefingDate?.toString() || 'Recently'}</span>
+                  <span>{briefing.briefingDate ? new Date(briefing.briefingDate).toLocaleDateString() : 'Recently'}</span>
                 </div>
               </div>
             </div>
