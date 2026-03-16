@@ -10,10 +10,33 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    host: true,
+    allowedHosts: ['ninki.tailed12a9.ts.net', 'localhost', '127.0.0.1'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        xfwd: true,
+      },
+      '/auth/login': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        xfwd: true,
+      },
+      '/login': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        xfwd: true,
+      },
+      '/logout': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        xfwd: true,
+      },
+      '/static': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        xfwd: true,
       },
     },
   },

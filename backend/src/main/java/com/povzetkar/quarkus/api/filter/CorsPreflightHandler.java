@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api.filter;
 import io.quarkus.runtime.StartupEvent;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -32,45 +33,61 @@ public class CorsPreflightHandler {
         router.route().order(-10000).handler(rc -> {
             String origin = rc.request().getHeader("Origin");
 
-            // Not a request from one of our allowed frontend origins, let other handlers deal with it.
-            boolean isAllowed = origin != null && allowedOrigins.stream()
-                    .anyMatch(ao -> ao.equalsIgnoreCase(origin));
-
-            if (!isAllowed) {
+            if (!isOriginAllowed(origin)) {
                 rc.next();
                 return;
             }
-            // From here, we know the request is from our allowed frontend origin.
-            // Ensure CORS headers are ALWAYS present on any response to the frontend.
-            rc.addHeadersEndHandler(v -> {
-                if (!rc.response().headers().contains("Access-Control-Allow-Origin")) {
-                    rc.response().putHeader("Access-Control-Allow-Origin", origin);
-                    rc.response().putHeader("Access-Control-Allow-Credentials", "true");
-                }
-            });
+
+            setupCorsResponseHeaders(rc, origin);
 
             if (rc.request().method() == HttpMethod.OPTIONS) {
-                // Handle CORS preflight request.
-                rc.response()
-                        .putHeader("Access-Control-Allow-Origin", origin)
-                        .putHeader("Access-Control-Allow-Methods", allowedMethods)
-                        .putHeader("Access-Control-Allow-Headers", allowedHeaders)
-                        .putHeader("Access-Control-Max-Age", "3600")
-                        .putHeader("Access-Control-Allow-Credentials", "true")
-                        .setStatusCode(200)
-                        .end();
+                handlePreflightResponse(rc, origin);
             } else {
-                // For actual AJAX requests, convert OIDC redirects (302) to 401 Unauthorized.
-                if ("XMLHttpRequest".equalsIgnoreCase(rc.request().getHeader("X-Requested-With"))) {
-                    rc.addHeadersEndHandler(v -> {
-                        if (rc.response().getStatusCode() == 302) {
-                            rc.response().setStatusCode(401);
-                            rc.response().headers().remove("Location");
-                        }
-                    });
-                }
+                handleAjaxRedirect(rc);
                 rc.next();
             }
         });
+    }
+
+    private boolean isOriginAllowed(String origin) {
+        if (origin == null) {
+            return false;
+        }
+        String normalizedOrigin = origin.replaceAll("/$", "");
+        return allowedOrigins.stream()
+                .map(String::trim)
+                .map(s -> s.replaceAll("/$", ""))
+                .anyMatch(ao -> ao.equalsIgnoreCase(normalizedOrigin));
+    }
+
+    private void setupCorsResponseHeaders(RoutingContext rc, String origin) {
+        rc.addHeadersEndHandler(v -> {
+            if (!rc.response().headers().contains("Access-Control-Allow-Origin")) {
+                rc.response().putHeader("Access-Control-Allow-Origin", origin);
+                rc.response().putHeader("Access-Control-Allow-Credentials", "true");
+            }
+        });
+    }
+
+    private void handlePreflightResponse(RoutingContext rc, String origin) {
+        rc.response()
+                .putHeader("Access-Control-Allow-Origin", origin)
+                .putHeader("Access-Control-Allow-Methods", allowedMethods)
+                .putHeader("Access-Control-Allow-Headers", allowedHeaders)
+                .putHeader("Access-Control-Max-Age", "3600")
+                .putHeader("Access-Control-Allow-Credentials", "true")
+                .setStatusCode(200)
+                .end();
+    }
+
+    private void handleAjaxRedirect(RoutingContext rc) {
+        if ("XMLHttpRequest".equalsIgnoreCase(rc.request().getHeader("X-Requested-With"))) {
+            rc.addHeadersEndHandler(v -> {
+                if (rc.response().getStatusCode() == 302) {
+                    rc.response().setStatusCode(401);
+                    rc.response().headers().remove("Location");
+                }
+            });
+        }
     }
 }

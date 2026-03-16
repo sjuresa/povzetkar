@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @ApplicationScoped
 public class LoginResource {
@@ -34,6 +35,9 @@ public class LoginResource {
 
     @ConfigProperty(name = "povzetkar.auth.post-logout-uri", defaultValue = LOGIN_PATH)
     String postLogoutUri;
+
+    @ConfigProperty(name = "povzetkar.frontend.origin")
+    List<String> allowedOrigins;
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
@@ -62,29 +66,33 @@ public class LoginResource {
         // This path is protected by OIDC in application.properties.
         // Once here, the user is authenticated.
         String dynamicRedirect = context.request().getParam("redirect");
-        String destination = postLoginUri;
-        // Prevent open redirect vulnerability. The path must be local and not protocol-relative (//).
-        if (dynamicRedirect != null && !dynamicRedirect.isBlank() && dynamicRedirect.startsWith("/")) {
-            try {
-                // Decode the path to prevent bypasses using URL-encoded characters.
-                String decodedPath = URLDecoder.decode(dynamicRedirect, StandardCharsets.UTF_8);
+        redirect(context, resolveSafeDestination(dynamicRedirect));
+    }
 
-                // After decoding, a protocol-relative URL attack would start with "//".
-                if (decodedPath.startsWith("//")) {
-                    logger.warn("Ignoring redirect parameter attempting protocol-relative redirect: {}", dynamicRedirect);
-                } else {
-                    // It's safe to normalize the original path now, as the main vector is checked.
-                    String normalizedPath = new URI(dynamicRedirect).normalize().getPath();
-                    if (normalizedPath != null && !normalizedPath.startsWith("/..")) {
-                        destination = normalizedPath;
-                    }
-                }
-            } catch (IllegalArgumentException | URISyntaxException e) {
-                logger.warn("Ignoring malformed redirect parameter: {}", dynamicRedirect, e);
-            }
+    private String resolveSafeDestination(String dynamicRedirect) {
+        if (dynamicRedirect == null || dynamicRedirect.isBlank() || !dynamicRedirect.startsWith("/")) {
+            return postLoginUri;
         }
-                
-        redirect(context, destination);
+
+        try {
+            // Decode the path to prevent bypasses using URL-encoded characters.
+            String decodedPath = URLDecoder.decode(dynamicRedirect, StandardCharsets.UTF_8);
+
+            // After decoding, a protocol-relative URL attack would start with "//".
+            if (decodedPath.startsWith("//")) {
+                logger.warn("Ignoring redirect parameter attempting protocol-relative redirect: {}", dynamicRedirect);
+                return postLoginUri;
+            }
+
+            // It's safe to normalize the original path now, as the main vector is checked.
+            String normalizedPath = new URI(dynamicRedirect).normalize().getPath();
+            if (normalizedPath != null && !normalizedPath.startsWith("/..")) {
+                return normalizedPath;
+            }
+        } catch (IllegalArgumentException | URISyntaxException e) {
+            logger.warn("Ignoring malformed redirect parameter: {}", dynamicRedirect, e);
+        }
+        return postLoginUri;
     }
 
     @Route(path = "/logout", methods = HttpMethod.GET)
@@ -114,6 +122,59 @@ public class LoginResource {
     }
 
     private void redirect(RoutingContext context, String location) {
-        context.response().setStatusCode(302).putHeader(LOCATION_HEADER, location).end();
+        String base = determineBaseUrl(context);
+        String finalLocation = applyBaseToLocation(base, location);
+
+        logger.info("Redirecting to: {}", finalLocation);
+        context.response()
+                .setStatusCode(302)
+                .putHeader(LOCATION_HEADER, finalLocation)
+                .end();
+    }
+
+    private String determineBaseUrl(RoutingContext context) {
+        String requesterBase = context.request().getHeader("Origin");
+        if (requesterBase == null) {
+            requesterBase = context.request().getHeader("Referer");
+        }
+
+        if (requesterBase == null) {
+            return null;
+        }
+
+        String sanitizedRequester = requesterBase.replaceAll("/$", "");
+        for (String allowed : allowedOrigins) {
+            String sanitizedAllowed = allowed.trim().replaceAll("/$", "");
+            if (sanitizedRequester.equalsIgnoreCase(sanitizedAllowed)) {
+                try {
+                    URI originUri = new URI(requesterBase);
+                    return originUri.getScheme() + "://" + originUri.getAuthority();
+                } catch (URISyntaxException _) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String applyBaseToLocation(String base, String location) {
+        if (base == null) {
+            return location;
+        }
+
+        if (location.startsWith("/dashboard") || location.equals("/") || location.startsWith("/briefings")) {
+            return base + (location.startsWith("/") ? "" : "/") + location;
+        } 
+        
+        if (location.startsWith("http")) {
+            if (location.contains("/dashboard")) {
+                return base + "/dashboard";
+            } 
+            if (location.endsWith("/") || location.equals(postLogoutUri)) {
+                return base + "/";
+            }
+        }
+        
+        return location;
     }
 }
