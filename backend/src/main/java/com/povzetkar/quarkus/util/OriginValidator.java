@@ -22,7 +22,7 @@ public class OriginValidator {
         if (allowedOrigins != null) {
             normalizedOrigins = allowedOrigins.stream()
                     .map(String::trim)
-                    .map(s -> s.replaceAll("/$", "").toLowerCase())
+                    .map(s -> (s.endsWith("/") ? s.substring(0, s.length() - 1) : s).toLowerCase())
                     .collect(Collectors.toSet());
         } else {
             normalizedOrigins = new HashSet<>();
@@ -33,7 +33,7 @@ public class OriginValidator {
         if (origin == null) {
             return false;
         }
-        String normalizedOrigin = origin.replaceAll("/$", "").toLowerCase();
+        String normalizedOrigin = (origin.endsWith("/") ? origin.substring(0, origin.length() - 1) : origin).toLowerCase();
         return normalizedOrigins.contains(normalizedOrigin);
     }
 }
