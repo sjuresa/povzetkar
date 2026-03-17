@@ -6,18 +6,21 @@ import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.Route.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class LoginResource {
@@ -38,6 +41,20 @@ public class LoginResource {
 
     @ConfigProperty(name = "povzetkar.frontend.origin")
     List<String> allowedOrigins;
+
+    private Set<String> normalizedOrigins;
+
+    @PostConstruct
+    void init() {
+        if (allowedOrigins != null) {
+            normalizedOrigins = allowedOrigins.stream()
+                    .map(String::trim)
+                    .map(s -> s.replaceAll("/$", "").toLowerCase())
+                    .collect(Collectors.toSet());
+        } else {
+            normalizedOrigins = new HashSet<>();
+        }
+    }
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
@@ -142,16 +159,13 @@ public class LoginResource {
             return null;
         }
 
-        String sanitizedRequester = requesterBase.replaceAll("/$", "");
-        for (String allowed : allowedOrigins) {
-            String sanitizedAllowed = allowed.trim().replaceAll("/$", "");
-            if (sanitizedRequester.equalsIgnoreCase(sanitizedAllowed)) {
-                try {
-                    URI originUri = new URI(requesterBase);
-                    return originUri.getScheme() + "://" + originUri.getAuthority();
-                } catch (URISyntaxException _) {
-                    return null;
-                }
+        String sanitizedRequester = requesterBase.replaceAll("/$", "").toLowerCase();
+        if (normalizedOrigins.contains(sanitizedRequester)) {
+            try {
+                URI originUri = new URI(requesterBase);
+                return originUri.getScheme() + "://" + originUri.getAuthority();
+            } catch (URISyntaxException _) {
+                return null;
             }
         }
         return null;
@@ -163,15 +177,20 @@ public class LoginResource {
         }
 
         if (location.startsWith("/dashboard") || location.equals("/") || location.startsWith("/briefings")) {
-            return base + (location.startsWith("/") ? "" : "/") + location;
+            return base + location;
         } 
         
         if (location.startsWith("http")) {
-            if (location.contains("/dashboard")) {
-                return base + "/dashboard";
-            } 
-            if (location.endsWith("/") || location.equals(postLogoutUri)) {
-                return base + "/";
+            try {
+                String path = new URI(location).getPath();
+                if ("/dashboard".equals(path)) {
+                    return base + "/dashboard";
+                } 
+                if ("/".equals(path) || (path != null && path.isEmpty()) || location.equals(postLogoutUri)) {
+                    return base + "/";
+                }
+            } catch (URISyntaxException _) {
+                // Malformed URI, let it pass through
             }
         }
         

@@ -8,6 +8,8 @@ import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -29,7 +31,14 @@ public class CorsPreflightHandler {
     @ConfigProperty(name = "povzetkar.cors.allowed-headers")
     String allowedHeaders;
 
+    private Set<String> normalizedOrigins;
+
     void onStart(@Observes StartupEvent ev) {
+        // Pre-normalize origins at startup for efficient lookups
+        normalizedOrigins = allowedOrigins.stream()
+                .map(String::trim)
+                .map(s -> s.replaceAll("/$", "").toLowerCase())
+                .collect(Collectors.toSet());
         router.route().order(-10000).handler(rc -> {
             String origin = rc.request().getHeader("Origin");
 
@@ -53,11 +62,8 @@ public class CorsPreflightHandler {
         if (origin == null) {
             return false;
         }
-        String normalizedOrigin = origin.replaceAll("/$", "");
-        return allowedOrigins.stream()
-                .map(String::trim)
-                .map(s -> s.replaceAll("/$", ""))
-                .anyMatch(ao -> ao.equalsIgnoreCase(normalizedOrigin));
+        String normalizedOrigin = origin.replaceAll("/$", "").toLowerCase();
+        return normalizedOrigins.contains(normalizedOrigin);
     }
 
     private void setupCorsResponseHeaders(RoutingContext rc, String origin) {
