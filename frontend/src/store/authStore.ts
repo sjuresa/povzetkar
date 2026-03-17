@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     return checkAuthPromise;
   },
   login: () => {
-    globalThis.location.href = `/login`;
+    globalThis.location.href = `/auth/login`;
   },
   logout: () => {
     globalThis.location.href = `/logout`;
