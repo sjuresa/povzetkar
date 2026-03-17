@@ -132,24 +132,28 @@ public class LoginResource {
     }
 
     private String determineBaseUrl(RoutingContext context) {
-        String requesterBase = context.request().getHeader("Origin");
-        if (requesterBase == null) {
-            requesterBase = context.request().getHeader("Referer");
-        }
+        String origin = context.request().getHeader("Origin");
 
-        if (requesterBase == null) {
-            return null;
-        }
-
-        if (originValidator.isAllowed(requesterBase)) {
-            try {
-                URI originUri = new URI(requesterBase);
-                return originUri.getScheme() + "://" + originUri.getAuthority();
-            } catch (URISyntaxException e) {
-                logger.warn("Failed to parse requester base origin: {}", requesterBase, e);
-                return null;
+        if (origin == null) {
+            String referer = context.request().getHeader("Referer");
+            if (referer != null) {
+                try {
+                    URI refererUri = new URI(referer);
+                    String scheme = refererUri.getScheme();
+                    String authority = refererUri.getAuthority();
+                    if (scheme != null && authority != null) {
+                        origin = scheme + "://" + authority;
+                    }
+                } catch (URISyntaxException e) {
+                    logger.warn("Failed to parse Referer header to extract origin: {}", referer, e);
+                }
             }
         }
+
+        if (origin != null && originValidator.isAllowed(origin)) {
+            return origin;
+        }
+
         return null;
     }
 
