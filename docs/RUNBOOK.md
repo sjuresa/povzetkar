@@ -64,7 +64,7 @@ The local database environment is managed by Docker Compose and is located in th
     # Empty for relative proxying (recommended)
     VITE_API_BASE_URL=
     # Comma-separated list of extra allowed hosts (e.g. for Tailscale)
-    VITE_ALLOWED_HOSTS=ninki.tailed12a9.ts.net
+    VITE_ALLOWED_HOSTS=www.example.com,192.168.1.100
     ```
 
 2.  **Start the Database:**
