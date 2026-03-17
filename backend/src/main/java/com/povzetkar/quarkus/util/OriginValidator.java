@@ -19,6 +19,7 @@ public class OriginValidator {
     @PostConstruct
     public void init() {
         normalizedOrigins = allowedOrigins.stream()
+                .filter(origin -> origin != null && !origin.isBlank())
                 .map(this::normalize)
                 .collect(Collectors.toSet());
     }
