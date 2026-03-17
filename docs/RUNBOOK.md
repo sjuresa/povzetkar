@@ -34,13 +34,13 @@ It is the primary technical guide for developers working on the project.
 ## 3. Local Environment Setup
 The local database environment is managed by Docker Compose and is located in the `backend/` directory.
 
-1.  **Create the Environment File:**
-The application requires a `.env` file in the `backend/` directory for database credentials and API keys. The
-`backend/docker-compose.yml` uses these to configure the PostgreSQL container.
-them for its database connection.
+1.  **Create Environment Files:**
+    The application requires `.env` files for both the backend and frontend to handle configuration across different dev environments.
 
+    **Backend (`backend/.env`):**
+    Copy `backend/.env.example` to `backend/.env` and update values.
     ```properties
-    # For the PostgreSQL container (development)
+    # For PostgreSQL (dev & tests)
     DB_KIND=postgresql
     DB_HOST=localhost
     DB_PORT=5432
@@ -51,10 +51,20 @@ them for its database connection.
     TEST_DB_USER=your_test_db_user
     TEST_DB_PASS=your_test_db_password
     TEST_DB_NAME=povzetkar_test
-    # For the Quarkus application
+    
+    # API Keys & Auth
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
     FRONTEND_URL=http://localhost:5173
+    ```
+
+    **Frontend (`frontend/.env`):**
+    Copy `frontend/.env.example` to `frontend/.env` and update values.
+    ```properties
+    # Empty for relative proxying (recommended)
+    VITE_API_BASE_URL=
+    # Comma-separated list of extra allowed hosts (e.g. for Tailscale)
+    VITE_ALLOWED_HOSTS=ninki.tailed12a9.ts.net
     ```
 
 2.  **Start the Database:**
