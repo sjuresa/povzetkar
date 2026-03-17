@@ -21,7 +21,7 @@
         <h1 class="login-title">Povzetkar AI</h1>
         <p class="login-subtitle">Your intelligent content summarizer</p>
 
-        <a href="/auth/login" role="button" class="login-btn">
+        <a href="/auth/login{#if redirect}?redirect={redirect}{/if}" role="button" class="login-btn">
             <i class="fab fa-google"></i> Login with Google
         </a>
 
