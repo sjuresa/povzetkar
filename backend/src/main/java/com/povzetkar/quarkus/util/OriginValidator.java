@@ -3,6 +3,8 @@ package com.povzetkar.quarkus.util;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +14,8 @@ import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class OriginValidator {
+
+    private static final Logger logger = LoggerFactory.getLogger(OriginValidator.class);
 
     @ConfigProperty(name = "povzetkar.cors.allowed-origins")
     List<String> allowedOrigins;
@@ -48,6 +52,7 @@ public class OriginValidator {
             }
         } catch (URISyntaxException e) {
             // Fallback for malformed or non-standard origins
+            logger.warn("Malformed origin URI '{}', using fallback normalization.", origin.trim(), e);
         }
         // Fallback to simple normalization for non-hierarchical URIs or on error
         String trimmed = origin.trim();
