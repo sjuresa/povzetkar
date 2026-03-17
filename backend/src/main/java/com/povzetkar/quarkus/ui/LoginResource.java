@@ -145,7 +145,8 @@ public class LoginResource {
             try {
                 URI originUri = new URI(requesterBase);
                 return originUri.getScheme() + "://" + originUri.getAuthority();
-            } catch (URISyntaxException _) {
+            } catch (URISyntaxException e) {
+                logger.warn("Failed to parse requester base origin: {}", requesterBase, e);
                 return null;
             }
         }

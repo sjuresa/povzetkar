@@ -30,14 +30,10 @@ public class OriginValidator {
     }
 
     public boolean isAllowed(String origin) {
-        if (origin == null || normalizedOrigins == null) {
+        if (origin == null) {
             return false;
         }
         String normalizedOrigin = origin.replaceAll("/$", "").toLowerCase();
         return normalizedOrigins.contains(normalizedOrigin);
-    }
-    
-    public String getFirstOrigin() {
-        return (allowedOrigins != null && !allowedOrigins.isEmpty()) ? allowedOrigins.get(0) : null;
     }
 }
