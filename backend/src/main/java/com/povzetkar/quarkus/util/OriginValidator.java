@@ -4,7 +4,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,13 +18,9 @@ public class OriginValidator {
 
     @PostConstruct
     public void init() {
-        if (allowedOrigins != null) {
-            normalizedOrigins = allowedOrigins.stream()
-                    .map(this::normalize)
-                    .collect(Collectors.toSet());
-        } else {
-            normalizedOrigins = new HashSet<>();
-        }
+        normalizedOrigins = allowedOrigins.stream()
+                .map(this::normalize)
+                .collect(Collectors.toSet());
     }
 
     public boolean isAllowed(String origin) {
