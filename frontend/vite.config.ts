@@ -12,20 +12,22 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: ['ninki.tailed12a9.ts.net', 'localhost', '127.0.0.1'],
-    proxy: [
-      '/api',
-      '/auth/login',
-      '/login',
-      '/logout',
-      '/static',
-    ].reduce((proxy, path) => {
-      proxy[path] = {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        xfwd: true,
-      };
-      return proxy;
-    }, {} as Record<string, object>),
+    proxy: Object.fromEntries(
+      [
+        '/api',
+        '/auth/login',
+        '/login',
+        '/logout',
+        '/static',
+      ].map((path) => [
+        path,
+        {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          xfwd: true,
+        },
+      ])
+    ),
   },
   // @ts-expect-error - ssgOptions is not in the base Vite config type but handled by vite-react-ssg
   ssgOptions: {

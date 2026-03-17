@@ -1,22 +1,18 @@
 package com.povzetkar.quarkus.ui;
 
+import com.povzetkar.quarkus.util.OriginValidator;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.Route.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.slf4j.Logger;
@@ -39,22 +35,8 @@ public class LoginResource {
     @ConfigProperty(name = "povzetkar.auth.post-logout-uri", defaultValue = LOGIN_PATH)
     String postLogoutUri;
 
-    @ConfigProperty(name = "povzetkar.frontend.origin")
-    List<String> allowedOrigins;
-
-    private Set<String> normalizedOrigins;
-
-    @PostConstruct
-    void init() {
-        if (allowedOrigins != null) {
-            normalizedOrigins = allowedOrigins.stream()
-                    .map(String::trim)
-                    .map(s -> s.replaceAll("/$", "").toLowerCase())
-                    .collect(Collectors.toSet());
-        } else {
-            normalizedOrigins = new HashSet<>();
-        }
-    }
+    @Inject
+    OriginValidator originValidator;
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
@@ -159,8 +141,7 @@ public class LoginResource {
             return null;
         }
 
-        String sanitizedRequester = requesterBase.replaceAll("/$", "").toLowerCase();
-        if (normalizedOrigins.contains(sanitizedRequester)) {
+        if (originValidator.isAllowed(requesterBase)) {
             try {
                 URI originUri = new URI(requesterBase);
                 return originUri.getScheme() + "://" + originUri.getAuthority();

@@ -1,15 +1,13 @@
 package com.povzetkar.quarkus.api.filter;
 
+import com.povzetkar.quarkus.util.OriginValidator;
 import io.quarkus.runtime.StartupEvent;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -22,49 +20,37 @@ public class CorsPreflightHandler {
     @Inject
     Router router;
 
-    @ConfigProperty(name = "povzetkar.frontend.origin")
-    List<String> allowedOrigins;
+    @ConfigProperty(name = "povzetkar.cors.allowed-headers")
+    String allowedHeaders;
 
     @ConfigProperty(name = "povzetkar.cors.allowed-methods")
     String allowedMethods;
 
-    @ConfigProperty(name = "povzetkar.cors.allowed-headers")
-    String allowedHeaders;
-
-    private Set<String> normalizedOrigins;
+    @Inject
+    OriginValidator originValidator;
 
     void onStart(@Observes StartupEvent ev) {
-        // Pre-normalize origins at startup for efficient lookups
-        normalizedOrigins = allowedOrigins.stream()
-                .map(String::trim)
-                .map(s -> s.replaceAll("/$", "").toLowerCase())
-                .collect(Collectors.toSet());
-        router.route().order(-10000).handler(rc -> {
-            String origin = rc.request().getHeader("Origin");
-
-            if (!isOriginAllowed(origin)) {
-                rc.next();
-                return;
-            }
-
-            setupCorsResponseHeaders(rc, origin);
-
-            if (rc.request().method() == HttpMethod.OPTIONS) {
-                handlePreflightResponse(rc, origin);
-            } else {
-                handleAjaxRedirect(rc);
-                rc.next();
-            }
-        });
+        router.route().order(-10000).handler(this::handleCorsRequest);
     }
 
-    private boolean isOriginAllowed(String origin) {
-        if (origin == null) {
-            return false;
+    private void handleCorsRequest(RoutingContext rc) {
+        String origin = rc.request().getHeader("Origin");
+
+        if (!originValidator.isAllowed(origin)) {
+            rc.next();
+            return;
         }
-        String normalizedOrigin = origin.replaceAll("/$", "").toLowerCase();
-        return normalizedOrigins.contains(normalizedOrigin);
+
+        setupCorsResponseHeaders(rc, origin);
+
+        if (rc.request().method() == HttpMethod.OPTIONS) {
+            handlePreflightResponse(rc, origin);
+        } else {
+            handleAjaxRedirect(rc);
+            rc.next();
+        }
     }
+
 
     private void setupCorsResponseHeaders(RoutingContext rc, String origin) {
         rc.addHeadersEndHandler(v -> {
