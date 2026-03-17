@@ -21,8 +21,7 @@ public class OriginValidator {
     public void init() {
         if (allowedOrigins != null) {
             normalizedOrigins = allowedOrigins.stream()
-                    .map(String::trim)
-                    .map(s -> (s.endsWith("/") ? s.substring(0, s.length() - 1) : s).toLowerCase())
+                    .map(this::normalize)
                     .collect(Collectors.toSet());
         } else {
             normalizedOrigins = new HashSet<>();
@@ -33,7 +32,14 @@ public class OriginValidator {
         if (origin == null) {
             return false;
         }
-        String normalizedOrigin = (origin.endsWith("/") ? origin.substring(0, origin.length() - 1) : origin).toLowerCase();
-        return normalizedOrigins.contains(normalizedOrigin);
+        return normalizedOrigins.contains(normalize(origin));
+    }
+
+    private String normalize(String origin) {
+        if (origin == null) {
+            return null;
+        }
+        String trimmed = origin.trim();
+        return (trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed).toLowerCase();
     }
 }
