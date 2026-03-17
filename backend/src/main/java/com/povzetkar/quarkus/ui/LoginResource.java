@@ -176,24 +176,14 @@ public class LoginResource {
             return location;
         }
 
-        if (location.startsWith("/dashboard") || location.equals("/") || location.startsWith("/briefings")) {
+        // Prepend base to all relative paths. Paths are sanitized against open redirects
+        // before this method is called.
+        if (location.startsWith("/")) {
             return base + location;
-        } 
-        
-        if (location.startsWith("http")) {
-            try {
-                String path = new URI(location).getPath();
-                if ("/dashboard".equals(path)) {
-                    return base + "/dashboard";
-                } 
-                if ("/".equals(path) || (path != null && path.isEmpty()) || location.equals(postLogoutUri)) {
-                    return base + "/";
-                }
-            } catch (URISyntaxException _) {
-                // Malformed URI, let it pass through
-            }
         }
-        
+
+        // The location is likely an absolute URL (e.g., for backward compatibility).
+        // The multi-host feature relies on relative paths, so we return it as-is.
         return location;
     }
 }
