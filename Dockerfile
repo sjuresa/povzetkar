@@ -29,7 +29,10 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build-backend /app/backend/target/quarkus-app/ ./
 EXPOSE 8080
-ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+ENV QUARKUS_HTTP_HOST=0.0.0.0
+ENV QUARKUS_HTTP_PORT=8080
+# Ensure the logging manager is set correctly for the runtime
+ENV JAVA_OPTS="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 CMD ["java", "-jar", "quarkus-run.jar"]
 # Verify both backend readiness (DB) and SPA availability (Static assets)
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/q/health/ready && curl -f http://localhost:8080/ || exit 1

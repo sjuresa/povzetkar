@@ -268,6 +268,34 @@ podman run -it --rm \
   si.jumis/povzetkar:latest
 ```
 
+#### 9.x Running on a Different Port
+
+If you need to run the Docker container on a different port (e.g., to avoid conflicts with a local `quarkus dev` session on 8080), you can use Docker's port mapping:
+
+```bash
+# Map host port 8081 to container port 8080
+docker run -it --rm -p 8081:8080 si.jumis/povzetkar:latest
+```
+
+#### 9.y Docker Runtime Configuration
+
+The application is configured using several environment variables in the `Dockerfile`:
+
+-   **`QUARKUS_HTTP_HOST`**: Set to `0.0.0.0` by default. This is critical for Docker, as it allows the application to listen on all available network interfaces, making it accessible from outside the container.
+-   **`QUARKUS_HTTP_PORT`**: Set to `8080` by default. You can override this using `-e QUARKUS_HTTP_PORT=8082` at runtime.
+-   **`JAVA_OPTS`**: Used to pass additional JVM arguments. Currently, it is essential for the Quarkus `LogManager` to function correctly in the runtime environment:
+    `-Djava.util.logging.manager=org.jboss.logmanager.LogManager`.
+
+Example overriding both host and port:
+
+```bash
+docker run -it --rm \
+  -e QUARKUS_HTTP_HOST=127.0.0.1 \
+  -e QUARKUS_HTTP_PORT=8082 \
+  -p 8082:8082 \
+  si.jumis/povzetkar:latest
+```
+
 ## 10. Application Usage
 
 ### 10.1 Content Source Management
