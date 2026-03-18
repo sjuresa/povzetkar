@@ -111,11 +111,21 @@ public class BackgroundJobService {
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
                 case GENERATE_TOPIC_BRIEFING -> {
                     Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(event.topicId()));
-                    jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
+                    if (topic == null) {
+                        logger.warn("Topic not found for ID: {}", event.topicId());
+                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
+                    } else {
+                        jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
+                    }
                 }
                 case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
                     ContentItem item = QuarkusTransaction.requiringNew().call(() -> ContentItem.findById(event.contentItemId()));
-                    jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
+                    if (item == null) {
+                        logger.warn("ContentItem not found for ID: {}", event.contentItemId());
+                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("ContentItem not found"));
+                    } else {
+                        jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
+                    }
                 }
                 default ->
                         jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
