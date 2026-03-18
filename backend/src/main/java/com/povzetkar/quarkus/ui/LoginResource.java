@@ -25,6 +25,8 @@ public class LoginResource {
     private static final Logger logger = LoggerFactory.getLogger(LoginResource.class);
     private static final String LOCATION_HEADER = "Location";
     private static final String LOGIN_PATH = "/login";
+    public static final String ADMIN_UI_PATH = "/ui/admin";
+    public static final String REDIRECT_PARAM = "redirect";
 
     private final Template login;
     private final SecurityIdentity securityIdentity;
@@ -55,16 +57,19 @@ public class LoginResource {
     @Route(path = "/login", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void login(RoutingContext context) {
-        String dynamicRedirect = context.request().getParam("redirect");
+        String dynamicRedirect = context.request().getParam(REDIRECT_PARAM);
         if (dynamicRedirect == null) {
-            dynamicRedirect = context.get("redirect");
+            Object redirectObj = context.get(REDIRECT_PARAM);
+            if (redirectObj instanceof String redirect) {
+                dynamicRedirect = redirect;
+            }
         }
 
         if (!securityIdentity.isAnonymous()) {
             redirect(context, resolveSafeDestination(dynamicRedirect));
             return;
         }
-        login.instance().data("redirect", dynamicRedirect).createUni().subscribe()
+        login.instance().data(REDIRECT_PARAM, dynamicRedirect).createUni().subscribe()
                 .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html),
                         context::fail);
     }
@@ -72,12 +77,12 @@ public class LoginResource {
     @Route(path = "/auth/login", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void authLogin(RoutingContext context) {
-        String dynamicRedirect = context.request().getParam("redirect");
+        String dynamicRedirect = context.request().getParam(REDIRECT_PARAM);
         String destination = resolveSafeDestination(dynamicRedirect);
 
         // If no explicit redirect and we are accessing backend directly (no Origin/Referer)
         if (dynamicRedirect == null && determineBaseUrl(context) == null) {
-            destination = "/ui/admin";
+            destination = ADMIN_UI_PATH;
         }
 
         redirect(context, destination);
@@ -138,7 +143,7 @@ public class LoginResource {
         String base = determineBaseUrl(context);
         if (!securityIdentity.isAnonymous()) {
             // If accessing directly via root and authenticated, go to backend UI
-            String target = (base != null) ? postLoginUri : "/ui/admin";
+            String target = (base != null) ? postLoginUri : ADMIN_UI_PATH;
             redirect(context, target);
             return;
         }
@@ -147,7 +152,7 @@ public class LoginResource {
         if ("/".equals(postLogoutUri) && base == null) {
             // To prevent loop redirect to "/", render login directly.
             // Pass /ui/admin as default redirect so the button works correctly.
-            context.put("redirect", "/ui/admin");
+            context.put(REDIRECT_PARAM, ADMIN_UI_PATH);
             login(context);
             return;
         }
