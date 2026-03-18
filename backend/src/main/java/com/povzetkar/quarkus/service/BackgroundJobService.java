@@ -12,6 +12,7 @@ import com.povzetkar.quarkus.api.ApiConstants;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
 import com.povzetkar.quarkus.service.event.JobStatusChangedEvent;
+import com.povzetkar.quarkus.service.event.JobTriggerInternalEvent;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,6 +35,7 @@ public class BackgroundJobService {
     private final java.time.Clock clock;
     private final JustInTimeSummarizationScheduler summarizationScheduler;
     private final Event<JobStatusChangedEvent> jobStatusEvent;
+    private final Event<JobTriggerInternalEvent> jobTriggerEvent;
     private static final Logger logger = LoggerFactory.getLogger(BackgroundJobService.class);
 
     @Inject
@@ -41,12 +43,14 @@ public class BackgroundJobService {
                                 BackgroundJobMapper backgroundJobMapper,
                                 java.time.Clock clock,
                                 JustInTimeSummarizationScheduler summarizationScheduler,
-                                Event<JobStatusChangedEvent> jobStatusEvent) {
+                                Event<JobStatusChangedEvent> jobStatusEvent,
+                                Event<JobTriggerInternalEvent> jobTriggerEvent) {
         this.orchestrationManager = orchestrationManager;
         this.backgroundJobMapper = backgroundJobMapper;
         this.clock = clock;
         this.summarizationScheduler = summarizationScheduler;
         this.jobStatusEvent = jobStatusEvent;
+        this.jobTriggerEvent = jobTriggerEvent;
     }
 
     @Transactional
@@ -60,21 +64,8 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        // Trigger asynchronously outside of the current transaction
-        executeInBackgroundWithMdc(() -> {
-            Uni<Void> jobTask;
-            switch (type) {
-                case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
-                case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
-                case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
-                default ->
-                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + type));
-            }
-            executeJobLifecycle(job.id, jobTask);
-        });
+        // Fire event to trigger task after transaction success
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, type, userId, null, null));
 
         return job;
     }
@@ -85,10 +76,7 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        executeInBackgroundWithMdc(() -> {
-            Uni<Void> jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
-            executeJobLifecycle(job.id, jobTask);
-        });
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, job.type, userId, null, topic.id));
 
         return job;
     }
@@ -99,12 +87,37 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        executeInBackgroundWithMdc(() -> {
-            Uni<Void> jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
-            executeJobLifecycle(job.id, jobTask);
-        });
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, type, userId, item.id, null));
 
         return job;
+    }
+
+    /**
+     * Observer that handles the actual job execution logic after the persisting transaction commits.
+     */
+    public void onJobTrigger(@jakarta.enterprise.event.Observes(during = jakarta.enterprise.event.TransactionPhase.AFTER_SUCCESS) JobTriggerInternalEvent event) {
+        executeInBackgroundWithMdc(() -> {
+            Uni<Void> jobTask;
+            switch (event.type()) {
+                case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
+                case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
+                case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
+                case GENERATE_TOPIC_BRIEFING -> {
+                    com.povzetkar.quarkus.model.Topic topic = com.povzetkar.quarkus.model.Topic.findById(event.topicId());
+                    jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
+                }
+                case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
+                    com.povzetkar.quarkus.model.ContentItem item = com.povzetkar.quarkus.model.ContentItem.findById(event.contentItemId());
+                    jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
+                }
+                default ->
+                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
+            }
+            executeJobLifecycle(event.jobId(), jobTask);
+        });
     }
 
     private void executeInBackgroundWithMdc(Runnable task) {

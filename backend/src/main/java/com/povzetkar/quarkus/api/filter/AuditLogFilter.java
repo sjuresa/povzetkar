@@ -44,6 +44,11 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
         this.userContextService = userContextService;
     }
 
+    protected AuditLogFilter() {
+        this.securityIdentity = null;
+        this.userContextService = null;
+    }
+
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         String path = requestContext.getUriInfo().getPath();
@@ -55,18 +60,23 @@ public class AuditLogFilter implements ContainerRequestFilter, ContainerResponse
 
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
-        Long startTime = (Long) requestContext.getProperty(PROPERTY_START_TIME);
-        if (startTime == null) return;
+        try {
+            Long startTime = (Long) requestContext.getProperty(PROPERTY_START_TIME);
+            if (startTime == null) return;
 
-        long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-        String correlationId = CorrelationIdFilter.currentCorrelationId();
-        String requestPath = getNormalizedPath(requestContext);
-        String userAgent = getBoundedUserAgent(requestContext);
+            long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+            String correlationId = CorrelationIdFilter.currentCorrelationId();
+            String requestPath = getNormalizedPath(requestContext);
+            String userAgent = getBoundedUserAgent(requestContext);
 
-        UserSecurityDetails security = UserSecurityDetails.capture(securityIdentity);
+            UserSecurityDetails security = UserSecurityDetails.capture(securityIdentity);
 
-        persistAuditLogAsync(correlationId, security, requestContext.getMethod(),
-                responseContext.getStatus(), requestPath, durationMs, userAgent);
+            persistAuditLogAsync(correlationId, security, requestContext.getMethod(),
+                    responseContext.getStatus(), requestPath, durationMs, userAgent);
+        } catch (Throwable t) {
+            // Never let audit logging fail the main request
+            logger.error(t, "event", "audit_log_filter_failed", "message", "Error in AuditLogFilter, bypassing audit log for this request.");
+        }
     }
 
     private String getNormalizedPath(ContainerRequestContext requestContext) {
