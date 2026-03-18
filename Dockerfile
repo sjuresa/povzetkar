@@ -3,7 +3,9 @@ FROM node:20-alpine AS build-frontend
 WORKDIR /app
 COPY frontend/package*.json ./frontend/
 RUN cd frontend && npm install --legacy-peer-deps
-COPY frontend/ ./frontend/
+COPY frontend/src ./frontend/src
+COPY frontend/public ./frontend/public
+COPY frontend/index.html frontend/tsconfig*.json frontend/*.config.* ./frontend/
 RUN cd frontend && npm run build
 
 # Stage 2: Build Backend
@@ -26,3 +28,4 @@ COPY --from=build-backend /app/backend/target/quarkus-app/ ./
 EXPOSE 8080
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 CMD ["java", "-jar", "quarkus-run.jar"]
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/q/health || exit 1
