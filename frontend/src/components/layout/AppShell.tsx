@@ -33,6 +33,15 @@ export function AppShell({ children }: AppShellProps) {
     { name: 'Sources', path: '/sources', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
   ];
 
+  const adminNavItems = [
+    { name: 'Audit Logs', path: '/admin/audit-log', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+    { name: 'System Jobs', path: '/admin/jobs', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  ];
+
+  const hasAdminPermission = user?.permissions?.some(p => 
+    ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW'].includes(p)
+  );
+
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 antialiased overflow-hidden">
       {/* Sidebar */}
@@ -86,6 +95,49 @@ export function AppShell({ children }: AppShellProps) {
               </Link>
             );
           })}
+
+          {hasAdminPermission && (
+            <div className="pt-6 mt-6 border-t border-slate-800">
+              {!sidebarCollapsed && (
+                <p className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  Administration
+                </p>
+              )}
+              {adminNavItems.map((item) => {
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative ${
+                      isActive
+                        ? 'bg-amber-500/10 text-amber-400'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    }`}
+                  >
+                    <svg
+                      className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-amber-500' : 'text-slate-500 group-hover:text-slate-300'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    {!sidebarCollapsed && (
+                      <span className="ml-3 font-medium transition-opacity duration-300">
+                        {item.name}
+                      </span>
+                    )}
+                    {sidebarCollapsed && (
+                       <div className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
+                        {item.name}
+                       </div>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-800">

@@ -26,11 +26,12 @@ import type {
 
 import type {
   AdminMetricsDTO,
+  AuditLogPaginatedResponse,
   BackgroundJobDTO,
+  BackgroundJobPaginatedResponse,
   GetApiV1AdminAuditLogParams,
   GetApiV1AdminJobsParams,
   JobTriggerRequest,
-  PaginatedResponse,
   Uuid
 } from '../model';
 
@@ -46,7 +47,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary List audit log entries
  */
 export type getApiV1AdminAuditLogResponse200 = {
-  data: PaginatedResponse
+  data: AuditLogPaginatedResponse
   status: 200
 }
 
@@ -176,7 +177,7 @@ export function useGetApiV1AdminAuditLog<TData = Awaited<ReturnType<typeof getAp
  * @summary List background jobs
  */
 export type getApiV1AdminJobsResponse200 = {
-  data: PaginatedResponse
+  data: BackgroundJobPaginatedResponse
   status: 200
 }
 

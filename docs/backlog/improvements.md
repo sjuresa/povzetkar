@@ -15,6 +15,9 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
 *   **Automatic Optimistic Locking in Orval mutator:** Enhance `customInstance` in `client.ts` to automatically extract a `version` or `meta.version` field from request data and inject the `If-Match` header for mutation methods (PATCH, PUT, DELETE), reducing manual boilerplate in TanStack Query hooks.
 *   **Axios Retry Strategy:** Implement a standard retry mechanism for transient network errors (e.g., using `axios-retry`) to improve frontend resilience during intermittent connectivity.
+*   **Admin Jobs UI Implementation:** (POV-142 Success-Followup) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
+*   **Shared Pagination Component:** Extract the navigation and page-size logic from `AuditLogPage.tsx` (and other future tables) into a reusable `components/ui/Pagination.tsx` component to reduce code duplication and standardize the UX.
+*   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
 
 ### Backend & Architecture
 

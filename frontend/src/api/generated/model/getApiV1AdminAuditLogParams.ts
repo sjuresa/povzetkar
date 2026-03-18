@@ -7,6 +7,10 @@
  */
 
 export type GetApiV1AdminAuditLogParams = {
+correlationId?: string;
+method?: string;
 page?: number;
 size?: number;
+status?: number;
+userId?: number;
 };

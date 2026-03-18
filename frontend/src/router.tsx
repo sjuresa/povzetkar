@@ -8,6 +8,7 @@ import {
 import { LandingPage } from './routes/LandingPage';
 import { DashboardPage } from './routes/DashboardPage';
 import { BriefingDetailPage } from './routes/BriefingDetailPage';
+import { AuditLogPage } from './routes/AuditLogPage';
 import { AppShell } from './components/layout/AppShell';
 
 // Define context for the router to enable type-safe auth guards
@@ -16,6 +17,7 @@ interface MyRouterContext {
     isAuthenticated: boolean;
     isLoaded: boolean;
     checkAuth: () => Promise<void>;
+    user: import('./api/generated/model').UserDTO | null;
   };
 }
 
@@ -103,6 +105,35 @@ const briefingDetailRoute = createRoute({
   component: BriefingDetailPage,
 });
 
+// 6. Admin Routes
+const adminLayoutRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/admin',
+  beforeLoad: ({ context }) => {
+    const hasAdminPerm = context.auth.user?.permissions?.some(p => 
+      ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW'].includes(p)
+    );
+    
+    if (!hasAdminPerm) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      throw redirect({ to: '/dashboard' });
+    }
+  },
+  component: () => <Outlet />,
+});
+
+const auditLogRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: 'audit-log',
+  component: AuditLogPage,
+});
+
+const adminJobsRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: 'jobs',
+  component: () => <div className="p-8 text-slate-400 italic">Background Jobs Admin coming soon...</div>,
+});
+
 // 5. Create Route Tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -111,6 +142,10 @@ const routeTree = rootRoute.addChildren([
     topicsRoute,
     briefingsRoute,
     briefingDetailRoute,
+    adminLayoutRoute.addChildren([
+      auditLogRoute,
+      adminJobsRoute
+    ]),
   ]),
 ]);
 

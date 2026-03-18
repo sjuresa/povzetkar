@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Infrastructure (POV-141):** Implemented a root-level **Multi-stage Dockerfile** integrating the React frontend into the Quarkus backend for a unified production image.
 - **Infrastructure (POV-141):** Integrated **Container Image Scanning (Trivy)** into the GitHub Actions CI pipeline, scanning the final build for vulnerabilities.
+- **Frontend (POV-142):** Implemented the **Audit Log Admin UI** for technical observability of API requests and background system events.
+- **Frontend (POV-142):** Fabricated a high-density **Audit Log Data Grid** with real-time filtering by User ID, HTTP Method, Status Code, and Correlation ID.
+- **Frontend (POV-142):** Integrated permission-based **Admin Navigation and Routing** with automated guards for `ADMIN_AUDIT_LOG_VIEW`.
+- **Backend (POV-142):** Hardened the **Audit Log API** with dynamic HQL filtering and 100% type-safe OpenAPI pagination models.
 - **Frontend (POV-140):** Integrated real-time **SSE Job Tracking** (`GET /api/v1/events/stream`) into the UI with a dedicated Zustand `eventStore`.
 - **Frontend (POV-140):** Implemented a lightweight **Toast Notification system** providing instant feedback on orchestration success, failures, and heartbeat (PULSE) status.
 - **Frontend (POV-140):** Integrated **Real-time Status Badges** into the Dashboard Hub, reflecting live "Processing" states for background jobs without page refreshes.
@@ -56,7 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend (POV-141):** Implemented an SPA catch-all route (`SpaRoutingHandler`) to support client-side navigation (e.g., `/dashboard`) on page refresh in production.
 
 ### Planned
-- Audit Log Admin UI (POV-142).
 - Finalize v0.12.0 Release.
 
 ## [v0.11.0] - 2026-03-12
