@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [v0.12.0] - 2026-03-18
+
+### Summary
+
+Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack application. This release finalizes the monorepo architecture, integrating a high-performance React/TypeScript frontend with a hardened Quarkus backend. Key highlights include a unified Docker deployment strategy with automated security scanning, a premium glassmorphic Dashboard Hub with real-time SSE job tracking, and a comprehensive Audit Log Admin UI for technical observability. With 100% end-to-end type safety, robust authentication guards, and a standardized API contract, version 0.12.0 establishes a rock-solid foundation for scalable content orchestration.
+
 ### Documentation
 - **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
 
@@ -59,8 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend (POV-141):** Corrected root access (`/`) behavior to serve the SPA instead of the legacy admin UI.
 - **Backend (POV-141):** Implemented an SPA catch-all route (`SpaRoutingHandler`) to support client-side navigation (e.g., `/dashboard`) on page refresh in production.
 
-### Planned
-- Finalize v0.12.0 Release.
 
 ## [v0.11.0] - 2026-03-12
 

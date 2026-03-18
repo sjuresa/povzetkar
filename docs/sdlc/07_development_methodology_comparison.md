@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date              | Author       | Changes                                                                                                                                         |
 |---------|-------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.8     | March 18, 2026    | Povzetkar AI | Removed "Automated Dependency Vulnerability Scanning" from proposed practices as it was adopted in v0.12.0. |
 | 1.7     | February 20, 2026 | Povzetkar AI | Removed "Architectural Decision Records (ADRs)" from proposed practices as it was adopted in v0.10.0.           |
 | 1.6     | January 20, 2026  | Povzetkar AI | Removed "Codified Testing Patterns" from proposed practices as it was adopted in v0.8.0.                                                        |
 | 1.5     | January 17, 2026  | Povzetkar AI | Updated "Amplify Learning" section to reflect the adopted Project-Wide Documentation Review practice.                                           |
@@ -112,7 +113,4 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 
 ## 7. Proposed Practices for Continuous Improvement
 
-### 7.1. Automated Dependency Vulnerability Scanning
-
-*   **What it is:** Integrating an automated tool (like Snyk or GitHub's Dependabot) into the CI/CD pipeline to continuously scan project dependencies for known security vulnerabilities.
-*   **Proposed Implementation:** As part of our "Production Hardening" phase (v0.12), we would configure Dependabot to automatically create Pull Requests to update vulnerable dependencies. This moves security from a manual check to a proactive, automated process.
+*(Section empty - all previous proposals have been adopted)*

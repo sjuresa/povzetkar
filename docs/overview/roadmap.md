@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                               |
 | 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                             |
 | 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                          |
 | 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
@@ -180,6 +181,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.12: Frontend MVP & Monorepo Foundations
 
 **Goal:** Establish a functional, deployable frontend integrated into a monorepo structure.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Frontend Architecture ADR:** Formally decide on the FE stack (Framework, CSS, State).

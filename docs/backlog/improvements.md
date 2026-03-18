@@ -10,7 +10,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### UI/UX
 
-*   **OIDC Session Mismatch Handling:** (Partially Resolved in v0.12.0) Fixed infinite redirect loops on root access and implemented explicit cookie clearing on logout. Further investigation needed for handling expired upstream sessions without manual user action.
 *   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
 *   **Automatic Optimistic Locking in Orval mutator:** Enhance `customInstance` in `client.ts` to automatically extract a `version` or `meta.version` field from request data and inject the `If-Match` header for mutation methods (PATCH, PUT, DELETE), reducing manual boilerplate in TanStack Query hooks.
