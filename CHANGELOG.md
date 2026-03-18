@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
 
 ### Changed
+- **Frontend (Auth):** Optimized OIDC login flow to initiate authentication directly via `/auth/login`, eliminating an intermediate landing page step for the Single Page Application.
+- **Infrastructure (Vite):** Refined `VITE_ALLOWED_HOSTS` parsing in `vite.config.ts` to robustly handle empty or malformed environment variables.
+- **Backend (Auth):** Improved `OriginValidator` to use `java.net.URI` for canonical normalization, correctly handling default ports (80/443) and malformed origins.
+- **Backend (Auth):** Refactored `LoginResource` to use constructor injection and constants for path and parameter management.
 - **Infrastructure (POV-138):** Stabilized the frontend stack by pinning **Vite 6** and **Tailwind 4** (stable) to resolve peer dependency conflicts.
 - **Backend:** Switched to `${project.root.basedir}` (using `maven.multiModuleProjectDirectory`) for stable cross-module resource loading, independent of directory depth.
 - **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
@@ -41,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend:** Switched `backend/pom.xml` to `<packaging>quarkus</packaging>` to leverage standard lifecycle bindings and eliminate redundant plugin executions.
 - **Backend:** Unified plugin and dependency versions using new properties in the root POM.
 - **Backend:** Simplified `backend/pom.xml` by removing redundant versions and execution blocks inherited from the root POM.
+
+### Fixed
+- **Backend (Auth):** Resolved an infinite redirect loop when accessing the backend root path (`/`) anonymously.
+- **Backend (Auth):** Ensured the session cookie is explicitly cleared and cache-prevention headers are present during logout to prevent "sticky" sessions.
 
 ### Planned
 - CD & Scanning Hardening (POV-141).

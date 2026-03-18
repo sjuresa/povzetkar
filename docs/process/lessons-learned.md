@@ -432,3 +432,20 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
   // GOOD: Only re-renders if array content actually changes
   const active = useStore(useShallow((s) => s.items.filter(i => i.active)));
   ```
+---
+
+## 16. Authentication & Session Management (BFF Pattern)
+
+### 16.1 Direct OIDC Initiation for SPAs
+- **The Problem:** In a BFF (Backend-for-Frontend) architecture, directing a Single Page Application (SPA) to a server-side "Login" page before the OIDC provider (Google) adds a redundant user interaction.
+- **The Standard:** SPAs should navigate directly to the backend's OIDC initiation endpoint (e.g., `/auth/login`). The backend should then immediately redirect to the OIDC provider. This reduces the number of clicks and redirects for the end user.
+
+### 16.2 Explicit Cookie Clearing & Cache Prevention
+- **The Problem:** Modern browsers may cache `302 Found` redirects or retain session cookies if the path/domain isn't precisely matched during logout. Re-visiting a protected resource immediately after logout can trigger an invisible auto-login if the OIDC provider session is still active.
+- **The Standard:** 
+  1. During logout, manually clear the session cookie by adding a `Set-Cookie` header with `Max-Age=0` and matching `Path=/`.
+  2. Set explicit cache-prevention headers (`Cache-Control: no-cache, no-store, must-revalidate`) on all authentication-related redirects. This ensures the browser always evaluates the actual authentication state rather than relying on cached results.
+
+### 16.3 Canonical Origin Normalization
+- **The Problem:** Incoming `Origin` headers may or may not include default ports (e.g., `https://example.com:443`). Simple string comparisons fail when the configured allowed origin differs from the header's port representation.
+- **The Standard:** Use `java.net.URI` to parse the origin string and reconstruct it in a canonical form (scheme + host + explicit non-default port). This provides a robust foundation for CORS and redirect validation. Always log malformed origins at `WARN` level to facilitate debugging without crashing the validator.
