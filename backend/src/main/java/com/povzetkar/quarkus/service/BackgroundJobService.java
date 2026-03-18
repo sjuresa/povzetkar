@@ -1,23 +1,27 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.api.ApiConstants;
 import com.povzetkar.quarkus.api.OrchestrationRequest;
-import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
-import com.povzetkar.quarkus.api.ApiConstants;
-import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.service.event.JobStatusChangedEvent;
 import com.povzetkar.quarkus.service.event.JobTriggerInternalEvent;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +75,7 @@ public class BackgroundJobService {
     }
 
     @Transactional
-    public BackgroundJob triggerTopicBriefingJob(com.povzetkar.quarkus.model.Topic topic, Long userId) {
+    public BackgroundJob triggerTopicBriefingJob(Topic topic, Long userId) {
         BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_BRIEFING);
         job.userId = userId;
         job.persist();
@@ -82,7 +86,7 @@ public class BackgroundJobService {
     }
 
     @Transactional
-    public BackgroundJob triggerItemJob(com.povzetkar.quarkus.model.ContentItem item, JobType type, Long userId) {
+    public BackgroundJob triggerItemJob(ContentItem item, JobType type, Long userId) {
         BackgroundJob job = new BackgroundJob(type);
         job.userId = userId;
         job.persist();
@@ -106,11 +110,11 @@ public class BackgroundJobService {
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
                 case GENERATE_TOPIC_BRIEFING -> {
-                    com.povzetkar.quarkus.model.Topic topic = com.povzetkar.quarkus.model.Topic.findById(event.topicId());
+                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(event.topicId()));
                     jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
                 }
                 case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
-                    com.povzetkar.quarkus.model.ContentItem item = com.povzetkar.quarkus.model.ContentItem.findById(event.contentItemId());
+                    ContentItem item = QuarkusTransaction.requiringNew().call(() -> ContentItem.findById(event.contentItemId()));
                     jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
                 }
                 default ->
@@ -147,7 +151,7 @@ public class BackgroundJobService {
 
     public Uni<Void> updateJobStatusUni(UUID jobId, JobStatus status, String errorMessage) {
         return Uni.createFrom().deferred(() -> {
-            io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> updateStatus(jobId, status, errorMessage));
+            QuarkusTransaction.requiringNew().run(() -> updateStatus(jobId, status, errorMessage));
             return Uni.createFrom().voidItem();
         });
     }
@@ -155,7 +159,7 @@ public class BackgroundJobService {
     @Transactional
     public void updateStatus(UUID jobId, JobStatus status, String errorMessage) {
         BackgroundJob job = BackgroundJob.<BackgroundJob>findByIdOptional(jobId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("BackgroundJob not found: " + jobId));
+                .orElseThrow(() -> new EntityNotFoundException("BackgroundJob not found: " + jobId));
         job.status = status;
         if (status == JobStatus.RUNNING) {
             if (job.startedAt == null) {
@@ -165,8 +169,8 @@ public class BackgroundJobService {
             job.endedAt = clock.instant();
             if (errorMessage != null) {
                 logger.error("Job [{}] failed with error: {}", jobId, errorMessage);
-                if (errorMessage.length() > com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
-                    job.errorMessage = errorMessage.substring(0, com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
+                if (errorMessage.length() > BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
+                    job.errorMessage = errorMessage.substring(0, BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
                 } else {
                     job.errorMessage = errorMessage;
                 }
