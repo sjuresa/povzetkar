@@ -9,14 +9,15 @@ import io.quarkus.vertx.web.Route.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @ApplicationScoped
 public class LoginResource {
@@ -24,6 +25,8 @@ public class LoginResource {
     private static final Logger logger = LoggerFactory.getLogger(LoginResource.class);
     private static final String LOCATION_HEADER = "Location";
     private static final String LOGIN_PATH = "/login";
+    public static final String ADMIN_UI_PATH = "/ui/admin";
+    public static final String REDIRECT_PARAM = "redirect";
 
     private final Template login;
     private final SecurityIdentity securityIdentity;
@@ -35,26 +38,38 @@ public class LoginResource {
     @ConfigProperty(name = "povzetkar.auth.post-logout-uri", defaultValue = LOGIN_PATH)
     String postLogoutUri;
 
-    @Inject
-    OriginValidator originValidator;
+    @ConfigProperty(name = "quarkus.http.auth.session.cookie-name")
+    String sessionCookieName;
+
+    private final OriginValidator originValidator;
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
-            SecurityIdentity securityIdentity,
-            io.quarkus.oidc.OidcSession oidcSession) {
+                         SecurityIdentity securityIdentity,
+                         io.quarkus.oidc.OidcSession oidcSession,
+                         OriginValidator originValidator) {
         this.login = login;
         this.securityIdentity = securityIdentity;
         this.oidcSession = oidcSession;
+        this.originValidator = originValidator;
     }
 
     @Route(path = "/login", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void login(RoutingContext context) {
+        String dynamicRedirect = context.request().getParam(REDIRECT_PARAM);
+        if (dynamicRedirect == null) {
+            Object redirectObj = context.get(REDIRECT_PARAM);
+            if (redirectObj instanceof String redirect) {
+                dynamicRedirect = redirect;
+            }
+        }
+
         if (!securityIdentity.isAnonymous()) {
-            redirect(context, postLoginUri);
+            redirect(context, resolveSafeDestination(dynamicRedirect));
             return;
         }
-        login.instance().createUni().subscribe()
+        login.instance().data(REDIRECT_PARAM, dynamicRedirect).createUni().subscribe()
                 .with(html -> context.response().putHeader("Content-Type", "text/html; charset=utf-8").end(html),
                         context::fail);
     }
@@ -62,10 +77,15 @@ public class LoginResource {
     @Route(path = "/auth/login", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void authLogin(RoutingContext context) {
-        // This path is protected by OIDC in application.properties.
-        // Once here, the user is authenticated.
-        String dynamicRedirect = context.request().getParam("redirect");
-        redirect(context, resolveSafeDestination(dynamicRedirect));
+        String dynamicRedirect = context.request().getParam(REDIRECT_PARAM);
+        String destination = resolveSafeDestination(dynamicRedirect);
+
+        // If no explicit redirect and we are accessing backend directly (no Origin/Referer)
+        if (dynamicRedirect == null && determineBaseUrl(context) == null) {
+            destination = ADMIN_UI_PATH;
+        }
+
+        redirect(context, destination);
     }
 
     private String resolveSafeDestination(String dynamicRedirect) {
@@ -105,6 +125,10 @@ public class LoginResource {
         oidcSession.logout().subscribe().with(
                 _ -> {
                     logger.info("Successfully destroyed local application session.");
+                    // Manually clear the session cookie as a safety measure to ensure browser reflects logout immediately
+                    context.response().addCookie(io.vertx.core.http.Cookie.cookie(sessionCookieName, "")
+                            .setMaxAge(0)
+                            .setPath("/"));
                     redirect(context, postLogoutUri);
                 },
                 err -> {
@@ -116,8 +140,24 @@ public class LoginResource {
     @Route(path = "/", methods = HttpMethod.GET)
     @Operation(hidden = true)
     public void index(RoutingContext context) {
-        String location = securityIdentity.isAnonymous() ? postLogoutUri : postLoginUri;
-        redirect(context, location);
+        String base = determineBaseUrl(context);
+        if (!securityIdentity.isAnonymous()) {
+            // If accessing directly via root and authenticated, go to backend UI
+            String target = (base != null) ? postLoginUri : ADMIN_UI_PATH;
+            redirect(context, target);
+            return;
+        }
+
+        // If anonymous and target is root, check if we'd loop
+        if ("/".equals(postLogoutUri) && base == null) {
+            // To prevent loop redirect to "/", render login directly.
+            // Pass /ui/admin as default redirect so the button works correctly.
+            context.put(REDIRECT_PARAM, ADMIN_UI_PATH);
+            login(context);
+            return;
+        }
+
+        redirect(context, postLogoutUri);
     }
 
     private void redirect(RoutingContext context, String location) {
@@ -128,6 +168,9 @@ public class LoginResource {
         context.response()
                 .setStatusCode(302)
                 .putHeader(LOCATION_HEADER, finalLocation)
+                .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                .putHeader("Pragma", "no-cache")
+                .putHeader("Expires", "0")
                 .end();
     }
 
