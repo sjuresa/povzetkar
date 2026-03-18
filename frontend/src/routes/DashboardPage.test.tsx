@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { DashboardPage } from './DashboardPage';
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
-import type { getApiV1DashboardResponse } from '../api/generated/dashboard/dashboard';
 import { 
   createRootRoute, 
   createRoute, 
@@ -36,11 +35,7 @@ describe('DashboardPage', () => {
       isLoading: true,
       isError: false,
       isRefetching: false,
-      data: { 
-        data: { stats: { activeTopics: 0 }, recentBriefings: [] },
-        status: 200,
-        headers: new Headers(),
-      } as getApiV1DashboardResponse,
+      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
@@ -54,11 +49,7 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { 
-        data: { stats: { activeTopics: 0 }, recentBriefings: [] },
-        status: 200,
-        headers: new Headers(),
-      } as getApiV1DashboardResponse,
+      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
@@ -73,15 +64,11 @@ describe('DashboardPage', () => {
       isError: false,
       isRefetching: false,
       data: {
-        data: {
-          stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
-          recentBriefings: [
-            { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
-          ],
-        },
-        status: 200,
-        headers: new Headers(),
-      } as getApiV1DashboardResponse,
+        stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
+        recentBriefings: [
+          { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
+        ],
+      } as any,
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 
@@ -98,11 +85,7 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { 
-        data: { stats: { activeTopics: 5 } },
-        status: 200,
-        headers: new Headers(),
-      } as getApiV1DashboardResponse,
+      data: { stats: { activeTopics: 5 } } as any,
       refetch,
     } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
 

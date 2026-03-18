@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
 
 ### Added
+- **Infrastructure (POV-141):** Implemented a root-level **Multi-stage Dockerfile** integrating the React frontend into the Quarkus backend for a unified production image.
+- **Infrastructure (POV-141):** Integrated **Container Image Scanning (Trivy)** into the GitHub Actions CI pipeline, scanning the final build for vulnerabilities.
 - **Frontend (POV-140):** Integrated real-time **SSE Job Tracking** (`GET /api/v1/events/stream`) into the UI with a dedicated Zustand `eventStore`.
 - **Frontend (POV-140):** Implemented a lightweight **Toast Notification system** providing instant feedback on orchestration success, failures, and heartbeat (PULSE) status.
 - **Frontend (POV-140):** Integrated **Real-time Status Badges** into the Dashboard Hub, reflecting live "Processing" states for background jobs without page refreshes.
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
 
 ### Changed
+- **Infrastructure (POV-141):** Migrated from Jib-based containerization to a manual Docker build process, enabling unified static serving of the UI via Quarkus (`META-INF/resources`).
 - **Frontend (Auth):** Optimized OIDC login flow to initiate authentication directly via `/auth/login`, eliminating an intermediate landing page step for the Single Page Application.
 - **Infrastructure (Vite):** Refined `VITE_ALLOWED_HOSTS` parsing in `vite.config.ts` to robustly handle empty or malformed environment variables.
 - **Backend (Auth):** Improved `OriginValidator` to use `java.net.URI` for canonical normalization, correctly handling default ports (80/443) and malformed origins.
@@ -49,9 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Backend (Auth):** Resolved an infinite redirect loop when accessing the backend root path (`/`) anonymously.
 - **Backend (Auth):** Ensured the session cookie is explicitly cleared and cache-prevention headers are present during logout to prevent "sticky" sessions.
+- **Backend (POV-141):** Corrected root access (`/`) behavior to serve the SPA instead of the legacy admin UI.
+- **Backend (POV-141):** Implemented an SPA catch-all route (`SpaRoutingHandler`) to support client-side navigation (e.g., `/dashboard`) on page refresh in production.
 
 ### Planned
-- CD & Scanning Hardening (POV-141).
 - Audit Log Admin UI (POV-142).
 - Finalize v0.12.0 Release.
 

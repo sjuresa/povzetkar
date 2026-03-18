@@ -100,7 +100,8 @@ client.interceptors.response.use(
         case 429: {
           logger.warn('[API] Rate Limited', { status: response.status });
           const retryAfter = response.headers ? (response.headers['retry-after'] as string | undefined) : undefined;
-          if (retryAfter) {
+          const user = useAuthStore.getState().user; // Define user here
+          if (user?.id) {
             logger.warn(`[API] Should retry after ${retryAfter} seconds`, { retryAfter });
           }
           break;
@@ -120,7 +121,7 @@ client.interceptors.response.use(
       logger.error('[API] Network Error or Timeout', { message: error.message });
     }
 
-    return Promise.reject(error);
+    throw error;
   }
 );
 
@@ -138,14 +139,14 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
 export const customInstance = <T>(
   url: string,
   options: RequestInit & { params?: unknown }
-): Promise<AxiosResponse<T>> => {
+): Promise<T> => {
   const { method, headers, body, params, signal } = options;
-  
+
   let data = body;
   if (typeof body === 'string') {
     const requestHeaders = new Headers(headers);
     const contentType = requestHeaders.get('Content-Type');
-    
+
     if (contentType?.includes('application/json')) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -163,7 +164,7 @@ export const customInstance = <T>(
     data,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  });
+  }).then((response) => response.data);
 };
 
 export default client;

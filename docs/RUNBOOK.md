@@ -23,7 +23,7 @@
 This document provides all the necessary instructions for setting up the local development environment, running the application, and executing tests.
 It is the primary technical guide for developers working on the project.
 ## 2. Prerequisites
-- **Java:** JDK 21 or later.
+- **Java:** JDK 25 or later.
 - **Node.js:** v25.8.0 or later.
 - **NPM:** v10.x or later.
 - **Maven:** Version 3.8.x or later.
@@ -204,17 +204,20 @@ This will:
 
 ## 9. Containerized Execution (Docker/Podman)
 
-The application can be packaged as a container image using Jib. This image is OCI-compliant and can be run with Docker or Podman.
+The application uses a multi-stage `Dockerfile` at the root of the project to build both the React frontend and the Quarkus backend into a unified production-ready image.
 
 ### 9.1 Building the Container Image
 
-To build the container image, run the following Maven command:
+To build the container image, run the following command from the root directory:
 
 ```bash
-./mvnw clean package -Dquarkus.container-image.build=true -pl backend -am
+docker build -t si.jumis/povzetkar:latest .
 ```
 
-This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by default).
+This process:
+1.  **Builds the Frontend**: Compiles React and Vite-React-SSG artifacts.
+2.  **Integrates Static Resources**: Embeds the built frontend into the Quarkus `META-INF/resources` directory.
+3.  **Packages Backend**: Builds the Quarkus "runner" with all dependencies included.
 
 ### 9.2 Running the Container
 
@@ -235,20 +238,26 @@ The application requires several environment variables to function correctly. Th
 | `FRONTEND_URL`    | Frontend origin(s) and redirect base URL(s). Supports comma-separated list. | `http://localhost:5173`                                                                                                    |
 | `CORS_METHODS`    | Allowed HTTP methods for CORS           | `GET, POST, ...`                                                                                                           |
 | `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
+| `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
+| `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
 
 **Docker Run Example:**
 
 Assuming the database is running in a container named `povzetkar-db-dev` on the same network (e.g., `povzetkar_default` created by docker-compose):
 
 > **Note:** The network name `povzetkar_default` is derived from the directory name. If your directory is named differently, check the network name using `docker network ls`.
+> **Note:** Since the frontend is now served directly by Quarkus, navigate to `http://localhost:8080` to access the application. The API is hosted at the same origin under `/api/*`. OIDC credentials should be obtained from the Google Cloud Console for the production origin.
 
 ```bash
 docker run -it --rm \
+  --name povzetkar-app \
   --network povzetkar_default \
   --env-file .env.docker \
   -p 8080:8080 \
   si.jumis/povzetkar:latest
 ```
+
+**Note:** Since the frontend is now served directly by Quarkus, navigate to `http://localhost:8080` to access the application. The API is hosted at the same origin under `/api/*`.
 
 **Podman Run Example:**
 

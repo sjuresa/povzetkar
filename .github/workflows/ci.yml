@@ -86,11 +86,22 @@ jobs:
         TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
         TEST_DB_PASS: ${{ secrets.TEST_DB_PASS }}
 
-    - name: Run Trivy vulnerability scanner
+    - name: Run Trivy vulnerability scanner (FS)
       uses: aquasecurity/trivy-action@0.24.0
       with:
         scan-type: 'fs'
         scan-ref: '.'
+        format: 'table'
+        exit-code: '1'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Build Docker Image
+      run: docker build -t povzetkar:${{ github.sha }} .
+
+    - name: Run Trivy vulnerability scanner (Image)
+      uses: aquasecurity/trivy-action@0.24.0
+      with:
+        image-ref: 'povzetkar:${{ github.sha }}'
         format: 'table'
         exit-code: '1'
         severity: 'CRITICAL,HIGH'
