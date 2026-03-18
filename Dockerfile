@@ -1,12 +1,14 @@
 # Stage 1: Build Frontend
 FROM node:20-alpine AS build-frontend
-WORKDIR /app
-COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm install --legacy-peer-deps
-COPY frontend/src ./frontend/src
-COPY frontend/public ./frontend/public
-COPY frontend/index.html frontend/tsconfig*.json frontend/*.config.* ./frontend/
-RUN cd frontend && npm run build
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install --legacy-peer-deps
+COPY frontend/src ./src
+COPY frontend/public ./public
+COPY frontend/index.html ./
+COPY frontend/tsconfig*.json ./
+COPY frontend/*.config.* ./
+RUN npm run build
 
 # Stage 2: Build Backend
 FROM eclipse-temurin:25-jdk-alpine AS build-backend
@@ -23,6 +25,7 @@ RUN mvn package -DskipTests -pl backend -am
 
 # Stage 3: Runtime
 FROM eclipse-temurin:25-jre-alpine
+RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build-backend /app/backend/target/quarkus-app/ ./
 EXPOSE 8080

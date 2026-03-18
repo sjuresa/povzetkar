@@ -101,7 +101,7 @@ client.interceptors.response.use(
           logger.warn('[API] Rate Limited', { status: response.status });
           const retryAfter = response.headers ? (response.headers['retry-after'] as string | undefined) : undefined;
           const user = useAuthStore.getState().user; // Define user here
-          if (user?.id) {
+          if (user?.id && retryAfter) {
             logger.warn(`[API] Should retry after ${retryAfter} seconds`, { retryAfter });
           }
           break;

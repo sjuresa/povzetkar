@@ -30,8 +30,8 @@ public class SpaRoutingHandler {
             return;
         }
 
-        // If the path contains a dot and it's not .html, it's likely a static resource that wasn't found
-        if (path.contains(".") && !path.endsWith(".html")) {
+        // Check for a file extension in the last path segment (exclude .html)
+        if (path.lastIndexOf('.') > path.lastIndexOf('/') && !path.endsWith(".html")) {
             rc.next();
             return;
         }
