@@ -36,6 +36,9 @@ public class LoginResource {
     @ConfigProperty(name = "povzetkar.auth.post-logout-uri", defaultValue = LOGIN_PATH)
     String postLogoutUri;
 
+    @ConfigProperty(name = "quarkus.http.auth.session.cookie-name")
+    String sessionCookieName;
+
     private final OriginValidator originValidator;
 
     @Inject
@@ -118,7 +121,7 @@ public class LoginResource {
                 _ -> {
                     logger.info("Successfully destroyed local application session.");
                     // Manually clear the session cookie as a safety measure to ensure browser reflects logout immediately
-                    context.response().addCookie(io.vertx.core.http.Cookie.cookie("POVZETKAR_SESSION", "")
+                    context.response().addCookie(io.vertx.core.http.Cookie.cookie(sessionCookieName, "")
                             .setMaxAge(0)
                             .setPath("/"));
                             
