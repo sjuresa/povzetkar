@@ -31,5 +31,5 @@ COPY --from=build-backend /app/backend/target/quarkus-app/ ./
 EXPOSE 8080
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 CMD ["java", "-jar", "quarkus-run.jar"]
-# Use /q/health/ready to ensure that database and other critical dependencies are healthy
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/q/health/ready || exit 1
+# Verify both backend readiness (DB) and SPA availability (Static assets)
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/q/health/ready && curl -f http://localhost:8080/ || exit 1
