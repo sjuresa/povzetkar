@@ -1,5 +1,6 @@
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
 import { StatCard, StatCardSkeleton } from '../components/dashboard/StatCard';
+import type { DashboardDTO } from '../api/generated/model';
 import { EmptyState } from '../components/dashboard/EmptyState';
 import { RecentBriefingList, BriefingListSkeleton } from '../components/dashboard/RecentBriefingList';
 import { useEventStore } from '../store/eventStore';
@@ -12,7 +13,6 @@ export function DashboardPage() {
       Object.values(state.jobs).filter(j => j.status === 'RUNNING' || j.status === 'QUEUED')
     )
   );
-   
   const { data: response, isLoading, isError, refetch, isRefetching } = useGetApiV1Dashboard({
     query: {
       refetchOnWindowFocus: true,
@@ -22,7 +22,7 @@ export function DashboardPage() {
 
   const { mutate: triggerTestPulse, isPending: isTestingPulse } = usePostApiV1EventsTestPulse();
 
-  const data = response?.data;
+  const data = response as DashboardDTO | undefined;
 
   if (isLoading) {
     return (

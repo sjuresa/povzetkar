@@ -25,7 +25,6 @@ public class LoginResource {
     private static final Logger logger = LoggerFactory.getLogger(LoginResource.class);
     private static final String LOCATION_HEADER = "Location";
     private static final String LOGIN_PATH = "/login";
-    public static final String ADMIN_UI_PATH = "/ui/admin";
     public static final String REDIRECT_PARAM = "redirect";
 
     private final Template login;
@@ -82,7 +81,8 @@ public class LoginResource {
 
         // If no explicit redirect and we are accessing backend directly (no Origin/Referer)
         if (dynamicRedirect == null && determineBaseUrl(context) == null) {
-            destination = ADMIN_UI_PATH;
+            logger.info("[Auth] No explicit redirect or Origin/Referer detected, defaulting to postLoginUri: {}", postLoginUri);
+            destination = postLoginUri;
         }
 
         redirect(context, destination);
@@ -135,29 +135,6 @@ public class LoginResource {
                     logger.error("Failed to perform local OIDC logout", err);
                     redirect(context, postLogoutUri);
                 });
-    }
-
-    @Route(path = "/", methods = HttpMethod.GET)
-    @Operation(hidden = true)
-    public void index(RoutingContext context) {
-        String base = determineBaseUrl(context);
-        if (!securityIdentity.isAnonymous()) {
-            // If accessing directly via root and authenticated, go to backend UI
-            String target = (base != null) ? postLoginUri : ADMIN_UI_PATH;
-            redirect(context, target);
-            return;
-        }
-
-        // If anonymous and target is root, check if we'd loop
-        if ("/".equals(postLogoutUri) && base == null) {
-            // To prevent loop redirect to "/", render login directly.
-            // Pass /ui/admin as default redirect so the button works correctly.
-            context.put(REDIRECT_PARAM, ADMIN_UI_PATH);
-            login(context);
-            return;
-        }
-
-        redirect(context, postLogoutUri);
     }
 
     private void redirect(RoutingContext context, String location) {

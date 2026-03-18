@@ -449,3 +449,17 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
 ### 16.3 Canonical Origin Normalization
 - **The Problem:** Incoming `Origin` headers may or may not include default ports (e.g., `https://example.com:443`). Simple string comparisons fail when the configured allowed origin differs from the header's port representation.
 - **The Standard:** Use `java.net.URI` to parse the origin string and reconstruct it in a canonical form (scheme + host + explicit non-default port). This provides a robust foundation for CORS and redirect validation. Always log malformed origins at `WARN` level to facilitate debugging without crashing the validator.
+### 16.4 Orval/Axios Return Type Alignment (Promise<T> vs Promise<AxiosResponse<T>>)
+- **The Problem:** In a strict TypeScript environment (Vite/TSC), Orval-generated API functions (e.g., `getApiV1UsersMe`) often default to returning `Promise<T>` (the DTO) even if the underlying `customInstance` returns `Promise<AxiosResponse<T>>`. This causes `TS2322` assignment errors during build.
+- **The Trap:** Changing the `customInstance` to return `Promise<T>` (unwrapped data) fixes the compiler but breaks all hand-written logic that expects the Axios wrapper (e.g., `const { data } = await getApiV1...`).
+- **The Standard:** 
+    1. Standardize `customInstance` to return `Promise<T>` (the unwrapped data) to satisfy the generated types and the `react-query` hooks' expectations.
+    2. In the global interceptor, unwrap the `ApiEnvelope` into `response.data`.
+    3. Update all hand-written call sites to access the data directly without destructuring or by using appropriate type casting (e.g., `await getApiV1UsersMe() as any as UserDTO`) if the generated union types (Success | Error) are too restrictive.
+    4. Ensure unit tests mock the unwrapped DTO directly for consistency.
+### 16.5 SPA Routing with Quarkus (Catch-all)
+- **The Problem:** In a unified build where Quarkus serves a React SPA, navigating directly to a client-side route (e.g., `/dashboard`) or refreshing the page results in a 404 error because the backend doesn't recognize the path.
+- **The Standard:** 
+    1. Enable the built-in fallback: `quarkus.http.serve-index-html-for-not-found=true`.
+    2. Implement a specialized `SpaRoutingHandler` using a high-priority catch-all route (`@Route(path = "/*", order = 10000)`).
+    3. The handler should check if the request is NOT for an API (`/api/*`), static asset (contains a dot), or legacy UI (`/ui/*`), and if so, perform a `rc.reroute("/index.html")`. This keeps the browser URL intact while allowing the SPA to load and handle the routing logic.

@@ -41,3 +41,5 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Standardized Background Job Pattern:** Standardize the `BackgroundJob` pattern (including MDC propagation and reactive orchestration) for other long-running tasks like OCR, embedding generation, or trend analysis.
 *   **Vite 8 Multi-File Patching:** Re-evaluate upgrading to Vite 8 once `@tailwindcss/vite` and `vitest` have released stable versions supporting it, to leverage improved build performance.
 *   **Centralized Lint Suppression Policy:** Create a shared configuration or a custom ESLint plugin to handle recurring framework "exceptions" (like TanStack redirects) without broad `eslint-disable` comments.
+*   **Docker Build Optimization:** Optimize the root-level Dockerfile by using a more granular `COPY` strategy for dependencies (e.g., `package-lock.json` and `pom.xml` first) to leverage Docker's layer caching more effectively.
+*   **Enhanced Docker Healthchecks:** Implement a robust Docker `HEALTHCHECK` in the final image, possibly using a dedicated `/q/health` endpoint or a simple `curl` check against the SPA landing page.
