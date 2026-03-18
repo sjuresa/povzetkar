@@ -16,4 +16,18 @@ public record AuditLogEntryDTO(
         String userAgent,
         Instant createdAt
 ) {
+
+    public static AuditLogEntryDTO fromEntity(com.povzetkar.quarkus.model.AuditLog entity) {
+        return new AuditLogEntryDTO(
+                entity.id,
+                entity.correlationId,
+                entity.userId,
+                entity.httpMethod,
+                entity.requestPath,
+                entity.responseStatus,
+                entity.durationMs,
+                entity.userAgent,
+                entity.createdAt
+        );
+    }
 }

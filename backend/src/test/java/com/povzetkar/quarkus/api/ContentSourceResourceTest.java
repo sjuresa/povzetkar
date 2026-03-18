@@ -232,7 +232,7 @@ class ContentSourceResourceTest {
 
                 given()
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .body("")
+                                .body("{}")
                                 .when().post(API_BASE_PATH)
                                 .then()
                                 .statusCode(400);

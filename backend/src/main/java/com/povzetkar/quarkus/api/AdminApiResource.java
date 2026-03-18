@@ -8,7 +8,9 @@ import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 import com.povzetkar.quarkus.api.util.QueryParser;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
@@ -59,6 +61,18 @@ public class AdminApiResource extends BaseApiResource {
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
     private final EntityManager em;
+
+    public static class AuditLogPaginatedResponse extends PaginatedResponse<AuditLogEntryDTO> {
+        public AuditLogPaginatedResponse(List<AuditLogEntryDTO> items, long totalCount, int pageIndex, int pageSize) {
+            super(items, totalCount, pageIndex, pageSize);
+        }
+    }
+
+    public static class BackgroundJobPaginatedResponse extends PaginatedResponse<BackgroundJobDTO> {
+        public BackgroundJobPaginatedResponse(List<BackgroundJobDTO> items, long totalCount, int pageIndex, int pageSize) {
+            super(items, totalCount, pageIndex, pageSize);
+        }
+    }
 
     @Inject
     public AdminApiResource(BackgroundJobService backgroundJobService,
@@ -120,7 +134,7 @@ public class AdminApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of jobs retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobPaginatedResponse.class))
     )
     public PaginatedResponse<BackgroundJobDTO> getJobs(
             @QueryParam("status") JobStatus status,
@@ -140,22 +154,43 @@ public class AdminApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "Audit log entries retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = AuditLogPaginatedResponse.class))
     )
     @APIResponse(responseCode = "403", description = "Forbidden")
     public PaginatedResponse<AuditLogEntryDTO> getAuditLog(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("20") int pageSize) {
+            @QueryParam("size") @DefaultValue("20") int pageSize,
+            @QueryParam("userId") Long userId,
+            @QueryParam("method") String httpMethod,
+            @QueryParam("status") Integer responseStatus,
+            @QueryParam("correlationId") String correlationId) {
+        
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        long totalCount = AuditLog.count();
-        List<AuditLogEntryDTO> items = em.createQuery("""
-                        SELECT NEW AuditLogEntryDTO(
-                                e.id, e.correlationId, e.userId, e.httpMethod, e.requestPath,
-                                e.responseStatus, e.durationMs, e.userAgent, e.createdAt)
-                                FROM AuditLog e ORDER BY e.createdAt DESC""", AuditLogEntryDTO.class)
-                .setFirstResult(pageIndex * clampedPageSize)
-                .setMaxResults(clampedPageSize)
-                .getResultList();
+        
+        FilterBuilder filters = new FilterBuilder("");
+        filters.and("userId = :userId", "userId", userId);
+        filters.and("httpMethod = :method", "method", httpMethod);
+        filters.and("responseStatus = :status", "status", responseStatus);
+
+        if (correlationId != null && !correlationId.isBlank()) {
+            filters.and("lower(correlationId) LIKE lower(:correlationId)", "correlationId", "%" + correlationId + "%");
+        }
+
+        String query = filters.getQuery();
+        Sort sort = Sort.by("createdAt").descending();
+
+        PanacheQuery<AuditLog> panacheQuery = query.isEmpty()
+                ? AuditLog.findAll(sort)
+                : AuditLog.find(query, sort, filters.getParams());
+
+        long totalCount = query.isEmpty() ? AuditLog.count() : AuditLog.count(query, filters.getParams());
+
+        List<AuditLogEntryDTO> items = panacheQuery
+                .page(pageIndex, clampedPageSize)
+                .stream()
+                .map(AuditLogEntryDTO::fromEntity)
+                .toList();
+        
         return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
     }
 

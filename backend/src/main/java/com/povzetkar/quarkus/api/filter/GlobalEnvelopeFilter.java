@@ -10,7 +10,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.Provider;
 
 import java.io.IOException;
-import java.util.List;
 
 @Provider
 @Enveloped
@@ -35,10 +34,8 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
         }
 
         // Handle PaginatedResponse wrapping
-        if (entity instanceof PaginatedResponse<?>(
-                List<?> items, long totalCount, int pageIndex, int pageSize
-        )) {
-            responseContext.setEntity(ApiEnvelopeDTO.paginated(items, totalCount, pageIndex, pageSize));
+        if (entity instanceof PaginatedResponse<?> p) {
+            responseContext.setEntity(ApiEnvelopeDTO.paginated(p.items, p.totalCount, p.pageIndex, p.pageSize));
         } else {
             // Standard success wrap for raw DTOs or Lists
             responseContext.setEntity(ApiEnvelopeDTO.success(entity));

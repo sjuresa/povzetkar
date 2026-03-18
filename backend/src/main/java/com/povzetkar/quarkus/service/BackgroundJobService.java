@@ -1,22 +1,27 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.api.ApiConstants;
 import com.povzetkar.quarkus.api.OrchestrationRequest;
-import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
-import com.povzetkar.quarkus.api.ApiConstants;
-import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Sort;
+import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.service.event.JobStatusChangedEvent;
+import com.povzetkar.quarkus.service.event.JobTriggerInternalEvent;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +39,7 @@ public class BackgroundJobService {
     private final java.time.Clock clock;
     private final JustInTimeSummarizationScheduler summarizationScheduler;
     private final Event<JobStatusChangedEvent> jobStatusEvent;
+    private final Event<JobTriggerInternalEvent> jobTriggerEvent;
     private static final Logger logger = LoggerFactory.getLogger(BackgroundJobService.class);
 
     @Inject
@@ -41,12 +47,14 @@ public class BackgroundJobService {
                                 BackgroundJobMapper backgroundJobMapper,
                                 java.time.Clock clock,
                                 JustInTimeSummarizationScheduler summarizationScheduler,
-                                Event<JobStatusChangedEvent> jobStatusEvent) {
+                                Event<JobStatusChangedEvent> jobStatusEvent,
+                                Event<JobTriggerInternalEvent> jobTriggerEvent) {
         this.orchestrationManager = orchestrationManager;
         this.backgroundJobMapper = backgroundJobMapper;
         this.clock = clock;
         this.summarizationScheduler = summarizationScheduler;
         this.jobStatusEvent = jobStatusEvent;
+        this.jobTriggerEvent = jobTriggerEvent;
     }
 
     @Transactional
@@ -60,51 +68,70 @@ public class BackgroundJobService {
         job.userId = userId;
         job.persist();
 
-        // Trigger asynchronously outside of the current transaction
+        // Fire event to trigger task after transaction success
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, type, userId, null, null));
+
+        return job;
+    }
+
+    @Transactional
+    public BackgroundJob triggerTopicBriefingJob(Topic topic, Long userId) {
+        BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_BRIEFING);
+        job.userId = userId;
+        job.persist();
+
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, job.type, userId, null, topic.id));
+
+        return job;
+    }
+
+    @Transactional
+    public BackgroundJob triggerItemJob(ContentItem item, JobType type, Long userId) {
+        BackgroundJob job = new BackgroundJob(type);
+        job.userId = userId;
+        job.persist();
+
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, type, userId, item.id, null));
+
+        return job;
+    }
+
+    /**
+     * Observer that handles the actual job execution logic after the persisting transaction commits.
+     */
+    public void onJobTrigger(@jakarta.enterprise.event.Observes(during = jakarta.enterprise.event.TransactionPhase.AFTER_SUCCESS) JobTriggerInternalEvent event) {
         executeInBackgroundWithMdc(() -> {
             Uni<Void> jobTask;
-            switch (type) {
+            switch (event.type()) {
                 case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
                 case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
+                case GENERATE_TOPIC_BRIEFING -> {
+                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(event.topicId()));
+                    if (topic == null) {
+                        logger.warn("Topic not found for ID: {}", event.topicId());
+                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
+                    } else {
+                        jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
+                    }
+                }
+                case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
+                    ContentItem item = QuarkusTransaction.requiringNew().call(() -> ContentItem.findById(event.contentItemId()));
+                    if (item == null) {
+                        logger.warn("ContentItem not found for ID: {}", event.contentItemId());
+                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("ContentItem not found"));
+                    } else {
+                        jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
+                    }
+                }
                 default ->
-                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + type));
+                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
             }
-            executeJobLifecycle(job.id, jobTask);
+            executeJobLifecycle(event.jobId(), jobTask);
         });
-
-        return job;
-    }
-
-    @Transactional
-    public BackgroundJob triggerTopicBriefingJob(com.povzetkar.quarkus.model.Topic topic, Long userId) {
-        BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_BRIEFING);
-        job.userId = userId;
-        job.persist();
-
-        executeInBackgroundWithMdc(() -> {
-            Uni<Void> jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
-            executeJobLifecycle(job.id, jobTask);
-        });
-
-        return job;
-    }
-
-    @Transactional
-    public BackgroundJob triggerItemJob(com.povzetkar.quarkus.model.ContentItem item, JobType type, Long userId) {
-        BackgroundJob job = new BackgroundJob(type);
-        job.userId = userId;
-        job.persist();
-
-        executeInBackgroundWithMdc(() -> {
-            Uni<Void> jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
-            executeJobLifecycle(job.id, jobTask);
-        });
-
-        return job;
     }
 
     private void executeInBackgroundWithMdc(Runnable task) {
@@ -134,7 +161,7 @@ public class BackgroundJobService {
 
     public Uni<Void> updateJobStatusUni(UUID jobId, JobStatus status, String errorMessage) {
         return Uni.createFrom().deferred(() -> {
-            io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> updateStatus(jobId, status, errorMessage));
+            QuarkusTransaction.requiringNew().run(() -> updateStatus(jobId, status, errorMessage));
             return Uni.createFrom().voidItem();
         });
     }
@@ -142,7 +169,7 @@ public class BackgroundJobService {
     @Transactional
     public void updateStatus(UUID jobId, JobStatus status, String errorMessage) {
         BackgroundJob job = BackgroundJob.<BackgroundJob>findByIdOptional(jobId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("BackgroundJob not found: " + jobId));
+                .orElseThrow(() -> new EntityNotFoundException("BackgroundJob not found: " + jobId));
         job.status = status;
         if (status == JobStatus.RUNNING) {
             if (job.startedAt == null) {
@@ -152,8 +179,8 @@ public class BackgroundJobService {
             job.endedAt = clock.instant();
             if (errorMessage != null) {
                 logger.error("Job [{}] failed with error: {}", jobId, errorMessage);
-                if (errorMessage.length() > com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
-                    job.errorMessage = errorMessage.substring(0, com.povzetkar.quarkus.model.BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
+                if (errorMessage.length() > BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
+                    job.errorMessage = errorMessage.substring(0, BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
                 } else {
                     job.errorMessage = errorMessage;
                 }
