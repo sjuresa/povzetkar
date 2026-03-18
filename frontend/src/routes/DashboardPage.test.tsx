@@ -2,32 +2,35 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { DashboardPage } from './DashboardPage';
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
-import { 
-  createRootRoute, 
-  createRoute, 
-  createRouter, 
-  RouterProvider 
-} from '@tanstack/react-router';
 
-// Mock the API hook
+
+// Mock the API hooks and store
 vi.mock('../api/generated/dashboard/dashboard', () => ({
   useGetApiV1Dashboard: vi.fn(),
 }));
 
-// Setup a minimal router for testing links
-const rootRoute = createRootRoute();
-const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/' });
-const dashboardRoute = createRoute({ getParentRoute: () => rootRoute, path: '/dashboard', component: DashboardPage });
-const topicsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/topics' });
-const briefingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/briefings' });
-const briefingDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/briefings/$briefingId' });
+vi.mock('../api/generated/events/events', () => ({
+  usePostApiV1EventsTestPulse: vi.fn(() => ({ 
+    mutate: vi.fn(), 
+    isPending: false 
+  })),
+}));
 
-const routeTree = rootRoute.addChildren([indexRoute, dashboardRoute, topicsRoute, briefingsRoute, briefingDetailRoute]);
-const router = createRouter({ routeTree });
+vi.mock('../store/eventStore', () => ({
+  useEventStore: vi.fn(),
+}));
 
-const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<RouterProvider router={router} defaultComponent={() => ui} />);
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
+}));
+
+import { useEventStore } from '../store/eventStore';
+
+
+const renderDashboard = () => {
+  return render(<DashboardPage />);
 };
+
 
 describe('DashboardPage', () => {
   it('renders loading state initially', () => {
@@ -35,12 +38,14 @@ describe('DashboardPage', () => {
       isLoading: true,
       isError: false,
       isRefetching: false,
-      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
+      data: undefined,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
+    } as any);
 
-    renderWithRouter(<DashboardPage />);
-    // We expect to see skeletons
+    vi.mocked(useEventStore).mockReturnValue([]);
+
+    renderDashboard();
+    // We expect NOT to see Dashboard title yet while loading
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
   });
 
@@ -51,9 +56,11 @@ describe('DashboardPage', () => {
       isRefetching: false,
       data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
+    } as any);
 
-    renderWithRouter(<DashboardPage />);
+    vi.mocked(useEventStore).mockReturnValue([]);
+
+    renderDashboard();
     expect(screen.getByText(/Welcome to/i)).toBeInTheDocument();
     expect(screen.getByText(/Add Your First Topic/i)).toBeInTheDocument();
   });
@@ -70,9 +77,11 @@ describe('DashboardPage', () => {
         ],
       } as any,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
+    } as any);
 
-    renderWithRouter(<DashboardPage />);
+    vi.mocked(useEventStore).mockReturnValue([]);
+
+    renderDashboard();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
@@ -87,9 +96,11 @@ describe('DashboardPage', () => {
       isRefetching: false,
       data: { stats: { activeTopics: 5 } } as any,
       refetch,
-    } as unknown as ReturnType<typeof useGetApiV1Dashboard>);
+    } as any);
 
-    renderWithRouter(<DashboardPage />);
+    vi.mocked(useEventStore).mockReturnValue([]);
+
+    renderDashboard();
     const refreshBtn = screen.getByTitle('Refresh Dashboard');
     fireEvent.click(refreshBtn);
     expect(refetch).toHaveBeenCalled();
