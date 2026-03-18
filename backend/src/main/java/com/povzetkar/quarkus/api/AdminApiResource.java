@@ -171,13 +171,16 @@ public class AdminApiResource extends BaseApiResource {
         filters.and("userId = :userId", "userId", userId);
         filters.and("httpMethod = :method", "method", httpMethod);
         filters.and("responseStatus = :status", "status", responseStatus);
-        filters.and("correlationId = :correlationId", "correlationId", correlationId);
+
+        if (correlationId != null && !correlationId.isBlank()) {
+            filters.and("lower(correlationId) LIKE lower(:correlationId)", "correlationId", "%" + correlationId + "%");
+        }
 
         String query = filters.getQuery();
         Sort sort = Sort.by("createdAt").descending();
 
         PanacheQuery<AuditLog> panacheQuery = query.isEmpty()
-                ? AuditLog.find("order by createdAt desc")
+                ? AuditLog.findAll(sort)
                 : AuditLog.find(query, sort, filters.getParams());
 
         long totalCount = query.isEmpty() ? AuditLog.count() : AuditLog.count(query, filters.getParams());

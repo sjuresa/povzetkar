@@ -68,67 +68,65 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
         </div>
       </div>
 
-      {(true) && ( // Keeping it visible or expanded? Plan said high contrast.
-        <div className={`grid gap-4 md:grid-cols-4 lg:grid-cols-5 mt-6 animate-in slide-in-from-top-4 duration-300 ${!expanded ? 'hidden md:grid' : ''}`}>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">User ID</label>
-            <input 
-              type="number" 
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="e.g. 1"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
-            />
-          </div>
-          
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">HTTP Method</label>
-            <select 
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
-            >
-              <option value="">Any Method</option>
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
-              <option value="PATCH">PATCH</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Status Code</label>
-            <input 
-              type="number" 
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              placeholder="e.g. 200"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
-            />
-          </div>
-
-          <div className="space-y-1.5 md:col-span-1 lg:col-span-2">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Correlation ID</label>
-            <input 
-              type="text" 
-              value={correlationId}
-              onChange={(e) => setCorrelationId(e.target.value)}
-              placeholder="Trace ID (Partial ok)"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
-            />
-          </div>
-
-          <div className="md:col-start-4 lg:col-start-5 flex items-end">
-            <button 
-              onClick={applyFilters}
-              className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all"
-            >
-              Apply Filter
-            </button>
-          </div>
+      <div className={`grid gap-4 md:grid-cols-4 lg:grid-cols-5 mt-6 animate-in slide-in-from-top-4 duration-300 ${!expanded ? 'hidden md:grid' : ''}`}>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">User ID</label>
+          <input 
+            type="number" 
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            placeholder="e.g. 1"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+          />
         </div>
-      )}
+        
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">HTTP Method</label>
+          <select 
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+          >
+            <option value="">Any Method</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="PATCH">PATCH</option>
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Status Code</label>
+          <input 
+            type="number" 
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            placeholder="e.g. 200"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+          />
+        </div>
+
+        <div className="space-y-1.5 md:col-span-1 lg:col-span-2">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Correlation ID</label>
+          <input 
+            type="text" 
+            value={correlationId}
+            onChange={(e) => setCorrelationId(e.target.value)}
+            placeholder="Trace ID (Partial ok)"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+          />
+        </div>
+
+        <div className="md:col-start-4 lg:col-start-5 flex items-end">
+          <button 
+            onClick={applyFilters}
+            className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all"
+          >
+            Apply Filter
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
