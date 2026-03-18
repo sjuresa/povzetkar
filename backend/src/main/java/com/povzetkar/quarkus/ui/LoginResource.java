@@ -43,9 +43,9 @@ public class LoginResource {
 
     @Inject
     public LoginResource(@Location("login.html") Template login,
-            SecurityIdentity securityIdentity,
-            io.quarkus.oidc.OidcSession oidcSession,
-            OriginValidator originValidator) {
+                         SecurityIdentity securityIdentity,
+                         io.quarkus.oidc.OidcSession oidcSession,
+                         OriginValidator originValidator) {
         this.login = login;
         this.securityIdentity = securityIdentity;
         this.oidcSession = oidcSession;
@@ -59,7 +59,7 @@ public class LoginResource {
         if (dynamicRedirect == null) {
             dynamicRedirect = context.get("redirect");
         }
-        
+
         if (!securityIdentity.isAnonymous()) {
             redirect(context, resolveSafeDestination(dynamicRedirect));
             return;
@@ -74,12 +74,12 @@ public class LoginResource {
     public void authLogin(RoutingContext context) {
         String dynamicRedirect = context.request().getParam("redirect");
         String destination = resolveSafeDestination(dynamicRedirect);
-        
+
         // If no explicit redirect and we are accessing backend directly (no Origin/Referer)
         if (dynamicRedirect == null && determineBaseUrl(context) == null) {
             destination = "/ui/admin";
         }
-        
+
         redirect(context, destination);
     }
 
@@ -124,7 +124,6 @@ public class LoginResource {
                     context.response().addCookie(io.vertx.core.http.Cookie.cookie(sessionCookieName, "")
                             .setMaxAge(0)
                             .setPath("/"));
-                            
                     redirect(context, postLogoutUri);
                 },
                 err -> {
@@ -146,13 +145,12 @@ public class LoginResource {
 
         // If anonymous and target is root, check if we'd loop
         if ("/".equals(postLogoutUri) && base == null) {
-                // To prevent loop redirect to "/", render login directly.
-                // Pass /ui/admin as default redirect so the button works correctly.
-                context.put("redirect", "/ui/admin");
-                login(context);
-                return;
-            }
-
+            // To prevent loop redirect to "/", render login directly.
+            // Pass /ui/admin as default redirect so the button works correctly.
+            context.put("redirect", "/ui/admin");
+            login(context);
+            return;
+        }
 
         redirect(context, postLogoutUri);
     }
