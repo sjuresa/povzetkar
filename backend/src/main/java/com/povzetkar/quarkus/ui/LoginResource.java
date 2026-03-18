@@ -81,6 +81,7 @@ public class LoginResource {
 
         // If no explicit redirect and we are accessing backend directly (no Origin/Referer)
         if (dynamicRedirect == null && determineBaseUrl(context) == null) {
+            logger.info("[Auth] No explicit redirect or Origin/Referer detected, defaulting to postLoginUri: {}", postLoginUri);
             destination = postLoginUri;
         }
 

@@ -139,6 +139,11 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
 export const customInstance = <T>(
   url: string,
   options: RequestInit & { params?: unknown }
+  /* 
+   * Custom instance returns Promise<T> (unwrapped response.data) instead of Promise<AxiosResponse<T>>.
+   * This aligns with Orval's generated hook signatures while allowing the global interceptor 
+   * to handle API envelope unwrapping and error normalization centrally.
+   */
 ): Promise<T> => {
   const { method, headers, body, params, signal } = options;
 

@@ -22,7 +22,7 @@ export function DashboardPage() {
 
   const { mutate: triggerTestPulse, isPending: isTestingPulse } = usePostApiV1EventsTestPulse();
 
-  const data = response as any as DashboardDTO | undefined;
+  const data = response as DashboardDTO | undefined;
 
   if (isLoading) {
     return (

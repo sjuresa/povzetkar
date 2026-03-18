@@ -3,6 +3,8 @@ package com.povzetkar.quarkus.ui.util;
 import io.quarkus.vertx.web.Route;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Set;
 
 /**
@@ -11,6 +13,8 @@ import java.util.Set;
  */
 @ApplicationScoped
 public class SpaRoutingHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpaRoutingHandler.class);
 
     private static final Set<String> EXCLUDED_PREFIXES = Set.of(
             "/api", "/ui", "/q", "/static", "/assets", "/login", "/logout", "/auth", "/favicon.ico"
@@ -38,6 +42,9 @@ public class SpaRoutingHandler {
 
         // If it's not an excluded path (API, internal, etc.), reroute to index.html
         if (EXCLUDED_PREFIXES.stream().noneMatch(path::startsWith)) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("[SpaRouting] Rerouting path '{}' to /index.html", path);
+            }
             rc.reroute("/index.html");
         } else {
             rc.next();

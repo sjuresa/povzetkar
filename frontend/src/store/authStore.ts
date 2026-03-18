@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     checkAuthPromise = (async () => {
       set({ isLoading: true });
       try {
-        const user = (await getApiV1UsersMe()) as any as UserDTO;
+        const user = (await getApiV1UsersMe()) as UserDTO;
         if (user?.id) {
           set({ user, isAuthenticated: true, isLoaded: true, isLoading: false });
         } else {
