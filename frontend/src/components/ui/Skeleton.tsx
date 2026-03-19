@@ -3,12 +3,12 @@ import { cn } from '../../util/cn';
 
 /**
  * Standard Skeleton component for loading states.
- * Uses pulse animation and glassmorphic styling consistent with the Dashboard.
+ * Uses pulse animation and semantic styling.
  */
 export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('animate-pulse rounded-xl bg-slate-800/40 border border-slate-700/30', className)}
+      className={cn('animate-pulse rounded-xl bg-[var(--color-surface-deep)]/40 border border-[var(--color-border-subtle)]/30', className)}
       {...props}
     />
   );

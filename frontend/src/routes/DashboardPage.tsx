@@ -7,8 +7,10 @@ import { useEventStore } from '../store/eventStore';
 import { useShallow } from 'zustand/react/shallow';
 import { usePostApiV1EventsTestPulse } from '../api/generated/events/events';
 import { Skeleton } from '../components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 export function DashboardPage() {
+  const { t, i18n } = useTranslation();
   const activeJobs = useEventStore(
     useShallow((state) => 
       Object.values(state.jobs).filter(j => j.status === 'RUNNING' || j.status === 'QUEUED')
@@ -43,43 +45,46 @@ export function DashboardPage() {
     );
   }
 
-  // Determine if we are in an empty state
   const hasNoData = !data?.stats?.activeTopics && (!data?.recentBriefings || data.recentBriefings.length === 0);
-
   const latestBriefingDate = data?.recentBriefings?.[0]?.briefingDate;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
       <div className="flex items-center justify-between">
-        <h2 className="text-4xl font-extrabold tracking-tight text-white text-glow">Dashboard</h2>
+        <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] text-glow">
+          {t('dashboard.title')}
+        </h2>
         <div className="flex items-center space-x-4">
           {activeJobs.length > 0 && (
-            <div className="flex items-center space-x-2 bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/20 animate-pulse">
+            <div className="flex items-center space-x-2 bg-[var(--color-accent-soft)] text-[var(--color-accent)] px-3 py-1.5 rounded-full border border-[var(--color-accent)]/20 animate-pulse">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
-              <span className="text-xs font-medium uppercase tracking-wider">{activeJobs.length} active job(s)</span>
+              <span className="text-xs font-medium uppercase tracking-wider">
+                {activeJobs.length} {t('dashboard.activeJobs')}
+              </span>
             </div>
           )}
           <button
             onClick={() => triggerTestPulse()}
             disabled={isTestingPulse || activeJobs.length > 0}
-            className={`px-4 py-2 rounded-xl glass hover:bg-slate-800 transition-all flex items-center space-x-2 ${isTestingPulse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
-            title="Test real-time feedback"
+            className={`px-4 py-2 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] transition-all flex items-center space-x-2 ${isTestingPulse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
           >
             <div className={`w-2 h-2 rounded-full ${isTestingPulse ? 'bg-amber-500 animate-pulse' : 'bg-blue-500'}`}></div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Test Pulse</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
+              {t('dashboard.testPulse')}
+            </span>
           </button>
           <button
             onClick={() => {
               void refetch();
             }}
             disabled={isRefetching}
-            className={`p-2 rounded-xl glass hover:bg-slate-800 transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
-            title="Refresh Dashboard"
+            className={`p-2 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
+            title={t('dashboard.refresh')}
           >
-            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
@@ -92,26 +97,26 @@ export function DashboardPage() {
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <StatCard 
-              label="Active Topics" 
+              label={t('dashboard.stats.activeTopics')} 
               value={data?.stats?.activeTopics} 
               icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 11h.01M7 15h.01M11 7h.01M11 11h.01M11 15h.01M15 7h.01M15 11h.01M15 15h.01" /></svg>}
-              description="Monitoring your sources"
+              description={t('dashboard.stats.activeTopicsDesc')}
             />
             <StatCard 
-              label="Weekly Briefings" 
+              label={t('dashboard.stats.weeklyBriefings')} 
               value={data?.stats?.briefingsGeneratedLast7Days} 
               icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-              description="In the last 7 days"
+              description={t('dashboard.stats.weeklyBriefingsDesc')}
             />
             <StatCard 
-              label="Latest Activity" 
-              value={latestBriefingDate ? new Date(latestBriefingDate).toLocaleDateString() : undefined} 
+              label={t('dashboard.stats.latestActivity')} 
+              value={latestBriefingDate ? new Date(latestBriefingDate).toLocaleDateString(i18n.language) : undefined} 
               icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-              description="Last briefing generated"
+              description={t('dashboard.stats.latestActivityDesc')}
             />
           </div>
 
-          <div className="mt-12 bg-slate-900/30 p-8 rounded-3xl border border-slate-800/50 backdrop-blur-sm">
+          <div className="mt-12 bg-[var(--color-background-alt)]/30 p-8 rounded-3xl border border-[var(--color-border-subtle)]/50 backdrop-blur-sm">
             <RecentBriefingList briefings={data?.recentBriefings} />
           </div>
         </>

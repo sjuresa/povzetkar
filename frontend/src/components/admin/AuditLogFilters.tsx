@@ -35,30 +35,30 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/20">
+    <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-3xl p-6 shadow-xl shadow-black/5 backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
              </svg>
           </div>
           <div>
-            <h3 className="font-bold text-white tracking-tight">System Audit Filter</h3>
-            <p className="text-xs text-slate-500">Search thru technical API request logs</p>
+            <h3 className="font-bold text-[var(--color-text-primary)] tracking-tight">System Audit Filter</h3>
+            <p className="text-xs text-[var(--color-text-secondary)]">Search thru technical API request logs</p>
           </div>
         </div>
         
         <div className="flex items-center space-x-3">
            <button 
              onClick={() => setExpanded(!expanded)}
-             className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white transition-colors"
+             className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
            >
              {expanded ? 'Collapse' : 'Refine Search'}
            </button>
            <button 
              onClick={handleClear}
-             className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+             className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
              title="Clear Filters"
            >
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,22 +70,22 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
 
       <div className={`grid gap-4 md:grid-cols-4 lg:grid-cols-5 mt-6 animate-in slide-in-from-top-4 duration-300 ${!expanded ? 'hidden md:grid' : ''}`}>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">User ID</label>
+          <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest px-1">User ID</label>
           <input 
             type="number" 
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             placeholder="e.g. 1"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
           />
         </div>
         
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">HTTP Method</label>
+          <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest px-1">HTTP Method</label>
           <select 
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
           >
             <option value="">Any Method</option>
             <option value="GET">GET</option>
@@ -97,31 +97,31 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Status Code</label>
+          <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest px-1">Status Code</label>
           <input 
             type="number" 
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             placeholder="e.g. 200"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
           />
         </div>
 
         <div className="space-y-1.5 md:col-span-1 lg:col-span-2">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Correlation ID</label>
+          <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest px-1">Correlation ID</label>
           <input 
             type="text" 
             value={correlationId}
             onChange={(e) => setCorrelationId(e.target.value)}
             placeholder="Trace ID (Partial ok)"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
           />
         </div>
 
         <div className="md:col-start-4 lg:col-start-5 flex items-end">
           <button 
             onClick={applyFilters}
-            className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all"
+            className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all outline-none"
           >
             Apply Filter
           </button>

@@ -5,6 +5,7 @@ import { useAuthStore } from './store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 import { ErrorPage } from './routes/ErrorPage';
+import { ThemeProvider } from './components/theme/ThemeProvider';
 
 function App() {
   // Only subscribe to the fields the router context needs for guards
@@ -22,6 +23,7 @@ function App() {
 
   return (
     <ErrorBoundary fallback={<ErrorPage />}>
+      <ThemeProvider />
       <RouterProvider 
         router={router} 
         context={context} 

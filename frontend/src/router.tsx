@@ -10,6 +10,7 @@ import { DashboardPage } from './routes/DashboardPage';
 import { BriefingDetailPage } from './routes/BriefingDetailPage';
 import { AuditLogPage } from './routes/AuditLogPage';
 import { ErrorPage } from './routes/ErrorPage';
+import { ProfilePage } from './routes/ProfilePage';
 import { AppShell } from './components/layout/AppShell';
 
 // Define context for the router to enable type-safe auth guards
@@ -77,6 +78,12 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
+const profileRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/me',
+  component: ProfilePage,
+});
+
 // Topics Placeholder
 const topicsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
@@ -140,6 +147,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   protectedLayoutRoute.addChildren([
     dashboardRoute,
+    profileRoute,
     topicsRoute,
     briefingsRoute,
     briefingDetailRoute,

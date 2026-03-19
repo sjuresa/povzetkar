@@ -1,12 +1,13 @@
-# Architecture Overview (v0.6)
+# Architecture Overview (v0.13)
 
-**Version:** 1.1
-**Date:** November 1, 2025
+**Version:** 1.2
+**Date:** March 19, 2026
 
 ## Revision History
 
 | Version | Date               | Author       | Changes                                                                                             |
 |---------|--------------------|--------------|-----------------------------------------------------------------------------------------------------|
+| 1.2     | March 19, 2026     | Antigravity  | Updated to reflect the React-based SPA architecture and new Platform Foundations (i18n, Theme).      |
 | 1.1     | November 1, 2025   | Povzetkar AI | Overhauled document to reflect the final v0.6 architecture, replacing Git publishing with the new UI. |
 | 1.0     | September 10, 2025 | Povzetkar AI | Initial version of the architecture overview.                                                       |
 
@@ -23,8 +24,9 @@ The architecture consists of a single, modular Quarkus application that handles 
 ```mermaid
 graph TD
     subgraph "User Interaction"
-        User --> UI[Simple Web UI]
+        User --> UI[React SPA]
         UI --> API[REST API]
+        UI --> SSE[SSE Event Stream]
     end
 
     subgraph quarkus_app ["Quarkus Application"]
@@ -64,7 +66,10 @@ graph TD
 
 5.  **BriefingService**: Aggregates individual summaries from the database into a coherent daily briefing for a specific topic.
 
-6.  **Simple Web UI & REST API**: A server-side rendered interface (using Qute) that allows users to browse generated briefings by user and topic. It is powered by a set of internal REST endpoints.
+6.  **React SPA & REST API**: A modern Single Page Application (Vite, React, Tailwind 4) that allows users to browse generated briefings, manage topics, and monitor system status. It features:
+    *   **Platform Foundations**: Integrated Theme switching (Dark/Light/System) and i18n support (English/Slovenian).
+    *   **User Profile**: Dedicated route (`/me`) for managing user identity and preferences.
+    *   **Real-time Updates**: SSE-powered job monitoring and notifications.
 
 ## 3. Data Flow
 
