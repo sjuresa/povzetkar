@@ -1,0 +1,70 @@
+{
+  "navigation": {
+    "dashboard": "Nadzorna Plošča",
+    "briefings": "Teme Poročil",
+    "topics": "Teme",
+    "sources": "Viri",
+    "administration": "Administracija",
+    "auditLogs": "Revizijski Sledi",
+    "systemJobs": "Sistemska Opravila"
+  },
+  "common": {
+    "profile": "Profil",
+    "settings": "Nastavitve",
+    "logout": "Odjava",
+    "theme": "Tema",
+    "language": "Jezik",
+    "save": "Shrani",
+    "cancel": "Prekliči",
+    "loading": "Nalaganje...",
+    "retry": "Poskusi ponovno",
+    "error": "Napaka",
+    "success": "Uspeh",
+    "theme_settings": {
+      "light": "Svetla",
+      "dark": "Temna",
+      "system": "Sistemska",
+      "title": "Zamenjaj temo"
+    }
+  },
+  "profile": {
+    "title": "Vaš Profil",
+    "description": "Pregled osebnih podatkov ter dodeljenih pravic.",
+    "identity": "Identiteta",
+    "name": "Ime",
+    "email": "E-pošta",
+    "provider": "Ponudnik Avtentikacije",
+    "roles": "Vloge",
+    "permissions": "Pravice",
+    "no_permissions": "Nimate dodeljenih posebnih pravic."
+  },
+  "dashboard": {
+    "title": "Nadzorna Plošča",
+    "activeJobs": "Aktivno Opravilo/i",
+    "testPulse": "Testni Impulz",
+    "recentBriefings": "Zadnja Poročila",
+    "viewAll": "Prikaži Vse",
+    "refresh": "Osveži Dashboard",
+    "stats": {
+      "activeTopics": "Aktivne Teme",
+      "activeTopicsDesc": "Spremljanje vaših virov",
+      "weeklyBriefings": "Tedenska Poročila",
+      "weeklyBriefingsDesc": "V zadnjih 7 dneh",
+      "latestActivity": "Zadnja Aktivnost",
+      "latestActivityDesc": "Zadnje ustvarjeno poročilo"
+    },
+    "empty": {
+      "welcome": "Dobrodošli v",
+      "subtitle": "Vaš povzetkar z umetno inteligenco je pripravljen. Nastavimo vaše prvo poročilo.",
+      "connectTitle": "Povežite vir",
+      "connectDesc": "Dodajte YouTube kanal ali RSS vir za začetek spremljanja.",
+      "createTopicTitle": "Ustvarite temo",
+      "createTopicDesc": "Določite, kaj želite spremljati v svojih virih.",
+      "getBriefingTitle": "Prejmite poročilo",
+      "getBriefingDesc": "AI samodejno izvleče ključne točke iz nove vsebine.",
+      "action": "Dodajte prvo temo",
+      "help": "Potrebujete pomoč?",
+      "guide": "Vodnik za hiter začetek prihaja kmalu"
+    }
+  }
+}

@@ -46,7 +46,7 @@ describe('DashboardPage', () => {
 
     renderDashboard();
     // We expect NOT to see Dashboard title yet while loading
-    expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('dashboard.title')).not.toBeInTheDocument();
   });
 
   it('renders empty state when there is no data', () => {
@@ -61,8 +61,9 @@ describe('DashboardPage', () => {
     vi.mocked(useEventStore).mockReturnValue([]);
 
     renderDashboard();
-    expect(screen.getByText(/Welcome to/i)).toBeInTheDocument();
-    expect(screen.getByText(/Add Your First Topic/i)).toBeInTheDocument();
+    // Now searching for i18n keys instead of English text due to global mock
+    expect(screen.getByText(/dashboard.empty.welcome/i)).toBeInTheDocument();
+    expect(screen.getByText(/dashboard.empty.action/i)).toBeInTheDocument();
   });
 
   it('renders real data when available', () => {
@@ -82,7 +83,7 @@ describe('DashboardPage', () => {
     vi.mocked(useEventStore).mockReturnValue([]);
 
     renderDashboard();
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('dashboard.title')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('AI News')).toBeInTheDocument();
@@ -101,7 +102,7 @@ describe('DashboardPage', () => {
     vi.mocked(useEventStore).mockReturnValue([]);
 
     renderDashboard();
-    const refreshBtn = screen.getByTitle('Refresh Dashboard');
+    const refreshBtn = screen.getByTitle('dashboard.refresh');
     fireEvent.click(refreshBtn);
     expect(refetch).toHaveBeenCalled();
   });

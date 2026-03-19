@@ -484,3 +484,27 @@ Building "Professional Grade" applications requires more than just visual polish
     2. **UI Safety Nets:** Wrap the root `RouterProvider` in a React `ErrorBoundary` and integrate with `TanStack Router`'s `defaultErrorComponent` to catch unhandled rendering exceptions and route loader failures.
     3. **Bridge Async state:** Enable `throwOnError: true` in `TanStack Query` to propagate background fetch failures into the UI's error boundary for centralized failure handling.
 - **Verification Tip:** When verifying this strategy with E2E tests (Playwright), ensure `expect` timeouts are increased (e.g. 15s+) to allow for multiple network retries before the UI fail-state is rendered.
+
+---
+
+## 19. Theme & i18n Foundations
+
+### 19.1 CSS Variable Semantic Theming (Tailwind 4)
+When implementing multi-theme support in Tailwind 4, avoid hardcoding `@theme` blocks with fixed colors. 
+- **The Trap:** Defining specific colors like `--color-slate-900` directly in the `@theme` block makes it difficult to swap them for a light theme without re-aliasing every utility class.
+- **The Standard:** 
+    1. Define **Semantic Variables** (e.g., `--color-background-base`, `--color-text-primary`) in a global `:root` block.
+    2. Map these variables in the Tailwind `@theme` block for easy discovery.
+    3. Use a `.dark` class (applied to `<html>` or `<body>`) to override these semantic variables with dark-specific values. This allows the rest of the application to use standard classes like `bg-background-base` which automatically adapt to the active theme.
+
+### 19.2 window.matchMedia Mocking in Vitest/JSDOM
+Components using `window.matchMedia` (e.g., for system theme detection) will crash `Vitest` tests because `JSDOM` does not implement this method by default.
+- **The Trap:** Adding `matchMedia` mocking directly inside every test file leads to duplication and brittle setups.
+- **The Standard:** Centralize the mock in `src/test/setup.ts`. Use `Object.defineProperty` on the `window` object and provide a full mock implementation of the `MediaQueryList` interface (including `addEventListener` and `removeEventListener`) to satisfy all modern hooks and components.
+
+### 19.3 i18next Hybrid Loading Strategy
+For optimal performance and SEO in a Dual-Language application:
+- **The Standard:** 
+    1. Bundle the **default language** (e.g. English) as a static JSON or object to prevent a "flash of untranslated content" on initial load.
+    2. Use `i18next-http-backend` to **lazy-load additional languages** (e.g. Slovenian) only when requested.
+    3. Integrated with `react-i18next` and configure `fallbackLng: 'en'` and `debug: import.meta.env.DEV` to ensure a smooth developer experience and reliable fallbacks.

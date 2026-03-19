@@ -17,6 +17,9 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Admin Jobs UI Implementation:** (Moved to v0.14.0 - Data infra in v0.13.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
 *   **Shared Pagination Component:** (Moved to v0.13.0) Extract the navigation and page-size logic from `AuditLogPage.tsx` (and other future tables) into a reusable `components/ui/Pagination.tsx` component to reduce code duplication and standardize the UX.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
+*   **Full Component Internationalization:** (POV-146 Extension) Systematically migrate all hardcoded strings in `DashboardPage`, `AuditLogPage`, and `TopicManager` to the i18n system.
+*   **Theme Transition Animations:** (POV-146 Polish) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
+*   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
 
 ### Backend & Architecture
 

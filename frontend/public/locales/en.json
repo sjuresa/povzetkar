@@ -1,0 +1,70 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "briefings": "Briefings",
+    "topics": "Topics",
+    "sources": "Sources",
+    "administration": "Administration",
+    "auditLogs": "Audit Logs",
+    "systemJobs": "System Jobs"
+  },
+  "common": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "theme": "Theme",
+    "language": "Language",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "error": "Error",
+    "success": "Success",
+    "theme_settings": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "title": "Switch Theme"
+    }
+  },
+  "profile": {
+    "title": "Your Profile",
+    "description": "Overview of your personal data and assigned permissions.",
+    "identity": "Identity",
+    "name": "Name",
+    "email": "Email",
+    "provider": "Authentication Provider",
+    "roles": "Roles",
+    "permissions": "Permissions",
+    "no_permissions": "No specific permissions assigned."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "activeJobs": "Active Job(s)",
+    "testPulse": "Test Pulse",
+    "recentBriefings": "Recent Briefings",
+    "viewAll": "View All",
+    "refresh": "Refresh Dashboard",
+    "stats": {
+      "activeTopics": "Active Topics",
+      "activeTopicsDesc": "Monitoring your sources",
+      "weeklyBriefings": "Weekly Briefings",
+      "weeklyBriefingsDesc": "In the last 7 days",
+      "latestActivity": "Latest Activity",
+      "latestActivityDesc": "Last briefing generated"
+    },
+    "empty": {
+      "welcome": "Welcome to",
+      "subtitle": "Your AI-powered content summarizer is ready. Let's set up your first briefing.",
+      "connectTitle": "Connect a Source",
+      "connectDesc": "Add a YouTube channel or RSS feed to start monitoring.",
+      "createTopicTitle": "Create a Topic",
+      "createTopicDesc": "Define what you want to track across your sources.",
+      "getBriefingTitle": "Get Your Briefing",
+      "getBriefingDesc": "AI automatically extracts key points from new content.",
+      "action": "Add Your First Topic",
+      "help": "Need help?",
+      "guide": "Quickstart Guide coming soon"
+    }
+  }
+}

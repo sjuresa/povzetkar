@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.13.0] - 2026-03-19
 
 ### Summary
-Version 0.13.0 focuses on UX Resilience and Polish, introducing a hardened network layer and a professional error handling system. Key improvements include automated network retries for transient errors, a unified toast notification system using `sonner`, a global React Error Boundary with a premium fallback UI, and standardized loading states via a new `Skeleton` component system. These enhancements significantly improve application stability and provide a smoother, more reliable user experience.
+Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It introduces a hardened network layer with automated retries, a global Error Boundary for catastrophic failure recovery, and a localized, themeable user environment. Key highlights include the new User Profile page, dual-language support (English/Slovenian), and a robust Light/Dark/System theme system with persistence. These enhancements provide a professional, inclusive, and stable platform for daily content briefings.
 
 ### Added
 - **Infrastructure (POV-145):** Integrated `axios-retry` into the global API client with exponential backoff for network errors and transient 5xx status codes (502, 503, 504).
@@ -17,11 +17,17 @@ Version 0.13.0 focuses on UX Resilience and Polish, introducing a hardened netwo
 - **Frontend (POV-145):** Fabricated a professional-grade **Error Page** (`ErrorPage.tsx`) with a "Midnight Slate" aesthetic, providing graceful failure recovery and navigation.
 - **Frontend (POV-145):** Created a reusable **Skeleton** component (`Skeleton.tsx`) with premium "pulse" animations and glassmorphic borders for consistent loading states.
 - **Frontend (POV-145):** Developed a comprehensive **E2E Test** (`error-boundary.spec.ts`) verifying that catastrophic API failures correctly trigger the global Error Page.
+- **Frontend (POV-146):** Implemented the **User Profile page** (`/me`) with a premium identity card displaying name, email, auth provider, and assigned permissions.
+- **Infrastructure (POV-146):** Configured **Internationalization (i18n)** with `i18next`, featuring English and Slovenian translations with hybrid lazy-loading support.
+- **Frontend (POV-146):** Developed a persistent **Theme System** (Light, Dark, System) using Zustand and Tailwind 4 CSS variables, featuring a professional "Polished Silver" light mode.
+- **Frontend (POV-146):** Integrated **Header Shell Controls** including a dynamic Theme Toggle and Language Switcher next to the interactive user profile.
 
 ### Changed
 - **Frontend (POV-145):** Migrated from the custom toast system to **Sonner**, enabling a more flexible and visually polished notification experience.
 - **Frontend (POV-145):** Refactored `DashboardPage` and `AuditLogPage` to utilize the new `Skeleton` system and global error handling, simplifying component logic.
 - **Frontend (POV-145):** Configured TanStack Query to use `throwOnError: true` by default, delegating error UX to the global boundary for a more unified architecture.
+- **Frontend (POV-146):** Refactored global CSS to use semantic **Theme Tokens**, enabling seamless switching between "Midnight Slate" and "Polished Silver" aesthetics.
+- **Frontend (POV-146):** Updated the **AppShell Header** to be fully interactive, linking the user profile to the new identity page.
 
 ### Removed
 - **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
