@@ -1,3 +1,5 @@
+**DEPRECATED!**
+
 # Our Development Workflow: A Division of Labor
 
 This document outlines the division of labor between the user (the Executor) and the AI assistant (the Preparer). It clarifies the specific roles and responsibilities at each stage of the development process.
@@ -31,9 +33,9 @@ Our development process is a partnership. My role is to do all the preparation a
 | Activity                      | Your Role (The Executor)                                       | **My Role (The Assistant)**                                                                                                                                  |
 | :---------------------------- | :------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1. Write/Modify Code**      | Review and approve my plans.                                   | I perform this entire step using my file system and code intelligence tools, following our `AGENT.md` process to ensure high-quality, SOLID design.         |
-| **2. Test the Code**          | **Run the actual tests** (e.g., `mvn test`) and confirm they pass. | I can **write and modify the test files** (`*Test.java`). I use `analyze_current_file` to ensure the test code *compiles*, but I **cannot run the tests myself.** |
+| **2. Test the Code**          |  | Run the actual tests** (e.g., `mvn test`) and confirm they pass. |
 | **3. Stage Changes for Commit** | Run `git add`.                                                 | I can run `git status` to see which files have been modified and confirm that we are about to commit the correct changes.                                    |
-| **4. Commit to Git**          | **Run `git commit`**.                                          | I **cannot** run the commit command. My most important contribution here is to **author the perfect, pre-formatted commit message** for you to use.             |
+| **4. Commit to Git**          | **Run `git commit`**.                                          | I am forbidden to run the commit command. My most important contribution here is to **author the perfect, pre-formatted commit message** for you to use.             |
 | **5. Create a Pull Request**  | **Create the PR** in the Git hosting service (e.g., GitHub).   | I have **zero visibility or capability** here. My role ends after I provide the commit message.                                                            |
 
 ### Summary: Your "Expert Preparer"

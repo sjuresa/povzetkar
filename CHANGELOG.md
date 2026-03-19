@@ -6,6 +6,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [v0.12.0] - 2026-03-18
+
+### Summary
+
+Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack application. This release finalizes the monorepo architecture, integrating a high-performance React/TypeScript frontend with a hardened Quarkus backend. Key highlights include a unified Docker deployment strategy with automated security scanning, a premium glassmorphic Dashboard Hub with real-time SSE job tracking, and a comprehensive Audit Log Admin UI for technical observability. With 100% end-to-end type safety, robust authentication guards, and a standardized API contract, version 0.12.0 establishes a rock-solid foundation for scalable content orchestration.
+
+### Documentation
+- **Frontend Architecture:** Finalized ADR-0004 specifying the frontend technology stack: React, Vite, TypeScript, Tailwind CSS, Shadcn/UI, Orval, TanStack Query, and TanStack Router. The architecture adopts a hybrid monorepo structure (co-located folders) without root-level workspaces, minimizing repository clutter while ensuring 100% type-safety and SEO compliance via pre-rendering.
+
+### Added
+- **Infrastructure (POV-141):** Implemented a root-level **Multi-stage Dockerfile** integrating the React frontend into the Quarkus backend for a unified production image.
+- **Infrastructure (POV-141):** Integrated **Container Image Scanning (Trivy)** into the GitHub Actions CI pipeline, scanning the final build for vulnerabilities.
+- **Frontend (POV-142):** Implemented the **Audit Log Admin UI** for technical observability of API requests and background system events.
+- **Frontend (POV-142):** Fabricated a high-density **Audit Log Data Grid** with real-time filtering by User ID, HTTP Method, Status Code, and Correlation ID.
+- **Frontend (POV-142):** Integrated permission-based **Admin Navigation and Routing** with automated guards for `ADMIN_AUDIT_LOG_VIEW`.
+- **Backend (POV-142):** Hardened the **Audit Log API** with dynamic HQL filtering and 100% type-safe OpenAPI pagination models.
+- **Frontend (POV-140):** Integrated real-time **SSE Job Tracking** (`GET /api/v1/events/stream`) into the UI with a dedicated Zustand `eventStore`.
+- **Frontend (POV-140):** Implemented a lightweight **Toast Notification system** providing instant feedback on orchestration success, failures, and heartbeat (PULSE) status.
+- **Frontend (POV-140):** Integrated **Real-time Status Badges** into the Dashboard Hub, reflecting live "Processing" states for background jobs without page refreshes.
+- **Frontend (POV-139):** Implemented the interactive **Dashboard Hub** fetching real-time data from the `GET /api/v1/dashboard` BFF endpoint.
+- **Frontend (POV-139):** Fabricated glassmorphic **Stat Widgets** for Active Topics, Weekly Output, and Latest Activity with `text-glow` effects.
+- **Frontend (POV-139):** Integrated an **Empty State "Getting Started" guide** for new users to facilitate onboarding (Source → Topic → Briefing).
+- **Frontend (POV-139):** Implemented a high-fidelity **Recent Briefings list** with interactive cards and navigation to a new detail view.
+- **Frontend (POV-139):** Added a premium **Briefing Detail stub** at `/briefings/$id` to complete the user journey navigation.
+- **Frontend (POV-139):** Implemented "Refetch on Focus" and manual refresh capability for dashboard data utilizing TanStack Query.
+- **Frontend (POV-138):** Implemented authentication foundations using **Zustand** and the BFF pattern (Session Cookies).
+- **Frontend (POV-138):** Integrated **TanStack Router** with type-safe context and `protectedRoute` auth guards.
+- **Frontend (POV-138):** Fabricated a premium **AppShell** with a collapsible "Midnight Slate" sidebar, glassmorphic header, and smooth transitions.
+- **Frontend (POV-138):** Implemented high-conversion **Landing Page** and protected **Dashboard** shell.
+- **Frontend:** Implemented type-safe API foundations (POV-137) using Orval and TanStack Query, automated from the backend OpenAPI specification.
+- **Frontend:** Implemented a global Axios interceptor for the standard API envelope (`{ data, meta, error }`), request tracing (`X-Correlation-ID`), and idempotency (`Idempotency-Key` for command endpoints).
+- **Frontend:** Standardized global error handling in the API client to translate backend error codes into typed frontend exceptions.
+- **Infrastructure:** Restructured the repository into a monorepo by migrating all backend code, configurations, and resources into a dedicated `/backend` module.
+- **Infrastructure:** Introduced a root-level aggregator `pom.xml` to manage the project's parent-child relationship and shared dependency management.
+- **Frontend:** Initialized the React/Vite/TypeScript frontend project in `/frontend` with Tailwind CSS 4, Shadcn/UI foundations, and `vite-react-ssg` for SEO pre-rendering.
+- **Frontend:** Configured Vitest and Playwright testing frameworks with initial smoke tests.
+- **Infrastructure:** Established root-level `package.json` for monorepo-wide script orchestration (dev, build, lint, test).
+- **Documentation:** Updated `README.md` and `docs/RUNBOOK.md` to reflect the new monorepo structure and module-specific Maven commands (e.g., `-pl backend`).
+
+### Changed
+- **Infrastructure (POV-141):** Migrated from Jib-based containerization to a manual Docker build process, enabling unified static serving of the UI via Quarkus (`META-INF/resources`).
+- **Frontend (Auth):** Optimized OIDC login flow to initiate authentication directly via `/auth/login`, eliminating an intermediate landing page step for the Single Page Application.
+- **Infrastructure (Vite):** Refined `VITE_ALLOWED_HOSTS` parsing in `vite.config.ts` to robustly handle empty or malformed environment variables.
+- **Backend (Auth):** Improved `OriginValidator` to use `java.net.URI` for canonical normalization, correctly handling default ports (80/443) and malformed origins.
+- **Backend (Auth):** Refactored `LoginResource` to use constructor injection and constants for path and parameter management.
+- **Infrastructure (POV-138):** Stabilized the frontend stack by pinning **Vite 6** and **Tailwind 4** (stable) to resolve peer dependency conflicts.
+- **Backend:** Switched to `${project.root.basedir}` (using `maven.multiModuleProjectDirectory`) for stable cross-module resource loading, independent of directory depth.
+- **Backend:** Updated `backend/pom.xml` to correctly locate global resources like `CHANGELOG.md` in the parent directory during the build process.
+- **Backend:** Centralized all `<properties>`, `<dependencyManagement>`, and `<pluginManagement>` entries (including Quarkus and Maven plugins) in the root `pom.xml`.
+- **Backend:** Switched `backend/pom.xml` to `<packaging>quarkus</packaging>` to leverage standard lifecycle bindings and eliminate redundant plugin executions.
+- **Backend:** Unified plugin and dependency versions using new properties in the root POM.
+- **Backend:** Simplified `backend/pom.xml` by removing redundant versions and execution blocks inherited from the root POM.
+
+### Fixed
+- **Backend (Auth):** Resolved an infinite redirect loop when accessing the backend root path (`/`) anonymously.
+- **Backend (Auth):** Ensured the session cookie is explicitly cleared and cache-prevention headers are present during logout to prevent "sticky" sessions.
+- **Backend (POV-141):** Corrected root access (`/`) behavior to serve the SPA instead of the legacy admin UI.
+- **Backend (POV-141):** Implemented an SPA catch-all route (`SpaRoutingHandler`) to support client-side navigation (e.g., `/dashboard`) on page refresh in production.
+
+
 ## [v0.11.0] - 2026-03-12
 
 ### Summary

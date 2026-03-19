@@ -5,6 +5,8 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                 |
 |---------|--------------------|--------------|-------------------------------------------------------------------------|
+| 2.2     | March 16, 2026     | Povzetkar AI | Added Documentation for FRONTEND_URL and Open Redirect protection. |
+| 2.1     | March 14, 2026     | Povzetkar AI | Updated for Monorepo, Frontend Initialization (POV-136), and Vite 8. |
 | 2.0     | March 13, 2026     | Povzetkar AI | Added documentation for Task 17 (SSE Stream) and Task 18 (Admin/Audit). |
 | 1.9     | March 13, 2026     | Povzetkar AI | Added documentation for Idempotency, Optimistic Locking, SSE, and Envelopes. |
 | 1.8     | March 13, 2026     | Povzetkar AI | Added documentation for Correlation IDs, Audit Logs, and Metrics.       |
@@ -21,22 +23,24 @@
 This document provides all the necessary instructions for setting up the local development environment, running the application, and executing tests.
 It is the primary technical guide for developers working on the project.
 ## 2. Prerequisites
-- **Java:** JDK 21 or later.
+- **Java:** JDK 25 or later.
+- **Node.js:** v25.8.0 or later.
+- **NPM:** v10.x or later.
 - **Maven:** Version 3.8.x or later.
 - **Docker & Docker Compose:** For running the local development environment.
 - **IDE:** IntelliJ IDEA or VS Code are recommended.
 - **Git:** For version control.
 
 ## 3. Local Environment Setup
-The entire local environment is managed by Docker Compose.
+The local database environment is managed by Docker Compose and is located in the `backend/` directory.
 
-1.  **Create the Environment File:**
-The application requires a `.env` file in the project root for database credentials and API keys. The
-`docker-compose.yml` uses these to configure the PostgreSQL container, and the Quarkus application is configured to use
-them for its database connection.
+1.  **Create Environment Files:**
+    The application requires `.env` files for both the backend and frontend to handle configuration across different dev environments.
 
+    **Backend (`backend/.env`):**
+    Copy `backend/.env.example` to `backend/.env` and update values.
     ```properties
-    # For the PostgreSQL container (development)
+    # For PostgreSQL (dev & tests)
     DB_KIND=postgresql
     DB_HOST=localhost
     DB_PORT=5432
@@ -47,14 +51,26 @@ them for its database connection.
     TEST_DB_USER=your_test_db_user
     TEST_DB_PASS=your_test_db_password
     TEST_DB_NAME=povzetkar_test
-    # For the Quarkus application
+    
+    # API Keys & Auth
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
+    FRONTEND_URL=http://localhost:5173
+    ```
+
+    **Frontend (`frontend/.env`):**
+    Copy `frontend/.env.example` to `frontend/.env` and update values.
+    ```properties
+    # Empty for relative proxying (recommended)
+    VITE_API_BASE_URL=
+    # Comma-separated list of extra allowed hosts (e.g. for Tailscale)
+    VITE_ALLOWED_HOSTS=www.example.com,192.168.1.100
     ```
 
 2.  **Start the Database:**
-    This command starts the PostgreSQL database in a Docker container.
+    Navigate to the backend directory and start the PostgreSQL database.
     ```bash
+    cd backend
     docker compose up -d
     ```
 
@@ -64,6 +80,7 @@ PostgreSQL initialization scripts (like the one that enables the `pgvector` exte
 
 1.  **Destroy the existing containers and volumes:**
     ```bash
+    cd backend
     docker compose down -v
     ```
 2.  **Recreate the environment:**
@@ -82,6 +99,7 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 1.  **Connect to the development database container:**
     This command executes a shell inside the container to correctly access the environment variables set by Docker Compose (`POSTGRES_USER` and `POSTGRES_DB`).
     ```bash
+    cd backend
     docker compose exec postgres-dev sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
     ```
 
@@ -94,14 +112,37 @@ The application uses the `pgvector` extension for PostgreSQL. To verify it's ena
 
 ## 6. Running the Application
 
-With the database running, you can start the Quarkus application in development mode:
+With the database running, you can start the full stack (Backend + Frontend) using the root-level orchestration:
+
 ```bash
-./mvnw quarkus:dev
+npm run dev
 ```
 
-**Access the Endpoint:**
-`http://localhost:8080/q/health/live`
-`http://localhost:8080/q/health`
+This command uses `npm-run-all` to simultaneously boot:
+- **Backend (Quarkus):** `http://localhost:8080` (API & Dev UI)
+- **Frontend (Vite 8):** `http://localhost:5173` (React SPA)
+
+### 6.1 Individual Service Execution
+
+If you need to run services separately:
+
+**Backend only:**
+```bash
+./mvnw quarkus:dev -pl backend
+```
+
+**Frontend only:**
+```bash
+cd frontend
+npm run dev
+```
+
+### 6.2 Application Entry Points
+
+- **Frontend SPA:** `http://localhost:5173`
+- **Backend Health:** `http://localhost:8080/q/health`
+- **Backend API Docs:** `http://localhost:8080/q/swagger-ui`
+- **Legacy Admin UI (Qute):** `http://localhost:8080/ui/admin`
 
 ### 6.1 API Documentation (Swagger UI)
 
@@ -112,9 +153,29 @@ In development mode, the application generates an OpenAPI specification and prov
 **Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
 
 ## 7. Running Tests
-To run the test suite:
+To run the full-stack test suite (Backend JUnit + Frontend Vitest + Playwright):
+
 ```bash
-./mvnw test
+npm run test
+```
+
+### 7.1 Individual Testing Commands
+
+**Backend (Maven):**
+```bash
+./mvnw test -pl backend
+```
+
+**Frontend (Vitest):**
+```bash
+cd frontend
+npm run test
+```
+
+**Frontend (Playwright E2E):**
+```bash
+cd frontend
+npx playwright test
 ```
 
 ## 8. Security & Code Quality
@@ -129,21 +190,36 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ### 8.2 Dependency Scanning (Trivy)
 Third-party dependencies are scanned for known vulnerabilities (CVEs). While this is primarily integrated into the GitHub Actions CI pipeline, you can run a local container scan if needed (requires [Trivy](https://trivy.dev/) installed).
 
-## 9. Containerized Execution (Docker/Podman)
+## 8. Building the Full Stack
 
-The application can be packaged as a container image using Jib. This image is OCI-compliant and can be run with Docker or Podman.
-
-### 8.1 Building the Container Image
-
-To build the container image, run the following Maven command:
+To build both the frontend and backend in one command:
 
 ```bash
-./mvnw clean package -Dquarkus.container-image.build=true
+npm run build
 ```
 
-This will create an image named `si.jumis/povzetkar:latest` (or `latest` tag by default).
+This will:
+1.  Build the React frontend and place artifacts in `frontend/dist`.
+2.  Build the Quarkus backend and run standard JAR packaging.
 
-### 8.2 Running the Container
+## 9. Containerized Execution (Docker/Podman)
+
+The application uses a multi-stage `Dockerfile` at the root of the project to build both the React frontend and the Quarkus backend into a unified production-ready image.
+
+### 9.1 Building the Container Image
+
+To build the container image, run the following command from the root directory:
+
+```bash
+docker build -t si.jumis/povzetkar:latest .
+```
+
+This process:
+1.  **Builds the Frontend**: Compiles React and Vite-React-SSG artifacts.
+2.  **Integrates Static Resources**: Embeds the built frontend into the Quarkus `META-INF/resources` directory.
+3.  **Packages Backend**: Builds the Quarkus "runner" with all dependencies included.
+
+### 9.2 Running the Container
 
 The application requires several environment variables to function correctly. These must be passed to the container at runtime.
 
@@ -159,15 +235,22 @@ The application requires several environment variables to function correctly. Th
 | `DB_PASS`         | Database password                       | `your_db_password`                                                                                                         |
 | `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                                                                                |
 | `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                                                                                |
+| `FRONTEND_URL`    | Frontend origin(s) and redirect base URL(s). Supports comma-separated list. | `http://localhost:5173`                                                                                                    |
+| `CORS_METHODS`    | Allowed HTTP methods for CORS           | `GET, POST, ...`                                                                                                           |
+| `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
+| `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
+| `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
 
 **Docker Run Example:**
 
 Assuming the database is running in a container named `povzetkar-db-dev` on the same network (e.g., `povzetkar_default` created by docker-compose):
 
 > **Note:** The network name `povzetkar_default` is derived from the directory name. If your directory is named differently, check the network name using `docker network ls`.
+> **Note:** Since the frontend is now served directly by Quarkus, navigate to `http://localhost:8080` to access the application. The API is hosted at the same origin under `/api/*`. OIDC credentials should be obtained from the Google Cloud Console for the production origin.
 
 ```bash
 docker run -it --rm \
+  --name povzetkar-app \
   --network povzetkar_default \
   --env-file .env.docker \
   -p 8080:8080 \
@@ -185,9 +268,37 @@ podman run -it --rm \
   si.jumis/povzetkar:latest
 ```
 
-## 9. Application Usage
+#### 9.x Running on a Different Port
 
-### 9.1 Content Source Management
+If you need to run the Docker container on a different port (e.g., to avoid conflicts with a local `quarkus dev` session on 8080), you can use Docker's port mapping:
+
+```bash
+# Map host port 8081 to container port 8080
+docker run -it --rm -p 8081:8080 si.jumis/povzetkar:latest
+```
+
+#### 9.y Docker Runtime Configuration
+
+The application is configured using several environment variables in the `Dockerfile`:
+
+-   **`QUARKUS_HTTP_HOST`**: Set to `0.0.0.0` by default. This is critical for Docker, as it allows the application to listen on all available network interfaces, making it accessible from outside the container.
+-   **`QUARKUS_HTTP_PORT`**: Set to `8080` by default. You can override this using `-e QUARKUS_HTTP_PORT=8082` at runtime.
+-   **`JAVA_OPTS`**: Used to pass additional JVM arguments. Currently, it is essential for the Quarkus `LogManager` to function correctly in the runtime environment:
+    `-Djava.util.logging.manager=org.jboss.logmanager.LogManager`.
+
+Example overriding both host and port:
+
+```bash
+docker run -it --rm \
+  -e QUARKUS_HTTP_HOST=127.0.0.1 \
+  -e QUARKUS_HTTP_PORT=8082 \
+  -p 8082:8082 \
+  si.jumis/povzetkar:latest
+```
+
+## 10. Application Usage
+
+### 10.1 Content Source Management
 
 The `ContentSourceDetailService` is responsible for enriching and refreshing details (like name, description, and subscriber count) for content sources in the database. This service can be triggered on-demand or runs on a schedule.
 
@@ -207,7 +318,7 @@ To manually trigger the enrichment process for all content sources that are miss
 The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
 
 *   **Configuration Property:** `quarkus.scheduler.enrich-content-sources.cron`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
@@ -221,7 +332,7 @@ The `OrchestratorService` is responsible for the end-to-end process of fetching 
 The orchestration process is configured to run periodically. By default, it runs daily at midnight.
 
 *   **Configuration Property:** `povzetkar.orchestrator.cron`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 * * ?` (daily at midnight)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
@@ -341,7 +452,7 @@ All tables include a '#' column for row numbering and display dates in the confi
 The history tables on the Admin UI page are paginated. The number of items displayed per page can be configured in `application.properties`.
 
 *   **Configuration Property:** `povzetkar.ui.admin.page-size`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `20`
 
 You can modify this value to control how many items appear on each page of the history tables.
@@ -351,14 +462,14 @@ You can modify this value to control how many items appear on each page of the h
 The circuit breaker for GenAI API calls prevents repeated attempts to a failing service. It tracks consecutive 503 (Service Unavailable) errors per API key.
 
 *   **Configuration Property:** `povzetkar.orchestrator.circuit-breaker.threshold`
-*   **Location:** `src/main/resources/application.properties`
+*   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `3`
 
 If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.
 
-## 10. Compliance & Monitoring
+## 11. Compliance & Monitoring
 
-### 10.1 Correlation IDs & Request Tracing
+### 11.1 Correlation IDs & Request Tracing
 
 Every request to the `/api/v1/*` endpoints is assigned a **Correlation ID** to allow end-to-end tracing across logs and the database.
 
@@ -442,7 +553,7 @@ The project has standardized on **SLF4J** for logging and uses a `StructuredLogg
         logger.info("event", "job_started", "job_id", jobId);
         ```
 
-## 11. Real-Time Event Stream (SSE)
+## 12. Real-Time Event Stream (SSE)
 
 The application provides a centralized **Server-Sent Events (SSE)** endpoint for real-time system monitoring. This is the preferred method for frontends to track background job completion.
 
@@ -455,7 +566,7 @@ The application provides a centralized **Server-Sent Events (SSE)** endpoint for
     curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events/stream
     ```
 
-## 12. API Response Structure (Envelopes)
+## 13. API Response Structure (Envelopes)
 
 All REST API responses (except for special streams like SSE) are wrapped in a standard **JSON Envelope** to ensure consistency across the platform.
 

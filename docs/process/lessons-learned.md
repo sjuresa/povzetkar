@@ -293,4 +293,186 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ### 10.1 Logger Consistency
 - **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments. Mixing `org.jboss.logging.Logger` and `slf4j` facades in the same project can lead to confusing configuration and inconsistent MDC behavior.
 - **The Standard:** Always standardize on **SLF4J (`org.slf4j.Logger`)** as the primary logging facade for maximum compatibility and consistency with `RUNBOOK.md`. For structured logging with key-value pairs, use the custom `StructuredLogger` helper.
-
+
+---
+
+## 11. Monorepo & Multi-module Maven
+
+### 11.1 Cross-module Resource Loading
+- **The Trap:** Using `${project.basedir}` in a submodule `pom.xml` to refer to resources located at the monorepo root (e.g., `CHANGELOG.md` or global docs). Using relative paths like `${project.basedir}/..` is a common but brittle workaround that breaks if the module structure becomes deeper.
+- **The Standard:** To provide a stable reference point to the monorepo root from any submodule, define a property in the root `pom.xml` using Maven's built-in `${maven.multiModuleProjectDirectory}` property (e.g., `<project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>`). Use this property in submodules to access root-level resources. This approach is more robust than using relative paths like `${project.basedir}/..`.
+
+### 11.2 Aggregator vs. Parent POM
+- **The Trap:** Conflating the role of the "Aggregator" (the `pom.xml` that lists `<modules>`) and the "Parent" (the `pom.xml` that submodule `<parent>` blocks inherit from).
+- **The Standard:** In a clean monorepo, the root `pom.xml` should serve both roles. It defines the modules for orchestration and provides the `<dependencyManagement>` and `<properties>` shared by all modules. Submodules should explicitly point to the root via `<parent>` to ensure unified versioning and configuration.
+
+### 11.3 Targeted Module Execution
+- **The Standard:** When working in a monorepo, avoid running full builds from the root for every change. Use the `-pl <module-name>` (project list) and `-am` (also make dependencies) flags to target specific modules:
+  ```bash
+  ./mvnw quarkus:dev -pl backend
+  ./mvnw clean package -pl backend -am
+  ```
+  This speeds up the development loop and prevents unnecessary re-building of unrelated modules (like the future frontend).
+
+---
+
+## 12. Frontend Development (React / Vite)
+
+### 12.1 ViteSSG & Beta Compatibility
+Vite's ecosystem (especially SSG plugins) moves fast. When using plugins like vite-react-ssg, you may encounter type mismatches with the latest React, react-router-dom, or Vite versions.
+- **The Trap:** Spending hours trying to perfectly align @types/* versions when the plugin itself has internally mismatched peer dependencies or hardcoded types in its dist.
+- **The Standard:** If a required import like ViteReactSSG is clearly exported in the source but triggers a [MISSING_EXPORT] error or TS type error during build, verify the exact export name in node_modules. If types are the only blocker, use // @ts-expect-error - <reason> with a specific explanation. This keeps the build passing while acknowledging the technical debt.
+
+### 12.2 Tailwind 4 & Mono-CSS
+Tailwind CSS 4 introduces a 'CSS-first' approach.
+- **The Trap:** Trying to configure Tailwind 4 using a legacy tailwind.config.js with internal plugins that haven't been ported yet.
+- **The Standard:** Leverage @tailwindcss/vite and import Tailwind directly in your CSS: @import 'tailwindcss';. Keep configurations in CSS variables where possible.
+
+### 12.3 Monorepo Orchestration (NPM + Maven)
+In a monorepo containing both Maven (Java) and NPM (JavaScript) projects:
+- **The Trap:** Relying on developers to manually run npm install and mvn compile in separate folders, leading to mismatched build states.
+- **The Standard:** Use a root-level package.json with npm-run-all or simple shell scripts to orchestrate cross-project commands. High-level commands like npm run dev should ideally start both the backend and frontend simultaneously.
+
+---
+
+## 13. API Integration (Orval & Axios)
+
+### 13.1 Strict Linting in API Clients
+When building production-grade API clients with strict ESLint rules (2025 standards):
+- **The Trap:** Using `any` for raw JSON payloads from `JSON.parse` or environment variables (e.g., `import.meta.env`). This triggers `no-unsafe-assignment` and `no-unsafe-return` warnings.
+- **The Standard:** Always use `unknown` as the initial type and perform explicit casting via specialized interfaces or `Record<string, string>`. For environment variables, use `(import.meta.env as Record<string, string>)`.
+  
+### 13.2 Type-Safe Error Handling in Envelopes
+Our backend returns all errors wrapped in an `ApiEnvelope` containing a `code` and `message`.
+- **The Standard:** In the Axios response interceptor, when an envelope error is detected, reject the promise with a proper `Error` object. To preserve the API error code, use an intersection type `(error as Error & { code?: string }).code = apiCode;`. This allows downstream components to use the standard `error.message` while still having access to the specific error code for conditional logic (e.g., showing a specific modal for `TOPIC_LIMIT_EXCEEDED`).
+
+### 13.3 Header Normalization for Axios
+Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `string[][]`, or `Record<string, string>`). Axios expects a plain object.
+- **The Standard:** Always use a normalization helper in the custom fetcher:
+  ```typescript
+  const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string> => {
+      if (!headers) return {};
+      if (headers instanceof Headers) {
+          const obj: Record<string, string> = {};
+          headers.forEach((v, k) => obj[k] = v);
+          return obj;
+      }
+      return Array.isArray(headers) ? Object.fromEntries(headers) : (headers as Record<string, string>);
+  };
+  ```
+
+### 13.4 Idempotency Key Injection
+- **The Standard:** The global interceptor should automatically inject an `Idempotency-Key` UUID for all `POST /commands/*` requests. If the request already has one (e.g., passed manually to handle retries), the interceptor must preserve the existing one.
+
+### 13.5 Axios Cancellation & Global Logging
+- **The Trap:** Logging all failed requests in a global Axios interceptor without checking for cancellations. In React 18 (Strict Mode) and TanStack Query, requests are frequently aborted by design (e.g., component unmount, rapid re-renders). Logging these as "Errors" leads to confusing console noise and false alarms about network stability.
+- **The Standard:** Always check `axios.isCancel(error)` in the error interceptor. These should be ignored or logged at `debug` level, never as `error`.
+  ```typescript
+  if (axios.isCancel(error)) {
+      return Promise.reject(error); // Reject silently
+  }
+  logger.error('[API] Network Error', { message: error.message });
+  ```
+
+---
+
+## 14. Frontend Routing & Auth (TanStack Router + Zustand)
+
+### 14.1 Eliminating "Flash of Unauthenticated Content" (FOUC)
+- **The Trap:** Checking auth status only inside components causes the "Unauthenticated" view (like a Landing Page) to flicker for a few milliseconds before the app realizes the user is logged in.
+- **The Standard:** Use TanStack Router's `beforeLoad` hook in combination with a state-based "isLoaded" flag. Perform the silent auth check (`GET /api/v1/users/me`) inside `beforeLoad` if the state is not yet loaded. Using `throw redirect(...)` inside `beforeLoad` ensures the route transition never completes into the wrong state.
+
+### 14.2 ESLint & TanStack Router Redirects
+- **The Trap:** TanStack Router's `redirect()` function returns a special object intended to be thrown. Some ESLint configurations (like `@typescript-eslint/only-throw-error`) will flag this as an error because it's not a subclass of `Error`.
+- **The Standard:** Use `// eslint-disable-next-line @typescript-eslint/only-throw-error` for lines throwing `redirect()`. This acknowledges the framework's intent while keeping strict linting for actual application errors.
+
+### 14.3 Vite & Beta-Plugin Stability
+- **The Trap:** Using the absolute latest version of Vite (e.g., Vite 8) while the ecosystem (Tailwind 4, Vitest) is still providing beta-grade support for the previous major version results in severe peer dependency conflicts and build failures.
+- **The Standard:** When using bleeding-edge ecosystems like Tailwind 4, pin the build tool (Vite) to the version currently targeted by the plugins. "Bleeding edge" + "Bleeding edge" often equals a broken dev environment.
+### 14.4 Standardizing Linting Suppressions (ESLint 9+)
+- **The Trap:** Using deprecated or inconsistent suppression rules (e.g., `@typescript-eslint/no-throw-literal`) leads to build warnings and unpredictable linting behavior in modern environments.
+- **The Standard:** Always use the latest rule names (e.g., `@typescript-eslint/only-throw-error`). When dealing with framework-specific patterns that use `any` (like test mocks or API response handling), prefer `@typescript-eslint/no-unsafe-assignment` or `@typescript-eslint/no-unsafe-return` over a blanket `no-explicit-any`, as it provides more granular oversight.
+
+---
+
+## 15. Frontend Real-time & Notifications (SSE)
+
+### 15.1 EventSource Lifecycle Management
+- **The Trap:** Initializing `EventSource` directly in a component body or incorrectly in a `useEffect` without proper cleanup and ref guards. In React Strict Mode, this leads to double-connections on mount, which can exhaust backend connection pools and cause "Ghost Toast" effects in the UI.
+- **The Standard:** Always use a `useRef<EventSource | null>(null)` guard alongside `useEffect`. The ref ensures that if an instance exists (due to a double-mount in dev), we don't spawn a second stream. Always return a cleanup function that calls `es.close()`.
+  ```typescript
+  const esRef = useRef<EventSource | null>(null);
+  useEffect(() => {
+      if (esRef.current) return; // Prevent double-init
+      const es = new EventSource(url);
+      esRef.current = es;
+      // ... bindings ...
+      return () => {
+          es.close();
+          esRef.current = null;
+      };
+  }, []);
+  ```
+
+### 15.2 State-Driven Notifications vs Imparative Logic
+- **The Trap:** Triggering `toast()` calls directly within a generic API fetcher. This makes it difficult to silence notifications for specific routes or to aggregate multiple rapid events into a single summary.
+- **The Standard:** Decouple event processing from notification display using a store (e.g., Zustand `eventStore`). Let the UI components or a specialized "Coordinator Hook" (`useJobEvents`) subscribe to the store and trigger notifications based on state transitions (e.g., `status` changing from `QUEUED` to `RUNNING`).
+
+### 15.3 Minimalist Custom Notification Systems
+- **The Trap:** Pulling in heavy external libraries (like `react-toastify`) for simple, themed notifications. This increases bundle size and often requires overriding complex CSS to match a premium design system like "Midnight Slate".
+- **The Standard:** Implement a minimal "Shadcn-style" notification system using a simple pub/sub pattern in a hook (e.g., `use-toast.ts`). This allows 100% aesthetic control using standard Tailwind classes and ensures the notification component (`Toaster.tsx`) is perfectly co-located with the application shell.
+
+### 15.4 Unstable Selectors & useSyncExternalStore
+- **The Trap:** Creating selectors that return new objects or arrays (e.g., `.filter()`) inside a store hook without an equality function. In React 18+, this causes `useSyncExternalStore` to detect a "change" on every single re-render or store update (even unrelated ones), leading to infinite render loops or "Maximum update depth exceeded" errors.
+- **The Standard:** Always use `useShallow` from `zustand/react/shallow` when return a non-primitive or a new collection from a selector. For effects, always use a dedicated selector to extract only the stable actions needed, rather than subscribing to the entire state.
+  ```typescript
+  // BAD: Returns new array ref every time store changes
+  const active = useStore((s) => s.items.filter(i => i.active));
+  
+  // GOOD: Only re-renders if array content actually changes
+  const active = useStore(useShallow((s) => s.items.filter(i => i.active)));
+  ```
+---
+
+## 16. Authentication & Session Management (BFF Pattern)
+
+### 16.1 Direct OIDC Initiation for SPAs
+- **The Problem:** In a BFF (Backend-for-Frontend) architecture, directing a Single Page Application (SPA) to a server-side "Login" page before the OIDC provider (Google) adds a redundant user interaction.
+- **The Standard:** SPAs should navigate directly to the backend's OIDC initiation endpoint (e.g., `/auth/login`). The backend should then immediately redirect to the OIDC provider. This reduces the number of clicks and redirects for the end user.
+
+### 16.2 Explicit Cookie Clearing & Cache Prevention
+- **The Problem:** Modern browsers may cache `302 Found` redirects or retain session cookies if the path/domain isn't precisely matched during logout. Re-visiting a protected resource immediately after logout can trigger an invisible auto-login if the OIDC provider session is still active.
+- **The Standard:** 
+  1. During logout, manually clear the session cookie by adding a `Set-Cookie` header with `Max-Age=0` and matching `Path=/`.
+  2. Set explicit cache-prevention headers (`Cache-Control: no-cache, no-store, must-revalidate`) on all authentication-related redirects. This ensures the browser always evaluates the actual authentication state rather than relying on cached results.
+
+### 16.3 Canonical Origin Normalization
+- **The Problem:** Incoming `Origin` headers may or may not include default ports (e.g., `https://example.com:443`). Simple string comparisons fail when the configured allowed origin differs from the header's port representation.
+- **The Standard:** Use `java.net.URI` to parse the origin string and reconstruct it in a canonical form (scheme + host + explicit non-default port). This provides a robust foundation for CORS and redirect validation. Always log malformed origins at `WARN` level to facilitate debugging without crashing the validator.
+### 16.4 Orval/Axios Return Type Alignment (Promise<T> vs Promise<AxiosResponse<T>>)
+- **The Problem:** In a strict TypeScript environment (Vite/TSC), Orval-generated API functions (e.g., `getApiV1UsersMe`) often default to returning `Promise<T>` (the DTO) even if the underlying `customInstance` returns `Promise<AxiosResponse<T>>`. This causes `TS2322` assignment errors during build.
+- **The Trap:** Changing the `customInstance` to return `Promise<T>` (unwrapped data) fixes the compiler but breaks all hand-written logic that expects the Axios wrapper (e.g., `const { data } = await getApiV1...`).
+- **The Standard:** 
+    1. Standardize `customInstance` to return `Promise<T>` (the unwrapped data) to satisfy the generated types and the `react-query` hooks' expectations.
+    2. In the global interceptor, unwrap the `ApiEnvelope` into `response.data`.
+    3. Update all hand-written call sites to access the data directly without destructuring or by using appropriate type casting (e.g., `await getApiV1UsersMe() as any as UserDTO`) if the generated union types (Success | Error) are too restrictive.
+    4. Ensure unit tests mock the unwrapped DTO directly for consistency.
+### 16.5 SPA Routing with Quarkus (Catch-all)
+- **The Problem:** In a unified build where Quarkus serves a React SPA, navigating directly to a client-side route (e.g., `/dashboard`) or refreshing the page results in a 404 error because the backend doesn't recognize the path.
+- **The Standard:** 
+    1. Enable the built-in fallback: `quarkus.http.serve-index-html-for-not-found=true`.
+    2. Implement a specialized `SpaRoutingHandler` using a high-priority catch-all route (`@Route(path = "/*", order = 10000)`).
+    3. The handler should check if the request is NOT for an API (`/api/*`), static asset (contains a dot), or legacy UI (`/ui/*`), and if so, perform a `rc.reroute("/index.html")`. This keeps the browser URL intact while allowing the SPA to load and handle the routing logic.
+467: 
+468: ---
+469: 
+470: ## 17. Typed Pagination & OpenAPI (Quarkus / Orval)
+471: 
+472: ### 17.1 Eliminating `unknown[]` in Generated Collections
+473: When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus-smallrye-openapi` often fails to resolve the specific type `T` in the generated `openapi.json`, mapping `items` to a generic `object` or `unknown[]` in the Orval-generated TypeScript models.
+474: - **The Trap:** Relying on the generic `PaginatedResponse.class` in the `@Schema(implementation = ...)` attribute of a JAX-RS resource. This results in the loss of type-safety for the collection items in the frontend, requiring unsafe type assertions.
+475: - **The Standard:** 
+476:     1. Convert the `PaginatedResponse<T>` from a Java `record` to a standard class to allow for easier inheritance and explicit schema definition.
+477:     2. In each resource class (e.g., `AdminApiResource`), create a `public static` inner class that explicitly extends the generic response: `public static class AuditLogPaginatedResponse extends PaginatedResponse<AuditLogEntryDTO> { ... }`.
+478:     3. Use this specific subclass in the `@APIResponse` annotation: `@Content(schema = @Schema(implementation = AuditLogPaginatedResponse.class))`.
+479:     4. Orval will now generate a dedicated `AuditLogPaginatedResponse` interface with `items: AuditLogEntryDTO[]`, providing 100% end-to-end type safety without manual casting.
