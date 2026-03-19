@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'a
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../util/logger';
 import { useAuthStore } from '../store/authStore';
+import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
 
 /**
  * Custom request config to support idempotency keys and other metadata
@@ -38,6 +39,21 @@ const client: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
+});
+
+// Configure Axios Retry Strategy
+axiosRetry(client, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  onRetry: (retryCount) => {
+    logger.warn(`[API] Retrying request (${retryCount}/3)...`);
+  },
+  retryCondition: (error) => {
+    // Retry on network errors or transient 5xx status codes
+    return isNetworkOrIdempotentRequestError(error) ||
+           (!!error.response?.status && [502, 503, 504].includes(error.response.status));
+  },
+  shouldResetTimeout: true,
 });
 
 /**
@@ -85,7 +101,7 @@ client.interceptors.response.use(
     
     return response;
   },
-  async (error: AxiosError<ApiEnvelope>) => {
+  (error: AxiosError<ApiEnvelope>) => {
     const { response } = error;
 
     if (response) {

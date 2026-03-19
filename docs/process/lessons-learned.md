@@ -463,16 +463,24 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
     1. Enable the built-in fallback: `quarkus.http.serve-index-html-for-not-found=true`.
     2. Implement a specialized `SpaRoutingHandler` using a high-priority catch-all route (`@Route(path = "/*", order = 10000)`).
     3. The handler should check if the request is NOT for an API (`/api/*`), static asset (contains a dot), or legacy UI (`/ui/*`), and if so, perform a `rc.reroute("/index.html")`. This keeps the browser URL intact while allowing the SPA to load and handle the routing logic.
-467: 
-468: ---
-469: 
-470: ## 17. Typed Pagination & OpenAPI (Quarkus / Orval)
-471: 
-472: ### 17.1 Eliminating `unknown[]` in Generated Collections
-473: When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus-smallrye-openapi` often fails to resolve the specific type `T` in the generated `openapi.json`, mapping `items` to a generic `object` or `unknown[]` in the Orval-generated TypeScript models.
-474: - **The Trap:** Relying on the generic `PaginatedResponse.class` in the `@Schema(implementation = ...)` attribute of a JAX-RS resource. This results in the loss of type-safety for the collection items in the frontend, requiring unsafe type assertions.
-475: - **The Standard:** 
-476:     1. Convert the `PaginatedResponse<T>` from a Java `record` to a standard class to allow for easier inheritance and explicit schema definition.
-477:     2. In each resource class (e.g., `AdminApiResource`), create a `public static` inner class that explicitly extends the generic response: `public static class AuditLogPaginatedResponse extends PaginatedResponse<AuditLogEntryDTO> { ... }`.
-478:     3. Use this specific subclass in the `@APIResponse` annotation: `@Content(schema = @Schema(implementation = AuditLogPaginatedResponse.class))`.
-479:     4. Orval will now generate a dedicated `AuditLogPaginatedResponse` interface with `items: AuditLogEntryDTO[]`, providing 100% end-to-end type safety without manual casting.
+
+---
+
+## 17. Typed Pagination & OpenAPI (Quarkus / Orval)
+
+### 17.1 Eliminating `unknown[]` in Generated Collections
+When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus-smallrye-openapi` often fails to resolve the specific type `T` in the generated `openapi.json`, mapping `items` to a generic `object` or `unknown[]` in the Orval-generated TypeScript models.
+- **The Trap:** Relying on the generic `PaginatedResponse.class` in the `@Schema(implementation = ...)` attribute of a JAX-RS resource. This results in the loss of type-safety for the collection items in the frontend, requiring unsafe type assertions.
+- **The Standard:** 
+    1. Convert the `PaginatedResponse<T>` from a Java `record` to a standard class to allow for easier inheritance and explicit schema definition.
+    2. In each resource class (e.g., `AdminApiResource`), create a `public static` inner class that explicitly extends the generic response: `public static class AuditLogPaginatedResponse extends PaginatedResponse<AuditLogEntryDTO> { ... }`.
+    3. Use this specific subclass in the `@APIResponse` annotation: `@Content(schema = @Schema(implementation = AuditLogPaginatedResponse.class))`.
+    4. Orval will now generate a dedicated `AuditLogPaginatedResponse` interface with `items: AuditLogEntryDTO[]`, providing 100% end-to-end type safety without manual casting.
+
+### 18. Frontend UX Resilience Strategy
+Building "Professional Grade" applications requires more than just visual polish; it requires handling failures gracefully to maintain user trust.
+- **The Strategy:** Use a three-tier resilience strategy:
+    1. **Network Resilience:** Integrate `axios-retry` at the global client level to handle transient network issues and gateway errors (502/503/504) with exponential backoff.
+    2. **UI Safety Nets:** Wrap the root `RouterProvider` in a React `ErrorBoundary` and integrate with `TanStack Router`'s `defaultErrorComponent` to catch unhandled rendering exceptions and route loader failures.
+    3. **Bridge Async state:** Enable `throwOnError: true` in `TanStack Query` to propagate background fetch failures into the UI's error boundary for centralized failure handling.
+- **Verification Tip:** When verifying this strategy with E2E tests (Playwright), ensure `expect` timeouts are increased (e.g. 15s+) to allow for multiple network retries before the UI fail-state is rendered.

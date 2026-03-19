@@ -9,6 +9,7 @@ import { LandingPage } from './routes/LandingPage';
 import { DashboardPage } from './routes/DashboardPage';
 import { BriefingDetailPage } from './routes/BriefingDetailPage';
 import { AuditLogPage } from './routes/AuditLogPage';
+import { ErrorPage } from './routes/ErrorPage';
 import { AppShell } from './components/layout/AppShell';
 
 // Define context for the router to enable type-safe auth guards
@@ -152,6 +153,7 @@ const routeTree = rootRoute.addChildren([
 // 6. Create Router Instance
 export const router = createRouter({
   routeTree,
+  defaultErrorComponent: ErrorPage,
   context: {
     auth: undefined!, // Injected at runtime via RouterProvider
   },

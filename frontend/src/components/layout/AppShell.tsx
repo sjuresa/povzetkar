@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, useLocation } from '@tanstack/react-router';
-import { Toaster } from '../ui/Toaster';
+import { Toaster } from 'sonner';
 import { useJobEvents } from '../../hooks/useJobEvents';
 import { useEventStore } from '../../store/eventStore';
 
@@ -207,7 +207,20 @@ export function AppShell({ children }: AppShellProps) {
         </main>
       </div>
 
-      <Toaster />
+      <Toaster 
+        position="top-right" 
+        expand={false} 
+        richColors 
+        closeButton 
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: 'var(--color-slate-900)',
+            border: '1px solid var(--color-slate-800)',
+            color: 'var(--color-slate-100)',
+          },
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useEventStore, type JobStatusChangedEvent } from '../store/eventStore';
-import { useToast } from './use-toast';
+import { toast } from 'sonner';
 import logger from '../util/logger'; // Added import for logger
 
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
@@ -15,7 +15,6 @@ export function useJobEvents() {
       setConnectionStatus: state.setConnectionStatus,
     }))
   );
-  const { toast } = useToast();
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -57,22 +56,16 @@ export function useJobEvents() {
         
         // Show toast for significant changes
         if (data.status === 'RUNNING') {
-          toast({
-            title: 'Job Started',
+          toast.info('Job Started', {
             description: `Processing ${data.jobType.toLowerCase().replace(/_/g, ' ')}...`,
-            type: 'info',
           });
         } else if (data.status === 'COMPLETED') {
-          toast({
-            title: 'Job Completed',
+          toast.success('Job Completed', {
             description: 'Your request has been processed successfully.',
-            type: 'success',
           });
         } else if (data.status === 'FAILED') {
-          toast({
-            title: 'Job Failed',
+          toast.error('Job Failed', {
             description: 'An error occurred during processing.',
-            type: 'destructive',
           });
         }
       } catch (err) {
@@ -90,7 +83,7 @@ export function useJobEvents() {
       eventSourceRef.current = null;
       setConnectionStatus('disconnected');
     };
-  }, [updateJobStatus, setLastEvent, toast, setConnectionStatus]); // Added setConnectionStatus to dependency array
+  }, [updateJobStatus, setLastEvent, setConnectionStatus]); // Removed toast from dependency array
 
   return { isConnected: !!eventSourceRef.current };
 }
