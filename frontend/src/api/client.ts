@@ -49,9 +49,9 @@ axiosRetry(client, {
     return axiosRetry.exponentialDelay(retryCount);
   },
   retryCondition: (error) => {
-    // Retry on network errors or idempotent requests that failed with specific transient status codes
+    // Retry on network errors or transient 5xx status codes
     return isNetworkOrIdempotentRequestError(error) || 
-           (error.response?.status === 502 || error.response?.status === 503 || error.response?.status === 504);
+           (!!error.response?.status && [502, 503, 504].includes(error.response.status));
   },
   shouldResetTimeout: true,
 });

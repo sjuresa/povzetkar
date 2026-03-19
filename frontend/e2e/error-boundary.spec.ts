@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+/**
+ * Timeout to account for axios-retry logic (3 retries with exponential backoff).
+ * Standard 5s timeout is insufficient when simulating transient failures.
+ */
+const E2E_RESILIENCE_TIMEOUT = 15000;
+
 test.describe('Global Error Handling', () => {
   test.beforeEach(async ({ page }) => {
     // 1. Mock Auth - Always return a valid user to bypass login
@@ -39,9 +45,9 @@ test.describe('Global Error Handling', () => {
     
     // TanStack Query with throwOnError will trigger the ErrorComponent (ErrorPage)
     // defined in router.tsx
-    await expect(page.getByText('A glitch in the matrix')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Something went wrong while loading this page')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Go to Dashboard')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('A glitch in the matrix')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
+    await expect(page.getByText('Something went wrong while loading this page')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
+    await expect(page.getByText('Go to Dashboard')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
     
     // Verify that "Try Refreshing" exists
     await expect(page.getByRole('button', { name: 'Try Refreshing' })).toBeVisible();
@@ -55,6 +61,6 @@ test.describe('Global Error Handling', () => {
 
     await page.goto('/admin/audit-log');
     
-    await expect(page.getByText('A glitch in the matrix')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('A glitch in the matrix')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
   });
 });
