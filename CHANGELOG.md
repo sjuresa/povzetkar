@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [v0.13.0] - 2026-03-19
+
+### Summary
+Version 0.13.0 focuses on UX Resilience and Polish, introducing a hardened network layer and a professional error handling system. Key improvements include automated network retries for transient errors, a unified toast notification system using `sonner`, a global React Error Boundary with a premium fallback UI, and standardized loading states via a new `Skeleton` component system. These enhancements significantly improve application stability and provide a smoother, more reliable user experience.
+
+### Added
+- **Infrastructure (POV-145):** Integrated `axios-retry` into the global API client with exponential backoff for network errors and transient 5xx status codes (502, 503, 504).
+- **Frontend (POV-145):** Implemented a global **React Error Boundary** (`ErrorBoundary.tsx`) to catch unhandled rendering exceptions.
+- **Frontend (POV-145):** Fabricated a professional-grade **Error Page** (`ErrorPage.tsx`) with a "Midnight Slate" aesthetic, providing graceful failure recovery and navigation.
+- **Frontend (POV-145):** Created a reusable **Skeleton** component (`Skeleton.tsx`) with premium "pulse" animations and glassmorphic borders for consistent loading states.
+- **Frontend (POV-145):** Developed a comprehensive **E2E Test** (`error-boundary.spec.ts`) verifying that catastrophic API failures correctly trigger the global Error Page.
+
+### Changed
+- **Frontend (POV-145):** Migrated from the custom toast system to **Sonner**, enabling a more flexible and visually polished notification experience.
+- **Frontend (POV-145):** Refactored `DashboardPage` and `AuditLogPage` to utilize the new `Skeleton` system and global error handling, simplifying component logic.
+- **Frontend (POV-145):** Configured TanStack Query to use `throwOnError: true` by default, delegating error UX to the global boundary for a more unified architecture.
+
+### Removed
+- **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
+
 ## [v0.12.0] - 2026-03-18
 
 ### Summary

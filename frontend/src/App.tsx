@@ -3,6 +3,8 @@ import { RouterProvider } from '@tanstack/react-router';
 import { router } from './router';
 import { useAuthStore } from './store/authStore';
 import { useShallow } from 'zustand/react/shallow';
+import { ErrorBoundary } from './components/error/ErrorBoundary';
+import { ErrorPage } from './routes/ErrorPage';
 
 function App() {
   // Only subscribe to the fields the router context needs for guards
@@ -19,10 +21,12 @@ function App() {
   const context = useMemo(() => ({ auth }), [auth]);
 
   return (
-    <RouterProvider 
-      router={router} 
-      context={context} 
-    />
+    <ErrorBoundary fallback={<ErrorPage />}>
+      <RouterProvider 
+        router={router} 
+        context={context} 
+      />
+    </ErrorBoundary>
   );
 }
 
