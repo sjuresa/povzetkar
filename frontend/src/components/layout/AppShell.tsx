@@ -223,7 +223,7 @@ export function AppShell({ children }: AppShellProps) {
 
       <Toaster 
         position="top-right" 
-        expand={false} 
+        expand={true} 
         richColors 
         closeButton 
         theme={theme as 'light' | 'dark'}

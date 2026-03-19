@@ -9,4 +9,7 @@
 export interface TopicCreate {
   /** @pattern \S */
   name: string;
+  enabled?: boolean;
+  promptTemplate?: string;
+  sourceIds?: number[];
 }

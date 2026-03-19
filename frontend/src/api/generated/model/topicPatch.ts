@@ -9,4 +9,7 @@
 export interface TopicPatch {
   name?: string;
   enabled?: boolean;
+  promptTemplate?: string;
+  sourceIds?: number[];
+  version?: number;
 }

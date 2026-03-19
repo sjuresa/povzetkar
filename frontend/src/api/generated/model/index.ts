@@ -81,6 +81,7 @@ export * from './template';
 export * from './templateInstance';
 export * from './templateLocator';
 export * from './templateNode';
+export * from './topic';
 export * from './topicCreate';
 export * from './topicDTO';
 export * from './topicPatch';

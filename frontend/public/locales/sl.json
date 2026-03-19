@@ -66,5 +66,42 @@
       "help": "Potrebujete pomoč?",
       "guide": "Vodnik za hiter začetek prihaja kmalu"
     }
+  },
+  "topics": {
+    "title": "Upravljanje tem",
+    "subtitle": "Upravljajte in avtomatizirajte odkrivanje vsebine z UI.",
+    "add_topic": "Nova tema",
+    "edit_topic": "Uredi temo",
+    "delete_confirm": "Ali ste prepričani, da želite izbrisati temo \"{{name}}\"?",
+    "delete_success": "Tema je bila uspešno izbrisana",
+    "delete_failed": "Brisanje ni uspelo: {{message}}",
+    "trigger_success": "Zagon teme je bil uspešno sprožen!",
+    "trigger_failed": "Zagon ni uspel: {{message}}",
+    "empty_title": "Ni najdenih tem",
+    "empty_desc": "Ustvarite svojo prvo temo, da začnete prejemati povzetke novic z UI.",
+    "last_run": "Zadnji zagon",
+    "never": "Nikoli",
+    "default_prompt": "Privzeto navodilo",
+    "run_briefing": "Dostavi briefing",
+    "generate_summaries": "Generiraj povzetke",
+    "linked_sources_one": "{{count}} povezan vir",
+    "linked_sources_many": "{{count}} povezanih virov",
+    "linked_sources": "{{count}} povezanih virov vsebine",
+    "form": {
+      "name_label": "Ime teme",
+      "name_placeholder": "npr. Dnevne AI novice",
+      "enabled_label": "Omogočeno",
+      "prompt_label": "Predloga navodila",
+      "prompt_placeholder": "Navodila za UI po meri za to temo...",
+      "prompt_tip": "Namig: Za prilagoditev povzetka lahko uporabite spremenljivke.",
+      "sources_label": "Viri vsebine",
+      "sources_loading": "Nalaganje virov...",
+      "no_sources": "Ni na voljo virov vsebine.",
+      "update": "Posodobi temo",
+      "create": "Ustvari temo",
+      "save_failed": "Napaka pri shranjevanju teme: {{message}}",
+      "save_success_create": "Tema je bila uspešno ustvarjena",
+      "save_success_update": "Tema je bila uspešno posodobljena"
+    }
   }
 }

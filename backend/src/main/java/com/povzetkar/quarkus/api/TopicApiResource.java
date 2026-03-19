@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
+import com.povzetkar.quarkus.api.dto.ApiMetaDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
@@ -11,6 +13,8 @@ import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.TopicMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
+import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
@@ -51,9 +55,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("/api/v1/topics")
 @ApplicationScoped
@@ -99,6 +105,7 @@ public class TopicApiResource extends BaseApiResource {
         PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
+                .list()
                 .stream()
                 .map(topicMapper::toDTO)
                 .toList();
@@ -131,18 +138,27 @@ public class TopicApiResource extends BaseApiResource {
             description = "Topic created successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicDTO.class))
     )
-    public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO) {
+    public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
 
         checkForDuplicateTopicName(user, createDTO.name());
 
         Topic topic = topicMapper.toEntity(createDTO);
         topic.user = user;
+        
+        if (createDTO.enabled() != null) {
+            topic.enabled = createDTO.enabled();
+        }
+
+        if (createDTO.sourceIds() != null && !createDTO.sourceIds().isEmpty()) {
+            topic.contentSources = resolveSources(createDTO.sourceIds());
+        }
+
         topic.persist();
 
-        return Response.created(URI.create("/api/v1/topics/" + topic.id))
-                .entity(topicMapper.toDTO(topic))
-                .type(MediaType.APPLICATION_JSON)
+        URI uri = uriInfo.getAbsolutePathBuilder().path(Long.toString(topic.id)).build();
+        return Response.created(uri)
+                .entity(new ApiEnvelopeDTO<>(topicMapper.toDTO(topic), new ApiMetaDTO(Instant.now(), null, null), null))
                 .build();
     }
 
@@ -161,10 +177,10 @@ public class TopicApiResource extends BaseApiResource {
             @PathParam("id") Long id,
             @HeaderParam("If-Match") String ifMatch,
             @Valid @NotNull TopicPatchDTO patchDTO) {
-        
+
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);
-        
+
         checkOptimisticLock(topic, ifMatch);
 
         if (patchDTO.name() != null && !topic.name.equals(patchDTO.name())) {
@@ -172,7 +188,25 @@ public class TopicApiResource extends BaseApiResource {
         }
 
         topicMapper.patchEntity(patchDTO, topic);
+
+        if (patchDTO.sourceIds() != null) {
+            topic.contentSources.clear();
+            if (!patchDTO.sourceIds().isEmpty()) {
+                topic.contentSources.addAll(resolveSources(patchDTO.sourceIds()));
+            }
+        }
+
         return topicMapper.toDTO(topic);
+    }
+
+    private Set<ContentSource> resolveSources(Set<Long> sourceIds) {
+        if (sourceIds == null || sourceIds.isEmpty()) {
+            return new java.util.HashSet<>();
+        }
+        return sourceIds.stream()
+                .map(id -> (ContentSource) ContentSource.findByIdOptional(id)
+                        .orElseThrow(() -> new jakarta.ws.rs.NotFoundException("ContentSource not found: " + id)))
+                .collect(Collectors.toSet());
     }
 
     @DELETE
@@ -190,6 +224,23 @@ public class TopicApiResource extends BaseApiResource {
         
         topic.delete();
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{id}/commands/generate-summaries")
+    @RolesAllowed(Permission.V_TOPIC_TRIGGER_RUN)
+    @Operation(summary = "Trigger topic-only summarization", description = "Triggers a background job to fetch and summarize content for a specific topic today without creating a briefing.")
+    @APIResponse(responseCode = "202", description = "Job triggered successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class)))
+    @APIResponse(responseCode = "404", description = "Topic not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to summarize", schema = @Schema(type = SchemaType.INTEGER))
+    public BackgroundJobDTO triggerTopicSummaries(@PathParam("id") Long id) {
+        User user = getAuthenticatedUser();
+        Topic topic = Topic.<Topic>findByIdOptional(id)
+                .filter(t -> t.user.id.equals(user.id))
+                .orElseThrow(() -> new NotFoundException("Topic with id " + id + " not found."));
+
+        BackgroundJob job = backgroundJobService.triggerTopicSummariesJob(topic, user.id);
+        return backgroundJobMapper.toDTO(job);
     }
 
     @POST

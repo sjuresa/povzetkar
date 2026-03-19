@@ -66,5 +66,42 @@
       "help": "Need help?",
       "guide": "Quickstart Guide coming soon"
     }
+  },
+  "topics": {
+    "title": "Topic Management",
+    "subtitle": "Curate and automate your AI content discovery.",
+    "add_topic": "New Topic",
+    "edit_topic": "Edit Topic",
+    "delete_confirm": "Are you sure you want to delete \"{{name}}\"?",
+    "delete_success": "Topic deleted successfully",
+    "delete_failed": "Deletion failed: {{message}}",
+    "trigger_success": "Topic run triggered successfully!",
+    "trigger_failed": "Trigger failed: {{message}}",
+    "empty_title": "No Topics Found",
+    "empty_desc": "Create your first topic to start receiving AI-powered news summaries.",
+    "last_run": "Last run",
+    "never": "Never",
+    "default_prompt": "Default prompt",
+    "linked_sources": "{{count}} content sources linked",
+    "run_briefing": "Deliver Briefing",
+    "generate_summaries": "Generate Summaries",
+    "linked_sources_one": "{{count}} linked source",
+    "linked_sources_many": "{{count}} linked sources",
+    "form": {
+      "name_label": "Topic Name",
+      "name_placeholder": "e.g., Daily AI News",
+      "enabled_label": "Enabled",
+      "prompt_label": "Prompt Template",
+      "prompt_placeholder": "Custom AI instructions for this topic...",
+      "prompt_tip": "Tip: You can use variables to customize the summary.",
+      "sources_label": "Content Sources",
+      "sources_loading": "Loading sources...",
+      "no_sources": "No content sources available.",
+      "update": "Update Topic",
+      "create": "Create Topic",
+      "save_failed": "Failed to save topic: {{message}}",
+      "save_success_create": "Topic created successfully",
+      "save_success_update": "Topic updated successfully"
+    }
   }
 }

@@ -76,8 +76,8 @@ describe('useJobEvents', () => {
     mockEventSourceInstance.emit('JOB_STATUS_CHANGED', eventPayload);
 
     expect(updateJobStatus).toHaveBeenCalledWith(jobData);
-    expect(toast.info).toHaveBeenCalledWith('Job Started', expect.objectContaining({
-      description: expect.stringContaining('generate topic briefing'),
+    expect(toast.info).toHaveBeenCalledWith('Job Started: generate topic briefing', expect.objectContaining({
+      description: expect.stringContaining('Processing information'),
     }));
   });
 

@@ -78,6 +78,19 @@ public class BackgroundJobService {
     public BackgroundJob triggerTopicBriefingJob(Topic topic, Long userId) {
         BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_BRIEFING);
         job.userId = userId;
+        job.topicId = topic.id;
+        job.persist();
+
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, job.type, userId, null, topic.id));
+
+        return job;
+    }
+
+    @Transactional
+    public BackgroundJob triggerTopicSummariesJob(Topic topic, Long userId) {
+        BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_SUMMARIES);
+        job.userId = userId;
+        job.topicId = topic.id;
         job.persist();
 
         jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, job.type, userId, null, topic.id));
@@ -110,12 +123,21 @@ public class BackgroundJobService {
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
                 case GENERATE_TOPIC_BRIEFING -> {
-                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(event.topicId()));
+                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(event.topicId()));
                     if (topic == null) {
                         logger.warn("Topic not found for ID: {}", event.topicId());
                         jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
                     } else {
                         jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
+                    }
+                }
+                case GENERATE_TOPIC_SUMMARIES -> {
+                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(event.topicId()));
+                    if (topic == null) {
+                        logger.warn("Topic not found for ID: {}", event.topicId());
+                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
+                    } else {
+                        jobTask = orchestrationManager.runSummarizationForTopicOnly(topic, LocalDate.now(clock));
                     }
                 }
                 case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
@@ -187,7 +209,14 @@ public class BackgroundJobService {
             }
         }
         job.persist();
-        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type));
+        String details = null;
+        if (job.topicId != null) {
+            Topic topic = Topic.findById(job.topicId);
+            if (topic != null) {
+                details = topic.name;
+            }
+        }
+        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, details));
     }
 
     public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, Sort sort, int pageIndex, int pageSize) {

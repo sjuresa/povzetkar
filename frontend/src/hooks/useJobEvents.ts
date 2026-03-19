@@ -54,18 +54,23 @@ export function useJobEvents() {
 
         updateJobStatus(data);
         
+        const jobName = data.jobType.toLowerCase().replace(/_/g, ' ');
+        const details = data.details ? `: ${data.details}` : '';
+
         // Show toast for significant changes
         if (data.status === 'RUNNING') {
-          toast.info('Job Started', {
-            description: `Processing ${data.jobType.toLowerCase().replace(/_/g, ' ')}...`,
+          toast.info(`Job Started: ${jobName}`, {
+            description: `Processing information${details}...`,
           });
         } else if (data.status === 'COMPLETED') {
-          toast.success('Job Completed', {
-            description: 'Your request has been processed successfully.',
+          toast.success(`Job Completed: ${jobName}`, {
+            description: `Successfully processed${details}.`,
+            duration: 5000,
           });
         } else if (data.status === 'FAILED') {
-          toast.error('Job Failed', {
-            description: 'An error occurred during processing.',
+          toast.error(`Job Failed: ${jobName}`, {
+            description: `An error occurred while processing${details}.`,
+            duration: 7000,
           });
         }
       } catch (err) {

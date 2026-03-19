@@ -1,17 +1,21 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Topic;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class TopicProcessor {
@@ -32,9 +36,15 @@ public class TopicProcessor {
     }
 
     public Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate) {
-        logger.info("Starting content processing for topic '{}' on {}.", topic.name, orchestrationDate);
+        return processTopicUni(topic, orchestrationDate, false);
+    }
 
-        return fetchAndPersistContentUni(topic, orchestrationDate)
+    public Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate, boolean processPending) {
+        logger.info("Starting content processing for topic '{}' on {}. Process pending: {}", topic.name, orchestrationDate, processPending);
+
+        Uni<Void> initialTask = processPending ? processTopicPendingItems(topic, orchestrationDate) : Uni.createFrom().voidItem();
+
+        return initialTask.chain(() -> fetchAndPersistContentUni(topic, orchestrationDate)
                 .onItem().transformToUni(newContentItems -> {
                     if (newContentItems.isEmpty()) {
                         logger.info("No new content found for topic '{}' on {}. Skipping summarization.", topic.name, orchestrationDate);
@@ -49,7 +59,32 @@ public class TopicProcessor {
                 .onItem().invoke(() -> logger.info("Finished content processing for topic '{}' on {}.", topic.name, orchestrationDate))
                 .onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration for date {}.", topic.name, orchestrationDate, ex))
                 .onFailure().recoverWithNull()
-                .replaceWithVoid();
+                .replaceWithVoid());
+    }
+
+    private Uni<Void> processTopicPendingItems(Topic topic, LocalDate orchestrationDate) {
+        logger.info("Checking for pending/retry items for topic '{}' on {}.", topic.name, orchestrationDate);
+        String query = "select distinct ci from ContentItem ci " +
+                       "join ci.contentSource cs " +
+                       "join cs.topics t " +
+                       "where t.id = ?1 " +
+                       "and ci.processingStatus in ?2 " +
+                       "and ci.publishedAt >= ?3 " +
+                       "and ci.publishedAt < ?4";
+        
+        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(() -> 
+                ContentItem.<ContentItem>find(query,
+                        topic.id,
+                        Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
+                        orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                        orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
+                .list())).chain(itemsToProcess -> {
+            if (itemsToProcess.isEmpty()) {
+                return Uni.createFrom().voidItem();
+            }
+            logger.info("Found {} items to retry/pending for topic '{}'.", itemsToProcess.size(), topic.name);
+            return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate);
+        });
     }
 
     public Uni<List<ContentItem>> fetchAndPersistContentUni(Topic topic, LocalDate orchestrationDate) {
