@@ -50,8 +50,7 @@ axiosRetry(client, {
   },
   retryCondition: (error) => {
     // Retry on network errors or transient 5xx status codes
-    return isNetworkOrIdempotentRequestError(error) || 
-           (!!error.response?.status && [502, 503, 504].includes(error.response.status));
+    return isNetworkOrIdempotentRequestError(error) || [502, 503, 504].includes(error.response?.status);
   },
   shouldResetTimeout: true,
 });
