@@ -2,7 +2,8 @@
 FROM node:20-alpine AS build-frontend
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install
+
 COPY frontend/src ./src
 COPY frontend/public ./public
 COPY frontend/index.html ./

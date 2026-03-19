@@ -36,7 +36,8 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies (root + frontend)
-      run: npm install && cd frontend && npm install --legacy-peer-deps
+      run: npm install && cd frontend && npm install
+
 
     - name: Make mvnw executable
       run: chmod +x mvnw
