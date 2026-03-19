@@ -8,6 +8,7 @@ import { useEventStore } from '../../store/eventStore';
 import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { useThemeStore } from '../../store/themeStore';
 
 interface AppShellProps {
   children: ReactNode;
@@ -29,6 +30,7 @@ export function AppShell({ children }: AppShellProps) {
   const connectionStatus = useEventStore((state) => state.connectionStatus);
   const location = useLocation();
   const { t } = useTranslation();
+  const { theme } = useThemeStore();
 
   const navItems = [
     { name: t('navigation.dashboard'), path: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -224,6 +226,7 @@ export function AppShell({ children }: AppShellProps) {
         expand={false} 
         richColors 
         closeButton 
+        theme={theme as 'light' | 'dark'}
         toastOptions={{
           style: {
             background: 'var(--color-surface-elevated)',

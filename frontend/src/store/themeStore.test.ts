@@ -3,15 +3,14 @@ import { useThemeStore } from './themeStore';
 
 describe('themeStore', () => {
   beforeEach(() => {
-    // Clear the store before each test
     const { setTheme } = useThemeStore.getState();
-    setTheme('system');
+    setTheme('dark');
     localStorage.clear();
     vi.clearAllMocks();
   });
 
-  it('should have "system" as default theme', () => {
-    expect(useThemeStore.getState().theme).toBe('system');
+  it('should have "dark" as default theme', () => {
+    expect(useThemeStore.getState().theme).toBe('dark');
   });
 
   it('should update theme correctly', () => {

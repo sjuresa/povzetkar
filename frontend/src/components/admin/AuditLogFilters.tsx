@@ -121,7 +121,7 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
         <div className="md:col-start-4 lg:col-start-5 flex items-end">
           <button 
             onClick={applyFilters}
-            className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all outline-none"
+            className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all focus:ring-2 focus:ring-amber-500/50 outline-none"
           >
             Apply Filter
           </button>
