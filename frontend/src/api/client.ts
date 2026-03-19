@@ -44,13 +44,14 @@ const client: AxiosInstance = axios.create({
 // Configure Axios Retry Strategy
 axiosRetry(client, {
   retries: 3,
-  retryDelay: (retryCount) => {
+  retryDelay: axiosRetry.exponentialDelay,
+  onRetry: (retryCount) => {
     logger.warn(`[API] Retrying request (${retryCount}/3)...`);
-    return axiosRetry.exponentialDelay(retryCount);
   },
   retryCondition: (error) => {
     // Retry on network errors or transient 5xx status codes
-    return isNetworkOrIdempotentRequestError(error) || [502, 503, 504].includes(error.response?.status);
+    return isNetworkOrIdempotentRequestError(error) ||
+           (!!error.response?.status && [502, 503, 504].includes(error.response.status));
   },
   shouldResetTimeout: true,
 });

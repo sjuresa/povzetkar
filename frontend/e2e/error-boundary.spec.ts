@@ -46,8 +46,8 @@ test.describe('Global Error Handling', () => {
     // TanStack Query with throwOnError will trigger the ErrorComponent (ErrorPage)
     // defined in router.tsx
     await expect(page.getByText('A glitch in the matrix')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
-    await expect(page.getByText('Something went wrong while loading this page')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
-    await expect(page.getByText('Go to Dashboard')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
+    await expect(page.getByText('Something went wrong while loading this page')).toBeVisible();
+    await expect(page.getByText('Go to Dashboard')).toBeVisible();
     
     // Verify that "Try Refreshing" exists
     await expect(page.getByRole('button', { name: 'Try Refreshing' })).toBeVisible();
