@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 1.7     | March 19, 2026   | Povzetkar AI | Upgraded Phase 1 planning standards: added Evolution/Justification logic and mandatory time breakdown with contingency. |
 | 1.6     | January 18, 2026 | Povzetkar AI | Added BOM alignment check to QA steps based on v0.7.0 retrospective. Added note on automating BOM check with maven-enforcer-plugin. |
 | 1.5     | January 17, 2026 | Povzetkar AI | Added Dependency Security Check (IntelliJ) and expanded documentation review scope.                                                 |
 | 1.4     | January 13, 2026 | Povzetkar AI | Restructured release phases for clarity (Finalization -> Release -> Post-Release).                                                  |
@@ -25,12 +26,16 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.2. Define High-Level Goals:** Review the `roadmap.md` and agree on the primary objectives for the new version.
 - [ ] **1.3. Define Testing Strategy:** For any new functionality (especially with a UI component), ask "How will we test this in a way that is proportional to the investment?". The decision must be documented in the `planning-process.md`.
 - [ ] **1.4. Identify Spike Tasks:** Review goals for high technical uncertainty. If any exist, create a dedicated "Spike" task to de-risk future development.
-- [ ] **1.5. Document Planning Process:** Create a `docs/versions/vX.Y-planning-process.md` file to log the decisions and rationale behind the plan, including the testing strategy.
+- [ ] **1.5. Document Planning Process:** Create a `docs/versions/vX.Y-planning-process.md` file to log the decisions and rationale behind the plan.
+    - [ ] Include **Planning Evolution & Justification**: Document how the plan changed during brainstorming and why (Pros/Cons of key decisions).
+    - [ ] Include the **Testing Strategy**, documenting the proportionality of testing effort.
 - [ ] **1.6. Create Task Breakdown:** Create a new `docs/versions/vX.Y-tasks.md` file, breaking down the high-level goals into concrete, actionable tasks.
-    - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in the v0.6 retrospective.
-    - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined to explicitly outline the test scenarios.
+    - [ ] Include a **Time Estimation Summary** with sub-estimates and contingency.
+    - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in previous retrospectives.
+    - [ ] For every `feat` task, ensure a corresponding `test` sub-task or criteria is defined to explicitly outline the test scenarios (E2E/Unit).
+
 - [ ] **1.7. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
-- [ ] **1.8. Prepare Development Branch:** Create the new version branch (e.g., `v0.7`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
+- [ ] **1.8. Prepare Development Branch:** Create the new version branch (e.g., `v0.7.0`) from `main` and update the `pom.xml` to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
 
 ---
 
