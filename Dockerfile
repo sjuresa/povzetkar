@@ -2,7 +2,7 @@
 FROM node:20-alpine AS build-frontend
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN apk update && apk upgrade --no-cache && npm install
 
 COPY frontend/src ./src
 COPY frontend/public ./public
@@ -13,7 +13,7 @@ RUN npm run build
 
 # Stage 2: Build Backend
 FROM eclipse-temurin:25-jdk-alpine AS build-backend
-RUN apk add --no-cache maven
+RUN apk update && apk upgrade --no-cache && apk add --no-cache maven
 WORKDIR /app
 COPY pom.xml .
 COPY backend/pom.xml ./backend/
@@ -26,7 +26,7 @@ RUN mvn package -DskipTests -pl backend -am
 
 # Stage 3: Runtime
 FROM eclipse-temurin:25-jre-alpine
-RUN apk add --no-cache curl
+RUN apk update && apk upgrade --no-cache && apk add --no-cache curl
 WORKDIR /app
 COPY --from=build-backend /app/backend/target/quarkus-app/ ./
 EXPOSE 8080
