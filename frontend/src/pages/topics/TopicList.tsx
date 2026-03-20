@@ -12,7 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useGetApiV1Topics, deleteApiV1TopicsId, postApiV1TopicsIdCommandsGenerateBriefing } from '../../api/generated/topics/topics';
-import type { Topic } from '../../api/generated/model';
+import type { Topic, TopicPaginatedResponse } from '../../api/generated/model';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -32,7 +32,7 @@ export const TopicList: React.FC<TopicListProps> = ({
 
   const { data: topicsResponse, isLoading, error } = useGetApiV1Topics({ page: 0, size: 100 });
 
-  const handleDelete = async (topic: Topic) => {
+  const handleDelete = async (topiglobalThisic) => {
     if (!window.confirm(t('topics.list.delete_confirm', { name: topic.name }))) {
       return;
     }
@@ -78,9 +78,10 @@ export const TopicList: React.FC<TopicListProps> = ({
     );
   }
 
-  const topics: Topic[] = Array.isArray(topicsResponse) 
-    ? topicsResponse 
-    : (topicsResponse as any)?.items || [];
+  /**
+   * Topics extraction simplified for cleaner logic and type safety.
+   */
+  const topics: Topic[] = (topicsResponse as unknown as TopicPaginatedResponse)?.items ?? [];
 
   const filteredTopics = topics.filter(topic => {
     const matchesSearch = topic.name?.toLowerCase().includes(searchQuery.toLowerCase());

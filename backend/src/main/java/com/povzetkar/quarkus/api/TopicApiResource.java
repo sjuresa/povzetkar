@@ -1,7 +1,5 @@
 package com.povzetkar.quarkus.api;
 
-import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
-import com.povzetkar.quarkus.api.dto.ApiMetaDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
@@ -55,7 +53,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -158,7 +155,8 @@ public class TopicApiResource extends BaseApiResource {
 
         URI uri = uriInfo.getAbsolutePathBuilder().path(Long.toString(topic.id)).build();
         return Response.created(uri)
-                .entity(new ApiEnvelopeDTO<>(topicMapper.toDTO(topic), new ApiMetaDTO(Instant.now(), null, null), null))
+                .type(MediaType.APPLICATION_JSON)
+                .entity(topicMapper.toDTO(topic))
                 .build();
     }
 

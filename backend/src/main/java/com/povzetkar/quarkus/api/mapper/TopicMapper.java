@@ -28,7 +28,8 @@ public interface TopicMapper {
     @Mapping(target = "lastRunDate", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "contentSources", ignore = true) // Handled manually in resource for now or with custom mapping
+    @Mapping(target = "contentSources", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
     Topic toEntity(TopicCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)

@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { TopicCreate, Topic, TopicPatch } from '../../api/generated/model';
+import type { TopicCreate, Topic, TopicPatch, ContentSourcePaginatedResponse, ContentSourceDTO } from '../../api/generated/model';
 import { useTranslation } from 'react-i18next';
 import { useGetApiV1Sources } from '../../api/generated/content-sources/content-sources';
 import { usePostApiV1Topics, patchApiV1TopicsId } from '../../api/generated/topics/topics';
@@ -86,9 +86,12 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
     }
   };
 
-  const sourcesData = (Array.isArray(sourcesResponse) 
-    ? sourcesResponse 
-    : (sourcesResponse as any)?.items || []) as any[];
+  /**
+   * Sources extraction simplified as per CR feedback.
+   * Although useGetApiV1Sources type signature suggests it returns the whole response object, 
+   * customInstance at runtime unwraps the inner DTO from the envelope.
+   */
+  const sourcesData = (sourcesResponse as unknown as ContentSourcePaginatedResponse)?.items ?? [];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
@@ -186,26 +189,26 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar p-2">
-            {sourcesData.map((source) => (
+            {sourcesData.map((source: ContentSourceDTO) => (
               <button
                 key={source.id}
                 type="button"
-                onClick={() => toggleSource(source.id)}
+                onClick={() => toggleSource(source.id!)}
                 className={`flex items-center justify-between p-4 rounded-2xl border transition-all text-left group ${
-                  selectedSourceIds.includes(source.id)
+                  selectedSourceIds.includes(source.id!)
                     ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20 scale-[1.02]'
                     : 'bg-[var(--color-background-base)] text-[var(--color-text-primary)] border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] hover:-translate-y-0.5'
                 }`}
               >
                 <div className="flex items-center min-w-0">
                   <div className={`p-2 rounded-lg mr-3 flex-shrink-0 ${
-                    selectedSourceIds.includes(source.id) ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-800'
+                    selectedSourceIds.includes(source.id!) ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-800'
                   }`}>
                     <ExternalLink className="w-4 h-4" />
                   </div>
                   <span className="font-bold truncate text-sm">{source.name}</span>
                 </div>
-                {selectedSourceIds.includes(source.id) && (
+                {selectedSourceIds.includes(source.id!) && (
                   <Check className="w-5 h-5 flex-shrink-0 animate-in zoom-in" />
                 )}
               </button>
