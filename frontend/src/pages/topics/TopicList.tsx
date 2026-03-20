@@ -68,7 +68,13 @@ export const TopicList: React.FC<TopicListProps> = ({ onEdit }) => {
     );
   }
 
-  const topics = (topicsResponse?.data?.items as Topic[]) || [];
+  const topicsResponseValue = topicsResponse as any;
+  const topics: Topic[] = 
+    (Array.isArray(topicsResponseValue) ? topicsResponseValue : undefined) || 
+    topicsResponseValue?.items || 
+    topicsResponseValue?.data?.items || 
+    (Array.isArray(topicsResponseValue?.data) ? topicsResponseValue.data : []) || 
+    [];
 
   if (topics.length === 0) {
     return (

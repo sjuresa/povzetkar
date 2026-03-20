@@ -91,7 +91,12 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
     }
   };
 
-  const sourcesData = (sourcesResponse?.data?.items as any[]) || [];
+  const sourcesResponseValue = sourcesResponse as any;
+  const sourcesData = 
+    sourcesResponseValue?.items || 
+    sourcesResponseValue?.data?.items || 
+    (Array.isArray(sourcesResponseValue?.data) ? sourcesResponseValue.data : []) || 
+    (Array.isArray(sourcesResponseValue) ? sourcesResponseValue : []);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -30,6 +30,11 @@ export interface ApiEnvelope<T = unknown> {
   } | null;
 }
 
+/**
+ * Type helper to unwrap the API envelope if it exists
+ */
+export type UnwrapEnvelope<T> = T extends { data: infer D } ? D : T;
+
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
 
 const client: AxiosInstance = axios.create({
@@ -160,7 +165,7 @@ export const customInstance = <T>(
    * This aligns with Orval's generated hook signatures while allowing the global interceptor 
    * to handle API envelope unwrapping and error normalization centrally.
    */
-): Promise<T> => {
+): Promise<UnwrapEnvelope<T>> => {
   const { method, headers, body, params, signal, version } = options;
 
   let requestData = body;
@@ -205,11 +210,7 @@ export const customInstance = <T>(
     data: requestData,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }).then((response) => ({
-    data: response.data,
-    status: response.status,
-    headers: response.headers,
-  } as T));
+  }).then((response) => response.data as UnwrapEnvelope<T>);
 };
 
 export default client;
