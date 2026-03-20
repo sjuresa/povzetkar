@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useGetApiV1Sources } from '../../api/generated/content-sources/content-sources';
 import { usePostApiV1Topics, patchApiV1TopicsId } from '../../api/generated/topics/topics';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings } from 'lucide-react';
 
 const topicSchema = z.object({
@@ -26,6 +27,7 @@ interface TopicFormProps {
 
 export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, onCancel }) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { data: sourcesResponse, isLoading: isLoadingSources } = useGetApiV1Sources({ page: 0, size: 100 });
   const { mutateAsync: createTopic, isPending: isCreating } = usePostApiV1Topics();
 
@@ -71,6 +73,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         await createTopic({ data: create });
         toast.success(t('topics.form.save_success_create'));
       }
+      void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
       onSuccess();
     } catch (error: any) {
       const message = error.response?.data?.error?.message || error.message;

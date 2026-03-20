@@ -32,7 +32,7 @@ export const TopicList: React.FC<TopicListProps> = ({
 
   const { data: topicsResponse, isLoading, error } = useGetApiV1Topics({ page: 0, size: 100 });
 
-  const handleDelete = async (topiglobalThisic) => {
+  const handleDelete = async (topic: Topic) => {
     if (!window.confirm(t('topics.list.delete_confirm', { name: topic.name }))) {
       return;
     }
@@ -42,7 +42,7 @@ export const TopicList: React.FC<TopicListProps> = ({
         headers: { 'If-Match': `"${topic.version}"` } as HeadersInit 
       });
       toast.success(t('topics.list.delete_success'));
-      void queryClient.invalidateQueries({ queryKey: ['getApiV1Topics'] });
+      void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
     } catch (err: any) {
       toast.error(t('topics.list.delete_failed', { message: err.message }));
     }

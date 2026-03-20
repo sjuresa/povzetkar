@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.api.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
@@ -33,12 +32,7 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
             return;
         }
 
-        // Handle PaginatedResponse wrapping
-        if (entity instanceof PaginatedResponse<?> p) {
-            responseContext.setEntity(ApiEnvelopeDTO.paginated(p.items, p.totalCount, p.pageIndex, p.pageSize));
-        } else {
-            // Standard success wrap for raw DTOs or Lists
-            responseContext.setEntity(ApiEnvelopeDTO.success(entity));
-        }
+        // Wrap all 2xx responses — both paginated lists and raw DTOs
+        responseContext.setEntity(ApiEnvelopeDTO.success(entity));
     }
 }
