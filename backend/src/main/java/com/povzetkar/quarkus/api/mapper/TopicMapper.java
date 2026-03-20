@@ -11,6 +11,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,7 @@ public interface TopicMapper {
     void patchEntity(TopicPatchDTO dto, @MappingTarget Topic entity);
 
     default Set<Long> mapSourcesToIds(Set<ContentSource> sources) {
-        if (sources == null) return null;
+        if (sources == null) return Collections.emptySet();
         return sources.stream().map(s -> s.id).collect(Collectors.toSet());
     }
 }

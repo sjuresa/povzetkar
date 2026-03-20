@@ -203,10 +203,14 @@ public class TopicApiResource extends BaseApiResource {
         if (sourceIds == null || sourceIds.isEmpty()) {
             return new java.util.HashSet<>();
         }
-        return sourceIds.stream()
-                .map(id -> ContentSource.<ContentSource>findByIdOptional(id)
-                        .orElseThrow(() -> new jakarta.ws.rs.NotFoundException("ContentSource not found: " + id)))
-                .collect(Collectors.toSet());
+        List<ContentSource> sources = ContentSource.list("id in ?1", sourceIds);
+        if (sources.size() != sourceIds.size()) {
+            Set<Long> foundIds = sources.stream().map(s -> s.id).collect(Collectors.toSet());
+            Set<Long> missingIds = new java.util.HashSet<>(sourceIds);
+            missingIds.removeAll(foundIds);
+            throw new jakarta.ws.rs.NotFoundException("ContentSource(s) not found: " + missingIds);
+        }
+        return new java.util.HashSet<>(sources);
     }
 
     @DELETE

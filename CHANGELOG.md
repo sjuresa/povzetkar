@@ -38,7 +38,6 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 - **Backend (Persistence):** Fixed `LazyInitializationException` by implementing eager loading of content sources via `Topic.findByIdWithSources()`.
 - **Backend (Orchestration):** Restored inadvertently overwritten `findEnabledByUsers` method in `Topic.java` to maintain global processing stability.
 - **Backend (API):** Fixed a timeout in `IdempotencyFilter.java` for requests with empty bodies.
-- **Backend (API):** Refined `TopicDTO` and `TopicApiResource` for improved type safety and performance.
 - **Frontend (API):** Aligned `customInstance` to return the full response object, improving type safety and simplifying data access across the application.
 - **Frontend (UX):** Improved toast notifications to support stacking and descriptive messages containing topic names.
 - **Frontend (Build):** Resolved production build errors by removing unused imports in `TopicList.tsx`.

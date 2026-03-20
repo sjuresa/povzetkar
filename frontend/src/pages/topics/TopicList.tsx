@@ -23,9 +23,6 @@ export const TopicList: React.FC<TopicListProps> = ({ onEdit }) => {
   const triggerTopic = useTriggerTopic();
   const triggerSummaries = useTriggerSummaries();
 
-  console.log('TopicList: topicsResponseRaw:', topicsResponse);
-  console.log('TopicList: error:', error);
-
   const handleDelete = async (topic: Topic) => {
     if (!globalThis.confirm(t('topics.delete_confirm', { name: topic.name }))) return;
 
