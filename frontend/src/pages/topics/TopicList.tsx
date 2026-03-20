@@ -81,7 +81,9 @@ export const TopicList: React.FC<TopicListProps> = ({
   /**
    * Topics extraction simplified for cleaner logic and type safety.
    */
-  const topics: Topic[] = (topicsResponse as unknown as TopicPaginatedResponse)?.items ?? [];
+  const topics: Topic[] = Array.isArray(topicsResponse)
+    ? (topicsResponse as unknown as Topic[])
+    : ((topicsResponse as unknown as TopicPaginatedResponse)?.items ?? []);
 
   const filteredTopics = topics.filter(topic => {
     const matchesSearch = topic.name?.toLowerCase().includes(searchQuery.toLowerCase());

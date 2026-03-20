@@ -94,7 +94,9 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
    * Although useGetApiV1Sources type signature suggests it returns the whole response object, 
    * customInstance at runtime unwraps the inner DTO from the envelope.
    */
-  const sourcesData = (sourcesResponse as unknown as ContentSourcePaginatedResponse)?.items ?? [];
+  const sourcesData: ContentSourceDTO[] = Array.isArray(sourcesResponse)
+    ? (sourcesResponse as unknown as ContentSourceDTO[])
+    : ((sourcesResponse as unknown as ContentSourcePaginatedResponse)?.items ?? []);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
