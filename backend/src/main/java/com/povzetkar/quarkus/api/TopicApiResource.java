@@ -3,9 +3,9 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.ApiEnvelopeDTO;
 import com.povzetkar.quarkus.api.dto.ApiMetaDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
+import com.povzetkar.quarkus.api.dto.TopicPaginatedResponse;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
@@ -92,9 +92,9 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of topics retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopicPaginatedResponse.class))
     )
-    public PaginatedResponse<TopicDTO> getTopics(
+    public TopicPaginatedResponse getTopics(
             @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
@@ -110,7 +110,7 @@ public class TopicApiResource extends BaseApiResource {
                 .map(topicMapper::toDTO)
                 .toList();
 
-        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
+        return new TopicPaginatedResponse(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET
@@ -220,6 +220,7 @@ public class TopicApiResource extends BaseApiResource {
     @OptimisticLocking
     @Operation(summary = "Delete topic", description = "Deletes a specific topic.")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to delete", schema = @Schema(type = SchemaType.INTEGER))
+    @Parameter(name = "If-Match", in = ParameterIn.HEADER, required = false, description = "Optimistic locking version", schema = @Schema(type = SchemaType.STRING))
     public Response deleteTopic(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
         User user = getAuthenticatedUser();
         Topic topic = findResolvedTopic(id, user);

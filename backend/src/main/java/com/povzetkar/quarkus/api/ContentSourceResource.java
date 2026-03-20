@@ -2,8 +2,8 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceDTO;
+import com.povzetkar.quarkus.api.dto.ContentSourcePaginatedResponse;
 import com.povzetkar.quarkus.api.dto.ContentSourcePatchDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
@@ -37,8 +37,10 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -74,9 +76,9 @@ public class ContentSourceResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of content sources retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourcePaginatedResponse.class))
     )
-    public PaginatedResponse<ContentSourceDTO> getAllContentSources(
+    public ContentSourcePaginatedResponse getAllContentSources(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
@@ -88,7 +90,7 @@ public class ContentSourceResource extends BaseApiResource {
                 .map(contentSourceMapper::toDTO)
                 .toList();
  
-        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
+        return new ContentSourcePaginatedResponse(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET
@@ -165,6 +167,8 @@ public class ContentSourceResource extends BaseApiResource {
     @RolesAllowed(Permission.V_SOURCE_DELETE)
     @OptimisticLocking
     @Operation(summary = "Delete content source", description = "Deletes a specific content source.")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the source to delete")
+    @Parameter(name = "If-Match", in = ParameterIn.HEADER, required = false, description = "Optimistic locking version")
     public Response deleteContentSource(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
         ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));

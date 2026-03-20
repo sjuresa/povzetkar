@@ -27,9 +27,9 @@ import type {
 import type {
   BackgroundJobDTO,
   GetApiV1TopicsParams,
-  PaginatedResponse,
   Topic,
   TopicCreate,
+  TopicPaginatedResponse,
   TopicPatch
 } from '../model';
 
@@ -45,7 +45,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Get all topics
  */
 export type getApiV1TopicsResponse200 = {
-  data: PaginatedResponse
+  data: TopicPaginatedResponse
   status: 200
 }
 

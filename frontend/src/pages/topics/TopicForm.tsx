@@ -5,18 +5,18 @@ import * as z from 'zod';
 import type { TopicCreate, Topic, TopicPatch } from '../../api/generated/model';
 import { useTranslation } from 'react-i18next';
 import { useGetApiV1Sources } from '../../api/generated/content-sources/content-sources';
-import { usePostApiV1Topics, usePatchApiV1TopicsId } from '../../api/generated/topics/topics';
+import { usePostApiV1Topics, patchApiV1TopicsId } from '../../api/generated/topics/topics';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings } from 'lucide-react';
 
 const topicSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
+  name: z.string().min(3, 'Name must be at least 3 characters'),
   enabled: z.boolean(),
-  promptTemplate: z.string().optional(),
-  sourceIds: z.array(z.number()),
+  promptTemplate: z.string().min(10, 'Prompt must be at least 10 characters'),
+  sourceIds: z.array(z.number()).min(1, 'Select at least one source'),
 });
 
-type TopicFormValues = z.infer<typeof topicSchema>;
+type TopicFormData = z.infer<typeof topicSchema>;
 
 interface TopicFormProps {
   initialData?: Topic;
@@ -26,54 +26,49 @@ interface TopicFormProps {
 
 export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, onCancel }) => {
   const { t } = useTranslation();
-  const isEditing = !!initialData;
-  const { data: sourcesResponse, isLoading: isLoadingSources } = useGetApiV1Sources(undefined);
-  const createTopic = usePostApiV1Topics();
-  const patchTopic = usePatchApiV1TopicsId();
+  const { data: sourcesResponse, isLoading: isLoadingSources } = useGetApiV1Sources({ page: 0, size: 100 });
+  const { mutateAsync: createTopic, isPending: isCreating } = usePostApiV1Topics();
 
   const {
     register,
     handleSubmit,
-    setValue,
+    formState: { errors },
     watch,
-    formState: { errors, isSubmitting },
-  } = useForm<TopicFormValues>({
+    setValue,
+  } = useForm<TopicFormData>({
     resolver: zodResolver(topicSchema),
     defaultValues: {
       name: initialData?.name || '',
       enabled: initialData?.enabled ?? true,
-      promptTemplate: initialData?.promptTemplate || undefined,
-      sourceIds: (initialData?.contentSourceIds || []) as number[],
+      promptTemplate: initialData?.promptTemplate || 'Summarize the key points from the following content, focusing on {{topic}}.',
+      sourceIds: initialData?.contentSourceIds || [],
     },
   });
 
   const selectedSourceIds = watch('sourceIds');
+  const isSubmitting = isCreating;
 
-  const onSubmit = async (values: TopicFormValues) => {
+  const onSubmit = async (data: TopicFormData) => {
     try {
-      if (isEditing) {
-        const data: TopicPatch = {
-          name: values.name === initialData!.name ? undefined : values.name,
-          enabled: values.enabled === initialData!.enabled ? undefined : values.enabled,
-          promptTemplate: values.promptTemplate === initialData!.promptTemplate ? undefined : values.promptTemplate,
-          sourceIds: values.sourceIds,
-          version: initialData!.version,
+      if (initialData?.id) {
+        const patch: TopicPatch = {
+          name: data.name,
+          enabled: data.enabled,
+          promptTemplate: data.promptTemplate,
+          sourceIds: data.sourceIds,
         };
-        await patchTopic.mutateAsync({
-          id: initialData!.id!,
-          data: data,
+        await patchApiV1TopicsId(initialData.id, patch, {
+          headers: { 'If-Match': `"${initialData.version}"` } as HeadersInit
         });
         toast.success(t('topics.form.save_success_update'));
       } else {
-        const data: TopicCreate = {
-          name: values.name,
-          enabled: values.enabled,
-          promptTemplate: values.promptTemplate,
-          sourceIds: values.sourceIds,
+        const create: TopicCreate = {
+          name: data.name,
+          enabled: data.enabled,
+          promptTemplate: data.promptTemplate,
+          sourceIds: data.sourceIds,
         };
-        await createTopic.mutateAsync({
-          data: data,
-        });
+        await createTopic({ data: create });
         toast.success(t('topics.form.save_success_create'));
       }
       onSuccess();
@@ -91,112 +86,159 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
     }
   };
 
-  const sourcesResponseValue = sourcesResponse as any;
-  const sourcesData = 
-    sourcesResponseValue?.items || 
-    sourcesResponseValue?.data?.items || 
-    (Array.isArray(sourcesResponseValue?.data) ? sourcesResponseValue.data : []) || 
-    (Array.isArray(sourcesResponseValue) ? sourcesResponseValue : []);
+  const sourcesData = (Array.isArray(sourcesResponse) 
+    ? sourcesResponse 
+    : (sourcesResponse as any)?.items || []) as any[];
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+      {/* Name Input */}
+      <div className="space-y-3">
+        <label className="block text-lg font-bold text-[var(--color-text-primary)]">
           {t('topics.form.name_label')}
         </label>
-        <input
-          {...register('name')}
-          className={`w-full px-4 py-2 rounded-lg border bg-[var(--color-background-base)] text-[var(--color-text-primary)] transition-colors focus:ring-2 focus:ring-blue-600 ${
-            errors.name ? 'border-red-500 ring-red-200' : 'border-[var(--color-border-subtle)]'
-          }`}
-          placeholder={t('topics.form.name_placeholder')}
-        />
-        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
-      </div>
-
-      <div className="flex items-center space-x-3 bg-[var(--color-background-alt)] p-4 rounded-xl border border-[var(--color-border-subtle)]">
-        <div className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
-            <input
-                type="checkbox"
-                {...register('enabled')}
-                className="sr-only peer"
-                id="topic-enabled"
-            />
-            <div className="w-11 h-6 bg-[var(--color-surface-deep)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+        <div className="relative group">
+          <input
+            {...register('name')}
+            className={`w-full px-6 py-4 rounded-2xl border bg-[var(--color-background-base)] text-[var(--color-text-primary)] transition-all focus:ring-4 focus:ring-blue-500/20 group-hover:shadow-lg ${
+              errors.name ? 'border-red-500 ring-red-200' : 'border-[var(--color-border-subtle)] focus:border-blue-500'
+            }`}
+            placeholder={t('topics.form.name_placeholder')}
+          />
+          {errors.name && (
+            <div className="flex items-center mt-2 text-sm text-red-500 font-medium animate-in slide-in-from-left-2 transition-all">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              {errors.name.message}
+            </div>
+          )}
         </div>
-        <label htmlFor="topic-enabled" className="text-sm font-medium text-[var(--color-text-primary)]">
-          {t('topics.form.enabled_label')}
+      </div>
+
+      {/* Toggle */}
+      <div className="bg-[var(--color-background-alt)] p-6 rounded-3xl border border-[var(--color-border-subtle)] flex items-center justify-between transition-all hover:bg-[var(--color-surface-hover)]">
+        <div className="flex items-center space-x-4">
+          <div className={`p-3 rounded-xl ${watch('enabled') ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+            <Settings className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="block text-lg font-bold text-[var(--color-text-primary)]">
+              {t('topics.form.enabled_label')}
+            </span>
+            <span className="text-sm text-[var(--color-text-secondary)] font-medium">
+              {watch('enabled') ? 'Topic monitoring is active' : 'Monitoring paused'}
+            </span>
+          </div>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer group">
+          <input
+            type="checkbox"
+            {...register('enabled')}
+            className="sr-only peer"
+            id="topic-enabled-toggle"
+          />
+          <div className="w-14 h-8 bg-[var(--color-surface-deep)] peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600 shadow-inner group-hover:scale-105 transition-transform"></div>
         </label>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-          {t('topics.form.prompt_label')}
-        </label>
+      {/* Prompt Template */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="block text-lg font-bold text-[var(--color-text-primary)]">
+            {t('topics.form.prompt_label')}
+          </label>
+          <span className="flex items-center text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-lg">
+            <Info className="w-3.5 h-3.5 mr-1.5" />
+            Supports Variables
+          </span>
+        </div>
         <textarea
           {...register('promptTemplate')}
-          rows={5}
-          className="w-full px-4 py-2 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] transition-colors focus:ring-2 focus:ring-blue-600 font-mono text-sm"
+          rows={6}
+          className={`w-full px-6 py-4 rounded-3xl border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] transition-all focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-sm leading-relaxed ${
+            errors.promptTemplate ? 'border-red-500' : ''
+          }`}
           placeholder={t('topics.form.prompt_placeholder')}
         />
-        <p className="mt-1 text-xs text-[var(--color-text-secondary)] opacity-70">
+        <p className="flex items-start text-sm text-[var(--color-text-secondary)] font-medium leading-relaxed opacity-80">
+          <Info className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
           {t('topics.form.prompt_tip')}
         </p>
+        {errors.promptTemplate && (
+          <p className="text-sm text-red-500 font-medium">{errors.promptTemplate.message}</p>
+        )}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+      {/* Sources Selection */}
+      <div className="space-y-4">
+        <label className="block text-lg font-bold text-[var(--color-text-primary)]">
           {t('topics.form.sources_label')}
         </label>
+        
         {isLoadingSources ? (
-          <div className="flex items-center space-x-2 text-sm text-[var(--color-text-secondary)]">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>{t('topics.form.sources_loading')}</span>
+          <div className="flex items-center justify-center p-12 bg-[var(--color-background-alt)] rounded-3xl animate-pulse">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mr-3" />
+            <span className="text-[var(--color-text-secondary)] font-bold">{t('topics.form.sources_loading')}</span>
+          </div>
+        ) : sourcesData.length === 0 ? (
+          <div className="p-10 text-center bg-[var(--color-background-alt)] rounded-3xl border border-dashed border-[var(--color-border-subtle)]">
+            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-[var(--color-text-secondary)] font-bold">{t('topics.form.no_sources')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-            {sourcesData?.map((source: any) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar p-2">
+            {sourcesData.map((source) => (
               <button
                 key={source.id}
                 type="button"
                 onClick={() => toggleSource(source.id)}
-                className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                className={`flex items-center justify-between p-4 rounded-2xl border transition-all text-left group ${
                   selectedSourceIds.includes(source.id)
-                    ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                    : 'border-[var(--color-border-subtle)] bg-[var(--color-background-alt)] text-[var(--color-text-secondary)]'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20 scale-[1.02]'
+                    : 'bg-[var(--color-background-base)] text-[var(--color-text-primary)] border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] hover:-translate-y-0.5'
                 }`}
               >
-                <div>
-                  <p className="text-sm font-medium">{source.name}</p>
-                  <p className="text-xs opacity-70 line-clamp-1">{source.sourceIdentifier}</p>
+                <div className="flex items-center min-w-0">
+                  <div className={`p-2 rounded-lg mr-3 flex-shrink-0 ${
+                    selectedSourceIds.includes(source.id) ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-800'
+                  }`}>
+                    <ExternalLink className="w-4 h-4" />
+                  </div>
+                  <span className="font-bold truncate text-sm">{source.name}</span>
                 </div>
                 {selectedSourceIds.includes(source.id) && (
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <Check className="w-5 h-5 flex-shrink-0 animate-in zoom-in" />
                 )}
               </button>
             ))}
-            {(!sourcesData || sourcesData.length === 0) && (
-              <p className="text-sm text-[var(--color-text-secondary)] italic">{t('topics.form.no_sources')}</p>
-            )}
           </div>
+        )}
+        {errors.sourceIds && (
+          <p className="text-sm text-red-500 font-medium animate-in slide-in-from-left-2">
+            {errors.sourceIds.message}
+          </p>
         )}
       </div>
 
-      <div className="flex items-center justify-end space-x-3 pt-6 border-t border-[var(--color-border-subtle)]">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-6 py-2 rounded-xl text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-background-alt)] transition-colors"
-        >
-          {t('common.cancel')}
-        </button>
+      {/* Actions */}
+      <div className="flex items-center space-x-4 pt-6">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-8 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center space-x-2"
+          className="flex-1 inline-flex items-center justify-center px-8 py-5 bg-blue-600 text-white rounded-[24px] font-bold shadow-xl shadow-blue-500/30 hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         >
-          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-          <span>{isEditing ? t('topics.form.update') : t('topics.form.create')}</span>
+          {isSubmitting ? (
+            <Loader2 className="w-6 h-6 animate-spin mr-3" />
+          ) : (
+            <Check className="w-6 h-6 mr-3" />
+          )}
+          {initialData ? t('topics.form.update') : t('topics.form.create')}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-8 py-5 rounded-[24px] border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] font-bold hover:bg-[var(--color-background-alt)] transition-all active:scale-95 text-lg"
+        >
+          {t('common.cancel')}
         </button>
       </div>
     </form>

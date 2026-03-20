@@ -25,7 +25,10 @@
       "dark": "Dark",
       "system": "System",
       "title": "Switch Theme"
-    }
+    },
+    "filter": "Filter",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "profile": {
     "title": "Your Profile",
@@ -82,11 +85,35 @@
     "last_run": "Last run",
     "never": "Never",
     "default_prompt": "Default prompt",
-    "linked_sources": "{{count}} content sources linked",
     "run_briefing": "Deliver Briefing",
     "generate_summaries": "Generate Summaries",
+    "linked_sources": "{{count}} content sources linked",
     "linked_sources_one": "{{count}} linked source",
     "linked_sources_many": "{{count}} linked sources",
+    "list": {
+      "search_placeholder": "Search topics...",
+      "add_button": "New Topic",
+      "add_title": "Add New Topic",
+      "edit_title": "Edit Topic",
+      "delete_confirm": "Are you sure you want to delete \"{{name}}\"?",
+      "delete_success": "Topic deleted successfully",
+      "delete_failed": "Deletion failed: {{message}}",
+      "run_success": "Topic run triggered successfully!",
+      "run_failed": "Trigger failed: {{message}}",
+      "empty_title": "No Topics Found",
+      "empty_description": "Create your first topic to start receiving AI-powered news summaries.",
+      "run_now": "Run now",
+      "never_run": "Never",
+      "show_active_only": "Active Only",
+      "sources_count_one": "{{count}} source",
+      "sources_count_two": "{{count}} sources",
+      "sources_count_few": "{{count}} sources",
+      "sources_count_other": "{{count}} sources"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
     "form": {
       "name_label": "Topic Name",
       "name_placeholder": "e.g., Daily AI News",
@@ -101,7 +128,8 @@
       "create": "Create Topic",
       "save_failed": "Failed to save topic: {{message}}",
       "save_success_create": "Topic created successfully",
-      "save_success_update": "Topic updated successfully"
+      "save_success_update": "Topic updated successfully",
+      "update_success": "Topic updated successfully"
     }
   }
 }
