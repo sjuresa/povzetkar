@@ -122,24 +122,10 @@ public class BackgroundJobService {
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
-                case GENERATE_TOPIC_BRIEFING -> {
-                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(event.topicId()));
-                    if (topic == null) {
-                        logger.warn("Topic not found for ID: {}", event.topicId());
-                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
-                    } else {
-                        jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
-                    }
-                }
-                case GENERATE_TOPIC_SUMMARIES -> {
-                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(event.topicId()));
-                    if (topic == null) {
-                        logger.warn("Topic not found for ID: {}", event.topicId());
-                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
-                    } else {
-                        jobTask = orchestrationManager.runSummarizationForTopicOnly(topic, LocalDate.now(clock));
-                    }
-                }
+                case GENERATE_TOPIC_BRIEFING -> jobTask = createTopicJobTask(event.topicId(),
+                        topic -> orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock)));
+                case GENERATE_TOPIC_SUMMARIES -> jobTask = createTopicJobTask(event.topicId(),
+                        topic -> orchestrationManager.runSummarizationForTopicOnly(topic, LocalDate.now(clock)));
                 case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
                     ContentItem item = QuarkusTransaction.requiringNew().call(() -> ContentItem.findById(event.contentItemId()));
                     if (item == null) {
@@ -238,5 +224,14 @@ public class BackgroundJobService {
 
     public Optional<BackgroundJob> getJobById(UUID id) {
         return BackgroundJob.findByIdOptional(id);
+    }
+
+    private Uni<Void> createTopicJobTask(Long topicId, java.util.function.Function<Topic, Uni<Void>> action) {
+        Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(topicId));
+        if (topic == null) {
+            logger.warn("Topic not found for ID: {}", topicId);
+            return Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
+        }
+        return action.apply(topic);
     }
 }

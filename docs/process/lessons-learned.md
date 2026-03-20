@@ -508,3 +508,13 @@ For optimal performance and SEO in a Dual-Language application:
     1. Bundle the **default language** (e.g. English) as a static JSON or object to prevent a "flash of untranslated content" on initial load.
     2. Use `i18next-http-backend` to **lazy-load additional languages** (e.g. Slovenian) only when requested.
     3. Integrated with `react-i18next` and configure `fallbackLng: 'en'` and `debug: import.meta.env.DEV` to ensure a smooth developer experience and reliable fallbacks.
+
+---
+
+### 3.8 Transactional Consistency in Background Jobs
+- **The Problem:** Background jobs triggered from executor threads lack a default CDI request or transaction context. This leads to `ContextNotActiveException` when calling Panache methods.
+- **The Standard:** Always wrap background database operations in an explicit programmatic transaction: `QuarkusTransaction.requiringNew().call(() -> { ... })`.
+
+### 3.9 Eager Loading for Background Processing
+- **The Problem:** When processing entities in a *new* transaction (common in background jobs), lazy-loaded collections (like `@ManyToMany`) will throw `LazyInitializationException` if they weren't fetched in the same transaction session.
+- **The Standard:** Implement dedicated finders that use `JOIN FETCH` (e.g., `Topic.findByIdWithSources()`) to eagerly load all required associations before passing the entity to the background worker. Avoid relying on open-session-in-view patterns for background tasks.

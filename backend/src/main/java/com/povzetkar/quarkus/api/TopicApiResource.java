@@ -71,7 +71,7 @@ public class TopicApiResource extends BaseApiResource {
 
     private static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
     private static final String DUPLICATE_TOPIC_NAME = "A topic with this name already exists.";
-    private static final String TOPIC_NOT_FOUND = "Topic with id ";
+    private static final String TOPIC_WITH_ID = "Topic with id ";
     private static final String NOT_FOUND_SUFFIX = " not found or does not belong to user.";
     
     private final TopicMapper topicMapper;
@@ -204,7 +204,7 @@ public class TopicApiResource extends BaseApiResource {
             return new java.util.HashSet<>();
         }
         return sourceIds.stream()
-                .map(id -> (ContentSource) ContentSource.findByIdOptional(id)
+                .map(id -> ContentSource.<ContentSource>findByIdOptional(id)
                         .orElseThrow(() -> new jakarta.ws.rs.NotFoundException("ContentSource not found: " + id)))
                 .collect(Collectors.toSet());
     }
@@ -237,7 +237,7 @@ public class TopicApiResource extends BaseApiResource {
         User user = getAuthenticatedUser();
         Topic topic = Topic.<Topic>findByIdOptional(id)
                 .filter(t -> t.user.id.equals(user.id))
-                .orElseThrow(() -> new NotFoundException("Topic with id " + id + " not found."));
+                .orElseThrow(() -> new NotFoundException(TOPIC_WITH_ID + id + " not found."));
 
         BackgroundJob job = backgroundJobService.triggerTopicSummariesJob(topic, user.id);
         return backgroundJobMapper.toDTO(job);
@@ -284,7 +284,7 @@ public class TopicApiResource extends BaseApiResource {
         return Topic.<Topic>find("id = ?1 and user = ?2", id, user)
                 .firstResultOptional()
                 .orElseThrow(
-                        () -> new NotFoundException(TOPIC_NOT_FOUND + id + NOT_FOUND_SUFFIX));
+                        () -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND_SUFFIX));
     }
 
 }

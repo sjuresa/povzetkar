@@ -27,7 +27,7 @@ export const TopicList: React.FC<TopicListProps> = ({ onEdit }) => {
   console.log('TopicList: error:', error);
 
   const handleDelete = async (topic: Topic) => {
-    if (!window.confirm(t('topics.delete_confirm', { name: topic.name }))) return;
+    if (!globalThis.confirm(t('topics.delete_confirm', { name: topic.name }))) return;
 
     try {
       await deleteApiV1TopicsId(topic.id!, { version: topic.version } as any);
@@ -68,13 +68,7 @@ export const TopicList: React.FC<TopicListProps> = ({ onEdit }) => {
     );
   }
 
-  const topicsResponseValue = topicsResponse as any;
-  const topics: Topic[] = 
-    (Array.isArray(topicsResponseValue) ? topicsResponseValue : undefined) || 
-    topicsResponseValue?.items || 
-    topicsResponseValue?.data?.items || 
-    (Array.isArray(topicsResponseValue?.data) ? topicsResponseValue.data : []) || 
-    [];
+  const topics = (topicsResponse?.data?.items as Topic[]) || [];
 
   if (topics.length === 0) {
     return (

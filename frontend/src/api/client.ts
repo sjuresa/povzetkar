@@ -205,7 +205,11 @@ export const customInstance = <T>(
     data: requestData,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }).then((response) => response.data);
+  }).then((response) => ({
+    data: response.data,
+    status: response.status,
+    headers: response.headers,
+  } as T));
 };
 
 export default client;

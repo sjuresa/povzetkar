@@ -48,3 +48,5 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Centralized Lint Suppression Policy:** Create a shared configuration or a custom ESLint plugin to handle recurring framework "exceptions" (like TanStack redirects) without broad `eslint-disable` comments.
 *   **Docker Build Optimization:** Optimize the root-level Dockerfile by using a more granular `COPY` strategy for dependencies (e.g., `package-lock.json` and `pom.xml` first) to leverage Docker's layer caching more effectively.
 *   **Enhanced Docker Healthchecks:** Implement a robust Docker `HEALTHCHECK` in the final image, possibly using a dedicated `/q/health` endpoint or a simple `curl` check against the SPA landing page.
+*   **Automatic Summary Generation Validation:** Add a backend check to prevent re-triggering "Generate Summaries" if a job for the same topic is already `RUNNING` or `QUEUED` to prevent resource waste.
+*   **Improved Toast Actionability:** Enhance toast notifications with "View Job" or "Refresh Page" buttons for `COMPLETED` or `FAILED` states.

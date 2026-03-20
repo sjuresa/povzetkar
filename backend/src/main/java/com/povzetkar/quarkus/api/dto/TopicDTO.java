@@ -9,7 +9,7 @@ public record TopicDTO(
         Long id,
         Integer version,
         String name,
-        Boolean enabled,
+        boolean enabled,
         Instant lastRunDate,
         String promptTemplate,
         Set<Long> contentSourceIds) {
