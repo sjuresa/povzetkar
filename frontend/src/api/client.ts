@@ -159,18 +159,18 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
 
 export type CustomRequestOptions = {
   method?: string;
-  headers?: any; // Use any for simplicity in types, will be converted to AxiosHeaders
+  headers?: any;
   body?: any;
   params?: any;
-  signal?: AbortSignal;
+  signal?: AbortSignal | null;
   version?: number;
   skipEnvelopeUnwrap?: boolean;
-} & Record<string, any>; // Allow other RequestInit properties if needed
+} & Record<string, any>;
 
 export const customInstance = <T>(
   url: string,
   options: CustomRequestOptions
-): Promise<UnwrapEnvelope<T>> => {
+): Promise<T> => {
   const { method, headers, body, params, signal, version } = options;
 
   let requestData = body;
@@ -215,7 +215,7 @@ export const customInstance = <T>(
     data: requestData,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }).then((response) => response.data as UnwrapEnvelope<T>);
+  }).then((response) => response.data as T);
 };
 
 export default client;
