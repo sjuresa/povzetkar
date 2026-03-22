@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { TopicCreate, Topic, TopicPatch, ContentSourcePaginatedResponse, ContentSourceDTO } from '../../api/generated/model';
+import type { TopicCreate, Topic, TopicPatch, ContentSourceDTO } from '../../api/generated/model';
 import { useTranslation } from 'react-i18next';
 import { useGetApiV1Sources } from '../../api/generated/content-sources/content-sources';
 import { usePostApiV1Topics, patchApiV1TopicsId } from '../../api/generated/topics/topics';
@@ -93,9 +93,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
    * Although useGetApiV1Sources type signature suggests it returns the whole response object, 
    * customInstance at runtime unwraps the inner DTO from the envelope.
    */
-  const sourcesData: ContentSourceDTO[] = Array.isArray(sourcesResponse)
-    ? (sourcesResponse as unknown as ContentSourceDTO[])
-    : ((sourcesResponse as unknown as ContentSourcePaginatedResponse)?.items ?? []);
+  const sourcesData: ContentSourceDTO[] = Array.isArray(sourcesResponse) ? (sourcesResponse as any) : [];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">

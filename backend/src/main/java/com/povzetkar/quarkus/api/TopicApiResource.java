@@ -15,11 +15,11 @@ import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -53,6 +53,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -204,11 +205,11 @@ public class TopicApiResource extends BaseApiResource {
         List<ContentSource> sources = ContentSource.list("id in ?1", sourceIds);
         if (sources.size() != sourceIds.size()) {
             Set<Long> foundIds = sources.stream().map(s -> s.id).collect(Collectors.toSet());
-            Set<Long> missingIds = new java.util.HashSet<>(sourceIds);
+            Set<Long> missingIds = new HashSet<>(sourceIds);
             missingIds.removeAll(foundIds);
             throw new jakarta.ws.rs.NotFoundException("ContentSource(s) not found: " + missingIds);
         }
-        return new java.util.HashSet<>(sources);
+        return new HashSet<>(sources);
     }
 
     @DELETE
