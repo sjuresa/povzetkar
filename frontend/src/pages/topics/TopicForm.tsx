@@ -88,12 +88,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
     }
   };
 
-  /**
-   * Sources extraction simplified as per CR feedback.
-   * Although useGetApiV1Sources type signature suggests it returns the whole response object, 
-   * customInstance at runtime unwraps the inner DTO from the envelope.
-   */
-  const sourcesData: ContentSourceDTO[] = Array.isArray(sourcesResponse) ? (sourcesResponse as any) : [];
+  const sourcesData: ContentSourceDTO[] = sourcesResponse?.data?.items ?? [];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">

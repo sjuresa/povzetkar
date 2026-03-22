@@ -102,7 +102,21 @@ client.interceptors.response.use(
     
     // Replace the response.data with the unwrapped inner data (the actual DTO)
     // This aligns with Orval's expectation that AxiosResponse.data contains the model.
-    response.data = data?.data;
+    let unwrappedData = data?.data;
+    
+    if (Array.isArray(unwrappedData) && data?.meta?.pagination) {
+      const pagination = data.meta.pagination as any;
+      unwrappedData = {
+        items: unwrappedData,
+        totalCount: pagination.totalElements,
+        pageIndex: pagination.page,
+        pageSize: pagination.size,
+        totalPages: pagination.totalPages,
+        hasNext: pagination.hasNext
+      };
+    }
+    
+    response.data = unwrappedData;
     
     return response;
   },
@@ -157,6 +171,14 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
   return headers;
 };
 
+declare global {
+  interface RequestInit {
+    version?: number;
+    skipEnvelopeUnwrap?: boolean;
+    params?: any;
+  }
+}
+
 export type CustomRequestOptions = {
   method?: string;
   headers?: any;
@@ -165,7 +187,7 @@ export type CustomRequestOptions = {
   signal?: AbortSignal | null;
   version?: number;
   skipEnvelopeUnwrap?: boolean;
-} & Record<string, any>;
+} & RequestInit & Record<string, any>;
 
 export const customInstance = <T>(
   url: string,
@@ -215,7 +237,7 @@ export const customInstance = <T>(
     data: requestData,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }).then((response) => response.data as T);
+  }).then((response) => response as unknown as T);
 };
 
 export default client;

@@ -40,7 +40,7 @@ export const TopicList: React.FC<TopicListProps> = ({
     try {
       await deleteApiV1TopicsId(topic.id!, { 
         version: topic.version 
-      } as any);
+      });
       toast.success(t('topics.list.delete_success'));
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
     } catch (err: any) {
@@ -81,7 +81,7 @@ export const TopicList: React.FC<TopicListProps> = ({
   /**
    * Topics extraction simplified for cleaner logic and type safety.
    */
-  const topics: Topic[] = Array.isArray(topicsResponse) ? (topicsResponse as any) : [];
+  const topics: Topic[] = topicsResponse?.data?.items ?? [];
 
   const filteredTopics = topics.filter(topic => {
     const matchesSearch = topic.name?.toLowerCase().includes(searchQuery.toLowerCase());
