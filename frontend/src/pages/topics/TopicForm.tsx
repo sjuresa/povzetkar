@@ -13,8 +13,8 @@ import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings } from 'lucid
 const topicSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   enabled: z.boolean(),
-  promptTemplate: z.string().min(10, 'Prompt must be at least 10 characters'),
-  sourceIds: z.array(z.number()).min(1, 'Select at least one source'),
+  promptTemplate: z.string(),
+  sourceIds: z.array(z.number()),
 });
 
 type TopicFormData = z.infer<typeof topicSchema>;
