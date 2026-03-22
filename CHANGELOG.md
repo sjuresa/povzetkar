@@ -32,6 +32,18 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 ### Removed
 - **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
 
+### Fixed
+- **Backend (Orchestration):** Resolved `ContextNotActiveException` in background jobs by wrapping database operations in `QuarkusTransaction.requiringNew()`.
+- **Backend (Orchestration):** Refactored `BackgroundJobService` to eliminate duplication in topic-related job creation via a unified helper.
+- **Backend (Persistence):** Fixed `LazyInitializationException` by implementing eager loading of content sources via `Topic.findByIdWithSources()`.
+- **Backend (Orchestration):** Restored inadvertently overwritten `findEnabledByUsers` method in `Topic.java` to maintain global processing stability.
+- **Backend (API):** Fixed a timeout in `IdempotencyFilter.java` for requests with empty bodies.
+- **Frontend (API):** Aligned `customInstance` to return the full response object, improving type safety and simplifying data access across the application.
+- **Frontend (UX):** Improved toast notifications to support stacking and descriptive messages containing topic names.
+- **Frontend (Build):** Resolved production build errors by removing unused imports in `TopicList.tsx`.
+- **Frontend (i18n):** Added missing Slovenian translation keys for topic source counts.
+- **Backend (Migration):** Added `topic_id` to `background_jobs` table (V21) for improved auditability.
+
 ## [v0.12.0] - 2026-03-18
 
 ### Summary

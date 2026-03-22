@@ -22,8 +22,8 @@ import type {
 
 import type {
   BriefingDetailDTO,
-  GetApiV1BriefingsParams,
-  PaginatedResponse
+  BriefingPaginatedResponse,
+  GetApiV1BriefingsParams
 } from '../model';
 
 import { customInstance } from '../../client';
@@ -38,7 +38,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Get all briefings
  */
 export type getApiV1BriefingsResponse200 = {
-  data: PaginatedResponse
+  data: BriefingPaginatedResponse
   status: 200
 }
 

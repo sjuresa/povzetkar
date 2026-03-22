@@ -42,10 +42,17 @@ public class Topic extends BaseAuditableEntity {
     @Column(name = "last_run_date")
     public java.time.Instant lastRunDate;
 
+    @Column(name = "prompt_template")
+    public String promptTemplate;
+
     public static List<Topic> findEnabledByUsers(List<User> users) {
         return find(
                 "select distinct t from Topic t left join fetch t.contentSources where t.enabled = true and t.user in ?1",
                 users).list();
+    }
+
+    public static Topic findByIdWithSources(Long id) {
+        return find("from Topic t left join fetch t.contentSources where t.id = ?1", id).firstResult();
     }
 
     @Override

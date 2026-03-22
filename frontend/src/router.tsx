@@ -12,6 +12,7 @@ import { AuditLogPage } from './routes/AuditLogPage';
 import { ErrorPage } from './routes/ErrorPage';
 import { ProfilePage } from './routes/ProfilePage';
 import { AppShell } from './components/layout/AppShell';
+import { TopicsPage } from './pages/topics/TopicsPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -84,15 +85,11 @@ const profileRoute = createRoute({
   component: ProfilePage,
 });
 
-// Topics Placeholder
+// Topics Route
 const topicsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/topics',
-  component: () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 italic">
-      Topics management coming soon
-    </div>
-  ),
+  component: TopicsPage,
 });
 
 // Briefings Placeholder

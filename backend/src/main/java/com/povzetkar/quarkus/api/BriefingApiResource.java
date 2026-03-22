@@ -2,7 +2,7 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
-import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.BriefingPaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
@@ -61,9 +61,9 @@ public class BriefingApiResource extends BaseApiResource {
     @APIResponse(
             responseCode = "200",
             description = "List of briefings retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponse.class))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingPaginatedResponse.class))
     )
-    public PaginatedResponse<BriefingSummaryDTO> getBriefings(
+    public BriefingPaginatedResponse getBriefings(
             @QueryParam("topicId") Long topicId,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
@@ -89,7 +89,7 @@ public class BriefingApiResource extends BaseApiResource {
                 .map(briefingMapper::toSummaryDTO)
                 .toList();
  
-        return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
+        return new BriefingPaginatedResponse(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET

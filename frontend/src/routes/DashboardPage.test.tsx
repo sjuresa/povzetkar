@@ -54,7 +54,7 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
+      data: { data: { stats: { activeTopics: 0 }, recentBriefings: [] } } as any,
       refetch: vi.fn(),
     } as any);
 
@@ -72,10 +72,12 @@ describe('DashboardPage', () => {
       isError: false,
       isRefetching: false,
       data: {
-        stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
-        recentBriefings: [
-          { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
-        ],
+        data: {
+          stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
+          recentBriefings: [
+            { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
+          ],
+        }
       } as any,
       refetch: vi.fn(),
     } as any);
@@ -95,7 +97,7 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { stats: { activeTopics: 5 } } as any,
+      data: { data: { stats: { activeTopics: 5 } } } as any,
       refetch,
     } as any);
 

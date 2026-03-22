@@ -12,6 +12,7 @@ public record BackgroundJobDTO(
     Instant startedAt,
     Instant endedAt,
     String errorMessage,
-    Long userId
+    Long userId,
+    Long topicId
 ) {
 }

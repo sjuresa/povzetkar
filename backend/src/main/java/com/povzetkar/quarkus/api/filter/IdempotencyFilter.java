@@ -131,6 +131,9 @@ public class IdempotencyFilter implements ContainerRequestFilter, ContainerRespo
     }
 
     private String extractAndHashBody(ContainerRequestContext requestContext) throws IOException {
+        if (!requestContext.hasEntity() || requestContext.getLength() == 0) {
+            return null;
+        }
         InputStream is = requestContext.getEntityStream();
         if (is == null) {
             return null;

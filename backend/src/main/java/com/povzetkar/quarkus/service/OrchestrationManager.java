@@ -450,14 +450,28 @@ public class OrchestrationManager {
         }));
     }
 
-    public Uni<Void> runOrchestrationForTopicManually(Topic topic, LocalDate date) {
+    public Uni<Void> runSummarizationForTopicOnly(Topic topic, LocalDate date) {
         logger.info(
-                LogKeys.ACTION, ORCHESTRATION_MANUAL_TOPIC,
+                LogKeys.ACTION, "summarization_manual_topic",
                 LogKeys.STATUS, LogKeys.STARTED,
                 LogKeys.TOPIC_NAME, topic.name,
                 LogKeys.DATE, date,
-                LogKeys.MESSAGE, "Manual orchestration triggered for single topic.");
-        return topicProcessor.processTopicUni(topic, date)
+                LogKeys.MESSAGE, "Manual summarization triggered for single topic.");
+        return topicProcessor.processTopicUni(topic, date, true)
+                .onItem().invoke(() -> logger.info(
+                        LogKeys.ACTION, "summarization_manual_topic",
+                        LogKeys.STATUS, LogKeys.FINISHED,
+                        LogKeys.TOPIC_NAME, topic.name,
+                        LogKeys.MESSAGE, "Manual summarization finished for single topic."))
+                .onFailure().invoke(ex -> logger.error(ex,
+                        LogKeys.ACTION, "summarization_manual_topic",
+                        LogKeys.STATUS, LogKeys.FAILED,
+                        LogKeys.TOPIC_NAME, topic.name,
+                        LogKeys.MESSAGE, "Manual summarization failed unexpectedly for single topic."));
+    }
+
+    public Uni<Void> runOrchestrationForTopicManually(Topic topic, LocalDate date) {
+        return runSummarizationForTopicOnly(topic, date)
                 .chain(() -> generateBriefingForTopicUni(topic, date))
                 .onItem().invoke(() -> logger.info(
                         LogKeys.ACTION, ORCHESTRATION_MANUAL_TOPIC,

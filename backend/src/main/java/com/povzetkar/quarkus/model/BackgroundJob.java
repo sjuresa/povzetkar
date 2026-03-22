@@ -26,6 +26,9 @@ public class BackgroundJob extends PanacheEntityBase {
     @Column(name = "user_id")
     public Long userId;
 
+    @Column(name = "topic_id")
+    public Long topicId;
+
     @Column(name = "started_at")
     public Instant startedAt;
 

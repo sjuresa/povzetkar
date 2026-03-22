@@ -30,6 +30,11 @@ export interface ApiEnvelope<T = unknown> {
   } | null;
 }
 
+/**
+ * Type helper to unwrap the API envelope if it exists
+ */
+export type UnwrapEnvelope<T> = T extends { data: infer D } ? D : T;
+
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
 
 const client: AxiosInstance = axios.create({
@@ -97,7 +102,21 @@ client.interceptors.response.use(
     
     // Replace the response.data with the unwrapped inner data (the actual DTO)
     // This aligns with Orval's expectation that AxiosResponse.data contains the model.
-    response.data = data?.data;
+    let unwrappedData = data?.data;
+    
+    if (Array.isArray(unwrappedData) && data?.meta?.pagination) {
+      const pagination = data.meta.pagination as any;
+      unwrappedData = {
+        items: unwrappedData,
+        totalCount: pagination.totalElements,
+        pageIndex: pagination.page,
+        pageSize: pagination.size,
+        totalPages: pagination.totalPages,
+        hasNext: pagination.hasNext
+      };
+    }
+    
+    response.data = unwrappedData;
     
     return response;
   },
@@ -152,18 +171,31 @@ const toAxiosHeaders = (headers: HeadersInit | undefined): Record<string, string
   return headers;
 };
 
+declare global {
+  interface RequestInit {
+    version?: number;
+    skipEnvelopeUnwrap?: boolean;
+    params?: any;
+  }
+}
+
+export type CustomRequestOptions = {
+  method?: string;
+  headers?: any;
+  body?: any;
+  params?: any;
+  signal?: AbortSignal | null;
+  version?: number;
+  skipEnvelopeUnwrap?: boolean;
+} & RequestInit & Record<string, any>;
+
 export const customInstance = <T>(
   url: string,
-  options: RequestInit & { params?: unknown }
-  /* 
-   * Custom instance returns Promise<T> (unwrapped response.data) instead of Promise<AxiosResponse<T>>.
-   * This aligns with Orval's generated hook signatures while allowing the global interceptor 
-   * to handle API envelope unwrapping and error normalization centrally.
-   */
+  options: CustomRequestOptions
 ): Promise<T> => {
-  const { method, headers, body, params, signal } = options;
+  const { method, headers, body, params, signal, version } = options;
 
-  let data = body;
+  let requestData = body;
   if (typeof body === 'string') {
     const requestHeaders = new Headers(headers);
     const contentType = requestHeaders.get('Content-Type');
@@ -171,21 +203,41 @@ export const customInstance = <T>(
     if (contentType?.includes('application/json')) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        data = JSON.parse(body);
+        requestData = JSON.parse(body);
       } catch (_e) {
         logger.error('[API] Failed to parse JSON body', { error: _e, url });
       }
     }
   }
 
+  const finalHeaders = toAxiosHeaders(headers);
+  const normalizedMethod = method?.toUpperCase() || 'GET';
+
+  // 1. Prioritize explicit version in options
+  if (version !== undefined && ['PATCH', 'PUT', 'DELETE'].includes(normalizedMethod)) {
+    finalHeaders['If-Match'] = `"${version}"`;
+  }
+  // 2. Fallback to automatic extraction from data object (Optimistic Locking)
+  else if (
+    requestData &&
+    typeof requestData === 'object' &&
+    'version' in requestData &&
+    ['PATCH', 'PUT'].includes(normalizedMethod)
+  ) {
+    const dataVersion = (requestData as { version?: number }).version;
+    if (dataVersion !== undefined) {
+      finalHeaders['If-Match'] = `"${dataVersion}"`;
+    }
+  }
+
   return client({
     url,
     method,
-    headers: toAxiosHeaders(headers),
-    data,
+    headers: finalHeaders,
+    data: requestData,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }).then((response) => response.data);
+  }).then((response) => response as unknown as T);
 };
 
 export default client;

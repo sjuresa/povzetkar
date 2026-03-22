@@ -6,6 +6,7 @@ export interface JobStatusChangedEvent {
   jobId: string;
   status: JobStatus;
   jobType: string;
+  details?: string;
 }
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting';

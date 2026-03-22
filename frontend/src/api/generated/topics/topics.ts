@@ -27,9 +27,9 @@ import type {
 import type {
   BackgroundJobDTO,
   GetApiV1TopicsParams,
-  PaginatedResponse,
+  Topic,
   TopicCreate,
-  TopicDTO,
+  TopicPaginatedResponse,
   TopicPatch
 } from '../model';
 
@@ -45,7 +45,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Get all topics
  */
 export type getApiV1TopicsResponse200 = {
-  data: PaginatedResponse
+  data: TopicPaginatedResponse
   status: 200
 }
 
@@ -174,7 +174,7 @@ export function useGetApiV1Topics<TData = Awaited<ReturnType<typeof getApiV1Topi
  * @summary Create Topic
  */
 export type postApiV1TopicsResponse201 = {
-  data: TopicDTO
+  data: Topic
   status: 201
 }
 
@@ -273,7 +273,7 @@ export const usePostApiV1Topics = <TError = void,
  * @summary Patch Topic
  */
 export type patchApiV1TopicsIdResponse200 = {
-  data: TopicDTO
+  data: Topic
   status: 200
 }
 
@@ -369,7 +369,7 @@ export const usePatchApiV1TopicsId = <TError = void,
  * @summary Get topic by ID
  */
 export type getApiV1TopicsIdResponse200 = {
-  data: TopicDTO
+  data: Topic
   status: 200
 }
 
@@ -689,5 +689,104 @@ export const usePostApiV1TopicsIdCommandsGenerateBriefing = <TError = void,
         TContext
       > => {
       return useMutation(getPostApiV1TopicsIdCommandsGenerateBriefingMutationOptions(options), queryClient);
+    }
+    /**
+ * Triggers a background job to fetch and summarize content for a specific topic today without creating a briefing.
+ * @summary Trigger topic-only summarization
+ */
+export type postApiV1TopicsIdCommandsGenerateSummariesResponse202 = {
+  data: BackgroundJobDTO
+  status: 202
+}
+
+export type postApiV1TopicsIdCommandsGenerateSummariesResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1TopicsIdCommandsGenerateSummariesResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1TopicsIdCommandsGenerateSummariesResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1TopicsIdCommandsGenerateSummariesResponseSuccess = (postApiV1TopicsIdCommandsGenerateSummariesResponse202) & {
+  headers: Headers;
+};
+export type postApiV1TopicsIdCommandsGenerateSummariesResponseError = (postApiV1TopicsIdCommandsGenerateSummariesResponse401 | postApiV1TopicsIdCommandsGenerateSummariesResponse403 | postApiV1TopicsIdCommandsGenerateSummariesResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1TopicsIdCommandsGenerateSummariesResponse = (postApiV1TopicsIdCommandsGenerateSummariesResponseSuccess | postApiV1TopicsIdCommandsGenerateSummariesResponseError)
+
+export const getPostApiV1TopicsIdCommandsGenerateSummariesUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/topics/${id}/commands/generate-summaries`
+}
+
+export const postApiV1TopicsIdCommandsGenerateSummaries = async (id: number, options?: RequestInit): Promise<postApiV1TopicsIdCommandsGenerateSummariesResponse> => {
+  
+  return customInstance<postApiV1TopicsIdCommandsGenerateSummariesResponse>(getPostApiV1TopicsIdCommandsGenerateSummariesUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1TopicsIdCommandsGenerateSummariesMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1TopicsIdCommandsGenerateSummaries>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1TopicsIdCommandsGenerateSummaries>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1TopicsIdCommandsGenerateSummaries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1TopicsIdCommandsGenerateSummaries>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1TopicsIdCommandsGenerateSummaries(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1TopicsIdCommandsGenerateSummariesMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1TopicsIdCommandsGenerateSummaries>>>
+    
+    export type PostApiV1TopicsIdCommandsGenerateSummariesMutationError = void
+
+    /**
+ * @summary Trigger topic-only summarization
+ */
+export const usePostApiV1TopicsIdCommandsGenerateSummaries = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1TopicsIdCommandsGenerateSummaries>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1TopicsIdCommandsGenerateSummaries>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1TopicsIdCommandsGenerateSummariesMutationOptions(options), queryClient);
     }
     

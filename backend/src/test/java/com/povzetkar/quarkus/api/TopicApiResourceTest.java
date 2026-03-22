@@ -79,7 +79,7 @@ class TopicApiResourceTest {
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
             "TOPIC_TRIGGER_RUN" })
     void testCreateTopic() {
-        TopicCreateDTO dto = new TopicCreateDTO("New Topic");
+        TopicCreateDTO dto = new TopicCreateDTO("New Topic", true, "Summarize this", null);
 
         given()
                 .contentType(ContentType.JSON)
@@ -89,14 +89,15 @@ class TopicApiResourceTest {
                 .statusCode(201)
                 .header("Location", containsString("/api/v1/topics/"))
                 .body("data.name", equalTo("New Topic"))
-                .body("data.enabled", equalTo(true)); // Matches Topic default value
+                .body("data.promptTemplate", equalTo("Summarize this"))
+                .body("data.enabled", equalTo(true));
     }
 
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
             "TOPIC_TRIGGER_RUN" })
     void testCreateTopicConflict() {
-        TopicCreateDTO dto = new TopicCreateDTO("Initial Setup Topic");
+        TopicCreateDTO dto = new TopicCreateDTO("Initial Setup Topic", true, null, null);
 
         given()
                 .contentType(ContentType.JSON)
@@ -109,7 +110,7 @@ class TopicApiResourceTest {
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW" })
     void testCreateTopicForbidden() {
-        TopicCreateDTO dto = new TopicCreateDTO("Forbidden Topic");
+        TopicCreateDTO dto = new TopicCreateDTO("Forbidden Topic", true, null, null);
 
         given()
                 .contentType(ContentType.JSON)
@@ -125,7 +126,7 @@ class TopicApiResourceTest {
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
             "TOPIC_TRIGGER_RUN" })
     void testPatchTopic() {
-        TopicPatchDTO dto = new TopicPatchDTO(null, false);
+        TopicPatchDTO dto = new TopicPatchDTO(null, false, "Updated prompt", null, 0);
 
         given()
                 .header("If-Match", "\"0\"")
@@ -135,6 +136,7 @@ class TopicApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("data.name", equalTo("Initial Setup Topic"))
+                .body("data.promptTemplate", equalTo("Updated prompt"))
                 .body("data.enabled", equalTo(false));
     }
 
@@ -142,7 +144,7 @@ class TopicApiResourceTest {
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
             "TOPIC_TRIGGER_RUN" })
     void testPatchTopicMissingIfMatch() {
-        TopicPatchDTO dto = new TopicPatchDTO(null, false);
+        TopicPatchDTO dto = new TopicPatchDTO(null, false, null, null, 0);
 
         given()
                 .contentType(ContentType.JSON)
@@ -156,7 +158,7 @@ class TopicApiResourceTest {
     @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW", "TOPIC_CREATE", "TOPIC_UPDATE", "TOPIC_DELETE",
             "TOPIC_TRIGGER_RUN" })
     void testPatchTopicWrongIfMatch() {
-        TopicPatchDTO dto = new TopicPatchDTO(null, false);
+        TopicPatchDTO dto = new TopicPatchDTO(null, false, null, null, 0);
 
         given()
                 .header("If-Match", "\"999\"")

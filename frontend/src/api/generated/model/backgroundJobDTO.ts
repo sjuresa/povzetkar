@@ -18,4 +18,5 @@ export interface BackgroundJobDTO {
   endedAt?: Instant;
   errorMessage?: string;
   userId?: number;
+  topicId?: number;
 }
