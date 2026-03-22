@@ -60,7 +60,7 @@ public class RoleApiResource {
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), Set.of("id", "name"));
         PanacheQuery<Role> query = Role.findAll(panacheSort);
         long totalCount = query.count();
-        List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).stream()
+        List<RoleDTO> dtoList = query.page(pageIndex, clampedPageSize).list().stream()
                 .map(roleMapper::toDTO)
                 .toList();
         return new PaginatedResponse<>(dtoList, totalCount, pageIndex, clampedPageSize);
