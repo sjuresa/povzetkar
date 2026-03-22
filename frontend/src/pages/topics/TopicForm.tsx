@@ -58,10 +58,9 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
           enabled: data.enabled,
           promptTemplate: data.promptTemplate,
           sourceIds: data.sourceIds,
+          version: initialData.version,
         };
-        await patchApiV1TopicsId(initialData.id, patch, {
-          headers: { 'If-Match': `"${initialData.version}"` } as HeadersInit
-        });
+        await patchApiV1TopicsId(initialData.id, patch);
         toast.success(t('topics.form.save_success_update'));
       } else {
         const create: TopicCreate = {

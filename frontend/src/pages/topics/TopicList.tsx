@@ -39,8 +39,8 @@ export const TopicList: React.FC<TopicListProps> = ({
 
     try {
       await deleteApiV1TopicsId(topic.id!, { 
-        headers: { 'If-Match': `"${topic.version}"` } as HeadersInit 
-      });
+        version: topic.version 
+      } as any);
       toast.success(t('topics.list.delete_success'));
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
     } catch (err: any) {
