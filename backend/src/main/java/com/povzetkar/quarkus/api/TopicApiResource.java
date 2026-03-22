@@ -285,7 +285,7 @@ public class TopicApiResource extends BaseApiResource {
     }
 
     private Topic findResolvedTopic(Long id, User user) {
-        return Topic.<Topic>find("id = ?1 and user = ?2", id, user)
+        return Topic.<Topic>find("from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", id, user)
                 .firstResultOptional()
                 .orElseThrow(
                         () -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND_SUFFIX));
