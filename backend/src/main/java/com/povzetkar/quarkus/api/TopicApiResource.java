@@ -103,7 +103,6 @@ public class TopicApiResource extends BaseApiResource {
         PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
-                .list()
                 .stream()
                 .map(topicMapper::toDTO)
                 .toList();
