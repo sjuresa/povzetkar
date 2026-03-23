@@ -16,7 +16,15 @@ public interface SummaryMapper {
     @Mapping(target = "sourceUrl", source = "contentItem.sourceUrl")
     @Mapping(target = "publishedAt", source = "contentItem.publishedAt")
     @Mapping(target = "durationSeconds", source = "contentItem", qualifiedByName = "mapDurationSeconds")
+    @Mapping(target = "platform", expression = "java(mapPlatform(entity))")
     SummaryDTO toDTO(Summary entity);
+
+    default String mapPlatform(Summary entity) {
+        if (entity == null || entity.contentItem == null || entity.contentItem.contentSource == null) {
+            return null;
+        }
+        return com.povzetkar.quarkus.model.SourceTypeEnum.fromId(entity.contentItem.contentSource.sourceTypeId).name();
+    }
 
     @Named("mapDurationSeconds")
     default Long mapDurationSeconds(ContentItem entity) {

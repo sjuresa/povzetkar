@@ -18,6 +18,8 @@ public record SummaryDTO(
         @Schema(description = "The publication date/time of the original content.")
         java.time.Instant publishedAt,
         @Schema(description = "Duration in seconds (if applicable).")
-        Long durationSeconds
+        Long durationSeconds,
+        @Schema(description = "The platform of the content (e.g., YOUTUBE, BLOG).")
+        String platform
 ) {
 }

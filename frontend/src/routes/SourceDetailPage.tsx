@@ -321,8 +321,13 @@ function SummaryModal({ itemId, onClose }: { itemId: number, onClose: () => void
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 md:px-10 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl">
           <div className="flex items-center space-x-4">
-             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 border border-indigo-500/20 shadow-inner">
-               <FileText size={24} />
+             <div className={cn(
+               "w-12 h-12 rounded-2xl flex items-center justify-center border shadow-inner",
+               summary?.platform === 'YOUTUBE' 
+                 ? "bg-red-500/10 text-red-500 border-red-500/20" 
+                 : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+             )}>
+               {summary?.platform === 'YOUTUBE' ? <Youtube size={24} /> : <Globe size={24} />}
              </div>
              <div>
                <h3 className="text-xl font-bold text-[var(--color-text-primary)]">AI Content Summary</h3>
