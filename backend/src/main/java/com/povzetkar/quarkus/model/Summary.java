@@ -49,6 +49,10 @@ public class Summary extends BaseAuditableEntity {
         return find("contentItem.id", id).firstResult();
     }
 
+    public static Summary findByContentIdWithAssociations(Long contentId) {
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResult();
+    }
+
     public static List<Summary> findByTopicAndDateRange(Topic topic, LocalDate date) {
         return find("from Summary s where s.contentItem.contentSource.id in " +
                         "(select cs.id from ContentSource cs join cs.topics t where t = ?1) and s.briefingDate = ?2 order by s.id",

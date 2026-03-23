@@ -21,6 +21,12 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 - **Infrastructure (POV-146):** Configured **Internationalization (i18n)** with `i18next`, featuring English and Slovenian translations with hybrid lazy-loading support.
 - **Frontend (POV-146):** Developed a persistent **Theme System** (Light, Dark, System) using Zustand and Tailwind 4 CSS variables, featuring a professional "Polished Silver" light mode.
 - **Frontend (POV-146):** Integrated **Header Shell Controls** including a dynamic Theme Toggle and Language Switcher next to the interactive user profile.
+- **Backend (POV-148):** Enhanced `ContentSourceResource` with a case-insensitive **Search API** (`?search=`) for content sources.
+- **Frontend (POV-148):** Implemented the **Sources Library** (`/sources`), a searchable and paginated hub for all ingested content providers.
+- **Frontend (POV-148):** Developed the **Source Detail** page (`/sources/$id`), providing deep visibility into individual source items and their processing history.
+- **Frontend (POV-148):** Extracted a reusable **Pagination** component, standardized across the Audit Log and Source Library.
+- **Backend (POV-148):** Implemented a specialized **Summary API** (`/api/v1/content-items/{id}/summary`) to retrieve individual content piece summaries.
+- **Frontend (POV-148):** Integrated a **Glassmorphic Summary Reader** with `react-markdown` support, a dedicated Executive Summary highlight, and an auditable **Reference Tag** (ITEM-ID).
 
 ### Changed
 - **Frontend (POV-145):** Migrated from the custom toast system to **Sonner**, enabling a more flexible and visually polished notification experience.
@@ -28,6 +34,9 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 - **Frontend (POV-145):** Configured TanStack Query to use `throwOnError: true` by default, delegating error UX to the global boundary for a more unified architecture.
 - **Frontend (POV-146):** Refactored global CSS to use semantic **Theme Tokens**, enabling seamless switching between "Midnight Slate" and "Polished Silver" aesthetics.
 - **Frontend (POV-146):** Updated the **AppShell Header** to be fully interactive, linking the user profile to the new identity page.
+- **Frontend (POV-148):** Refactored **AuditLogPage** to utilize the shared `Pagination` component, eliminating redundant UI logic.
+- **Frontend (POV-148):** Regenerated the **API Client** using Orval to support the new searchable backend parameters.
+- **Frontend (POV-148):** Updated the **Source Detail** page with a "View Summary" action for all processed content items and added a formatted **Duration** column (MM:SS) to the content list.
 
 ### Removed
 - **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.

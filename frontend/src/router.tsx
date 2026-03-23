@@ -13,6 +13,8 @@ import { ErrorPage } from './routes/ErrorPage';
 import { ProfilePage } from './routes/ProfilePage';
 import { AppShell } from './components/layout/AppShell';
 import { TopicsPage } from './pages/topics/TopicsPage';
+import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
+import { SourceDetailPage } from './routes/SourceDetailPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -103,6 +105,19 @@ const briefingsRoute = createRoute({
   ),
 });
 
+// Sources Routes
+const sourcesRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/sources',
+  component: SourcesLibraryPage,
+});
+
+const sourceDetailRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/sources/$sourceId',
+  component: SourceDetailPage,
+});
+
 // 5. Briefing Detail Route
 const briefingDetailRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
@@ -148,6 +163,8 @@ const routeTree = rootRoute.addChildren([
     topicsRoute,
     briefingsRoute,
     briefingDetailRoute,
+    sourcesRoute,
+    sourceDetailRoute,
     adminLayoutRoute.addChildren([
       auditLogRoute,
       adminJobsRoute

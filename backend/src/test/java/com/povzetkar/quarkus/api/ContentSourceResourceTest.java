@@ -141,6 +141,30 @@ class ContentSourceResourceTest {
         }
 
         @Test
+        void testGetAllContentSources_Search_Success() {
+                // Assuming "Test ContentSource 0" exists from setup
+                given()
+                                .queryParam("search", "ContentSource 0")
+                                .when().get(API_BASE_PATH)
+                                .then()
+                                .statusCode(200)
+                                .body("meta.pagination.totalElements", is(1))
+                                .body("data", hasSize(1))
+                                .body("data[0].name", is(TEST_CONTENT_SOURCE_NAME_PREFIX + 0));
+        }
+
+        @Test
+        void testGetAllContentSources_Search_NoMatch() {
+                given()
+                                .queryParam("search", "NONEXISTENT_SOURCE_NAME")
+                                .when().get(API_BASE_PATH)
+                                .then()
+                                .statusCode(200)
+                                .body("meta.pagination.totalElements", is(0))
+                                .body("data", hasSize(0));
+        }
+
+        @Test
         void testGetContentSourceById_Success() {
                 ContentSource existingContentSource = em.find(ContentSource.class,
                                 createdContentSourceIds.iterator().next());

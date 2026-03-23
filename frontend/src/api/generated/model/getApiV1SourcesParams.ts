@@ -3,10 +3,11 @@
  * Do not edit manually.
  * Povzetkar API
  * REST API for Povzetkar - AI Powered Content Summarizer
- * OpenAPI spec version: 0.11.0
+ * OpenAPI spec version: 0.13.0
  */
 
 export type GetApiV1SourcesParams = {
 page?: number;
+search?: string;
 size?: number;
 };
