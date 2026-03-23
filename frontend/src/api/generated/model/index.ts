@@ -79,6 +79,7 @@ export * from './sectionBlockExpressions';
 export * from './sectionBlockParameters';
 export * from './sectionHelper';
 export * from './sectionNode';
+export * from './summary';
 export * from './template';
 export * from './templateInstance';
 export * from './templateLocator';

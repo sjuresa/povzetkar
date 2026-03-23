@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --color-primary: var(--color-blue-600);
@@ -65,6 +66,40 @@
 
   .text-glow {
     text-shadow: 0 0 20px var(--color-glow);
+  }
+
+  /* Prose Overrides for Document Reader */
+  .prose {
+    color: var(--color-text-secondary);
+  }
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    color: var(--color-text-primary) !important;
+    font-weight: 800 !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    line-height: 1.2 !important;
+  }
+  .prose > :first-child {
+    margin-top: 0 !important;
+  }
+  .prose h1 { font-size: 2.5rem !important; }
+  .prose h2 { font-size: 2rem !important; }
+  .prose h3 { font-size: 1.5rem !important; }
+  
+  .prose a {
+    color: #3b82f6 !important; /* blue-500 */
+    text-decoration: underline !important;
+    font-weight: 600 !important;
+  }
+  .prose p {
+    margin-bottom: 1.5rem !important;
+  }
+  .prose ul, .prose ol {
+    margin-bottom: 1.5rem !important;
+    padding-left: 1.5rem !important;
+  }
+  .prose li {
+    margin-bottom: 0.5rem !important;
   }
 }
 

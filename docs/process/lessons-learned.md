@@ -26,6 +26,8 @@ When building paginated APIs that return entities with collections (e.g., `User`
   // Step 2: Fetch the full graph for exactly those IDs
   List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
   ```
+*   **Job Stacking UX:** Reverting to stacked toast notifications for background jobs provided a much more informative and less aggressive update pattern than replacing a single toast.
+*   **Source Transparency (POV-148):** The implementation of the Source Library and Source Detail pages significantly improved system observability. Users can now "drill down" from a high-level briefing to the raw source items that informed it, closing the loop on content transparency.
 
 ### 1.2 Graceful Failure, String Truncation & Error Sanitization
 When background jobs or data-sync commands fail, the exception stack trace can be massive and contain sensitive structure details.
@@ -518,3 +520,27 @@ For optimal performance and SEO in a Dual-Language application:
 ### 3.9 Eager Loading for Background Processing
 - **The Problem:** When processing entities in a *new* transaction (common in background jobs), lazy-loaded collections (like `@ManyToMany`) will throw `LazyInitializationException` if they weren't fetched in the same transaction session.
 - **The Standard:** Implement dedicated finders that use `JOIN FETCH` (e.g., `Topic.findByIdWithSources()`) to eagerly load all required associations before passing the entity to the background worker. Avoid relying on open-session-in-view patterns for background tasks.
+
+---
+
+## 20. Advanced Routing (TanStack Router)
+
+### 20.1 Structural ID Propagation in Types
+When using nested layout routes with an `id` (e.g., `id: 'authenticated'`) but no `path`, TanStack Router's internal type generation may sometimes prepend the ID to the route's path identifier in the generated types (e.g., requiring `from: '/authenticated/dashboard'` instead of `/dashboard`).
+- **The Trap:** Relying on the visual browser URL as the source of truth for the `from` property in `useParams` can lead to persistent `TS2345` errors if the internal type tree is structured differently.
+- **The Standard:** If `tsc` reports a mismatch for a standard absolute path, use `useParams({ strict: false })` as a pragmatic bypass for layout-heavy route trees where the internal ID mapping is complex. Always perform an explicit `typeof id === 'string'` check after a non-strict `useParams` call to maintain runtime safety.
+
+---
+
+## 21. Frontend Typography & Modal Design
+
+### 21.1 Symmetrical Padding & .prose Layout
+When building professional-grade document readers (like the **Summary Modal**) using `@tailwindcss/typography` (`.prose`), the default browser/plugin margins can conflict with container padding.
+- **The Trap:** A container with `p-8` will look unbalanced if the first element inside it (like an `H2`) has a default `margin-top: 1.5em`. This creates an asymmetric "gap" at the top compared to the sides.
+- **The Standard:** Always apply a CSS override to ensure the first child of a `.prose` container has no top margin. This ensures the content aligns perfectly with the container's top padding, maintaining symmetrical document aesthetics.
+  ```css
+  .prose > :first-child {
+    margin-top: 0 !important;
+  }
+  ```
+- **The Standard:** For modals intended as document readers, favor a fixed max-width (e.g., `max-w-4xl`) and symmetrical internal padding (`p-6 md:p-8`) on the article tag itself to prevent the text from becoming too wide to read easily while maintaining consistent spacing.

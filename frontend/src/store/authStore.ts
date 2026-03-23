@@ -38,7 +38,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         } else {
           set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
         }
-      } catch {
+      } catch (error: any) {
+        // If the request was cancelled, we don't know the status yet.
+        // We SHOULD NOT set isLoaded: true because that would trigger a redirect to/from landing.
+        if (error?.message === 'canceled' || error?.code === 'ERR_CANCELED') {
+           set({ isLoading: false });
+           return;
+        }
+
         // Only log serious failures, 401 is "normal" for unauthenticated
         set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
       } finally {

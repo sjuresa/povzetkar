@@ -8,5 +8,6 @@
 
 export type GetApiV1SourcesParams = {
 page?: number;
+search?: string;
 size?: number;
 };

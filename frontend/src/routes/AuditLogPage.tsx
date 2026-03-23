@@ -4,6 +4,7 @@ import { AuditLogTable } from '../components/admin/AuditLogTable';
 import { AuditLogFilters } from '../components/admin/AuditLogFilters';
 import type { AuditLogPaginatedResponse } from '../api/generated/model';
 import { Skeleton } from '../components/ui/Skeleton';
+import { Pagination } from '../components/ui/Pagination';
 
 export function AuditLogPage() {
   const [page, setPage] = useState(0);
@@ -62,7 +63,7 @@ export function AuditLogPage() {
       }} />
 
       <div className="space-y-4">
-        {isLoading ? (
+        {isLoading && !data ? (
           <div className="space-y-4">
              {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-20 w-full" />
@@ -71,31 +72,12 @@ export function AuditLogPage() {
         ) : (
           <>
             <AuditLogTable logs={items} />
-            
-            {/* Pagination */}
-            <div className="flex items-center justify-between pt-4">
-              <p className="text-xs text-[var(--color-text-secondary)] italic">
-                Showing page <span className="text-[var(--color-text-primary)] font-bold">{page + 1}</span> of <span className="text-[var(--color-text-primary)] font-bold">{totalPages || 1}</span>
-              </p>
-              
-              <div className="flex items-center space-x-2">
-                <button
-                  disabled={page === 0 || isLoading}
-                  onClick={() => setPage(p => p - 1)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] disabled:opacity-30 transition-all hover:scale-105 active:scale-95 text-xs font-bold uppercase tracking-widest text-[var(--color-text-primary)]"
-                >
-                  Previous
-                </button>
-                <div className="w-px h-6 bg-[var(--color-border-subtle)] mx-2"></div>
-                <button
-                  disabled={page >= totalPages - 1 || isLoading}
-                  onClick={() => setPage(p => p + 1)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] disabled:opacity-30 transition-all hover:scale-105 active:scale-95 text-xs font-bold uppercase tracking-widest text-[var(--color-text-primary)]"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+            <Pagination 
+              page={page} 
+              totalPages={totalPages} 
+              onPageChange={setPage} 
+              isLoading={isLoading} 
+            />
           </>
         )}
       </div>

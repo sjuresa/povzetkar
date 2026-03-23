@@ -79,11 +79,21 @@ public class ContentSourceResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourcePaginatedResponse.class))
     )
     public ContentSourcePaginatedResponse getAllContentSources(
+            @QueryParam("search") @DefaultValue("") String search,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<ContentSource> query = ContentSource.findAll(Sort.by("id"));
+        
+        PanacheQuery<ContentSource> query;
+        if (search == null || search.isBlank()) {
+            query = ContentSource.findAll(Sort.by("id"));
+        } else {
+            String pattern = "%" + search.toLowerCase() + "%";
+            query = ContentSource.find("lower(sourceIdentifier) like ?1 or lower(name) like ?1 or lower(description) like ?1", 
+                    Sort.by("id"), pattern);
+        }
+        
         long count = query.count();
         List<ContentSourceDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()

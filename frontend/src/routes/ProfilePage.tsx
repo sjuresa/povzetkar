@@ -1,12 +1,46 @@
+import { useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useTranslation } from 'react-i18next';
-import { Shield, Mail, User, Fingerprint } from 'lucide-react';
+import { Shield, Mail, User, Fingerprint, RefreshCw, AlertCircle } from 'lucide-react';
 
 export function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, isLoaded, isAuthenticated, checkAuth } = useAuthStore();
   const { t } = useTranslation();
 
-  if (!user) return null;
+  useEffect(() => {
+    if (isLoaded && !user && isAuthenticated) {
+      // Something is wrong, we are "authenticated" but have no user data.
+      // Try to re-fetch once.
+      void checkAuth();
+    }
+  }, [isLoaded, user, isAuthenticated, checkAuth]);
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+        <p className="text-[var(--color-text-secondary)] font-medium animate-pulse">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+          <AlertCircle size={32} />
+        </div>
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Session Incomplete</h2>
+        <p className="text-[var(--color-text-secondary)]">We couldn't retrieve your user details. Please try logging in again.</p>
+        <button 
+          onClick={() => window.location.href = '/auth/login'}
+          className="px-6 py-2 rounded-xl bg-indigo-500 text-white font-bold hover:bg-indigo-600 transition-colors"
+        >
+          Re-authenticate
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
