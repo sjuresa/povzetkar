@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### Added
+- **Infrastructure (POV-149):** Implemented `SecretConfigValidator` — a startup fail-fast validator that verifies all required secrets (API keys, DB password, OIDC credentials) are present before the application starts.
+- **Infrastructure (POV-149):** Configured Quarkus secret-keys masking (`quarkus.config.secret-keys`) to prevent sensitive property values from appearing in diagnostic output.
+- **Infrastructure (POV-149):** Suppressed config value logging at startup via `quarkus.config.log.values=false` to prevent accidental secret leakage.
+- **Documentation (POV-149):** Added Section 14 "Secrets Management" to `RUNBOOK.md` with inventory, environment-specific injection methods, and security best practices.
+
+### Changed
+- **Infrastructure (POV-149):** Updated `backend/.env.example` to include `GOOGLE_OIDC_CLIENT_ID` and `GOOGLE_OIDC_CLIENT_SECRET` placeholders.
+- **Infrastructure (POV-149):** Fixed test-profile property names for YouTube/Google API keys (corrected namespace from `quarkus.youtube.api.key` to `youtube.api.key`).
+
+### Removed
+- **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).
 ## [v0.13.0] - 2026-03-19
 
 ### Summary
