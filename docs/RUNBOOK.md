@@ -608,3 +608,52 @@ Errors follow the **RFC 7807** (Problem Details) structure:
   }
 }
 ```
+
+## 14. Secrets Management
+
+The application requires several sensitive configuration values (API keys, database credentials, OIDC secrets) to function. This section documents how secrets are managed across environments.
+
+### 14.1 Required Secrets Inventory
+
+| Environment Variable | Config Property | Description | Required |
+|:---|:---|:---|:---:|
+| `DB_PASS` | `quarkus.datasource.password` | PostgreSQL database password | ✅ |
+| `YOUTUBE_API_KEY` | `youtube.api.key` | YouTube Data API v3 key | ✅ |
+| `GOOGLE_API_KEYS` | `google.api.keys` | Google GenAI API keys (comma-separated for pool rotation) | ✅ |
+| `GOOGLE_OIDC_CLIENT_ID` | `quarkus.oidc.client-id` | Google OIDC OAuth 2.0 Client ID | ✅ |
+| `GOOGLE_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` | Google OIDC OAuth 2.0 Client Secret | ✅ |
+
+### 14.2 How Secrets Are Provided
+
+Secrets are injected via **environment variables** and resolved by Quarkus Config at startup. The approach varies by environment:
+
+| Environment | Method | Details |
+|:---|:---|:---|
+| **Local Dev** | `.env` file | Copy `backend/.env.example` to `backend/.env` and fill in real values. Loaded by Quarkus Dev mode. |
+| **Docker** | `--env-file` | Create a `.env.docker` file (never committed) and pass via `docker run --env-file .env.docker`. |
+| **CI/CD** | GitHub Secrets | Injected as environment variables in the `ci.yml` workflow via `${{ secrets.* }}`. |
+| **Kubernetes** | K8s Secrets | Mount as environment variables from a `Secret` resource. See deployment docs. |
+
+### 14.3 Startup Secret Validation (Fail-Fast)
+
+The `SecretConfigValidator` bean automatically runs at application startup and validates that **all required secrets** from the inventory above are present and non-blank.
+
+*   **If any secret is missing:** The application logs a `FATAL` error listing the missing keys and exits immediately with code `1`.
+*   **If all secrets are present:** A confirmation `INFO` log is emitted.
+
+This prevents partial system failures where the app starts successfully but crashes at runtime when a service first tries to use an unconfigured API key.
+
+### 14.4 Secret Masking & Log Suppression
+
+Two Quarkus mechanisms prevent accidental secret exposure in logs:
+
+1.  **`quarkus.config.log.values=false`**: Suppresses the config value dump that normally appears in startup logs.
+2.  **`quarkus.config.secret-keys`**: Marks specific properties as secrets. If Quarkus ever needs to display their values in diagnostics (e.g., Dev UI, error messages), they are shown as `****` instead of the real value.
+
+### 14.5 Security Best Practices
+
+1.  **Never commit `.env` files.** Both `backend/.env` and `.env.docker` are listed in `.gitignore`.
+2.  **Rotate API keys periodically.** Google API keys and OIDC secrets should be rotated at least annually.
+3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
+4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
+5.  **Audit key usage.** Monitor API key usage in the Google Cloud Console to detect unauthorized access or quota anomalies.
