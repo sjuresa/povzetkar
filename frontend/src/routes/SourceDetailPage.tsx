@@ -333,7 +333,11 @@ function SummaryModal({ itemId, onClose }: { itemId: number, onClose: () => void
                <h3 className="text-xl font-bold text-[var(--color-text-primary)]">AI Content Summary</h3>
                {summary ? (
                  <div className="flex items-center text-[10px] text-[var(--color-text-secondary)] font-mono opacity-60 mt-0.5 tracking-wider">
-                   <Youtube size={10} className="mr-1 text-red-500" />
+                   {summary?.platform === 'YOUTUBE' ? (
+                     <Youtube size={10} className="mr-1 text-red-500" />
+                   ) : (
+                     <Globe size={10} className="mr-1 text-blue-500" />
+                   )}
                    <span>REFERENCE: ITEM-{itemId}</span>
                  </div>
                ) : null}
