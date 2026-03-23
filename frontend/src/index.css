@@ -68,38 +68,47 @@
     text-shadow: 0 0 20px var(--color-glow);
   }
 
-  /* Prose Overrides for Document Reader */
+  /* Prose Overrides for Document Reader (Tailwind v4 style) */
   .prose {
-    color: var(--color-text-secondary);
+    --tw-prose-body: var(--color-text-secondary);
+    --tw-prose-headings: var(--color-text-primary);
+    --tw-prose-links: #3b82f6;
+    --tw-prose-bold: var(--color-text-primary);
+    
+    max-width: none;
   }
+
   .prose h1, .prose h2, .prose h3, .prose h4 {
-    color: var(--color-text-primary) !important;
-    font-weight: 800 !important;
-    margin-top: 2rem !important;
-    margin-bottom: 1rem !important;
-    line-height: 1.2 !important;
+    font-weight: 800;
+    margin-top: 2.5rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.2;
   }
+
+  .prose h1 { font-size: 2.5rem; }
+  .prose h2 { font-size: 2rem; }
+  .prose h3 { font-size: 1.5rem; }
+
   .prose > :first-child {
-    margin-top: 0 !important;
+    margin-top: 0;
   }
-  .prose h1 { font-size: 2.5rem !important; }
-  .prose h2 { font-size: 2rem !important; }
-  .prose h3 { font-size: 1.5rem !important; }
   
   .prose a {
-    color: #3b82f6 !important; /* blue-500 */
-    text-decoration: underline !important;
-    font-weight: 600 !important;
+    text-decoration: underline;
+    font-weight: 600;
   }
+
   .prose p {
-    margin-bottom: 1.5rem !important;
+    margin-bottom: 1.5rem;
   }
+
   .prose ul, .prose ol {
-    margin-bottom: 1.5rem !important;
-    padding-left: 1.5rem !important;
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
   }
+
   .prose li {
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.5rem;
   }
 }
 

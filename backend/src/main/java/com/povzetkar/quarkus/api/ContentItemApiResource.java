@@ -144,7 +144,7 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item or summary not found")
     public SummaryDTO getSummaryByItemId(@PathParam("id") Long id) {
-        Summary entity = Summary.findByContentId(id);
+        Summary entity = Summary.findByContentIdWithAssociations(id);
         if (entity == null) {
             throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
         }

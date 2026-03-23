@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGetApiV1Sources } from '../api/generated/content-sources/content-sources';
 import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Link } from '@tanstack/react-router';
 import { Search, Globe, Youtube } from 'lucide-react';
+import { useDebounce } from '../hooks/useDebounce';
 import { cn } from '../util/cn';
 
 /**
@@ -14,16 +15,22 @@ export function SourcesLibraryPage() {
   const [page, setPage] = useState(0);
   const [size] = useState(12);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
 
   const { data: response, isLoading } = useGetApiV1Sources({
     page,
     size,
-    search: search || undefined
+    search: debouncedSearch || undefined
   }, {
     query: {
       placeholderData: (previousData) => previousData, // Smooth transitions during pagination
     }
   });
+
+  // Reset to first page when debounced search term changes
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch]);
 
   const data = response?.data;
   const items = data?.items || [];
