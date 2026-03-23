@@ -31,10 +31,15 @@ class SecretConfigValidatorTest {
     }
 
     @Test
-    void requiredSecretsListShouldNotBeEmpty() {
+    void requiredSecretsListShouldBeComplete() {
         assertThat(SecretConfigValidator.REQUIRED_SECRETS)
-                .isNotEmpty()
-                .contains("youtube.api.key", "google.api.keys", "quarkus.datasource.password");
+                .containsExactlyInAnyOrder(
+                        "youtube.api.key",
+                        "google.api.keys",
+                        "quarkus.datasource.password",
+                        "quarkus.oidc.client-id",
+                        "quarkus.oidc.credentials.secret"
+                );
     }
 
     @Test
@@ -50,10 +55,13 @@ class SecretConfigValidatorTest {
         var secretKeys = config.getOptionalValue("quarkus.config.secret-keys", String.class);
         assertThat(secretKeys).isPresent();
         String keys = secretKeys.get();
-        assertThat(keys).contains("youtube.api.key");
-        assertThat(keys).contains("google.api.keys");
-        assertThat(keys).contains("quarkus.datasource.password");
-        assertThat(keys).contains("quarkus.oidc.credentials.secret");
+        assertThat(keys).contains(
+                "youtube.api.key",
+                "google.api.keys",
+                "quarkus.datasource.password",
+                "quarkus.oidc.credentials.secret",
+                "quarkus.oidc.client-id"
+        );
     }
 
     @Test

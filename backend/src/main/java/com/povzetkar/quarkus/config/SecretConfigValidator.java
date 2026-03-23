@@ -9,7 +9,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,14 +38,9 @@ public class SecretConfigValidator {
     }
 
     void validate(Config config) {
-        List<String> missing = new ArrayList<>();
-
-        for (String key : REQUIRED_SECRETS) {
-            var value = config.getOptionalValue(key, String.class);
-            if (value.isEmpty() || value.get().isBlank()) {
-                missing.add(key);
-            }
-        }
+        List<String> missing = REQUIRED_SECRETS.stream()
+                .filter(key -> config.getOptionalValue(key, String.class).map(String::isBlank).orElse(true))
+                .toList();
 
         if (!missing.isEmpty()) {
             logger.error("FATAL: Required secret configuration is missing or blank. "
