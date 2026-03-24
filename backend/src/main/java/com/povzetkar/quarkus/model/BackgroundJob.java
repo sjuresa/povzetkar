@@ -26,7 +26,7 @@ public class BackgroundJob extends PanacheEntityBase {
     @Column(name = "user_id")
     public Long userId;
 
-    @Column(name = "correlation_id", unique = true)
+    @Column(name = "correlation_id")
     public String correlationId;
 
     @Column(name = "topic_id")
