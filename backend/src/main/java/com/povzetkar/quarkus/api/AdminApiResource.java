@@ -234,7 +234,7 @@ public class AdminApiResource extends BaseApiResource {
     @Path("/" + JOBS_PATH + "/{id}/audit")
     @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
     @Operation(summary = "Get job audit history (Admin)", description = "Get full chronological execution history for any job and its sub-items.")
-    public List<com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO> getJobAudit(@PathParam("id") UUID id) {
+    public List<JobExecutionAuditDTO> getJobAudit(@PathParam("id") UUID id) {
         BackgroundJob job = backgroundJobService.getJobById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
 

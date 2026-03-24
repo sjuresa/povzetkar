@@ -1,16 +1,17 @@
 package com.povzetkar.quarkus.model;
 
+import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
 import java.time.Instant;
 import java.util.UUID;
-
-import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 
 @Entity
 @Table(name = "job_execution_audit")
@@ -50,7 +51,7 @@ public class JobExecutionAudit extends PanacheEntityBase {
      * Helper to persist a job-level audit.
      */
     public static void logJob(UUID jobId, JobStatus status, String message) {
-        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+        QuarkusTransaction.requiringNew().run(() -> {
             JobExecutionAudit audit = new JobExecutionAudit();
             audit.jobId = jobId;
             audit.status = status.name();
@@ -63,7 +64,7 @@ public class JobExecutionAudit extends PanacheEntityBase {
      * Helper to persist an item-level audit.
      */
     public static void logItem(Long itemId, String itemTitle, ProcessingStatus status, String message) {
-        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+        QuarkusTransaction.requiringNew().run(() -> {
             JobExecutionAudit audit = new JobExecutionAudit();
             audit.contentItemId = itemId;
             audit.itemTitle = itemTitle;
