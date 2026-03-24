@@ -72,7 +72,7 @@ public class JobExecutionAudit extends PanacheEntityBase {
             audit.message = message;
 
             // POV-150: Attempt to find and link the parent job via correlation ID for better data integrity
-            if (audit.correlationId != null) {
+            if (audit.correlationId != null && !audit.correlationId.isBlank()) {
                 BackgroundJob.find("correlationId", audit.correlationId).firstResultOptional()
                         .ifPresent(job -> audit.jobId = ((BackgroundJob) job).id);
             }
