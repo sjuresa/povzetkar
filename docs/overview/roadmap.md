@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
 | 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
 | 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                                                                                                                |
 | 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                                             |
@@ -197,6 +198,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.13: Input Mastery & UX Foundation
 
 **Goal:** Transition from MVP to a "Professional Grade" user experience. This version pivots from the original "Production Hardening" goal to focus on **Input Resilience** and establishing a solid UI foundation, while keeping mission-critical infra tasks (Secrets, Persistence).
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Topic & Source Management:**
