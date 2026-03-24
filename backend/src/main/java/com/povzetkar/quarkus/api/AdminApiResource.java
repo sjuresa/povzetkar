@@ -19,7 +19,6 @@ import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
-import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -48,6 +47,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -239,7 +239,7 @@ public class AdminApiResource extends BaseApiResource {
                 .orElseThrow(() -> new NotFoundException("Job not found"));
 
         String query = "jobId = :jobId or correlationId = :correlationId";
-        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), Parameters.with("jobId", id).and("correlationId", job.correlationId))
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), Map.of("jobId", id, "correlationId", job.correlationId))
                 .stream()
                 .map(JobExecutionAuditDTO::fromEntity)
                 .toList();
