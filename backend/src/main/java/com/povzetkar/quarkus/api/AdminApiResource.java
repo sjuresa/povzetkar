@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.AdminMetricsDTO;
 import com.povzetkar.quarkus.api.dto.AuditLogEntryDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
@@ -13,10 +14,12 @@ import com.povzetkar.quarkus.api.util.QueryParser;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -235,10 +238,10 @@ public class AdminApiResource extends BaseApiResource {
         BackgroundJob job = backgroundJobService.getJobById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
 
-        String query = "jobId = ?1 or correlationId = ?2";
-        return com.povzetkar.quarkus.model.JobExecutionAudit.<com.povzetkar.quarkus.model.JobExecutionAudit>find(query, io.quarkus.panache.common.Sort.by("createdAt").ascending(), id, job.correlationId)
+        String query = "jobId = :jobId or correlationId = :correlationId";
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), Parameters.with("jobId", id).and("correlationId", job.correlationId))
                 .stream()
-                .map(com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO::fromEntity)
+                .map(JobExecutionAuditDTO::fromEntity)
                 .toList();
     }
 }

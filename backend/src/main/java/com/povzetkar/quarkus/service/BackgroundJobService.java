@@ -136,7 +136,7 @@ public class BackgroundJobService {
                         jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
                     }
                 }
-                default -> jobTask = Uni.createFrom().voidItem();
+                default -> jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
             }
             // POV-150: Capture the current correlation ID for the job
             String correlationId = CorrelationIdFilter.currentCorrelationId();

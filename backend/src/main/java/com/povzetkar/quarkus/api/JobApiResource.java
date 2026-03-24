@@ -90,7 +90,7 @@ public class JobApiResource extends BaseApiResource {
 
         // POV-150: Fetch history linked by jobId OR correlationId
         String query = "jobId = ?1 or correlationId = ?2";
-        return JobExecutionAudit.<com.povzetkar.quarkus.model.JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), id, job.correlationId)
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), id, job.correlationId)
                 .stream()
                 .map(JobExecutionAuditDTO::fromEntity)
                 .toList();
