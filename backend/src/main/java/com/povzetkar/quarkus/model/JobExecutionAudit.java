@@ -82,4 +82,15 @@ public class JobExecutionAudit extends PanacheEntityBase {
             audit.persist();
         });
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof JobExecutionAudit that)) return false;
+        return id != null && id.equals(that.id);
+    }
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : super.hashCode();
+    }
 }
