@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentProcessingError;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.logging.Log;
@@ -67,10 +68,14 @@ public class ContentItemService {
     }
 
     private void updateVideoStatus(YouTubeVideo video, ContentProcessingError error, String errorMessage) {
-        video.processingStatus = error.isRetriable() ? ProcessingStatus.RETRY_LATER : ProcessingStatus.FAILED;
+        ProcessingStatus status = error.isRetriable() ? ProcessingStatus.RETRY_LATER : ProcessingStatus.FAILED;
+        video.processingStatus = status;
         video.errorCode = error.name();
         video.errorMessage = errorMessage;
         video.persist();
+
+        // POV-150: Audit item failure or retry
+        JobExecutionAudit.logItem(video.id, video.title, status, errorMessage);
     }
 
     public long countPending() {

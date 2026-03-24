@@ -41,6 +41,8 @@ erDiagram
     SENTIMENTS ||--|{ SUMMARY_SENTIMENTS : "describes"
     SUMMARIES ||--|{ SUMMARY_SENTIMENTS : "is described by"
     TOPICS ||--o{ BRIEFINGS : "has"
+    BACKGROUND_JOBS ||--o{ JOB_EXECUTION_AUDIT : "has"
+    CONTENT_ITEMS ||--o{ JOB_EXECUTION_AUDIT : "logged in"
 
     USERS {
         bigint id PK
@@ -162,6 +164,29 @@ erDiagram
         bigint id PK
         date orchestration_date UK
         timestamp locked_at
+    }
+
+    JOB_EXECUTION_AUDIT {
+        bigint id PK
+        uuid job_id FK
+        bigint content_item_id FK
+        varchar item_title
+        varchar status
+        text message
+        varchar correlation_id
+        timestamp created_at
+    }
+
+    BACKGROUND_JOBS {
+        uuid job_id PK
+        varchar type
+        varchar status
+        bigint user_id FK
+        bigint topic_id FK
+        varchar correlation_id
+        timestamp started_at
+        timestamp ended_at
+        varchar error_message
     }
 ```
 
@@ -311,3 +336,28 @@ A simple locking mechanism to ensure that the daily orchestration process runs o
 - `id` (PK, bigint, auto-increment): `NOT NULL`
 - `orchestration_date` (date, unique): The date for which the lock is held. `NOT NULL`
 - `locked_at` (timestamp): When the lock was acquired. `NOT NULL`
+
+### `job_execution_audit`
+Stores historical execution events for jobs and items.
+- `id` (PK, bigint, auto-increment): `NOT NULL`
+- `job_id` (FK, uuid): References `background_jobs.job_id`. `NULL`
+- `content_item_id` (FK, bigint): References `content_items.id`. `NULL`
+- `item_title` (varchar): Human-readable title of the item at the time of logging. `NULL`
+- `status` (varchar): The state name (e.g. 'RUNNING', 'FAILED', 'RETRY_LATER'). `NOT NULL`
+- `message` (text): Detailed information or exception stack trace. `NULL`
+- `correlation_id` (varchar): Used to group all events within a single execution logical unit. `NULL`
+- `created_at` (timestamp): The time of the event. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
+
+### `background_jobs` (Updated)
+Tracks high-level background task lifecycle.
+- `job_id` (PK, uuid): `NOT NULL`
+- `type` (varchar): The job type. `NOT NULL`
+- `status` (varchar): The high-level status. `NOT NULL`
+- `user_id` (FK, bigint): `NOT NULL`
+- `topic_id` (FK, bigint): `NULL`
+- `correlation_id` (varchar): Trace ID for log/audit correlation. `NULL`
+- `started_at` (timestamp): `NULL`
+- `ended_at` (timestamp): `NULL`
+- `error_message` (varchar): `NULL`
+- `created_at` (timestamp): `NOT NULL`
+- `updated_at` (timestamp): `NOT NULL`

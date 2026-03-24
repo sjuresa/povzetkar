@@ -10,11 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Infrastructure (POV-149):** Implemented `SecretConfigValidator` — a startup fail-fast validator that verifies all required secrets (API keys, DB password, OIDC credentials) are present before the application starts.
 - **Infrastructure (POV-149):** Configured Quarkus secret-keys masking (`quarkus.config.secret-keys`) to prevent sensitive property values from appearing in diagnostic output.
 - **Infrastructure (POV-149):** Suppressed config value logging at startup via `quarkus.config.log.values=false` to prevent accidental secret leakage.
-- **Documentation (POV-149):** Added Section 14 "Secrets Management" to `RUNBOOK.md` with inventory, environment-specific injection methods, and security best practices.
+- **Infrastructure (POV-149):** Added Section 14 "Secrets Management" to `RUNBOOK.md` with inventory, environment-specific injection methods, and security best practices.
+- **Monitoring (POV-150):** Implemented a persistent **Job Execution Audit** system, enabling granular tracking of status transitions and item-level failures for background jobs.
+- **Monitoring (POV-150):** Added `GET /api/v1/jobs/{id}/audit` endpoint to retrieve historical audit trails for specific jobs.
 
 ### Changed
 - **Infrastructure (POV-149):** Updated `backend/.env.example` to include `GOOGLE_OIDC_CLIENT_ID` and `GOOGLE_OIDC_CLIENT_SECRET` placeholders.
 - **Infrastructure (POV-149):** Fixed test-profile property names for YouTube/Google API keys (corrected namespace from `quarkus.youtube.api.key` to `youtube.api.key`).
+- **Database (POV-150):** Added `job_execution_audit` table (V23) with foreign key support to `background_jobs` and `content_items`.
+
+### Fixed
+- **Logging (POV-150):** Resolved `IllegalArgumentException` in `StructuredLogger` by adding a `warn(Throwable, Object...)` overload to handle exceptions with context safely.
+- **Testing (POV-150):** Hardened the integration test suite by implementing robust data setup for `User` and `ContentSource` entities, resolving intermittent foreign key constraint violations.
 
 ### Removed
 - **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).

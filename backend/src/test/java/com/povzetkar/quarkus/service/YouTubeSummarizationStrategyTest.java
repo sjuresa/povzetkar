@@ -7,6 +7,7 @@ import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.narayana.jta.TransactionRunnerOptions;
@@ -71,7 +72,8 @@ class YouTubeSummarizationStrategyTest {
 
     @Test
     void testSummarize_alreadySummarized() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
 
             PanacheMock.mock(Summary.class);
 
@@ -81,6 +83,7 @@ class YouTubeSummarizationStrategyTest {
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertTrue(result);
+            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), any(), anyString()), never());
             PanacheMock.verify(Summary.class).findByContentId(1L);
             verifyNoInteractions(contentCreationService, videoSummaryService);
         }
@@ -88,7 +91,8 @@ class YouTubeSummarizationStrategyTest {
 
     @Test
     void testSummarize_contentCreationFails() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
 
             PanacheMock.mock(Summary.class);
             PanacheMock.mock(ContentItem.class);
@@ -104,6 +108,7 @@ class YouTubeSummarizationStrategyTest {
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
+            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.RETRY_LATER), anyString()), atLeastOnce());
             
             // Verify status and error fields were updated on the mockVideo
             assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
@@ -114,7 +119,8 @@ class YouTubeSummarizationStrategyTest {
 
     @Test
     void testSummarize_genAiFails() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
 
             PanacheMock.mock(Summary.class);
             PanacheMock.mock(ContentItem.class);
@@ -136,6 +142,7 @@ class YouTubeSummarizationStrategyTest {
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertFalse(result);
+            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.RETRY_LATER), anyString()), atLeastOnce());
             
             // Verify status and error fields were updated on the mockVideo
             assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
@@ -147,6 +154,7 @@ class YouTubeSummarizationStrategyTest {
     @Test
     void testSummarize_success() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class);
              MockedConstruction<Summary> cons = mockConstruction(Summary.class, (mock, ctx) -> doNothing().when(mock).persist())) {
 
             PanacheMock.mock(Summary.class);
@@ -164,6 +172,7 @@ class YouTubeSummarizationStrategyTest {
             boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
 
             assertTrue(result);
+            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.COMPLETED), anyString()), atLeastOnce());
             assertEquals(ProcessingStatus.COMPLETED, mockVideo.processingStatus);
             assertNull(mockVideo.errorCode);
             assertNull(mockVideo.errorMessage);
@@ -175,8 +184,9 @@ class YouTubeSummarizationStrategyTest {
 
     @Test
     void testSummarize_handlesPersistenceExceptionOnRaceCondition() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
-            PanacheMock.mock(Summary.class);
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+                PanacheMock.mock(Summary.class);
             PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
@@ -199,13 +209,15 @@ class YouTubeSummarizationStrategyTest {
 
             // Assert
             assertTrue(result, "Should return true on persistence exception due to race condition");
+            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), any(), anyString()), never());
         }
     }
 
     @Test
     void testSummarize_handlesOtherPersistenceExceptionAsFailure() {
-        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class)) {
-            PanacheMock.mock(Summary.class);
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+                PanacheMock.mock(Summary.class);
             PanacheMock.mock(YouTubeVideo.class); // Mock YouTubeVideo
             PanacheMock.mock(ContentItem.class); // Still need to mock ContentItem for updateProcessingStatus
 
@@ -236,6 +248,7 @@ class YouTubeSummarizationStrategyTest {
 
             // Assert
             assertFalse(result, "Should return false for generic persistence exception");
+            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.FAILED), anyString()), atLeastOnce());
             
             // Verify status and error fields were updated on the mockVideo
             assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
