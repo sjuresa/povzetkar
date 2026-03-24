@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [v0.13.0] - 2026-03-24
+
+### Summary
+Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with automated retries, a global Error Boundary for catastrophic failure recovery, and a localized, themeable user environment. Key highlights include the new User Profile page, dual-language support (English/Slovenian), and a robust Light/Dark/System theme system with persistence. This release also solidifies the backend with a persistent **Job Execution Audit** system and a comprehensive **Secrets Management** strategy (fail-fast validation and masking), ensuring a professional and secure platform for content orchestration.
+
 ### Added
 - **Infrastructure (POV-149):** Implemented `SecretConfigValidator` — a startup fail-fast validator that verifies all required secrets (API keys, DB password, OIDC credentials) are present before the application starts.
 - **Infrastructure (POV-149):** Configured Quarkus secret-keys masking (`quarkus.config.secret-keys`) to prevent sensitive property values from appearing in diagnostic output.
@@ -13,24 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Infrastructure (POV-149):** Added Section 14 "Secrets Management" to `RUNBOOK.md` with inventory, environment-specific injection methods, and security best practices.
 - **Monitoring (POV-150):** Implemented a persistent **Job Execution Audit** system, enabling granular tracking of status transitions and item-level failures for background jobs.
 - **Monitoring (POV-150):** Added `GET /api/v1/jobs/{id}/audit` endpoint to retrieve historical audit trails for specific jobs.
-
-### Changed
-- **Infrastructure (POV-149):** Updated `backend/.env.example` to include `GOOGLE_OIDC_CLIENT_ID` and `GOOGLE_OIDC_CLIENT_SECRET` placeholders.
-- **Infrastructure (POV-149):** Fixed test-profile property names for YouTube/Google API keys (corrected namespace from `quarkus.youtube.api.key` to `youtube.api.key`).
-- **Database (POV-150):** Added `job_execution_audit` table (V23) with foreign key support to `background_jobs` and `content_items`.
-
-### Fixed
-- **Logging (POV-150):** Resolved `IllegalArgumentException` in `StructuredLogger` by adding a `warn(Throwable, Object...)` overload to handle exceptions with context safely.
-- **Testing (POV-150):** Hardened the integration test suite by implementing robust data setup for `User` and `ContentSource` entities, resolving intermittent foreign key constraint violations.
-
-### Removed
-- **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).
-## [v0.13.0] - 2026-03-19
-
-### Summary
-Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It introduces a hardened network layer with automated retries, a global Error Boundary for catastrophic failure recovery, and a localized, themeable user environment. Key highlights include the new User Profile page, dual-language support (English/Slovenian), and a robust Light/Dark/System theme system with persistence. These enhancements provide a professional, inclusive, and stable platform for daily content briefings.
-
-### Added
 - **Infrastructure (POV-145):** Integrated `axios-retry` into the global API client with exponential backoff for network errors and transient 5xx status codes (502, 503, 504).
 - **Frontend (POV-145):** Implemented a global **React Error Boundary** (`ErrorBoundary.tsx`) to catch unhandled rendering exceptions.
 - **Frontend (POV-145):** Fabricated a professional-grade **Error Page** (`ErrorPage.tsx`) with a "Midnight Slate" aesthetic, providing graceful failure recovery and navigation.
@@ -48,6 +35,9 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 - **Frontend (POV-148):** Integrated a **Glassmorphic Summary Reader** with `react-markdown` support, a dedicated Executive Summary highlight, and an auditable **Reference Tag** (ITEM-ID).
 
 ### Changed
+- **Infrastructure (POV-149):** Updated `backend/.env.example` to include `GOOGLE_OIDC_CLIENT_ID` and `GOOGLE_OIDC_CLIENT_SECRET` placeholders.
+- **Infrastructure (POV-149):** Fixed test-profile property names for YouTube/Google API keys (corrected namespace from `quarkus.youtube.api.key` to `youtube.api.key`).
+- **Database (POV-150):** Added `job_execution_audit` table (V23) with foreign key support to `background_jobs` and `content_items`.
 - **Frontend (POV-145):** Migrated from the custom toast system to **Sonner**, enabling a more flexible and visually polished notification experience.
 - **Frontend (POV-145):** Refactored `DashboardPage` and `AuditLogPage` to utilize the new `Skeleton` system and global error handling, simplifying component logic.
 - **Frontend (POV-145):** Configured TanStack Query to use `throwOnError: true` by default, delegating error UX to the global boundary for a more unified architecture.
@@ -57,10 +47,9 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 - **Frontend (POV-148):** Regenerated the **API Client** using Orval to support the new searchable backend parameters.
 - **Frontend (POV-148):** Updated the **Source Detail** page with a "View Summary" action for all processed content items and added a formatted **Duration** column (MM:SS) to the content list.
 
-### Removed
-- **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
-
 ### Fixed
+- **Logging (POV-150):** Resolved `IllegalArgumentException` in `StructuredLogger` by adding a `warn(Throwable, Object...)` overload to handle exceptions with context safely.
+- **Testing (POV-150):** Hardened the integration test suite by implementing robust data setup for `User` and `ContentSource` entities, resolving intermittent foreign key constraint violations.
 - **Backend (Orchestration):** Resolved `ContextNotActiveException` in background jobs by wrapping database operations in `QuarkusTransaction.requiringNew()`.
 - **Backend (Orchestration):** Refactored `BackgroundJobService` to eliminate duplication in topic-related job creation via a unified helper.
 - **Backend (Persistence):** Fixed `LazyInitializationException` by implementing eager loading of content sources via `Topic.findByIdWithSources()`.
@@ -71,6 +60,10 @@ Version 0.13.0 focuses on **User Experience Foundations and Resilience**. It int
 - **Frontend (Build):** Resolved production build errors by removing unused imports in `TopicList.tsx`.
 - **Frontend (i18n):** Added missing Slovenian translation keys for topic source counts.
 - **Backend (Migration):** Added `topic_id` to `background_jobs` table (V21) for improved auditability.
+
+### Removed
+- **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).
+- **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
 
 ## [v0.12.0] - 2026-03-18
 
@@ -130,7 +123,6 @@ Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitio
 - **Backend (Auth):** Ensured the session cookie is explicitly cleared and cache-prevention headers are present during logout to prevent "sticky" sessions.
 - **Backend (POV-141):** Corrected root access (`/`) behavior to serve the SPA instead of the legacy admin UI.
 - **Backend (POV-141):** Implemented an SPA catch-all route (`SpaRoutingHandler`) to support client-side navigation (e.g., `/dashboard`) on page refresh in production.
-
 
 ## [v0.11.0] - 2026-03-12
 

@@ -10,12 +10,8 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### UI/UX
 
-*   **Global Error Handling Page:** (Moved to v0.13.0) Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
-*   **Automatic Optimistic Locking in Orval mutator:** (Moved to v0.13.0) Enhance `customInstance` in `client.ts` to automatically extract a `version` or `meta.version` field from request data and inject the `If-Match` header for mutation methods (PATCH, PUT, DELETE), reducing manual boilerplate in TanStack Query hooks.
-*   **Axios Retry Strategy:** (Moved to v0.13.0) Implement a standard retry mechanism for transient network errors (e.g., using `axios-retry`) to improve frontend resilience during intermittent connectivity.
 *   **Admin Jobs UI Implementation:** (Moved to v0.14.0 - Data infra in v0.13.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
-*   **Shared Pagination Component:** (Moved to v0.13.0) Extract the navigation and page-size logic from `AuditLogPage.tsx` (and other future tables) into a reusable `components/ui/Pagination.tsx` component to reduce code duplication and standardize the UX.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
 *   **Full Component Internationalization:** (POV-146 Extension) Systematically migrate all hardcoded strings in `DashboardPage`, `AuditLogPage`, and `TopicManager` to the i18n system.
 *   **Theme Transition Animations:** (POV-146 Polish) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
