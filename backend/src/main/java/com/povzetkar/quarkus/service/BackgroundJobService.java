@@ -8,6 +8,7 @@ import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.Topic;
@@ -135,9 +136,17 @@ public class BackgroundJobService {
                         jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
                     }
                 }
-                default ->
-                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
+                default -> jobTask = Uni.createFrom().voidItem();
             }
+            // POV-150: Capture the current correlation ID for the job
+            String correlationId = CorrelationIdFilter.currentCorrelationId();
+            QuarkusTransaction.requiringNew().run(() -> {
+                BackgroundJob job = BackgroundJob.findById(event.jobId());
+                if (job != null) {
+                    job.correlationId = correlationId;
+                }
+            });
+
             executeJobLifecycle(event.jobId(), jobTask);
         });
     }
@@ -178,7 +187,18 @@ public class BackgroundJobService {
     public void updateStatus(UUID jobId, JobStatus status, String errorMessage) {
         BackgroundJob job = BackgroundJob.<BackgroundJob>findByIdOptional(jobId)
                 .orElseThrow(() -> new EntityNotFoundException("BackgroundJob not found: " + jobId));
+
+        JobStatus oldStatus = job.status;
         job.status = status;
+
+        // POV-150: Audit high-level job transitions
+        // 1. Log if status changed
+        // 2. Log if it's FAILED (even if already FAILED) to capture all error messages
+        if (oldStatus != status || status == JobStatus.FAILED) {
+            String auditMessage = errorMessage != null ? errorMessage : "Job status transitioned to " + status;
+            JobExecutionAudit.logJob(jobId, status, auditMessage);
+        }
+
         if (status == JobStatus.RUNNING) {
             if (job.startedAt == null) {
                 job.startedAt = clock.instant();

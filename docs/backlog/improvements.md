@@ -23,6 +23,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### Backend & Architecture
 
+*   **Job Audit Cleanup:** Implement a separate cleanup task for `JobExecutionAudit` records (e.g., 90-day retention policy).
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
 *   **Content Deduplication Engine:** Basic hash-based or semantic deduplication of sources (Deferred from v0.12).
 *   **GenAI Rate Limiting (TPM/RPM):** Advanced token-per-minute and request-per-minute management for GenAI providers (Deferred from v0.12).

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
@@ -217,6 +218,50 @@ class AdminApiResourceTest {
                 .then()
                 .statusCode(200)
                 .header("X-Correlation-ID", notNullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_DASHBOARD_VIEW"})
+    void testGetJobAuditTrail() {
+        UUID jobId = UUID.randomUUID();
+        String corrId = "corr-" + UUID.randomUUID();
+        QuarkusTransaction.requiringNew().run(() -> {
+            com.povzetkar.quarkus.model.User user = new com.povzetkar.quarkus.model.User();
+            user.username = "trail-user";
+            user.email = "trail@example.com";
+            user.name = "Trail User";
+            user.persist();
+            
+            BackgroundJob job = new BackgroundJob(JobType.SYNC_YOUTUBE_FEEDS);
+            job.id = jobId;
+            job.correlationId = corrId;
+            job.status = JobStatus.COMPLETED;
+            job.userId = user.id;
+            job.persist();
+            
+            // Log some audit entries
+            com.povzetkar.quarkus.model.JobExecutionAudit audit1 = new com.povzetkar.quarkus.model.JobExecutionAudit();
+            audit1.jobId = jobId;
+            audit1.correlationId = corrId;
+            audit1.status = "RUNNING";
+            audit1.createdAt = java.time.Instant.now().minusSeconds(10);
+            audit1.persist();
+
+            com.povzetkar.quarkus.model.JobExecutionAudit audit2 = new com.povzetkar.quarkus.model.JobExecutionAudit();
+            audit2.jobId = jobId;
+            audit2.correlationId = corrId;
+            audit2.status = "COMPLETED";
+            audit2.createdAt = java.time.Instant.now();
+            audit2.persist();
+        });
+
+        given()
+                .when().get("/api/v1/admin/jobs/" + jobId + "/audit")
+                .then()
+                .statusCode(200)
+                .body("data", hasSize(2))
+                .body("data[0].status", equalTo("RUNNING"))
+                .body("data[1].status", equalTo("COMPLETED"));
     }
 
     // ------------------------------------------------------------------

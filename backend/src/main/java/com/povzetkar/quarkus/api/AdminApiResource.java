@@ -226,4 +226,19 @@ public class AdminApiResource extends BaseApiResource {
                 ((Number) result[6]).longValue()
         );
     }
+
+    @GET
+    @Path("/" + JOBS_PATH + "/{id}/audit")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "Get job audit history (Admin)", description = "Get full chronological execution history for any job and its sub-items.")
+    public List<com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO> getJobAudit(@PathParam("id") UUID id) {
+        BackgroundJob job = backgroundJobService.getJobById(id)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
+
+        String query = "jobId = ?1 or correlationId = ?2";
+        return com.povzetkar.quarkus.model.JobExecutionAudit.<com.povzetkar.quarkus.model.JobExecutionAudit>find(query, io.quarkus.panache.common.Sort.by("createdAt").ascending(), id, job.correlationId)
+                .stream()
+                .map(com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO::fromEntity)
+                .toList();
+    }
 }

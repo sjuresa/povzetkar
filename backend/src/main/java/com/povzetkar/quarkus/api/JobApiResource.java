@@ -1,13 +1,16 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
-import com.povzetkar.quarkus.security.Permission;
+import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,7 +27,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
- 
+
+import java.util.List;
 import java.util.UUID;
  
 @Path("/api/v1/jobs")
@@ -68,5 +72,27 @@ public class JobApiResource extends BaseApiResource {
         }
 
         return backgroundJobMapper.toDTO(job);
+    }
+
+    @GET
+    @Path("/{id}/audit")
+    @RolesAllowed(Permission.ROLE_USER)
+    @Operation(summary = "Get job audit history", description = "Get chronological execution history for the specified job and its sub-items.")
+    public List<JobExecutionAuditDTO> getJobAudit(@PathParam("id") UUID id) {
+        User currentUser = getAuthenticatedUser();
+
+        BackgroundJob job = backgroundJobService.getJobById(id)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
+
+        if (!currentUser.id.equals(job.userId)) {
+            throw new ForbiddenException("You do not have permission to view this job history.");
+        }
+
+        // POV-150: Fetch history linked by jobId OR correlationId
+        String query = "jobId = ?1 or correlationId = ?2";
+        return JobExecutionAudit.<com.povzetkar.quarkus.model.JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), id, job.correlationId)
+                .stream()
+                .map(JobExecutionAuditDTO::fromEntity)
+                .toList();
     }
 }

@@ -5,6 +5,7 @@ import com.google.genai.types.Content;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentProcessingError;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -49,7 +50,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
         Content content = contentCreationService.createContentForVideo(video);
         if (content == null) {
-            updateStatusInNewTransaction(video.id, ProcessingStatus.RETRY_LATER, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript could not be retrieved.");
+            updateStatusInNewTransaction(video.id, video.title, ProcessingStatus.RETRY_LATER, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript could not be retrieved.");
             return false;
         }
 
@@ -99,6 +100,9 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 // Clear any previous errors on success
                 attachedVideo.errorCode = null;
                 attachedVideo.errorMessage = null;
+
+                // POV-150: Audit item completion
+                JobExecutionAudit.logItem(attachedVideo.id, attachedVideo.title, ProcessingStatus.COMPLETED, "Summary generated successfully.");
             } else {
                 logger.warn(
                     LogKeys.ACTION, LogKeys.PERSIST_SUMMARY,
@@ -126,7 +130,7 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 LogKeys.VIDEO_ID, video.videoId,
                 LogKeys.ERROR_MESSAGE, e.getMessage()
             );
-            updateStatusInNewTransaction(video.id, ProcessingStatus.FAILED, ContentProcessingError.UNKNOWN_ERROR, e.getMessage());
+            updateStatusInNewTransaction(video.id, video.title, ProcessingStatus.FAILED, ContentProcessingError.UNKNOWN_ERROR, e.getMessage());
             return false;
         }
     }
@@ -164,11 +168,11 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             );
         }
         
-        updateStatusInNewTransaction(video.id, status, error, e.getMessage());
+        updateStatusInNewTransaction(video.id, video.title, status, error, e.getMessage());
         return false;
     }
 
-    private void updateStatusInNewTransaction(Long videoId, ProcessingStatus status, ContentProcessingError errorCode, String errorMessage) {
+    private void updateStatusInNewTransaction(Long videoId, String title, ProcessingStatus status, ContentProcessingError errorCode, String errorMessage) {
         QuarkusTransaction.requiringNew().run(() -> {
             ContentItem item = ContentItem.findById(videoId);
             if (item != null) {
@@ -177,6 +181,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                     item.errorCode = errorCode.name();
                     item.errorMessage = errorMessage;
                 }
+                // POV-150: Audit item failure or retry
+                JobExecutionAudit.logItem(videoId, title, status, errorMessage);
             }
         });
     }

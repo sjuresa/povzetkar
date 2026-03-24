@@ -57,6 +57,10 @@ Object[] result = (Object[]) em.createNativeQuery(
 // Map results using result[0], result[1], etc.
 ```
 
+### 1.6 Independent Transaction for Auditing
+- **The Trap:** Persisting audit logs or job audit trails within the same transaction as the main business logic. If the business transaction rolls back (e.g., due to a constraint violation), the audit record is also lost, leaving no trace of the failure.
+- **The Standard:** Always wrap persistence of audit records (API audits, job execution audits) in **`QuarkusTransaction.requiringNew()`**. This ensures the audit record is committed independently of the success or failure of the main operation, providing a reliable diagnostic trail.
+
 ---
 
 ## 2. API Design & Consistency
@@ -295,6 +299,10 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 ### 10.1 Logger Consistency
 - **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments. Mixing `org.jboss.logging.Logger` and `slf4j` facades in the same project can lead to confusing configuration and inconsistent MDC behavior.
 - **The Standard:** Always standardize on **SLF4J (`org.slf4j.Logger`)** as the primary logging facade for maximum compatibility and consistency with `RUNBOOK.md`. For structured logging with key-value pairs, use the custom `StructuredLogger` helper.
+
+### 10.2 StructuredLogger Argument Count Safety
+- **The Trap:** Passing an odd number of arguments for key-value pairs in `StructuredLogger` (e.g., including an exception but neglecting to add the corresponding key/value pairs) triggers an `IllegalArgumentException` during log message construction. This can crash the application or a filter during critical error paths.
+- **The Standard:** Always ensure that `StructuredLogger` calls have an **even number** of arguments for key-value pairs (excluding the format string or exception). When logging an exception with additional context, use the explicit `(Throwable t, Object... keyValuePairs)` overload to ensure the stack trace is properly captured without breaking the key-value alignment.
 
 ---
 
