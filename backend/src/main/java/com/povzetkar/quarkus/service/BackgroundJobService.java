@@ -246,6 +246,23 @@ public class BackgroundJobService {
         return BackgroundJob.findByIdOptional(id);
     }
 
+    /**
+     * POV-150: Centralized logic to fetch the full audit trail for a job.
+     * Uses correlationId to bridge high-level job events and sub-item events.
+     */
+    public List<JobExecutionAudit> getJobAuditTrail(UUID jobId, String correlationId) {
+        String query;
+        java.util.Map<String, Object> params;
+        if (correlationId != null && !correlationId.isBlank()) {
+            query = "jobId = :jobId or correlationId = :correlationId";
+            params = java.util.Map.of("jobId", jobId, "correlationId", correlationId);
+        } else {
+            query = "jobId = :jobId";
+            params = java.util.Map.of("jobId", jobId);
+        }
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), params).list();
+    }
+
     private Uni<Void> createTopicJobTask(Long topicId, java.util.function.Function<Topic, Uni<Void>> action) {
         Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(topicId));
         if (topic == null) {

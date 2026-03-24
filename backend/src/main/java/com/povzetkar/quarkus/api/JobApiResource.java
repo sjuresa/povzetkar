@@ -5,12 +5,10 @@ import com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
-import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
-import io.quarkus.panache.common.Sort;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -29,7 +27,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
  
 @Path("/api/v1/jobs")
@@ -89,17 +86,7 @@ public class JobApiResource extends BaseApiResource {
             throw new ForbiddenException("You do not have permission to view this job history.");
         }
 
-        // POV-150: Fetch history linked by jobId OR correlationId
-        String query;
-        Map<String, Object> params;
-        if (job.correlationId != null && !job.correlationId.isBlank()) {
-            query = "jobId = :jobId or correlationId = :correlationId";
-            params = Map.of("jobId", id, "correlationId", job.correlationId);
-        } else {
-            query = "jobId = :jobId";
-            params = Map.of("jobId", id);
-        }
-        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), params)
+        return backgroundJobService.getJobAuditTrail(id, job.correlationId)
                 .stream()
                 .map(JobExecutionAuditDTO::fromEntity)
                 .toList();
