@@ -89,8 +89,16 @@ public class JobApiResource extends BaseApiResource {
         }
 
         // POV-150: Fetch history linked by jobId OR correlationId
-        String query = "jobId = ?1 or correlationId = ?2";
-        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), id, job.correlationId)
+        String query;
+        Object[] params;
+        if (job.correlationId != null && !job.correlationId.isBlank()) {
+            query = "jobId = ?1 or correlationId = ?2";
+            params = new Object[]{id, job.correlationId};
+        } else {
+            query = "jobId = ?1";
+            params = new Object[]{id};
+        }
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), params)
                 .stream()
                 .map(JobExecutionAuditDTO::fromEntity)
                 .toList();

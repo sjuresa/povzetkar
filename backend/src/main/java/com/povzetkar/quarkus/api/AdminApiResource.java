@@ -238,8 +238,16 @@ public class AdminApiResource extends BaseApiResource {
         BackgroundJob job = backgroundJobService.getJobById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found"));
 
-        String query = "jobId = :jobId or correlationId = :correlationId";
-        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), Map.of("jobId", id, "correlationId", job.correlationId))
+        String query;
+        Map<String, Object> params;
+        if (job.correlationId != null && !job.correlationId.isBlank()) {
+            query = "jobId = :jobId or correlationId = :correlationId";
+            params = Map.of("jobId", id, "correlationId", job.correlationId);
+        } else {
+            query = "jobId = :jobId";
+            params = Map.of("jobId", id);
+        }
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), params)
                 .stream()
                 .map(JobExecutionAuditDTO::fromEntity)
                 .toList();

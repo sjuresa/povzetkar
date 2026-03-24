@@ -179,7 +179,7 @@ erDiagram
 
     BACKGROUND_JOBS {
         uuid job_id PK
-        varchar job_type
+        varchar type
         varchar status
         bigint user_id FK
         bigint topic_id FK
