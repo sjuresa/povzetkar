@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.model;
 import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.panache.common.Sort;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -72,8 +73,9 @@ public class JobExecutionAudit extends PanacheEntityBase {
             audit.message = message;
 
             // POV-150: Attempt to find and link the parent job via correlation ID for better data integrity
+            // Uses descending sort by createdAt to pick the newest job if multiple exist (to avoid non-determinism)
             if (audit.correlationId != null && !audit.correlationId.isBlank()) {
-                BackgroundJob.find("correlationId", audit.correlationId).firstResultOptional()
+                BackgroundJob.find("correlationId", Sort.by("createdAt").descending(), audit.correlationId).firstResultOptional()
                         .ifPresent(job -> audit.jobId = ((BackgroundJob) job).id);
             }
 
