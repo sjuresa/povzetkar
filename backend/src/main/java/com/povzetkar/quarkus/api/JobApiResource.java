@@ -29,6 +29,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
  
 @Path("/api/v1/jobs")
@@ -90,13 +91,13 @@ public class JobApiResource extends BaseApiResource {
 
         // POV-150: Fetch history linked by jobId OR correlationId
         String query;
-        Object[] params;
+        Map<String, Object> params;
         if (job.correlationId != null && !job.correlationId.isBlank()) {
-            query = "jobId = ?1 or correlationId = ?2";
-            params = new Object[]{id, job.correlationId};
+            query = "jobId = :jobId or correlationId = :correlationId";
+            params = Map.of("jobId", id, "correlationId", job.correlationId);
         } else {
-            query = "jobId = ?1";
-            params = new Object[]{id};
+            query = "jobId = :jobId";
+            params = Map.of("jobId", id);
         }
         return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), params)
                 .stream()
