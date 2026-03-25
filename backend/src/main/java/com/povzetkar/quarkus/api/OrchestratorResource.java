@@ -100,7 +100,8 @@ public class OrchestratorResource {
                 false,
                 false,
                 false,
-                true
+                true,
+                request.topicId()
         );
 
         return orchestrationManager.runOrchestrationManually(previewRequest)

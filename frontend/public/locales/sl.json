@@ -155,6 +155,24 @@
         "no_results_tip": "Poskusite z drugim iskalnim nizom ali ga dodajte zdaj",
         "quick_add_trigger": "Ni najdeno? Registrirajte nov vir",
         "page_info": "Stran {{current}} od {{total}}"
+      },
+      "trigger_modal": {
+        "title": "Sproži zagon teme",
+        "subtitle": "Konfigurirajte orkestracijo za \"{{name}}\"",
+        "date_range_label": "Časovno obdobje",
+        "start_date_label": "Datum začetka",
+        "end_date_label": "Datum konca",
+        "options_label": "Možnosti zagona",
+        "process_pending_label": "Obdelaj čakajoče elemente",
+        "process_pending_tip": "Ponovni poskus za elemente, ki so spodleteli ali se zataknili",
+        "summarize_label": "Generiraj nove povzetke",
+        "summarize_tip": "Pridobi in povzemi novo vsebino",
+        "create_briefing_label": "Dostavi briefing",
+        "create_briefing_tip": "Generiraj končno UI poročilo",
+        "preview_only_label": "Samo predogled",
+        "preview_only_tip": "Samo pridobi elemente, ne generiraj povzetkov",
+        "submit_button": "Zaženi orkestracijo",
+        "triggering": "Sprožanje..."
       }
     }
   }

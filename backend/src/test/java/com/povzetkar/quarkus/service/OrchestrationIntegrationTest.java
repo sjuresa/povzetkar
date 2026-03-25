@@ -113,7 +113,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_success() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         YouTubeVideo longVideo = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -164,7 +164,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_noNewContent() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(Collections.emptyList());
@@ -186,7 +186,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_summarizationFails() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         YouTubeVideo videoToProcess = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -220,7 +220,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_briefingOverwrite() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
         Topic testTopic = Topic.find("name", "Default Topic").firstResult();
 
         when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
@@ -280,7 +280,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.acquireLock(orchestrationDate));
 
@@ -301,7 +301,7 @@ class OrchestrationIntegrationTest {
     void testOrchestration_takesOverStaleLock() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
         Instant staleLockTime = Instant.now().minus(lockTimeout).minus(Duration.ofMinutes(1));
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -325,7 +325,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_previewMode() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, false, false, false, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, false, false, false, true, null);
 
         YouTubeVideo video1 = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",

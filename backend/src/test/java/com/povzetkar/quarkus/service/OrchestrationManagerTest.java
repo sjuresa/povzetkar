@@ -1,10 +1,10 @@
 package com.povzetkar.quarkus.service;
-import com.povzetkar.quarkus.builder.ContentSourceBuilder;
-import com.povzetkar.quarkus.builder.TopicBuilder;
-import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.api.OrchestrationRequest;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
+import com.povzetkar.quarkus.builder.UserBuilder;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -33,12 +33,13 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyList;
 
 @QuarkusTest
 class OrchestrationManagerTest {
@@ -61,15 +62,23 @@ class OrchestrationManagerTest {
     @InjectMock
     JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
 
+    @InjectMock
+    EventBroadcaster eventBroadcaster;
+
     @BeforeEach
     @Transactional
     void setUp() {
-        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService, justInTimeSummarizationScheduler);
+        Mockito.reset(orchestrationLockService, topicProcessor, managedExecutor, videoSummaryService, justInTimeSummarizationScheduler, eventBroadcaster);
         
         // Clean up database before each test to ensure isolation
         tearDown();
 
-        // Mock the executor to run tasks immediately on the same thread for runAsync
+        // Mock the executor to run tasks immediately on the same thread
+        doAnswer(invocation -> {
+            Supplier<?> supplier = invocation.getArgument(0);
+            return CompletableFuture.completedFuture(supplier.get());
+        }).when(managedExecutor).supplyAsync(any(Supplier.class));
+
         doAnswer(invocation -> {
             Runnable runnable = invocation.getArgument(0);
             runnable.run();
@@ -200,7 +209,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_defaultCurrentDate() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(null, null, true, true, true, false);
+        var request = new OrchestrationRequest(null, null, true, true, true, false, null);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -260,7 +269,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_singlePastDate() { // Removed @Transactional
         // Given
         LocalDate pastDate = LocalDate.now().minusDays(5);
-        var request = new OrchestrationRequest(pastDate, null, true, true, true, false);
+        var request = new OrchestrationRequest(pastDate, null, true, true, true, false, null);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -321,7 +330,7 @@ class OrchestrationManagerTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(3);
         LocalDate endDate = LocalDate.now().minusDays(1);
-        var request = new OrchestrationRequest(startDate, endDate, true, true, true, false);
+        var request = new OrchestrationRequest(startDate, endDate, true, true, true, false, null);
         long numOfDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         
         // Setup entities within a transaction
@@ -385,7 +394,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_futureDate_throwsException() {
         // Given
         LocalDate futureDate = LocalDate.now().plusDays(1);
-        var request = new OrchestrationRequest(futureDate, null, true, true, true, false);
+        var request = new OrchestrationRequest(futureDate, null, true, true, true, false, null);
 
         // When / Then
         assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(request), "Orchestration cannot be run for future dates.");
@@ -396,7 +405,7 @@ class OrchestrationManagerTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(1);
         LocalDate endDate = LocalDate.now().minusDays(5);
-        var request = new OrchestrationRequest(startDate, endDate, true, true, true, false);
+        var request = new OrchestrationRequest(startDate, endDate, true, true, true, false, null);
 
         // When / Then
         assertThrows(IllegalArgumentException.class, () -> orchestrationManager.runOrchestrationManually(request), "Start date cannot be after end date.");
@@ -407,7 +416,7 @@ class OrchestrationManagerTest {
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -515,7 +524,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_skipsDisabledTopics() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, true, true, true, false);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, true, true, true, false, null);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -549,7 +558,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_summarizeOnly() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, false, true, false, false);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, false, true, false, false, null);
         User user = setupUser();
         user.persist();
         Topic topic = setupTopic(user);
@@ -582,7 +591,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_briefingOnly() { // Removed @Transactional
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, false, false, true, false);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, false, false, true, false, null);
         
         // Setup entities within a transaction
         QuarkusTransaction.requiringNew().run(() -> {
@@ -628,7 +637,7 @@ class OrchestrationManagerTest {
     void testRunOrchestrationManually_granularExecution_pendingOnly() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        var request = new OrchestrationRequest(expectedDate, expectedDate, true, false, false, false);
+        var request = new OrchestrationRequest(expectedDate, expectedDate, true, false, false, false, null);
         
         // Setup entities
         User user = setupUser();
@@ -708,5 +717,150 @@ class OrchestrationManagerTest {
         // Then
         // Verify that the scheduler was NOT called because the topic is disabled
         verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), any(LocalDate.class));
+    }
+
+    @Test
+    void testRunOrchestrationManually_previewOnly_Comprehensive() {
+        // Given
+        LocalDate startDate = LocalDate.now().minusDays(1);
+        LocalDate endDate = LocalDate.now();
+        
+        User user = setupUser();
+        QuarkusTransaction.requiringNew().run(() -> {
+            user.persist();
+            Topic topicA = setupTopic(user);
+            topicA.name = "Topic A";
+            topicA.persist();
+            
+            Topic topicB = setupTopic(user);
+            topicB.name = "Topic B";
+            topicB.persist();
+        });
+
+        Topic persistedTopicA = Topic.find("name", "Topic A").firstResult();
+        Topic persistedTopicB = Topic.find("name", "Topic B").firstResult();
+
+        // Prepare content items with different statuses
+        ContentItem pendingItem = new ContentItem();
+        pendingItem.processingStatus = ProcessingStatus.PENDING;
+        
+        ContentItem skippedItem = new ContentItem();
+        skippedItem.processingStatus = ProcessingStatus.SKIPPED_TOO_SHORT;
+
+        ContentItem completedItem = new ContentItem();
+        completedItem.processingStatus = ProcessingStatus.COMPLETED;
+
+        // Mock TopicProcessor returns
+        // Topic A: Day 1 (1 pending, 1 skipped), Day 2 (1 completed)
+        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(startDate)))
+                .thenReturn(Uni.createFrom().item(List.of(pendingItem, skippedItem)));
+        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(endDate)))
+                .thenReturn(Uni.createFrom().item(List.of(completedItem)));
+        
+        // Topic B: Day 1 (1 pending), Day 2 (1 pending)
+        // The original `pendingItem` mock is removed here, as we'll use persisted items.
+
+        // --- Scenario 1: Topic A only, Date Range (2 days) ---
+        final Long topicAId = persistedTopicA.id;
+        QuarkusTransaction.requiringNew().run(() -> {
+            Topic topic = Topic.findById(topicAId);
+            ContentSource sourceA = setupContentSource();
+            sourceA.sourceIdentifier = "source_A";
+            sourceA.persist();
+            topic.contentSources.add(sourceA);
+            
+            // Persist the "new" pending item so it's found in DB count
+            ContentItem itemA1 = new ContentItem();
+            itemA1.processingStatus = ProcessingStatus.PENDING;
+            itemA1.contentSource = sourceA;
+            itemA1.title = "Item A1";
+            itemA1.sourceUrl = "http://example.com/a1";
+            itemA1.rawContent = "raw";
+            itemA1.publishedAt = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            itemA1.persist();
+        });
+
+        ContentItem itemA1 = ContentItem.find("title", "Item A1").firstResult();
+        ContentItem itemA2_short = new ContentItem(); itemA2_short.processingStatus = ProcessingStatus.SKIPPED_TOO_SHORT;
+        ContentItem itemA3_completed = new ContentItem(); itemA3_completed.processingStatus = ProcessingStatus.COMPLETED;
+
+        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(startDate)))
+                .thenReturn(Uni.createFrom().item(List.of(itemA1, itemA2_short)));
+        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(endDate)))
+                .thenReturn(Uni.createFrom().item(List.of(itemA3_completed)));
+
+        var requestA = new OrchestrationRequest(startDate, endDate, false, false, false, true, persistedTopicA.id);
+        orchestrationManager.runOrchestrationManually(requestA).await().indefinitely();
+
+        // Should find 1 item total (matches the persisted PENDING item)
+        // newPendingCount=1, existingPendingCount=1 -> trulyExisting=0
+        verify(eventBroadcaster, times(1)).broadcast(argThat(event -> 
+            "ORCHESTRATION_PREVIEW_COMPLETED".equals(event.type()) && 
+            event.data().toString().contains("Found 1 items (1 new, 0 existing pending)")
+        ));
+        
+        Mockito.reset(eventBroadcaster);
+
+        // --- Scenario 2: Topic B only, Single Date (startDate) ---
+        final Long topicBId = persistedTopicB.id;
+        QuarkusTransaction.requiringNew().run(() -> {
+            Topic topic = Topic.findById(topicBId);
+            ContentSource sourceB = setupContentSource();
+            sourceB.sourceIdentifier = "source_B";
+            sourceB.persist();
+            topic.contentSources.add(sourceB);
+
+            ContentItem itemB1 = new ContentItem();
+            itemB1.processingStatus = ProcessingStatus.PENDING;
+            itemB1.contentSource = sourceB;
+            itemB1.title = "Item B1";
+            itemB1.sourceUrl = "http://example.com/b1";
+            itemB1.rawContent = "raw";
+            itemB1.publishedAt = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            itemB1.persist();
+        });
+
+        ContentItem itemB1 = ContentItem.find("title", "Item B1").firstResult();
+        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicB), any(LocalDate.class)))
+                .thenReturn(Uni.createFrom().item(List.of(itemB1)));
+
+        var requestB = new OrchestrationRequest(startDate, startDate, false, false, false, true, persistedTopicB.id);
+        orchestrationManager.runOrchestrationManually(requestB).await().indefinitely();
+
+        verify(eventBroadcaster, times(1)).broadcast(argThat(event -> 
+            "ORCHESTRATION_PREVIEW_COMPLETED".equals(event.type()) && 
+            event.data().toString().contains("Found 1 items (1 new, 0 existing pending)")
+        ));
+
+        Mockito.reset(eventBroadcaster);
+
+        // --- Scenario 3: All Topics, Single Date (startDate) ---
+        QuarkusTransaction.requiringNew().run(() -> {
+            Topic topicA = Topic.find("name", "Topic A").firstResult();
+            ContentSource sourceA = topicA.contentSources.iterator().next();
+            
+            ContentItem existingItem = new ContentItem(); 
+            existingItem.sourceUrl = "http://example.com/existing_p";
+            existingItem.rawContent = "raw";
+            existingItem.title = "Existing Pending";
+            existingItem.publishedAt = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            existingItem.contentSource = sourceA;
+            existingItem.processingStatus = ProcessingStatus.PENDING;
+            existingItem.persist();
+        });
+
+        var requestAll = new OrchestrationRequest(startDate, startDate, false, false, false, true, null);
+        orchestrationManager.runOrchestrationManually(requestAll).await().indefinitely();
+
+        // Should find 3 items: Topic A (1 new, 1 existing), Topic B (1 new)
+        verify(eventBroadcaster, times(1)).broadcast(argThat(event -> 
+            "ORCHESTRATION_PREVIEW_COMPLETED".equals(event.type()) && 
+            event.data().toString().contains("Found 3 items (2 new, 1 existing pending)")
+        ));
+
+        // 3. Verify NO full orchestration tasks were run in any scenario
+        verify(orchestrationLockService, never()).acquireLock(any());
+        verify(topicProcessor, never()).processTopicUni(any(), any(), anyBoolean());
+        verify(videoSummaryService, never()).createBriefingFromSummaries(any(), any(), any(), any(), any());
     }
 }

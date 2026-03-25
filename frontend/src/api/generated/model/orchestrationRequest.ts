@@ -14,4 +14,5 @@ export interface OrchestrationRequest {
   summarize?: boolean;
   createBriefing?: boolean;
   previewOnly?: boolean;
+  topicId?: number;
 }

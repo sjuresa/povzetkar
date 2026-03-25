@@ -42,7 +42,7 @@ class AdminResourceTest {
 
     @Test
     void testRunOrchestrationAjaxCall() {
-        var request = new OrchestrationRequest(null, null, false, false, false, false); // Added false for previewOnly
+        var request = new OrchestrationRequest(null, null, false, false, false, false, null); // Added null for topicId
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(request)
@@ -55,7 +55,7 @@ class AdminResourceTest {
     @Test
     void testRunOrchestrationAjaxCallWithDates() {
         var request = new OrchestrationRequest(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 2), true, true, true,
-                false); // Added false for previewOnly
+                false, null); // Added null for topicId
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(request)

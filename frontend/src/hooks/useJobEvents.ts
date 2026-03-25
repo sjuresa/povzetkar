@@ -78,6 +78,32 @@ export function useJobEvents() {
       }
     });
 
+    es.addEventListener('ORCHESTRATION_COMPLETED', (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const message = payload.data || 'Orchestration finished';
+        toast.success('Orchestration Complete', {
+          description: message,
+          duration: 5000,
+        });
+      } catch (err) {
+        logger.error('[SSE] Failed to parse ORCHESTRATION_COMPLETED event', { error: err as Error });
+      }
+    });
+
+    es.addEventListener('ORCHESTRATION_PREVIEW_COMPLETED', (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const message = payload.data || 'Preview finished';
+        toast.info('Orchestration Preview', {
+          description: message,
+          duration: 7000,
+        });
+      } catch (err) {
+        logger.error('[SSE] Failed to parse ORCHESTRATION_PREVIEW_COMPLETED event', { error: err as Error });
+      }
+    });
+
     es.addEventListener('PULSE', () => {
       setLastEvent('PULSE');
     });
