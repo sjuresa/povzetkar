@@ -102,7 +102,7 @@ public class ContentSourceResource extends BaseApiResource {
                         .map(Long::valueOf)
                         .toList();
             } catch (NumberFormatException e) {
-                logger.warn("Invalid excludeIds format: {}", excludeIdsCsv);
+                throw new BadRequestException("Invalid format for excludeIds. All IDs must be numeric.", e);
             }
         }
 
@@ -160,7 +160,7 @@ public class ContentSourceResource extends BaseApiResource {
         SourceTypeEnum sourceType;
         try {
             sourceType = SourceTypeEnum.valueOf(createDTO.platform());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw new BadRequestException("Invalid platform: " + createDTO.platform());
         }
 
@@ -169,8 +169,10 @@ public class ContentSourceResource extends BaseApiResource {
                 createDTO.sourceIdentifier(), sourceType.getId()).firstResultOptional();
         
         if (existing.isPresent()) {
-            logger.info("ContentSource already exists for identifier: {}, platform: {}. Returning existing.", createDTO.sourceIdentifier(), createDTO.platform());
-            return Response.ok(contentSourceMapper.toDTO(existing.get()))
+            ContentSource cs = existing.get();
+            logger.info("ContentSource already exists for identifier: {}, platform: {}. Returning existing.", cs.sourceIdentifier, createDTO.platform());
+            return Response.ok(contentSourceMapper.toDTO(cs))
+                    .location(URI.create("/api/v1/sources/" + cs.id))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }

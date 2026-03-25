@@ -100,7 +100,7 @@ public class TopicApiResource extends BaseApiResource {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("t.id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"), "t");
-        PanacheQuery<Topic> query = Topic.find("from Topic t left join fetch t.contentSources where t.user = ?1", panacheSort, user);
+        PanacheQuery<Topic> query = Topic.find("select distinct t from Topic t left join fetch t.contentSources where t.user = ?1", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .list()

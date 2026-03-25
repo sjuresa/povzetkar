@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { SourceSearchModal } from '../../components/topics/SourceSearchModal';
-import { useEffect } from 'react';
 
 const topicSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -59,17 +58,27 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
 
   const [hasInitializedDefault, setHasInitializedDefault] = useState(false);
 
+  interface DefaultTemplateResponse {
+    template: string;
+  }
+
+  function isDefaultTemplateResponse(data: unknown): data is DefaultTemplateResponse {
+    return typeof data === 'object' && data !== null && 'template' in data && typeof (data as any).template === 'string';
+  }
+
   useEffect(() => {
     if (defaultTemplateResponse?.status === 200 && !hasInitializedDefault) {
-      const template = (defaultTemplateResponse.data as any).template;
-      // Only auto-fill if the field is currently empty and we don't have initial data for it
-      const currentVal = watch('promptTemplate');
-      if (template && !currentVal && !initialData?.promptTemplate) {
-        setValue('promptTemplate', template);
+      const data = defaultTemplateResponse.data;
+      if (isDefaultTemplateResponse(data)) {
+        const template = data.template;
+        const currentVal = watch('promptTemplate');
+        if (template && !currentVal && !initialData?.promptTemplate) {
+          setValue('promptTemplate', template);
+        }
       }
       setHasInitializedDefault(true);
     }
-  }, [defaultTemplateResponse, initialData, setValue, hasInitializedDefault]);
+  }, [defaultTemplateResponse, initialData, setValue, hasInitializedDefault, watch]);
 
   const sourceIds = watch('sourceIds');
   const isSubmitting = isCreating;
