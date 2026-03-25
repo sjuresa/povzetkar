@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "cdi")
+@Mapper(componentModel = "jakarta")
 public abstract class BriefingMapper {
 
     @Inject

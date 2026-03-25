@@ -11,6 +11,5 @@ export interface ContentSourceCreate {
   platform: string;
   /** @pattern \S */
   sourceIdentifier: string;
-  /** @pattern \S */
-  name: string;
+  name?: string;
 }

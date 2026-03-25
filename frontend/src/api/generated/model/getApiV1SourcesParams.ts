@@ -7,6 +7,7 @@
  */
 
 export type GetApiV1SourcesParams = {
+excludeIds?: string;
 page?: number;
 search?: string;
 size?: number;

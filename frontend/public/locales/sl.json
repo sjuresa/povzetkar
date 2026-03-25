@@ -126,10 +126,36 @@
       "no_sources": "Ni na voljo virov vsebine.",
       "update": "Posodobi temo",
       "create": "Ustvari temo",
+      "advanced_settings": "Napredne nastavitve",
+      "add_source_button": "Dodaj vir",
+      "prompt_supports_variables": "Podpira spremenljivke",
       "save_failed": "Napaka pri shranjevanju teme: {{message}}",
       "save_success_create": "Tema je bila uspešno ustvarjena",
       "save_success_update": "Tema je bila uspešno posodobljena",
-      "update_success": "Tema je bila uspešno posodobljena"
+      "update_success": "Tema je bila uspešno posodobljena",
+      "quick_add": {
+        "title": "Hitro dodajanje vira",
+        "platform_label": "Platforma",
+        "identifier_label": "Identifikator",
+        "identifier_placeholder_youtube": "UC...",
+        "identifier_placeholder_blog": "https://...",
+        "youtube_guidance_title": "Navodila za YouTube Channel ID:",
+        "youtube_guidance_id": "Identifikator mora biti Channel ID (običajno se začne z UC).",
+        "youtube_guidance_find": "Najdete ga na strani kanala \"Vizitka\" (About) ali s pomočjo \"YouTube ID Finder\".",
+        "submit_button": "Dodaj vir",
+        "cancel_button": "Prekliči",
+        "error_identifier_required": "Identifikator je obvezen"
+      },
+      "search_modal": {
+        "title": "Dodaj vir vsebine",
+        "subtitle": "Poiščite ali registrirajte nov vir",
+        "search_placeholder": "Išči po imenu, platformi ali identifikatorju...",
+        "searching": "Iskanje...",
+        "no_results": "Ni najdenih virov",
+        "no_results_tip": "Poskusite z drugim iskalnim nizom ali ga dodajte zdaj",
+        "quick_add_trigger": "Ni najdeno? Registrirajte nov vir",
+        "page_info": "Stran {{current}} od {{total}}"
+      }
     }
   }
 }

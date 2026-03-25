@@ -70,13 +70,33 @@ class VideoSummaryServiceTest {
         when(mockModels.generateContent(anyString(), contentCaptor.capture(), eq(null)))
                 .thenReturn(mockResponse);
 
-        String result = videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName);
+        String result = videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName, null);
 
         assertEquals(expectedBriefing, result);
         String capturedPrompt = contentCaptor.getValue().toString();
         assertTrue(capturedPrompt.contains(rawSummaries));
         assertTrue(capturedPrompt.contains(date));
         verify(mockApiKeyUsageService).incrementUsage("test-key");
+    }
+
+    @Test
+    @DisplayName("createBriefingFromSummaries should use custom prompt template when provided")
+    void createBriefingFromSummaries_customTemplate() {
+        String rawSummaries = "Summary 1";
+        String date = "2025-07-17";
+        String topicName = "AI";
+        String customTemplate = "CUSTOM PROMPT: %s on %s for %s";
+        ArgumentCaptor<Content> contentCaptor = ArgumentCaptor.forClass(Content.class);
+
+        when(mockResponse.text()).thenReturn("Custom Response");
+        when(mockModels.generateContent(anyString(), contentCaptor.capture(), eq(null)))
+                .thenReturn(mockResponse);
+
+        videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName, customTemplate);
+
+        // Map the Content parts to text
+        String capturedPrompt = contentCaptor.getValue().parts().get().get(0).text().get();
+        assertTrue(capturedPrompt.contains("CUSTOM PROMPT: AI on 2025-07-17 for Summary 1"));
     }
 
     @ParameterizedTest

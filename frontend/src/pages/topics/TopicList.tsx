@@ -148,7 +148,7 @@ export const TopicList: React.FC<TopicListProps> = ({
               </div>
               <div className="flex items-center text-[var(--color-text-secondary)] font-bold text-sm">
                 <CheckCircle2 className="w-4 h-4 mr-3 text-green-500" />
-                {t('topics.list.sources_count', { count: topic.contentSourceIds?.length || 0 })}
+                {t('topics.list.sources_count', { count: topic.contentSources?.length || 0 })}
               </div>
             </div>
           </div>

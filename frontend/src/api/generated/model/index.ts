@@ -46,6 +46,7 @@ export * from './getApiV1TopicsParams';
 export * from './getApiV1UsersParams';
 export * from './initializer';
 export * from './instant';
+export * from './jobExecutionAudit';
 export * from './jobStatus';
 export * from './jobTriggerRequest';
 export * from './jobType';

@@ -12,5 +12,5 @@ public record TopicDTO(
         boolean enabled,
         Instant lastRunDate,
         String promptTemplate,
-        Set<Long> contentSourceIds) {
+        Set<ContentSourceDTO> contentSources) {
 }

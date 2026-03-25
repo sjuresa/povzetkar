@@ -126,10 +126,36 @@
       "no_sources": "No content sources available.",
       "update": "Update Topic",
       "create": "Create Topic",
+      "advanced_settings": "Advanced Settings",
+      "add_source_button": "Add Source",
+      "prompt_supports_variables": "Supports Variables",
       "save_failed": "Failed to save topic: {{message}}",
       "save_success_create": "Topic created successfully",
       "save_success_update": "Topic updated successfully",
-      "update_success": "Topic updated successfully"
+      "update_success": "Topic updated successfully",
+      "quick_add": {
+        "title": "Quick Add Source",
+        "platform_label": "Platform",
+        "identifier_label": "Identifier",
+        "identifier_placeholder_youtube": "UC...",
+        "identifier_placeholder_blog": "https://...",
+        "youtube_guidance_title": "YouTube Channel ID Guidance:",
+        "youtube_guidance_id": "Identifier must be the Channel ID (usually starts with UC).",
+        "youtube_guidance_find": "Find it in the channel's \"About\" page or using a \"YouTube ID Finder\".",
+        "submit_button": "Add Source",
+        "cancel_button": "Cancel",
+        "error_identifier_required": "Identifier is required"
+      },
+      "search_modal": {
+        "title": "Add content source",
+        "subtitle": "Find or register a new source",
+        "search_placeholder": "Search by name, platform or identifier...",
+        "searching": "Searching...",
+        "no_results": "No sources found",
+        "no_results_tip": "Try a different search term or add it now",
+        "quick_add_trigger": "Not found? Register a New Source",
+        "page_info": "Page {{current}} of {{total}}"
+      }
     }
   }
 }

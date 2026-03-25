@@ -9,11 +9,11 @@ import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -43,9 +43,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Path("/api/v1/sources")
@@ -58,6 +63,8 @@ public class ContentSourceResource extends BaseApiResource {
 
     public static final String CONTENT_SOURCE_WITH_ID = "ContentSource with id ";
     public static final String NOT_FOUND = " not found";
+    private static final Logger logger = LoggerFactory.getLogger(ContentSourceResource.class);
+    
     private final ContentSourceDetailService contentSourceDetailService;
     private final ContentSourceMapper contentSourceMapper;
 
@@ -81,18 +88,39 @@ public class ContentSourceResource extends BaseApiResource {
     public ContentSourcePaginatedResponse getAllContentSources(
             @QueryParam("search") @DefaultValue("") String search,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("20") int pageSize) {
+            @QueryParam("size") @DefaultValue("20") int pageSize,
+            @QueryParam("excludeIds") String excludeIdsCsv) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         
-        PanacheQuery<ContentSource> query;
-        if (search == null || search.isBlank()) {
-            query = ContentSource.findAll(Sort.by("id"));
-        } else {
-            String pattern = "%" + search.toLowerCase() + "%";
-            query = ContentSource.find("lower(sourceIdentifier) like ?1 or lower(name) like ?1 or lower(description) like ?1", 
-                    Sort.by("id"), pattern);
+        List<Long> excludeIds = null;
+        if (excludeIdsCsv != null && !excludeIdsCsv.isBlank()) {
+            try {
+                excludeIds = Arrays.stream(excludeIdsCsv.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(Long::valueOf)
+                        .toList();
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid excludeIds format: {}", excludeIdsCsv);
+            }
         }
+
+        PanacheQuery<ContentSource> query;
+        StringBuilder hql = new StringBuilder("from ContentSource s where 1=1");
+        Map<String, Object> params = new HashMap<>();
+
+        if (search != null && !search.isBlank()) {
+            hql.append(" and (lower(s.sourceIdentifier) like :search or lower(s.name) like :search or lower(s.description) like :search)");
+            params.put("search", "%" + search.toLowerCase() + "%");
+        }
+
+        if (excludeIds != null && !excludeIds.isEmpty()) {
+            hql.append(" and s.id not in :excludeIds");
+            params.put("excludeIds", excludeIds);
+        }
+
+        query = ContentSource.find(hql.toString(), Sort.by("id"), params);
         
         long count = query.count();
         List<ContentSourceDTO> dtoList = query.page(pageIndex, clampedPageSize)
@@ -129,6 +157,24 @@ public class ContentSourceResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceDTO.class))
     )
     public Response createContentSource(@Valid @NotNull ContentSourceCreateDTO createDTO) {
+        SourceTypeEnum sourceType;
+        try {
+            sourceType = SourceTypeEnum.valueOf(createDTO.platform());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid platform: " + createDTO.platform());
+        }
+
+        // If it already exists, return the existing one as per user feedback
+        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
+                createDTO.sourceIdentifier(), sourceType.getId()).firstResultOptional();
+        
+        if (existing.isPresent()) {
+            logger.info("ContentSource already exists for identifier: {}, platform: {}. Returning existing.", createDTO.sourceIdentifier(), createDTO.platform());
+            return Response.ok(contentSourceMapper.toDTO(existing.get()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
         ContentSource contentSource;
         try {
             contentSource = contentSourceMapper.toEntity(createDTO);
@@ -136,9 +182,14 @@ public class ContentSourceResource extends BaseApiResource {
             throw new BadRequestException(e.getMessage());
         }
 
-        checkForDuplicateContentSource(contentSource.sourceIdentifier, contentSource.sourceTypeId, null);
+        if (contentSource.name == null || contentSource.name.isBlank()) {
+            contentSource.name = contentSource.sourceIdentifier;
+        }
 
         contentSource.persist();
+        logger.info("Created new ContentSource: {} [{}] (id: {})", contentSource.name, contentSource.sourceIdentifier, contentSource.id);
+        
+        contentSourceDetailService.enrichContentSource(contentSource);
         return Response.created(URI.create("/api/v1/sources/" + contentSource.id))
                 .entity(contentSourceMapper.toDTO(contentSource))
                 .type(MediaType.APPLICATION_JSON)
