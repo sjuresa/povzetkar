@@ -33,7 +33,7 @@ public class GlobalEnvelopeFilter implements ContainerResponseFilter {
             return;
         }
 
-        // Handle PaginatedResponse wrapping
+        // Handle PaginatedResponse: items array in data, pagination info in meta
         if (entity instanceof PaginatedResponse<?> p) {
             responseContext.setEntity(ApiEnvelopeDTO.paginated(p.items, p.totalCount, p.pageIndex, p.pageSize));
         } else {

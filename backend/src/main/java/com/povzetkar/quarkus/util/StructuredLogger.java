@@ -29,6 +29,12 @@ public class StructuredLogger {
         }
     }
 
+    public void warn(Throwable t, Object... keyValuePairs) {
+        if (logger.isWarnEnabled()) {
+            logger.warn(buildLogMessage(keyValuePairs), t);
+        }
+    }
+
     public void error(Throwable t, Object... keyValuePairs) {
         if (logger.isErrorEnabled()) {
             logger.error(buildLogMessage(keyValuePairs), t);

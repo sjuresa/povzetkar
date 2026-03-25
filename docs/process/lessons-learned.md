@@ -26,6 +26,8 @@ When building paginated APIs that return entities with collections (e.g., `User`
   // Step 2: Fetch the full graph for exactly those IDs
   List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
   ```
+*   **Job Stacking UX:** Reverting to stacked toast notifications for background jobs provided a much more informative and less aggressive update pattern than replacing a single toast.
+*   **Source Transparency (POV-148):** The implementation of the Source Library and Source Detail pages significantly improved system observability. Users can now "drill down" from a high-level briefing to the raw source items that informed it, closing the loop on content transparency.
 
 ### 1.2 Graceful Failure, String Truncation & Error Sanitization
 When background jobs or data-sync commands fail, the exception stack trace can be massive and contain sensitive structure details.
@@ -54,6 +56,10 @@ Object[] result = (Object[]) em.createNativeQuery(
         .getSingleResult();
 // Map results using result[0], result[1], etc.
 ```
+
+### 1.6 Independent Transaction for Auditing
+- **The Trap:** Persisting audit logs or job audit trails within the same transaction as the main business logic. If the business transaction rolls back (e.g., due to a constraint violation), the audit record is also lost, leaving no trace of the failure.
+- **The Standard:** Always wrap persistence of audit records (API audits, job execution audits) in **`QuarkusTransaction.requiringNew()`**. This ensures the audit record is committed independently of the success or failure of the main operation, providing a reliable diagnostic trail.
 
 ---
 
@@ -294,6 +300,10 @@ When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch mult
 - **The Trap:** Using `System.out` or `System.err` for logging in tests or utility classes. This bypasses the formal logging configuration, lacks timestamping/metadata, and leads to messy console output that is hard to filter or parse in CI environments. Mixing `org.jboss.logging.Logger` and `slf4j` facades in the same project can lead to confusing configuration and inconsistent MDC behavior.
 - **The Standard:** Always standardize on **SLF4J (`org.slf4j.Logger`)** as the primary logging facade for maximum compatibility and consistency with `RUNBOOK.md`. For structured logging with key-value pairs, use the custom `StructuredLogger` helper.
 
+### 10.2 StructuredLogger Argument Count Safety
+- **The Trap:** Passing an odd number of arguments for key-value pairs in `StructuredLogger` (e.g., including an exception but neglecting to add the corresponding key/value pairs) triggers an `IllegalArgumentException` during log message construction. This can crash the application or a filter during critical error paths.
+- **The Standard:** Always ensure that `StructuredLogger` calls have an **even number** of arguments for key-value pairs (excluding the format string or exception). When logging an exception with additional context, use the explicit `(Throwable t, Object... keyValuePairs)` overload to ensure the stack trace is properly captured without breaking the key-value alignment.
+
 ---
 
 ## 11. Monorepo & Multi-module Maven
@@ -463,16 +473,82 @@ Orval generates `options.headers` as `HeadersInit` (which can be `Headers`, `str
     1. Enable the built-in fallback: `quarkus.http.serve-index-html-for-not-found=true`.
     2. Implement a specialized `SpaRoutingHandler` using a high-priority catch-all route (`@Route(path = "/*", order = 10000)`).
     3. The handler should check if the request is NOT for an API (`/api/*`), static asset (contains a dot), or legacy UI (`/ui/*`), and if so, perform a `rc.reroute("/index.html")`. This keeps the browser URL intact while allowing the SPA to load and handle the routing logic.
-467: 
-468: ---
-469: 
-470: ## 17. Typed Pagination & OpenAPI (Quarkus / Orval)
-471: 
-472: ### 17.1 Eliminating `unknown[]` in Generated Collections
-473: When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus-smallrye-openapi` often fails to resolve the specific type `T` in the generated `openapi.json`, mapping `items` to a generic `object` or `unknown[]` in the Orval-generated TypeScript models.
-474: - **The Trap:** Relying on the generic `PaginatedResponse.class` in the `@Schema(implementation = ...)` attribute of a JAX-RS resource. This results in the loss of type-safety for the collection items in the frontend, requiring unsafe type assertions.
-475: - **The Standard:** 
-476:     1. Convert the `PaginatedResponse<T>` from a Java `record` to a standard class to allow for easier inheritance and explicit schema definition.
-477:     2. In each resource class (e.g., `AdminApiResource`), create a `public static` inner class that explicitly extends the generic response: `public static class AuditLogPaginatedResponse extends PaginatedResponse<AuditLogEntryDTO> { ... }`.
-478:     3. Use this specific subclass in the `@APIResponse` annotation: `@Content(schema = @Schema(implementation = AuditLogPaginatedResponse.class))`.
-479:     4. Orval will now generate a dedicated `AuditLogPaginatedResponse` interface with `items: AuditLogEntryDTO[]`, providing 100% end-to-end type safety without manual casting.
+
+---
+
+## 17. Typed Pagination & OpenAPI (Quarkus / Orval)
+
+### 17.1 Eliminating `unknown[]` in Generated Collections
+When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus-smallrye-openapi` often fails to resolve the specific type `T` in the generated `openapi.json`, mapping `items` to a generic `object` or `unknown[]` in the Orval-generated TypeScript models.
+- **The Trap:** Relying on the generic `PaginatedResponse.class` in the `@Schema(implementation = ...)` attribute of a JAX-RS resource. This results in the loss of type-safety for the collection items in the frontend, requiring unsafe type assertions.
+- **The Standard:** 
+    1. Convert the `PaginatedResponse<T>` from a Java `record` to a standard class to allow for easier inheritance and explicit schema definition.
+    2. In each resource class (e.g., `AdminApiResource`), create a `public static` inner class that explicitly extends the generic response: `public static class AuditLogPaginatedResponse extends PaginatedResponse<AuditLogEntryDTO> { ... }`.
+    3. Use this specific subclass in the `@APIResponse` annotation: `@Content(schema = @Schema(implementation = AuditLogPaginatedResponse.class))`.
+    4. Orval will now generate a dedicated `AuditLogPaginatedResponse` interface with `items: AuditLogEntryDTO[]`, providing 100% end-to-end type safety without manual casting.
+
+### 18. Frontend UX Resilience Strategy
+Building "Professional Grade" applications requires more than just visual polish; it requires handling failures gracefully to maintain user trust.
+- **The Strategy:** Use a three-tier resilience strategy:
+    1. **Network Resilience:** Integrate `axios-retry` at the global client level to handle transient network issues and gateway errors (502/503/504) with exponential backoff.
+    2. **UI Safety Nets:** Wrap the root `RouterProvider` in a React `ErrorBoundary` and integrate with `TanStack Router`'s `defaultErrorComponent` to catch unhandled rendering exceptions and route loader failures.
+    3. **Bridge Async state:** Enable `throwOnError: true` in `TanStack Query` to propagate background fetch failures into the UI's error boundary for centralized failure handling.
+- **Verification Tip:** When verifying this strategy with E2E tests (Playwright), ensure `expect` timeouts are increased (e.g. 15s+) to allow for multiple network retries before the UI fail-state is rendered.
+
+---
+
+## 19. Theme & i18n Foundations
+
+### 19.1 CSS Variable Semantic Theming (Tailwind 4)
+When implementing multi-theme support in Tailwind 4, avoid hardcoding `@theme` blocks with fixed colors. 
+- **The Trap:** Defining specific colors like `--color-slate-900` directly in the `@theme` block makes it difficult to swap them for a light theme without re-aliasing every utility class.
+- **The Standard:** 
+    1. Define **Semantic Variables** (e.g., `--color-background-base`, `--color-text-primary`) in a global `:root` block.
+    2. Map these variables in the Tailwind `@theme` block for easy discovery.
+    3. Use a `.dark` class (applied to `<html>` or `<body>`) to override these semantic variables with dark-specific values. This allows the rest of the application to use standard classes like `bg-background-base` which automatically adapt to the active theme.
+
+### 19.2 window.matchMedia Mocking in Vitest/JSDOM
+Components using `window.matchMedia` (e.g., for system theme detection) will crash `Vitest` tests because `JSDOM` does not implement this method by default.
+- **The Trap:** Adding `matchMedia` mocking directly inside every test file leads to duplication and brittle setups.
+- **The Standard:** Centralize the mock in `src/test/setup.ts`. Use `Object.defineProperty` on the `window` object and provide a full mock implementation of the `MediaQueryList` interface (including `addEventListener` and `removeEventListener`) to satisfy all modern hooks and components.
+
+### 19.3 i18next Hybrid Loading Strategy
+For optimal performance and SEO in a Dual-Language application:
+- **The Standard:** 
+    1. Bundle the **default language** (e.g. English) as a static JSON or object to prevent a "flash of untranslated content" on initial load.
+    2. Use `i18next-http-backend` to **lazy-load additional languages** (e.g. Slovenian) only when requested.
+    3. Integrated with `react-i18next` and configure `fallbackLng: 'en'` and `debug: import.meta.env.DEV` to ensure a smooth developer experience and reliable fallbacks.
+
+---
+
+### 3.8 Transactional Consistency in Background Jobs
+- **The Problem:** Background jobs triggered from executor threads lack a default CDI request or transaction context. This leads to `ContextNotActiveException` when calling Panache methods.
+- **The Standard:** Always wrap background database operations in an explicit programmatic transaction: `QuarkusTransaction.requiringNew().call(() -> { ... })`.
+
+### 3.9 Eager Loading for Background Processing
+- **The Problem:** When processing entities in a *new* transaction (common in background jobs), lazy-loaded collections (like `@ManyToMany`) will throw `LazyInitializationException` if they weren't fetched in the same transaction session.
+- **The Standard:** Implement dedicated finders that use `JOIN FETCH` (e.g., `Topic.findByIdWithSources()`) to eagerly load all required associations before passing the entity to the background worker. Avoid relying on open-session-in-view patterns for background tasks.
+
+---
+
+## 20. Advanced Routing (TanStack Router)
+
+### 20.1 Structural ID Propagation in Types
+When using nested layout routes with an `id` (e.g., `id: 'authenticated'`) but no `path`, TanStack Router's internal type generation may sometimes prepend the ID to the route's path identifier in the generated types (e.g., requiring `from: '/authenticated/dashboard'` instead of `/dashboard`).
+- **The Trap:** Relying on the visual browser URL as the source of truth for the `from` property in `useParams` can lead to persistent `TS2345` errors if the internal type tree is structured differently.
+- **The Standard:** If `tsc` reports a mismatch for a standard absolute path, use `useParams({ strict: false })` as a pragmatic bypass for layout-heavy route trees where the internal ID mapping is complex. Always perform an explicit `typeof id === 'string'` check after a non-strict `useParams` call to maintain runtime safety.
+
+---
+
+## 21. Frontend Typography & Modal Design
+
+### 21.1 Symmetrical Padding & .prose Layout
+When building professional-grade document readers (like the **Summary Modal**) using `@tailwindcss/typography` (`.prose`), the default browser/plugin margins can conflict with container padding.
+- **The Trap:** A container with `p-8` will look unbalanced if the first element inside it (like an `H2`) has a default `margin-top: 1.5em`. This creates an asymmetric "gap" at the top compared to the sides.
+- **The Standard:** Always apply a CSS override to ensure the first child of a `.prose` container has no top margin. This ensures the content aligns perfectly with the container's top padding, maintaining symmetrical document aesthetics.
+  ```css
+  .prose > :first-child {
+    margin-top: 0 !important;
+  }
+  ```
+- **The Standard:** For modals intended as document readers, favor a fixed max-width (e.g., `max-w-4xl`) and symmetrical internal padding (`p-6 md:p-8`) on the article tag itself to prevent the text from becoming too wide to read easily while maintaining consistent spacing.

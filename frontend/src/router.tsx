@@ -9,7 +9,12 @@ import { LandingPage } from './routes/LandingPage';
 import { DashboardPage } from './routes/DashboardPage';
 import { BriefingDetailPage } from './routes/BriefingDetailPage';
 import { AuditLogPage } from './routes/AuditLogPage';
+import { ErrorPage } from './routes/ErrorPage';
+import { ProfilePage } from './routes/ProfilePage';
 import { AppShell } from './components/layout/AppShell';
+import { TopicsPage } from './pages/topics/TopicsPage';
+import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
+import { SourceDetailPage } from './routes/SourceDetailPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -76,15 +81,17 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
-// Topics Placeholder
+const profileRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/me',
+  component: ProfilePage,
+});
+
+// Topics Route
 const topicsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/topics',
-  component: () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 italic">
-      Topics management coming soon
-    </div>
-  ),
+  component: TopicsPage,
 });
 
 // Briefings Placeholder
@@ -96,6 +103,19 @@ const briefingsRoute = createRoute({
       All briefings list coming soon
     </div>
   ),
+});
+
+// Sources Routes
+const sourcesRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/sources',
+  component: SourcesLibraryPage,
+});
+
+const sourceDetailRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/sources/$sourceId',
+  component: SourceDetailPage,
 });
 
 // 5. Briefing Detail Route
@@ -139,9 +159,12 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   protectedLayoutRoute.addChildren([
     dashboardRoute,
+    profileRoute,
     topicsRoute,
     briefingsRoute,
     briefingDetailRoute,
+    sourcesRoute,
+    sourceDetailRoute,
     adminLayoutRoute.addChildren([
       auditLogRoute,
       adminJobsRoute
@@ -152,6 +175,7 @@ const routeTree = rootRoute.addChildren([
 // 6. Create Router Instance
 export const router = createRouter({
   routeTree,
+  defaultErrorComponent: ErrorPage,
   context: {
     auth: undefined!, // Injected at runtime via RouterProvider
   },

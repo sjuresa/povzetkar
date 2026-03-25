@@ -1,48 +1,118 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --color-primary: var(--color-blue-600);
   --color-primary-hover: var(--color-blue-500);
-  
-  /* Customizing for Midnight Slate aesthetic */
-  --color-background-base: #020617; /* slate-950 */
-  --color-surface-deep: #0f172a;     /* slate-900 */
-  --color-surface-elevated: #1e293b; /* slate-800 */
 }
 
 @layer base {
+  :root {
+    --color-background-base: #f8fafc; /* slate-50 */
+    --color-background-alt: #f1f5f9;  /* slate-100 */
+    --color-surface-deep: #e2e8f0;     /* slate-200 */
+    --color-surface-hover: #cbd5e1;    /* slate-300 */
+    --color-surface-elevated: #ffffff;
+    --color-text-primary: #0f172a;     /* slate-900 */
+    --color-text-secondary: #475569;   /* slate-600 */
+    --color-border-subtle: #cbd5e1;    /* slate-300 */
+    --color-glow: rgba(59, 130, 246, 0.1);
+    --color-accent: #2563eb;          /* blue-600 */
+    --color-accent-soft: rgba(37, 99, 235, 0.1);
+  }
+
+  .dark {
+    --color-background-base: #020617; /* slate-950 */
+    --color-background-alt: #030712;  /* even deeper */
+    --color-surface-deep: #0f172a;     /* slate-900 */
+    --color-surface-hover: #1e293b;    /* slate-800 */
+    --color-surface-elevated: #1e293b; /* slate-800 */
+    --color-text-primary: #f8fafc;     /* slate-50 */
+    --color-text-secondary: #94a3b8;   /* slate-400 */
+    --color-border-subtle: #1e293b;    /* slate-800 */
+    --color-glow: rgba(59, 130, 246, 0.4);
+    --color-accent: #60a5fa;          /* blue-400 */
+    --color-accent-soft: rgba(59, 130, 246, 0.15);
+  }
+
   html, body, #root {
     height: 100%;
     margin: 0;
     padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   body {
     background-color: var(--color-background-base);
-    color: var(--color-slate-50);
+    color: var(--color-text-primary);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
 @layer utilities {
   .glass {
-    background-color: rgba(15, 23, 42, 0.5);
+    background-color: var(--color-surface-deep);
+    opacity: 0.8;
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--color-border-subtle);
   }
   
   .glass-elevated {
-    background-color: rgba(30, 41, 59, 0.5);
+    background-color: var(--color-surface-elevated);
+    opacity: 0.9;
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(51, 65, 85, 0.5);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .text-glow {
-    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    text-shadow: 0 0 20px var(--color-glow);
+  }
+
+  /* Prose Overrides for Document Reader (Tailwind v4 style) */
+  .prose {
+    --tw-prose-body: var(--color-text-secondary);
+    --tw-prose-headings: var(--color-text-primary);
+    --tw-prose-links: #3b82f6;
+    --tw-prose-bold: var(--color-text-primary);
+    
+    max-width: none;
+  }
+
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    font-weight: 800;
+    margin-top: 2.5rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .prose h1 { font-size: 2.5rem; }
+  .prose h2 { font-size: 2rem; }
+  .prose h3 { font-size: 1.5rem; }
+
+  .prose > :first-child {
+    margin-top: 0;
+  }
+  
+  .prose a {
+    text-decoration: underline;
+    font-weight: 600;
+  }
+
+  .prose p {
+    margin-bottom: 1.5rem;
+  }
+
+  .prose ul, .prose ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose li {
+    margin-bottom: 0.5rem;
   }
 }
 
-/* Custom Scrollbar for a premium feel */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -53,10 +123,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--color-surface-elevated);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--color-border-subtle);
 }

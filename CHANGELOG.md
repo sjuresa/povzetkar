@@ -6,6 +6,65 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [v0.13.0] - 2026-03-24
+
+### Summary
+Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with automated retries, a global Error Boundary for catastrophic failure recovery, and a localized, themeable user environment. Key highlights include the new User Profile page, dual-language support (English/Slovenian), and a robust Light/Dark/System theme system with persistence. This release also solidifies the backend with a persistent **Job Execution Audit** system and a comprehensive **Secrets Management** strategy (fail-fast validation and masking), ensuring a professional and secure platform for content orchestration.
+
+### Added
+- **Infrastructure (POV-149):** Implemented `SecretConfigValidator` — a startup fail-fast validator that verifies all required secrets (API keys, DB password, OIDC credentials) are present before the application starts.
+- **Infrastructure (POV-149):** Configured Quarkus secret-keys masking (`quarkus.config.secret-keys`) to prevent sensitive property values from appearing in diagnostic output.
+- **Infrastructure (POV-149):** Suppressed config value logging at startup via `quarkus.config.log.values=false` to prevent accidental secret leakage.
+- **Infrastructure (POV-149):** Added Section 14 "Secrets Management" to `RUNBOOK.md` with inventory, environment-specific injection methods, and security best practices.
+- **Monitoring (POV-150):** Implemented a persistent **Job Execution Audit** system, enabling granular tracking of status transitions and item-level failures for background jobs.
+- **Monitoring (POV-150):** Added `GET /api/v1/jobs/{id}/audit` endpoint to retrieve historical audit trails for specific jobs.
+- **Infrastructure (POV-145):** Integrated `axios-retry` into the global API client with exponential backoff for network errors and transient 5xx status codes (502, 503, 504).
+- **Frontend (POV-145):** Implemented a global **React Error Boundary** (`ErrorBoundary.tsx`) to catch unhandled rendering exceptions.
+- **Frontend (POV-145):** Fabricated a professional-grade **Error Page** (`ErrorPage.tsx`) with a "Midnight Slate" aesthetic, providing graceful failure recovery and navigation.
+- **Frontend (POV-145):** Created a reusable **Skeleton** component (`Skeleton.tsx`) with premium "pulse" animations and glassmorphic borders for consistent loading states.
+- **Frontend (POV-145):** Developed a comprehensive **E2E Test** (`error-boundary.spec.ts`) verifying that catastrophic API failures correctly trigger the global Error Page.
+- **Frontend (POV-146):** Implemented the **User Profile page** (`/me`) with a premium identity card displaying name, email, auth provider, and assigned permissions.
+- **Infrastructure (POV-146):** Configured **Internationalization (i18n)** with `i18next`, featuring English and Slovenian translations with hybrid lazy-loading support.
+- **Frontend (POV-146):** Developed a persistent **Theme System** (Light, Dark, System) using Zustand and Tailwind 4 CSS variables, featuring a professional "Polished Silver" light mode.
+- **Frontend (POV-146):** Integrated **Header Shell Controls** including a dynamic Theme Toggle and Language Switcher next to the interactive user profile.
+- **Backend (POV-148):** Enhanced `ContentSourceResource` with a case-insensitive **Search API** (`?search=`) for content sources.
+- **Frontend (POV-148):** Implemented the **Sources Library** (`/sources`), a searchable and paginated hub for all ingested content providers.
+- **Frontend (POV-148):** Developed the **Source Detail** page (`/sources/$id`), providing deep visibility into individual source items and their processing history.
+- **Frontend (POV-148):** Extracted a reusable **Pagination** component, standardized across the Audit Log and Source Library.
+- **Backend (POV-148):** Implemented a specialized **Summary API** (`/api/v1/content-items/{id}/summary`) to retrieve individual content piece summaries.
+- **Frontend (POV-148):** Integrated a **Glassmorphic Summary Reader** with `react-markdown` support, a dedicated Executive Summary highlight, and an auditable **Reference Tag** (ITEM-ID).
+
+### Changed
+- **Infrastructure (POV-149):** Updated `backend/.env.example` to include `GOOGLE_OIDC_CLIENT_ID` and `GOOGLE_OIDC_CLIENT_SECRET` placeholders.
+- **Infrastructure (POV-149):** Fixed test-profile property names for YouTube/Google API keys (corrected namespace from `quarkus.youtube.api.key` to `youtube.api.key`).
+- **Database (POV-150):** Added `job_execution_audit` table (V23) with foreign key support to `background_jobs` and `content_items`.
+- **Frontend (POV-145):** Migrated from the custom toast system to **Sonner**, enabling a more flexible and visually polished notification experience.
+- **Frontend (POV-145):** Refactored `DashboardPage` and `AuditLogPage` to utilize the new `Skeleton` system and global error handling, simplifying component logic.
+- **Frontend (POV-145):** Configured TanStack Query to use `throwOnError: true` by default, delegating error UX to the global boundary for a more unified architecture.
+- **Frontend (POV-146):** Refactored global CSS to use semantic **Theme Tokens**, enabling seamless switching between "Midnight Slate" and "Polished Silver" aesthetics.
+- **Frontend (POV-146):** Updated the **AppShell Header** to be fully interactive, linking the user profile to the new identity page.
+- **Frontend (POV-148):** Refactored **AuditLogPage** to utilize the shared `Pagination` component, eliminating redundant UI logic.
+- **Frontend (POV-148):** Regenerated the **API Client** using Orval to support the new searchable backend parameters.
+- **Frontend (POV-148):** Updated the **Source Detail** page with a "View Summary" action for all processed content items and added a formatted **Duration** column (MM:SS) to the content list.
+
+### Fixed
+- **Logging (POV-150):** Resolved `IllegalArgumentException` in `StructuredLogger` by adding a `warn(Throwable, Object...)` overload to handle exceptions with context safely.
+- **Testing (POV-150):** Hardened the integration test suite by implementing robust data setup for `User` and `ContentSource` entities, resolving intermittent foreign key constraint violations.
+- **Backend (Orchestration):** Resolved `ContextNotActiveException` in background jobs by wrapping database operations in `QuarkusTransaction.requiringNew()`.
+- **Backend (Orchestration):** Refactored `BackgroundJobService` to eliminate duplication in topic-related job creation via a unified helper.
+- **Backend (Persistence):** Fixed `LazyInitializationException` by implementing eager loading of content sources via `Topic.findByIdWithSources()`.
+- **Backend (Orchestration):** Restored inadvertently overwritten `findEnabledByUsers` method in `Topic.java` to maintain global processing stability.
+- **Backend (API):** Fixed a timeout in `IdempotencyFilter.java` for requests with empty bodies.
+- **Frontend (API):** Aligned `customInstance` to return the full response object, improving type safety and simplifying data access across the application.
+- **Frontend (UX):** Improved toast notifications to support stacking and descriptive messages containing topic names.
+- **Frontend (Build):** Resolved production build errors by removing unused imports in `TopicList.tsx`.
+- **Frontend (i18n):** Added missing Slovenian translation keys for topic source counts.
+- **Backend (Migration):** Added `topic_id` to `background_jobs` table (V21) for improved auditability.
+
+### Removed
+- **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).
+- **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
+
 ## [v0.12.0] - 2026-03-18
 
 ### Summary
@@ -64,7 +123,6 @@ Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitio
 - **Backend (Auth):** Ensured the session cookie is explicitly cleared and cache-prevention headers are present during logout to prevent "sticky" sessions.
 - **Backend (POV-141):** Corrected root access (`/`) behavior to serve the SPA instead of the legacy admin UI.
 - **Backend (POV-141):** Implemented an SPA catch-all route (`SpaRoutingHandler`) to support client-side navigation (e.g., `/dashboard`) on page refresh in production.
-
 
 ## [v0.11.0] - 2026-03-12
 

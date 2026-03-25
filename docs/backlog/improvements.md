@@ -10,16 +10,16 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### UI/UX
 
-*   **Global Error Handling Page:** Create a global, user-friendly error page for unhandled exceptions (HTTP 500) to provide a better user experience than the default framework error page.
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
-*   **Automatic Optimistic Locking in Orval mutator:** Enhance `customInstance` in `client.ts` to automatically extract a `version` or `meta.version` field from request data and inject the `If-Match` header for mutation methods (PATCH, PUT, DELETE), reducing manual boilerplate in TanStack Query hooks.
-*   **Axios Retry Strategy:** Implement a standard retry mechanism for transient network errors (e.g., using `axios-retry`) to improve frontend resilience during intermittent connectivity.
-*   **Admin Jobs UI Implementation:** (POV-142 Success-Followup) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
-*   **Shared Pagination Component:** Extract the navigation and page-size logic from `AuditLogPage.tsx` (and other future tables) into a reusable `components/ui/Pagination.tsx` component to reduce code duplication and standardize the UX.
+*   **Admin Jobs UI Implementation:** (Moved to v0.14.0 - Data infra in v0.13.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
+*   **Full Component Internationalization:** (POV-146 Extension) Systematically migrate all hardcoded strings in `DashboardPage`, `AuditLogPage`, and `TopicManager` to the i18n system.
+*   **Theme Transition Animations:** (POV-146 Polish) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
+*   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
 
 ### Backend & Architecture
 
+*   **Job Audit Cleanup:** Implement a separate cleanup task for `JobExecutionAudit` records (e.g., 90-day retention policy).
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
 *   **Content Deduplication Engine:** Basic hash-based or semantic deduplication of sources (Deferred from v0.12).
 *   **GenAI Rate Limiting (TPM/RPM):** Advanced token-per-minute and request-per-minute management for GenAI providers (Deferred from v0.12).
@@ -45,3 +45,5 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Centralized Lint Suppression Policy:** Create a shared configuration or a custom ESLint plugin to handle recurring framework "exceptions" (like TanStack redirects) without broad `eslint-disable` comments.
 *   **Docker Build Optimization:** Optimize the root-level Dockerfile by using a more granular `COPY` strategy for dependencies (e.g., `package-lock.json` and `pom.xml` first) to leverage Docker's layer caching more effectively.
 *   **Enhanced Docker Healthchecks:** Implement a robust Docker `HEALTHCHECK` in the final image, possibly using a dedicated `/q/health` endpoint or a simple `curl` check against the SPA landing page.
+*   **Automatic Summary Generation Validation:** Add a backend check to prevent re-triggering "Generate Summaries" if a job for the same topic is already `RUNNING` or `QUEUED` to prevent resource waste.
+*   **Improved Toast Actionability:** Enhance toast notifications with "View Job" or "Refresh Page" buttons for `COMPLETED` or `FAILED` states.

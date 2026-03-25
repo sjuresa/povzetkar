@@ -16,6 +16,11 @@ export default defineConfig({
         mutator: {
           path: './src/api/client.ts',
           name: 'customInstance',
+          alias: {
+            SecondParameter: 'CustomRequestOptions',
+            RequestOptions: 'CustomRequestOptions',
+            RequestInit: 'CustomRequestOptions',
+          },
         },
       },
     },

@@ -8,6 +8,7 @@ import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.Topic;
@@ -78,6 +79,19 @@ public class BackgroundJobService {
     public BackgroundJob triggerTopicBriefingJob(Topic topic, Long userId) {
         BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_BRIEFING);
         job.userId = userId;
+        job.topicId = topic.id;
+        job.persist();
+
+        jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, job.type, userId, null, topic.id));
+
+        return job;
+    }
+
+    @Transactional
+    public BackgroundJob triggerTopicSummariesJob(Topic topic, Long userId) {
+        BackgroundJob job = new BackgroundJob(JobType.GENERATE_TOPIC_SUMMARIES);
+        job.userId = userId;
+        job.topicId = topic.id;
         job.persist();
 
         jobTriggerEvent.fire(new JobTriggerInternalEvent(job.id, job.type, userId, null, topic.id));
@@ -109,15 +123,10 @@ public class BackgroundJobService {
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
                         new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
-                case GENERATE_TOPIC_BRIEFING -> {
-                    Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(event.topicId()));
-                    if (topic == null) {
-                        logger.warn("Topic not found for ID: {}", event.topicId());
-                        jobTask = Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
-                    } else {
-                        jobTask = orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock));
-                    }
-                }
+                case GENERATE_TOPIC_BRIEFING -> jobTask = createTopicJobTask(event.topicId(),
+                        topic -> orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock)));
+                case GENERATE_TOPIC_SUMMARIES -> jobTask = createTopicJobTask(event.topicId(),
+                        topic -> orchestrationManager.runSummarizationForTopicOnly(topic, LocalDate.now(clock)));
                 case GENERATE_ITEM_SUMMARY, RETRY_ITEM_PROCESSING -> {
                     ContentItem item = QuarkusTransaction.requiringNew().call(() -> ContentItem.findById(event.contentItemId()));
                     if (item == null) {
@@ -127,9 +136,17 @@ public class BackgroundJobService {
                         jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
                     }
                 }
-                default ->
-                        jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
+                default -> jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));
             }
+            // POV-150: Capture the current correlation ID for the job
+            String correlationId = CorrelationIdFilter.currentCorrelationId();
+            QuarkusTransaction.requiringNew().run(() -> {
+                BackgroundJob job = BackgroundJob.findById(event.jobId());
+                if (job != null) {
+                    job.correlationId = correlationId;
+                }
+            });
+
             executeJobLifecycle(event.jobId(), jobTask);
         });
     }
@@ -170,7 +187,18 @@ public class BackgroundJobService {
     public void updateStatus(UUID jobId, JobStatus status, String errorMessage) {
         BackgroundJob job = BackgroundJob.<BackgroundJob>findByIdOptional(jobId)
                 .orElseThrow(() -> new EntityNotFoundException("BackgroundJob not found: " + jobId));
+
+        JobStatus oldStatus = job.status;
         job.status = status;
+
+        // POV-150: Audit high-level job transitions
+        // 1. Log if status changed
+        // 2. Log if it's FAILED (even if already FAILED) to capture all error messages
+        if (oldStatus != status || status == JobStatus.FAILED) {
+            String auditMessage = errorMessage != null ? errorMessage : "Job status transitioned to " + status;
+            JobExecutionAudit.logJob(jobId, status, auditMessage);
+        }
+
         if (status == JobStatus.RUNNING) {
             if (job.startedAt == null) {
                 job.startedAt = clock.instant();
@@ -187,7 +215,14 @@ public class BackgroundJobService {
             }
         }
         job.persist();
-        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type));
+        String details = null;
+        if (job.topicId != null) {
+            Topic topic = Topic.findById(job.topicId);
+            if (topic != null) {
+                details = topic.name;
+            }
+        }
+        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, details));
     }
 
     public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, Sort sort, int pageIndex, int pageSize) {
@@ -209,5 +244,31 @@ public class BackgroundJobService {
 
     public Optional<BackgroundJob> getJobById(UUID id) {
         return BackgroundJob.findByIdOptional(id);
+    }
+
+    /**
+     * POV-150: Centralized logic to fetch the full audit trail for a job.
+     * Uses correlationId to bridge high-level job events and sub-item events.
+     */
+    public List<JobExecutionAudit> getJobAuditTrail(UUID jobId, String correlationId) {
+        String query;
+        java.util.Map<String, Object> params;
+        if (correlationId != null && !correlationId.isBlank()) {
+            query = "jobId = :jobId or correlationId = :correlationId";
+            params = java.util.Map.of("jobId", jobId, "correlationId", correlationId);
+        } else {
+            query = "jobId = :jobId";
+            params = java.util.Map.of("jobId", jobId);
+        }
+        return JobExecutionAudit.<JobExecutionAudit>find(query, Sort.by("createdAt").ascending(), params).list();
+    }
+
+    private Uni<Void> createTopicJobTask(Long topicId, java.util.function.Function<Topic, Uni<Void>> action) {
+        Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(topicId));
+        if (topic == null) {
+            logger.warn("Topic not found for ID: {}", topicId);
+            return Uni.createFrom().failure(new EntityNotFoundException("Topic not found"));
+        }
+        return action.apply(topic);
     }
 }

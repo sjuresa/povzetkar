@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Povzetkar API
  * REST API for Povzetkar - AI Powered Content Summarizer
- * OpenAPI spec version: 0.11.0
+ * OpenAPI spec version: 0.13.0
  */
 import {
   useQuery
@@ -22,8 +22,8 @@ import type {
 
 import type {
   BriefingDetailDTO,
-  GetApiV1BriefingsParams,
-  PaginatedResponse
+  BriefingPaginatedResponse,
+  GetApiV1BriefingsParams
 } from '../model';
 
 import { customInstance } from '../../client';
@@ -38,7 +38,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Get all briefings
  */
 export type getApiV1BriefingsResponse200 = {
-  data: PaginatedResponse
+  data: BriefingPaginatedResponse
   status: 200
 }
 

@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Povzetkar API
  * REST API for Povzetkar - AI Powered Content Summarizer
- * OpenAPI spec version: 0.11.0
+ * OpenAPI spec version: 0.13.0
  */
 import {
   useMutation,
@@ -28,9 +28,9 @@ import type {
   ContentSourceCreate,
   ContentSourceDTO,
   ContentSourceDetails,
+  ContentSourcePaginatedResponse,
   ContentSourcePatch,
-  GetApiV1SourcesParams,
-  PaginatedResponse
+  GetApiV1SourcesParams
 } from '../model';
 
 import { customInstance } from '../../client';
@@ -45,7 +45,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Get all content sources
  */
 export type getApiV1SourcesResponse200 = {
-  data: PaginatedResponse
+  data: ContentSourcePaginatedResponse
   status: 200
 }
 

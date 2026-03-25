@@ -2,10 +2,12 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.builder.ContentItemBuilder;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
+import com.povzetkar.quarkus.builder.SummaryBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.ProcessingStatus;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -53,6 +55,12 @@ class ContentItemApiResourceTest {
                 .build();
         completedItem.persistAndFlush();
 
+        Summary summary = SummaryBuilder.aSummary()
+                .withContentItem(completedItem)
+                .withSummaryText("### Executive Summary\nMy Exec Summary\n###\nFull text")
+                .build();
+        summary.persistAndFlush();
+
         pendingItem = ContentItemBuilder.aContentItem()
                 .withContentSource(testSource)
                 .withSourceUrl("http://example.com/2")
@@ -75,6 +83,7 @@ class ContentItemApiResourceTest {
     @AfterEach
     @Transactional
     void teardown() {
+        Summary.deleteAll();
         ContentItem.deleteAll();
         ContentSource.deleteAll();
         User.deleteAll();
@@ -151,5 +160,25 @@ class ContentItemApiResourceTest {
                 .when().post("/api/v1/content-items/" + pendingItem.id + "/commands/retry")
                 .then()
                 .statusCode(409);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetSummary_Success() {
+        given()
+                .when().get("/api/v1/content-items/" + completedItem.id + "/summary")
+                .then()
+                .statusCode(200)
+                .body("data.summaryText", containsString("Full text"))
+                .body("data.executiveSummary", containsString("My Exec Summary"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetSummary_NotFound() {
+        given()
+                .when().get("/api/v1/content-items/" + pendingItem.id + "/summary")
+                .then()
+                .statusCode(404);
     }
 }

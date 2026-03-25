@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Povzetkar API
  * REST API for Povzetkar - AI Powered Content Summarizer
- * OpenAPI spec version: 0.11.0
+ * OpenAPI spec version: 0.13.0
  */
 import type { Instant } from './instant';
 import type { JobStatus } from './jobStatus';
@@ -18,4 +18,5 @@ export interface BackgroundJobDTO {
   endedAt?: Instant;
   errorMessage?: string;
   userId?: number;
+  topicId?: number;
 }

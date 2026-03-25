@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Povzetkar API
  * REST API for Povzetkar - AI Powered Content Summarizer
- * OpenAPI spec version: 0.11.0
+ * OpenAPI spec version: 0.13.0
  */
 
 export * from './adminMetricsDTO';
@@ -16,12 +16,14 @@ export * from './auditLogPaginatedResponse';
 export * from './backgroundJobDTO';
 export * from './backgroundJobPaginatedResponse';
 export * from './briefingDetailDTO';
+export * from './briefingPaginatedResponse';
 export * from './briefingSummaryDTO';
 export * from './charset';
 export * from './contentItem';
 export * from './contentSourceCreate';
 export * from './contentSourceDetails';
 export * from './contentSourceDTO';
+export * from './contentSourcePaginatedResponse';
 export * from './contentSourcePatch';
 export * from './contentSourceUpdate';
 export * from './dashboardDTO';
@@ -77,12 +79,15 @@ export * from './sectionBlockExpressions';
 export * from './sectionBlockParameters';
 export * from './sectionHelper';
 export * from './sectionNode';
+export * from './summary';
 export * from './template';
 export * from './templateInstance';
 export * from './templateLocator';
 export * from './templateNode';
+export * from './topic';
 export * from './topicCreate';
 export * from './topicDTO';
+export * from './topicPaginatedResponse';
 export * from './topicPatch';
 export * from './topicUpdate';
 export * from './traceListener';

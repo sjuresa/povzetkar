@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Povzetkar Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Professional React/TypeScript frontend for the Povzetkar content orchestration platform.
 
-Currently, two official plugins are available:
+## 🚀 Technology Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework:** React 19 + Vite 6
+- **Language:** TypeScript (Strict Mode)
+- **Styling:** Tailwind CSS 4 (Theme: Midnight Slate)
+- **Routing:** TanStack Router (Type-safe, File-based)
+- **Data Fetching:** TanStack Query (React Query) v5
+- **API Client:** Axios + Orval (Automated TS generation from OpenAPI)
+- **State Management:** Zustand
+- **Notifications:** Sonner
+- **Testing:** Vitest (Unit) + Playwright (E2E)
 
-## React Compiler
+## 🛡️ Resilience & UX Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Global Error Handling
+The application uses a dual-layer error handling strategy:
+1. **React Error Boundary:** Catches unhandled rendering exceptions at the root.
+2. **TanStack Router `defaultErrorComponent`:** Catches route-level loader or guard failures.
+Both render the `ErrorPage` component found in `src/routes/ErrorPage.tsx`.
 
-## Expanding the ESLint configuration
+### Automatic Retries
+Network stability is ensured via `axios-retry`. Requests are automatically retried up to 3 times with exponential backoff for:
+- Network connectivity issues.
+- Transient status codes: 502 (Bad Gateway), 503 (Service Unavailable), 504 (Gateway Timeout).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Polished Loading States
+A unified `Skeleton` component (`src/components/ui/Skeleton.tsx`) is used to provide consistent, glassmorphic pulse loaders across Dashboard widgets and data tables.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Setup
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Run Local Dev
+```bash
+npm run dev
 ```
+
+### Generate API Client
+When the backend OpenAPI spec changes, regenerate the client:
+```bash
+npm run gen:api
+```
+
+### Testing
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npx playwright test
+```
+
+## 📂 Project Structure
+
+- `src/api`: Axios client configuration and generated Orval hooks.
+- `src/components`: Reusable UI elements, categorized by domain (ui, layout, admin).
+- `src/hooks`: Global React hooks (auth, events, toasts).
+- `src/routes`: Page components and route definitions.
+- `src/store`: Zustand stores for global state (auth, events).
+- `src/util`: Helper utilities (logger, formatting).

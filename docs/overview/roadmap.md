@@ -3,11 +3,13 @@
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                               |
-| 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                             |
-| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                          |
-| 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                     |
-| 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                               |
+| 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
+| 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
+| 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                                                                                                                |
+| 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                                             |
+| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                                          |
+| 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                                                     |
+| 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                                               |
 | 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
 | 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
 | 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
@@ -193,22 +195,49 @@ This document outlines the concrete steps for implementing the features describe
 
 ---
 
-## v0.13: Production Hardening
+## v0.13: Input Mastery & UX Foundation
 
-**Goal:** Stabilize the application and prepare it for a reliable and secure production deployment.
+**Goal:** Transition from MVP to a "Professional Grade" user experience. This version pivots from the original "Production Hardening" goal to focus on **Input Resilience** and establishing a solid UI foundation, while keeping mission-critical infra tasks (Secrets, Persistence).
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
-1.  **Monitoring & Alerting:** Implement Prometheus metrics and Grafana dashboards, exposing detailed AI token usage, job failure rates, and average job durations.
-2.  **Secrets Management:** Integrate a secrets management solution.
-3.  **Job Auditing Persistent Storage:** Ensure `job_executions` are persistently stored in a database specifically for long-term historical analysis (beyond the standard `admin/audit-log` functionality provided in v0.11).
-4.  **Backup & Recovery:** Establish automated database backup/recovery.
-5.  **Dynamic Security Testing (DAST):** Implement automated security testing using OWASP ZAP against the API and UI.
+1.  **Topic & Source Management:**
+    *   Implement full Topic CRUD and custom prompt template editing.
+    *   Create a "Content Source Library" to browse and search all added sources.
+    *   Implement "Source Item Review" to inspect fetched items (e.g., YouTube video lists) and their statuses.
+2.  **User Profile & Platform Foundations:**
+    *   Implement a User Profile page (`/me`) and basic Preferences (Theme, Language infra).
+    *   Unified "Global Error & Notification" system (Toasts, Error Boundaries).
+3.  **UI/UX Refinement:**
+    *   Implement Skeleton loading states for all major views.
+    *   Refine the Landing Page and Sidebar navigation for a "Premium" feel.
+    *   Full Internationalization (i18n) infrastructure setup.
+4.  **Backend & Infra Resilience:**
+    *   Integrate Secrets Management.
+    *   Implement Persistent Job Auditing storage for historical analysis.
+
+---
+
+## v0.14: Output Mastery & Admin Operations
+
+**Goal:** Empower users with advanced reporting tools and give administrators full control over system operations and user management.
+
+### Key Tasks & Implementation Steps:
+1.  **Briefing Mastery:**
+    *   Implement a searchable "Briefing Library" archive with advanced filtering.
+    *   Implement manual "Custom Briefing Generation" for specific date ranges and topics.
+2.  **Admin Empowerment:**
+    *   Build the "Admin User Management" UI for managing roles and account statuses.
+    *   Implement the "Advanced Job Console" with manual retry/cancel capabilities for background tasks.
+3.  **Operational Maturity:**
+    *   Implement Prometheus metrics and Grafana dashboards.
+    *   Automated Dynamic Security Testing (DAST) with OWASP ZAP.
 
 ---
 
 ## v1.0: RAG & Conversational Interface
 
-**Goal:** Deliver the core "interactive report" feature by implementing the RAG pipeline and a user-facing API.
+**Goal:** Deliver the core "interactive report" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.
 
 ### Key Tasks & Implementation Steps
 

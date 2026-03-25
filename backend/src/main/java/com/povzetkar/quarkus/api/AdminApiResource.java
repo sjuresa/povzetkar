@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.AdminMetricsDTO;
 import com.povzetkar.quarkus.api.dto.AuditLogEntryDTO;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.dto.JobExecutionAuditDTO;
 import com.povzetkar.quarkus.api.dto.JobTriggerRequest;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
@@ -225,5 +226,19 @@ public class AdminApiResource extends BaseApiResource {
                 ((Number) result[5]).longValue(),
                 ((Number) result[6]).longValue()
         );
+    }
+
+    @GET
+    @Path("/" + JOBS_PATH + "/{id}/audit")
+    @RolesAllowed(Permission.V_ADMIN_DASHBOARD_VIEW)
+    @Operation(summary = "Get job audit history (Admin)", description = "Get full chronological execution history for any job and its sub-items.")
+    public List<JobExecutionAuditDTO> getJobAudit(@PathParam("id") UUID id) {
+        BackgroundJob job = backgroundJobService.getJobById(id)
+                .orElseThrow(() -> new NotFoundException("Job not found"));
+
+        return backgroundJobService.getJobAuditTrail(id, job.correlationId)
+                .stream()
+                .map(JobExecutionAuditDTO::fromEntity)
+                .toList();
     }
 }

@@ -3,15 +3,18 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.SummaryDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
+import com.povzetkar.quarkus.api.mapper.SummaryMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.ProcessingStatus;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -61,13 +64,19 @@ public class ContentItemApiResource extends BaseApiResource {
     private final ContentItemMapper contentItemMapper;
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
+    private final SummaryMapper summaryMapper;
 
     @Inject
-    public ContentItemApiResource(ContentItemMapper contentItemMapper, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper, UserContextService userContextService) {
+    public ContentItemApiResource(ContentItemMapper contentItemMapper, 
+                                 BackgroundJobService backgroundJobService, 
+                                 BackgroundJobMapper backgroundJobMapper, 
+                                 SummaryMapper summaryMapper,
+                                 UserContextService userContextService) {
         super(userContextService);
         this.contentItemMapper = contentItemMapper;
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
+        this.summaryMapper = summaryMapper;
     }
 
     @GET
@@ -122,6 +131,24 @@ public class ContentItemApiResource extends BaseApiResource {
         ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
         return contentItemMapper.toDTO(entity);
+    }
+
+    @GET
+    @Path("/{id}/summary")
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Get content item summary", description = "Retrieves the AI-generated summary for a specific content item.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Summary retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = SummaryDTO.class))
+    )
+    @APIResponse(responseCode = "404", description = "Content item or summary not found")
+    public SummaryDTO getSummaryByItemId(@PathParam("id") Long id) {
+        Summary entity = Summary.findByContentIdWithAssociations(id);
+        if (entity == null) {
+            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
+        }
+        return summaryMapper.toDTO(entity);
     }
 
     @POST

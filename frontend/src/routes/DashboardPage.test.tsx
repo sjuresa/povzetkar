@@ -46,7 +46,7 @@ describe('DashboardPage', () => {
 
     renderDashboard();
     // We expect NOT to see Dashboard title yet while loading
-    expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('dashboard.title')).not.toBeInTheDocument();
   });
 
   it('renders empty state when there is no data', () => {
@@ -54,15 +54,16 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { stats: { activeTopics: 0 }, recentBriefings: [] } as any,
+      data: { data: { stats: { activeTopics: 0 }, recentBriefings: [] } } as any,
       refetch: vi.fn(),
     } as any);
 
     vi.mocked(useEventStore).mockReturnValue([]);
 
     renderDashboard();
-    expect(screen.getByText(/Welcome to/i)).toBeInTheDocument();
-    expect(screen.getByText(/Add Your First Topic/i)).toBeInTheDocument();
+    // Now searching for i18n keys instead of English text due to global mock
+    expect(screen.getByText(/dashboard.empty.welcome/i)).toBeInTheDocument();
+    expect(screen.getByText(/dashboard.empty.action/i)).toBeInTheDocument();
   });
 
   it('renders real data when available', () => {
@@ -71,10 +72,12 @@ describe('DashboardPage', () => {
       isError: false,
       isRefetching: false,
       data: {
-        stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
-        recentBriefings: [
-          { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
-        ],
+        data: {
+          stats: { activeTopics: 5, briefingsGeneratedLast7Days: 12 },
+          recentBriefings: [
+            { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
+          ],
+        }
       } as any,
       refetch: vi.fn(),
     } as any);
@@ -82,7 +85,7 @@ describe('DashboardPage', () => {
     vi.mocked(useEventStore).mockReturnValue([]);
 
     renderDashboard();
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('dashboard.title')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('AI News')).toBeInTheDocument();
@@ -94,14 +97,14 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { stats: { activeTopics: 5 } } as any,
+      data: { data: { stats: { activeTopics: 5 } } } as any,
       refetch,
     } as any);
 
     vi.mocked(useEventStore).mockReturnValue([]);
 
     renderDashboard();
-    const refreshBtn = screen.getByTitle('Refresh Dashboard');
+    const refreshBtn = screen.getByTitle('dashboard.refresh');
     fireEvent.click(refreshBtn);
     expect(refetch).toHaveBeenCalled();
   });
