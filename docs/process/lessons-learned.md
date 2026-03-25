@@ -157,6 +157,30 @@ When asserting logic bound to rolling windows (e.g., "last 7 days") or specific 
 When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_B"})` in Quarkus:
 - **The Standard:** Remember that passing an array of roles evaluates as a logical **OR** condition, meaning the user only needs *at least one* of the specified roles to gain access to the method. Do not natively assume an `AND` condition or strip declarative annotations for manual `if` block checks unless specifically building complex, field-level access control within the method scope itself.
 
+---
+
+## 22. Quarkus 3 & Jakarta EE Migration (v0.14.0)
+
+### 22.1 MapStruct Component Model
+- **The Trap:** Using `@Mapper(componentModel = "cdi")` in a Quarkus 3 project can lead to `jakarta.enterprise.inject.spi.DeploymentException` if the underlying implementation (like `TopicMapperImpl`) uses `@javax.inject.Inject` (the legacy namespace) instead of `@jakarta.inject.Inject`. This is common when MapStruct versions are not perfectly aligned with the Jakarta EE 10 baseline.
+- **The Standard:** Always explicitly use **`componentModel = "jakarta"`** for all MapStruct mappers in Quarkus 3+. This ensures the generated code utilizes the correct `jakarta.*` annotations for dependency injection, preventing deployment-time failures.
+
+### 22.2 Transaction Visibility in Integration Tests
+- **The Trap:** When a service method (e.g. `OrchestrationManager`) executes internal logic inside `QuarkusTransaction.requiringNew()`, it starts and commits a *separate* database transaction. If the main test method (also transactional) just created the data, that data will be **invisible** to the background transaction because it hasn't been committed yet from the test's perspective.
+- **The Standard:** Before triggering an asynchronous background job or a `requiringNew()` service call in an integration test, you MUST manually synchronize the persistence context. Use **`entityManager.flush()`** to push pending changes to the database and **`entityManager.clear()`** to ensure subsequent reads see the actual DB state. This bridges the isolation gap between the test runner and the background workers.
+
+---
+
+## 23. API Robustness & Idempotency (v0.14.0)
+
+### 23.1 Idempotent "Add" Operations
+- **The Trap:** Returning `409 Conflict` when a user tries to "add" an entity that already exists (e.g. a Content Source) can lead to frustrating UI experiences and redundant error handling logic.
+- **The Standard:** For "creation" endpoints that are conceptually "idempotent adds," the API should return **`200 OK`** and the existing object if it already exists. This simplifies the frontend's "Success" path and prevents unnecessary error toasts for non-erroneous states.
+
+### 23.2 Safe Enum Conversion
+- **The Trap:** Passing a raw string name directly to `Enum.valueOf()` in a REST resource. If the input is malformed, it throws an internal `IllegalArgumentException`, which the default Quarkus exception mapper might catch as a `500 Internal Server Error`, obscuring the real cause (bad input).
+- **The Standard:** Always wrap enum conversions from request parameters in a `try-catch` block and throw a specialized **`BadRequestException`** with a descriptive message (e.g. "Invalid platform type: 'unknown'"). This ensures the client receives a correct `400` status code instead of a generic system crash.
+
 ### 3.7 Asynchronous Testing: Avoiding `Thread.sleep`
 - **The Trap:** Using `Thread.sleep()` to wait for asynchronous operations in tests (e.g., waiting for a background job to finish or a lock to appear in the database). This leads to flaky tests, slow execution, and brittle code that fails unpredictably depending on environmental load.
 - **The Standard:** Always use **Awaitility** to poll for the expected state change. Awaitility provides built-in support for timeouts, polling intervals, and clear failure messages.

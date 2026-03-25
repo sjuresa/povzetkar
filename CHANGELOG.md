@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
+
+## [Unreleased] (v0.14.0 Work-in-Progress)
+
+### Summary
+Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management** and **Infrastructure Hardening**. It introduces **Custom Prompt Templates** for topics, giving users control over AI summarization behavior via an "Advanced" settings toggle. It also hardens the backend by migrating to Jakarta CDI, ensuring long-term compatibility with Quarkus 3. The content ingestion layer is being refined with **Idempotent Source Creation** and **Automated Metadata Enrichment**. Stability is further reinforced with a fully restored and hardened integration test suite.
+
+### Added
+- **AI Customization (POV-153):** Implemented support for **Custom Prompt Templates** at the topic level. Users can now define specialized summarization instructions (e.g., specific language, tone, or format) that override the global default.
+- **Backend (POV-153):** Integrated `promptTemplate` fallback logic in `VideoSummaryService`, ensuring a graceful return to the global prompt if a custom one is not provided.
+- **Frontend (POV-153):** Enhanced the **Topic Edit/Create form** to support prompt template management with a live "Reset to Default" capability.
+- **Content Ingestion (POV-153):** Implemented **Automated Source Enrichment**. Adding a YouTube channel now automatically fetches its name, description, and subscriber count via the YouTube Data API.
+- **Content Ingestion (POV-153):** Implemented **Idempotent Source Creation**. Attempting to add an existing source now gracefully returns the current record with a `200 OK` instead of a conflict, facilitating smoother user flows.
+
+### Changed
+- **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.
+- **Orchestration (POV-153):** Refactored `DefaultBriefingGenerator` to utilize shared transactions for historical summary lookups, improving database visibility and test reliability.
+
+### Fixed
+- **Error Handling (POV-153):** Hardened the Content Source API to provide `400 Bad Request` responses for invalid platforms/identifiers, eliminating 500 crashes.
 
 ## [v0.13.0] - 2026-03-24
 

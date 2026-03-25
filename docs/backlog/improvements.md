@@ -47,3 +47,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Enhanced Docker Healthchecks:** Implement a robust Docker `HEALTHCHECK` in the final image, possibly using a dedicated `/q/health` endpoint or a simple `curl` check against the SPA landing page.
 *   **Automatic Summary Generation Validation:** Add a backend check to prevent re-triggering "Generate Summaries" if a job for the same topic is already `RUNNING` or `QUEUED` to prevent resource waste.
 *   **Improved Toast Actionability:** Enhance toast notifications with "View Job" or "Refresh Page" buttons for `COMPLETED` or `FAILED` states.
+*   **Frontend Lint Policy (v0.14.0):** Systematically resolve the ~107 `any` type and unsafe assignment lint errors in the frontend (e.g. `client.ts`, `setup.ts`) by introducing strict interfaces for API responses and environment variables.
+*   **Mapper Audit Field Standardization (v0.14.0):** Instead of manually ignoring `version`, `createdAt`, etc., in every MapStruct mapper, create a `@MappingConfig` or a base mapper that centralizes these exclusions for all auditable entities.
+*   **Real-time Platform Validation (v0.14.0):** Implement a debounced "Check Now" button in the `Add Source` dialog to verify the YouTube channel's existence before the user hits "Save," providing immediate visual feedback.
+*   **Topic Template Preview (v0.14.0):** Add a "Preview with Template" action in the `TopicForm` that allows users to see how a mock content item would be summarized using their custom prompt before saving.
