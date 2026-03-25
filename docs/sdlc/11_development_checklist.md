@@ -1,22 +1,8 @@
 # Development Process Checklist
 
-## Revision History
-| Version | Date             | Author       | Changes                                                                                                                             |
-|---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| 1.7     | March 19, 2026   | Povzetkar AI | Upgraded Phase 1 planning standards: added Evolution/Justification logic and mandatory time breakdown with contingency. |
-| 1.6     | January 18, 2026 | Povzetkar AI | Added BOM alignment check to QA steps based on v0.7.0 retrospective. Added note on automating BOM check with maven-enforcer-plugin. |
-| 1.5     | January 17, 2026 | Povzetkar AI | Added Dependency Security Check (IntelliJ) and expanded documentation review scope.                                                 |
-| 1.4     | January 13, 2026 | Povzetkar AI | Restructured release phases for clarity (Finalization -> Release -> Post-Release).                                                  |
-| 1.3     | January 7, 2026  | Povzetkar AI | Added step 2.7 for continuous retrospective and backlog updates during task execution.                                              |
-| 1.2     | January 7, 2026  | Povzetkar AI | Added initialization of retrospective draft to Phase 1.                                                                             |
-| 1.1     | January 6, 2026  | Povzetkar AI | Updated checklist based on v0.6.2 retrospective: added code review steps, post-version documentation updates, and specific prompts. |
-| 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                                                                                    |
-
 ## 1. Introduction
 
 This document provides a comprehensive checklist for our development process. It serves as a step-by-step guide to ensure that all phases of a development cycle, from planning to release and review, are executed consistently and thoroughly.
-
----
 
 ## Phase 1: Version Planning
 
@@ -26,18 +12,17 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.2. Define High-Level Goals:** Review the `roadmap.md` and agree on the primary objectives for the new version.
 - [ ] **1.3. Define Testing Strategy:** For any new functionality (especially with a UI component), ask "How will we test this in a way that is proportional to the investment?". The decision must be documented in the `planning-process.md`.
 - [ ] **1.4. Identify Spike Tasks:** Review goals for high technical uncertainty. If any exist, create a dedicated "Spike" task to de-risk future development.
-- [ ] **1.5. Document Planning Process:** Create a `docs/versions/vX.Y-planning-process.md` file to log the decisions and rationale behind the plan.
-    - [ ] Include **Planning Evolution & Justification**: Document how the plan changed during brainstorming and why (Pros/Cons of key decisions).
-    - [ ] Include the **Testing Strategy**, documenting the proportionality of testing effort.
-- [ ] **1.6. Create Task Breakdown:** Create a new `docs/versions/vX.Y-tasks.md` file, breaking down the high-level goals into concrete, actionable tasks.
-    - [ ] Include a **Time Estimation Summary** with sub-estimates and contingency.
-    - [ ] Ensure each task includes a `## Documentation` section (`Context` and `Update`), as defined in previous retrospectives.
-    - [ ] For every `feat` task, ensure a corresponding `test` sub-task or criteria is defined to explicitly outline the test scenarios (E2E/Unit).
-
-- [ ] **1.7. Initialize Retrospective Draft:** Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
-- [ ] **1.8. Prepare Development Branch:** Create the new version branch (e.g., `v0.7.0`) from `main` and update version numbers (e.g., `pom.xml`, `package.json`) to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
-
----
+- [ ] **1.5. Document Planning Process**: Create a `docs/versions/vX.Y-planning-process.md` file using the "Decision Log" style (see v0.13.0 or v0.14.0 as examples).
+    - [ ] Include **Planning Evolution & Justification**: Document brainstorming discussions, pro/con analysis of alternatives, and rationale for final choices. 
+    - [ ] Include the **Testing Strategy**, ensuring it's proportional to the feature complexity and references `use_cases.md`.
+- [ ] **1.6. Define Use Cases**: For all user-facing or complex features, create/update `docs/analysis/use_cases.md` to map User Stories to concrete interaction flows. This document serves as the foundation for both UI implementation and test cases.
+- [ ] **1.7. Create Task Breakdown**: Create a new `docs/versions/vX.Y-tasks.md` file.
+    - [ ] Include a **Time Estimation Summary** with per-task estimates and contingency.
+    - [ ] **Task Specification**: Every task must have a `## Context` (links to relevant documents/ADRs/Specs) and a `## Definition of Done` (specific acceptance criteria).
+    - [ ] For every `feat` task, ensure a corresponding `test` sub-task (Vitest/Playwright/Integration) is defined.
+- [ ] **1.8. Initialize Retrospective Draft**: Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
+- [ ] **1.9. Prepare Development Branch**: Create the new version branch (e.g., `v0.7.0`) from `main` and update version numbers (e.g., `pom.xml`, `package.json`) to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
+- [ ] **1.10. Document Standard (Formatting)**: For all non-trivial documents created or updated, ensure that the **Revision History** section is placed at the **END** of the file to prioritize immediate access to core content.
 
 ## Phase 2: Task Execution (Core Loop)
 
@@ -70,8 +55,6 @@ This document provides a comprehensive checklist for our development process. It
         -   If **both** answers are YES: Pause, discuss, and agree to update the current version's task plan (`*-tasks.md`) to include the fix.
         -   If **either** answer is NO: Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
 
----
-
 ## Phase 3: Version Finalization
 
 *This phase is executed once all tasks for the current version are complete.*
@@ -92,8 +75,6 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[0.7.0] - YYYY-MM-DD`).
     - [ ] Add a new, empty `[Unreleased]` section at the top.
 
----
-
 ## Phase 4: Release
 
 *This phase is executed after the version is finalized.*
@@ -101,3 +82,16 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **4.1. Create Release PR:** Create a Pull Request from the version branch (e.g., `v0.7`) to `main`.
 - [ ] **4.2. Merge to `main`:** After approval, merge the release PR. Ensure that the CI pipeline explicitly passes the Trivy vulnerability scan and SAST routines.
 - [ ] **4.3. Create Git Tag:** On the `main` branch, create and push an annotated Git tag (e.g., `git tag -a v0.7.0 -m "Release version 0.7.0"`).
+
+## Revision History
+| Version | Date             | Author       | Changes                                                                                                                             |
+|---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 1.8     | March 25, 2026   | Povzetkar AI | Formalized document formatting (Revision History at end) and refined Planning/Task document standards based on v0.14.0 learnings.   |
+| 1.7     | March 19, 2026   | Povzetkar AI | Upgraded Phase 1 planning standards: added Evolution/Justification logic and mandatory time breakdown with contingency.             |
+| 1.6     | January 18, 2026 | Povzetkar AI | Added BOM alignment check to QA steps based on v0.7.0 retrospective. Added note on automating BOM check with maven-enforcer-plugin. |
+| 1.5     | January 17, 2026 | Povzetkar AI | Added Dependency Security Check (IntelliJ) and expanded documentation review scope.                                                 |
+| 1.4     | January 13, 2026 | Povzetkar AI | Restructured release phases for clarity (Finalization -> Release -> Post-Release).                                                  |
+| 1.3     | January 7, 2026  | Povzetkar AI | Added step 2.7 for continuous retrospective and backlog updates during task execution.                                              |
+| 1.2     | January 7, 2026  | Povzetkar AI | Added initialization of retrospective draft to Phase 1.                                                                             |
+| 1.1     | January 6, 2026  | Povzetkar AI | Updated checklist based on v0.6.2 retrospective: added code review steps, post-version documentation updates, and specific prompts. |
+| 1.0     | November 1, 2025 | Povzetkar AI | Initial version.                                                                                                                    |

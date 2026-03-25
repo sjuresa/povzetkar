@@ -1,32 +1,6 @@
 # Project Povzetkar: Development Roadmap
 
-## Revision History
-| Version | Date               | Author       | Changes                                                                                                                                                                  |
-|---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
-| 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
-| 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                                                                                                                |
-| 2.6     | March 12, 2026     | Povzetkar AI | Marked v0.11.0 as completed.                                                                                                                                             |
-| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                                          |
-| 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                                                     |
-| 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                                               |
-| 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
-| 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
-| 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
-| 1.9     | January 21, 2026   | Povzetkar AI | Inserted v0.9 "Operational Refinement" based on user request. Shifted User Management to v0.10 and Advanced Content to v0.11.                                            |
-| 1.8     | January 20, 2026   | Povzetkar AI | Marked v0.8 as complete.                                                                                                                                                 |
-| 1.7     | January 13, 2026   | Povzetkar AI | Marked v0.7 as complete.                                                                                                                                                 |
-| 1.6     | January 7, 2026    | Povzetkar AI | Redefined v0.7 scope to "Operational Excellence & Technical Modernization" based on planning. Shifted subsequent versions. Created new v0.9 for Advanced GenAI features. |
-| 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                                     |
-| 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                      |
-| 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.                    |
-| 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                       |
-| 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses.       |
-| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the roadmap.                                                                                                                                          |
-
 This document outlines the concrete steps for implementing the features described in the [`specification.md`](specification.md). It breaks down the high-level phases into actionable tasks.
-
----
 
 ## v0.5: The Architectural Skeleton
 
@@ -47,8 +21,6 @@ This document outlines the concrete steps for implementing the features describe
     *   Create a topic-aware API (`GET /api/v1/topics/{name}/channels`) in the new application.
     *   Refactor the legacy `AuthorService` to call this new API instead of reading from local files.
 
----
-
 ## v0.6: Core Logic Migration & Automation
 
 **Goal:** Migrate the entire core workflow into the new Quarkus application, making it fully autonomous. This includes fetching new content, creating summaries, and generating briefings. This version replaces the legacy Git publishing with a foundational web UI for reviewing results and delivers **full multi-topic support**.
@@ -64,8 +36,6 @@ This document outlines the concrete steps for implementing the features describe
 5.  **Refactor for Robustness:** Decouple briefing generation from content fetching and add resilience to handle transient errors, based on findings during the migration.
 6.  **Decommission Legacy App:** Completely remove the `legacy-app` module, finalizing the migration.
 
----
-
 ## v0.6.1: Foundational UI/UX Refinement
 
 **Goal:** Substantially improve the usability and visual appeal of the server-side rendered UI. This release establishes a clean, responsive, and navigable baseline experience, including a powerful Admin UI for system monitoring and management.
@@ -78,8 +48,6 @@ This document outlines the concrete steps for implementing the features describe
 4.  **Scalability:** Replaced the content source dropdown with a scalable, searchable page.
 5.  **Code Quality:** Performed significant refactoring to centralize common logic (auditing, UI utils) and enforce consistent dependency injection patterns.
 
-
----
 
 ## v0.6.2: Orchestration Hardening & Reliability
 
@@ -95,8 +63,6 @@ This document outlines the concrete steps for implementing the features describe
 6.  **API Stability:** Implement rate limiting for external transcription APIs. *(Deferred)*.
 
 
----
-
 ## v0.7: Operational Excellence & Technical Modernization
 
 **Goal:** Mature the platform from a "working prototype" to a robust, observable, and manageable system. This version focuses on operational tools (Topic management, Logging), recovering from failure modes (PENDING state), and updating to **Quarkus 3.27.x LTS**.
@@ -109,8 +75,6 @@ This document outlines the concrete steps for implementing the features describe
 3.  **Topic Management:** Add ability to enable/disable topics and trigger orchestration for specific topics.
 4.  **Admin UI Improvements:** Enhance history table with duration, dates, and direct links.
 
----
-
 ## v0.8: Standalone Application Deployment
 
 **Goal:** Prepare and document the process for building and running the Quarkus application as a standalone executable (JAR or native binary), moving away from development mode (`mvn quarkus:dev`).
@@ -121,8 +85,6 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Containerization:** Create a `Dockerfile` to package the application into a container image for consistent and isolated deployments.
 3.  **Deployment Documentation:** Update `RUNBOOK.md` with clear instructions on how to build the container image and run the application using Docker or `docker-compose`.
 4.  **Configuration Management:** Ensure the application can be fully configured via environment variables passed to the Docker container, which is crucial for production environments.
-
----
 
 ## v0.9: Operational Refinement & Admin Tools
 
@@ -140,8 +102,6 @@ This document outlines the concrete steps for implementing the features describe
     *   Create a comprehensive Methodology document.
     *   **Spike:** Research MCP (Model Context Protocol) for agent context integration.
 
----
-
 ## v0.10: User Management, Security & Developer Experience
 
 **Goal:** Transform the application into a secure, multi-tenant platform while simultaneously improving developer experience, documentation, and operational logic.
@@ -153,8 +113,6 @@ This document outlines the concrete steps for implementing the features describe
 3.  **Operational Logic:** Implement content filtering based on minimum video duration to skip short content.
 4.  **Observability & UI:** Add auditing fields, and expose Changelog and Roadmap within the application.
 5.  **Google OIDC:** Integrate Google OIDC for seamless user authentication and linking.
-
----
 
 ## v0.11: API-First & Advanced Security
 
@@ -178,8 +136,6 @@ This document outlines the concrete steps for implementing the features describe
     -   Generate OpenAPI/Swagger specifications for the new API.
     -   Implement Test Data Builder pattern to streamline testing.
 
----
-
 ## v0.12: Frontend MVP & Monorepo Foundations
 
 **Goal:** Establish a functional, deployable frontend integrated into a monorepo structure.
@@ -192,8 +148,6 @@ This document outlines the concrete steps for implementing the features describe
 4.  **SSE Real-time Job Tracking:** Live UI updates for background orchestration.
 5.  **Audit Log Admin UI:** Administrative visibility for technical request logs.
 6.  **Production Orchestration & Scanning:** Multi-stage Docker optimization and integration of frontend dependency scanning into CI/CD.
-
----
 
 ## v0.13: Input Mastery & UX Foundation
 
@@ -216,24 +170,41 @@ This document outlines the concrete steps for implementing the features describe
     *   Integrate Secrets Management.
     *   Implement Persistent Job Auditing storage for historical analysis.
 
----
-
-## v0.14: Output Mastery & Admin Operations
+## v0.14: Output Mastery & UX Refinement
+**Status:** 🏗️ In Progress
 
 **Goal:** Empower users with advanced reporting tools and give administrators full control over system operations and user management.
 
 ### Key Tasks & Implementation Steps:
-1.  **Briefing Mastery:**
-    *   Implement a searchable "Briefing Library" archive with advanced filtering.
-    *   Implement manual "Custom Briefing Generation" for specific date ranges and topics.
-2.  **Admin Empowerment:**
-    *   Build the "Admin User Management" UI for managing roles and account statuses.
-    *   Implement the "Advanced Job Console" with manual retry/cancel capabilities for background tasks.
-3.  **Operational Maturity:**
-    *   Implement Prometheus metrics and Grafana dashboards.
-    *   Automated Dynamic Security Testing (DAST) with OWASP ZAP.
+1.  **UX & Orchestration Refinement:**
+    *   Implement Advanced Topic Management with search-based source selection and persistent visibility (POV-153).
+    *   Replace direct "Run Now" with a configurable Trigger Dialog (POV-154).
+    *   Implement manual Content Status overrides and visibility for skipped items (POV-155).
+2.  **Product Presentation & Metadata:**
+    *   Implement a "High-Converting" Premium Landing Page (POV-158).
+    *   Expose App Version, Changelog, and Roadmap within the SPA.
+3.  **Security & Technical Quality:**
+    *   Resolve identified CVEs in Docker images (POV-156).
+    *   Establishing codebase quality baselines: JaCoCo coverage reports and Database ERD synchronization (POV-157).
 
----
+## v0.15: Advanced Archive & Operational Excellence
+
+**Goal:** Finalize the transition to a full-featured analytical platform with historical archives and enterprise-grade observability.
+
+### Key Tasks & Implementation Steps:
+1.  **Briefing Mastery & User UX:**
+    *   Implement a searchable "Briefing Library" archive with advanced filtering and grouping.
+    *   Exporting and sharing capabilities for generated briefings.
+    *   Full i18n Migration: systematically migrate all remaining hardcoded strings in Dashboard and Audit Log.
+    *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
+2.  **Administrative Command Center:**
+    *   Build the "Admin User Management" UI for managing roles and account statuses.
+    *   Comprehensive "Background Job Dashboard" with full operational control (Cancel, Restart, Audit).
+3.  **Hardening & Operational Excellence:**
+    *   Implement Prometheus metrics and Grafana dashboards for system-wide monitoring.
+    *   Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
+    *   **Self-Cleaning Infra**: Implement a background job to purge `JobExecutionAudit` records (90-day retention).
+    *   **QA Health**: Migrate remaining Integration Tests to the `@TestTransaction` pattern.
 
 ## v1.0: RAG & Conversational Interface
 
@@ -271,8 +242,6 @@ This document outlines the concrete steps for implementing the features describe
     *   **Deployment Guide:** **Expand** the deployment guide to include the setup for the new frontend client and any additional services.
     *   **Architectural Decision Record (ADR):** Continue to log significant decisions, such as the choice of `LangChain4j` or specific RAG strategies.
 
----
-
 ## v1.1: Expansion & Advanced Analytics
 
 **Goal:** Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.
@@ -298,8 +267,30 @@ This document outlines the concrete steps for implementing the features describe
     *   **Performance Testing:** Conduct initial load tests on the RAG API to identify performance bottlenecks.
     *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows, following the architectural decision made in v1.0.
 
----
-
 ## v1.2: Content Creation & Refinement
 
 *(Details to be added as Phase 3 nears completion)*
+
+## Revision History
+| Version | Date               | Author       | Changes                                                                                                                                                                  |
+|---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15. |
+| 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
+| 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
+| 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                                                                                                                |
+| 2.5     | March 5, 2026      | Povzetkar AI | Added Phase 1 Frontend Foundations to v0.11 and deferred remaining Hardening features to v0.13.                                                                          |
+| 2.4     | February 26, 2026  | Povzetkar AI | Marked v0.11 as In Progress and refined scope (Frontend Spec, SAST).                                                                                                     |
+| 2.3     | February 20, 2026  | Povzetkar AI | Marked v0.10 as completed.                                                                                                                                               |
+| 2.2     | February 19, 2026  | Povzetkar AI | Inserted v0.11 for API & PBAC. Shifted Hardening to v0.12 and Advanced Content to v0.13.                                                                                 |
+| 2.1     | February 13, 2026  | Povzetkar AI | Marked v0.10 as In Progress and expanded scope (DevEx, Ops).                                                                                                             |
+| 2.0     | February 5, 2026   | Povzetkar AI | Marked v0.9 as complete.                                                                                                                                                 |
+| 1.9     | January 21, 2026   | Povzetkar AI | Inserted v0.9 "Operational Refinement" based on user request. Shifted User Management to v0.10 and Advanced Content to v0.11.                                            |
+| 1.8     | January 20, 2026   | Povzetkar AI | Marked v0.8 as complete.                                                                                                                                                 |
+| 1.7     | January 13, 2026   | Povzetkar AI | Marked v0.7 as complete.                                                                                                                                                 |
+| 1.6     | January 7, 2026    | Povzetkar AI | Redefined v0.7 scope to "Operational Excellence & Technical Modernization" based on planning. Shifted subsequent versions. Created new v0.9 for Advanced GenAI features. |
+| 1.5     | January 4, 2026    | Povzetkar AI | Marked v0.6.2 as complete and updated task statuses.                                                                                                                     |
+| 1.4     | November 1, 2025   | Povzetkar AI | Marked v0.6 as complete and inserted v0.6.1 for UI refinement. Restructured future versions to prioritize User Management and Production Hardening.                      |
+| 1.3     | September 10, 2025 | Povzetkar AI | Major roadmap acceleration: v0.6 now includes full core logic migration. Redefined v0.7 for standalone deployment and re-aligned subsequent versions.                    |
+| 1.2     | September 1, 2025  | Povzetkar AI | Major roadmap alignment: deferred multi-topic support to v1.0, created new v0.6 plan, and renumbered migration completion to v0.9.                                       |
+| 1.1     | August 27, 2025    | Povzetkar AI | Refined future versions (v0.6+) to align with Strangler Fig pattern, and updated v0.7 to use a unified API with `COMPLETED`, `FAILED`, and `RETRY_LATER` statuses.       |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the roadmap.                                                                                                                                          |
