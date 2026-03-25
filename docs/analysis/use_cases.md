@@ -46,7 +46,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 3. Administrator selects "Override Status".
 4. Administrator chooses a new status (e.g., `RETRY_LATER` or `PENDING`).
 5. System validates the transition and updates the item.
-**Postconditions**: The item is requeueud for processing in the next run.
+**Postconditions**: The item is requeued for processing in the next run.
 
 ### UC-4: View Briefings
 **Actor**: User
