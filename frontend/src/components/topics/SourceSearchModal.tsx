@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGetApiV1Sources } from '../../api/generated/content-sources/content-sources';
 import type { ContentSourceDTO } from '../../api/generated/model';
 import { Search, X, Loader2, Plus, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { QuickSourceIntake } from './QuickSourceIntake';
 
 interface SourceSearchModalProps {
@@ -28,7 +28,12 @@ export function SourceSearchModal({ isOpen, onClose, onSelect, excludeIds = [] }
   }, [search]);
 
   const { data: sourcesResponse, isLoading } = useGetApiV1Sources(
-    { search: debouncedSearch, page, size: 5, excludeIds },
+    { 
+      search: debouncedSearch, 
+      page, 
+      size: 5, 
+      excludeIds: excludeIds.length > 0 ? excludeIds.join(',') : undefined 
+    },
     { query: { enabled: isOpen && !showQuickAdd } }
   );
 
