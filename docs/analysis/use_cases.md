@@ -11,7 +11,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 
 ### UC-1: Manage Topic Sources
 **Actor**: Administrator
-**Context**: [topic-management.md](file:///c:/dev/AI/povzetkar/docs/features/topic-management.md)
+**Context**: [topic-management.md](../features/topic-management.md)
 **Preconditions**: Administrator is logged in.
 **Main Flow**:
 1. Administrator navigates to Topic Management and selects a Topic for Editing.
@@ -25,7 +25,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 
 ### UC-2: Trigger Manual Orchestration (Configurable)
 **Actor**: Administrator
-**Context**: [frontend-specification.md](file:///c:/dev/AI/povzetkar/docs/analysis/frontend-specification.md)
+**Context**: [frontend-specification.md](frontend-specification.md)
 **Preconditions**: Topic has active sources.
 **Main Flow**:
 1. Administrator navigates to Dashboard and clicks the "Trigger Run" (Play) icon on a Topic.
@@ -38,7 +38,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 
 ### UC-3: Review and Override Content Status (Admin Only)
 **Actor**: Administrator
-**Context**: [frontend-specification.md](file:///c:/dev/AI/povzetkar/docs/analysis/frontend-specification.md), [ProcessingStatus.java](file:///c:/dev/AI/povzetkar/backend/src/main/java/com/povzetkar/quarkus/model/ProcessingStatus.java)
+**Context**: [frontend-specification.md](frontend-specification.md), [ProcessingStatus.java](../../backend/src/main/java/com/povzetkar/quarkus/model/ProcessingStatus.java)
 **Preconditions**: Content items have been fetched.
 **Main Flow**:
 1. Administrator navigates to Source Detail view or a global "Processing History".
@@ -50,7 +50,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 
 ### UC-4: View Briefings
 **Actor**: User
-**Context**: [frontend-specification.md](file:///c:/dev/AI/povzetkar/docs/analysis/frontend-specification.md)
+**Context**: [frontend-specification.md](frontend-specification.md)
 **Preconditions**: Briefings have been generated for at least one topic.
 **Main Flow**:
 1. User navigates to Briefings Library.
