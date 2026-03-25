@@ -22,6 +22,7 @@ import type {
 
 import type {
   BackgroundJobDTO,
+  JobExecutionAudit,
   Uuid
 } from '../model';
 
@@ -151,6 +152,129 @@ export function useGetApiV1JobsId<TData = Awaited<ReturnType<typeof getApiV1Jobs
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetApiV1JobsIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * Get chronological execution history for the specified job and its sub-items.
+ * @summary Get job audit history
+ */
+export type getApiV1JobsIdAuditResponse200 = {
+  data: JobExecutionAudit[]
+  status: 200
+}
+
+export type getApiV1JobsIdAuditResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getApiV1JobsIdAuditResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getApiV1JobsIdAuditResponseSuccess = (getApiV1JobsIdAuditResponse200) & {
+  headers: Headers;
+};
+export type getApiV1JobsIdAuditResponseError = (getApiV1JobsIdAuditResponse401 | getApiV1JobsIdAuditResponse403) & {
+  headers: Headers;
+};
+
+export type getApiV1JobsIdAuditResponse = (getApiV1JobsIdAuditResponseSuccess | getApiV1JobsIdAuditResponseError)
+
+export const getGetApiV1JobsIdAuditUrl = (id: Uuid,) => {
+
+
+  
+
+  return `/api/v1/jobs/${id}/audit`
+}
+
+export const getApiV1JobsIdAudit = async (id: Uuid, options?: RequestInit): Promise<getApiV1JobsIdAuditResponse> => {
+  
+  return customInstance<getApiV1JobsIdAuditResponse>(getGetApiV1JobsIdAuditUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetApiV1JobsIdAuditQueryKey = (id: Uuid,) => {
+    return [
+    `/api/v1/jobs/${id}/audit`
+    ] as const;
+    }
+
+    
+export const getGetApiV1JobsIdAuditQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError = void>(id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiV1JobsIdAuditQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>> = ({ signal }) => getApiV1JobsIdAudit(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiV1JobsIdAuditQueryResult = NonNullable<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>>
+export type GetApiV1JobsIdAuditQueryError = void
+
+
+export function useGetApiV1JobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError = void>(
+ id: Uuid, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1JobsIdAudit>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1JobsIdAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1JobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError = void>(
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1JobsIdAudit>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1JobsIdAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1JobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError = void>(
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get job audit history
+ */
+
+export function useGetApiV1JobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError = void>(
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1JobsIdAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiV1JobsIdAuditQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

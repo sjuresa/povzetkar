@@ -149,7 +149,7 @@ class DefaultBriefingGeneratorTest {
         existingBriefing.persistAndFlush();
 
         String updatedMetaSummary = "Updated Meta-summary Text";
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), anyString(), anyString()))
                 .thenReturn(updatedMetaSummary);
 
         // When
@@ -182,7 +182,7 @@ class DefaultBriefingGeneratorTest {
         List<Summary> summaries = List.of(summary1);
 
         String metaSummary = "Meta-summary Text";
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(testDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), anyString(), anyString()))
                 .thenReturn(metaSummary);
 
         // When

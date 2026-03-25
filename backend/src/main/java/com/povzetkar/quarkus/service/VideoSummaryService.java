@@ -51,14 +51,16 @@ public class VideoSummaryService {
     /**
      * Creates a daily briefing by sending a pre-formatted block of summaries to the AI.
      *
-     * @param client       The pre-acquired client to use for the API call.
-     * @param rawSummaries A single string containing all summaries, separated by '---'.
-     * @param date         The date for the briefing title.
-     * @param topicName    The name of the topic for the briefing.
+     * @param client         The pre-acquired client to use for the API call.
+     * @param rawSummaries   A single string containing all summaries, separated by '---'.
+     * @param date           The date for the briefing title.
+     * @param topicName      The name of the topic for the briefing.
+     * @param promptTemplate The custom prompt template to use (optional). Fallback to global if null.
      * @return The AI-generated briefing as a Markdown string.
      */
-    public String createBriefingFromSummaries(GenAiClient client, String rawSummaries, String date, String topicName) {
-        String finalPrompt = Prompts.SUMMARIES_SUMMARY_PROMPT.formatted(date, rawSummaries);
+    public String createBriefingFromSummaries(GenAiClient client, String rawSummaries, String date, String topicName, String promptTemplate) {
+        String template = (promptTemplate != null && !promptTemplate.isBlank()) ? promptTemplate : Prompts.SUMMARIES_SUMMARY_PROMPT;
+        String finalPrompt = template.formatted(topicName, date, rawSummaries);
         Content content = Content.fromParts(Part.fromText(finalPrompt));
         String description = "Daily briefing for topic '" + topicName + "' on " + date;
         return generateContent(client, content, description, null, null);

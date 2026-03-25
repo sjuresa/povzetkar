@@ -125,8 +125,14 @@ class OrchestrationIntegrationTest {
 
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Summary for Video");
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
+
+        // Flush to ensure that topics and sources created in setupTestData are visible to the background tasks
+        // which might run in separate transactions (requiringNew).
+        Topic.getEntityManager().flush();
+
         // When
         orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
@@ -134,7 +140,9 @@ class OrchestrationIntegrationTest {
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService).getTranscript("video1_id");
         verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
-        verify(videoSummaryService).createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), eq("Default Topic"));
+        verify(videoSummaryService).createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), eq("Default Topic"), any());
+
+        Briefing.getEntityManager().clear();
 
         List<ContentItem> contentItems = ContentItem.listAll();
         assertEquals(1, contentItems.size());
@@ -197,7 +205,7 @@ class OrchestrationIntegrationTest {
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService).getTranscript("video1_id");
         verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
-        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString());
+        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
 
         List<ContentItem> contentItems = ContentItem.listAll();
         assertEquals(1, contentItems.size());
@@ -215,7 +223,7 @@ class OrchestrationIntegrationTest {
         var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
         Topic testTopic = Topic.find("name", "Default Topic").firstResult();
 
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Initial Meta-summary")
                 .thenReturn("Updated Meta-summary");
 
@@ -227,6 +235,10 @@ class OrchestrationIntegrationTest {
         when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenReturn("Initial Summary");
+
+        // Flush to ensure that topics and sources created in setupTestData are visible to the background tasks
+        // which might run in separate transactions (requiringNew).
+        Topic.getEntityManager().flush();
 
         orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
@@ -328,7 +340,7 @@ class OrchestrationIntegrationTest {
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService, never()).getTranscript(anyString());
         verify(videoSummaryService, never()).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
-        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString());
+        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
 
         List<ContentItem> contentItems = ContentItem.listAll();
         assertEquals(1, contentItems.size());

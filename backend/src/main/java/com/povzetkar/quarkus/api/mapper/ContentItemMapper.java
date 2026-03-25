@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 
-@Mapper(componentModel = "cdi")
+@Mapper(componentModel = "jakarta")
 public interface ContentItemMapper {
 
     @Mapping(target = "durationSeconds", source = "entity", qualifiedByName = "mapDurationSeconds")

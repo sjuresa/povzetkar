@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.model.ContentSource;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -45,6 +46,11 @@ public class ContentSourceDetailService {
         for (ContentSourceDetailEnrichmentStrategy strategy : strategyFactory.getStrategies()) {
             strategy.enrich();
         }
+    }
+
+    @Transactional
+    public void enrichContentSource(ContentSource source) {
+        strategyFactory.getStrategy(source.sourceTypeId).enrich(source);
     }
 
     /**

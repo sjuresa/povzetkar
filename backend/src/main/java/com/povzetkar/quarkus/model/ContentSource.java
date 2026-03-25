@@ -30,8 +30,7 @@ public class ContentSource extends BaseAuditableEntity {
     @Column(name = "source_type_id", nullable = false)
     public int sourceTypeId;
 
-    @Column(nullable = false)
-    @NotBlank
+    @Column(nullable = true)
     public String name;
 
     @Column(columnDefinition = "TEXT")

@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "jakarta-cdi", uses = {RoleMapper.class})
+@Mapper(componentModel = "jakarta", uses = {RoleMapper.class})
 public abstract class UserMapper {
 
     @Mapping(target = "authProvider", source = "identities", qualifiedByName = "mapAuthProvider")

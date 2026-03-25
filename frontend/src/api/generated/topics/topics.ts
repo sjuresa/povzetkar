@@ -270,6 +270,129 @@ export const usePostApiV1Topics = <TError = void,
       return useMutation(getPostApiV1TopicsMutationOptions(options), queryClient);
     }
     /**
+ * Retrieves the global default prompt template used for topics.
+ * @summary Get default prompt template
+ */
+export type getApiV1TopicsDefaultPromptTemplateResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type getApiV1TopicsDefaultPromptTemplateResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getApiV1TopicsDefaultPromptTemplateResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getApiV1TopicsDefaultPromptTemplateResponseSuccess = (getApiV1TopicsDefaultPromptTemplateResponse200) & {
+  headers: Headers;
+};
+export type getApiV1TopicsDefaultPromptTemplateResponseError = (getApiV1TopicsDefaultPromptTemplateResponse401 | getApiV1TopicsDefaultPromptTemplateResponse403) & {
+  headers: Headers;
+};
+
+export type getApiV1TopicsDefaultPromptTemplateResponse = (getApiV1TopicsDefaultPromptTemplateResponseSuccess | getApiV1TopicsDefaultPromptTemplateResponseError)
+
+export const getGetApiV1TopicsDefaultPromptTemplateUrl = () => {
+
+
+  
+
+  return `/api/v1/topics/default-prompt-template`
+}
+
+export const getApiV1TopicsDefaultPromptTemplate = async ( options?: RequestInit): Promise<getApiV1TopicsDefaultPromptTemplateResponse> => {
+  
+  return customInstance<getApiV1TopicsDefaultPromptTemplateResponse>(getGetApiV1TopicsDefaultPromptTemplateUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetApiV1TopicsDefaultPromptTemplateQueryKey = () => {
+    return [
+    `/api/v1/topics/default-prompt-template`
+    ] as const;
+    }
+
+    
+export const getGetApiV1TopicsDefaultPromptTemplateQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiV1TopicsDefaultPromptTemplateQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>> = ({ signal }) => getApiV1TopicsDefaultPromptTemplate({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiV1TopicsDefaultPromptTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>>
+export type GetApiV1TopicsDefaultPromptTemplateQueryError = void
+
+
+export function useGetApiV1TopicsDefaultPromptTemplate<TData = Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1TopicsDefaultPromptTemplate<TData = Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1TopicsDefaultPromptTemplate<TData = Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get default prompt template
+ */
+
+export function useGetApiV1TopicsDefaultPromptTemplate<TData = Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1TopicsDefaultPromptTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiV1TopicsDefaultPromptTemplateQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
  * @summary Patch Topic
  */
 export type patchApiV1TopicsIdResponse200 = {

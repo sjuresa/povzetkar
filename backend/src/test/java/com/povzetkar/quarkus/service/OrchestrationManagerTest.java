@@ -180,7 +180,7 @@ class OrchestrationManagerTest {
         });
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -235,7 +235,7 @@ class OrchestrationManagerTest {
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -295,7 +295,7 @@ class OrchestrationManagerTest {
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -360,7 +360,7 @@ class OrchestrationManagerTest {
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
 
         // When
@@ -609,7 +609,7 @@ class OrchestrationManagerTest {
         });
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
 
         // When

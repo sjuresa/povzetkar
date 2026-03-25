@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.slf4j.Logger;
@@ -16,6 +17,11 @@ public class NullDetailEnrichmentStrategy implements ContentSourceDetailEnrichme
     @Override
     public void enrich() {
         logger.warn("No content detail enrichment strategy found. Skipping enrichment.");
+    }
+
+    @Override
+    public void enrich(ContentSource source) {
+        logger.warn("No content detail enrichment strategy found for source: {}. Skipping.", source.sourceIdentifier);
     }
 
     @Override

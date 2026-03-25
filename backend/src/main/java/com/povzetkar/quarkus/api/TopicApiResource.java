@@ -99,8 +99,8 @@ public class TopicApiResource extends BaseApiResource {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getAuthenticatedUser();
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"));
-        PanacheQuery<Topic> query = Topic.find("user", panacheSort, user);
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("t.id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"), "t");
+        PanacheQuery<Topic> query = Topic.find("select distinct t from Topic t left join fetch t.contentSources where t.user = ?1", panacheSort, user);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .list()
@@ -275,6 +275,15 @@ public class TopicApiResource extends BaseApiResource {
                 .location(location)
                 .entity(backgroundJobMapper.toDTO(job))
                 .build();
+    }
+
+    @GET
+    @Path("/default-prompt-template")
+    @RolesAllowed(Permission.V_TOPIC_VIEW)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get default prompt template", description = "Retrieves the global default prompt template used for topics.")
+    public java.util.Map<String, String> getDefaultPromptTemplate() {
+        return java.util.Map.of("template", com.povzetkar.quarkus.ai.Prompts.SUMMARIES_SUMMARY_PROMPT);
     }
 
     private void checkForDuplicateTopicName(User user, String name) {

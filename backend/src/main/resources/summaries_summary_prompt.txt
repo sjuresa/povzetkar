@@ -5,7 +5,7 @@ Refer sources by author name.
 
 Structure your briefing as follows:
 
-## Daily Briefing for %s
+## Daily Briefing for %s [%s]
 ### 1. Overall Executive Summary
 Start with a short, one to two paragraph summary highlighting the single most important development, theme, or piece of news from all the analyzed content today.
 ### 2. Major Themes and Developments

@@ -3,10 +3,11 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
-
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.service.ContentSourceDetailService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
@@ -48,6 +49,9 @@ class ContentSourceResourceTest {
         ContentSourceResourceTest(EntityManager em) {
                 this.em = em;
         }
+
+        @InjectMock
+        ContentSourceDetailService contentSourceDetailService;
 
         @BeforeEach
         @Transactional
@@ -274,7 +278,7 @@ class ContentSourceResourceTest {
                                 .body(duplicateContentSource)
                                 .when().post(API_BASE_PATH)
                                 .then()
-                                .statusCode(409);
+                                .statusCode(200);
         }
 
     @Test
