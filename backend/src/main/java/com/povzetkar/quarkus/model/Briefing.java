@@ -79,8 +79,8 @@ public class Briefing extends BaseAuditableEntity {
         return find("select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1", briefingId).firstResultOptional();
     }
 
-    public static Optional<Briefing> findByTopicAndDate(Topic topic, LocalDate briefingDate) {
-        return find("topic = ?1 and briefingDate = ?2", topic, briefingDate).firstResultOptional();
+    public static Optional<Briefing> findByTopicAndDate(Long topicId, LocalDate briefingDate) {
+        return find("topic.id = ?1 and briefingDate = ?2", topicId, briefingDate).firstResultOptional();
     }
 
     public String getExecutiveSummary() {

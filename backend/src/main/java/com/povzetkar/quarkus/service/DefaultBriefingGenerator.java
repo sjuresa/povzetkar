@@ -29,8 +29,8 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
     }
 
     @Override
-    public List<Summary> getSummariesForBriefing(Topic topic, LocalDate briefingDate) {
-        return Summary.findByTopicAndDateRange(topic, briefingDate);
+    public List<Summary> getSummariesForBriefing(Long topicId, LocalDate briefingDate) {
+        return Summary.findByTopicAndDateRange(topicId, briefingDate);
     }
 
     /**

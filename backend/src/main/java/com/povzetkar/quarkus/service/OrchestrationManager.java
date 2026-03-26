@@ -449,7 +449,7 @@ public class OrchestrationManager {
         );
 
         List<Uni<Void>> briefingTasks = allTopics.stream()
-                .map(topic -> generateBriefingForTopicUni(topic, briefingDate))
+                .map(topic -> generateBriefingForTopicUni(topic.id, briefingDate))
                 .toList();
 
         return Uni.join().all(briefingTasks).andFailFast().replaceWithVoid()
@@ -467,15 +467,27 @@ public class OrchestrationManager {
                 ));
     }
 
-    public Uni<Void> generateBriefingForTopicUni(Topic topic, LocalDate briefingDate) {
+    public Uni<Void> generateBriefingForTopicUni(Long topicId, LocalDate briefingDate) {
         return Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
             try {
                 // Step 1: Read data in a transaction
-                List<Summary> availableSummaries = briefingService.getSummariesForBriefing(topic, briefingDate);
+                Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(topicId));
+                if (topic == null) {
+                    logger.warn(
+                        ACTION, BRIEFING_GENERATION,
+                        STATUS, SKIPPED,
+                        REASON, "topic_not_found",
+                        "topicId", topicId,
+                        MESSAGE, "Topic not found for briefing generation.");
+                    return;
+                }
+
+                List<Summary> availableSummaries = QuarkusTransaction.requiringNew()
+                        .call(() -> briefingService.getSummariesForBriefing(topicId, briefingDate));
                 Set<Long> availableSummaryIds = availableSummaries.stream().map(s -> s.id).collect(Collectors.toSet());
 
                 Set<Long> existingBriefingSummaryIds = QuarkusTransaction.requiringNew()
-                        .call(() -> Briefing.findByTopicAndDate(topic, briefingDate)
+                        .call(() -> Briefing.findByTopicAndDate(topicId, briefingDate)
                                 .map(briefing -> briefing.summaries.stream().map(summary -> summary.id)
                                         .collect(Collectors.toSet()))
                                 .orElse(Collections.emptySet()));
@@ -508,7 +520,7 @@ public class OrchestrationManager {
                 logger.error(e,
                         ACTION, BRIEFING_GENERATION,
                         STATUS, FAILED,
-                        TOPIC_NAME, topic.name,
+                        "topicId", topicId,
                         DATE, briefingDate,
                         MESSAGE, "An unexpected error occurred during briefing generation.");
             }
@@ -537,7 +549,7 @@ public class OrchestrationManager {
 
     public Uni<Void> runOrchestrationForTopicManually(Topic topic, LocalDate date) {
         return runSummarizationForTopicOnly(topic, date)
-                .chain(() -> generateBriefingForTopicUni(topic, date))
+                .chain(() -> generateBriefingForTopicUni(topic.id, date))
                 .onItem().invoke(() -> logger.info(
                         ACTION, ORCHESTRATION_MANUAL_TOPIC,
                         STATUS, FINISHED,

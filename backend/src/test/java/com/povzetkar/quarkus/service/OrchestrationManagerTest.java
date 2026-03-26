@@ -379,7 +379,7 @@ class OrchestrationManagerTest {
         // Verify real database interactions
         assertEquals(numOfDays, Briefing.count());
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            Briefing briefing = Briefing.findByTopicAndDate((Topic) Topic.listAll().getFirst(), date).orElseThrow();
+            Briefing briefing = Briefing.findByTopicAndDate(((Topic) Topic.listAll().getFirst()).id, date).orElseThrow();
             assertEquals(date, briefing.briefingDate);
             assertEquals(1, briefing.summaries.size());
         }

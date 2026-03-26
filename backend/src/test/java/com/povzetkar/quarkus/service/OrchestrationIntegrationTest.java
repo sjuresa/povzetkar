@@ -243,7 +243,7 @@ class OrchestrationIntegrationTest {
         orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         assertEquals(1, Briefing.count());
-        Briefing initialBriefing = Briefing.findByTopicAndDate(testTopic, orchestrationDate).orElseThrow();
+        Briefing initialBriefing = Briefing.findByTopicAndDate(testTopic.id, orchestrationDate).orElseThrow();
         assertEquals("Initial Meta-summary", initialBriefing.metaSummary);
         assertEquals(1, initialBriefing.summaries.size());
 
@@ -268,7 +268,7 @@ class OrchestrationIntegrationTest {
 
         assertEquals(1, Briefing.count());
         Briefing.getEntityManager().clear();
-        Briefing updatedBriefing = Briefing.findByTopicAndDate(testTopic, orchestrationDate).orElseThrow();
+        Briefing updatedBriefing = Briefing.findByTopicAndDate(testTopic.id, orchestrationDate).orElseThrow();
         assertEquals("Updated Meta-summary", updatedBriefing.metaSummary);
         assertEquals(2, updatedBriefing.summaries.size());
         assertTrue(updatedBriefing.summaries.stream().anyMatch(s -> s.summaryText.equals("Initial Summary")));
