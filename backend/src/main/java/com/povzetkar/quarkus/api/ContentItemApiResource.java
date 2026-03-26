@@ -12,9 +12,11 @@ import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.api.mapper.SummaryMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
@@ -107,7 +109,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
         FilterBuilder filters = new FilterBuilder("");
         if (sourceId != null) {
-            if (com.povzetkar.quarkus.model.ContentSource.findById(sourceId) == null) {
+            if (ContentSource.findById(sourceId) == null) {
                 throw new NotFoundException("Source with id " + sourceId + " not found.");
             }
             filters.and("c.contentSource.id = :sourceId", "sourceId", sourceId);
@@ -116,7 +118,7 @@ public class ContentItemApiResource extends BaseApiResource {
             filters.and("c.processingStatus IN :statuses", "statuses", statuses);
         }
         if (topicId != null) {
-            if (com.povzetkar.quarkus.model.Topic.findById(topicId) == null) {
+            if (Topic.findById(topicId) == null) {
                 throw new NotFoundException("Topic with id " + topicId + " not found.");
             }
             filters.and("EXISTS (SELECT t FROM c.contentSource.topics t WHERE t.id = :topicId)", "topicId", topicId);
@@ -160,10 +162,10 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
-        ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
+        ContentItem entity = ContentItem.<ContentItem>find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id).firstResultOptional()
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
         
-        Set<Long> summaryExists = com.povzetkar.quarkus.model.Summary.count("contentItem.id", id) > 0 
+        Set<Long> summaryExists = Summary.count("contentItem.id", id) > 0 
                 ? Set.of(id) : Set.of();
         return contentItemMapper.toDTO(entity, summaryExists);
     }
@@ -259,10 +261,14 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to update", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO updateItemStatus(@PathParam("id") Long id, StatusUpdateDTO dto) {
-        ContentItem updatedItem = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN")
+        ContentItem baseItem = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN")
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
         
-        Set<Long> summaryExists = com.povzetkar.quarkus.model.Summary.count("contentItem.id", updatedItem.id) > 0 
+        ContentItem updatedItem = ContentItem.<ContentItem>find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", baseItem.id)
+                .firstResultOptional()
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+        
+        Set<Long> summaryExists = Summary.count("contentItem.id", updatedItem.id) > 0 
                 ? Set.of(updatedItem.id) : Set.of();
         return contentItemMapper.toDTO(updatedItem, summaryExists);
     }
