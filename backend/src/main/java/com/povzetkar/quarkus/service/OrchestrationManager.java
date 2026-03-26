@@ -9,7 +9,6 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
-import static com.povzetkar.quarkus.util.LogKeys.*;
 import com.povzetkar.quarkus.util.StructuredLogger;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
@@ -25,6 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.povzetkar.quarkus.util.LogKeys.*;
 
 @ApplicationScoped
 public class OrchestrationManager {
@@ -138,9 +139,14 @@ public class OrchestrationManager {
                 return Uni.createFrom().voidItem();
             }
         })
-        .onItem().invoke(() -> {
-            eventBroadcaster.broadcast(SseEventDTO.of("ORCHESTRATION_COMPLETED", "Manual orchestration finished successfully."));
-        })
+        .onItem().invoke(() -> eventBroadcaster.broadcast(SseEventDTO.of("ORCHESTRATION_COMPLETED", "Manual orchestration finished successfully.")))
+        .onFailure().invoke(ex -> logger.error(ex,
+            ACTION, ORCHESTRATION_MANUAL,
+            STATUS, FAILED,
+            START_DATE, actualStartDate,
+            END_DATE, actualEndDate,
+            MESSAGE, "Manual orchestration failed unexpectedly"
+        ))
         .replaceWithVoid();
     }
 
@@ -148,25 +154,23 @@ public class OrchestrationManager {
         LocalDate actualStartDate = (request.startDate() != null) ? request.startDate() : LocalDate.now();
         LocalDate actualEndDate = (request.endDate() != null) ? request.endDate() : actualStartDate;
 
-        return Uni.createFrom().completionStage(managedExecutor.supplyAsync(() -> {
-            return QuarkusTransaction.requiringNew().call(() -> {
-                List<User> activeUsers = User.listAllActive();
-                if (activeUsers.isEmpty()) {
-                    logger.info(
-                        ACTION, ORCHESTRATION_PREVIEW,
-                        STATUS, SKIPPED,
-                        REASON, "no_active_users",
-                        MESSAGE, "No active users found. Orchestration preview finished."
-                    );
-                    return (List<Topic>) Collections.<Topic>emptyList();
-                }
-                List<Topic> topics = Topic.findEnabledByUsers(activeUsers);
-                if (request.topicId() != null) {
-                    topics = topics.stream().filter(t -> t.id.equals(request.topicId())).toList();
-                }
-                return topics;
-            });
-        }))
+        return Uni.createFrom().completionStage(managedExecutor.supplyAsync(() -> QuarkusTransaction.requiringNew().call(() -> {
+            List<User> activeUsers = User.listAllActive();
+            if (activeUsers.isEmpty()) {
+                logger.info(
+                    ACTION, ORCHESTRATION_PREVIEW,
+                    STATUS, SKIPPED,
+                    REASON, "no_active_users",
+                    MESSAGE, "No active users found. Orchestration preview finished."
+                );
+                return Collections.<Topic>emptyList();
+            }
+            List<Topic> topics = Topic.findEnabledByUsers(activeUsers);
+            if (request.topicId() != null) {
+                topics = topics.stream().filter(t -> t.id.equals(request.topicId())).toList();
+            }
+            return topics;
+        })))
         .chain(selectedTopics -> {
             if (selectedTopics.isEmpty()) {
                 logger.info(
@@ -187,8 +191,8 @@ public class OrchestrationManager {
                 List<ContentItem> newItems = results.stream()
                         .map(result -> (List<?>) result)
                         .flatMap(List::stream)
-                        .filter(item -> item instanceof ContentItem)
-                        .map(item -> (ContentItem) item)
+                        .filter(ContentItem.class::isInstance)
+                        .map(ContentItem.class::cast)
                         .toList();
 
                 long newPendingCount = newItems.stream()
@@ -196,20 +200,27 @@ public class OrchestrationManager {
                         .count();
 
                 // Calculate existing pending items (items already in DB but not just fetched)
-                // We use a transaction for counting.
+                // We use a transaction for counting and optimize with a single query to avoid N+1.
                 final long existingPendingCount = QuarkusTransaction.requiringNew().call(() -> {
-                    long count = 0;
-                    for (Topic topic : selectedTopics) {
-                        for (com.povzetkar.quarkus.model.ContentSource source : topic.contentSources) {
-                            // Convert LocalDate to Instant for the query
-                            Instant startInstant = actualStartDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
-                            Instant endInstant = actualEndDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
-                            
-                            count += ContentItem.count("contentSource = ?1 and processingStatus = ?2 and publishedAt >= ?3 and publishedAt < ?4", 
-                                    source, ProcessingStatus.PENDING, startInstant, endInstant);
-                        }
+                    List<com.povzetkar.quarkus.model.ContentSource> allSources = selectedTopics.stream()
+                            .flatMap(topic -> topic.contentSources.stream())
+                            .distinct()
+                            .toList();
+
+                    if (allSources.isEmpty()) {
+                        return 0L;
                     }
-                    return count;
+
+                    Instant startInstant = actualStartDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+                    Instant endInstant = actualEndDate.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+                    
+                    return ContentItem.count(
+                        "contentSource in ?1 and processingStatus = ?2 and publishedAt >= ?3 and publishedAt < ?4", 
+                        allSources, 
+                        ProcessingStatus.PENDING, 
+                        startInstant, 
+                        endInstant
+                    );
                 });
 
                 // The 'newPendingCount' are items actually fetched and persisted in this run.
@@ -361,8 +372,8 @@ public class OrchestrationManager {
 
         java.util.Map<String, Object> params = new java.util.HashMap<>();
         params.put("statuses", Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING));
-        params.put("start", orchestrationDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-        params.put("end", orchestrationDate.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+        params.put("start", orchestrationDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
+        params.put("end", orchestrationDate.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
         if (topicId != null) {
             params.put("topicId", topicId);
         }

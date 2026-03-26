@@ -752,7 +752,7 @@ class OrchestrationManagerTest {
 
         // Mock TopicProcessor returns
         // Topic A: Day 1 (1 pending, 1 skipped), Day 2 (1 completed)
-        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(startDate)))
+        when(topicProcessor.fetchAndPersistContentUni(persistedTopicA, startDate))
                 .thenReturn(Uni.createFrom().item(List.of(pendingItem, skippedItem)));
         when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(endDate)))
                 .thenReturn(Uni.createFrom().item(List.of(completedItem)));
@@ -776,7 +776,7 @@ class OrchestrationManagerTest {
             itemA1.title = "Item A1";
             itemA1.sourceUrl = "http://example.com/a1";
             itemA1.rawContent = "raw";
-            itemA1.publishedAt = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            itemA1.publishedAt = startDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
             itemA1.persist();
         });
 
@@ -784,9 +784,9 @@ class OrchestrationManagerTest {
         ContentItem itemA2_short = new ContentItem(); itemA2_short.processingStatus = ProcessingStatus.SKIPPED_TOO_SHORT;
         ContentItem itemA3_completed = new ContentItem(); itemA3_completed.processingStatus = ProcessingStatus.COMPLETED;
 
-        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(startDate)))
+        when(topicProcessor.fetchAndPersistContentUni(persistedTopicA, startDate))
                 .thenReturn(Uni.createFrom().item(List.of(itemA1, itemA2_short)));
-        when(topicProcessor.fetchAndPersistContentUni(eq(persistedTopicA), eq(endDate)))
+        when(topicProcessor.fetchAndPersistContentUni(persistedTopicA, endDate))
                 .thenReturn(Uni.createFrom().item(List.of(itemA3_completed)));
 
         var requestA = new OrchestrationRequest(startDate, endDate, false, false, false, true, persistedTopicA.id);
@@ -816,7 +816,7 @@ class OrchestrationManagerTest {
             itemB1.title = "Item B1";
             itemB1.sourceUrl = "http://example.com/b1";
             itemB1.rawContent = "raw";
-            itemB1.publishedAt = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            itemB1.publishedAt = startDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
             itemB1.persist();
         });
 
@@ -843,7 +843,7 @@ class OrchestrationManagerTest {
             existingItem.sourceUrl = "http://example.com/existing_p";
             existingItem.rawContent = "raw";
             existingItem.title = "Existing Pending";
-            existingItem.publishedAt = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            existingItem.publishedAt = startDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
             existingItem.contentSource = sourceA;
             existingItem.processingStatus = ProcessingStatus.PENDING;
             existingItem.persist();
