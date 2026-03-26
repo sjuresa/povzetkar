@@ -84,7 +84,7 @@ class OrchestrationPreviewIntegrationTest {
         
         // 1. Setup all DB entities in a single consistent block
         final Long topicId = QuarkusTransaction.requiringNew().call(() -> {
-            User user = UserBuilder.aUser().withUsername("int_user_" + System.currentTimeMillis()).withEmail("int@ex.com").build();
+            User user = UserBuilder.aUser().withUsername("int_user_" + java.util.UUID.randomUUID()).withEmail("int@ex.com").build();
             user.persist();
             
             Topic t = TopicBuilder.aTopic().withName("Int Topic").withUser(user).build();
