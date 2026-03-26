@@ -155,6 +155,24 @@
         "no_results_tip": "Try a different search term or add it now",
         "quick_add_trigger": "Not found? Register a New Source",
         "page_info": "Page {{current}} of {{total}}"
+      },
+      "trigger_modal": {
+        "title": "Trigger Topic Run",
+        "subtitle": "Configure orchestration for \"{{name}}\"",
+        "date_range_label": "Date Range",
+        "start_date_label": "Start Date",
+        "end_date_label": "End Date",
+        "options_label": "Run Options",
+        "process_pending_label": "Process Pending Items",
+        "process_pending_tip": "Retry items that failed or are stuck",
+        "summarize_label": "Generate New Summaries",
+        "summarize_tip": "Fetch and summarize new content",
+        "create_briefing_label": "Deliver Briefing",
+        "create_briefing_tip": "Generate the final AI briefing",
+        "preview_only_label": "Preview Mode Only",
+        "preview_only_tip": "Only fetch items, don't generate summaries",
+        "submit_button": "Start Orchestration",
+        "triggering": "Triggering..."
       }
     }
   }

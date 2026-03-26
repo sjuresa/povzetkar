@@ -55,6 +55,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -200,7 +201,7 @@ public class TopicApiResource extends BaseApiResource {
 
     private Set<ContentSource> resolveSources(Set<Long> sourceIds) {
         if (sourceIds == null || sourceIds.isEmpty()) {
-            return new java.util.HashSet<>();
+            return new HashSet<>();
         }
         List<ContentSource> sources = ContentSource.list("id in ?1", sourceIds);
         if (sources.size() != sourceIds.size()) {
@@ -282,8 +283,8 @@ public class TopicApiResource extends BaseApiResource {
     @RolesAllowed(Permission.V_TOPIC_VIEW)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get default prompt template", description = "Retrieves the global default prompt template used for topics.")
-    public java.util.Map<String, String> getDefaultPromptTemplate() {
-        return java.util.Map.of("template", com.povzetkar.quarkus.ai.Prompts.SUMMARIES_SUMMARY_PROMPT);
+    public Map<String, String> getDefaultPromptTemplate() {
+        return Map.of("template", com.povzetkar.quarkus.ai.Prompts.SUMMARIES_SUMMARY_PROMPT);
     }
 
     private void checkForDuplicateTopicName(User user, String name) {

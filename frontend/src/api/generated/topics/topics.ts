@@ -26,6 +26,7 @@ import type {
 
 import type {
   BackgroundJobDTO,
+  GetApiV1TopicsDefaultPromptTemplate200,
   GetApiV1TopicsParams,
   Topic,
   TopicCreate,
@@ -274,7 +275,7 @@ export const usePostApiV1Topics = <TError = void,
  * @summary Get default prompt template
  */
 export type getApiV1TopicsDefaultPromptTemplateResponse200 = {
-  data: unknown
+  data: GetApiV1TopicsDefaultPromptTemplate200
   status: 200
 }
 

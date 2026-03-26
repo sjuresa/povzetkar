@@ -104,7 +104,7 @@ class DefaultBriefingGeneratorTest {
         });
 
         // When
-        List<Summary> actualSummaries = defaultBriefingGenerator.getSummariesForBriefing(testTopic, testDate);
+        List<Summary> actualSummaries = defaultBriefingGenerator.getSummariesForBriefing(testTopic.id, testDate);
 
         // Then
         assertEquals(1, actualSummaries.size());

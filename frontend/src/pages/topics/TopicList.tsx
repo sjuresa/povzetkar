@@ -11,10 +11,11 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react';
-import { useGetApiV1Topics, deleteApiV1TopicsId, postApiV1TopicsIdCommandsGenerateBriefing } from '../../api/generated/topics/topics';
+import { useGetApiV1Topics, deleteApiV1TopicsId } from '../../api/generated/topics/topics';
 import type { Topic } from '../../api/generated/model';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { TriggerOrchestrationModal } from '../../components/topics/TriggerOrchestrationModal';
 
 interface TopicListProps {
   onEdit?: (topic: Topic) => void;
@@ -29,6 +30,7 @@ export const TopicList: React.FC<TopicListProps> = ({
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [triggerTopic, setTriggerTopic] = React.useState<Topic | null>(null);
 
   const { data: topicsResponse, isLoading, error } = useGetApiV1Topics({ page: 0, size: 100 });
 
@@ -48,13 +50,8 @@ export const TopicList: React.FC<TopicListProps> = ({
     }
   };
 
-  const handleRun = async (topic: Topic) => {
-    try {
-      await postApiV1TopicsIdCommandsGenerateBriefing(topic.id!);
-      toast.success(t('topics.list.run_success'));
-    } catch (err: any) {
-      toast.error(t('topics.list.run_failed', { message: err.message }));
-    }
+  const handleRun = (topic: Topic) => {
+    setTriggerTopic(topic);
   };
 
   if (isLoading) {
@@ -176,6 +173,17 @@ export const TopicList: React.FC<TopicListProps> = ({
           </div>
         </div>
       ))}
+      {triggerTopic && (
+        <TriggerOrchestrationModal
+          isOpen={!!triggerTopic}
+          onClose={() => setTriggerTopic(null)}
+          topic={triggerTopic}
+          onSuccess={() => {
+            toast.success(t('topics.list.run_success'));
+            void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
+          }}
+        />
+      )}
     </div>
   );
 };

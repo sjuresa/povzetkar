@@ -42,6 +42,7 @@ export * from './getApiV1ContentItemsParams';
 export * from './getApiV1RolesParams';
 export * from './getApiV1SourcesIdItemsParams';
 export * from './getApiV1SourcesParams';
+export * from './getApiV1TopicsDefaultPromptTemplate200';
 export * from './getApiV1TopicsParams';
 export * from './getApiV1UsersParams';
 export * from './initializer';
