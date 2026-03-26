@@ -23,6 +23,11 @@ public class ContentItemAdminService {
 
     @Transactional
     public boolean updateStatus(Long contentItemId, ProcessingStatus newStatus) {
+        return updateStatus(contentItemId, newStatus, "SYSTEM");
+    }
+
+    @Transactional
+    public boolean updateStatus(Long contentItemId, ProcessingStatus newStatus, String context) {
         Objects.requireNonNull(contentItemId, "Content Item ID cannot be null");
         Objects.requireNonNull(newStatus, "New Status cannot be null");
 
@@ -36,7 +41,7 @@ public class ContentItemAdminService {
         ContentItem item = itemOptional.get();
         ProcessingStatus oldStatus = item.processingStatus;
 
-        // Basic validation: prevent setting to the same status or invalid transitions
+        // Basic validation: prevent setting to the same status
         if (oldStatus == newStatus) {
             logger.info(ACTION_KEY, UPDATE_STATUS_ACTION, STATUS_KEY, "no_change", CONTENT_ITEM_ID_KEY, contentItemId, MESSAGE_KEY, "Status is already " + newStatus);
             return true; // No change needed
@@ -45,7 +50,8 @@ public class ContentItemAdminService {
         item.processingStatus = newStatus;
         Panache.getEntityManager().merge(item);
 
-        logger.info(ACTION_KEY, UPDATE_STATUS_ACTION, STATUS_KEY, "success", CONTENT_ITEM_ID_KEY, contentItemId, "old_status", oldStatus, "new_status", newStatus, MESSAGE_KEY, "Successfully updated content item status.");
+        String logPrefix = "ADMIN".equals(context) ? "[ADMIN_OVERRIDE] " : "";
+        logger.info(ACTION_KEY, UPDATE_STATUS_ACTION, STATUS_KEY, "success", CONTENT_ITEM_ID_KEY, contentItemId, "old_status", oldStatus, "new_status", newStatus, "context", context, MESSAGE_KEY, logPrefix + "Successfully updated content item status.");
         return true;
     }
 }

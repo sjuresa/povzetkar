@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from '@tanstack/react-router';
 import { useGetApiV1SourcesId } from '../api/generated/content-sources/content-sources';
-import { useGetApiV1SourcesIdItems, useGetApiV1ContentItemsIdSummary } from '../api/generated/content-items/content-items';
+import { 
+  useGetApiV1SourcesIdItems, 
+  useGetApiV1ContentItemsIdSummary,
+  usePostApiV1ContentItemsIdCommandsStatus 
+} from '../api/generated/content-items/content-items';
 import ReactMarkdown from 'react-markdown';
+import { ProcessingStatus } from '../api/generated/model/processingStatus';
 import type { ContentItem } from '../api/generated/model';
 import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -13,13 +18,14 @@ import {
   Globe, 
   Clock, 
   FileText, 
-  CheckCircle2, 
   AlertCircle, 
-  RefreshCw,
   X
 } from 'lucide-react';
 import { cn } from '../util/cn';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { getGetApiV1SourcesIdItemsQueryKey } from '../api/generated/content-items/content-items';
 
 /**
  * Helper to format duration in seconds to MM:SS or HH:MM:SS
@@ -55,6 +61,19 @@ export function SourceDetailPage() {
   const items = (itemsResponse?.data?.items || []) as ContentItem[];
   const totalCount = itemsResponse?.data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / size);
+
+  const queryClient = useQueryClient();
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = usePostApiV1ContentItemsIdCommandsStatus();
+
+  const handleStatusChange = (itemId: number, newStatus: ProcessingStatus) => {
+    updateStatus({ id: itemId, data: { status: newStatus } }, {
+      onSuccess: () => {
+        toast.success('Status updated');
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1SourcesIdItemsQueryKey(id) });
+      },
+      onError: () => toast.error('Failed to update status'),
+    });
+  };
 
   if (isSourceLoading) {
     return (
@@ -215,22 +234,23 @@ export function SourceDetailPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          {item.processingStatus === 'COMPLETED' ? (
-                            <div className="flex items-center text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">
-                              <CheckCircle2 size={12} className="mr-1.5" />
-                              Processed
-                            </div>
-                          ) : item.processingStatus === 'FAILED' ? (
-                            <div className="flex items-center text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-lg">
-                              <AlertCircle size={12} className="mr-1.5" />
-                              Failed
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">
-                              <RefreshCw size={12} className="mr-1.5 animate-spin" />
-                              {item.processingStatus}
-                            </div>
-                          )}
+                          <select 
+                            value={item.processingStatus}
+                            disabled={isUpdatingStatus}
+                            onChange={(e) => handleStatusChange(item.id!, e.target.value as ProcessingStatus)}
+                            className={cn(
+                              "text-[10px] font-bold px-2 py-1 rounded-lg border bg-transparent cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/30",
+                              item.processingStatus === 'COMPLETED' ? "text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/5" :
+                              item.processingStatus === 'FAILED' ? "text-red-500 border-red-500/20 hover:bg-red-500/5" :
+                              "text-amber-500 border-amber-500/20 hover:bg-amber-500/5"
+                            )}
+                          >
+                            {Object.values(ProcessingStatus).map(status => (
+                              <option key={status} value={status} className="bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)]">
+                                {status}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </td>
                       <td className="px-6 py-4">

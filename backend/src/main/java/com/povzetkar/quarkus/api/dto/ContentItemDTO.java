@@ -16,6 +16,13 @@ public record ContentItemDTO(
         @Schema(description = "Error code if status is FAILED")
         String errorCode,
         Long durationSeconds,
-        String thumbnailUrl
+        String thumbnailUrl,
+        ContentSourceDTO contentSource,
+        @Schema(description = "First associated topic name")
+        String topicName,
+        @Schema(description = "Whether a transcript exists in the database")
+        boolean hasTranscript,
+        @Schema(description = "Whether a summary exists in the database")
+        boolean hasSummary
 ) {
 }

@@ -30,6 +30,7 @@ import type {
   GetApiV1ContentItemsParams,
   GetApiV1SourcesIdItemsParams,
   PaginatedResponse,
+  StatusUpdate,
   Summary
 } from '../model';
 
@@ -41,7 +42,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Retrieves a paginated list of all content items, optionally filtered by sourceId.
+ * Retrieves a paginated list of all content items, optionally filtered by sourceId, status, or topic.
  * @summary Get all content items
  */
 export type getApiV1ContentItemsResponse200 = {
@@ -505,6 +506,112 @@ export const usePostApiV1ContentItemsIdCommandsRetry = <TError = void,
         TContext
       > => {
       return useMutation(getPostApiV1ContentItemsIdCommandsRetryMutationOptions(options), queryClient);
+    }
+    /**
+ * Manually updates the processing status of a content item. Admin only.
+ * @summary Override content item status
+ */
+export type postApiV1ContentItemsIdCommandsStatusResponse200 = {
+  data: ContentItem
+  status: 200
+}
+
+export type postApiV1ContentItemsIdCommandsStatusResponse400 = {
+  data: void
+  status: 400
+}
+
+export type postApiV1ContentItemsIdCommandsStatusResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1ContentItemsIdCommandsStatusResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1ContentItemsIdCommandsStatusResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1ContentItemsIdCommandsStatusResponseSuccess = (postApiV1ContentItemsIdCommandsStatusResponse200) & {
+  headers: Headers;
+};
+export type postApiV1ContentItemsIdCommandsStatusResponseError = (postApiV1ContentItemsIdCommandsStatusResponse400 | postApiV1ContentItemsIdCommandsStatusResponse401 | postApiV1ContentItemsIdCommandsStatusResponse403 | postApiV1ContentItemsIdCommandsStatusResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1ContentItemsIdCommandsStatusResponse = (postApiV1ContentItemsIdCommandsStatusResponseSuccess | postApiV1ContentItemsIdCommandsStatusResponseError)
+
+export const getPostApiV1ContentItemsIdCommandsStatusUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/content-items/${id}/commands/status`
+}
+
+export const postApiV1ContentItemsIdCommandsStatus = async (id: number,
+    statusUpdate: StatusUpdate, options?: RequestInit): Promise<postApiV1ContentItemsIdCommandsStatusResponse> => {
+  
+  return customInstance<postApiV1ContentItemsIdCommandsStatusResponse>(getPostApiV1ContentItemsIdCommandsStatusUrl(id),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      statusUpdate,)
+  }
+);}
+  
+
+
+
+export const getPostApiV1ContentItemsIdCommandsStatusMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdCommandsStatus>>, TError,{id: number;data: StatusUpdate}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdCommandsStatus>>, TError,{id: number;data: StatusUpdate}, TContext> => {
+
+const mutationKey = ['postApiV1ContentItemsIdCommandsStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1ContentItemsIdCommandsStatus>>, {id: number;data: StatusUpdate}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postApiV1ContentItemsIdCommandsStatus(id,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1ContentItemsIdCommandsStatusMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1ContentItemsIdCommandsStatus>>>
+    export type PostApiV1ContentItemsIdCommandsStatusMutationBody = StatusUpdate
+    export type PostApiV1ContentItemsIdCommandsStatusMutationError = void
+
+    /**
+ * @summary Override content item status
+ */
+export const usePostApiV1ContentItemsIdCommandsStatus = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdCommandsStatus>>, TError,{id: number;data: StatusUpdate}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1ContentItemsIdCommandsStatus>>,
+        TError,
+        {id: number;data: StatusUpdate},
+        TContext
+      > => {
+      return useMutation(getPostApiV1ContentItemsIdCommandsStatusMutationOptions(options), queryClient);
     }
     /**
  * Retrieves the AI-generated summary for a specific content item.

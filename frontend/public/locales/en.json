@@ -6,7 +6,8 @@
     "sources": "Sources",
     "administration": "Administration",
     "auditLogs": "Audit Logs",
-    "systemJobs": "System Jobs"
+    "systemJobs": "System Jobs",
+    "contentManagement": "Content Items"
   },
   "common": {
     "profile": "Profile",
@@ -174,6 +175,34 @@
         "submit_button": "Start Orchestration",
         "triggering": "Triggering..."
       }
+    }
+  },
+  "contentManagement": {
+    "title": "Content Items",
+    "subtitle": "Universal registry for all processed content. Manage processing lifecycles and manual status overrides.",
+    "filters": {
+      "status": "Filter by Status",
+      "topic": "Filter by Topic"
+    },
+    "table": {
+      "published": "Published At",
+      "source": "Source",
+      "topic": "Topic",
+      "title": "Title",
+      "status": "Status",
+      "transcript": "Transcript",
+      "actions": "Actions",
+      "viewSummary": "View Summary",
+      "generateSummary": "Generate Summary",
+      "generating": "Generating...",
+      "noItems": "No content items found matching current filters."
+    },
+    "modal": {
+      "title": "AI Content Summary",
+      "reference": "Reference",
+      "notAvailable": "Summary Not Available",
+      "notAvailableSub": "The requested summary could not be retrieved.",
+      "close": "Close Reader"
     }
   }
 }

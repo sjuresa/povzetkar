@@ -19,10 +19,14 @@ Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Th
 - **Orchestration (POV-154):** Implemented a specialized **Trigger Dialog** (Run Now) allowing users to configure orchestration parameters before execution.
 - **Orchestration (POV-154):** Added support for **Preview Mode** (Dry Run), enabling users to see pending items and potential status changes without persisting briefings.
 - **Orchestration (POV-154):** Added a **Briefing Toggle** to skip briefing generation during manual runs.
+- **Content Management (POV-155):** Implemented a global **Content Management** dashboard (`/admin/content`) for administrative oversight of all ingested content items.
+- **Admin Tools (POV-155):** Added support for **Manual Status Overrides**, allowing administrators to force status transitions (e.g., PENDING → COMPLETED, FAILED → PENDING) via a secure administrative API.
 
 ### Changed
 - **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.
 - **Orchestration (POV-153):** Refactored `DefaultBriefingGenerator` to utilize shared transactions for historical summary lookups, improving database visibility and test reliability.
+- **API (POV-155):** Enhanced the Content Item API with advanced filtering by **Status** and **Topic**, and server-side sorting by publication date.
+- **Frontend (POV-155):** Updated the **Source Detail** page and **Admin Content Management** table to support individual content item status overrides with premium glassmorphic UI.
 
 ### Fixed
 - **Error Handling (POV-153):** Hardened the Content Source API to provide `400 Bad Request` responses for invalid platforms/identifiers, eliminating 500 crashes.

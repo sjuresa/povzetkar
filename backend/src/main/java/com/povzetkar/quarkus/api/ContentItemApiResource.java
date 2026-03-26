@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
+import com.povzetkar.quarkus.api.dto.StatusUpdateDTO;
 import com.povzetkar.quarkus.api.dto.SummaryDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
@@ -11,14 +12,17 @@ import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.api.mapper.SummaryMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
-import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.BackgroundJobService;
+import com.povzetkar.quarkus.service.ContentItemAdminService;
 import com.povzetkar.quarkus.service.UserContextService;
 import com.povzetkar.quarkus.security.Permission;
+import com.povzetkar.quarkus.api.util.FilterBuilder;
+import com.povzetkar.quarkus.api.util.QueryParser;
+import io.quarkus.panache.common.Sort;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -65,23 +69,26 @@ public class ContentItemApiResource extends BaseApiResource {
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
     private final SummaryMapper summaryMapper;
+    private final ContentItemAdminService contentItemAdminService;
 
     @Inject
     public ContentItemApiResource(ContentItemMapper contentItemMapper, 
                                  BackgroundJobService backgroundJobService, 
                                  BackgroundJobMapper backgroundJobMapper, 
                                  SummaryMapper summaryMapper,
+                                 ContentItemAdminService contentItemAdminService,
                                  UserContextService userContextService) {
         super(userContextService);
         this.contentItemMapper = contentItemMapper;
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
         this.summaryMapper = summaryMapper;
+        this.contentItemAdminService = contentItemAdminService;
     }
 
     @GET
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Get all content items", description = "Retrieves a paginated list of all content items, optionally filtered by sourceId.")
+    @Operation(summary = "Get all content items", description = "Retrieves a paginated list of all content items, optionally filtered by sourceId, status, or topic.")
     @APIResponse(
             responseCode = "200",
             description = "List of content items retrieved successfully",
@@ -89,20 +96,30 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     public PaginatedResponse<ContentItemDTO> getAllContentItems(
             @QueryParam("sourceId") Long sourceId,
+            @QueryParam("status") List<ProcessingStatus> statuses,
+            @QueryParam("topicId") Long topicId,
+            @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<Long> idQuery;
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("publishedAt").descending(), Set.of("id", "title", "publishedAt", "processingStatus", "durationSeconds"));
+
+        FilterBuilder filters = new FilterBuilder("");
         if (sourceId != null) {
-            ContentSource source = ContentSource.findById(sourceId);
-            if (source == null) {
-                throw new NotFoundException("Source with id " + sourceId + " not found.");
-            }
-            idQuery = ContentItem.find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1 ORDER BY c.publishedAt DESC", source).project(Long.class);
-        } else {
-            idQuery = ContentItem.find("SELECT c.id FROM ContentItem c ORDER BY c.publishedAt DESC").project(Long.class);
+            filters.and("c.contentSource.id = :sourceId", "sourceId", sourceId);
         }
+        if (statuses != null && !statuses.isEmpty()) {
+            filters.and("c.processingStatus IN :statuses", "statuses", statuses);
+        }
+        if (topicId != null) {
+            filters.and("EXISTS (SELECT t FROM c.contentSource.topics t WHERE t.id = :topicId)", "topicId", topicId);
+        }
+
+        String query = filters.getQuery();
+        PanacheQuery<Long> idQuery = query.isEmpty()
+                ? ContentItem.find("SELECT c.id FROM ContentItem c", panacheSort).project(Long.class)
+                : ContentItem.find("SELECT c.id FROM ContentItem c WHERE " + query, panacheSort, filters.getParams()).project(Long.class);
 
         long count = idQuery.count();
         List<Long> itemIds = idQuery.page(pageIndex, clampedPageSize).list();
@@ -111,7 +128,7 @@ public class ContentItemApiResource extends BaseApiResource {
             return new PaginatedResponse<>(List.of(), count, pageIndex, clampedPageSize);
         }
 
-        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource WHERE c.id IN ?1 ORDER BY c.publishedAt DESC", itemIds);
+        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", panacheSort, itemIds);
         List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
@@ -210,6 +227,28 @@ public class ContentItemApiResource extends BaseApiResource {
                 .location(location)
                 .entity(backgroundJobMapper.toDTO(job))
                 .build();
+    }
+
+    @POST
+    @Path("/{id}/commands/status")
+    @RolesAllowed(Permission.V_ADMIN_JOB_UPDATE)
+    @Operation(summary = "Override content item status", description = "Manually updates the processing status of a content item. Admin only.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Status updated successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ContentItemDTO.class))
+    )
+    @APIResponse(responseCode = "404", description = "Content item not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to update", schema = @Schema(type = SchemaType.INTEGER))
+    public ContentItemDTO updateItemStatus(@PathParam("id") Long id, StatusUpdateDTO dto) {
+        boolean success = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN");
+        if (!success) {
+            throw new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND);
+        }
+        
+        ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+        return contentItemMapper.toDTO(entity);
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
