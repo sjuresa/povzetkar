@@ -107,12 +107,18 @@ public class ContentItemApiResource extends BaseApiResource {
 
         FilterBuilder filters = new FilterBuilder("");
         if (sourceId != null) {
+            if (com.povzetkar.quarkus.model.ContentSource.findById(sourceId) == null) {
+                throw new NotFoundException("Source with id " + sourceId + " not found.");
+            }
             filters.and("c.contentSource.id = :sourceId", "sourceId", sourceId);
         }
         if (statuses != null && !statuses.isEmpty()) {
             filters.and("c.processingStatus IN :statuses", "statuses", statuses);
         }
         if (topicId != null) {
+            if (com.povzetkar.quarkus.model.Topic.findById(topicId) == null) {
+                throw new NotFoundException("Topic with id " + topicId + " not found.");
+            }
             filters.and("EXISTS (SELECT t FROM c.contentSource.topics t WHERE t.id = :topicId)", "topicId", topicId);
         }
 
