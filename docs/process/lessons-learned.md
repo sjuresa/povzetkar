@@ -576,3 +576,15 @@ When building professional-grade document readers (like the **Summary Modal**) u
   }
   ```
 - **The Standard:** For modals intended as document readers, favor a fixed max-width (e.g., `max-w-4xl`) and symmetrical internal padding (`p-6 md:p-8`) on the article tag itself to prevent the text from becoming too wide to read easily while maintaining consistent spacing.
+---
+
+## 24. Concurrency & Thread Safety in Background Orchestration (v0.14.0)
+
+### 24.1 Hibernate Session Isolation in Parallel Tasks
+When executing parallel database tasks using a `ManagedExecutor` or similar thread pool in Quarkus/Panache:
+- **The Trap:** Passing a JPA entity (e.g., a `Topic` fetched on the main request thread) into multiple background lambdas. Even if each lambda uses `QuarkusTransaction.requiringNew()`, Hibernate may attempt to lazily initialize collections or manage the entity state using the *original* session from the parent thread. This leads to `java.util.ConcurrentModificationException` within Hibernate's `ResultsetsTrackingContainer` or `PSQLException: This statement has been closed` errors.
+- **The Standard:** **Never** pass managed entities across thread boundaries. Instead, pass the **entity ID** (`Long topicId`) to the background task. Inside the task's own transaction, refetch the entity from the database using `Topic.findById(topicId)`. This ensures each parallel task has its own isolated Hibernate session and state tracking.
+
+### 24.2 Environment-Agnostic Date Management
+- **The Trap:** Using `ZoneId.systemDefault()` for `Instant` or `OffsetDateTime` conversions. This results in "flaky" date-range logic that works on a developer's machine but fails on a CI server or cloud environment set to a different timezone (e.g., UTC).
+- **The Standard:** Always use **`ZoneOffset.UTC`** for all internal orchestration logic and date-to-instant conversions. This ensures consistent, deterministic behavior regardless of the host environment's configuration.

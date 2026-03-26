@@ -16,6 +16,9 @@ Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Th
 - **Frontend (POV-153):** Enhanced the **Topic Edit/Create form** to support prompt template management with a live "Reset to Default" capability.
 - **Content Ingestion (POV-153):** Implemented **Automated Source Enrichment**. Adding a YouTube channel now automatically fetches its name, description, and subscriber count via the YouTube Data API.
 - **Content Ingestion (POV-153):** Implemented **Idempotent Source Creation**. Attempting to add an existing source now gracefully returns the current record with a `200 OK` instead of a conflict, facilitating smoother user flows.
+- **Orchestration (POV-154):** Implemented a specialized **Trigger Dialog** (Run Now) allowing users to configure orchestration parameters before execution.
+- **Orchestration (POV-154):** Added support for **Preview Mode** (Dry Run), enabling users to see pending items and potential status changes without persisting briefings.
+- **Orchestration (POV-154):** Added a **Briefing Toggle** to skip briefing generation during manual runs.
 
 ### Changed
 - **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.
