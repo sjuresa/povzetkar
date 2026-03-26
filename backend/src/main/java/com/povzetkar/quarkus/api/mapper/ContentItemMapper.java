@@ -3,10 +3,12 @@ package com.povzetkar.quarkus.api.mapper;
 import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+import java.util.Set;
 
 @Mapper(componentModel = "jakarta", uses = {ContentSourceMapper.class})
 public interface ContentItemMapper {
@@ -16,8 +18,15 @@ public interface ContentItemMapper {
     @Mapping(target = "contentSource", source = "entity.contentSource")
     @Mapping(target = "topicName", source = "entity", qualifiedByName = "mapTopicName")
     @Mapping(target = "hasTranscript", source = "entity", qualifiedByName = "mapHasTranscript")
-    @Mapping(target = "hasSummary", source = "entity", qualifiedByName = "mapHasSummary")
-    ContentItemDTO toDTO(ContentItem entity);
+    @Mapping(target = "hasSummary", expression = "java(itemIdsWithSummaries != null && itemIdsWithSummaries.contains(entity.id))")
+    ContentItemDTO toDTO(ContentItem entity, @Context Set<Long> itemIdsWithSummaries);
+
+    default ContentItemDTO toDTO(ContentItem entity) {
+        Set<Long> summaryIdSet = com.povzetkar.quarkus.model.Summary.count("contentItem.id", entity.id) > 0 
+            ? java.util.Set.of(entity.id) 
+            : java.util.Collections.emptySet();
+        return toDTO(entity, summaryIdSet);
+    }
 
     @Named("mapDurationSeconds")
     default Long mapDurationSeconds(ContentItem entity) {
@@ -49,12 +58,5 @@ public interface ContentItemMapper {
             return yt.transcript != null && !yt.transcript.isBlank();
         }
         return false;
-    }
-
-    @Named("mapHasSummary")
-    default boolean mapHasSummary(ContentItem entity) {
-        // Simple count lookup - since we list ~20 items, this is marginally okay for admin UI
-        // In highly performant routes, we'd use a single join query or pre-fetched set.
-        return com.povzetkar.quarkus.model.Summary.count("contentItem.id", entity.id) > 0;
     }
 }

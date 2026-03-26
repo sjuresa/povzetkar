@@ -129,7 +129,16 @@ public class ContentItemApiResource extends BaseApiResource {
         }
 
         List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", panacheSort, itemIds);
-        List<ContentItemDTO> dtoList = items.stream().map(contentItemMapper::toDTO).toList();
+
+        // Fetch all summary existence flags in one go to solve N+1 Problem
+        final java.util.Set<Long> itemIdsWithSummaries = new java.util.HashSet<>(
+            io.quarkus.hibernate.orm.panache.Panache.getEntityManager()
+                   .createQuery("SELECT s.contentItem.id FROM Summary s WHERE s.contentItem.id IN :ids", Long.class)
+                   .setParameter("ids", itemIds)
+                   .getResultList()
+        );
+
+        List<ContentItemDTO> dtoList = items.stream().map(item -> contentItemMapper.toDTO(item, itemIdsWithSummaries)).toList();
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
@@ -241,14 +250,10 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to update", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO updateItemStatus(@PathParam("id") Long id, StatusUpdateDTO dto) {
-        boolean success = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN");
-        if (!success) {
-            throw new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND);
-        }
-        
-        ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
+        ContentItem updatedItem = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN")
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        return contentItemMapper.toDTO(entity);
+        
+        return contentItemMapper.toDTO(updatedItem);
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {

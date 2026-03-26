@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from '@tanstack/react-router';
 import { useGetApiV1SourcesId } from '../api/generated/content-sources/content-sources';
 import { 
   useGetApiV1SourcesIdItems, 
-  useGetApiV1ContentItemsIdSummary,
-  usePostApiV1ContentItemsIdCommandsStatus 
+  usePostApiV1ContentItemsIdCommandsStatus,
+  getGetApiV1SourcesIdItemsQueryKey
 } from '../api/generated/content-items/content-items';
-import ReactMarkdown from 'react-markdown';
 import { ProcessingStatus } from '../api/generated/model/processingStatus';
 import type { ContentItem } from '../api/generated/model';
 import { Pagination } from '../components/ui/Pagination';
@@ -18,14 +17,13 @@ import {
   Globe, 
   Clock, 
   FileText, 
-  AlertCircle, 
-  X
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '../util/cn';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { getGetApiV1SourcesIdItemsQueryKey } from '../api/generated/content-items/content-items';
+import { SummaryModal } from '../components/admin/SummaryModal';
 
 /**
  * Helper to format duration in seconds to MM:SS or HH:MM:SS
@@ -39,6 +37,20 @@ const formatDuration = (seconds?: number) => {
     return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
   return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Helper to get CSS classes for the status select based on status
+ */
+const getStatusSelectClasses = (status?: ProcessingStatus) => {
+  switch (status) {
+    case 'COMPLETED':
+      return "text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/5";
+    case 'FAILED':
+      return "text-red-500 border-red-500/20 hover:bg-red-500/5";
+    default:
+      return "text-amber-500 border-amber-500/20 hover:bg-amber-500/5";
+  }
 };
 
 /**
@@ -240,9 +252,7 @@ export function SourceDetailPage() {
                             onChange={(e) => handleStatusChange(item.id!, e.target.value as ProcessingStatus)}
                             className={cn(
                               "text-[10px] font-bold px-2 py-1 rounded-lg border bg-transparent cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/30",
-                              item.processingStatus === 'COMPLETED' ? "text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/5" :
-                              item.processingStatus === 'FAILED' ? "text-red-500 border-red-500/20 hover:bg-red-500/5" :
-                              "text-amber-500 border-amber-500/20 hover:bg-amber-500/5"
+                              getStatusSelectClasses(item.processingStatus)
                             )}
                           >
                             {Object.values(ProcessingStatus).map(status => (
@@ -313,105 +323,3 @@ export function SourceDetailPage() {
   );
 }
 
-/**
- * Centered glassmorphic modal for viewing ContentItem summaries.
- * Features Executive Summary highlight and ReactMarkdown rendering.
- */
-function SummaryModal({ itemId, onClose }: { itemId: number, onClose: () => void }) {
-  const { data: response, isLoading, error } = useGetApiV1ContentItemsIdSummary(itemId);
-  const summary = response?.data;
-
-  // Prevent background scrolling while modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = 'unset'; };
-  }, []);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" 
-        onClick={onClose} 
-      />
-      
-      {/* Modal Container */}
-      <div className="glass relative w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col rounded-[2.5rem] border border-[var(--color-border-subtle)] shadow-4xl animate-in zoom-in-95 fade-in duration-300 bg-[var(--color-surface-elevated)]">
-        
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 md:px-10 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl">
-          <div className="flex items-center space-x-4">
-             <div className={cn(
-               "w-12 h-12 rounded-2xl flex items-center justify-center border shadow-inner",
-               summary?.platform === 'YOUTUBE' 
-                 ? "bg-red-500/10 text-red-500 border-red-500/20" 
-                 : "bg-blue-500/10 text-blue-500 border-blue-500/20"
-             )}>
-               {summary?.platform === 'YOUTUBE' ? <Youtube size={24} /> : <Globe size={24} />}
-             </div>
-             <div>
-               <h3 className="text-xl font-bold text-[var(--color-text-primary)]">AI Content Summary</h3>
-               {summary ? (
-                 <div className="flex items-center text-[10px] text-[var(--color-text-secondary)] font-mono opacity-60 mt-0.5 tracking-wider">
-                   {summary?.platform === 'YOUTUBE' ? (
-                     <Youtube size={10} className="mr-1 text-red-500" />
-                   ) : (
-                     <Globe size={10} className="mr-1 text-blue-500" />
-                   )}
-                   <span>REFERENCE: ITEM-{itemId}</span>
-                 </div>
-               ) : null}
-             </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-3 rounded-2xl hover:bg-white/5 text-[var(--color-text-secondary)] hover:text-white transition-all active:scale-90"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto scrollbar-elegant bg-gradient-to-b from-white to-gray-50 dark:from-[#0a0a0a] dark:to-[#080808] p-6 md:p-8">
-          {isLoading ? (
-            <div className="p-10 space-y-10 animate-pulse">
-              <div className="space-y-4">
-                <Skeleton className="h-10 w-3/4" />
-                <Skeleton className="h-6 w-1/2" />
-              </div>
-              <Skeleton className="h-48 w-full rounded-3xl" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-32 text-center space-y-6">
-               <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
-                  <AlertCircle size={40} />
-               </div>
-               <p className="text-2xl font-bold text-gray-900 dark:text-white">Request Interrupted</p>
-               <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-indigo-500 text-white font-bold">Go Back</button>
-            </div>
-          ) : summary ? (
-            <article className="w-full">
-              <section className="prose prose-slate dark:prose-invert max-w-none animate-in fade-in slide-in-from-bottom-6 duration-700">
-                <ReactMarkdown>{summary.summaryText || ""}</ReactMarkdown>
-              </section>
-            </article>
-          ) : (
-            <div className="text-center py-32 text-gray-400 italic">
-              No analysis found for this item.
-            </div>
-          )}
-        </div>
-
-        {/* Modal Footer */}
-        <div className="p-6 md:px-10 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl flex justify-end">
-           <button 
-             onClick={onClose}
-             className="px-8 py-2.5 rounded-xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-bold transition-all active:scale-95"
-           >
-             Close Reader
-           </button>
-        </div>
-      </div>
-    </div>
-  );
-}
