@@ -6,10 +6,10 @@ import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -27,8 +27,10 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
- 
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
  
 @Path("/api/v1/sources")
 @ApplicationScoped
@@ -69,11 +71,30 @@ public class SourceItemApiResource extends BaseApiResource {
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<ContentItem> query = ContentItem.find("contentSource", Sort.by("publishedAt").descending(), source);
-        long count = query.count();
-        List<ContentItemDTO> dtoList = query.page(pageIndex, clampedPageSize)
-                .stream()
-                .map(contentItemMapper::toDTO)
+        Sort sort = Sort.by("publishedAt").descending();
+
+        // Pattern inspired by ContentItemApiResource to solve ResultSet issues and N+1
+        PanacheQuery<Long> idQuery = ContentItem.find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1", sort, source).project(Long.class);
+        long count = idQuery.count();
+        List<Long> itemIds = idQuery.page(pageIndex, clampedPageSize).list();
+
+        if (itemIds.isEmpty()) {
+            return new PaginatedResponse<>(List.of(), count, pageIndex, clampedPageSize);
+        }
+
+        // Fetch items by ID list (using JOIN FETCH to be safe/consistent)
+        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", sort, itemIds);
+
+        // Fetch all summary existence flags in one go
+        final Set<Long> itemIdsWithSummaries = new HashSet<>(
+            io.quarkus.hibernate.orm.panache.Panache.getEntityManager()
+                   .createQuery("SELECT s.contentItem.id FROM Summary s WHERE s.contentItem.id IN :ids", Long.class)
+                   .setParameter("ids", itemIds)
+                   .getResultList()
+        );
+
+        List<ContentItemDTO> dtoList = items.stream()
+                .map(item -> contentItemMapper.toDTO(item, itemIdsWithSummaries))
                 .toList();
  
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);

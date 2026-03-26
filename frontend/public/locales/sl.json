@@ -6,7 +6,8 @@
     "sources": "Viri",
     "administration": "Administracija",
     "auditLogs": "Revizijski Sledi",
-    "systemJobs": "Sistemska Opravila"
+    "systemJobs": "Sistemska Opravila",
+    "contentManagement": "Elementi vsebine"
   },
   "common": {
     "profile": "Profil",
@@ -174,6 +175,34 @@
         "submit_button": "Zaženi orkestracijo",
         "triggering": "Sprožanje..."
       }
+    }
+  },
+  "contentManagement": {
+    "title": "Vsebinski elementi",
+    "subtitle": "Univerzalni register za vso obdelano vsebino. Upravljanje življenjskih ciklov obdelave in ročni popravki statusov.",
+    "filters": {
+      "status": "Filtriraj po statusu",
+      "topic": "Filtriraj po temi"
+    },
+    "table": {
+      "published": "Objavljeno",
+      "source": "Vir",
+      "topic": "Tema",
+      "title": "Naslov",
+      "status": "Status",
+      "transcript": "Prepis",
+      "actions": "Akcije",
+      "viewSummary": "Poglej povzetek",
+      "generateSummary": "Generiraj povzetek",
+      "generating": "Generiram...",
+      "noItems": "Ni najdenih elementov za trenutne filtre."
+    },
+    "modal": {
+      "title": "AI povzetek vsebine",
+      "reference": "Referenca",
+      "notAvailable": "Povzetek ni na voljo",
+      "notAvailableSub": "Povzetka ni bilo mogoče pridobiti.",
+      "close": "Zapri bralnik"
     }
   }
 }

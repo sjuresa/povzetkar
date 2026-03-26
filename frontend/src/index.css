@@ -70,45 +70,56 @@
 
   /* Prose Overrides for Document Reader (Tailwind v4 style) */
   .prose {
-    --tw-prose-body: var(--color-text-secondary);
+    --tw-prose-body: var(--color-text-primary);
     --tw-prose-headings: var(--color-text-primary);
-    --tw-prose-links: #3b82f6;
+    --tw-prose-links: var(--color-accent);
     --tw-prose-bold: var(--color-text-primary);
+    --tw-prose-counters: var(--color-text-secondary);
+    --tw-prose-bullets: var(--color-text-secondary);
+    --tw-prose-quotes: var(--color-text-primary);
+    --tw-prose-quote-borders: var(--color-border-subtle);
+    --tw-prose-captions: var(--color-text-secondary);
+    --tw-prose-code: var(--color-primary);
+    --tw-prose-pre-code: var(--color-text-primary);
+    --tw-prose-pre-bg: var(--color-background-alt);
+    --tw-prose-th-borders: var(--color-border-subtle);
+    --tw-prose-td-borders: var(--color-border-subtle);
     
     max-width: none;
+    font-size: 1.125rem;
+    line-height: 1.75;
   }
 
   .prose h1, .prose h2, .prose h3, .prose h4 {
-    font-weight: 800;
-    margin-top: 2.5rem;
-    margin-bottom: 1.25rem;
-    line-height: 1.2;
+    font-weight: 900;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
   }
 
-  .prose h1 { font-size: 2.5rem; }
-  .prose h2 { font-size: 2rem; }
-  .prose h3 { font-size: 1.5rem; }
-
-  .prose > :first-child {
-    margin-top: 0;
-  }
-  
-  .prose a {
-    text-decoration: underline;
-    font-weight: 600;
-  }
+  .prose h1 { font-size: 2.75rem; }
+  .prose h2 { font-size: 2.25rem; border-bottom: 1px solid var(--color-border-subtle); padding-bottom: 0.5rem; }
+  .prose h3 { font-size: 1.75rem; }
 
   .prose p {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
+    color: var(--color-text-primary);
   }
 
   .prose ul, .prose ol {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
     padding-left: 1.5rem;
   }
 
   .prose li {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose strong {
+    color: var(--color-text-primary);
+    font-weight: 700;
   }
 }
 

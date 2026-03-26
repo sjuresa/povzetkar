@@ -588,3 +588,17 @@ When executing parallel database tasks using a `ManagedExecutor` or similar thre
 ### 24.2 Environment-Agnostic Date Management
 - **The Trap:** Using `ZoneId.systemDefault()` for `Instant` or `OffsetDateTime` conversions. This results in "flaky" date-range logic that works on a developer's machine but fails on a CI server or cloud environment set to a different timezone (e.g., UTC).
 - **The Standard:** Always use **`ZoneOffset.UTC`** for all internal orchestration logic and date-to-instant conversions. This ensures consistent, deterministic behavior regardless of the host environment's configuration.
+
+## [2026-03-26] Content Management & Status Overrides (POV-155)
+
+### API & Backend Isolation
+- **DTOs vs. Entities**: Never expose JPA entities directly in paginated API responses if specialized DTOs exist. Using `ContentItemDTO` instead of `ContentItem` (JPA) resolved over 100 frontend lint errors and provided a cleaner, more stable API contract.
+- **Nested Mapping**: MapStruct's `uses` attribute is essential for mapping nested DTOs (e.g., `ContentItemDTO` -> `ContentSourceDTO`). This ensures consistency across the entire domain model.
+
+### Frontend Synchronization
+- **OpenAPI Schema Updates**: Manual backend `package` runs are mandatory after DTO changes to ensure `openapi.json` is correctly regenerated for Orval. Failure to do this leads to stale frontend hooks and type-safety regressions.
+- **Casting Paginated Items**: Orval's `PaginatedResponse` often defaults to `unknown[]` for items. Explicitly casting these to the domain DTO (e.g., `(data?.items || []) as ContentItem[]`) in the route components restores full IDE support and type-safety.
+
+### UI/UX & Administrative Tools
+- **Glassmorphic Data Grids**: Using `glass` and `animate-in` tokens creates a premium administrative feel that matches the main dashboard, even for high-density tables.
+- **Immediate Feedback**: Integrating `useQueryClient.invalidateQueries` in status update hooks provides the near-instant feedback loop expected in modern administrative tools.

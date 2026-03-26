@@ -12,6 +12,7 @@ import { AuditLogPage } from './routes/AuditLogPage';
 import { ErrorPage } from './routes/ErrorPage';
 import { ProfilePage } from './routes/ProfilePage';
 import { AppShell } from './components/layout/AppShell';
+import { ContentManagementPage } from './routes/ContentManagementPage';
 import { TopicsPage } from './pages/topics/TopicsPage';
 import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
 import { SourceDetailPage } from './routes/SourceDetailPage';
@@ -148,6 +149,12 @@ const auditLogRoute = createRoute({
   component: AuditLogPage,
 });
 
+const contentManagementRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: 'content',
+  component: ContentManagementPage,
+});
+
 const adminJobsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'jobs',
@@ -167,6 +174,7 @@ const routeTree = rootRoute.addChildren([
     sourceDetailRoute,
     adminLayoutRoute.addChildren([
       auditLogRoute,
+      contentManagementRoute,
       adminJobsRoute
     ]),
   ]),

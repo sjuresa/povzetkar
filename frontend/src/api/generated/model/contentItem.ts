@@ -5,6 +5,7 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
+import type { ContentSourceDTO } from './contentSourceDTO';
 import type { Instant } from './instant';
 import type { ProcessingStatus } from './processingStatus';
 
@@ -23,4 +24,11 @@ export interface ContentItem {
   errorCode?: string;
   durationSeconds?: number;
   thumbnailUrl?: string;
+  contentSource?: ContentSourceDTO;
+  /** First associated topic name */
+  topicName?: string;
+  /** Whether a transcript exists in the database */
+  hasTranscript?: boolean;
+  /** Whether a summary exists in the database */
+  hasSummary?: boolean;
 }
