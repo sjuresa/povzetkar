@@ -3,10 +3,11 @@ import { ProcessingStatus } from '../../api/generated/model/processingStatus';
 import { useTranslation } from 'react-i18next';
 
 export interface ContentItemFiltersProps {
+  filters: { status?: ProcessingStatus[]; topicId?: number };
   onFilterChange: (filters: { status?: ProcessingStatus[]; topicId?: number }) => void;
 }
 
-export function ContentItemFilters({ onFilterChange }: ContentItemFiltersProps) {
+export function ContentItemFilters({ filters, onFilterChange }: ContentItemFiltersProps) {
   const { t } = useTranslation();
   const { data: topicsData } = useGetApiV1Topics({ page: 0, size: 100 });
   const topics = topicsData?.data?.items || [];
@@ -18,6 +19,7 @@ export function ContentItemFilters({ onFilterChange }: ContentItemFiltersProps) 
           {t('contentManagement.filters.topic')}
         </label>
         <select 
+          value={filters.topicId || ''}
           onChange={(e) => onFilterChange({ topicId: e.target.value ? Number(e.target.value) : undefined })}
           className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all appearance-none cursor-pointer"
         >
@@ -33,6 +35,7 @@ export function ContentItemFilters({ onFilterChange }: ContentItemFiltersProps) 
           {t('contentManagement.filters.status')}
         </label>
         <select 
+          value={filters.status?.[0] || ''}
           onChange={(e) => onFilterChange({ status: e.target.value ? [e.target.value as ProcessingStatus] : undefined })}
           className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all appearance-none cursor-pointer"
         >
@@ -45,11 +48,7 @@ export function ContentItemFilters({ onFilterChange }: ContentItemFiltersProps) 
 
       <div className="flex items-end">
         <button 
-          onClick={() => {
-            const selects = document.querySelectorAll('select');
-            selects.forEach(s => (s as HTMLSelectElement).value = '');
-            onFilterChange({});
-          }}
+          onClick={() => onFilterChange({ status: undefined, topicId: undefined })}
           className="w-full md:w-auto px-6 py-3 rounded-xl bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-deep)] transition-all font-medium border border-[var(--color-border-subtle)]"
         >
           {t('common.cancel')}

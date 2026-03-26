@@ -47,7 +47,10 @@ public interface ContentItemMapper {
     @Named("mapTopicName")
     default String mapTopicName(ContentItem entity) {
         if (entity.contentSource != null && entity.contentSource.topics != null && !entity.contentSource.topics.isEmpty()) {
-            return entity.contentSource.topics.iterator().next().name;
+            return entity.contentSource.topics.stream()
+                .min(java.util.Comparator.comparing(topic -> topic.id))
+                .map(topic -> topic.name)
+                .orElse("N/A");
         }
         return "N/A";
     }

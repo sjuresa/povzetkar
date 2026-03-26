@@ -61,10 +61,13 @@ export function ContentManagementPage() {
         </div>
       </div>
 
-      <ContentItemFilters onFilterChange={(newFilters) => {
-        setFilters(newFilters);
-        setPage(0);
-      }} />
+      <ContentItemFilters 
+        filters={filters}
+        onFilterChange={(newFilters) => {
+          setFilters(prev => ({ ...prev, ...newFilters }));
+          setPage(0);
+        }} 
+      />
 
       <div className="space-y-6">
         {isLoading && !items.length ? (

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useGetApiV1ContentItemsIdSummary } from '../../api/generated/content-items/content-items';
 import ReactMarkdown from 'react-markdown';
 import { Skeleton } from '../ui/Skeleton';
@@ -22,6 +23,15 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
     itemId!,
     { query: { enabled: !!itemId } }
   );
+
+  useEffect(() => {
+    if (itemId) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [itemId]);
 
   if (!itemId) return null;
 

@@ -25,9 +25,23 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
   const handleStatusChange = (id: number, newStatus: ProcessingStatus) => {
     if (!newStatus) return;
     updateStatus({ id, data: { status: newStatus } }, {
-      onSuccess: () => {
+      onSuccess: (updatedItem: any) => {
         toast.success(t('common.success'));
-        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsQueryKey() });
+        
+        // Optimistically update the cache for any query containing this item
+        // This is much faster than invalidating and refetching
+        queryClient.setQueriesData({ queryKey: getGetApiV1ContentItemsQueryKey() }, (oldData: any) => {
+          if (!oldData?.data?.items) return oldData;
+          return {
+            ...oldData,
+            data: {
+              ...oldData.data,
+              items: oldData.data.items.map((item: any) => 
+                item.id === id ? { ...item, ...updatedItem.data } : item
+              )
+            }
+          };
+        });
       },
       onError: () => toast.error(t('common.error')),
     });
