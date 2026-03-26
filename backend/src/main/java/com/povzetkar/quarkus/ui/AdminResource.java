@@ -20,7 +20,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
@@ -29,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @ApplicationScoped
-@Transactional
 public class AdminResource {
 
     private static final String ADMIN_REDIRECT_PATH = "/ui/admin";
