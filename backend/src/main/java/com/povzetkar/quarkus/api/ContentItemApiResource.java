@@ -156,7 +156,10 @@ public class ContentItemApiResource extends BaseApiResource {
     public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
         ContentItem entity = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        return contentItemMapper.toDTO(entity);
+        
+        Set<Long> summaryExists = com.povzetkar.quarkus.model.Summary.count("contentItem.id", id) > 0 
+                ? Set.of(id) : Set.of();
+        return contentItemMapper.toDTO(entity, summaryExists);
     }
 
     @GET
@@ -253,7 +256,9 @@ public class ContentItemApiResource extends BaseApiResource {
         ContentItem updatedItem = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN")
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
         
-        return contentItemMapper.toDTO(updatedItem);
+        Set<Long> summaryExists = com.povzetkar.quarkus.model.Summary.count("contentItem.id", updatedItem.id) > 0 
+                ? Set.of(updatedItem.id) : Set.of();
+        return contentItemMapper.toDTO(updatedItem, summaryExists);
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {

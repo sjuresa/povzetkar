@@ -22,10 +22,7 @@ public interface ContentItemMapper {
     ContentItemDTO toDTO(ContentItem entity, @Context Set<Long> itemIdsWithSummaries);
 
     default ContentItemDTO toDTO(ContentItem entity) {
-        Set<Long> summaryIdSet = com.povzetkar.quarkus.model.Summary.count("contentItem.id", entity.id) > 0 
-            ? java.util.Set.of(entity.id) 
-            : java.util.Collections.emptySet();
-        return toDTO(entity, summaryIdSet);
+        return toDTO(entity, java.util.Collections.emptySet());
     }
 
     @Named("mapDurationSeconds")
