@@ -19,13 +19,13 @@ func main() {
 
 	resp, err := client.Get(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to perform GET request: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to perform GET request to %s: %v\n", os.Args[1], err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Fprintf(os.Stderr, "Error: unexpected status code: %d\n", resp.StatusCode)
+		fmt.Fprintf(os.Stderr, "Error: unexpected status code %d for URL %s\n", resp.StatusCode, os.Args[1])
 		os.Exit(1)
 	}
 }
