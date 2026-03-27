@@ -80,7 +80,7 @@ client.interceptors.request.use(
 
     return config;
   },
-  (_error) => Promise.reject(new Error(_error instanceof Error ? _error.message : String(_error)))
+  (error) => Promise.reject(error)
 );
 
 /**
