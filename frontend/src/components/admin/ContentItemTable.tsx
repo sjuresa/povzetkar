@@ -25,18 +25,19 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
   const handleStatusChange = (id: number, newStatus: ProcessingStatus) => {
     if (!newStatus) return;
     updateStatus({ id, data: { status: newStatus } }, {
-      onSuccess: (updatedItem: any) => {
+      onSuccess: (updatedEntry) => {
         toast.success(t('common.success'));
         
-        // Optimistically update the cache for any query containing this item
-        // This is much faster than invalidating and refetching
-        queryClient.setQueriesData({ queryKey: getGetApiV1ContentItemsQueryKey() }, (oldData: any) => {
-          if (!oldData?.data?.items) return oldData;
+        const updatedItem = updatedEntry as { data: Partial<ContentItem> };
+        
+        queryClient.setQueriesData({ queryKey: getGetApiV1ContentItemsQueryKey() }, (oldData: unknown) => {
+          const data = oldData as { data?: { items?: ContentItem[] } } | undefined;
+          if (!data?.data?.items) return oldData;
           return {
-            ...oldData,
+            ...data,
             data: {
-              ...oldData.data,
-              items: oldData.data.items.map((item: any) => 
+              ...data.data,
+              items: data.data.items.map((item) => 
                 item.id === id ? { ...item, ...updatedItem.data } : item
               )
             }
@@ -53,8 +54,9 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
         toast.success(t('contentManagement.table.generating'));
         void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsQueryKey() });
       },
-      onError: (err: any) => {
-        const message = err.response?.data?.message || t('common.error');
+      onError: (err: unknown) => {
+        const axiosError = err as { response?: { data?: { message?: string } } };
+        const message = axiosError.response?.data?.message || t('common.error');
         toast.error(message);
       }
     });

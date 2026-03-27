@@ -45,7 +45,6 @@
   "dashboard": {
     "title": "Dashboard",
     "activeJobs": "Active Job(s)",
-    "testPulse": "Test Pulse",
     "recentBriefings": "Recent Briefings",
     "viewAll": "View All",
     "refresh": "Refresh Dashboard",

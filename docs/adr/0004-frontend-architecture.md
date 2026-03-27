@@ -44,6 +44,7 @@ We will implement the frontend using a **Monorepo** structure and the following 
 
 ### 7. Real-Time: SSE (Server-Sent Events)
 *   Implementation will use a custom React hook (e.g., `useEventSource`) to consume job status streams defined in v0.11.
+*   **Maintenance Note (v0.14.0)**: The `/api/v1/events/test-pulse` endpoint (previously used for SSE integration testing) has been removed as part of release stabilization.
 
 ### 8. Testing Strategy
 *   **Unit/Integration**: **Vitest** for component and logic testing.

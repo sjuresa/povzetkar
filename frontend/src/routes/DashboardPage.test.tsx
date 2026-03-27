@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { DashboardPage } from './DashboardPage';
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
-
+import { useEventStore } from '../store/eventStore';
 
 // Mock the API hooks and store
 vi.mock('../api/generated/dashboard/dashboard', () => ({
@@ -24,13 +24,9 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
-import { useEventStore } from '../store/eventStore';
-
-
 const renderDashboard = () => {
   return render(<DashboardPage />);
 };
-
 
 describe('DashboardPage', () => {
   it('renders loading state initially', () => {
@@ -42,10 +38,9 @@ describe('DashboardPage', () => {
       refetch: vi.fn(),
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue([]);
+    vi.mocked(useEventStore).mockReturnValue({} as any);
 
     renderDashboard();
-    // We expect NOT to see Dashboard title yet while loading
     expect(screen.queryByText('dashboard.title')).not.toBeInTheDocument();
   });
 
@@ -54,14 +49,13 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { data: { stats: { activeTopics: 0 }, recentBriefings: [] } } as any,
+      data: { data: { stats: { activeTopics: 0 }, recentBriefings: [] } },
       refetch: vi.fn(),
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue([]);
+    vi.mocked(useEventStore).mockReturnValue({} as any);
 
     renderDashboard();
-    // Now searching for i18n keys instead of English text due to global mock
     expect(screen.getByText(/dashboard.empty.welcome/i)).toBeInTheDocument();
     expect(screen.getByText(/dashboard.empty.action/i)).toBeInTheDocument();
   });
@@ -78,11 +72,11 @@ describe('DashboardPage', () => {
             { id: 1, title: 'AI News', topicName: 'Tech', briefingDate: '2026-03-15' },
           ],
         }
-      } as any,
+      },
       refetch: vi.fn(),
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue([]);
+    vi.mocked(useEventStore).mockReturnValue({} as any);
 
     renderDashboard();
     expect(screen.getByText('dashboard.title')).toBeInTheDocument();
@@ -97,11 +91,11 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { data: { stats: { activeTopics: 5 } } } as any,
+      data: { data: { stats: { activeTopics: 5 } } },
       refetch,
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue([]);
+    vi.mocked(useEventStore).mockReturnValue({} as any);
 
     renderDashboard();
     const refreshBtn = screen.getByTitle('dashboard.refresh');

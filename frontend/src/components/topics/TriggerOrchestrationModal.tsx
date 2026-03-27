@@ -232,7 +232,7 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
             {t('common.cancel')}
           </button>
           <button
-            onClick={handleRun}
+            onClick={() => { void handleRun(); }}
             disabled={isTriggering}
             className="flex-[2] flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >

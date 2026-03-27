@@ -41,10 +41,10 @@ export function useJobEvents() {
     };
 
     // Listen for specific event types from backend (EventApiResource.java)
-    es.addEventListener('JOB_STATUS_CHANGED', (event) => {
+    es.addEventListener('JOB_STATUS_CHANGED', (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data);
-        const data: JobStatusChangedEvent = payload.data;
+        const payload = JSON.parse(event.data as string) as { data: JobStatusChangedEvent };
+        const data = payload.data;
         logger.info('[SSE] Job status changed', { jobData: data }); // Replaced console.log with logger.info
         
         if (!data || !data.jobId) {
@@ -78,9 +78,9 @@ export function useJobEvents() {
       }
     });
 
-    es.addEventListener('ORCHESTRATION_COMPLETED', (event) => {
+    es.addEventListener('ORCHESTRATION_COMPLETED', (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data);
+        const payload = JSON.parse(event.data as string) as { data: string };
         const message = payload.data || 'Orchestration finished';
         toast.success('Orchestration Complete', {
           description: message,
@@ -91,9 +91,9 @@ export function useJobEvents() {
       }
     });
 
-    es.addEventListener('ORCHESTRATION_PREVIEW_COMPLETED', (event) => {
+    es.addEventListener('ORCHESTRATION_PREVIEW_COMPLETED', (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data);
+        const payload = JSON.parse(event.data as string) as { data: string };
         const message = payload.data || 'Preview finished';
         toast.info('Orchestration Preview', {
           description: message,

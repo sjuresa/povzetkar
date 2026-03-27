@@ -4,12 +4,12 @@ import { vi } from 'vitest';
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
-    getItem: (key: string) => store[key] || null,
+    getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, value: string) => { store[key] = value.toString(); },
     clear: () => { store = {}; },
     removeItem: (key: string) => { delete store[key]; },
-    length: Object.keys(store).length,
-    key: (index: number) => Object.keys(store)[index] || null,
+    get length() { return Object.keys(store).length; },
+    key: (index: number) => Object.keys(store)[index] ?? null,
   };
 })();
 
@@ -20,7 +20,7 @@ Object.defineProperty(global, 'localStorage', {
 // Mock matchMedia for tests
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,

