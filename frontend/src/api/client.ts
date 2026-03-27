@@ -201,14 +201,14 @@ export const customInstance = <T>(
 ): Promise<T> => {
   const { method, headers, body, params, signal, version } = options;
 
-  let requestData = body;
+  let requestData: any = body;
   if (typeof body === 'string') {
     const requestHeaders = new Headers(headers);
     const contentType = requestHeaders.get('Content-Type');
 
     if (contentType?.includes('application/json')) {
       try {
-        requestData = JSON.parse(body) as BodyInit;
+        requestData = JSON.parse(body) as Record<string, unknown>;
 
       } catch (_e) {
         logger.error('[API] Failed to parse JSON body', { error: _e, url });
