@@ -26,34 +26,7 @@ RUN mvn package -DskipTests -pl backend -am
 # Stage 3: Build custom static healthcheck tool for Distroless compatibility
 FROM golang:1.23-alpine AS build-healthcheck
 WORKDIR /app
-RUN <<EOF cat > healthcheck.go
-package main
-
-import (
-	"fmt"
-	"net/http"
-	"os"
-)
-
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Error: URL argument is missing.")
-		os.Exit(1)
-	}
-
-	resp, err := http.Get(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to perform GET request: %v\n", err)
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		fmt.Fprintf(os.Stderr, "Error: unexpected status code: %d\n", resp.StatusCode)
-		os.Exit(1)
-	}
-}
-EOF
+COPY build/healthcheck/main.go healthcheck.go
 RUN go build -ldflags="-s -w" -o /go/bin/healthcheck healthcheck.go
 
 # Stage 4: Runtime - Official Distroless Java 25 (Ultra-Hardened)
