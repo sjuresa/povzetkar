@@ -20,7 +20,7 @@ export default tseslint.config(
   ...tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2023,
       globals: {
         ...globals.browser,
         ...globals.node,
