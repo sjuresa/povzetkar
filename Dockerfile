@@ -25,8 +25,7 @@ RUN mvn package -DskipTests -pl backend -am
 
 # Stage 3: Build static healthcheck tool for Distroless compatibility
 FROM golang:1.23-alpine AS build-healthcheck
-RUN apk add --no-cache git
-RUN go install github.com/heptiolabs/healthcheck@latest
+RUN go install github.com/heptiolabs/healthcheck@v1.4.0
 
 # Stage 4: Runtime - Official Distroless Java 25 (Ultra-Hardened)
 # Resolves CVE-2026-27135 (nghttp2), CVE-2025-60876 (busybox), CVE-2016-2781 (coreutils)
