@@ -45,7 +45,6 @@
   "dashboard": {
     "title": "Nadzorna Plošča",
     "activeJobs": "Aktivno Opravilo/i",
-    "testPulse": "Testni Impulz",
     "recentBriefings": "Zadnja Poročila",
     "viewAll": "Prikaži Vse",
     "refresh": "Osveži Dashboard",

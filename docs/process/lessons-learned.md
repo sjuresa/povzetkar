@@ -606,3 +606,29 @@ When executing parallel database tasks using a `ManagedExecutor` or similar thre
 - **Non-Root Runtime**: Always run containerized applications as a non-root user (e.g., USER nonroot). This mitigates potential host exposure in the event of a container breakout.
 - **Explicit Security Audits**: For critical OS-level packages (curl, libpng, etc.), do not rely solely on `apk upgrade`. Explicitly add them to the `Dockerfile` and implement version-based audit logic in the security scanner (`security_scan.py`) to ensure deterministic compliance.
 - **Scan-Integrated Hardening**: Hardening is only complete when it is verifiable. The `vulnerability-scanner` skill should be the source of truth for both code-level and infrastructure-level security requirements.
+- **SSE Testing Endpoints**: Temporary testing endpoints like `/test-pulse` should be removed before stabilization to avoid polluting the public API and frontend state logic.
+- **Documentation Drift**: Regular synchronization between migration scripts and the ERD (`04_database_design.md`) is essential to prevent technical debt in the source of truth documentation.
+- **Jacoco Integration**: Enabling `quarkus-jacoco` provides immediate visibility into test gaps without requiring complex external reporting tools during CI/CD.
+
+---
+
+## 25. ESLint 9+ Hardening (v0.14.0)
+
+### 25.1 Multi-Target Flat Configuration
+- **The Trap:** Using a single ESLint configuration for both production code (`src/**/*`) and test files (`**/*.test.*`). Test files often use `any` casting, `no-explicit-any`, and complex mocking patterns that conflict with strict production type-checking rules. This leads to hundreds of "false positive" lint errors in the CI pipeline.
+- **The Standard:** Use a **Multi-Target Flat Configuration** (`eslint.config.js`). 
+  1. Define a **Strict Profile** for production code (`src/**/*`) that enforces `no-explicit-any`, `no-unsafe-assignment`, and `@typescript-eslint/no-floating-promises`.
+  2. Define a **Relaxed Profile** for tests (`**/src/test/**/*`, `**/*.test.*`) that disables strict `any` checks and floating promise rules, enabling flexible mocking without compromising production quality.
+  3. Ensure that `languageOptions.parserOptions.project` points to the correct `tsconfig.json` for accurate type-checked linting.
+
+## 26. Cross-Platform Build Stability (v0.14.0)
+
+### 26.1 Windows/Linux CLI Compatibility
+- **The Trap:** Hardcoding shell scripts or relying on `./mvnw` in `package.json` for project orchestration. On Windows, `./mvnw` requires a Bash-like environment (Git Bash, WSL), while CMD/PowerShell require `mvnw.cmd`. This leads to "command not found" errors during local development or in Windows-based CI runners.
+- **The Standard:** Always provide **Linux-compatible script aliases** (`./mvnw`) in `package.json` to ensure compatibility with CI/CD pipelines (GitHub Actions, Jenkins) and Linux-based development environments. Windows developers are expected to use a shell that supports this syntax (e.g., Git Bash, WSL, or modern PowerShell with aliases) rather than modifying shared build scripts to use `mvnw.cmd`.
+
+## 27. Vitest Coverage & Type-Safety (v0.14.0)
+
+### 27.1 Coverage Engine Requirements
+- **The Trap:** Forgetting to install the coverage provider separately. Vitest core does not include the coverage engine; you must explicitly add `@vitest/coverage-v8` (or `istanbul`) as a dev dependency.
+- **The Standard:** When enabling code coverage in the frontend (`vitest run --coverage`), ensure the configuration explicitly excludes `node_modules`, `dist`, and configuration files (like `eslint.config.js`). This prevents the coverage reporter from analyzing non-source files, resulting in cleaner and more accurate reports.

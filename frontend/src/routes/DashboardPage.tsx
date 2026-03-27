@@ -5,7 +5,6 @@ import { EmptyState } from '../components/dashboard/EmptyState';
 import { RecentBriefingList, BriefingListSkeleton } from '../components/dashboard/RecentBriefingList';
 import { useEventStore } from '../store/eventStore';
 import { useShallow } from 'zustand/react/shallow';
-import { usePostApiV1EventsTestPulse } from '../api/generated/events/events';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 
@@ -22,8 +21,6 @@ export function DashboardPage() {
       staleTime: 30000, // 30 seconds
     }
   });
-
-  const { mutate: triggerTestPulse, isPending: isTestingPulse } = usePostApiV1EventsTestPulse();
 
   const data = response?.data as DashboardDTO | undefined;
 
@@ -66,16 +63,6 @@ export function DashboardPage() {
               </span>
             </div>
           )}
-          <button
-            onClick={() => triggerTestPulse()}
-            disabled={isTestingPulse || activeJobs.length > 0}
-            className={`px-4 py-2 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] transition-all flex items-center space-x-2 ${isTestingPulse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
-          >
-            <div className={`w-2 h-2 rounded-full ${isTestingPulse ? 'bg-amber-500 animate-pulse' : 'bg-blue-500'}`}></div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
-              {t('dashboard.testPulse')}
-            </span>
-          </button>
           <button
             onClick={() => {
               void refetch();

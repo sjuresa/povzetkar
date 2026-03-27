@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { usePostApiV1Sources } from '../../api/generated/content-sources/content-sources';
+import type { ContentSourceDTO } from '../../api/generated/model';
 import { Info, Loader2, Check, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../util/cn';
 
 interface QuickSourceIntakeProps {
-  onSuccess: (source: any) => void;
+  onSuccess: (source: ContentSourceDTO) => void;
   onCancel: () => void;
 }
 
@@ -36,10 +37,11 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
       },
       {
         onSuccess: (response) => {
-          onSuccess(response.data);
+          onSuccess(response.data as ContentSourceDTO);
         },
-        onError: (err: any) => {
-          setError(err?.response?.data?.message || t('topics.form.quick_add.error_failed', 'Failed to add source'));
+        onError: (err: unknown) => {
+          const axiosError = err as { response?: { data?: { message?: string } } };
+          setError(axiosError?.response?.data?.message || t('topics.form.quick_add.error_failed', 'Failed to add source'));
         },
       }
     );

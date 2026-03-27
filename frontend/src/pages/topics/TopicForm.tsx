@@ -15,6 +15,7 @@ const topicSchema = z.object({
   enabled: z.boolean(),
   promptTemplate: z.string(),
   sourceIds: z.array(z.number()),
+  useDefaultTemplate: z.boolean().optional(),
 });
 
 type TopicFormData = z.infer<typeof topicSchema>;
@@ -53,6 +54,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
       enabled: initialData?.enabled ?? true,
       promptTemplate: initialData?.promptTemplate || '',
       sourceIds: initialData?.contentSources ? initialData.contentSources.map(s => s.id!) : [],
+      useDefaultTemplate: !initialData,
     },
   });
 
@@ -63,22 +65,22 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
   }
 
   function isDefaultTemplateResponse(data: unknown): data is DefaultTemplateResponse {
-    return typeof data === 'object' && data !== null && 'template' in data && typeof (data as any).template === 'string';
+    return typeof data === 'object' && data !== null && 'template' in data && typeof (data as { template: unknown }).template === 'string';
   }
 
+  const useDefaultTemplate = watch('useDefaultTemplate');
+
   useEffect(() => {
-    if (defaultTemplateResponse?.status === 200 && !hasInitializedDefault) {
-      const data = defaultTemplateResponse.data;
-      if (isDefaultTemplateResponse(data)) {
-        const template = data.template;
-        const currentVal = watch('promptTemplate');
-        if (template && !currentVal && !initialData?.promptTemplate) {
-          setValue('promptTemplate', template);
-        }
+    const data = defaultTemplateResponse?.data;
+    // This effect should only run once on mount to populate the default template
+    // if we are creating a NEW topic and the user has not interacted with the field.
+    if (data && !hasInitializedDefault && !initialData) {
+      if (useDefaultTemplate && isDefaultTemplateResponse(data)) {
+        setValue('promptTemplate', data.template, { shouldDirty: false });
       }
       setHasInitializedDefault(true);
     }
-  }, [defaultTemplateResponse, initialData, setValue, hasInitializedDefault, watch]);
+  }, [defaultTemplateResponse, initialData, setValue, hasInitializedDefault, useDefaultTemplate]);
 
   const sourceIds = watch('sourceIds');
   const isSubmitting = isCreating;
@@ -107,8 +109,9 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
       }
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
       onSuccess();
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || error.message;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      const message = err.response?.data?.error?.message || err.message;
       toast.error(t('topics.form.save_failed', { message }));
     }
   };
@@ -130,7 +133,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+      <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-10">
         {/* Name Input */}
         <div className="space-y-3">
           <label className="block text-lg font-bold text-[var(--color-text-primary)]">

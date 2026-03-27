@@ -19,7 +19,7 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false,
   };
 
-  public static getDerivedStateFromError(_: Error): State {
+  public static getDerivedStateFromError(): State {
     return { hasError: true };
   }
 
@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <h1 className="text-3xl font-bold mb-4">Something went wrong</h1>
           <p className="text-slate-400 mb-8">An unexpected error has occurred and the application was unable to continue.</p>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => { (window as Window).location.href = '/'; }}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors font-semibold"
           >
             Go to Home

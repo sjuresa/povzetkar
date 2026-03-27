@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] (v0.14.0 Work-in-Progress)
 
 ### Summary
-Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management** and **Infrastructure Hardening**. It introduces **Custom Prompt Templates** for topics, giving users control over AI summarization behavior via an "Advanced" settings toggle. It also hardens the backend by migrating to Jakarta CDI, ensuring long-term compatibility with Quarkus 3. The content ingestion layer is being refined with **Idempotent Source Creation** and **Automated Metadata Enrichment**. Stability is further reinforced with a fully restored and hardened integration test suite.
+Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infrastructure Hardening**, and **Technical Quality Sync**. Key highlights include **Custom Prompt Templates**, **Distroless Java 25 Runtime**, and the removal of the legacy **/api/v1/events/test-pulse** testing infrastructure. Technical quality is further reinforced with the integration of **Jacoco Coverage Reporting** and synchronized ERD documentation.
 
 ### Added
 - **AI Customization (POV-153):** Implemented support for **Custom Prompt Templates** at the topic level. Users can now define specialized summarization instructions (e.g., specific language, tone, or format) that override the global default.
@@ -23,12 +23,17 @@ Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Th
 - **Admin Tools (POV-155):** Added support for **Manual Status Overrides**, allowing administrators to force status transitions (e.g., PENDING → COMPLETED, FAILED → PENDING) via a secure administrative API.
 - **Security (POV-156):** Transitioned the Docker runtime to an **official Distroless Java 25** image (`gcr.io/distroless/java25-debian13`). This definitively resolves multiple high-severity CVEs by eliminating the shell, `busybox`, `coreutils`, and `curl` from the production environment.
 - **Security (POV-156):** Extended the **Vulnerability Scanner** (`security_scan.py`) with a dedicated **Docker Hardening Audit** module, enabling automated verification of image security and Distroless compliance.
+- **Quality (POV-157):** Enabled **Jacoco Code Coverage** reporting in the backend build pipeline with auto-generation in `target/jacoco-report/`.
+- **Quality (POV-157):** Achieved a 100% clean project-wide ESLint audit. Resolved over 150 TypeScript violations related to unsafe `any` usage, implicit member access, and async promise handling in the frontend.
+- **Quality (POV-157):** Enabled **Frontend Code Coverage** using Vitest and `@vitest/coverage-v8`, with auto-generation in `frontend/coverage/`.
 
 ### Changed
 - **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.
 - **Orchestration (POV-153):** Refactored `DefaultBriefingGenerator` to utilize shared transactions for historical summary lookups, improving database visibility and test reliability.
 - **API (POV-155):** Enhanced the Content Item API with advanced filtering by **Status** and **Topic**, and server-side sorting by publication date.
 - **Frontend (POV-155):** Updated the **Source Detail** page and **Admin Content Management** table to support individual content item status overrides with premium glassmorphic UI.
+- **Documentation (POV-157):** Synchronized ERD (`04_database_design.md`) with V22 migration scripts, adding documented function-based indexes for `content_sources`.
+- **Documentation (POV-157):** Updated `ADR-0004` (Frontend Architecture) to reflect the decommissioning of testing-only SSE pulse endpoints.
 
 ### Fixed
 - **Error Handling (POV-153):** Hardened the Content Source API to provide `400 Bad Request` responses for invalid platforms/identifiers, eliminating 500 crashes.
@@ -89,6 +94,7 @@ Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrast
 - **Backend (Migration):** Added `topic_id` to `background_jobs` table (V21) for improved auditability.
 
 ### Removed
+- **API (POV-157):** Decommissioned the obsolete `/api/v1/events/test-pulse` endpoint and its associated frontend "Test Pulse" button logic.
 - **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).
 - **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
 
