@@ -38,7 +38,7 @@ describe('DashboardPage', () => {
       refetch: vi.fn(),
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue({} as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
 
     renderDashboard();
     expect(screen.queryByText('dashboard.title')).not.toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('DashboardPage', () => {
       refetch: vi.fn(),
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue({} as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
 
     renderDashboard();
     expect(screen.getByText(/dashboard.empty.welcome/i)).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('DashboardPage', () => {
       refetch: vi.fn(),
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue({} as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
 
     renderDashboard();
     expect(screen.getByText('dashboard.title')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('DashboardPage', () => {
       refetch,
     } as any);
 
-    vi.mocked(useEventStore).mockReturnValue({} as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
 
     renderDashboard();
     const refreshBtn = screen.getByTitle('dashboard.refresh');

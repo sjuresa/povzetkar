@@ -203,7 +203,7 @@ export const customInstance = <T>(
 ): Promise<T> => {
   const { method, headers, body, params, signal, version } = options;
 
-  let requestData: any = body;
+  let requestData: BodyInit | null | Record<string, unknown> | undefined = body;
   if (typeof body === 'string') {
     const requestHeaders = new Headers(headers);
     const contentType = requestHeaders.get('Content-Type');
