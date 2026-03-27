@@ -14,12 +14,15 @@ func main() {
 	}
 
 	client := http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
 		Timeout: 8 * time.Second, // Timeout to prevent hanging
 	}
 
-	resp, err := client.Get(os.Args[1])
+	resp, err := client.Head(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to perform GET request to %s: %v\n", os.Args[1], err)
+		fmt.Fprintf(os.Stderr, "Error: failed to perform HEAD request to %s: %v\n", os.Args[1], err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
