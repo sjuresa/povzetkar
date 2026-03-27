@@ -1,17 +1,16 @@
 {
   "navigation": {
-    "dashboard": "Nadzorna Plošča",
-    "briefings": "Teme Poročil",
+    "dashboard": "Odpri poročilo",
     "topics": "Teme",
     "sources": "Viri",
-    "administration": "Administracija",
-    "auditLogs": "Revizijski Sledi",
-    "systemJobs": "Sistemska Opravila",
-    "contentManagement": "Elementi vsebine"
+    "admin": "Admin",
+    "settings": "Nastavitve",
+    "logout": "Izhod iz sistema"
   },
   "common": {
     "profile": "Profil",
     "settings": "Nastavitve",
+    "login": "Prijava",
     "logout": "Odjava",
     "theme": "Tema",
     "language": "Jezik",
@@ -202,6 +201,106 @@
       "notAvailable": "Povzetek ni na voljo",
       "notAvailableSub": "Povzetka ni bilo mogoče pridobiti.",
       "close": "Zapri bralnik"
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Univerzalno razumevanje.",
+      "subtitle": "Vaš osebni AI analitik za izluščanje bistva iz informacij.",
+      "cta_primary": "Pridobi ključne uvide",
+      "cta_vision": "Razišči vizijo"
+    },
+    "pyramid": {
+      "level1": "Informacije",
+      "level1_desc": "Zajem surovih podatkov in njihovo povzemanje.",
+      "level2": "Znanje",
+      "level2_desc": "Povezovanje konteksta in prepoznavanje trendov.",
+      "level3": "Modrost",
+      "level3_desc": "Kritična analiza in preverjanje napovedi.",
+      "reality_check": "Preverjanje realnosti",
+      "reality_check_desc": "Samodejno soočanje sistemskih vpogledov z dejanskimi izidi."
+    },
+    "vision": {
+      "title": "Razširjena zavest",
+      "desc1": "Prehod od pasivnega sprejemanja k proaktivnemu razumevanju.",
+      "desc2": "V svetu, ki se utaplja v informacijah, je Povzetkar odgovor na pomanjkanje modrosti. Ne gre le za še eno aplikacijo za povzetke, temveč za osebnega AI analitika, zasnovanega kot razširitev vaše lastne zavesti.",
+      "pillar1_title": "Informacije",
+      "pillar1_desc": "AI-povzetki, ki podajo bistveno — 'kaj'.",
+      "pillar2_title": "Znanje",
+      "pillar2_desc": "Povezovanje podatkov za prepoznavanje trendov in časovnic, ki razkrivajo 'kako' in 'zakaj'.",
+      "pillar3_title": "Modrost",
+      "pillar3_desc": "Analiza preteklih napovedi za razvoj kritičnega mišljenja in presojo zanesljivosti virov.",
+      "pillar4_title": "Preverjanje realnosti",
+      "pillar4_desc": "Avtomatizirano preverjanje sistemskih uvidov glede na dejanske rezultate.",
+      "image_label": "Strateško partnerstvo",
+      "image_text": "Transformacija informacij v razumevanje."
+    },
+    "settings": {
+      "title": "Nastavitve",
+      "light": "Svetlo",
+      "dark": "Temno",
+      "en": "English",
+      "sl": "Slovenščina"
+    },
+    "footer": {
+      "built_with": "Zgrajeno za proaktivno razumevanje.",
+      "mission": "Izgradnja osebnaga operacijskega sistema za univerzalno razumevanje.",
+      "partnership": "Partnerstvo",
+      "contact": "Kontakt",
+      "reality_check": "Preverjanje realnosti",
+      "status_label": "Status",
+      "status_text": "Način razširjene zavesti: AKTIVEN",
+      "version_prefix": "Verzija",
+      "release_date": "Marec 2026"
+    }
+  },
+  "system": {
+    "title": "Sistemsko raziskovanje",
+    "version": "Verzija",
+    "status": "Stanje",
+    "status_active": "Aktivna evolucija",
+    "status_active_evolution": "Aktivna evolucija",
+    "focus_text": "Trenutno premoščamo vrzel med avtomatiziranim znanjem in človeško modrostjo.",
+    "tabs": {
+      "changelog": "Posodobitve",
+      "roadmap": "Pot vizije"
+    },
+    "changelog": {
+      "title": "Strateške posodobitve",
+      "badges": {
+        "new": "NOVO",
+        "improved": "IZB",
+        "fixed": "POP"
+      },
+      "entry1_title": "Hub za tehnično transparentnost",
+      "entry1_desc": "Integriran nivo za realno spremljanje posodobitev in strateških ciljev projekta.",
+      "entry1_date": "27. marec 2026",
+      "entry2_title": "Utrjevanje infrastrukture",
+      "entry2_desc": "Prehod na Distroless Java 25, kar odpravlja 100% operacijskih varnostnih tveganj.",
+      "entry2_date": "26. marec 2026",
+      "entry3_title": "AI Prilagodljivost",
+      "entry3_desc": "Uvedba poljubnih predlog za pozive, ki omogočajo specifično logiko povzemanja na nivoju tem.",
+      "entry3_date": "25. marec 2026",
+      "entry4_title": "Arhitektura odpornosti",
+      "entry4_desc": "Implementacija globalnih meja napak in avtomatiziranih ponovnih poskusov za popolno stabilnost.",
+      "entry4_date": "24. marec 2026"
+    },
+    "roadmap": {
+      "title": "Pot vizije",
+      "q1_title": "Faza 1: Temelji znanja",
+      "q2_title": "Faza 2: Nivo modrosti",
+      "q3_title": "Faza 3: Knjižnica poročil",
+      "q4_title": "Faza 4: Sinteza in Interakcija",
+      "q5_title": "Faza 5: Globalna analitika",
+      "q1_desc_full": "Poglabljanje kontekstualizacije virov. Vzpostavljanje kronološkega zavedanja in prepoznavanje vzorcev med domenami.",
+      "q2_desc_full": "Zagon sistema Preverjanje realnosti. Avtomatizirano preverjanje preteklih napovedi in točkovanje zanesljivosti virov.",
+      "q3_desc": "Celovit iskalni arhiv z naprednim filtriranjem in administracijo za več uporabnikov.",
+      "q4_desc": "Integracija RAG cevovoda za interaktivne pogovore z vašimi podatki v realnem času.",
+      "q5_desc": "Zaznavanje trendov in ocena pristranskosti avtorjev za strateški nadzor nad informacijami."
+    },
+    "footer": {
+      "built_with": "Sistemski metapodatki zaključeni.",
+      "close": "Zapri raziskovanje"
     }
   }
 }

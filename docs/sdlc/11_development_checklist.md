@@ -74,6 +74,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] **Editorial Cleanup:** Remove internal refactoring noise and consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during development.
     - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[0.7.0] - YYYY-MM-DD`).
     - [ ] Add a new, empty `[Unreleased]` section at the top.
+- [ ] **3.5. Sync Landing Page Metadata:** Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes.
 
 ## Phase 4: Release
 
@@ -86,6 +87,7 @@ This document provides a comprehensive checklist for our development process. It
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 1.9     | March 27, 2026   | Povzetkar AI | Added Phase 3 mandate for syncing landing page metadata via `sync_metadata.py`.                    |
 | 1.8     | March 25, 2026   | Povzetkar AI | Formalized document formatting (Revision History at end) and refined Planning/Task document standards based on v0.14.0 learnings.   |
 | 1.7     | March 19, 2026   | Povzetkar AI | Upgraded Phase 1 planning standards: added Evolution/Justification logic and mandatory time breakdown with contingency.             |
 | 1.6     | January 18, 2026 | Povzetkar AI | Added BOM alignment check to QA steps based on v0.7.0 retrospective. Added note on automating BOM check with maven-enforcer-plugin. |

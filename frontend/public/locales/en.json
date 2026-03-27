@@ -1,17 +1,16 @@
 {
   "navigation": {
-    "dashboard": "Dashboard",
-    "briefings": "Briefings",
+    "dashboard": "Open Briefing",
     "topics": "Topics",
     "sources": "Sources",
-    "administration": "Administration",
-    "auditLogs": "Audit Logs",
-    "systemJobs": "System Jobs",
-    "contentManagement": "Content Items"
+    "admin": "Admin",
+    "settings": "Settings",
+    "logout": "Exit System"
   },
   "common": {
     "profile": "Profile",
     "settings": "Settings",
+    "login": "Login",
     "logout": "Logout",
     "theme": "Theme",
     "language": "Language",
@@ -202,6 +201,106 @@
       "notAvailable": "Summary Not Available",
       "notAvailableSub": "The requested summary could not be retrieved.",
       "close": "Close Reader"
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Universal Understanding.",
+      "subtitle": "Your Personal AI Analyst for Information Distillation.",
+      "cta_primary": "Get Key Insights",
+      "cta_vision": "Explore the Vision"
+    },
+    "pyramid": {
+      "level1": "Information",
+      "level1_desc": "Raw data extraction and summarization.",
+      "level2": "Knowledge",
+      "level2_desc": "Contextual mapping and trend identification.",
+      "level3": "Wisdom",
+      "level3_desc": "Critical analysis and prediction verification.",
+      "reality_check": "Reality Check System",
+      "reality_check_desc": "Retrospective analysis of past predictions."
+    },
+    "vision": {
+      "title": "Augmented Consciousness",
+      "desc1": "Moving beyond simple consumption to proactive understanding.",
+      "desc2": "In a world drowning in information, Povzetkar is the answer to the starvation for wisdom. Not just another summary app, but a personal AI analyst designed to serve as an extension of your own consciousness.",
+      "pillar1_title": "Information",
+      "pillar1_desc": "AI-generated summaries providing the essential 'what'.",
+      "pillar2_title": "Knowledge",
+      "pillar2_desc": "Connecting data to identify trends and timelines, revealing the 'how' and 'why'.",
+      "pillar3_title": "Wisdom",
+      "pillar3_desc": "Retrospectively analyzing past predictions to foster critical thinking and source reliability.",
+      "pillar4_title": "Reality Check",
+      "pillar4_desc": "Automated verification of system insights against real-world outcomes.",
+      "image_label": "Strategic Partnership",
+      "image_text": "Transforming information into understanding."
+    },
+    "settings": {
+      "title": "Preferences",
+      "light": "Light",
+      "dark": "Dark",
+      "en": "English",
+      "sl": "Slovenščina"
+    },
+    "footer": {
+      "built_with": "Built for proactive understanding.",
+      "mission": "Building the personal operating system for universal understanding.",
+      "partnership": "Partnership",
+      "contact": "Contact Intelligence",
+      "reality_check": "Reality Check",
+      "status_label": "Status",
+      "status_text": "Augmented Consciousness Mode: ACTIVE",
+      "version_prefix": "Version",
+      "release_date": "March 2026"
+    }
+  },
+  "system": {
+    "title": "System Discovery",
+    "version": "Version",
+    "status": "State",
+    "status_active": "Active Evolution",
+    "status_active_evolution": "Active Evolution",
+    "focus_text": "Currently bridging the gap between automated Knowledge and human-centered Wisdom.",
+    "tabs": {
+      "changelog": "Updates",
+      "roadmap": "Vision Path"
+    },
+    "changelog": {
+      "title": "Strategic Updates",
+      "badges": {
+        "new": "NEW",
+        "improved": "IMP",
+        "fixed": "FIX"
+      },
+      "entry1_title": "Technical Transparency Hub",
+      "entry1_desc": "Integrated a real-time system discovery layer for release lineage and strategic trajectory.",
+      "entry1_date": "March 27, 2026",
+      "entry2_title": "Infrastructure Hardening",
+      "entry2_desc": "Migrated to Distroless Java 25, eliminating 100% of OS-level attack surfaces.",
+      "entry2_date": "March 26, 2026",
+      "entry3_title": "AI Customization",
+      "entry3_desc": "Launched custom prompt templates, allowing for specialized topic-level summarization logic.",
+      "entry3_date": "March 25, 2026",
+      "entry4_title": "Resilience Architecture",
+      "entry4_desc": "Implemented global error boundaries and automated retry mechanisms for absolute stability.",
+      "entry4_date": "March 24, 2026"
+    },
+    "roadmap": {
+      "title": "Vision Path",
+      "q1_title": "Phase 1: Knowledge Foundations",
+      "q2_title": "Phase 2: The Wisdom Layer",
+      "q3_title": "Phase 3: The Briefing Library",
+      "q4_title": "Phase 4: Synthesis & Interaction",
+      "q5_title": "Phase 5: Global Analytics",
+      "q1_desc_full": "Deepening source contextualization. Establishing chronological awareness and cross-domain pattern recognition.",
+      "q2_desc_full": "Launching the Reality Check System. Automated verification of past predictions and source reliability scoring.",
+      "q3_desc": "Comprehensive searchable archive with advanced filtering and multi-user administration.",
+      "q4_desc": "RAG pipeline integration for interactive, context-aware conversations with your data.",
+      "q5_desc": "Trend detection and author bias assessment for high-level strategic oversight."
+    },
+    "footer": {
+      "built_with": "Release metadata finalized.",
+      "close": "Close Discovery"
     }
   }
 }
