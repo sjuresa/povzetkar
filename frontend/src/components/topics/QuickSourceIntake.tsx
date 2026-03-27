@@ -37,9 +37,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
       },
       {
         onSuccess: (response) => {
-          // Note: customInstance in client.ts already unwraps the API envelope
-          // and returns the inner data directly (the ContentSourceDTO).
-          onSuccess(response as unknown as ContentSourceDTO);
+          onSuccess(response.data as ContentSourceDTO);
         },
         onError: (err: unknown) => {
           const axiosError = err as { response?: { data?: { message?: string } } };

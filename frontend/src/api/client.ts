@@ -122,6 +122,8 @@ client.interceptors.response.use(
       };
     }
     
+    // Aligns with Orval's expectation that the promise resolves to the response object 
+    // containing the .data property (which we've unwrapped to be the inner DTO).
     response.data = unwrappedData;
     
     return response;
@@ -243,7 +245,7 @@ export const customInstance = <T>(
     data: requestData,
     params: params as Record<string, unknown>,
     signal: signal || undefined,
-  }).then((response) => response.data as T);
+  }).then((response) => response as unknown as T);
 };
 
 export default client;
