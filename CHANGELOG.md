@@ -21,6 +21,8 @@ Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Th
 - **Orchestration (POV-154):** Added a **Briefing Toggle** to skip briefing generation during manual runs.
 - **Content Management (POV-155):** Implemented a global **Content Management** dashboard (`/admin/content`) for administrative oversight of all ingested content items.
 - **Admin Tools (POV-155):** Added support for **Manual Status Overrides**, allowing administrators to force status transitions (e.g., PENDING → COMPLETED, FAILED → PENDING) via a secure administrative API.
+- **Security (POV-156):** Transitioned the Docker runtime to an **official Distroless Java 25** image (`gcr.io/distroless/java25-debian13`). This definitively resolves multiple high-severity CVEs by eliminating the shell, `busybox`, `coreutils`, and `curl` from the production environment.
+- **Security (POV-156):** Extended the **Vulnerability Scanner** (`security_scan.py`) with a dedicated **Docker Hardening Audit** module, enabling automated verification of image security and Distroless compliance.
 
 ### Changed
 - **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.
