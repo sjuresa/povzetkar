@@ -23,11 +23,19 @@ COPY backend/src ./backend/src
 COPY --from=build-frontend /app/frontend/dist ./backend/src/main/resources/META-INF/resources
 RUN mvn package -DskipTests -pl backend -am
 
-# Stage 3: Runtime - Official Distroless Java 25 (Ultra-Hardened)
+# Stage 3: Build static healthcheck tool for Distroless compatibility
+FROM golang:1.23-alpine AS build-healthcheck
+RUN apk add --no-cache git
+RUN go install github.com/heptiolabs/healthcheck@latest
+
+# Stage 4: Runtime - Official Distroless Java 25 (Ultra-Hardened)
 # Resolves CVE-2026-27135 (nghttp2), CVE-2025-60876 (busybox), CVE-2016-2781 (coreutils)
 FROM gcr.io/distroless/java25-debian13
 
 WORKDIR /app
+
+# Copy the healthcheck binary from the build stage
+COPY --from=build-healthcheck /go/bin/healthcheck /usr/local/bin/healthcheck
 
 # Copy application artifacts with correct ownership (nonroot user)
 COPY --from=build-backend --chown=nonroot:nonroot /app/backend/target/quarkus-app/ ./
@@ -42,6 +50,10 @@ ENV JAVA_OPTS="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 
 # Run as nonroot
 USER nonroot
+
+# Operational healthcheck using the static binary (restored for K8s/Docker readiness)
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD ["/usr/local/bin/healthcheck", "http://localhost:8080/q/health/ready"]
 
 # Definitive entrypoint targeting the official Distroless java binary
 ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]

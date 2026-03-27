@@ -603,6 +603,6 @@ When executing parallel database tasks using a `ManagedExecutor` or similar thre
 - **Glassmorphic Data Grids**: Using `glass` and `animate-in` tokens creates a premium administrative feel that matches the main dashboard, even for high-density tables.
 - **Immediate Feedback**: Integrating `useQueryClient.invalidateQueries` in status update hooks provides the near-instant feedback loop expected in modern administrative tools.
 ### 5. Infrastructure & Security (POV-156)
-- **Non-Root Runtime**: Always run containerized applications as a non-root user (e.g., `USER povzetkar`). This mitigates potential host exposure in the event of a container breakout.
+- **Non-Root Runtime**: Always run containerized applications as a non-root user (e.g., USER nonroot). This mitigates potential host exposure in the event of a container breakout.
 - **Explicit Security Audits**: For critical OS-level packages (curl, libpng, etc.), do not rely solely on `apk upgrade`. Explicitly add them to the `Dockerfile` and implement version-based audit logic in the security scanner (`security_scan.py`) to ensure deterministic compliance.
 - **Scan-Integrated Hardening**: Hardening is only complete when it is verifiable. The `vulnerability-scanner` skill should be the source of truth for both code-level and infrastructure-level security requirements.
