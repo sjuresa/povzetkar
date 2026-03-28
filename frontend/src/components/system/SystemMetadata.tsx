@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, GitBranch, History, Map, Loader2 } from 'lucide-react';
+import { X, GitBranch, History, Map, Loader2, BrainCircuit } from 'lucide-react';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 
 interface SystemMetadataProps {
@@ -140,11 +140,11 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                  {[
                   { title: t('system.roadmap.q1_title'), subtitle: `${t('landing.pyramid.level2')} Mastery`, desc: t('system.roadmap.q1_desc_full') },
                   { title: t('system.roadmap.q2_title'), subtitle: `${t('landing.pyramid.level3')} Implementation`, desc: t('system.roadmap.q2_desc_full') },
-                  { title: t('system.roadmap.q3_title'), subtitle: "Platform Integrity", desc: t('system.roadmap.q3_desc') },
-                  { title: t('system.roadmap.q4_title'), subtitle: "Intelligent Synthesis", desc: t('system.roadmap.q4_desc') },
-                  { title: t('system.roadmap.q5_title'), subtitle: "Universal Wisdom", desc: t('system.roadmap.q5_desc') }
+                  { title: t('system.roadmap.q3_title'), subtitle: "Platform Integrity", desc: t('system.roadmap.q3_desc_full') },
+                  { title: t('system.roadmap.q4_title'), subtitle: "Intelligent Synthesis", desc: t('system.roadmap.q4_desc_full') },
+                  { title: t('system.roadmap.q5_title'), subtitle: "Universal Wisdom", desc: t('system.roadmap.q5_desc_full') }
                 ].map((phase, idx) => (
-                  <div key={phase.title} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
+                  <div key={idx} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
                     <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
                     <div className="space-y-3">
                       <h4 className="text-sm font-black uppercase tracking-widest text-[var(--color-accent)]">{phase.title}</h4>
@@ -254,7 +254,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
             onClick={() => setActiveTab('wisdom')}
             className={`flex-1 p-4 flex flex-col items-center justify-center gap-1 font-black uppercase tracking-widest text-[10px] transition-all border-b-4 ${activeTab === 'wisdom' ? 'border-[var(--color-accent)] bg-black text-white' : 'border-transparent hover:bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)]'}`}
           >
-            <History className="w-4 h-4 rotate-180" />
+            <BrainCircuit className="w-4 h-4" />
             {t('landing.pyramid.level3')}
           </button>
         </div>

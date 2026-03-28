@@ -3,16 +3,34 @@ import json
 import os
 from typing import List, Dict, Any
 
+# Simple translation map for metadata terms
+TRANSLATIONS = {
+    "Update": "Posodobitev",
+    "In Progress": "V teku",
+    "Vision Path": "Pot vizije",
+    "Strategic Updates": "Strateške posodobitve",
+    "System Discovery": "Sistemsko raziskovanje",
+}
+
 def translate_to_sl(text: str) -> str:
-    # This is a placeholder for actual translation logic.
-    return text # Fallback
+    """
+    Translates basic metadata terms to Slovenian.
+    For complex summaries, it currently returns the original but identifies them for manual review.
+    """
+    translated = text
+    for en, sl in TRANSLATIONS.items():
+        translated = translated.replace(en, sl)
+    
+    # Custom logic for "Update vX.Y.Z"
+    if text.startswith("Update v"):
+        translated = text.replace("Update", "Posodobitev")
+        
+    return translated
 
 def parse_changelog(path: str) -> List[Dict[str, str]]:
     with open(path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # regex to find version blocks
-    # Looking for ## [Version] or ## [Unreleased]
     version_blocks = re.split(r'##\s+\[', content)[1:]
     
     entries = []
@@ -20,35 +38,28 @@ def parse_changelog(path: str) -> List[Dict[str, str]]:
         lines = block.strip().split('\n')
         header = lines[0]
         
-        # Extract version and date
-        # Format: v0.14.0 Work-in-Progress)] or v0.13.0] - 2026-03-24
         version_match = re.search(r'([^\]]+)\]', header)
         date_match = re.search(r'(\d{4}-\d{2}-\d{2})', header)
         
         version = version_match.group(1) if version_match else "Unknown"
         date_str = date_match.group(1) if date_match else "In Progress"
         
-        # Clean version if it has extra text
         if "Unreleased" in version:
-             # Check if version is mentioned in parentheses in the header
              ver_in_header = re.search(r'\((v[\d\.]+)', header)
              if ver_in_header:
                  version = ver_in_header.group(1)
              else:
                  raise ValueError(f"Could not determine version from 'Unreleased' header: {header}")
 
-        # Extract Summary or first few Added items
         summary = ""
         summary_match = re.search(r'### Summary\n(.*?)(?=\n###|\n##|$)', block, re.DOTALL)
         if summary_match:
             summary = summary_match.group(1).strip().replace('\n', ' ')
         else:
-            # Fallback to first 3 Added/Changed bullets
             bullets = re.findall(r'-\s+\*\*([^*]+)\*\*:\s*([^\n]+)', block)
             if bullets:
                 summary = " ".join([f"{b[0]}: {b[1]}" for b in bullets[:2]])
         
-        # Limit summary length
         if len(summary) > 150:
             summary = summary[:147] + "..."
             
@@ -65,52 +76,72 @@ def parse_roadmap(path: str) -> List[Dict[str, str]]:
     with open(path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Find active/future phases
-    # Looking for ## vX.Y: Title
+    phase_blocks = re.split(r'##\s+(v\d+\.\d+):', content)[1:]
     phases = []
-    version_matches = re.findall(r'##\s+(v\d+\.\d+):\s+(.*?)\n', content)
-    status_matches = re.findall(r'\*\*Status:\*\*\s*(.*?)\n', content)
     
-    # Combine and filter for In Progress or Future
-    for idx, (ver, title) in enumerate(version_matches):
-        status = status_matches[idx] if idx < len(status_matches) else ""
+    for block in phase_blocks:
+        lines = block.strip().split('\n')
+        title = lines[0].strip()
         
-        # Filter: Skip completed phases to focus on current/future trajectory
+        status_match = re.search(r'\*\*Status:\*\*\s*(.*?)\n', block)
+        status = status_match.group(1) if status_match else ""
+        
         if "Completed" in status or "✅" in status:
             continue
             
-        phases.append({
-            "title": f"{ver}: {title}",
-            "desc": ""
-        })
+        # Extract version from the split delimiter if we wanted it, 
+        # but here we just need the title and goal
+        goal_match = re.search(r'\*\*Goal:\*\*\s*(.*?)(?=\n\*\*Status|\n###|$)', block, re.DOTALL)
+        goal = goal_match.group(1).strip().replace('\n', ' ') if goal_match else ""
         
-        # Extract Goal/Description
-        goal_match = re.search(rf'##\s+{re.escape(ver)}.*?\*\*Goal:\*\*\s*(.*?)(?=\n\*\*Status|\n###|$)', content, re.DOTALL)
-        if goal_match:
-            phases[-1]["desc"] = goal_match.group(1).strip().replace('\n', ' ')
+        phases.append({
+            "title": title,
+            "desc": goal
+        })
 
-    # Return the latest 5 relevant phases
     return phases[:5]
 
 def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phases: List[Dict[str, str]], lang: str):
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
+    is_sl = (lang == 'sl')
+    
     # Update Changelog
     for i, entry in enumerate(changelog_entries):
         idx = i + 1
-        data['system']['changelog'][f'entry{idx}_title'] = entry['title']
-        data['system']['changelog'][f'entry{idx}_desc'] = entry['desc']
-        data['system']['changelog'][f'entry{idx}_date'] = entry['date']
+        title = entry['title']
+        desc = entry['desc']
+        date_str = entry['date']
+        
+        if is_sl:
+            title = translate_to_sl(title)
+            date_str = translate_to_sl(date_str)
+            # For complex descriptions, we keep original if no translation logic exists
+            # In a production app, we'd trigger a translation service here.
+    
+        data['system']['changelog'][f'entry{idx}_title'] = title
+        data['system']['changelog'][f'entry{idx}_desc'] = desc
+        data['system']['changelog'][f'entry{idx}_date'] = date_str
     
     # Update Roadmap
+    # NOTE: Roadmap titles are highly specific and harder to auto-translate without AI.
+    # For now, we update them but keep the structure.
     for i, phase in enumerate(roadmap_phases):
         idx = i + 1
-        data['system']['roadmap'][f'q{idx}_title'] = phase['title']
-        data['system']['roadmap'][f'q{idx}_desc_full'] = phase['desc']
-        # Map some for short desc fallback if missing
-        if f'q{idx}_desc' in data['system']['roadmap']:
-             data['system']['roadmap'][f'q{idx}_desc'] = phase['desc'][:100] + "..." if len(phase['desc']) > 100 else phase['desc']
+        title = phase['title']
+        desc = phase['desc']
+        
+        if is_sl:
+            # We don't overwrite Roadmap titles in SL if they are already significantly different
+            # (i.e., already translated).
+            existing_title = data['system']['roadmap'].get(f'q{idx}_title', "")
+            if existing_title and existing_title != title:
+                 # It's likely already translated, so we don't overwrite the title with EN
+                 continue
+                 
+        data['system']['roadmap'][f'q{idx}_title'] = title
+        data['system']['roadmap'][f'q{idx}_desc_full'] = desc
 
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)

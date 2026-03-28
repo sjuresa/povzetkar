@@ -122,11 +122,11 @@ export function LandingPage() {
                 <div className="relative w-full lg:w-[400px] aspect-square flex flex-col justify-end bg-[var(--color-surface-deep)] border-4 border-[var(--color-border-subtle)] p-8 shadow-[32px_32px_0px_rgba(0,0,0,0.1)]">
                    <div className="space-y-8 relative z-10">
                       {[
-                        { title: t('landing.pyramid.level3'), desc: t('landing.pyramid.level3_desc'), color: 'bg-amber-500' },
-                        { title: t('landing.pyramid.level2'), desc: t('landing.pyramid.level2_desc'), color: 'bg-blue-500' },
-                        { title: t('landing.pyramid.level1'), desc: t('landing.pyramid.level1_desc'), color: 'bg-[var(--color-accent)]' }
+                        { title: t('landing.pyramid.level3'), desc: t('landing.pyramid.level3_desc') },
+                        { title: t('landing.pyramid.level2'), desc: t('landing.pyramid.level2_desc') },
+                        { title: t('landing.pyramid.level1'), desc: t('landing.pyramid.level1_desc') }
                       ].map((level, idx) => (
-                        <div key={level.title} className={`group p-4 border-l-4 border-transparent hover:border-current transition-all ${getLevelStyles(idx)}`}>
+                        <div key={idx} className={`group p-4 border-l-4 border-transparent hover:border-current transition-all ${getLevelStyles(idx)}`}>
                           <h3 className="text-sm font-black uppercase tracking-widest mb-1">{level.title}</h3>
                           <p className="text-xs font-bold leading-relaxed">{level.desc}</p>
                         </div>
@@ -170,8 +170,8 @@ export function LandingPage() {
                        { title: t('landing.vision.pillar2_title'), desc: t('landing.vision.pillar2_desc') },
                        { title: t('landing.vision.pillar3_title'), desc: t('landing.vision.pillar3_desc') },
                        { title: t('landing.vision.pillar4_title'), desc: t('landing.vision.pillar4_desc') }
-                     ].map(pillar => (
-                       <div key={pillar.title} className="space-y-3">
+                     ].map((pillar, idx) => (
+                       <div key={idx} className="space-y-3">
                           <h4 className="text-lg font-black uppercase tracking-widest italic flex items-center gap-2">
                              <div className="w-2 h-6 bg-[var(--color-accent)]"></div>
                              {pillar.title}
@@ -213,7 +213,7 @@ export function LandingPage() {
                     {t('landing.footer.mission')}
                  </p>
                  <p className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">
-                    {metadata ? t('landing.footer.version_prefix') + ': ' + metadata.version + ' // ' + metadata.releaseDate : ''}
+                    {metadata ? t('landing.footer.version_info', { version: metadata.version, releaseDate: metadata.releaseDate }) : ''}
                  </p>
               </div>
             </div>

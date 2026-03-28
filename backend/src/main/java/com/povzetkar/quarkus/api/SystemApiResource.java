@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 @Tag(name = "System", description = "System-wide metadata and health")
 public class SystemApiResource extends BaseApiResource {
 
+    private static final String STATUS_ACTIVE_EVOLUTION = "ACTIVE_EVOLUTION";
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "0.0.0-SNAPSHOT")
     String version;
 
@@ -44,7 +45,7 @@ public class SystemApiResource extends BaseApiResource {
         return new SystemMetadataDTO(
                 version,
                 environment,
-                "ACTIVE_EVOLUTION",
+                STATUS_ACTIVE_EVOLUTION,
                 LocalDate.now(clock).format(DATE_FORMATTER)
         );
     }

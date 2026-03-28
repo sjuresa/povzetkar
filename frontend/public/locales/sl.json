@@ -256,7 +256,8 @@
       "status_label": "Status",
       "status_text": "Način razširjene zavesti: AKTIVEN",
       "version_prefix": "Verzija",
-      "release_date": "Marec 2026"
+      "release_date": "Marec 2026",
+      "version_info": "Verzija: {{version}} // {{releaseDate}}"
     }
   },
   "system": {
@@ -276,34 +277,31 @@
         "improved": "IZB",
         "fixed": "POP"
       },
-      "entry1_title": "Update v0.14.0",
+      "entry1_title": "Posodobitev v0.14.0",
       "entry1_desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infras...",
-      "entry1_date": "In Progress",
-      "entry2_title": "Update v0.13.0",
+      "entry1_date": "V teku",
+      "entry2_title": "Posodobitev v0.13.0",
       "entry2_desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
       "entry2_date": "2026-03-24",
-      "entry3_title": "Update v0.12.0",
+      "entry3_title": "Posodobitev v0.12.0",
       "entry3_desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
       "entry3_date": "2026-03-18",
-      "entry4_title": "Update v0.11.0",
+      "entry4_title": "Posodobitev v0.11.0",
       "entry4_desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
       "entry4_date": "2026-03-12"
     },
     "roadmap": {
       "title": "Pot vizije",
-      "q1_title": "v1.0: RAG & Conversational Interface",
-      "q2_title": "v1.1: Expansion & Advanced Analytics",
-      "q3_title": "v1.2: Content Creation & Refinement",
-      "q4_title": "v1.1: Expansion & Advanced Analytics",
-      "q5_title": "v1.2: Content Creation & Refinement",
-      "q1_desc_full": "Deliver the core \"interactive report\" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.",
-      "q2_desc_full": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.",
-      "q3_desc": "",
-      "q4_desc": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical...",
-      "q5_desc": "",
-      "q3_desc_full": "",
-      "q4_desc_full": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.",
-      "q5_desc_full": ""
+      "q1_title": "v1.0: RAG & Pogovorni vmesnik",
+      "q2_title": "v1.1: Razširitev & Napredna analitika",
+      "q3_title": "v1.2: Ustvarjanje vsebin & Izpopolnjevanje",
+      "q4_title": "v1.3: Sodelovalna analiza",
+      "q5_title": "v2.0: Enotna platforma za analitike",
+      "q1_desc_full": "Dostava jedrne funkcije \"interaktivnega poročila\" (RAG cevovod) in zaključek serije **Production Hardening** z avtomatiziranimi varnostnimi kopijami baze podatkov.",
+      "q2_desc_full": "Razširitev zmogljivosti zbiranja inteligence platforme z dodajanjem novih virov podatkov in analitičnih funkcij.",
+      "q3_desc_full": "Implementacija orodij za ustvarjanje vsebin in sodelovalnih funkcij za izpopolnjevanje znanja.",
+      "q4_desc_full": "Uvedba napredne sinteze in modulov za sodelovalno analizo za deljenje vpogledov na visoki ravni.",
+      "q5_desc_full": "Razširitev platforme v enoten osebni analitični sistem za večdomensko proaktivno razumevanje."
     },
     "footer": {
       "built_with": "Sistemski metapodatki zaključeni.",

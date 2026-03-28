@@ -256,7 +256,8 @@
       "status_label": "Status",
       "status_text": "Augmented Consciousness Mode: ACTIVE",
       "version_prefix": "Version",
-      "release_date": "March 2026"
+      "release_date": "March 2026",
+      "version_info": "Version: {{version}} // {{releaseDate}}"
     }
   },
   "system": {
@@ -291,18 +292,15 @@
     },
     "roadmap": {
       "title": "Vision Path",
-      "q1_title": "v1.0: RAG & Conversational Interface",
-      "q2_title": "v1.1: Expansion & Advanced Analytics",
-      "q3_title": "v1.2: Content Creation & Refinement",
-      "q4_title": "v1.1: Expansion & Advanced Analytics",
-      "q5_title": "v1.2: Content Creation & Refinement",
-      "q1_desc_full": "Deliver the core \"interactive report\" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.",
-      "q2_desc_full": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.",
-      "q3_desc": "",
-      "q4_desc": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical...",
-      "q5_desc": "",
+      "q1_title": "v0.5",
+      "q2_title": "v0.6",
+      "q3_title": "v0.7",
+      "q4_title": "v0.8",
+      "q5_title": "v0.9",
+      "q1_desc_full": "",
+      "q2_desc_full": "",
       "q3_desc_full": "",
-      "q4_desc_full": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.",
+      "q4_desc_full": "",
       "q5_desc_full": ""
     },
     "footer": {
