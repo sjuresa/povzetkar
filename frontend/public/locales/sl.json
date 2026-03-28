@@ -312,5 +312,45 @@
       "built_with": "Sistemski metapodatki zaključeni.",
       "close": "Zapri raziskovanje"
     }
+  },
+  "briefingLibrary": {
+    "title": "Knjižnica poročil",
+    "subtitle": "Iščite in pregledujte vaš celoten arhiv poročil.",
+    "stats": {
+      "totalBriefings": "Skupaj poročil",
+      "totalBriefingsDesc": "V vašem arhivu"
+    },
+    "search": {
+      "placeholder": "Išči poročila po naslovu ali vsebini..."
+    },
+    "filters": {
+      "topic": "Vse teme",
+      "source": "Vsi viri",
+      "startDate": "Datum od",
+      "endDate": "Datum do",
+      "reset": "Počisti filtre"
+    },
+    "table": {
+      "date": "Datum",
+      "topic": "Tema",
+      "title": "Naslov",
+      "actions": "Akcije",
+      "view": "Poglej"
+    },
+    "empty": {
+      "title": "Ni najdenih poročil",
+      "description": "Poskusite prilagoditi iskalne izraze ali filtre.",
+      "clearFilters": "Počisti vse filtre"
+    }
+  },
+  "briefingDetail": {
+    "backToLibrary": "Nazaj v knjižnico",
+    "executiveSummary": "Izvršni povzetek",
+    "fullBriefing": "Celotno poročilo",
+    "sourceItems": "Izvorni material",
+    "sourcesCount": "{{count}} analiziranih virov",
+    "openOriginal": "Odpri izvornik",
+    "notFound": "Poročilo ni najdeno",
+    "notFoundDesc": "Zahtevano poročilo ni bilo mogoče pridobiti ali ne obstaja."
   }
 }

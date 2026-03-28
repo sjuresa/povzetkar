@@ -312,5 +312,45 @@
       "built_with": "Release metadata finalized.",
       "close": "Close Discovery"
     }
+  },
+  "briefingLibrary": {
+    "title": "Briefing Library",
+    "subtitle": "Search and explore your complete briefing archive.",
+    "stats": {
+      "totalBriefings": "Total Briefings",
+      "totalBriefingsDesc": "In your archive"
+    },
+    "search": {
+      "placeholder": "Search briefings by title or content..."
+    },
+    "filters": {
+      "topic": "All Topics",
+      "source": "All Sources",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "reset": "Clear Filters"
+    },
+    "table": {
+      "date": "Date",
+      "topic": "Topic",
+      "title": "Title",
+      "actions": "Actions",
+      "view": "View"
+    },
+    "empty": {
+      "title": "No briefings found",
+      "description": "Try adjusting your search terms or filters.",
+      "clearFilters": "Clear all filters"
+    }
+  },
+  "briefingDetail": {
+    "backToLibrary": "Back to Library",
+    "executiveSummary": "Executive Summary",
+    "fullBriefing": "Full Briefing",
+    "sourceItems": "Source Content",
+    "sourcesCount": "{{count}} source(s) analyzed",
+    "openOriginal": "Open original",
+    "notFound": "Briefing Not Found",
+    "notFoundDesc": "The requested briefing could not be retrieved or does not exist."
   }
 }

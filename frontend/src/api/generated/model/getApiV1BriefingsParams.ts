@@ -10,8 +10,10 @@ import type { LocalDate } from './localDate';
 export type GetApiV1BriefingsParams = {
 endDate?: LocalDate;
 page?: number;
+search?: string;
 size?: number;
 sort?: string[];
+sourceId?: number;
 startDate?: LocalDate;
 topicId?: number;
 };
