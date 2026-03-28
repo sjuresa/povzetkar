@@ -10,7 +10,7 @@ interface SystemMetadataProps {
   initialTab?: 'changelog' | 'roadmap' | 'wisdom';
 }
 
-interface SystemMetadata {
+export interface SystemMetadata {
   version: string;
   environment: string;
   status: string;
@@ -31,8 +31,8 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
   const { data: metadata, isLoading } = useQuery<SystemMetadata>({
     queryKey: ['system-metadata'],
     queryFn: async () => {
-      const response = await client.get('/v1/system/metadata');
-      return response as unknown as SystemMetadata;
+      const { data } = await client.get<SystemMetadata>('/v1/system/metadata');
+      return data;
     },
     enabled: isOpen,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -61,8 +61,8 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                 </span>
                 <div className="w-1 h-1 rounded-full bg-[var(--color-border-subtle)]" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-secondary)]">
-                  {t('system.status')}: <span className={metadata && typeof metadata === 'object' && 'status' in metadata && typeof metadata.status === 'string' && metadata.status.toUpperCase() === 'ACTIVE_EVOLUTION' ? 'text-emerald-500' : 'text-amber-500'}>
-                    {isLoading ? <Loader2 className="inline w-3 h-3 animate-spin" /> : (metadata && typeof metadata === 'object' && 'status' in metadata && typeof metadata.status === 'string' ? t(`system.status_${metadata.status.toLowerCase()}`) : t('system.status_active'))}
+                  {t('system.status')}: <span className={metadata?.status?.toUpperCase() === 'ACTIVE_EVOLUTION' ? 'text-emerald-500' : 'text-amber-500'}>
+                    {isLoading ? <Loader2 className="inline w-3 h-3 animate-spin" /> : (metadata?.status ? t('system.status_' + metadata.status.toLowerCase()) : t('system.status_active_evolution'))}
                   </span>
                 </span>
               </div>

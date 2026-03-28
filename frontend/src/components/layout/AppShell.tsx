@@ -10,7 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
-import { SystemMetadata } from '../system/SystemMetadata';
+import { SystemMetadata, SystemMetadata as SystemMetadataType } from '../system/SystemMetadata';
+import { useQuery } from '@tanstack/react-query';
+import client from '../../api/client';
 
 interface AppShellProps {
   children: ReactNode;
@@ -35,6 +37,15 @@ export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
+
+  const { data: metadata } = useQuery<SystemMetadataType>({
+    queryKey: ['system-metadata'],
+    queryFn: async () => {
+      const { data } = await client.get<SystemMetadataType>('/v1/system/metadata');
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   const navItems = [
     { name: t('navigation.dashboard'), path: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -158,7 +169,9 @@ export function AppShell({ children }: AppShellProps) {
           >
             <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 flex-shrink-0 animate-pulse"></div>
             {!sidebarCollapsed && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] transition-colors">v0.14.0-SNAPSHOT</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] transition-colors">
+                {metadata?.version || 'v0.14.0-SNAPSHOT'}
+              </span>
             )}
           </button>
           <button

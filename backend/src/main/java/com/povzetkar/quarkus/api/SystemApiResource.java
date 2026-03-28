@@ -28,6 +28,8 @@ public class SystemApiResource extends BaseApiResource {
     @ConfigProperty(name = "quarkus.profile", defaultValue = "dev")
     String profile;
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy");
+
     @GET
     @Path("/metadata")
     @PermitAll
@@ -37,7 +39,7 @@ public class SystemApiResource extends BaseApiResource {
             version,
             profile,
             "ACTIVE_EVOLUTION",
-            LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM d, yyyy")) // Simplified for demo
+            LocalDate.now().format(DATE_FORMATTER) // Refined for best practices
         );
     }
 }

@@ -258,7 +258,6 @@
     "title": "System Discovery",
     "version": "Version",
     "status": "State",
-    "status_active": "Active Evolution",
     "status_active_evolution": "Active Evolution",
     "focus_text": "Currently bridging the gap between automated Knowledge and human-centered Wisdom.",
     "tabs": {

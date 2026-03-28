@@ -3,8 +3,10 @@ import { Link } from '@tanstack/react-router';
 import { useAuthStore } from '../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
-import { SystemMetadata } from '../components/system/SystemMetadata';
+import { SystemMetadata, SystemMetadata as SystemMetadataType } from '../components/system/SystemMetadata';
 import heroAsset from '../assets/hero-distillation.png';
+import { useQuery } from '@tanstack/react-query';
+import client from '../api/client';
 
 import { useThemeStore } from '../store/themeStore';
 
@@ -20,13 +22,30 @@ export function LandingPage() {
     }))
   );
 
+  const { data: metadata } = useQuery<SystemMetadataType>({
+    queryKey: ['system-metadata'],
+    queryFn: async () => {
+      const { data } = await client.get<SystemMetadataType>('/v1/system/metadata');
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   const toggleLanguage = () => {
     const newLng = i18n.language === 'en' ? 'sl' : 'en';
-    i18n.changeLanguage(newLng);
+    void i18n.changeLanguage(newLng);
   };
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const getLevelStyles = (idx: number) => {
+    switch (idx) {
+      case 0: return 'opacity-100 hover:text-amber-500';
+      case 1: return 'opacity-80 hover:text-blue-500';
+      default: return 'opacity-60 hover:text-[var(--color-accent)]';
+    }
   };
 
   return (
@@ -82,13 +101,13 @@ export function LandingPage() {
                   
                   <div className="flex flex-wrap gap-6 pt-4">
                     {isAuthenticated ? (
-                      <Link
-                        to="/dashboard"
-                        className="group relative px-10 py-5 bg-[var(--color-accent)] text-white font-black uppercase tracking-widest transition-transform active:scale-95 overflow-hidden"
-                      >
-                        <span className="relative z-10">{t('landing.hero.cta_primary')}</span>
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </Link>
+                       <Link
+                         to="/dashboard"
+                         className="group relative px-10 py-5 bg-[var(--color-accent)] text-white font-black uppercase tracking-widest transition-transform active:scale-95 overflow-hidden"
+                       >
+                         <span className="relative z-10">{t('landing.hero.cta_primary')}</span>
+                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                       </Link>
                     ) : (
                       <button
                         onClick={login}
@@ -115,7 +134,7 @@ export function LandingPage() {
                         { title: t('landing.pyramid.level2'), desc: t('landing.pyramid.level2_desc'), color: 'bg-blue-500' },
                         { title: t('landing.pyramid.level1'), desc: t('landing.pyramid.level1_desc'), color: 'bg-[var(--color-accent)]' }
                       ].map((level, idx) => (
-                        <div key={level.title} className={`group p-4 border-l-4 border-transparent hover:border-current transition-all ${idx === 0 ? 'opacity-100 hover:text-amber-500' : idx === 1 ? 'opacity-80 hover:text-blue-500' : 'opacity-60 hover:text-[var(--color-accent)]'}`}>
+                        <div key={level.title} className={`group p-4 border-l-4 border-transparent hover:border-current transition-all ${getLevelStyles(idx)}`}>
                           <h3 className="text-sm font-black uppercase tracking-widest mb-1">{level.title}</h3>
                           <p className="text-xs font-bold leading-relaxed">{level.desc}</p>
                         </div>
@@ -202,7 +221,7 @@ export function LandingPage() {
                     {t('landing.footer.mission')}
                  </p>
                  <p className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">
-                    {t('landing.footer.version_prefix')}: 0.14.0-SNAPSHOT // {t('landing.footer.release_date')}
+                    {t('landing.footer.version_prefix')}: {metadata?.version || '0.14.0-SNAPSHOT'} <span className="mx-1">{'//'}</span> {metadata?.releaseDate || t('landing.footer.release_date')}
                  </p>
               </div>
             </div>
@@ -264,5 +283,3 @@ export function LandingPage() {
     </>
   );
 }
-
-
