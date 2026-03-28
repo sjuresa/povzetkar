@@ -35,6 +35,10 @@ class SystemApiResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("data.status", equalTo("ACTIVE_EVOLUTION"));
+                .body("data", notNullValue())
+                .body("data.version", notNullValue())
+                .body("data.environment", notNullValue())
+                .body("data.status", equalTo("ACTIVE_EVOLUTION"))
+                .body("meta", notNullValue());
     }
 }
