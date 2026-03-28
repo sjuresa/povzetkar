@@ -162,12 +162,9 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
-        ContentItem entity = ContentItem.<ContentItem>find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id).firstResultOptional()
+        ContentItem item = ContentItem.findByIdWithAssociations(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        
-        Set<Long> summaryExists = Summary.count("contentItem.id", id) > 0 
-                ? Set.of(id) : Set.of();
-        return contentItemMapper.toDTO(entity, summaryExists);
+        return mapToDTO(item);
     }
 
     @GET
@@ -261,15 +258,11 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to update", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO updateItemStatus(@PathParam("id") Long id, StatusUpdateDTO dto) {
-        ContentItem itemToUpdate = ContentItem.<ContentItem>find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id)
-                .firstResultOptional()
+        ContentItem itemToUpdate = ContentItem.findByIdWithAssociations(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
         
         ContentItem updatedItem = contentItemAdminService.updateStatus(itemToUpdate, dto.status(), "ADMIN");
-        
-        Set<Long> summaryExists = Summary.count("contentItem.id", updatedItem.id) > 0 
-                ? Set.of(updatedItem.id) : Set.of();
-        return contentItemMapper.toDTO(updatedItem, summaryExists);
+        return mapToDTO(updatedItem);
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
@@ -282,5 +275,11 @@ public class ContentItemApiResource extends BaseApiResource {
                     Response.Status.CONFLICT);
         }
         return item;
+    }
+
+    private ContentItemDTO mapToDTO(ContentItem item) {
+        Set<Long> summaryExists = Summary.count("contentItem.id", item.id) > 0 
+                ? Set.of(item.id) : Set.of();
+        return contentItemMapper.toDTO(item, summaryExists);
     }
 }

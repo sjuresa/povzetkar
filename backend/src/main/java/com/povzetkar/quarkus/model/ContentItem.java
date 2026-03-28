@@ -5,7 +5,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
-import java.util.Objects; // Import for Objects.equals and Objects.hash
+import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @Table(name = "content_items")
@@ -45,6 +46,11 @@ public class ContentItem extends BaseAuditableEntity {
 
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {
         update("processingStatus = ?1 where id = ?2", status, id);
+    }
+
+    public static Optional<ContentItem> findByIdWithAssociations(Long id) {
+        return find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id)
+                .firstResultOptional();
     }
 
     @Override
