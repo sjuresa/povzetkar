@@ -221,7 +221,7 @@ export function LandingPage() {
                     {t('landing.footer.mission')}
                  </p>
                  <p className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">
-                    {t('landing.footer.version_prefix')}: {metadata?.version || '0.14.0-SNAPSHOT'} <span className="mx-1">{'//'}</span> {metadata?.releaseDate || t('landing.footer.release_date')}
+                    {metadata ? t('landing.footer.version_prefix') + ': ' + metadata.version + ' // ' + metadata.releaseDate : ''}
                  </p>
               </div>
             </div>

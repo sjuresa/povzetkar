@@ -170,7 +170,7 @@ export function AppShell({ children }: AppShellProps) {
             <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 flex-shrink-0 animate-pulse"></div>
             {!sidebarCollapsed && (
               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] transition-colors">
-                {metadata?.version || 'v0.14.0-SNAPSHOT'}
+                {metadata?.version}
               </span>
             )}
           </button>

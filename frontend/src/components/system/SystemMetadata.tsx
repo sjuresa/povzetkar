@@ -56,7 +56,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-secondary)]">
                   {t('system.version')}: <span className="text-[var(--color-text-primary)]">
-                    {isLoading ? <Loader2 className="inline w-3 h-3 animate-spin" /> : (metadata?.version || 'v0.14.0-SNAPSHOT')}
+                    {isLoading ? <Loader2 className="inline w-3 h-3 animate-spin" /> : (metadata?.version || 'N/A')}
                   </span>
                 </span>
                 <div className="w-1 h-1 rounded-full bg-[var(--color-border-subtle)]" />

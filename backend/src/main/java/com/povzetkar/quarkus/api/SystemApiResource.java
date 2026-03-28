@@ -12,6 +12,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import jakarta.inject.Inject;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -28,6 +30,9 @@ public class SystemApiResource extends BaseApiResource {
     @ConfigProperty(name = "quarkus.profile", defaultValue = "dev")
     String profile;
 
+    @Inject
+    Clock clock;
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy");
 
     @GET
@@ -39,7 +44,7 @@ public class SystemApiResource extends BaseApiResource {
             version,
             profile,
             "ACTIVE_EVOLUTION",
-            LocalDate.now().format(DATE_FORMATTER) // Refined for best practices
+            LocalDate.now(clock).format(DATE_FORMATTER)
         );
     }
 }
