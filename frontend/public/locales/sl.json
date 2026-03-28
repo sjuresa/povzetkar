@@ -301,7 +301,12 @@
       "q2_desc_full": "Razširitev zmogljivosti zbiranja inteligence platforme z dodajanjem novih virov podatkov in analitičnih funkcij.",
       "q3_desc_full": "Implementacija orodij za ustvarjanje vsebin in sodelovalnih funkcij za izpopolnjevanje znanja.",
       "q4_desc_full": "Uvedba napredne sinteze in modulov za sodelovalno analizo za deljenje vpogledov na visoki ravni.",
-      "q5_desc_full": "Razširitev platforme v enoten osebni analitični sistem za večdomensko proaktivno razumevanje."
+      "q5_desc_full": "Razširitev platforme v enoten osebni analitični sistem za večdomensko proaktivno razumevanje.",
+      "q1_subtitle": "Mojstrstvo poti znanja",
+      "q2_subtitle": "Implementacija modrosti",
+      "q3_subtitle": "Integriteta platforme",
+      "q4_subtitle": "Inteligentna sinteza",
+      "q5_subtitle": "Univerzalna modrost"
     },
     "footer": {
       "built_with": "Sistemski metapodatki zaključeni.",

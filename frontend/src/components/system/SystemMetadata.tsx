@@ -228,11 +228,11 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                 
                 <div className="relative pl-12 border-l-4 border-black space-y-20">
                    {[
-                    { title: t('system.roadmap.q1_title'), subtitle: `${t('landing.pyramid.level2')} Mastery`, desc: t('system.roadmap.q1_desc_full') },
-                    { title: t('system.roadmap.q2_title'), subtitle: `${t('landing.pyramid.level3')} Implementation`, desc: t('system.roadmap.q2_desc_full') },
-                    { title: t('system.roadmap.q3_title'), subtitle: "Platform Integrity", desc: t('system.roadmap.q3_desc_full') },
-                    { title: t('system.roadmap.q4_title'), subtitle: "Intelligent Synthesis", desc: t('system.roadmap.q4_desc_full') },
-                    { title: t('system.roadmap.q5_title'), subtitle: "Universal Wisdom", desc: t('system.roadmap.q5_desc_full') }
+                    { title: t('system.roadmap.q1_title'), subtitle: t('system.roadmap.q1_subtitle'), desc: t('system.roadmap.q1_desc_full') },
+                    { title: t('system.roadmap.q2_title'), subtitle: t('system.roadmap.q2_subtitle'), desc: t('system.roadmap.q2_desc_full') },
+                    { title: t('system.roadmap.q3_title'), subtitle: t('system.roadmap.q3_subtitle'), desc: t('system.roadmap.q3_desc_full') },
+                    { title: t('system.roadmap.q4_title'), subtitle: t('system.roadmap.q4_subtitle'), desc: t('system.roadmap.q4_desc_full') },
+                    { title: t('system.roadmap.q5_title'), subtitle: t('system.roadmap.q5_subtitle'), desc: t('system.roadmap.q5_desc_full') }
                   ].map((phase, idx) => (
                     <div key={idx} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
                       <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
