@@ -199,7 +199,7 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Hardening & Operational Excellence:**
     *   Implement Prometheus metrics and Grafana dashboards for system-wide monitoring (POV-164).
     *   **Self-Cleaning Infra**: Implement a background job to purge `JobExecutionAudit` records with 90-day retention (POV-165).
-    *   **QA & Process Automation**: Transition to a permanent Master Test Suite and develop an automated planning validation script (POV-166, POV-167).
+    *   **QA Health & Master Test Suite**: Centralize all regression scenarios into a permanent suite and migrate remaining Integration Tests to the `@TestTransaction` pattern (POV-166).
 
 ## v0.16: Administrative Control & Hardening
 
@@ -212,7 +212,7 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Product Refinement & Security:**
     *   Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
     *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
-    *   **Full i18n Audit**: Systematic migration of all remaining hardcoded strings in legacy Dashboard and Audit Log views.
+    *   **Full i18n Audit**: Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 
 ## v1.0: RAG & Conversational Interface
 
@@ -282,6 +282,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.3     | March 28, 2026     | Povzetkar AI | Final documentation alignment (POV-166, i18n audit) and clarified job cleanup task separation. |
 | 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0 with actual tasks and moved postponed items (Admin UI, Job Control, DAST) to new v0.16.0. |
 | 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                      |
 | 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15. |

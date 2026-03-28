@@ -13,7 +13,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
 *   **Admin Jobs UI Implementation:** (Moved to v0.16.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
-*   **Full Component Internationalization:** (Moved to v0.16.0) Systematically migrate all hardcoded strings in `DashboardPage`, `AuditLogPage`, and `TopicManager` to the i18n system.
+*   **Full Component Internationalization:** (Moved to v0.16.0) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 *   **Theme Transition Animations:** (Moved to v0.16.0) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
 
@@ -28,10 +28,10 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Standardize Exception Message Assertions in Tests:** Create a helper or wrapper for `ApiException` (and other external exceptions) to extract clean error messages, or standardize error message assertions in tests to handle variable message formats (e.g., including status codes) more robustly.
 *   **Advanced Idempotency (Full HTTP Response Replay):** Upgrade the current Idempotency-Key validation to fully cache and replay the exact HTTP response (including 400/500 `ProblemDetail` errors) for duplicate POST command requests, preventing any backend re-execution upon retry.
 *   **Recursive Briefings (Map-Reduce):** Implementing hierarchical summarization for extremely long content sets or timeframes (Deferred from v0.12).
-*   **Migrate Integration Tests to `@TestTransaction`:** (Moved to v0.15.0 - POV-166) Migrate relevant manual/automated cases from v0.13.0 and v0.14.0 and ensure all new tests use the transaction pattern.
+*   **QA Health & Master Test Suite:** (Moved to v0.15.0 - POV-166) Centralize all regression scenarios into a permanent suite and migrate remaining Integration Tests to the `@TestTransaction` pattern.
 *   **Fix Qute Template Lints:** There are numerous lint warnings/errors in `admin.html`, `main.html`, etc. regarding unresolved objects (`activeTab`, `item`, etc.). These should be investigated and fixed to ensure a clean build and IDE experience.
 *   **Primary Identity Resolution:** Refactor `UserMapper` to deterministically resolve a "primary" identity/provider when multiple OIDC accounts are linked to a single user.
-*   **Job Cleanup Strategy:** (Duplicate of Job Audit Cleanup) - Handled in POV-165.
+*   **Background Jobs Cleanup Strategy:** (Moved to v0.16.0) Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items to prevent historical database bloat.
 *   **API Abuse Mitigation (LLM Endpoints):** Implement rate limiting/quotas per user and strict state validation (e.g., preventing regeneration of already `COMPLETED` summaries) for global mutation endpoints like `POST /api/v1/content-items/{id}/commands/generate-summary` to prevent financial risk and queue starvation.
 *   **Advanced Caching Strategies:** Investigate `ETag`, `Cache-Control`, and `Stale-while-revalidate` patterns for Dashboard and Briefings endpoints to reduce database load.
 *   **Fully Reactive Identity Resolution:** Refactor `UserContextService.getCurrentUser()` to return a `Uni<User>`, allowing its removal from the initial JAX-RS method body and enabling the complete removal of the `@Blocking` annotation from reactive endpoints.
