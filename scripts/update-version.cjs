@@ -14,43 +14,38 @@ if (!newVersion) {
     process.exit(1);
 }
 
-const rootDir = path.join(__dirname, '..');
+    const rootDir = path.join(__dirname, '..');
 
-try {
-    // 1. Update Maven versions (Root and Submodules)
-    console.log(`\n📦 Updating Maven versions to ${newVersion}...`);
-    const mvnw = process.platform === 'win32' ? 'mvnw.cmd' : './mvnw';
-    
-    // We run versions:set on the root. The plugin handles submodule parent versions automatically.
-    execSync(`${mvnw} versions:set -DnewVersion=${newVersion} -DgenerateBackupPoms=false`, { 
-        cwd: rootDir,
-        stdio: 'inherit' 
-    });
+    const updatePackageVersion = (filePath, version) => {
+        const relativePath = path.relative(rootDir, filePath);
+        if (fs.existsSync(filePath)) {
+            console.log(`\nJSON Updating ${relativePath} version to ${version}...`);
+            const packageContent = fs.readFileSync(filePath, 'utf8');
+            const packageJson = JSON.parse(packageContent);
+            packageJson.version = version;
+            fs.writeFileSync(filePath, JSON.stringify(packageJson, null, 2) + '\n');
+            console.log(`✅ ${relativePath} updated.`);
+        } else {
+            console.warn(`⚠️ Warning: ${relativePath} not found.`);
+        }
+    };
 
-    // 2. Update package.json version
-    console.log(`\nJSON Updating package.json version to ${newVersion}...`);
-    const packageJsonPath = path.join(rootDir, 'package.json');
-    
-    if (fs.existsSync(packageJsonPath)) {
-        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-        packageJson.version = newVersion;
-        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-        console.log('✅ package.json updated.');
-    } else {
-        console.warn('⚠️ Warning: package.json not found in root.');
-    }
+    try {
+        // 1. Update Maven versions (Root and Submodules)
+        console.log(`\n📦 Updating Maven versions to ${newVersion}...`);
+        const mvnw = process.platform === 'win32' ? 'mvnw.cmd' : './mvnw';
+        
+        // We run versions:set on the root. The plugin handles submodule parent versions automatically.
+        execSync(`${mvnw} versions:set -DnewVersion=${newVersion} -DgenerateBackupPoms=false`, { 
+            cwd: rootDir,
+            stdio: 'inherit' 
+        });
 
-    // 3. Update frontend/package.json version (if exists)
-    const frontendPackageJsonPath = path.join(rootDir, 'frontend', 'package.json');
-    if (fs.existsSync(frontendPackageJsonPath)) {
-        console.log(`\nJSON Updating frontend/package.json version to ${newVersion}...`);
-        const frontendPackageJson = JSON.parse(fs.readFileSync(frontendPackageJsonPath, 'utf8'));
-        frontendPackageJson.version = newVersion;
-        fs.writeFileSync(frontendPackageJsonPath, JSON.stringify(frontendPackageJson, null, 2) + '\n');
-        console.log('✅ frontend/package.json updated.');
-    }
+        // 2. Update package.json versions
+        updatePackageVersion(path.join(rootDir, 'package.json'), newVersion);
+        updatePackageVersion(path.join(rootDir, 'frontend', 'package.json'), newVersion);
 
-    console.log('\n✨ Successfully synchronized all version files.');
+        console.log('\n✨ Successfully synchronized all version files.');
 
 } catch (error) {
     console.error('\n❌ Error during version update:');
