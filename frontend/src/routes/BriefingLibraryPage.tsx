@@ -30,7 +30,7 @@ export function BriefingLibraryPage() {
     size,
     search: debouncedSearch || undefined,
     topicId: topicId,
-    sourceId: sourceId as number | undefined,
+    sourceId: sourceId,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
   }, {
@@ -183,33 +183,42 @@ export function BriefingLibraryPage() {
 
       {/* Data Table */}
       <div className="space-y-4">
-        {isLoading && items.length === 0 ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-3xl p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-[var(--color-surface-deep)] flex items-center justify-center mx-auto mb-4 text-[var(--color-text-secondary)]">
-              <Search className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-bold text-[var(--color-text-primary)]">
-              {t('briefingLibrary.empty.title')}
-            </h3>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-              {t('briefingLibrary.empty.description')}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-4 px-4 py-2 rounded-xl bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-all text-sm font-medium cursor-pointer"
-              >
-                {t('briefingLibrary.empty.clearFilters')}
-              </button>
-            )}
-          </div>
-        ) : (
+        {(() => {
+          if (isLoading && items.length === 0) {
+            return (
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((id) => (
+                  <Skeleton key={`skeleton-${id}`} className="h-16 w-full" />
+                ))}
+              </div>
+            );
+          }
+
+          if (items.length === 0) {
+            return (
+              <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-3xl p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-[var(--color-surface-deep)] flex items-center justify-center mx-auto mb-4 text-[var(--color-text-secondary)]">
+                  <Search className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-[var(--color-text-primary)]">
+                  {t('briefingLibrary.empty.title')}
+                </h3>
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+                  {t('briefingLibrary.empty.description')}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 px-4 py-2 rounded-xl bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-all text-sm font-medium cursor-pointer"
+                  >
+                    {t('briefingLibrary.empty.clearFilters')}
+                  </button>
+                )}
+              </div>
+            );
+          }
+
+          return (
           <>
             {/* Table */}
             <div className="glass border border-[var(--color-border-subtle)] rounded-3xl overflow-hidden">
@@ -253,14 +262,16 @@ export function BriefingLibraryPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link
-                            to="/briefings/$briefingId"
-                            params={{ briefingId: String(briefing.id) }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] hover:border-blue-500/50 transition-all text-xs font-bold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-blue-400"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            {t('briefingLibrary.table.view')}
-                          </Link>
+                          {briefing.id != null && (
+                            <Link
+                              to="/briefings/$briefingId"
+                              params={{ briefingId: String(briefing.id) }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] hover:border-blue-500/50 transition-all text-xs font-bold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-blue-400"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              {t('briefingLibrary.table.view')}
+                            </Link>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -276,7 +287,8 @@ export function BriefingLibraryPage() {
               isLoading={isLoading}
             />
           </>
-        )}
+        );
+      })()}
       </div>
     </div>
   );
