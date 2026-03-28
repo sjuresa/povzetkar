@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (v0.14.0 Work-in-Progress)
+## [Unreleased]
 
 ### Summary
-Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infrastructure Hardening**, and **Technical Quality Sync**. Key highlights include **Custom Prompt Templates**, **Distroless Java 25 Runtime**, and the removal of the legacy **/api/v1/events/test-pulse** testing infrastructure. Technical quality is further reinforced with the integration of **Jacoco Coverage Reporting** and synchronized ERD documentation.
+Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
+
+## [0.14.0] - 2026-03-28
+
+### Summary
+Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Key highlights include **Custom Prompt Templates** at the topic level, a hardened **Distroless Java 25 Runtime**, and a premium distillery-inspired **Landing Page**. User control is significantly enhanced with a new **Orchestration Trigger Dialog** (allowing dry-runs and parameter refinement) and a global **Content Management Dashboard** for administrative oversight of the ingestion pipeline.
 
 ### Added
 - **AI Customization (POV-153):** Implemented support for **Custom Prompt Templates** at the topic level. Users can now define specialized summarization instructions (e.g., specific language, tone, or format) that override the global default.

@@ -171,7 +171,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Implement Persistent Job Auditing storage for historical analysis.
 
 ## v0.14: Output Mastery & UX Refinement
-**Status:** 🏗️ In Progress
+**Status:** ✅ Completed
 
 **Goal:** Empower users with advanced reporting tools and give administrators full control over system operations and user management.
 
@@ -274,6 +274,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                      |
 | 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15. |
 | 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
 | 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
