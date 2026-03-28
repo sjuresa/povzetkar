@@ -12,17 +12,29 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.2. Define High-Level Goals:** Review the `roadmap.md` and agree on the primary objectives for the new version.
 - [ ] **1.3. Define Testing Strategy:** For any new functionality (especially with a UI component), ask "How will we test this in a way that is proportional to the investment?". The decision must be documented in the `planning-process.md`.
 - [ ] **1.4. Identify Spike Tasks:** Review goals for high technical uncertainty. If any exist, create a dedicated "Spike" task to de-risk future development.
-- [ ] **1.5. Document Planning Process**: Create a `docs/versions/vX.Y-planning-process.md` file using the "Decision Log" style (see v0.13.0 or v0.14.0 as examples).
-    - [ ] Include **Planning Evolution & Justification**: Document brainstorming discussions, pro/con analysis of alternatives, and rationale for final choices. 
-    - [ ] Include the **Testing Strategy**, ensuring it's proportional to the feature complexity and references `use_cases.md`.
-- [ ] **1.6. Define Use Cases**: For all user-facing or complex features, create/update `docs/analysis/use_cases.md` to map User Stories to concrete interaction flows. This document serves as the foundation for both UI implementation and test cases.
+- [ ] **1.5. Document Planning Process**: Create a `docs/versions/vX.Y-planning-process.md` file using the "Decision Log" style.
+    - [ ] Include **Planning Evolution & Justification**: Document brainstorming discussions and pro/con analysis.
+    - [ ] Include **Testing Strategy**: Proportional complexity mapping to `use_cases.md`.
+    - [ ] Include **UI/UX Discovery (Skeletons)**: For all UI tasks, define the layout grid and element placement using **ASCII Wireframes**.
+    - [ ] Include **API & Dependency Audit**: Check status of external services (e.g., YouTube API) and library security *before* planning implementation.
+- [ ] **1.6. Define Use Cases & Test Cases**: 
+    - [ ] For all user-facing or complex features, create/update `docs/analysis/use_cases.md` to map User Stories to concrete interaction flows.
+    - [ ] Update **`docs/analysis/test_specification.md`** (Master Suite). Map every new Use Case to at least one Test Case (TC) and define the testing methodology (Manual, Unit, Playwright).
 - [ ] **1.7. Create Task Breakdown**: Create a new `docs/versions/vX.Y-tasks.md` file.
     - [ ] Include a **Time Estimation Summary** with per-task estimates and contingency.
-    - [ ] **Task Specification**: Every task must have a `## Context` (links to relevant documents/ADRs/Specs) and a `## Definition of Done` (specific acceptance criteria).
-    - [ ] For every `feat` task, ensure a corresponding `test` sub-task (Vitest/Playwright/Integration) is defined.
+    - [ ] Assign **Prioritization (P-levels)**: P0 (Critical/Core), P1 (High), P2 (Enhancement), P3 (Maint).
+    - [ ] **Task Specification**: Every task must have a `## Context` and a `## Definition of Done`.
+    - [ ] **Resilience & Error States**: Every task must define system behavior for **failure scenarios** (e.g., network timeout, API down, database locked).
+    - [ ] **Skill Mapping**: Tag each task with required AI skills (e.g., `@[skills/api-patterns]`).
+    - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined.
 - [ ] **1.8. Initialize Retrospective Draft**: Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
-- [ ] **1.9. Prepare Development Branch**: Create the new version branch (e.g., `v0.7.0`) from `main` and update version numbers (e.g., `pom.xml`, `package.json`) to the new snapshot version (e.g., `0.7.0-SNAPSHOT`).
+- [ ] **1.9. Prepare Development Branch**: Create the new version branch (e.g., `v0.7.0`) from `main` and update version numbers using `node scripts/update-version.cjs <version>-SNAPSHOT`.
 - [ ] **1.10. Document Standard (Formatting)**: For all non-trivial documents created or updated, ensure that the **Revision History** section is placed at the **END** of the file to prioritize immediate access to core content.
+- [ ] **1.11. Final Expert Review**: Perform a mandatory final review of the version plan, specifically checking for:
+    - [ ] **i18n Readiness**: Impact on localization files (`en.json`, `sl.json`).
+    - [ ] **Security Audit**: Port exposures, sensitive data in logs, and Docker isolation.
+    - [ ] **Ops Readiness**: Verification of rollback/panic-switch procedures in `RUNBOOK.md`.
+    - [ ] **Legacy Sync**: Audit `frontend/e2e/` for undocumented tests and merge them into the Master Suite.
 
 ## Phase 2: Task Execution (Core Loop)
 
@@ -69,7 +81,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] **General Refresh:** "We are finalizing version vX.Y.Z. Please review the documents for this version (`docs/versions/vX.Y.Z-planning-process.md`, `docs/versions/vX.Y.Z-tasks.md`, `docs/retrospectives/vX.Y.Z-retrospective.md`) and check if the project documentation in `docs/` needs to be refreshed based on this (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`, `docs/strategy`). Today is [Current Date]."
     - [ ] **Agent Protocol Check:** "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
     - [ ] **Methodology Update:** "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
-- [ ] **3.3. Finalize `pom.xml`:** Remove the `-SNAPSHOT` suffix from the project version (e.g., `0.7.0`).
+- [ ] **3.3. Finalize Project Versions**: Remove the `-SNAPSHOT` suffix using `node scripts/update-version.cjs <version>`.
 - [ ] **3.4. Finalize `CHANGELOG.md`:**
     - [ ] **Editorial Cleanup:** Remove internal refactoring noise and consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during development.
     - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[0.7.0] - YYYY-MM-DD`).
@@ -87,6 +99,9 @@ This document provides a comprehensive checklist for our development process. It
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 2.2     | March 28, 2026   | Povzetkar AI | Mandated ASCII Wireframes (1.5), Resilience Analysis (1.7), and Dependency Audits (1.11). |
+| 2.1     | March 28, 2026   | Povzetkar AI | Mandated Master Test Suite (1.6), P-levels/Skill Mapping (1.7), and Expert Review (1.11). |
+| 2.0     | March 28, 2026   | Povzetkar AI | Integrated `update-version.cjs` for monorepo version synchronization (Phase 1 & Phase 3). |
 | 1.9     | March 27, 2026   | Povzetkar AI | Added Phase 3 mandate for syncing landing page metadata via `sync_metadata.py`.                    |
 | 1.8     | March 25, 2026   | Povzetkar AI | Formalized document formatting (Revision History at end) and refined Planning/Task document standards based on v0.14.0 learnings.   |
 | 1.7     | March 19, 2026   | Povzetkar AI | Upgraded Phase 1 planning standards: added Evolution/Justification logic and mandatory time breakdown with contingency.             |
