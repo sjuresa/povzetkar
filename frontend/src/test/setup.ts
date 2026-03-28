@@ -13,12 +13,12 @@ const localStorageMock = (() => {
   };
 })();
 
-Object.defineProperty(global, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock,
 });
 
 // Mock matchMedia for tests
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
@@ -43,5 +43,20 @@ vi.mock('react-i18next', () => ({
   initReactI18next: {
     type: '3rdParty',
     init: vi.fn(),
+  },
+}));
+
+// Global API Client Mock to prevent network leaks in components
+vi.mock('../api/client', () => ({
+  default: {
+    get: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    post: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    put: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    delete: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    patch: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
   },
 }));
