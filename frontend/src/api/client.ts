@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../util/logger';
@@ -49,7 +49,7 @@ const client: AxiosInstance = axios.create({
 // Configure Axios Retry Strategy
 axiosRetry(client, {
   retries: 3,
-  retryDelay: axiosRetry.exponentialDelay,
+  retryDelay: (retryCount) => axiosRetry.exponentialDelay(retryCount),
   onRetry: (retryCount) => {
     logger.warn(`[API] Retrying request (${retryCount}/3)...`);
   },
@@ -80,7 +80,7 @@ client.interceptors.request.use(
 
     return config;
   },
-  (_error: AxiosError) => Promise.reject(_error)
+  (error) => Promise.reject(error instanceof Error ? error : new Error(String(error)))
 );
 
 /**
@@ -105,7 +105,13 @@ client.interceptors.response.use(
     let unwrappedData = data?.data;
     
     if (Array.isArray(unwrappedData) && data?.meta?.pagination) {
-      const pagination = data.meta.pagination as any;
+      const pagination = data.meta.pagination as { 
+        totalElements: number; 
+        page: number; 
+        size: number; 
+        totalPages: number; 
+        hasNext: boolean; 
+      };
       unwrappedData = {
         items: unwrappedData,
         totalCount: pagination.totalElements,
@@ -116,11 +122,13 @@ client.interceptors.response.use(
       };
     }
     
+    // Aligns with Orval's expectation that the promise resolves to the response object 
+    // containing the .data property (which we've unwrapped to be the inner DTO).
     response.data = unwrappedData;
     
     return response;
   },
-  (error: AxiosError<ApiEnvelope>) => {
+  (error: import('axios').AxiosError<ApiEnvelope>) => {
     const { response } = error;
 
     if (response) {
@@ -134,7 +142,7 @@ client.interceptors.response.use(
           break;
         case 429: {
           logger.warn('[API] Rate Limited', { status: response.status });
-          const retryAfter = response.headers ? (response.headers['retry-after'] as string | undefined) : undefined;
+          const retryAfter = (response.headers as Record<string, string | undefined>)['retry-after'];
           const user = useAuthStore.getState().user; // Define user here
           if (user?.id && retryAfter) {
             logger.warn(`[API] Should retry after ${retryAfter} seconds`, { retryAfter });
@@ -175,19 +183,19 @@ declare global {
   interface RequestInit {
     version?: number;
     skipEnvelopeUnwrap?: boolean;
-    params?: any;
+    params?: Record<string, unknown>;
   }
 }
 
 export type CustomRequestOptions = {
   method?: string;
-  headers?: any;
-  body?: any;
-  params?: any;
+  headers?: HeadersInit;
+  body?: BodyInit | null;
+  params?: Record<string, unknown>;
   signal?: AbortSignal | null;
   version?: number;
   skipEnvelopeUnwrap?: boolean;
-} & RequestInit & Record<string, any>;
+} & RequestInit & Record<string, unknown>;
 
 export const customInstance = <T>(
   url: string,
@@ -195,17 +203,17 @@ export const customInstance = <T>(
 ): Promise<T> => {
   const { method, headers, body, params, signal, version } = options;
 
-  let requestData = body;
+  let requestData: BodyInit | null | Record<string, unknown> | undefined = body;
   if (typeof body === 'string') {
     const requestHeaders = new Headers(headers);
     const contentType = requestHeaders.get('Content-Type');
 
     if (contentType?.includes('application/json')) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        requestData = JSON.parse(body);
-      } catch (_e) {
-        logger.error('[API] Failed to parse JSON body', { error: _e, url });
+        requestData = JSON.parse(body) as Record<string, unknown>;
+
+      } catch (e) {
+        logger.error('[API] Failed to parse JSON body', { error: e, url });
       }
     }
   }

@@ -118,11 +118,11 @@ public class BackgroundJobService {
             Uni<Void> jobTask;
             switch (event.type()) {
                 case SYNC_YOUTUBE_FEEDS -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true));
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, false, true, null));
                 case GENERATE_BRIEFINGS -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false));
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), false, false, true, false, null));
                 case PROCESS_TOPICS_AND_SUMMARIZE -> jobTask = orchestrationManager.runOrchestrationManually(
-                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false));
+                        new OrchestrationRequest(LocalDate.now(clock), LocalDate.now(clock), true, true, false, false, null));
                 case GENERATE_TOPIC_BRIEFING -> jobTask = createTopicJobTask(event.topicId(),
                         topic -> orchestrationManager.runOrchestrationForTopicManually(topic, LocalDate.now(clock)));
                 case GENERATE_TOPIC_SUMMARIES -> jobTask = createTopicJobTask(event.topicId(),

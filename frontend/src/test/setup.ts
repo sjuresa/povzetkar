@@ -4,23 +4,23 @@ import { vi } from 'vitest';
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
-    getItem: (key: string) => store[key] || null,
+    getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, value: string) => { store[key] = value.toString(); },
     clear: () => { store = {}; },
     removeItem: (key: string) => { delete store[key]; },
-    length: Object.keys(store).length,
-    key: (index: number) => Object.keys(store)[index] || null,
+    get length() { return Object.keys(store).length; },
+    key: (index: number) => Object.keys(store)[index] ?? null,
   };
 })();
 
-Object.defineProperty(global, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock,
 });
 
 // Mock matchMedia for tests
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -43,5 +43,20 @@ vi.mock('react-i18next', () => ({
   initReactI18next: {
     type: '3rdParty',
     init: vi.fn(),
+  },
+}));
+
+// Global API Client Mock to prevent network leaks in components
+vi.mock('../api/client', () => ({
+  default: {
+    get: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    post: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    put: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    delete: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    patch: vi.fn().mockImplementation(() => Promise.resolve({ data: {} })),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
   },
 }));

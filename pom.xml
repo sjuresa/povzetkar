@@ -6,7 +6,7 @@
 
     <groupId>si.jumis</groupId>
     <artifactId>povzetkar-root</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
     <packaging>pom</packaging>
 
     <name>Povzetkar Root</name>
@@ -45,10 +45,22 @@
         <compiler.plugin.version>3.13.0</compiler.plugin.version>
         <resources.plugin.version>3.3.1</resources.plugin.version>
         <project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>
+
+        <!-- Fixed Versions for CVE-2026-33871 -->
+        <netty.version>4.1.132.Final</netty.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Force Netty 4.1.132.Final to resolve CVE-2026-33871 (POV-156) -->
+            <!-- MUST BE FIRST for Maven precedence -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>

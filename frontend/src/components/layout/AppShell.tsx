@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -9,14 +10,18 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
+import { SystemMetadata } from '../system/SystemMetadata';
+import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 
 interface AppShellProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
   // Initialize SSE event stream for jobs
   useJobEvents();
+
+  const [isMetadataOpen, setIsMetadataOpen] = useState(false);
 
   const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
@@ -32,6 +37,14 @@ export function AppShell({ children }: AppShellProps) {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
 
+  const { data: metadata } = useSystemMetadata();
+
+  const getStatusColor = () => {
+    if (connectionStatus === 'connected') return 'bg-emerald-500';
+    if (connectionStatus === 'connecting') return 'bg-amber-500 animate-pulse';
+    return 'bg-red-500';
+  };
+
   const navItems = [
     { name: t('navigation.dashboard'), path: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { name: t('navigation.briefings'), path: '/briefings', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
@@ -41,6 +54,7 @@ export function AppShell({ children }: AppShellProps) {
 
   const adminNavItems = [
     { name: t('navigation.auditLogs'), path: '/admin/audit-log', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+    { name: t('navigation.contentManagement'), path: '/admin/content', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
     { name: t('navigation.systemJobs'), path: '/admin/jobs', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
   ];
 
@@ -56,16 +70,16 @@ export function AppShell({ children }: AppShellProps) {
           sidebarCollapsed ? 'w-20' : 'w-64'
         } transition-all duration-300 ease-in-out bg-[var(--color-background-alt)] border-r border-[var(--color-border-subtle)] flex flex-col z-50`}
       >
-        <div className="h-16 flex items-center px-6 border-b border-[var(--color-border-subtle)]">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/40">
+        <Link to="/dashboard" className="h-16 flex items-center px-6 border-b border-[var(--color-border-subtle)] outline-none group hover:bg-[var(--color-surface-deep)]/30 transition-colors" aria-label="Povzetkar Dashboard">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/40 group-hover:scale-105 transition-transform">
             P
           </div>
           {!sidebarCollapsed && (
-            <span className="ml-3 font-bold text-xl tracking-tight text-[var(--color-text-primary)] animate-in fade-in duration-500">
+            <span className="ml-3 font-bold text-xl tracking-tight text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-blue-400 transition-colors">
               Povzetkar
             </span>
           )}
-        </div>
+        </Link>
 
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
           {navItems.map((item) => {
@@ -146,7 +160,18 @@ export function AppShell({ children }: AppShellProps) {
           )}
         </nav>
 
-        <div className="p-4 border-t border-[var(--color-border-subtle)]">
+        <div className="p-4 border-t border-[var(--color-border-subtle)] space-y-2">
+          <button
+            onClick={() => setIsMetadataOpen(true)}
+            className={`w-full h-10 flex items-center px-3 rounded-lg bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] transition-all group overflow-hidden ${sidebarCollapsed ? 'justify-center' : ''}`}
+          >
+            <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 flex-shrink-0 animate-pulse"></div>
+            {!sidebarCollapsed && (
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] transition-colors">
+                {metadata?.version}
+              </span>
+            )}
+          </button>
           <button
             onClick={toggleSidebar}
             className="w-full h-10 flex items-center justify-center rounded-lg bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
@@ -168,19 +193,15 @@ export function AppShell({ children }: AppShellProps) {
         {/* Header */}
         <header className="h-16 flex items-center justify-between px-8 bg-[var(--color-background-alt)]/50 border-b border-[var(--color-border-subtle)] backdrop-blur-md z-40">
           <div className="flex items-center space-x-4">
-             {/* Connection Status Indicator */}
-             <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)]" title={`Real-time Stream: ${connectionStatus}`}>
-               <span className="relative flex h-2 w-2">
-                 {connectionStatus === 'connected' && (
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                 )}
-                 <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                   connectionStatus === 'connected' ? 'bg-emerald-500' : 
-                   connectionStatus === 'connecting' ? 'bg-amber-500 animate-pulse' : 'bg-red-500'
-                 }`}></span>
-               </span>
-               <span className="text-[10px] font-bold uppercase tracking-tighter text-[var(--color-text-secondary)]">Live</span>
-             </div>
+              <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)]" title={`Real-time Stream: ${connectionStatus}`}>
+                <span className="relative flex h-2 w-2">
+                  {connectionStatus === 'connected' && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  )}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${getStatusColor()}`}></span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-tighter text-[var(--color-text-secondary)]">Live</span>
+              </div>
           </div>
 
           <div className="flex items-center space-x-6">
@@ -202,10 +223,10 @@ export function AppShell({ children }: AppShellProps) {
                </div>
             </Link>
             <button
-              onClick={logout}
-              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+               onClick={logout}
+               className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
-              {t('common.logout')}
+               {t('common.logout')}
             </button>
           </div>
         </header>
@@ -221,6 +242,7 @@ export function AppShell({ children }: AppShellProps) {
         </main>
       </div>
 
+      <SystemMetadata isOpen={isMetadataOpen} onClose={() => setIsMetadataOpen(false)} />
       <Toaster 
         position="top-right" 
         expand={true} 

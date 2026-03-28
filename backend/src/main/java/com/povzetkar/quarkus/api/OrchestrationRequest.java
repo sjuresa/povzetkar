@@ -8,6 +8,7 @@ public record OrchestrationRequest(
     boolean processPending,
     boolean summarize,
     boolean createBriefing,
-    boolean previewOnly
+    boolean previewOnly,
+    Long topicId
 ) {
 }

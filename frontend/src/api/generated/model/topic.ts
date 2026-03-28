@@ -5,6 +5,7 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
+import type { ContentSourceDTO } from './contentSourceDTO';
 import type { Instant } from './instant';
 
 export interface Topic {
@@ -14,5 +15,5 @@ export interface Topic {
   enabled?: boolean;
   lastRunDate?: Instant;
   promptTemplate?: string;
-  contentSourceIds?: number[];
+  contentSources?: ContentSourceDTO[];
 }

@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface BriefingGenerator {
-    List<Summary> getSummariesForBriefing(Topic topic, LocalDate briefingDate);
+    List<Summary> getSummariesForBriefing(Long topicId, LocalDate briefingDate);
     String getMetaSummaryFromAI(Topic topic, List<Summary> summaries, LocalDate briefingDate);
     Briefing generateBriefing(Topic topic, LocalDate briefingDate, List<Summary> summaries, String metaSummary);
 }

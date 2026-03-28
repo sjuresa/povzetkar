@@ -5,9 +5,13 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
+import type { ProcessingStatus } from './processingStatus';
 
 export type GetApiV1ContentItemsParams = {
 page?: number;
 size?: number;
+sort?: string[];
 sourceId?: number;
+status?: ProcessingStatus[];
+topicId?: number;
 };

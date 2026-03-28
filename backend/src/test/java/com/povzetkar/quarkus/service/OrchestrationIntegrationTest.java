@@ -113,7 +113,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_success() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         YouTubeVideo longVideo = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -125,8 +125,14 @@ class OrchestrationIntegrationTest {
 
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Summary for Video");
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
+
+        // Flush to ensure that topics and sources created in setupTestData are visible to the background tasks
+        // which might run in separate transactions (requiringNew).
+        Topic.getEntityManager().flush();
+
         // When
         orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
@@ -134,7 +140,9 @@ class OrchestrationIntegrationTest {
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService).getTranscript("video1_id");
         verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
-        verify(videoSummaryService).createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), eq("Default Topic"));
+        verify(videoSummaryService).createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), eq("Default Topic"), any());
+
+        Briefing.getEntityManager().clear();
 
         List<ContentItem> contentItems = ContentItem.listAll();
         assertEquals(1, contentItems.size());
@@ -156,7 +164,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_noNewContent() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(Collections.emptyList());
@@ -178,7 +186,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_summarizationFails() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         YouTubeVideo videoToProcess = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -197,7 +205,7 @@ class OrchestrationIntegrationTest {
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService).getTranscript("video1_id");
         verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
-        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString());
+        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
 
         List<ContentItem> contentItems = ContentItem.listAll();
         assertEquals(1, contentItems.size());
@@ -212,10 +220,10 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_briefingOverwrite() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
         Topic testTopic = Topic.find("name", "Default Topic").firstResult();
 
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString()))
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Initial Meta-summary")
                 .thenReturn("Updated Meta-summary");
 
@@ -228,10 +236,14 @@ class OrchestrationIntegrationTest {
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenReturn("Initial Summary");
 
+        // Flush to ensure that topics and sources created in setupTestData are visible to the background tasks
+        // which might run in separate transactions (requiringNew).
+        Topic.getEntityManager().flush();
+
         orchestrationManager.runOrchestrationManually(request).await().indefinitely();
 
         assertEquals(1, Briefing.count());
-        Briefing initialBriefing = Briefing.findByTopicAndDate(testTopic, orchestrationDate).orElseThrow();
+        Briefing initialBriefing = Briefing.findByTopicAndDate(testTopic.id, orchestrationDate).orElseThrow();
         assertEquals("Initial Meta-summary", initialBriefing.metaSummary);
         assertEquals(1, initialBriefing.summaries.size());
 
@@ -256,7 +268,7 @@ class OrchestrationIntegrationTest {
 
         assertEquals(1, Briefing.count());
         Briefing.getEntityManager().clear();
-        Briefing updatedBriefing = Briefing.findByTopicAndDate(testTopic, orchestrationDate).orElseThrow();
+        Briefing updatedBriefing = Briefing.findByTopicAndDate(testTopic.id, orchestrationDate).orElseThrow();
         assertEquals("Updated Meta-summary", updatedBriefing.metaSummary);
         assertEquals(2, updatedBriefing.summaries.size());
         assertTrue(updatedBriefing.summaries.stream().anyMatch(s -> s.summaryText.equals("Initial Summary")));
@@ -268,7 +280,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_concurrentRunPrevention() {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
 
         QuarkusTransaction.requiringNew().run(() -> orchestrationLockService.acquireLock(orchestrationDate));
 
@@ -289,7 +301,7 @@ class OrchestrationIntegrationTest {
     void testOrchestration_takesOverStaleLock() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, true, true, true, false, null);
         Instant staleLockTime = Instant.now().minus(lockTimeout).minus(Duration.ofMinutes(1));
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -313,7 +325,7 @@ class OrchestrationIntegrationTest {
     void testOrchestrationFlow_previewMode() throws IOException {
         // Given
         LocalDate orchestrationDate = LocalDate.now();
-        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, false, false, false, true);
+        var request = new OrchestrationRequest(orchestrationDate, orchestrationDate, false, false, false, true, null);
 
         YouTubeVideo video1 = new YouTubeVideo(
                 "video1_id", "Video 1 Title", "http://youtube.com/watch?v=video1_id",
@@ -328,7 +340,7 @@ class OrchestrationIntegrationTest {
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
         verify(youTubeTranscriptService, never()).getTranscript(anyString());
         verify(videoSummaryService, never()).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
-        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString());
+        verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
 
         List<ContentItem> contentItems = ContentItem.listAll();
         assertEquals(1, contentItems.size());

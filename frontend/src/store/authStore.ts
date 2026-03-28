@@ -38,10 +38,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         } else {
           set({ user: null, isAuthenticated: false, isLoaded: true, isLoading: false });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { message?: string; code?: string };
         // If the request was cancelled, we don't know the status yet.
         // We SHOULD NOT set isLoaded: true because that would trigger a redirect to/from landing.
-        if (error?.message === 'canceled' || error?.code === 'ERR_CANCELED') {
+        if (err?.message === 'canceled' || err?.code === 'ERR_CANCELED') {
            set({ isLoading: false });
            return;
         }

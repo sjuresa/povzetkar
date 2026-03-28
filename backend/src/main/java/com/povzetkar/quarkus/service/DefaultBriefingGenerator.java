@@ -4,7 +4,6 @@ import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
-import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.LockModeType;
@@ -30,8 +29,8 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
     }
 
     @Override
-    public List<Summary> getSummariesForBriefing(Topic topic, LocalDate briefingDate) {
-        return QuarkusTransaction.requiringNew().call(() -> Summary.findByTopicAndDateRange(topic, briefingDate));
+    public List<Summary> getSummariesForBriefing(Long topicId, LocalDate briefingDate) {
+        return Summary.findByTopicAndDateRange(topicId, briefingDate);
     }
 
     /**
@@ -51,7 +50,7 @@ public class DefaultBriefingGenerator implements BriefingGenerator {
 
         // Acquire client and make the blocking call here, outside any transaction.
         GenAiClient client = videoSummaryService.acquireClient();
-        return videoSummaryService.createBriefingFromSummaries(client, rawSummaries, briefingDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")), topic.name);
+        return videoSummaryService.createBriefingFromSummaries(client, rawSummaries, briefingDate.format(DateTimeFormatter.ofPattern("d.M.yyyy")), topic.name, topic.promptTemplate);
     }
 
     /**

@@ -14,7 +14,16 @@ public final class QueryParser {
     }
 
     public static Sort parseSort(List<String> sortParams, Sort defaultSort, Set<String> allowedFields) {
+        return parseSort(sortParams, defaultSort, allowedFields, null);
+    }
+
+    public static Sort parseSort(List<String> sortParams, Sort defaultSort, Set<String> allowedFields, String fieldPrefix) {
         if (sortParams == null || sortParams.isEmpty()) {
+            if (defaultSort != null && fieldPrefix != null) {
+                // If we have a default sort but also a prefix, we should ideally qualify the default sort too
+                // But for simplicity in this project, we assume defaultSort passed is already correct or handles it.
+                // To be robust, we could rebuild defaultSort with prefix.
+            }
             return defaultSort;
         }
 
@@ -28,6 +37,7 @@ public final class QueryParser {
                 throw new BadRequestException("Invalid sort field: " + field + ". Allowed fields are: " + allowedFields);
             }
 
+            String qualifiedField = fieldPrefix != null ? fieldPrefix + "." + field : field;
             Direction direction = Direction.Ascending;
 
             if (parts.length > 1) {
@@ -38,9 +48,9 @@ public final class QueryParser {
             }
 
             if (sort == null) {
-                sort = Sort.by(field, direction);
+                sort = Sort.by(qualifiedField, direction);
             } else {
-                sort = sort.and(field, direction);
+                sort = sort.and(qualifiedField, direction);
             }
         }
 

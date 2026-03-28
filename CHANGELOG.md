@@ -4,7 +4,47 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
+
+### Summary
+Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
+
+## [0.14.0] - 2026-03-28
+
+### Summary
+Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Key highlights include **Custom Prompt Templates** at the topic level, a hardened **Distroless Java 25 Runtime**, and a premium distillery-inspired **Landing Page**. User control is significantly enhanced with a new **Orchestration Trigger Dialog** (allowing dry-runs and parameter refinement) and a global **Content Management Dashboard** for administrative oversight of the ingestion pipeline.
+
+### Added
+- **AI Customization (POV-153):** Implemented support for **Custom Prompt Templates** at the topic level. Users can now define specialized summarization instructions (e.g., specific language, tone, or format) that override the global default.
+- **Backend (POV-153):** Integrated `promptTemplate` fallback logic in `VideoSummaryService`, ensuring a graceful return to the global prompt if a custom one is not provided.
+- **Frontend (POV-153):** Enhanced the **Topic Edit/Create form** to support prompt template management with a live "Reset to Default" capability.
+- **Content Ingestion (POV-153):** Implemented **Automated Source Enrichment**. Adding a YouTube channel now automatically fetches its name, description, and subscriber count via the YouTube Data API.
+- **Content Ingestion (POV-153):** Implemented **Idempotent Source Creation**. Attempting to add an existing source now gracefully returns the current record with a `200 OK` instead of a conflict, facilitating smoother user flows.
+- **Orchestration (POV-154):** Implemented a specialized **Trigger Dialog** (Run Now) allowing users to configure orchestration parameters before execution.
+- **Orchestration (POV-154):** Added support for **Preview Mode** (Dry Run), enabling users to see pending items and potential status changes without persisting briefings.
+- **Orchestration (POV-154):** Added a **Briefing Toggle** to skip briefing generation during manual runs.
+- **Content Management (POV-155):** Implemented a global **Content Management** dashboard (`/admin/content`) for administrative oversight of all ingested content items.
+- **Admin Tools (POV-155):** Added support for **Manual Status Overrides**, allowing administrators to force status transitions (e.g., PENDING → COMPLETED, FAILED → PENDING) via a secure administrative API.
+- **Security (POV-156):** Transitioned the Docker runtime to an **official Distroless Java 25** image (`gcr.io/distroless/java25-debian13`). This definitively resolves multiple high-severity CVEs by eliminating the shell, `busybox`, `coreutils`, and `curl` from the production environment.
+- **Security (POV-156):** Extended the **Vulnerability Scanner** (`security_scan.py`) with a dedicated **Docker Hardening Audit** module, enabling automated verification of image security and Distroless compliance.
+- **Quality (POV-157):** Enabled **Jacoco Code Coverage** reporting in the backend build pipeline with auto-generation in `target/jacoco-report/`.
+- **Quality (POV-157):** Achieved a 100% clean project-wide ESLint audit. Resolved over 150 TypeScript violations related to unsafe `any` usage, implicit member access, and async promise handling in the frontend.
+- **Quality (POV-157):** Enabled **Frontend Code Coverage** using Vitest and `@vitest/coverage-v8`, with auto-generation in `frontend/coverage/`.
+- **Landing Page (POV-158):** Implemented a high-converting, vision-driven **Landing Page** emphasizing the "Pyramid of Value" (Information ➔ Knowledge ➔ Wisdom). Features high-impact brutalist typography, responsive hero layouts, and unified insight-driven CTAs ("Get Key Insights").
+- **Discovery Hub (POV-158):** Implemented the **System Discovery Hub**, a theme-aware metadata drawer providing grounded visibility into the project's **Roadmap**, **Changelog**, and **Wisdom/Reality Check** methodology.
+- **i18n (POV-158):** Full localization support for both English and Slovenian across all visionary content, including differentiated "Preverjanje realnosti" (Reality Check) interactions.
+
+### Changed
+- **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.
+- **Orchestration (POV-153):** Refactored `DefaultBriefingGenerator` to utilize shared transactions for historical summary lookups, improving database visibility and test reliability.
+- **API (POV-155):** Enhanced the Content Item API with advanced filtering by **Status** and **Topic**, and server-side sorting by publication date.
+- **Frontend (POV-155):** Updated the **Source Detail** page and **Admin Content Management** table to support individual content item status overrides with premium glassmorphic UI.
+- **Documentation (POV-157):** Synchronized ERD (`04_database_design.md`) with V22 migration scripts, adding documented function-based indexes for `content_sources`.
+- **Documentation (POV-157):** Updated `ADR-0004` (Frontend Architecture) to reflect the decommissioning of testing-only SSE pulse endpoints.
+
+### Fixed
+- **Error Handling (POV-153):** Hardened the Content Source API to provide `400 Bad Request` responses for invalid platforms/identifiers, eliminating 500 crashes.
 
 ## [v0.13.0] - 2026-03-24
 
@@ -62,6 +102,7 @@ Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrast
 - **Backend (Migration):** Added `topic_id` to `background_jobs` table (V21) for improved auditability.
 
 ### Removed
+- **API (POV-157):** Decommissioned the obsolete `/api/v1/events/test-pulse` endpoint and its associated frontend "Test Pulse" button logic.
 - **Infrastructure (POV-149):** Removed unused `github.username` and `github.pat` config properties from `application.properties` (dead code — not referenced in any Java class).
 - **Frontend (POV-145):** Decommissioned legacy `Toaster.tsx` and `use-toast.ts` hooks in favor of the unified `sonner` implementation.
 

@@ -4,21 +4,16 @@ import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
 import com.povzetkar.quarkus.api.dto.TopicUpdateDTO;
-import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-@Mapper(componentModel = "cdi", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "jakarta", uses = {ContentSourceMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface TopicMapper {
 
-    @Mapping(target = "contentSourceIds", source = "contentSources")
+    @Mapping(target = "contentSources", source = "contentSources")
     TopicDTO toDTO(Topic entity);
 
     @Mapping(target = "id", ignore = true)
@@ -52,8 +47,4 @@ public interface TopicMapper {
     @Mapping(target = "contentSources", ignore = true)
     void patchEntity(TopicPatchDTO dto, @MappingTarget Topic entity);
 
-    default Set<Long> mapSourcesToIds(Set<ContentSource> sources) {
-        if (sources == null) return Collections.emptySet();
-        return sources.stream().map(s -> s.id).collect(Collectors.toSet());
-    }
 }

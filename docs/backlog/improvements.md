@@ -11,7 +11,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 ### UI/UX
 
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
-*   **Admin Jobs UI Implementation:** (Moved to v0.14.0 - Data infra in v0.13.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
+*   **Admin Jobs UI Implementation:** (Moved to v0.15.0 - Data infra in v0.13.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
 *   **Full Component Internationalization:** (POV-146 Extension) Systematically migrate all hardcoded strings in `DashboardPage`, `AuditLogPage`, and `TopicManager` to the i18n system.
 *   **Theme Transition Animations:** (POV-146 Polish) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
@@ -47,3 +47,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Enhanced Docker Healthchecks:** Implement a robust Docker `HEALTHCHECK` in the final image, possibly using a dedicated `/q/health` endpoint or a simple `curl` check against the SPA landing page.
 *   **Automatic Summary Generation Validation:** Add a backend check to prevent re-triggering "Generate Summaries" if a job for the same topic is already `RUNNING` or `QUEUED` to prevent resource waste.
 *   **Improved Toast Actionability:** Enhance toast notifications with "View Job" or "Refresh Page" buttons for `COMPLETED` or `FAILED` states.
+*   **Mapper Audit Field Standardization (v0.14.0):** Instead of manually ignoring `version`, `createdAt`, etc., in every MapStruct mapper, create a `@MappingConfig` or a base mapper that centralizes these exclusions for all auditable entities.
+*   **Real-time Platform Validation (v0.14.0):** Implement a debounced "Check Now" button in the `Add Source` dialog to verify the YouTube channel's existence before the user hits "Save," providing immediate visual feedback.
+*   **Topic Template Preview (v0.14.0):** Add a "Preview with Template" action in the `TopicForm` that allows users to see how a mock content item would be summarized using their custom prompt before saving.
+*   **Frontend Lint Refactoring (Post-v0.14.0):** Resolve persistent unused variable warnings in `TopicForm.tsx` (lines 34, 206) and standardize `useState` destructuring to prevent future regression.

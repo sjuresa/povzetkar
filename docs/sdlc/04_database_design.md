@@ -1,19 +1,6 @@
 # Database Design Document - Project Povzetkar
 
-## Revision History
 
-| Version | Date               | Author       | Changes                                                                                                                                                     |
-|---------|--------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.9     | January 17, 2026   | Povzetkar AI | Added `enabled` to `topics` and error tracking fields to `content_items` (v0.7.0).                                                                          |
-| 1.8     | November 1, 2025   | Povzetkar AI | Sync with V1 migration: added `users.username`, `orchestration_locks`, and `content_items` inheritance fields. Corrected `summaries.embedding` nullability. |
-| 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                                                                                                                 |
-| 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments.                                                                                        |
-| 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.                                                                                                     |
-| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant.                                                                                                            |
-| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).                                                                                                                   |
-| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.                                                                                                               |
-| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`.                                                                                                            |
-| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.                                                                                                                     |
 
 ## 1. Introduction
 
@@ -230,6 +217,10 @@ Stores information about various content sources (e.g., YouTube channels, blogs,
 - `name` (varchar): The source's name. `NOT NULL`
 - `description` (text): The source's description. `NULL`
 - `subscriber_count` (integer): `NOT NULL DEFAULT 0`
+- **Indexes**:
+    - `idx_content_source_name_lower`: `lower(name)` (Case-insensitive name search)
+    - `idx_content_source_identifier_lower`: `lower(source_identifier)` (Case-insensitive identifier match)
+    - `idx_content_source_description_lower`: `lower(description)` (Case-insensitive description search)
 - `created_at` (timestamp): When the source was first added to the system. `NOT NULL DEFAULT CURRENT_TIMESTAMP`
 
 ### `content_source_topics`
@@ -361,3 +352,20 @@ Tracks high-level background task lifecycle.
 - `error_message` (varchar): `NULL`
 - `created_at` (timestamp): `NOT NULL`
 - `updated_at` (timestamp): `NOT NULL`
+
+## Revision History
+
+| Version | Date               | Author       | Changes                                                                                                                                                     |
+|---------|--------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.11    | March 27, 2026     | Povzetkar AI | Maintenance sync (v0.14.0): Added V22 indexes.                                                                                                              |
+| 1.10    | March 24, 2026     | Povzetkar AI | Release normalization (v0.13.0).                                                                                                                            |
+| 1.9     | January 17, 2026   | Povzetkar AI | Added `enabled` to `topics` and error tracking fields to `content_items` (v0.7.0).                                                                          |
+| 1.8     | November 1, 2025   | Povzetkar AI | Sync with V1 migration: added `users.username`, `orchestration_locks`, and `content_items` inheritance fields. Corrected `summaries.embedding` nullability. |
+| 1.7     | October 26, 2025   | Povzetkar AI | Added `briefing_date` to `summaries` table.                                                                                                                 |
+| 1.6     | September 17, 2025 | Povzetkar AI | Corrected and finalized M-N relationships for categories/sentiments.                                                                                        |
+| 1.5     | September 17, 2025 | Povzetkar AI | Generalized Channel to ContentSource for extensibility.                                                                                                     |
+| 1.4     | September 15, 2025 | Povzetkar AI | Introduced User entity, made Topic multi-tenant.                                                                                                            |
+| 1.3     | September 10, 2025 | Povzetkar AI | Aligned terminology (Report -> Briefing).                                                                                                                   |
+| 1.2     | September 2, 2025  | Povzetkar AI | Replaced Author with Channel and added Topic.                                                                                                               |
+| 1.1     | August 27, 2025    | Povzetkar AI | Added `RETRY_LATER` to `processing_status_enum`.                                                                                                            |
+| 1.0     | August 15, 2025    | Povzetkar AI | Initial version of the database design.                                                                                                                     |

@@ -187,8 +187,8 @@ public class AdminResource {
             return;
         }
 
-        boolean success = contentItemAdminService.updateStatus(contentItemId, newStatus);
-        if (success) {
+        Optional<ContentItem> updatedItem = contentItemAdminService.updateStatus(contentItemId, newStatus);
+        if (updatedItem.isPresent()) {
             context.response().setStatusCode(200).end(new JsonObject().put(MESSAGE_KEY, "Content item status updated successfully.").encode());
         } else {
             context.response().setStatusCode(404).end(new JsonObject().put(MESSAGE_KEY, "Failed to update content item status. Content item not found.").encode());

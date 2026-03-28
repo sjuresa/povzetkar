@@ -1,16 +1,21 @@
 {
   "navigation": {
-    "dashboard": "Nadzorna Plošča",
-    "briefings": "Teme Poročil",
+    "dashboard": "Odpri poročilo",
+    "briefings": "Središče poročil",
     "topics": "Teme",
     "sources": "Viri",
     "administration": "Administracija",
-    "auditLogs": "Revizijski Sledi",
-    "systemJobs": "Sistemska Opravila"
+    "auditLogs": "Revizijski sledi",
+    "contentManagement": "Upravljanje vsebin",
+    "systemJobs": "Sistemska opravila",
+    "admin": "Admin",
+    "settings": "Nastavitve",
+    "logout": "Izhod iz sistema"
   },
   "common": {
     "profile": "Profil",
     "settings": "Nastavitve",
+    "login": "Prijava",
     "logout": "Odjava",
     "theme": "Tema",
     "language": "Jezik",
@@ -44,7 +49,6 @@
   "dashboard": {
     "title": "Nadzorna Plošča",
     "activeJobs": "Aktivno Opravilo/i",
-    "testPulse": "Testni Impulz",
     "recentBriefings": "Zadnja Poročila",
     "viewAll": "Prikaži Vse",
     "refresh": "Osveži Dashboard",
@@ -126,10 +130,187 @@
       "no_sources": "Ni na voljo virov vsebine.",
       "update": "Posodobi temo",
       "create": "Ustvari temo",
+      "advanced_settings": "Napredne nastavitve",
+      "add_source_button": "Dodaj vir",
+      "prompt_supports_variables": "Podpira spremenljivke",
       "save_failed": "Napaka pri shranjevanju teme: {{message}}",
       "save_success_create": "Tema je bila uspešno ustvarjena",
       "save_success_update": "Tema je bila uspešno posodobljena",
-      "update_success": "Tema je bila uspešno posodobljena"
+      "update_success": "Tema je bila uspešno posodobljena",
+      "quick_add": {
+        "title": "Hitro dodajanje vira",
+        "platform_label": "Platforma",
+        "identifier_label": "Identifikator",
+        "identifier_placeholder_youtube": "UC...",
+        "identifier_placeholder_blog": "https://...",
+        "youtube_guidance_title": "Navodila za YouTube Channel ID:",
+        "youtube_guidance_id": "Identifikator mora biti Channel ID (običajno se začne z UC).",
+        "youtube_guidance_find": "Najdete ga na strani kanala \"Vizitka\" (About) ali s pomočjo \"YouTube ID Finder\".",
+        "submit_button": "Dodaj vir",
+        "cancel_button": "Prekliči",
+        "error_identifier_required": "Identifikator je obvezen"
+      },
+      "search_modal": {
+        "title": "Dodaj vir vsebine",
+        "subtitle": "Poiščite ali registrirajte nov vir",
+        "search_placeholder": "Išči po imenu, platformi ali identifikatorju...",
+        "searching": "Iskanje...",
+        "no_results": "Ni najdenih virov",
+        "no_results_tip": "Poskusite z drugim iskalnim nizom ali ga dodajte zdaj",
+        "quick_add_trigger": "Ni najdeno? Registrirajte nov vir",
+        "page_info": "Stran {{current}} od {{total}}"
+      },
+      "trigger_modal": {
+        "title": "Sproži zagon teme",
+        "subtitle": "Konfigurirajte orkestracijo za \"{{name}}\"",
+        "date_range_label": "Časovno obdobje",
+        "start_date_label": "Datum začetka",
+        "end_date_label": "Datum konca",
+        "options_label": "Možnosti zagona",
+        "process_pending_label": "Obdelaj čakajoče elemente",
+        "process_pending_tip": "Ponovni poskus za elemente, ki so spodleteli ali se zataknili",
+        "summarize_label": "Generiraj nove povzetke",
+        "summarize_tip": "Pridobi in povzemi novo vsebino",
+        "create_briefing_label": "Dostavi briefing",
+        "create_briefing_tip": "Generiraj končno UI poročilo",
+        "preview_only_label": "Samo predogled",
+        "preview_only_tip": "Samo pridobi elemente, ne generiraj povzetkov",
+        "submit_button": "Zaženi orkestracijo",
+        "triggering": "Sprožanje..."
+      }
+    }
+  },
+  "contentManagement": {
+    "title": "Vsebinski elementi",
+    "subtitle": "Univerzalni register za vso obdelano vsebino. Upravljanje življenjskih ciklov obdelave in ročni popravki statusov.",
+    "filters": {
+      "status": "Filtriraj po statusu",
+      "topic": "Filtriraj po temi"
+    },
+    "table": {
+      "published": "Objavljeno",
+      "source": "Vir",
+      "topic": "Tema",
+      "title": "Naslov",
+      "status": "Status",
+      "transcript": "Prepis",
+      "actions": "Akcije",
+      "viewSummary": "Poglej povzetek",
+      "generateSummary": "Generiraj povzetek",
+      "generating": "Generiram...",
+      "noItems": "Ni najdenih elementov za trenutne filtre."
+    },
+    "modal": {
+      "title": "AI povzetek vsebine",
+      "reference": "Referenca",
+      "notAvailable": "Povzetek ni na voljo",
+      "notAvailableSub": "Povzetka ni bilo mogoče pridobiti.",
+      "close": "Zapri bralnik"
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Univerzalno razumevanje.",
+      "subtitle": "Vaš osebni AI analitik za izluščanje bistva iz informacij.",
+      "cta_primary": "Pridobi ključne uvide",
+      "cta_vision": "Razišči vizijo"
+    },
+    "pyramid": {
+      "level1": "Informacije",
+      "level1_desc": "Zajem surovih podatkov in njihovo povzemanje.",
+      "level2": "Znanje",
+      "level2_desc": "Povezovanje konteksta in prepoznavanje trendov.",
+      "level3": "Modrost",
+      "level3_desc": "Kritična analiza in preverjanje napovedi.",
+      "reality_check": "Preverjanje realnosti",
+      "reality_check_desc": "Samodejno soočanje sistemskih vpogledov z dejanskimi izidi."
+    },
+    "vision": {
+      "title": "Razširjena zavest",
+      "desc1": "Prehod od pasivnega sprejemanja k proaktivnemu razumevanju.",
+      "desc2": "V svetu, ki se utaplja v informacijah, je Povzetkar odgovor na pomanjkanje modrosti. Ne gre le za še eno aplikacijo za povzetke, temveč za osebnega AI analitika, zasnovanega kot razširitev vaše lastne zavesti.",
+      "pillar1_title": "Informacije",
+      "pillar1_desc": "AI-povzetki, ki podajo bistveno — 'kaj'.",
+      "pillar2_title": "Znanje",
+      "pillar2_desc": "Povezovanje podatkov za prepoznavanje trendov in časovnic, ki razkrivajo 'kako' in 'zakaj'.",
+      "pillar3_title": "Modrost",
+      "pillar3_desc": "Analiza preteklih napovedi za razvoj kritičnega mišljenja in presojo zanesljivosti virov.",
+      "pillar4_title": "Preverjanje realnosti",
+      "pillar4_desc": "Avtomatizirano preverjanje sistemskih uvidov glede na dejanske rezultate.",
+      "image_label": "Strateško partnerstvo",
+      "image_text": "Transformacija informacij v razumevanje."
+    },
+    "settings": {
+      "title": "Nastavitve",
+      "light": "Svetlo",
+      "dark": "Temno",
+      "en": "English",
+      "sl": "Slovenščina"
+    },
+    "footer": {
+      "built_with": "Zgrajeno za proaktivno razumevanje.",
+      "mission": "Izgradnja osebnaga operacijskega sistema za univerzalno razumevanje.",
+      "partnership": "Partnerstvo",
+      "contact": "Kontakt",
+      "reality_check": "Preverjanje realnosti",
+      "status_label": "Status",
+      "status_text": "Način razširjene zavesti: AKTIVEN",
+      "version_prefix": "Verzija",
+      "release_date": "Marec 2026",
+      "version_info": "Verzija: {{version}} // {{releaseDate}}"
+    }
+  },
+  "system": {
+    "title": "Sistemsko raziskovanje",
+    "version": "Verzija",
+    "status": "Stanje",
+    "status_active_evolution": "Aktivna evolucija",
+    "focus_text": "Trenutno premoščamo vrzel med avtomatiziranim znanjem in človeško modrostjo.",
+    "tabs": {
+      "changelog": "Posodobitve",
+      "roadmap": "Pot vizije"
+    },
+    "changelog": {
+      "title": "Strateške posodobitve",
+      "badges": {
+        "new": "NOVO",
+        "improved": "IZB",
+        "fixed": "POP"
+      },
+      "entry1_title": "Posodobitev v0.14.0",
+      "entry1_desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infras...",
+      "entry1_date": "V teku",
+      "entry2_title": "Posodobitev v0.13.0",
+      "entry2_desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
+      "entry2_date": "2026-03-24",
+      "entry3_title": "Posodobitev v0.12.0",
+      "entry3_desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
+      "entry3_date": "2026-03-18",
+      "entry4_title": "Posodobitev v0.11.0",
+      "entry4_desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
+      "entry4_date": "2026-03-12"
+    },
+    "roadmap": {
+      "title": "Pot vizije",
+      "q1_title": "v1.0: RAG & Pogovorni vmesnik",
+      "q2_title": "v1.1: Razširitev & Napredna analitika",
+      "q3_title": "v1.2: Ustvarjanje vsebin & Izpopolnjevanje",
+      "q4_title": "v1.3: Sodelovalna analiza",
+      "q5_title": "v2.0: Enotna platforma za analitike",
+      "q1_desc_full": "Dostava jedrne funkcije \"interaktivnega poročila\" (RAG cevovod) in zaključek serije **Production Hardening** z avtomatiziranimi varnostnimi kopijami baze podatkov.",
+      "q2_desc_full": "Razširitev zmogljivosti zbiranja inteligence platforme z dodajanjem novih virov podatkov in analitičnih funkcij.",
+      "q3_desc_full": "Implementacija orodij za ustvarjanje vsebin in sodelovalnih funkcij za izpopolnjevanje znanja.",
+      "q4_desc_full": "Uvedba napredne sinteze in modulov za sodelovalno analizo za deljenje vpogledov na visoki ravni.",
+      "q5_desc_full": "Razširitev platforme v enoten osebni analitični sistem za večdomensko proaktivno razumevanje.",
+      "q1_subtitle": "Mojstrstvo poti znanja",
+      "q2_subtitle": "Implementacija modrosti",
+      "q3_subtitle": "Integriteta platforme",
+      "q4_subtitle": "Inteligentna sinteza",
+      "q5_subtitle": "Univerzalna modrost"
+    },
+    "footer": {
+      "built_with": "Sistemski metapodatki zaključeni.",
+      "close": "Zapri raziskovanje"
     }
   }
 }

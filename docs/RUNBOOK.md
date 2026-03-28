@@ -178,6 +178,37 @@ cd frontend
 npx playwright test
 ```
 
+### 7.2 Code Coverage (Jacoco & Vitest)
+
+Both the backend and frontend have automated code coverage reporting.
+
+#### Backend (Jacoco)
+
+Coverage is automatically calculated during the test phase.
+
+1.  **Run tests and generate report:**
+    ```bash
+    ./mvnw test -pl backend
+    ```
+2.  **View the report:**
+    Open `backend/target/jacoco-report/index.html` in your browser.
+3.  **CI/CD Baseline:**
+    The project targets a minimum instruction coverage of **70%**.
+
+#### Frontend (Vitest)
+
+Coverage is calculated using `@vitest/coverage-v8`.
+
+1.  **Run tests and generate report:**
+    ```bash
+    cd frontend
+    npm run test -- --coverage --run
+    ```
+2.  **View the report:**
+    Open `frontend/coverage/index.html` in your browser.
+3.  **CI/CD Baseline:**
+    The project targets a minimum line coverage of **70%** for new components.
+
 ## 8. Security & Code Quality
 The project integrates automated security and quality gates into the Maven lifecycle.
 

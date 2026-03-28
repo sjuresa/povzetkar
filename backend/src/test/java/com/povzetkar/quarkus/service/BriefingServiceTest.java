@@ -110,7 +110,7 @@ class BriefingServiceTest {
         });
 
         String mockMetaSummary = "Meta-summary from GenAI";
-        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString())).thenReturn(mockMetaSummary);
+        when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), anyString())).thenReturn(mockMetaSummary);
 
         // When
         Briefing briefing = briefingService.generateBriefing(testTopic, briefingDate, List.of(summary), mockMetaSummary);

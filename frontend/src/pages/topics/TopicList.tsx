@@ -11,10 +11,11 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react';
-import { useGetApiV1Topics, deleteApiV1TopicsId, postApiV1TopicsIdCommandsGenerateBriefing } from '../../api/generated/topics/topics';
+import { useGetApiV1Topics, deleteApiV1TopicsId } from '../../api/generated/topics/topics';
 import type { Topic } from '../../api/generated/model';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { TriggerOrchestrationModal } from '../../components/topics/TriggerOrchestrationModal';
 
 interface TopicListProps {
   onEdit?: (topic: Topic) => void;
@@ -29,6 +30,7 @@ export const TopicList: React.FC<TopicListProps> = ({
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [triggerTopic, setTriggerTopic] = React.useState<Topic | null>(null);
 
   const { data: topicsResponse, isLoading, error } = useGetApiV1Topics({ page: 0, size: 100 });
 
@@ -43,18 +45,14 @@ export const TopicList: React.FC<TopicListProps> = ({
       });
       toast.success(t('topics.list.delete_success'));
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
-    } catch (err: any) {
-      toast.error(t('topics.list.delete_failed', { message: err.message }));
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      toast.error(t('topics.list.delete_failed', { message: errorObj.message }));
     }
   };
 
-  const handleRun = async (topic: Topic) => {
-    try {
-      await postApiV1TopicsIdCommandsGenerateBriefing(topic.id!);
-      toast.success(t('topics.list.run_success'));
-    } catch (err: any) {
-      toast.error(t('topics.list.run_failed', { message: err.message }));
-    }
+  const handleRun = (topic: Topic) => {
+    setTriggerTopic(topic);
   };
 
   if (isLoading) {
@@ -72,15 +70,12 @@ export const TopicList: React.FC<TopicListProps> = ({
         <AlertCircle className="w-8 h-8 text-red-600 mt-1" />
         <div>
           <h3 className="text-2xl text-red-900 dark:text-red-400 font-bold mb-2">{t('common.error')}</h3>
-          <p className="text-red-700 dark:text-red-300 text-lg">{(error as any).message}</p>
+          <p className="text-red-700 dark:text-red-300 text-lg">{(error as { message?: string })?.message}</p>
         </div>
       </div>
     );
   }
 
-  /**
-   * Topics extraction simplified for cleaner logic and type safety.
-   */
   const topics: Topic[] = topicsResponse?.data?.items ?? [];
 
   const filteredTopics = topics.filter(topic => {
@@ -114,21 +109,21 @@ export const TopicList: React.FC<TopicListProps> = ({
             </div>
             <div className="flex items-center space-x-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-1 group-hover:translate-y-0">
               <button 
-                onClick={() => handleRun(topic)}
+                onClick={() => { handleRun(topic); }}
                 className="p-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 rounded-xl transition-all hover:scale-110 active:scale-90"
                 title={t('topics.list.run_now')}
               >
                 <Play className="w-5 h-5 fill-current" />
               </button>
               <button 
-                onClick={() => onEdit?.(topic)}
+                onClick={() => { onEdit?.(topic); }}
                 className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl transition-all hover:scale-110 active:scale-90"
                 title={t('common.edit')}
               >
                 <Edit2 className="w-5 h-5" />
               </button>
               <button 
-                onClick={() => handleDelete(topic)}
+                onClick={() => { void handleDelete(topic); }}
                 className="p-3 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 rounded-xl transition-all hover:scale-110 active:scale-90"
                 title={t('common.delete')}
               >
@@ -148,7 +143,7 @@ export const TopicList: React.FC<TopicListProps> = ({
               </div>
               <div className="flex items-center text-[var(--color-text-secondary)] font-bold text-sm">
                 <CheckCircle2 className="w-4 h-4 mr-3 text-green-500" />
-                {t('topics.list.sources_count', { count: topic.contentSourceIds?.length || 0 })}
+                {t('topics.list.sources_count', { count: topic.contentSources?.length || 0 })}
               </div>
             </div>
           </div>
@@ -176,6 +171,17 @@ export const TopicList: React.FC<TopicListProps> = ({
           </div>
         </div>
       ))}
+      {triggerTopic && (
+        <TriggerOrchestrationModal
+          isOpen={!!triggerTopic}
+          onClose={() => setTriggerTopic(null)}
+          topic={triggerTopic}
+          onSuccess={() => {
+            toast.success(t('topics.list.run_success'));
+            void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
+          }}
+        />
+      )}
     </div>
   );
 };

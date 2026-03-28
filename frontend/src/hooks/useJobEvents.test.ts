@@ -18,30 +18,30 @@ vi.mock('sonner', () => ({
 }));
 
 // Better EventSource Mock
-let mockEventSourceInstance: any = null;
-
 class MockEventSource {
   onopen: (() => void) | null = null;
-  onerror: ((e: any) => void) | null = null;
-  listeners: Record<string, ((e: any) => void)[]> = {};
+  onerror: ((e: unknown) => void) | null = null;
+  listeners: Record<string, ((e: { data: string }) => void)[]> = {};
 
   constructor() {
     mockEventSourceInstance = this;
   }
 
-  addEventListener(type: string, listener: (e: any) => void) {
+  addEventListener(type: string, listener: (e: { data: string }) => void) {
     if (!this.listeners[type]) this.listeners[type] = [];
     this.listeners[type].push(listener);
   }
 
-  emit(type: string, data: any) {
+  emit(type: string, data: unknown) {
     this.listeners[type]?.forEach((l) => l({ data: JSON.stringify(data) }));
   }
 
   close = vi.fn();
 }
 
-global.EventSource = MockEventSource as any;
+let mockEventSourceInstance: MockEventSource | null = null;
+
+global.EventSource = MockEventSource as unknown as typeof EventSource;
 
 describe('useJobEvents', () => {
   const updateJobStatus = vi.fn();
@@ -51,47 +51,49 @@ describe('useJobEvents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEventSourceInstance = null;
-    (useEventStore as any).mockReturnValue({ 
+    vi.mocked(useEventStore).mockReturnValue({ 
       updateJobStatus, 
       setLastEvent, 
       setConnectionStatus,
       lastEvent: null 
-    });
+    } as any);
   });
 
   it('should connect to SSE and handle JOB_STATUS_CHANGED event', () => {
-    renderHook(() => useJobEvents());
+    const { result } = renderHook(() => useJobEvents());
 
     expect(mockEventSourceInstance).not.toBeNull();
     expect(setConnectionStatus).toHaveBeenCalledWith('connecting');
     
     // Simulate connection open
-    mockEventSourceInstance.onopen();
+    mockEventSourceInstance!.onopen!();
     expect(setConnectionStatus).toHaveBeenCalledWith('connected');
     expect(setLastEvent).toHaveBeenCalledWith('CONNECTED');
 
     // Simulate JOB_STATUS_CHANGED event - wrapped in SSE DTO
     const jobData = { jobId: '123', status: 'RUNNING', jobType: 'GENERATE_TOPIC_BRIEFING' };
     const eventPayload = { type: 'JOB_STATUS_CHANGED', data: jobData };
-    mockEventSourceInstance.emit('JOB_STATUS_CHANGED', eventPayload);
+    mockEventSourceInstance!.emit('JOB_STATUS_CHANGED', eventPayload);
 
     expect(updateJobStatus).toHaveBeenCalledWith(jobData);
     expect(toast.info).toHaveBeenCalledWith('Job Started: generate topic briefing', expect.objectContaining({
       description: expect.stringContaining('Processing information'),
     }));
+    
+    expect(result.current).not.toBeNull();
   });
 
   it('should handle PULSE event', () => {
     renderHook(() => useJobEvents());
     
     // Pulse is also wrapped
-    mockEventSourceInstance.emit('PULSE', { type: 'PULSE', data: {} });
+    mockEventSourceInstance!.emit('PULSE', { type: 'PULSE', data: {} });
     expect(setLastEvent).toHaveBeenCalledWith('PULSE');
   });
 
   it('should close connection on unmount', () => {
     const { unmount } = renderHook(() => useJobEvents());
-    const closeSpy = mockEventSourceInstance.close;
+    const closeSpy = mockEventSourceInstance!.close;
     unmount();
     expect(closeSpy).toHaveBeenCalled();
     expect(setConnectionStatus).toHaveBeenCalledWith('disconnected');

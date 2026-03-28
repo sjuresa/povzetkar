@@ -19,8 +19,8 @@ public class BriefingService {
         this.briefingGenerator = briefingGenerator;
     }
 
-    public List<Summary> getSummariesForBriefing(Topic topic, LocalDate briefingDate) {
-        return briefingGenerator.getSummariesForBriefing(topic, briefingDate);
+    public List<Summary> getSummariesForBriefing(Long topicId, LocalDate briefingDate) {
+        return briefingGenerator.getSummariesForBriefing(topicId, briefingDate);
     }
 
     public String getMetaSummaryFromAI(Topic topic, List<Summary> summaries, LocalDate briefingDate) {

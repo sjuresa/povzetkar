@@ -31,6 +31,7 @@ import type {
   BackgroundJobPaginatedResponse,
   GetApiV1AdminAuditLogParams,
   GetApiV1AdminJobsParams,
+  JobExecutionAudit,
   JobTriggerRequest,
   Uuid
 } from '../model';
@@ -520,6 +521,129 @@ export function useGetApiV1AdminJobsId<TData = Awaited<ReturnType<typeof getApiV
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetApiV1AdminJobsIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * Get full chronological execution history for any job and its sub-items.
+ * @summary Get job audit history (Admin)
+ */
+export type getApiV1AdminJobsIdAuditResponse200 = {
+  data: JobExecutionAudit[]
+  status: 200
+}
+
+export type getApiV1AdminJobsIdAuditResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getApiV1AdminJobsIdAuditResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getApiV1AdminJobsIdAuditResponseSuccess = (getApiV1AdminJobsIdAuditResponse200) & {
+  headers: Headers;
+};
+export type getApiV1AdminJobsIdAuditResponseError = (getApiV1AdminJobsIdAuditResponse401 | getApiV1AdminJobsIdAuditResponse403) & {
+  headers: Headers;
+};
+
+export type getApiV1AdminJobsIdAuditResponse = (getApiV1AdminJobsIdAuditResponseSuccess | getApiV1AdminJobsIdAuditResponseError)
+
+export const getGetApiV1AdminJobsIdAuditUrl = (id: Uuid,) => {
+
+
+  
+
+  return `/api/v1/admin/jobs/${id}/audit`
+}
+
+export const getApiV1AdminJobsIdAudit = async (id: Uuid, options?: RequestInit): Promise<getApiV1AdminJobsIdAuditResponse> => {
+  
+  return customInstance<getApiV1AdminJobsIdAuditResponse>(getGetApiV1AdminJobsIdAuditUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetApiV1AdminJobsIdAuditQueryKey = (id: Uuid,) => {
+    return [
+    `/api/v1/admin/jobs/${id}/audit`
+    ] as const;
+    }
+
+    
+export const getGetApiV1AdminJobsIdAuditQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError = void>(id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiV1AdminJobsIdAuditQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>> = ({ signal }) => getApiV1AdminJobsIdAudit(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiV1AdminJobsIdAuditQueryResult = NonNullable<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>>
+export type GetApiV1AdminJobsIdAuditQueryError = void
+
+
+export function useGetApiV1AdminJobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError = void>(
+ id: Uuid, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1AdminJobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError = void>(
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1AdminJobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError = void>(
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get job audit history (Admin)
+ */
+
+export function useGetApiV1AdminJobsIdAudit<TData = Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError = void>(
+ id: Uuid, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1AdminJobsIdAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiV1AdminJobsIdAuditQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

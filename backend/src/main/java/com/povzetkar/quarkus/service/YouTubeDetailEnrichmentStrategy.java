@@ -40,6 +40,15 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     }
 
     @Override
+    public void enrich(ContentSource source) {
+        fetchDetails(source.sourceIdentifier).ifPresent(details -> {
+            source.name = details.name();
+            source.description = details.description();
+            source.subscriberCount = details.subscriberCount();
+        });
+    }
+
+    @Override
     public void refresh() {
         List<ContentSource> sourcesToRefresh = ContentSource.list("sourceTypeId = ?1", SourceTypeEnum.YOUTUBE.getId());
         logger.info("Found {} YouTube content sources to refresh.", sourcesToRefresh.size());

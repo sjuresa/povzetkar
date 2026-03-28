@@ -157,6 +157,30 @@ When asserting logic bound to rolling windows (e.g., "last 7 days") or specific 
 When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_B"})` in Quarkus:
 - **The Standard:** Remember that passing an array of roles evaluates as a logical **OR** condition, meaning the user only needs *at least one* of the specified roles to gain access to the method. Do not natively assume an `AND` condition or strip declarative annotations for manual `if` block checks unless specifically building complex, field-level access control within the method scope itself.
 
+---
+
+## 22. Quarkus 3 & Jakarta EE Migration (v0.14.0)
+
+### 22.1 MapStruct Component Model
+- **The Trap:** Using `@Mapper(componentModel = "cdi")` in a Quarkus 3 project can lead to `jakarta.enterprise.inject.spi.DeploymentException` if the underlying implementation (like `TopicMapperImpl`) uses `@javax.inject.Inject` (the legacy namespace) instead of `@jakarta.inject.Inject`. This is common when MapStruct versions are not perfectly aligned with the Jakarta EE 10 baseline.
+- **The Standard:** Always explicitly use **`componentModel = "jakarta"`** for all MapStruct mappers in Quarkus 3+. This ensures the generated code utilizes the correct `jakarta.*` annotations for dependency injection, preventing deployment-time failures.
+
+### 22.2 Transaction Visibility in Integration Tests
+- **The Trap:** When a service method (e.g. `OrchestrationManager`) executes internal logic inside `QuarkusTransaction.requiringNew()`, it starts and commits a *separate* database transaction. If the main test method (also transactional) just created the data, that data will be **invisible** to the background transaction because it hasn't been committed yet from the test's perspective.
+- **The Standard:** Before triggering an asynchronous background job or a `requiringNew()` service call in an integration test, you MUST manually synchronize the persistence context. Use **`entityManager.flush()`** to push pending changes to the database and **`entityManager.clear()`** to ensure subsequent reads see the actual DB state. This bridges the isolation gap between the test runner and the background workers.
+
+---
+
+## 23. API Robustness & Idempotency (v0.14.0)
+
+### 23.1 Idempotent "Add" Operations
+- **The Trap:** Returning `409 Conflict` when a user tries to "add" an entity that already exists (e.g. a Content Source) can lead to frustrating UI experiences and redundant error handling logic.
+- **The Standard:** For "creation" endpoints that are conceptually "idempotent adds," the API should return **`200 OK`** and the existing object if it already exists. This simplifies the frontend's "Success" path and prevents unnecessary error toasts for non-erroneous states.
+
+### 23.2 Safe Enum Conversion
+- **The Trap:** Passing a raw string name directly to `Enum.valueOf()` in a REST resource. If the input is malformed, it throws an internal `IllegalArgumentException`, which the default Quarkus exception mapper might catch as a `500 Internal Server Error`, obscuring the real cause (bad input).
+- **The Standard:** Always wrap enum conversions from request parameters in a `try-catch` block and throw a specialized **`BadRequestException`** with a descriptive message (e.g. "Invalid platform type: 'unknown'"). This ensures the client receives a correct `400` status code instead of a generic system crash.
+
 ### 3.7 Asynchronous Testing: Avoiding `Thread.sleep`
 - **The Trap:** Using `Thread.sleep()` to wait for asynchronous operations in tests (e.g., waiting for a background job to finish or a lock to appear in the database). This leads to flaky tests, slow execution, and brittle code that fails unpredictably depending on environmental load.
 - **The Standard:** Always use **Awaitility** to poll for the expected state change. Awaitility provides built-in support for timeouts, polling intervals, and clear failure messages.
@@ -552,3 +576,70 @@ When building professional-grade document readers (like the **Summary Modal**) u
   }
   ```
 - **The Standard:** For modals intended as document readers, favor a fixed max-width (e.g., `max-w-4xl`) and symmetrical internal padding (`p-6 md:p-8`) on the article tag itself to prevent the text from becoming too wide to read easily while maintaining consistent spacing.
+---
+
+## 24. Concurrency & Thread Safety in Background Orchestration (v0.14.0)
+
+### 24.1 Hibernate Session Isolation in Parallel Tasks
+When executing parallel database tasks using a `ManagedExecutor` or similar thread pool in Quarkus/Panache:
+- **The Trap:** Passing a JPA entity (e.g., a `Topic` fetched on the main request thread) into multiple background lambdas. Even if each lambda uses `QuarkusTransaction.requiringNew()`, Hibernate may attempt to lazily initialize collections or manage the entity state using the *original* session from the parent thread. This leads to `java.util.ConcurrentModificationException` within Hibernate's `ResultsetsTrackingContainer` or `PSQLException: This statement has been closed` errors.
+- **The Standard:** **Never** pass managed entities across thread boundaries. Instead, pass the **entity ID** (`Long topicId`) to the background task. Inside the task's own transaction, refetch the entity from the database using `Topic.findById(topicId)`. This ensures each parallel task has its own isolated Hibernate session and state tracking.
+
+### 24.2 Environment-Agnostic Date Management
+- **The Trap:** Using `ZoneId.systemDefault()` for `Instant` or `OffsetDateTime` conversions. This results in "flaky" date-range logic that works on a developer's machine but fails on a CI server or cloud environment set to a different timezone (e.g., UTC).
+- **The Standard:** Always use **`ZoneOffset.UTC`** for all internal orchestration logic and date-to-instant conversions. This ensures consistent, deterministic behavior regardless of the host environment's configuration.
+
+## [2026-03-26] Content Management & Status Overrides (POV-155)
+
+### API & Backend Isolation
+- **DTOs vs. Entities**: Never expose JPA entities directly in paginated API responses if specialized DTOs exist. Using `ContentItemDTO` instead of `ContentItem` (JPA) resolved over 100 frontend lint errors and provided a cleaner, more stable API contract.
+- **Nested Mapping**: MapStruct's `uses` attribute is essential for mapping nested DTOs (e.g., `ContentItemDTO` -> `ContentSourceDTO`). This ensures consistency across the entire domain model.
+
+### Frontend Synchronization
+- **OpenAPI Schema Updates**: Manual backend `package` runs are mandatory after DTO changes to ensure `openapi.json` is correctly regenerated for Orval. Failure to do this leads to stale frontend hooks and type-safety regressions.
+- **Casting Paginated Items**: Orval's `PaginatedResponse` often defaults to `unknown[]` for items. Explicitly casting these to the domain DTO (e.g., `(data?.items || []) as ContentItem[]`) in the route components restores full IDE support and type-safety.
+
+### UI/UX & Administrative Tools
+- **Glassmorphic Data Grids**: Using `glass` and `animate-in` tokens creates a premium administrative feel that matches the main dashboard, even for high-density tables.
+- **Immediate Feedback**: Integrating `useQueryClient.invalidateQueries` in status update hooks provides the near-instant feedback loop expected in modern administrative tools.
+### 5. Infrastructure & Security (POV-156)
+- **Non-Root Runtime**: Always run containerized applications as a non-root user (e.g., USER nonroot). This mitigates potential host exposure in the event of a container breakout.
+- **Explicit Security Audits**: For critical OS-level packages (curl, libpng, etc.), do not rely solely on `apk upgrade`. Explicitly add them to the `Dockerfile` and implement version-based audit logic in the security scanner (`security_scan.py`) to ensure deterministic compliance.
+- **Scan-Integrated Hardening**: Hardening is only complete when it is verifiable. The `vulnerability-scanner` skill should be the source of truth for both code-level and infrastructure-level security requirements.
+- **SSE Testing Endpoints**: Temporary testing endpoints like `/test-pulse` should be removed before stabilization to avoid polluting the public API and frontend state logic.
+- **Documentation Drift**: Regular synchronization between migration scripts and the ERD (`04_database_design.md`) is essential to prevent technical debt in the source of truth documentation.
+- **Jacoco Integration**: Enabling `quarkus-jacoco` provides immediate visibility into test gaps without requiring complex external reporting tools during CI/CD.
+
+---
+
+## 25. ESLint 9+ Hardening (v0.14.0)
+
+### 25.1 Multi-Target Flat Configuration
+- **The Trap:** Using a single ESLint configuration for both production code (`src/**/*`) and test files (`**/*.test.*`). Test files often use `any` casting, `no-explicit-any`, and complex mocking patterns that conflict with strict production type-checking rules. This leads to hundreds of "false positive" lint errors in the CI pipeline.
+- **The Standard:** Use a **Multi-Target Flat Configuration** (`eslint.config.js`). 
+  1. Define a **Strict Profile** for production code (`src/**/*`) that enforces `no-explicit-any`, `no-unsafe-assignment`, and `@typescript-eslint/no-floating-promises`.
+  2. Define a **Relaxed Profile** for tests (`**/src/test/**/*`, `**/*.test.*`) that disables strict `any` checks and floating promise rules, enabling flexible mocking without compromising production quality.
+  3. Ensure that `languageOptions.parserOptions.project` points to the correct `tsconfig.json` for accurate type-checked linting.
+
+## 26. Cross-Platform Build Stability (v0.14.0)
+
+### 26.1 Windows/Linux CLI Compatibility
+- **The Trap:** Hardcoding shell scripts or relying on `./mvnw` in `package.json` for project orchestration. On Windows, `./mvnw` requires a Bash-like environment (Git Bash, WSL), while CMD/PowerShell require `mvnw.cmd`. This leads to "command not found" errors during local development or in Windows-based CI runners.
+- **The Standard:** Always provide **Linux-compatible script aliases** (`./mvnw`) in `package.json` to ensure compatibility with CI/CD pipelines (GitHub Actions, Jenkins) and Linux-based development environments. Windows developers are expected to use a shell that supports this syntax (e.g., Git Bash, WSL, or modern PowerShell with aliases) rather than modifying shared build scripts to use `mvnw.cmd`.
+
+## 27. Vitest Coverage & Type-Safety (v0.14.0)
+
+### 27.1 Coverage Engine Requirements
+- **The Trap:** Forgetting to install the coverage provider separately. Vitest core does not include the coverage engine; you must explicitly add `@vitest/coverage-v8` (or `istanbul`) as a dev dependency.
+- **The Standard:** When enabling code coverage in the frontend (`vitest run --coverage`), ensure the configuration explicitly excludes `node_modules`, `dist`, and configuration files (like `eslint.config.js`). This prevents the coverage reporter from analyzing non-source files, resulting in cleaner and more accurate reports.
+
+---
+
+## 28. Automated Metadata Grounding (POV-158)
+
+### 28.1 The "Source of Truth" Sync Pattern
+When displaying project metadata (Roadmap, Changelog) on public-facing pages (Landing Page, Discovery Hub), duplicating this information in code leads to drift and staleness.
+- **The Trap:** Manually hardcoding version strings, release dates, or roadmap items in frontend JSON files.
+- **The Standard:** Use a **Synchronization Script** (e.g., `scripts/sync_metadata.py`) to parse the actual project documentation (`CHANGELOG.md`, `roadmap.md`) and automatically update the frontend `i18n` source files. This ensures the Landing Page is always "truthful" relative to the release state.
+- **Requirement:** Markdown headers used by extraction scripts must remain stable (e.g., `## [Release Version]` format).
+- **Execution:** This sync should be a mandatory pre-commit or pre-release step in the development workflow (Phase 3.5).
