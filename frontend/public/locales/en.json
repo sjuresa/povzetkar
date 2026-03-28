@@ -1,17 +1,21 @@
 {
   "navigation": {
-    "dashboard": "Dashboard",
-    "briefings": "Briefings",
+    "dashboard": "Open Briefing",
+    "briefings": "Briefing Hub",
     "topics": "Topics",
     "sources": "Sources",
     "administration": "Administration",
     "auditLogs": "Audit Logs",
+    "contentManagement": "Content Management",
     "systemJobs": "System Jobs",
-    "contentManagement": "Content Items"
+    "admin": "Admin",
+    "settings": "Settings",
+    "logout": "Exit System"
   },
   "common": {
     "profile": "Profile",
     "settings": "Settings",
+    "login": "Login",
     "logout": "Logout",
     "theme": "Theme",
     "language": "Language",
@@ -202,6 +206,111 @@
       "notAvailable": "Summary Not Available",
       "notAvailableSub": "The requested summary could not be retrieved.",
       "close": "Close Reader"
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Universal Understanding.",
+      "subtitle": "Your Personal AI Analyst for Information Distillation.",
+      "cta_primary": "Get Key Insights",
+      "cta_vision": "Explore the Vision"
+    },
+    "pyramid": {
+      "level1": "Information",
+      "level1_desc": "Raw data extraction and summarization.",
+      "level2": "Knowledge",
+      "level2_desc": "Contextual mapping and trend identification.",
+      "level3": "Wisdom",
+      "level3_desc": "Critical analysis and prediction verification.",
+      "reality_check": "Reality Check System",
+      "reality_check_desc": "Retrospective analysis of past predictions."
+    },
+    "vision": {
+      "title": "Augmented Consciousness",
+      "desc1": "Moving beyond simple consumption to proactive understanding.",
+      "desc2": "In a world drowning in information, Povzetkar is the answer to the starvation for wisdom. Not just another summary app, but a personal AI analyst designed to serve as an extension of your own consciousness.",
+      "pillar1_title": "Information",
+      "pillar1_desc": "AI-generated summaries providing the essential 'what'.",
+      "pillar2_title": "Knowledge",
+      "pillar2_desc": "Connecting data to identify trends and timelines, revealing the 'how' and 'why'.",
+      "pillar3_title": "Wisdom",
+      "pillar3_desc": "Retrospectively analyzing past predictions to foster critical thinking and source reliability.",
+      "pillar4_title": "Reality Check",
+      "pillar4_desc": "Automated verification of system insights against real-world outcomes.",
+      "image_label": "Strategic Partnership",
+      "image_text": "Transforming information into understanding."
+    },
+    "settings": {
+      "title": "Preferences",
+      "light": "Light",
+      "dark": "Dark",
+      "en": "English",
+      "sl": "Slovenščina"
+    },
+    "footer": {
+      "built_with": "Built for proactive understanding.",
+      "mission": "Building the personal operating system for universal understanding.",
+      "partnership": "Partnership",
+      "contact": "Contact Intelligence",
+      "reality_check": "Reality Check",
+      "status_label": "Status",
+      "status_text": "Augmented Consciousness Mode: ACTIVE",
+      "version_prefix": "Version",
+      "release_date": "March 2026",
+      "version_info": "Version: {{version}} // {{releaseDate}}"
+    }
+  },
+  "system": {
+    "title": "System Discovery",
+    "version": "Version",
+    "status": "State",
+    "status_active_evolution": "Active Evolution",
+    "focus_text": "Currently bridging the gap between automated Knowledge and human-centered Wisdom.",
+    "tabs": {
+      "changelog": "Updates",
+      "roadmap": "Vision Path"
+    },
+    "changelog": {
+      "title": "Strategic Updates",
+      "badges": {
+        "new": "NEW",
+        "improved": "IMP",
+        "fixed": "FIX"
+      },
+      "entry1_title": "Update v0.14.0",
+      "entry1_desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infras...",
+      "entry1_date": "In Progress",
+      "entry2_title": "Update v0.13.0",
+      "entry2_desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
+      "entry2_date": "2026-03-24",
+      "entry3_title": "Update v0.12.0",
+      "entry3_desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
+      "entry3_date": "2026-03-18",
+      "entry4_title": "Update v0.11.0",
+      "entry4_desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
+      "entry4_date": "2026-03-12"
+    },
+    "roadmap": {
+      "title": "Vision Path",
+      "q1_title": "v0.14: Output Mastery & UX Refinement",
+      "q2_title": "v0.15: Advanced Archive & Operational Excellence",
+      "q3_title": "v1.0: RAG & Conversational Interface",
+      "q4_title": "v1.1: Expansion & Advanced Analytics",
+      "q5_title": "v1.2: Content Creation & Refinement",
+      "q1_desc_full": "Empower users with advanced reporting tools and give administrators full control over system operations and user management.",
+      "q2_desc_full": "Finalize the transition to a full-featured analytical platform with historical archives and enterprise-grade observability.",
+      "q3_desc_full": "Deliver the core \"interactive report\" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.",
+      "q4_desc_full": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.",
+      "q5_desc_full": "",
+      "q1_subtitle": "Knowledge Path Mastery",
+      "q2_subtitle": "Wisdom Implementation",
+      "q3_subtitle": "Platform Integrity",
+      "q4_subtitle": "Intelligent Synthesis",
+      "q5_subtitle": "Universal Wisdom"
+    },
+    "footer": {
+      "built_with": "Release metadata finalized.",
+      "close": "Close Discovery"
     }
   }
 }

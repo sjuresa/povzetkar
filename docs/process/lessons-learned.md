@@ -632,3 +632,14 @@ When executing parallel database tasks using a `ManagedExecutor` or similar thre
 ### 27.1 Coverage Engine Requirements
 - **The Trap:** Forgetting to install the coverage provider separately. Vitest core does not include the coverage engine; you must explicitly add `@vitest/coverage-v8` (or `istanbul`) as a dev dependency.
 - **The Standard:** When enabling code coverage in the frontend (`vitest run --coverage`), ensure the configuration explicitly excludes `node_modules`, `dist`, and configuration files (like `eslint.config.js`). This prevents the coverage reporter from analyzing non-source files, resulting in cleaner and more accurate reports.
+
+---
+
+## 28. Automated Metadata Grounding (POV-158)
+
+### 28.1 The "Source of Truth" Sync Pattern
+When displaying project metadata (Roadmap, Changelog) on public-facing pages (Landing Page, Discovery Hub), duplicating this information in code leads to drift and staleness.
+- **The Trap:** Manually hardcoding version strings, release dates, or roadmap items in frontend JSON files.
+- **The Standard:** Use a **Synchronization Script** (e.g., `scripts/sync_metadata.py`) to parse the actual project documentation (`CHANGELOG.md`, `roadmap.md`) and automatically update the frontend `i18n` source files. This ensures the Landing Page is always "truthful" relative to the release state.
+- **Requirement:** Markdown headers used by extraction scripts must remain stable (e.g., `## [Release Version]` format).
+- **Execution:** This sync should be a mandatory pre-commit or pre-release step in the development workflow (Phase 3.5).

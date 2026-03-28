@@ -80,7 +80,7 @@ client.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error instanceof Error ? error : new Error(String(error)))
 );
 
 /**
@@ -212,8 +212,8 @@ export const customInstance = <T>(
       try {
         requestData = JSON.parse(body) as Record<string, unknown>;
 
-      } catch (_e) {
-        logger.error('[API] Failed to parse JSON body', { error: _e, url });
+      } catch (e) {
+        logger.error('[API] Failed to parse JSON body', { error: e, url });
       }
     }
   }

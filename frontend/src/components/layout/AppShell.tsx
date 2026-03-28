@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -9,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
+import { SystemMetadata } from '../system/SystemMetadata';
+import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 
 interface AppShellProps {
   children: ReactNode;
@@ -17,6 +20,8 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   // Initialize SSE event stream for jobs
   useJobEvents();
+
+  const [isMetadataOpen, setIsMetadataOpen] = useState(false);
 
   const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
@@ -31,6 +36,8 @@ export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
+
+  const { data: metadata } = useSystemMetadata();
 
   const navItems = [
     { name: t('navigation.dashboard'), path: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -147,7 +154,18 @@ export function AppShell({ children }: AppShellProps) {
           )}
         </nav>
 
-        <div className="p-4 border-t border-[var(--color-border-subtle)]">
+        <div className="p-4 border-t border-[var(--color-border-subtle)] space-y-2">
+          <button
+            onClick={() => setIsMetadataOpen(true)}
+            className={`w-full h-10 flex items-center px-3 rounded-lg bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] transition-all group overflow-hidden ${sidebarCollapsed ? 'justify-center' : ''}`}
+          >
+            <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 flex-shrink-0 animate-pulse"></div>
+            {!sidebarCollapsed && (
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] transition-colors">
+                {metadata?.version}
+              </span>
+            )}
+          </button>
           <button
             onClick={toggleSidebar}
             className="w-full h-10 flex items-center justify-center rounded-lg bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
@@ -203,10 +221,10 @@ export function AppShell({ children }: AppShellProps) {
                </div>
             </Link>
             <button
-              onClick={logout}
-              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+               onClick={logout}
+               className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
-              {t('common.logout')}
+               {t('common.logout')}
             </button>
           </div>
         </header>
@@ -222,6 +240,7 @@ export function AppShell({ children }: AppShellProps) {
         </main>
       </div>
 
+      <SystemMetadata isOpen={isMetadataOpen} onClose={() => setIsMetadataOpen(false)} />
       <Toaster 
         position="top-right" 
         expand={true} 

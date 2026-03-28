@@ -26,6 +26,9 @@ Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Th
 - **Quality (POV-157):** Enabled **Jacoco Code Coverage** reporting in the backend build pipeline with auto-generation in `target/jacoco-report/`.
 - **Quality (POV-157):** Achieved a 100% clean project-wide ESLint audit. Resolved over 150 TypeScript violations related to unsafe `any` usage, implicit member access, and async promise handling in the frontend.
 - **Quality (POV-157):** Enabled **Frontend Code Coverage** using Vitest and `@vitest/coverage-v8`, with auto-generation in `frontend/coverage/`.
+- **Landing Page (POV-158):** Implemented a high-converting, vision-driven **Landing Page** emphasizing the "Pyramid of Value" (Information ➔ Knowledge ➔ Wisdom). Features high-impact brutalist typography, responsive hero layouts, and unified insight-driven CTAs ("Get Key Insights").
+- **Discovery Hub (POV-158):** Implemented the **System Discovery Hub**, a theme-aware metadata drawer providing grounded visibility into the project's **Roadmap**, **Changelog**, and **Wisdom/Reality Check** methodology.
+- **i18n (POV-158):** Full localization support for both English and Slovenian across all visionary content, including differentiated "Preverjanje realnosti" (Reality Check) interactions.
 
 ### Changed
 - **Database (POV-153):** Updated `ContentSource` entity to prioritize auto-fetched metadata while ensuring fallback to the source identifier for display.

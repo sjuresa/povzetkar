@@ -51,3 +51,4 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Mapper Audit Field Standardization (v0.14.0):** Instead of manually ignoring `version`, `createdAt`, etc., in every MapStruct mapper, create a `@MappingConfig` or a base mapper that centralizes these exclusions for all auditable entities.
 *   **Real-time Platform Validation (v0.14.0):** Implement a debounced "Check Now" button in the `Add Source` dialog to verify the YouTube channel's existence before the user hits "Save," providing immediate visual feedback.
 *   **Topic Template Preview (v0.14.0):** Add a "Preview with Template" action in the `TopicForm` that allows users to see how a mock content item would be summarized using their custom prompt before saving.
+*   **Frontend Lint Refactoring (Post-v0.14.0):** Resolve persistent unused variable warnings in `TopicForm.tsx` (lines 34, 206) and standardize `useState` destructuring to prevent future regression.
