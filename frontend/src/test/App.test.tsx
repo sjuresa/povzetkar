@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import App from '../App'
 import { useAuthStore } from '../store/authStore'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
