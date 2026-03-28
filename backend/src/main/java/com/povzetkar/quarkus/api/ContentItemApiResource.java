@@ -261,12 +261,11 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to update", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO updateItemStatus(@PathParam("id") Long id, StatusUpdateDTO dto) {
-        ContentItem baseItem = contentItemAdminService.updateStatus(id, dto.status(), "ADMIN")
-                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        
-        ContentItem updatedItem = ContentItem.<ContentItem>find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", baseItem.id)
+        ContentItem itemToUpdate = ContentItem.<ContentItem>find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+        
+        ContentItem updatedItem = contentItemAdminService.updateStatus(itemToUpdate, dto.status(), "ADMIN");
         
         Set<Long> summaryExists = Summary.count("contentItem.id", updatedItem.id) > 0 
                 ? Set.of(updatedItem.id) : Set.of();
