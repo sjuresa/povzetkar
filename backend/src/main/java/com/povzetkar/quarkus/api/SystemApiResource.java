@@ -13,6 +13,7 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import jakarta.inject.Inject;
+
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -28,7 +29,7 @@ public class SystemApiResource extends BaseApiResource {
     String version;
 
     @ConfigProperty(name = "quarkus.profile", defaultValue = "dev")
-    String profile;
+    String environment;
 
     @Inject
     Clock clock;
@@ -41,10 +42,10 @@ public class SystemApiResource extends BaseApiResource {
     @Operation(summary = "Get system metadata", description = "Returns current version, status and release info.")
     public SystemMetadataDTO getMetadata() {
         return new SystemMetadataDTO(
-            version,
-            profile,
-            "ACTIVE_EVOLUTION",
-            LocalDate.now(clock).format(DATE_FORMATTER)
+                version,
+                environment,
+                "ACTIVE_EVOLUTION",
+                LocalDate.now(clock).format(DATE_FORMATTER)
         );
     }
 }

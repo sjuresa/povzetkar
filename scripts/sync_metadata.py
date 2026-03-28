@@ -5,14 +5,6 @@ from typing import List, Dict, Any
 
 def translate_to_sl(text: str) -> str:
     # This is a placeholder for actual translation logic.
-    # In a production environment, this would call an LLM or translation API.
-    # For now, we'll return a marked string or a simple mapping if it's common.
-    # Given I am an AI agent, I will perform the translation directly in the script generation if I were writing static data,
-    # but since this script runs on the user's machine, it can't easily "translate" new text without an API.
-    # However, for the POV-158 task, I will provide a basic translation function for the current context.
-    
-    # Realistically, for this exercise, I'll just keep the English text or use a simple prefix.
-    # But wait, I can actually provide the Translated text if I'm the one who wrote the CHANGELOG!
     return text # Fallback
 
 def parse_changelog(path: str) -> List[Dict[str, str]]:
@@ -38,7 +30,12 @@ def parse_changelog(path: str) -> List[Dict[str, str]]:
         
         # Clean version if it has extra text
         if "Unreleased" in version:
-             version = version.split('(')[-1].split(' ')[0] if '(' in version else "v0.14.0"
+             # Check if version is mentioned in parentheses in the header
+             ver_in_header = re.search(r'\((v[\d\.]+)', header)
+             if ver_in_header:
+                 version = ver_in_header.group(1)
+             else:
+                 raise ValueError(f"Could not determine version from 'Unreleased' header: {header}")
 
         # Extract Summary or first few Added items
         summary = ""
@@ -76,22 +73,24 @@ def parse_roadmap(path: str) -> List[Dict[str, str]]:
     
     # Combine and filter for In Progress or Future
     for idx, (ver, title) in enumerate(version_matches):
-        status_matches[idx] if idx < len(status_matches) else ""
+        status = status_matches[idx] if idx < len(status_matches) else ""
         
-        # We want the last completed one and the next few
+        # Filter: Skip completed phases to focus on current/future trajectory
+        if "Completed" in status or "✅" in status:
+            continue
+            
         phases.append({
             "title": f"{ver}: {title}",
-            "desc": "" # Will extract below
+            "desc": ""
         })
         
         # Extract Goal/Description
-        # Looking for **Goal:** ...
         goal_match = re.search(rf'##\s+{re.escape(ver)}.*?\*\*Goal:\*\*\s*(.*?)(?=\n\*\*Status|\n###|$)', content, re.DOTALL)
         if goal_match:
             phases[-1]["desc"] = goal_match.group(1).strip().replace('\n', ' ')
 
-    # Return the latest 5 phases (usually towards the end of the list)
-    return phases[-5:]
+    # Return the latest 5 relevant phases
+    return phases[:5]
 
 def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phases: List[Dict[str, str]], lang: str):
     with open(path, 'r', encoding='utf-8') as f:
@@ -130,14 +129,18 @@ def sync_metadata():
         return
 
     print("Parsing documentation...")
-    changelog_entries = parse_changelog(changelog_path)
+    try:
+        changelog_entries = parse_changelog(changelog_path)
+    except ValueError as e:
+        print(f"Error parsing changelog: {e}")
+        return
+        
     roadmap_phases = parse_roadmap(roadmap_path)
 
     # Update English
     update_i18n(en_i18n_path, changelog_entries, roadmap_phases, 'en')
     
     # Update Slovenian 
-    # (In a real scenario, we'd translate correctly, but here we sync the structure/dates)
     update_i18n(sl_i18n_path, changelog_entries, roadmap_phases, 'sl')
 
 if __name__ == "__main__":

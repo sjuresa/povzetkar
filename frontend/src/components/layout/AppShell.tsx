@@ -10,9 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
-import { SystemMetadata, SystemMetadata as SystemMetadataType } from '../system/SystemMetadata';
-import { useQuery } from '@tanstack/react-query';
-import client from '../../api/client';
+import { SystemMetadata } from '../system/SystemMetadata';
+import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 
 interface AppShellProps {
   children: ReactNode;
@@ -38,14 +37,7 @@ export function AppShell({ children }: AppShellProps) {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
 
-  const { data: metadata } = useQuery<SystemMetadataType>({
-    queryKey: ['system-metadata'],
-    queryFn: async () => {
-      const { data } = await client.get<SystemMetadataType>('/v1/system/metadata');
-      return data;
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { data: metadata } = useSystemMetadata();
 
   const navItems = [
     { name: t('navigation.dashboard'), path: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },

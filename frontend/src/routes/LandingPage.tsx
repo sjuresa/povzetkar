@@ -3,10 +3,9 @@ import { Link } from '@tanstack/react-router';
 import { useAuthStore } from '../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
-import { SystemMetadata, SystemMetadata as SystemMetadataType } from '../components/system/SystemMetadata';
+import { SystemMetadata } from '../components/system/SystemMetadata';
 import heroAsset from '../assets/hero-distillation.png';
-import { useQuery } from '@tanstack/react-query';
-import client from '../api/client';
+import { useSystemMetadata } from '../hooks/useSystemMetadata';
 
 import { useThemeStore } from '../store/themeStore';
 
@@ -22,14 +21,7 @@ export function LandingPage() {
     }))
   );
 
-  const { data: metadata } = useQuery<SystemMetadataType>({
-    queryKey: ['system-metadata'],
-    queryFn: async () => {
-      const { data } = await client.get<SystemMetadataType>('/v1/system/metadata');
-      return data;
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { data: metadata } = useSystemMetadata();
 
   const toggleLanguage = () => {
     const newLng = i18n.language === 'en' ? 'sl' : 'en';
