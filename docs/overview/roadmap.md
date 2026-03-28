@@ -283,10 +283,9 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 3.3     | March 28, 2026     | Povzetkar AI | Final documentation alignment (POV-166, i18n audit) and clarified job cleanup task separation. |
-| 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0 with actual tasks and moved postponed items (Admin UI, Job Control, DAST) to new v0.16.0. |
-| 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                      |
-| 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15. |
+| 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0/v0.16.0 scope, moved postponed items (Admin UI, DAST), and clarified job cleanup tasks.                                                                  |
+| 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                                                   |
+| 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15.                              |
 | 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
 | 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
 | 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                                                                                                                |
