@@ -48,152 +48,6 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
 
   const isStatusActive = metadata?.status?.toUpperCase() === 'ACTIVE_EVOLUTION';
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'changelog':
-        return (
-          <div className="space-y-12">
-            <div className="space-y-8">
-              <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                <div className="w-3 h-8 bg-[var(--color-accent)]" />
-                {t('system.changelog.title')}
-              </h3>
-              
-              <div className="space-y-12">
-                <div className="relative pl-8 border-l-4 border-black">
-                  <div className="absolute top-0 -left-[10px] w-4 h-4 bg-[var(--color-accent)] shadow-[4px_4px_0px_black]" />
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.new')}</span>
-                      <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry1_date')}</span>
-                    </div>
-                    <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry1_title')}</h4>
-                    <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                      {t('system.changelog.entry1_desc')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative pl-8 border-l-4 border-black">
-                  <div className="absolute top-0 -left-[10px] w-4 h-4 bg-black" />
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-[var(--color-border-subtle)] text-black text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.improved')}</span>
-                      <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry2_date')}</span>
-                    </div>
-                    <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry2_title')}</h4>
-                    <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                      {t('system.changelog.entry2_desc')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative pl-8 border-l-4 border-black">
-                  <div className="absolute top-0 -left-[10px] w-4 h-4 bg-[var(--color-accent)]" />
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.new')}</span>
-                      <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry3_date')}</span>
-                    </div>
-                    <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry3_title')}</h4>
-                    <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                      {t('system.changelog.entry3_desc')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative pl-8 border-l-4 border-black opacity-60">
-                  <div className="absolute top-0 -left-[10px] w-4 h-4 bg-black" />
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.fixed')}</span>
-                      <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry4_date')}</span>
-                    </div>
-                    <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry4_title')}</h4>
-                    <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                      {t('system.changelog.entry4_desc')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Focus Banner */}
-            <div className="p-8 bg-black text-white border-l-8 border-amber-500">
-              <p className="text-sm font-black text-amber-500 mb-2 uppercase tracking-[0.2em]">{t('landing.pyramid.level3')}</p>
-              <p className="text-lg font-bold leading-tight italic">
-                {t('system.focus_text')}
-              </p>
-            </div>
-          </div>
-        );
-      case 'roadmap':
-        return (
-          <div className="space-y-12">
-             <div className="space-y-8">
-              <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                <div className="w-3 h-8 bg-amber-500" />
-                {t('system.roadmap.title')}
-              </h3>
-              
-              <div className="relative pl-12 border-l-4 border-black space-y-20">
-                 {[
-                  { title: t('system.roadmap.q1_title'), subtitle: `${t('landing.pyramid.level2')} Mastery`, desc: t('system.roadmap.q1_desc_full') },
-                  { title: t('system.roadmap.q2_title'), subtitle: `${t('landing.pyramid.level3')} Implementation`, desc: t('system.roadmap.q2_desc_full') },
-                  { title: t('system.roadmap.q3_title'), subtitle: "Platform Integrity", desc: t('system.roadmap.q3_desc_full') },
-                  { title: t('system.roadmap.q4_title'), subtitle: "Intelligent Synthesis", desc: t('system.roadmap.q4_desc_full') },
-                  { title: t('system.roadmap.q5_title'), subtitle: "Universal Wisdom", desc: t('system.roadmap.q5_desc_full') }
-                ].map((phase, idx) => (
-                  <div key={idx} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
-                    <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-black uppercase tracking-widest text-[var(--color-accent)]">{phase.title}</h4>
-                      <h3 className="text-2xl font-black uppercase tracking-tight">{phase.subtitle}</h3>
-                      <p className="text-lg font-bold text-[var(--color-text-secondary)] leading-relaxed max-w-2xl">
-                         {phase.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      case 'wisdom':
-        return (
-          <div className="space-y-12">
-             <div className="space-y-8">
-              <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                <div className="w-3 h-8 bg-emerald-500" />
-                {t('landing.pyramid.reality_check')}
-              </h3>
-              
-              <div className="p-8 bg-[var(--color-background-base)] border-4 border-black text-[var(--color-text-primary)] border-l-8 border-l-emerald-500 space-y-6 shadow-[16px_16px_0px_rgba(0,0,0,0.05)]">
-                 <h4 className="text-3xl font-black uppercase italic tracking-tighter text-emerald-500">
-                   The Wisdom Layer
-                 </h4>
-                 <p className="text-xl font-bold leading-relaxed opacity-80">
-                   {t('landing.vision.pillar4_desc')}
-                 </p>
-                 <div className="pt-8 border-t border-white/20 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Methodology</p>
-                       <p className="font-bold italic">Retrospective bias assessment and prediction scoring.</p>
-                    </div>
-                    <div className="space-y-2">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Goal</p>
-                       <p className="font-bold italic">Establishing source reliability metrics across all distilled content.</p>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
       <div 
@@ -234,9 +88,17 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b-4 border-black bg-[var(--color-background-base)]">
+        {/* Tabs - ARIA Pattern Implementation */}
+        <div 
+          className="flex border-b-4 border-black bg-[var(--color-background-base)]"
+          role="tablist"
+          aria-label={t('system.title')}
+        >
           <button 
+            id="tab-changelog"
+            role="tab"
+            aria-selected={activeTab === 'changelog'}
+            aria-controls="panel-changelog"
             onClick={() => setActiveTab('changelog')}
             className={`flex-1 p-4 flex flex-col items-center justify-center gap-1 font-black uppercase tracking-widest text-[10px] transition-all border-b-4 ${activeTab === 'changelog' ? 'border-[var(--color-accent)] bg-black text-white' : 'border-transparent hover:bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)]'}`}
           >
@@ -244,6 +106,10 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
             {t('system.tabs.changelog')}
           </button>
           <button 
+            id="tab-roadmap"
+            role="tab"
+            aria-selected={activeTab === 'roadmap'}
+            aria-controls="panel-roadmap"
             onClick={() => setActiveTab('roadmap')}
             className={`flex-1 p-4 flex flex-col items-center justify-center gap-1 font-black uppercase tracking-widest text-[10px] transition-all border-b-4 ${activeTab === 'roadmap' ? 'border-[var(--color-accent)] bg-black text-white' : 'border-transparent hover:bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)]'}`}
           >
@@ -251,6 +117,10 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
             {t('system.tabs.roadmap')}
           </button>
           <button 
+            id="tab-wisdom"
+            role="tab"
+            aria-selected={activeTab === 'wisdom'}
+            aria-controls="panel-wisdom"
             onClick={() => setActiveTab('wisdom')}
             className={`flex-1 p-4 flex flex-col items-center justify-center gap-1 font-black uppercase tracking-widest text-[10px] transition-all border-b-4 ${activeTab === 'wisdom' ? 'border-[var(--color-accent)] bg-black text-white' : 'border-transparent hover:bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)]'}`}
           >
@@ -259,9 +129,161 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
           </button>
         </div>
 
-        {/* Content Area */}
+        {/* Content Area - ARIA Pattern Implementation */}
         <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-[var(--color-background-alt)] custom-scrollbar">
-          {renderTabContent()}
+          <div 
+            id="panel-changelog" 
+            role="tabpanel" 
+            aria-labelledby="tab-changelog" 
+            className={activeTab === 'changelog' ? 'block' : 'hidden'}
+          >
+            <div className="space-y-12">
+              <div className="space-y-8">
+                <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
+                  <div className="w-3 h-8 bg-[var(--color-accent)]" />
+                  {t('system.changelog.title')}
+                </h3>
+                
+                <div className="space-y-12">
+                  <div className="relative pl-8 border-l-4 border-black">
+                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-[var(--color-accent)] shadow-[4px_4px_0px_black]" />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.new')}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry1_date')}</span>
+                      </div>
+                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry1_title')}</h4>
+                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
+                        {t('system.changelog.entry1_desc')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative pl-8 border-l-4 border-black">
+                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-black" />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-[var(--color-border-subtle)] text-black text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.improved')}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry2_date')}</span>
+                      </div>
+                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry2_title')}</h4>
+                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
+                        {t('system.changelog.entry2_desc')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative pl-8 border-l-4 border-black">
+                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-[var(--color-accent)]" />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.new')}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry3_date')}</span>
+                      </div>
+                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry3_title')}</h4>
+                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
+                        {t('system.changelog.entry3_desc')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative pl-8 border-l-4 border-black opacity-60">
+                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-black" />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.fixed')}</span>
+                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry4_date')}</span>
+                      </div>
+                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry4_title')}</h4>
+                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
+                        {t('system.changelog.entry4_desc')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Focus Banner */}
+              <div className="p-8 bg-black text-white border-l-8 border-amber-500">
+                <p className="text-sm font-black text-amber-500 mb-2 uppercase tracking-[0.2em]">{t('landing.pyramid.level3')}</p>
+                <p className="text-lg font-bold leading-tight italic">
+                  {t('system.focus_text')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div 
+            id="panel-roadmap" 
+            role="tabpanel" 
+            aria-labelledby="tab-roadmap" 
+            className={activeTab === 'roadmap' ? 'block' : 'hidden'}
+          >
+            <div className="space-y-12">
+               <div className="space-y-8">
+                <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
+                  <div className="w-3 h-8 bg-amber-500" />
+                  {t('system.roadmap.title')}
+                </h3>
+                
+                <div className="relative pl-12 border-l-4 border-black space-y-20">
+                   {[
+                    { title: t('system.roadmap.q1_title'), subtitle: `${t('landing.pyramid.level2')} Mastery`, desc: t('system.roadmap.q1_desc_full') },
+                    { title: t('system.roadmap.q2_title'), subtitle: `${t('landing.pyramid.level3')} Implementation`, desc: t('system.roadmap.q2_desc_full') },
+                    { title: t('system.roadmap.q3_title'), subtitle: "Platform Integrity", desc: t('system.roadmap.q3_desc_full') },
+                    { title: t('system.roadmap.q4_title'), subtitle: "Intelligent Synthesis", desc: t('system.roadmap.q4_desc_full') },
+                    { title: t('system.roadmap.q5_title'), subtitle: "Universal Wisdom", desc: t('system.roadmap.q5_desc_full') }
+                  ].map((phase, idx) => (
+                    <div key={idx} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
+                      <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-[var(--color-accent)]">{phase.title}</h4>
+                        <h3 className="text-2xl font-black uppercase tracking-tight">{phase.subtitle}</h3>
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)] leading-relaxed max-w-2xl">
+                           {phase.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div 
+            id="panel-wisdom" 
+            role="tabpanel" 
+            aria-labelledby="tab-wisdom" 
+            className={activeTab === 'wisdom' ? 'block' : 'hidden'}
+          >
+            <div className="space-y-12">
+               <div className="space-y-8">
+                <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
+                  <div className="w-3 h-8 bg-emerald-500" />
+                  {t('landing.pyramid.reality_check')}
+                </h3>
+                
+                <div className="p-8 bg-[var(--color-background-base)] border-4 border-black text-[var(--color-text-primary)] border-l-8 border-l-emerald-500 space-y-6 shadow-[16px_16px_0px_rgba(0,0,0,0.05)]">
+                   <h4 className="text-3xl font-black uppercase italic tracking-tighter text-emerald-500">
+                     The Wisdom Layer
+                   </h4>
+                   <p className="text-xl font-bold leading-relaxed opacity-80">
+                     {t('landing.vision.pillar4_desc')}
+                   </p>
+                   <div className="pt-8 border-t border-white/20 grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Methodology</p>
+                         <p className="font-bold italic">Retrospective bias assessment and prediction scoring.</p>
+                      </div>
+                      <div className="space-y-2">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Goal</p>
+                         <p className="font-bold italic">Establishing source reliability metrics across all distilled content.</p>
+                      </div>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

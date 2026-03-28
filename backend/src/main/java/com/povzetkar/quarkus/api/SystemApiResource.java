@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.api.dto.SystemMetadataDTO;
 import jakarta.annotation.security.PermitAll;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -12,11 +13,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import jakarta.inject.Inject;
-
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Path("/v1/system")
 @Produces(MediaType.APPLICATION_JSON)
@@ -35,8 +33,6 @@ public class SystemApiResource extends BaseApiResource {
     @Inject
     Clock clock;
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy");
-
     @GET
     @Path("/metadata")
     @PermitAll
@@ -46,7 +42,7 @@ public class SystemApiResource extends BaseApiResource {
                 version,
                 environment,
                 STATUS_ACTIVE_EVOLUTION,
-                LocalDate.now(clock).format(DATE_FORMATTER)
+                LocalDate.now(clock).toString()
         );
     }
 }
