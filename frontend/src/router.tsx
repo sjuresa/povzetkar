@@ -42,12 +42,6 @@ const indexRoute = createRoute({
     if (!context.auth.isLoaded) {
       await context.auth.checkAuth();
     }
-    
-    // If definitely authenticated, skip landing and go to dashboard
-    if (context.auth.isAuthenticated) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw redirect({ to: '/dashboard' });
-    }
   },
 });
 
