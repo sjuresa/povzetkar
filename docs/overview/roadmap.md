@@ -198,7 +198,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Implement real-time YouTube source validation with debounced existence checks (POV-163).
 2.  **Hardening & Operational Excellence:**
     *   Implement Prometheus metrics and Grafana dashboards for system-wide monitoring (POV-164).
-    *   **Self-Cleaning Infra**: Implement a background job to purge `JobExecutionAudit` records with 90-day retention (POV-165).
+    *   **Self-Cleaning Infra (Audits)**: Implement a background job to purge `JobExecutionAudit` records with 90-day retention (POV-165).
     *   **QA Health & Master Test Suite**: Centralize all regression scenarios into a permanent suite and migrate remaining Integration Tests to the `@TestTransaction` pattern (POV-166).
 
 ## v0.16: Administrative Control & Hardening
@@ -210,7 +210,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Build the "Admin User Management" UI for managing roles, account statuses, and permissions.
     *   Comprehensive "Background Job Dashboard" with full operational control (Cancel, Restart, Audit).
 2.  **Product Refinement & Security:**
-    *   **Self-Cleaning Infra**: Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items (Background Jobs Cleanup Strategy).
+    *   Self-Cleaning Infra (Jobs): Implement a background job to purge the background_jobs table of old COMPLETED or FAILED items (Background Jobs Cleanup Strategy).
     *   Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
     *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
     *   **Full i18n Audit**: Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
