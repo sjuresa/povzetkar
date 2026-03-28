@@ -231,6 +231,14 @@ Explicitly generate a custom briefing for a specific topic. Asynchronous operati
 ```
 **Response (202 Accepted):** Returns a `Location` header pointing to the job status (e.g., `/api/v1/jobs/{jobId}`).
 
+**`POST /api/v1/briefings/{id}/commands/share`**
+Enables public sharing for a briefing by generating a secure UUID.
+**Response (200 OK):** Returns updated briefing with `sharingUuid`.
+
+**`DELETE /api/v1/briefings/{id}/commands/share`**
+Disables public sharing by nullifying `sharingUuid`.
+**Response (200 OK):** Returns updated briefing with `sharingUuid: null`.
+
 ### 3.3. Content Sources (`/api/v1/sources`)
 *Required Permissions: `SOURCE_VIEW` (List/Get items), `SOURCE_CREATE` (POST), `SOURCE_UPDATE` (PUT/PATCH, Admin only), `SOURCE_DELETE` (DELETE, Admin only)*
 

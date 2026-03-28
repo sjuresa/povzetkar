@@ -23,10 +23,12 @@ public abstract class BriefingMapper {
 
     @Mapping(target = "topicId", source = "topic.id")
     @Mapping(target = "topicName", source = "topic.name")
+    @Mapping(target = "uuid", source = "uuid")
     public abstract BriefingSummaryDTO toSummaryDTO(Briefing entity);
 
     @Mapping(target = "topicId", source = "topic.id")
     @Mapping(target = "topicName", source = "topic.name")
+    @Mapping(target = "uuid", source = "uuid")
     @Mapping(target = "executiveSummary", source = "entity", qualifiedByName = "mapExecutiveSummary")
     @Mapping(target = "briefingText", source = "entity", qualifiedByName = "mapBriefingText")
     @Mapping(target = "sourceContentItems", source = "summaries")

@@ -48,6 +48,7 @@ class YouTubeFetchingStrategyTest {
         PanacheMock.mock(YouTubeVideo.class);
     }
 
+    @SuppressWarnings("unchecked")
     private TransactionRunnerOptions mockTransactionRunnerOptions() {
         TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
         when(runner.call(any(Callable.class)))

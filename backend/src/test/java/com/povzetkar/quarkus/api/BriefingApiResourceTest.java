@@ -172,4 +172,53 @@ class BriefingApiResourceTest {
                 .body("meta.pagination.totalElements", equalTo(0))
                 .body("data", hasSize(0));
     }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testShareBriefing() {
+        // Reset UUID
+        given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/unshare")
+                .then()
+                .statusCode(204);
+
+        // Share it
+        String uuid = given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/share")
+                .then()
+                .statusCode(200)
+                .extract().path("data");
+
+        given()
+                .when().get("/api/v1/public/briefings/" + uuid)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testUnshareBriefing() {
+        // Share it first
+        String uuid = given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/share")
+                .then()
+                .statusCode(200)
+                .extract().path("data");
+
+        // Unshare it
+        given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/unshare")
+                .then()
+                .statusCode(204);
+
+        // Verify public API returns 404
+        given()
+                .when().get("/api/v1/public/briefings/" + uuid)
+                .then()
+                .statusCode(404);
+    }
 }

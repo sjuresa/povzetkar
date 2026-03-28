@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 import { ErrorPage } from './routes/ErrorPage';
 import { ThemeProvider } from './components/theme/ThemeProvider';
+import { HelmetProvider } from 'react-helmet-async';
 
 function App() {
   // Only subscribe to the fields the router context needs for guards
@@ -22,13 +23,15 @@ function App() {
   const context = useMemo(() => ({ auth }), [auth]);
 
   return (
-    <ErrorBoundary fallback={<ErrorPage />}>
-      <ThemeProvider />
-      <RouterProvider 
-        router={router} 
-        context={context} 
-      />
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary fallback={<ErrorPage />}>
+        <ThemeProvider />
+        <RouterProvider 
+          router={router} 
+          context={context} 
+        />
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 

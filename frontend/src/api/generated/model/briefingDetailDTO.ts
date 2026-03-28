@@ -17,4 +17,5 @@ export interface BriefingDetailDTO {
   executiveSummary?: string;
   briefingText?: string;
   sourceContentItems?: ContentItem[];
+  uuid?: string;
 }

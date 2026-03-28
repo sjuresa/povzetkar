@@ -13,4 +13,5 @@ export interface BriefingSummaryDTO {
   topicName?: string;
   title?: string;
   briefingDate?: LocalDate;
+  uuid?: string;
 }

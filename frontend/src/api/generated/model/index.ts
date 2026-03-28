@@ -83,6 +83,7 @@ export * from './sectionHelper';
 export * from './sectionNode';
 export * from './statusUpdate';
 export * from './summary';
+export * from './systemMetadataDTO';
 export * from './template';
 export * from './templateInstance';
 export * from './templateLocator';

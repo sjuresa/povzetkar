@@ -13,6 +13,7 @@ import {
   Youtube,
   Globe,
 } from 'lucide-react';
+import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, ContentItem } from '../api/generated/model';
 
 /**
@@ -84,6 +85,21 @@ export function BriefingDetailPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] text-glow flex-1">
             {briefing.title}
           </h1>
+          {briefing.id != null && (
+            <ExportMenu 
+              briefing={{
+                id: briefing.id,
+                uuid: briefing.uuid ?? null,
+                title: briefing.title || '',
+                topicName: briefing.topicName || '',
+                briefingDate: briefing.briefingDate || '',
+                briefingText: briefing.briefingText || '',
+                executiveSummary: briefing.executiveSummary || '',
+              }}
+              variant="outline"
+              className="md:self-center"
+            />
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-sm">

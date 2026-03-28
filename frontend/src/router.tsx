@@ -17,6 +17,7 @@ import { ContentManagementPage } from './routes/ContentManagementPage';
 import { TopicsPage } from './pages/topics/TopicsPage';
 import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
 import { SourceDetailPage } from './routes/SourceDetailPage';
+import { PublicBriefingPage } from './routes/PublicBriefingPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -57,8 +58,13 @@ const protectedLayoutRoute = createRoute({
       await context.auth.checkAuth();
     }
     
+    // We must read the fresh state from zustand, not the React snapshot,
+    // because checkAuth() just updated the store asynchronously.
+    const useAuthStore = (await import('./store/authStore')).useAuthStore;
+    const isActuallyAuthenticated = useAuthStore.getState().isAuthenticated;
+    
     // Final check - if still not authenticated, redirect to landing
-    if (!context.auth.isAuthenticated) {
+    if (!isActuallyAuthenticated) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/' });
     }
@@ -121,8 +127,11 @@ const briefingDetailRoute = createRoute({
 const adminLayoutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/admin',
-  beforeLoad: ({ context }) => {
-    const hasAdminPerm = context.auth.user?.permissions?.some(p => 
+  beforeLoad: async () => {
+    const useAuthStore = (await import('./store/authStore')).useAuthStore;
+    const user = useAuthStore.getState().user;
+    
+    const hasAdminPerm = user?.permissions?.some(p => 
       ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW'].includes(p)
     );
     
@@ -152,9 +161,17 @@ const adminJobsRoute = createRoute({
   component: () => <div className="p-8 text-slate-400 italic">Background Jobs Admin coming soon...</div>,
 });
 
+// 7. Public Sharing Route
+const publicShareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/s/$uuid',
+  component: PublicBriefingPage,
+});
+
 // 5. Create Route Tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  publicShareRoute,
   protectedLayoutRoute.addChildren([
     dashboardRoute,
     profileRoute,
