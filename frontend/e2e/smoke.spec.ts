@@ -7,5 +7,5 @@ test('has title', async ({ page }) => {
 
 test('renders brand name', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('POVZETKAR')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Povzetkar/i }).first()).toBeVisible();
 });
