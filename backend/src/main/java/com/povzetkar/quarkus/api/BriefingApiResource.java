@@ -63,8 +63,12 @@ public class BriefingApiResource extends BaseApiResource {
             description = "List of briefings retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingPaginatedResponse.class))
     )
+    @Parameter(name = "search", description = "Keyword search across briefing title and executive summary")
+    @Parameter(name = "sourceId", description = "Filter briefings containing summaries from a specific content source")
     public BriefingPaginatedResponse getBriefings(
             @QueryParam("topicId") Long topicId,
+            @QueryParam("sourceId") Long sourceId,
+            @QueryParam("search") @DefaultValue("") String search,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
             @QueryParam("sort") List<String> sort,
@@ -80,6 +84,22 @@ public class BriefingApiResource extends BaseApiResource {
         filterBuilder.and("briefingDate >= :startDate", "startDate", startDate);
         filterBuilder.and("briefingDate <= :endDate", "endDate", endDate);
 
+        if (sourceId != null) {
+            filterBuilder.and(
+                    "EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)",
+                    "sourceId", sourceId);
+        }
+
+        if (search != null && !search.isBlank()) {
+            String escapedSearch = search.toLowerCase()
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+            filterBuilder.and(
+                    "(lower(title) LIKE :search ESCAPE '!' OR lower(metaSummary) LIKE :search ESCAPE '!')",
+                    "search", "%" + escapedSearch + "%");
+        }
+
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "status"));
         PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
@@ -88,7 +108,7 @@ public class BriefingApiResource extends BaseApiResource {
                 .stream()
                 .map(briefingMapper::toSummaryDTO)
                 .toList();
- 
+
         return new BriefingPaginatedResponse(dtoList, count, pageIndex, clampedPageSize);
     }
 

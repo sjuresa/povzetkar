@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Summary
 Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
 
+### Added
+- **Briefing Library (POV-161):** Implemented a searchable, filterable **Briefing Library** page (`/briefings`), replacing the previous placeholder. Users can now search briefings by keyword, filter by Topic, Source, or Date Range, and paginate through their complete briefing archive.
+- **Backend (POV-161):** Extended `GET /api/v1/briefings` with `search` (LIKE on title/metaSummary) and `sourceId` (EXISTS subquery) query parameters for advanced filtering.
+- **Briefing Detail (POV-161):** Implemented the **Briefing Detail** page (`/briefings/{id}`) with full markdown rendering of AI-generated briefing text, a highlighted Executive Summary card, and a Source Content grid displaying analyzed content items with thumbnails and external links.
+- **i18n (POV-161):** Full localization support for both English and Slovenian across the Briefing Library and Briefing Detail pages.
+
 ## [0.14.0] - 2026-03-28
 
 ### Summary

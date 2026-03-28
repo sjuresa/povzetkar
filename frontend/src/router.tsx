@@ -8,6 +8,7 @@ import {
 import { LandingPage } from './routes/LandingPage';
 import { DashboardPage } from './routes/DashboardPage';
 import { BriefingDetailPage } from './routes/BriefingDetailPage';
+import { BriefingLibraryPage } from './routes/BriefingLibraryPage';
 import { AuditLogPage } from './routes/AuditLogPage';
 import { ErrorPage } from './routes/ErrorPage';
 import { ProfilePage } from './routes/ProfilePage';
@@ -89,15 +90,11 @@ const topicsRoute = createRoute({
   component: TopicsPage,
 });
 
-// Briefings Placeholder
+// Briefing Library Route
 const briefingsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/briefings',
-  component: () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 italic">
-      All briefings list coming soon
-    </div>
-  ),
+  component: BriefingLibraryPage,
 });
 
 // Sources Routes

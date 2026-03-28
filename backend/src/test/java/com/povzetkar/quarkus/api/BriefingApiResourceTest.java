@@ -121,4 +121,55 @@ class BriefingApiResourceTest {
                 .then()
                 .statusCode(403);
     }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSearchFilter() {
+        given()
+                .queryParam("search", "Weekly")
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("Weekly AI Update"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSearchNoResults() {
+        given()
+                .queryParam("search", "nonexistent-keyword-xyz")
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(0))
+                .body("data", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSourceIdFilter() {
+        // Get the source ID from the test setup (first source persisted)
+        ContentSource source = ContentSource.<ContentSource>findAll().firstResult();
+
+        given()
+                .queryParam("sourceId", source.id)
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("Weekly AI Update"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSourceIdNoResults() {
+        given()
+                .queryParam("sourceId", 999999)
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(0))
+                .body("data", hasSize(0));
+    }
 }

@@ -643,3 +643,18 @@ When displaying project metadata (Roadmap, Changelog) on public-facing pages (La
 - **The Standard:** Use a **Synchronization Script** (e.g., `scripts/sync_metadata.py`) to parse the actual project documentation (`CHANGELOG.md`, `roadmap.md`) and automatically update the frontend `i18n` source files. This ensures the Landing Page is always "truthful" relative to the release state.
 - **Requirement:** Markdown headers used by extraction scripts must remain stable (e.g., `## [Release Version]` format).
 - **Execution:** This sync should be a mandatory pre-commit or pre-release step in the development workflow (Phase 3.5).
+
+---
+
+## 29. Placeholder Scope Identification (POV-161)
+
+### 29.1 Explicit Placeholder Audit in Task Planning
+When implementing a feature that replaces a placeholder page, the task scope must explicitly audit and list ALL related placeholder components — not just the primary one.
+- **The Trap (POV-161):** The BriefingLibraryPage was clearly in scope, but the BriefingDetailPage placeholder was only identified as needing implementation after the user flagged it during review.
+- **The Standard:** During the planning phase (Step 3), grep the codebase for placeholder-style components (e.g., "coming soon", static text-only components) related to the feature domain and explicitly include them in the implementation plan.
+- **Command:** `grep -rn "coming soon\|placeholder\|stub" frontend/src/routes/ --include="*.tsx"`
+
+### 29.2 EXISTS Subquery vs JOIN for Filtered Pagination
+The EXISTS subquery pattern (Lesson 1.1) was successfully validated in POV-161 for source-based briefing filtering.
+- **Pattern:** `EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)` correctly filters briefings that contain summaries from a specific source without introducing cartesian products on the paginated main query.
+- **Confirmed:** This approach correctly interacts with Panache's `.count()` and `.page()` methods, producing accurate pagination metadata.
