@@ -91,9 +91,13 @@ public class BriefingApiResource extends BaseApiResource {
         }
 
         if (search != null && !search.isBlank()) {
+            String escapedSearch = search.toLowerCase()
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
             filterBuilder.and(
-                    "(lower(title) LIKE :search OR lower(metaSummary) LIKE :search)",
-                    "search", "%" + search.toLowerCase() + "%");
+                    "(lower(title) LIKE :search ESCAPE '!' OR lower(metaSummary) LIKE :search ESCAPE '!')",
+                    "search", "%" + escapedSearch + "%");
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
