@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.SystemMetadataDTO;
+import com.povzetkar.quarkus.api.filter.Enveloped;
 import jakarta.annotation.security.PermitAll;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,26 +13,36 @@ import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import com.povzetkar.quarkus.service.UserContextService;
 
 import java.time.Clock;
 import java.time.LocalDate;
 
-@Path("/v1/system")
+@Path("/api/v1/system")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @ApplicationScoped
+@Enveloped
 @Tag(name = "System", description = "System-wide metadata and health")
 public class SystemApiResource extends BaseApiResource {
 
     private static final String STATUS_ACTIVE_EVOLUTION = "ACTIVE_EVOLUTION";
-    @ConfigProperty(name = "quarkus.application.version", defaultValue = "0.0.0-SNAPSHOT")
-    String version;
-
-    @ConfigProperty(name = "quarkus.profile", defaultValue = "dev")
-    String environment;
+    
+    private final String version;
+    private final String environment;
+    private final Clock clock;
 
     @Inject
-    Clock clock;
+    public SystemApiResource(
+            UserContextService userContextService,
+            @ConfigProperty(name = "quarkus.application.version", defaultValue = "0.0.0-SNAPSHOT") String version,
+            @ConfigProperty(name = "quarkus.profile", defaultValue = "dev") String environment,
+            Clock clock) {
+        super(userContextService);
+        this.version = version;
+        this.environment = environment;
+        this.clock = clock;
+    }
 
     @GET
     @Path("/metadata")
