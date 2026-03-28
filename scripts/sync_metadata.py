@@ -76,10 +76,14 @@ def parse_roadmap(path: str) -> List[Dict[str, str]]:
     with open(path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    phase_blocks = re.split(r'##\s+(v\d+\.\d+):', content)[1:]
+    phase_parts = re.split(r'##\s+(v\d+\.\d+):', content)[1:]
     phases = []
     
-    for block in phase_blocks:
+    # Iterate over pairs of (version, block_content)
+    for i in range(0, len(phase_parts), 2):
+        version = phase_parts[i]
+        block = phase_parts[i+1]
+
         lines = block.strip().split('\n')
         title = lines[0].strip()
         
@@ -89,13 +93,14 @@ def parse_roadmap(path: str) -> List[Dict[str, str]]:
         if "Completed" in status or "✅" in status:
             continue
             
-        # Extract version from the split delimiter if we wanted it, 
-        # but here we just need the title and goal
         goal_match = re.search(r'\*\*Goal:\*\*\s*(.*?)(?=\n\*\*Status|\n###|$)', block, re.DOTALL)
         goal = goal_match.group(1).strip().replace('\n', ' ') if goal_match else ""
         
+        # Combine version and title for a more descriptive entry.
+        full_title = f"{version}: {title}"
+
         phases.append({
-            "title": title,
+            "title": full_title,
             "desc": goal
         })
 
@@ -118,15 +123,12 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
             title = translate_to_sl(title)
             date_str = translate_to_sl(date_str)
             # For complex descriptions, we keep original if no translation logic exists
-            # In a production app, we'd trigger a translation service here.
     
         data['system']['changelog'][f'entry{idx}_title'] = title
         data['system']['changelog'][f'entry{idx}_desc'] = desc
         data['system']['changelog'][f'entry{idx}_date'] = date_str
     
     # Update Roadmap
-    # NOTE: Roadmap titles are highly specific and harder to auto-translate without AI.
-    # For now, we update them but keep the structure.
     for i, phase in enumerate(roadmap_phases):
         idx = i + 1
         title = phase['title']
@@ -134,10 +136,11 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
         
         if is_sl:
             # We don't overwrite Roadmap titles in SL if they are already significantly different
-            # (i.e., already translated).
             existing_title = data['system']['roadmap'].get(f'q{idx}_title', "")
             if existing_title and existing_title != title:
-                 # It's likely already translated, so we don't overwrite the title with EN
+                 # It's likely already translated, so we only update the description if it's empty
+                 if not data['system']['roadmap'].get(f'q{idx}_desc_full'):
+                      data['system']['roadmap'][f'q{idx}_desc_full'] = desc
                  continue
                  
         data['system']['roadmap'][f'q{idx}_title'] = title
