@@ -32,7 +32,7 @@ describe('useSystemMetadata', () => {
 
   it('should fetch system metadata from the correct path', async () => {
     const mockData = { version: '0.14.0', environment: 'test', status: 'ACTIVE', releaseDate: '2026-03-28' };
-    vi.mocked(client.get).mockResolvedValue({ data: mockData });
+    vi.mocked(client.get).mockResolvedValue({ data: { data: mockData, meta: {} } });
 
     const { result } = renderHook(() => useSystemMetadata(), {
       wrapper: createWrapper(),
@@ -45,8 +45,8 @@ describe('useSystemMetadata', () => {
   });
 
   it('should throw error when data is missing from response', async () => {
-    // Simulate a case where data is undefined (what caused the crash)
-    vi.mocked(client.get).mockResolvedValue({ data: undefined });
+    // Simulate a case where the inner data property is missing or null despite a 2xx response
+    vi.mocked(client.get).mockResolvedValue({ data: { data: null, meta: {} } });
 
     const { result } = renderHook(() => useSystemMetadata(), {
       wrapper: createWrapper(),
