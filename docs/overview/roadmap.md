@@ -210,6 +210,7 @@ This document outlines the concrete steps for implementing the features describe
     *   Build the "Admin User Management" UI for managing roles, account statuses, and permissions.
     *   Comprehensive "Background Job Dashboard" with full operational control (Cancel, Restart, Audit).
 2.  **Product Refinement & Security:**
+    *   **Self-Cleaning Infra**: Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items (Background Jobs Cleanup Strategy).
     *   Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
     *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
     *   **Full i18n Audit**: Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
