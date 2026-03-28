@@ -14,6 +14,12 @@ if (!newVersion) {
     process.exit(1);
 }
 
+const semverRegex = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/;
+if (!semverRegex.test(newVersion)) {
+    console.error('❌ Error: Invalid version format: "' + newVersion + '". Please use a valid semantic version (e.g., 1.0.0 or 1.0.0-SNAPSHOT).');
+    process.exit(1);
+}
+
 const rootDir = path.join(__dirname, '..');
 
 const updatePackageVersion = (filePath, version) => {
