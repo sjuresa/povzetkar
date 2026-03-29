@@ -15,6 +15,7 @@ import { cn } from '../../util/cn';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGetApiV1BriefingsId, usePostApiV1BriefingsIdShare, usePostApiV1BriefingsIdUnshare } from '../../api/generated/briefings/briefings';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 interface ExportMenuProps {
   briefing: {
@@ -23,15 +24,15 @@ interface ExportMenuProps {
     title: string;
     topicName: string;
     briefingDate: string;
-    briefingText?: string;
-    executiveSummary?: string;
+    metaSummary?: string;
+    summaries?: { summaryText?: string }[];
   };
   variant?: 'ghost' | 'outline' | 'primary';
   className?: string;
   align?: 'left' | 'right';
 }
 
-export function ExportMenu({ briefing, variant = 'outline', className, align = 'right' }: ExportMenuProps) {
+export function ExportMenu({ briefing, variant = 'outline', className, align = 'right' }: Readonly<ExportMenuProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -100,20 +101,22 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
   };
 
   const ensureData = async () => {
-    if (briefing.briefingText && briefing.executiveSummary) {
+    if (briefing.metaSummary && briefing.summaries) {
       return { 
-        text: briefing.briefingText, 
-        summary: briefing.executiveSummary 
+        metaSummary: briefing.metaSummary,
+        content: briefing.summaries.map(s => s.summaryText).join('\n\n---\n\n')
       };
     }
     
     setIsExporting(true);
     try {
       const { data: response } = await briefingDetailQuery.refetch();
-      if (!response?.data) throw new Error('Failed to fetch briefing detail');
+      const detail = response?.data;
+      if (!detail) throw new Error('Failed to fetch briefing detail');
+      
       return { 
-        text: response.data.briefingText, 
-        summary: response.data.executiveSummary 
+        metaSummary: detail.metaSummary || '', 
+        content: detail.summaries?.map(s => s.summaryText).join('\n\n---\n\n') || ''
       };
     } catch (err) {
       toast.error('Could not prepare export data');
@@ -130,11 +133,11 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     const content = `# ${briefing.title}\n\n` +
       `**Topic:** ${briefing.topicName}\n` +
       `**Date:** ${briefing.briefingDate}\n\n` +
-      `## Executive Summary\n\n${data.summary}\n\n` +
-      `---\n\n${data.text}`;
+      `## Executive Summary\n\n${data.metaSummary}\n\n` +
+      `---\n\n${data.content}`;
     
-    const safeTopic = briefing.topicName.replace(/\s+/g, '_');
-    const safeTitle = briefing.title.replace(/\s+/g, '_');
+    const safeTopic = briefing.topicName.replaceAll(/\s+/g, '_');
+    const safeTitle = briefing.title.replaceAll(/\s+/g, '_');
     const fileName = `${safeTopic}_${safeTitle}.md`;
     
     downloadFile(content, fileName, 'text/markdown');
@@ -146,9 +149,12 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     const data = await ensureData();
     if (!data) return;
 
-    // Use marked to parse markdown to HTML
-    const summaryHtml = marked.parse(data.summary || '');
-    const textHtml = marked.parse(data.text || '');
+    // Use marked to parse markdown to HTML and sanitize the output
+    const unsafeSummaryHtml = marked.parse(data.metaSummary || '') as string;
+    const unsafeContentHtml = marked.parse(data.content || '') as string;
+    
+    const summaryHtml = DOMPurify.sanitize(unsafeSummaryHtml);
+    const textHtml = DOMPurify.sanitize(unsafeContentHtml);
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -205,8 +211,8 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
 </body>
 </html>`;
     
-    const safeTopic = briefing.topicName.replace(/\s+/g, '_');
-    const safeTitle = briefing.title.replace(/\s+/g, '_');
+    const safeTopic = briefing.topicName.replaceAll(/\s+/g, '_');
+    const safeTitle = briefing.title.replaceAll(/\s+/g, '_');
     const fileName = `${safeTopic}_${safeTitle}.html`;
     
     downloadFile(htmlContent, fileName, 'text/html');
@@ -215,7 +221,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
   };
 
   const copyShareLink = async () => {
-    const url = `${window.location.origin}/s/${localUuid}`;
+    const url = `${globalThis.location.origin}/s/${localUuid}`;
     try {
       await navigator.clipboard.writeText(url);
       setIsCopied(true);
@@ -281,23 +287,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
 
             <div className="my-1 border-t border-slate-800" />
 
-            {!localUuid ? (
-              <button
-                onClick={() => shareMutation.mutate({ id: briefing.id! })}
-                disabled={shareMutation.isPending}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
-              >
-                {shareMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
-                ) : (
-                  <Share2 className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
-                )}
-                <div className="flex-1 text-left">
-                  <p className="font-medium">Enable Share Link</p>
-                  <p className="text-[10px] text-slate-500">Generate a public URL</p>
-                </div>
-              </button>
-            ) : (
+            {localUuid ? (
               <>
                 <button
                   onClick={copyShareLink}
@@ -330,6 +320,22 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
                   </div>
                 </button>
               </>
+            ) : (
+              <button
+                onClick={() => shareMutation.mutate({ id: briefing.id! })}
+                disabled={shareMutation.isPending}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
+              >
+                {shareMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+                ) : (
+                  <Share2 className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
+                )}
+                <div className="flex-1 text-left">
+                  <p className="font-medium">Enable Share Link</p>
+                  <p className="text-[10px] text-slate-500">Generate a public URL</p>
+                </div>
+              </button>
             )}
           </div>
         </div>

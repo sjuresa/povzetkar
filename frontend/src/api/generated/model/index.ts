@@ -16,6 +16,7 @@ export * from './auditLogPaginatedResponse';
 export * from './backgroundJobDTO';
 export * from './backgroundJobPaginatedResponse';
 export * from './briefingDetailDTO';
+export * from './briefingItemDTO';
 export * from './briefingPaginatedResponse';
 export * from './briefingSummaryDTO';
 export * from './charset';

@@ -5,7 +5,7 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
-import type { ContentItem } from './contentItem';
+import type { BriefingItemDTO } from './briefingItemDTO';
 import type { LocalDate } from './localDate';
 
 export interface BriefingDetailDTO {
@@ -15,7 +15,6 @@ export interface BriefingDetailDTO {
   topicName?: string;
   title?: string;
   briefingDate?: LocalDate;
-  executiveSummary?: string;
-  briefingText?: string;
-  sourceContentItems?: ContentItem[];
+  metaSummary?: string;
+  summaries?: BriefingItemDTO[];
 }

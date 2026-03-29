@@ -10,8 +10,7 @@ public record BriefingDetailDTO(
         String topicName,
         String title,
         LocalDate briefingDate,
-        String executiveSummary,
-        String briefingText,
-        List<ContentItemDTO> sourceContentItems
+        String metaSummary,
+        List<BriefingItemDTO> summaries
 ) {
 }
