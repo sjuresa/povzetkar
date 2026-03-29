@@ -45,16 +45,24 @@ public class YouTubeDataApiClient {
     }
 
     public Optional<Channel> fetchChannelByHandle(String handle) throws IOException {
-        List<Channel> channels = youTubeService.channels()
+        return fetchChannel(youTubeService.channels()
                 .list(List.of("contentDetails", "snippet", "statistics"))
                 .setForHandle(handle)
-                .setKey(apiKey)
-                .execute()
-                .getItems();
-        
-        return Optional.ofNullable(channels).stream()
-                .flatMap(List::stream)
-                .findFirst();
+                .setKey(apiKey));
+    }
+
+    public Optional<Channel> fetchChannelByUsername(String username) throws IOException {
+        return fetchChannel(youTubeService.channels()
+                .list(List.of("contentDetails", "snippet", "statistics"))
+                .setForUsername(username)
+                .setKey(apiKey));
+    }
+
+    private Optional<Channel> fetchChannel(com.google.api.services.youtube.YouTube.Channels.List request) throws IOException {
+        List<Channel> channels = request.execute().getItems();
+        return Optional.ofNullable(channels)
+                .filter(list -> !list.isEmpty())
+                .map(List::getFirst);
     }
 
     public PlaylistItemListResponse executePlaylistItemsRequest(String playlistId, String pageToken) throws IOException {

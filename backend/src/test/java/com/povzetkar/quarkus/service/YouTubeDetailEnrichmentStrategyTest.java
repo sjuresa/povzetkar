@@ -255,4 +255,20 @@ class YouTubeDetailEnrichmentStrategyTest {
         assertTrue(details.isEmpty());
         verifyNoInteractions(mockYouTubeDataApiClient);
     }
+
+    @Test
+    void testFetchDetails_caching() throws IOException {
+        // Given
+        String handle = "@veritasium";
+        Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", "Veritasium", "Desc", 1000000L);
+        
+        when(mockYouTubeDataApiClient.fetchChannelByHandle(handle)).thenReturn(Optional.of(testChannel));
+
+        // When: call twice
+        strategy.fetchDetails(handle);
+        strategy.fetchDetails(handle);
+
+        // Then: verify API was called only once
+        verify(mockYouTubeDataApiClient, times(1)).fetchChannelByHandle(handle);
+    }
 }

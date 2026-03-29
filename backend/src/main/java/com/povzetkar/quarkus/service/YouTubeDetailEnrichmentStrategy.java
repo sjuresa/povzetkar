@@ -30,6 +30,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
+    private final long cacheExpiryMs;
     
     // Simple 1-hour in-memory cache for validation results
     private final Map<String, CachedItem<Optional<ContentSourceDetailService.ContentSourceDetails>>> validationCache = new ConcurrentHashMap<>();
@@ -38,9 +39,11 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     @Inject
     public YouTubeDetailEnrichmentStrategy(YouTubeDataApiClient youtubeDataApiClient,
-                                           @ConfigProperty(name = "youtube.api.batch-size", defaultValue = "50") int batchSize) {
+                                           @ConfigProperty(name = "youtube.api.batch-size", defaultValue = "50") int batchSize,
+                                           @ConfigProperty(name = "youtube.validation.cache-expiry-ms", defaultValue = "3600000") long cacheExpiryMs) {
         this.youtubeDataApiClient = youtubeDataApiClient;
         this.batchSize = batchSize;
+        this.cacheExpiryMs = cacheExpiryMs;
     }
 
     @Override
@@ -79,7 +82,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         }
 
         Optional<ContentSourceDetailService.ContentSourceDetails> details = doFetchDetails(identifier);
-        validationCache.put(identifier, new CachedItem<>(details, System.currentTimeMillis() + 3600000));
+        validationCache.put(identifier, new CachedItem<>(details, System.currentTimeMillis() + cacheExpiryMs));
         return details;
     }
 
@@ -101,12 +104,17 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             } else if (CHANNEL_ID_PATTERN.matcher(resolved).matches()) {
                 List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
                 channelOpt = Optional.ofNullable(items).stream().flatMap(List::stream).findFirst();
+            } else if (resolved.startsWith("user:")) {
+                channelOpt = youtubeDataApiClient.fetchChannelByUsername(resolved.substring(5));
             } else {
-                // Fallback: try handle first, then ID
+                // Fallback: try handle first, then ID, then username (as last resort)
                 channelOpt = youtubeDataApiClient.fetchChannelByHandle("@" + resolved);
                 if (channelOpt.isEmpty()) {
                     List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
                     channelOpt = Optional.ofNullable(items).stream().flatMap(List::stream).findFirst();
+                }
+                if (channelOpt.isEmpty()) {
+                    channelOpt = youtubeDataApiClient.fetchChannelByUsername(resolved);
                 }
             }
 
@@ -140,13 +148,16 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         Matcher urlMatcher = URL_PATTERN.matcher(trimmed);
         if (urlMatcher.find()) {
             String candidate = urlMatcher.group(1);
-            if (trimmed.contains("/channel/")) {
+            if (trimmed.contains("/channel/") || CHANNEL_ID_PATTERN.matcher(candidate).matches()) {
                 return candidate; // It's an ID
+            }
+            if (trimmed.contains("/user/")) {
+                return "user:" + candidate; // Special prefix for username lookup
             }
             return "@" + candidate; // Assume handle for other URL types
         }
         
-        return null;
+        return null; // No fallback to magic prefixing
     }
 
     private void enrichSources(List<ContentSource> sources, String successLog, String failureLog) {

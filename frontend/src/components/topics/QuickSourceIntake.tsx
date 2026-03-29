@@ -11,6 +11,9 @@ interface QuickSourceIntakeProps {
   onCancel: () => void;
 }
 
+const SOURCE_TYPE_YOUTUBE = 1; // From SourceTypeEnum.YOUTUBE
+const SOURCE_TYPE_BLOG = 2;    // From SourceTypeEnum.BLOG
+
 export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProps) {
   const { t } = useTranslation();
   const [platform, setPlatform] = useState<'YOUTUBE' | 'BLOG'>('YOUTUBE');
@@ -31,7 +34,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
     isError,
     error: validationApiError
   } = useGetApiV1SourcesDetailsSourceTypeIdIdentifier(
-    platform === 'YOUTUBE' ? 1 : 2, // 1 for YOUTUBE, 2 for BLOG (assuming IDs from SourceTypeEnum)
+    platform === 'YOUTUBE' ? SOURCE_TYPE_YOUTUBE : SOURCE_TYPE_BLOG,
     debouncedIdentifier,
     {
       query: {
@@ -58,9 +61,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
     if (isValidating) {
       setValidationStatus('validating');
     } else if (isSuccess && detailsResponse) {
-      // Handle both AxiosResponse and unwrapped payload structures for maximum robustness
-      const possiblePayload = (detailsResponse as { data?: { name?: string } | null })?.data ?? (detailsResponse as { name?: string } | null);
-      const finalName = possiblePayload?.name;
+      const finalName = (detailsResponse as { data?: { name?: string } })?.data?.name;
       
       if (finalName) {
         setValidationStatus('valid');
@@ -229,7 +230,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
            <AlertTriangle className="w-4 h-4" />}
           
           {validationStatus === 'invalid' || validationStatus === 'warning' 
-            ? t('topics.form.quick_add.force_submit_button', 'Prisili dodajanje') 
+            ? t('topics.form.quick_add.force_submit_button', 'Force Add') 
             : t('topics.form.quick_add.submit_button', 'Add Source')}
         </button>
       </form>
