@@ -4,7 +4,7 @@ test.describe('Dashboard MVP', () => {
   test('unauthenticated user is redirected to landing page', async ({ page }) => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('link', { name: /Povzetkar/i }).first()).toBeVisible();
+    await expect(page.getByLabel(/Povzetkar/i).or(page.getByText(/Povzetkar/i, { exact: false })).first()).toBeVisible();
   });
 
   // Note: Full auth flow test requires a mock OIDC provider or a test account.

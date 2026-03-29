@@ -8,12 +8,18 @@
 import type { LocalDate } from './localDate';
 
 export type GetApiV1BriefingsParams = {
+/**
+ * Keyword search across briefing title and executive summary
+ */
+search?: string;
+/**
+ * Filter briefings containing summaries from a specific content source
+ */
+sourceId?: number;
 endDate?: LocalDate;
 page?: number;
-search?: string;
 size?: number;
 sort?: string[];
-sourceId?: number;
 startDate?: LocalDate;
 topicId?: number;
 };

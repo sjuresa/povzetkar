@@ -6,16 +6,20 @@
  * OpenAPI spec version: 0.13.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -291,3 +295,202 @@ export function useGetApiV1BriefingsId<TData = Awaited<ReturnType<typeof getApiV
 
 
 
+/**
+ * Generates a public UUID for the briefing to enable unauthenticated access.
+ * @summary Enable sharing for a briefing
+ */
+export type postApiV1BriefingsIdShareResponse200 = {
+  data: string
+  status: 200
+}
+
+export type postApiV1BriefingsIdShareResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1BriefingsIdShareResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1BriefingsIdShareResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1BriefingsIdShareResponseSuccess = (postApiV1BriefingsIdShareResponse200) & {
+  headers: Headers;
+};
+export type postApiV1BriefingsIdShareResponseError = (postApiV1BriefingsIdShareResponse401 | postApiV1BriefingsIdShareResponse403 | postApiV1BriefingsIdShareResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1BriefingsIdShareResponse = (postApiV1BriefingsIdShareResponseSuccess | postApiV1BriefingsIdShareResponseError)
+
+export const getPostApiV1BriefingsIdShareUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/briefings/${id}/share`
+}
+
+export const postApiV1BriefingsIdShare = async (id: number, options?: RequestInit): Promise<postApiV1BriefingsIdShareResponse> => {
+  
+  return customInstance<postApiV1BriefingsIdShareResponse>(getPostApiV1BriefingsIdShareUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1BriefingsIdShareMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1BriefingsIdShare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1BriefingsIdShare>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1BriefingsIdShare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1BriefingsIdShare>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1BriefingsIdShare(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1BriefingsIdShareMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1BriefingsIdShare>>>
+    
+    export type PostApiV1BriefingsIdShareMutationError = void
+
+    /**
+ * @summary Enable sharing for a briefing
+ */
+export const usePostApiV1BriefingsIdShare = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1BriefingsIdShare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1BriefingsIdShare>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1BriefingsIdShareMutationOptions(options), queryClient);
+    }
+    /**
+ * Removes the public UUID for the briefing to disable unauthenticated access.
+ * @summary Disable sharing for a briefing
+ */
+export type postApiV1BriefingsIdUnshareResponse204 = {
+  data: void
+  status: 204
+}
+
+export type postApiV1BriefingsIdUnshareResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1BriefingsIdUnshareResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1BriefingsIdUnshareResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1BriefingsIdUnshareResponseSuccess = (postApiV1BriefingsIdUnshareResponse204) & {
+  headers: Headers;
+};
+export type postApiV1BriefingsIdUnshareResponseError = (postApiV1BriefingsIdUnshareResponse401 | postApiV1BriefingsIdUnshareResponse403 | postApiV1BriefingsIdUnshareResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1BriefingsIdUnshareResponse = (postApiV1BriefingsIdUnshareResponseSuccess | postApiV1BriefingsIdUnshareResponseError)
+
+export const getPostApiV1BriefingsIdUnshareUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/briefings/${id}/unshare`
+}
+
+export const postApiV1BriefingsIdUnshare = async (id: number, options?: RequestInit): Promise<postApiV1BriefingsIdUnshareResponse> => {
+  
+  return customInstance<postApiV1BriefingsIdUnshareResponse>(getPostApiV1BriefingsIdUnshareUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1BriefingsIdUnshareMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1BriefingsIdUnshare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1BriefingsIdUnshare>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1BriefingsIdUnshare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1BriefingsIdUnshare>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1BriefingsIdUnshare(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1BriefingsIdUnshareMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1BriefingsIdUnshare>>>
+    
+    export type PostApiV1BriefingsIdUnshareMutationError = void
+
+    /**
+ * @summary Disable sharing for a briefing
+ */
+export const usePostApiV1BriefingsIdUnshare = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1BriefingsIdUnshare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1BriefingsIdUnshare>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1BriefingsIdUnshareMutationOptions(options), queryClient);
+    }
+    

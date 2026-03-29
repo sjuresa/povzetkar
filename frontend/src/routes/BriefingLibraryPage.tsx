@@ -9,6 +9,7 @@ import { Search, FileText, Calendar, X, SlidersHorizontal } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
 import type { BriefingSummaryDTO } from '../api/generated/model';
+import { ExportMenu } from '../components/briefing/ExportMenu';
 
 /**
  * BriefingLibraryPage displays a searchable, filterable, paginated archive of all briefings.
@@ -262,16 +263,31 @@ export function BriefingLibraryPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {briefing.id != null && (
-                            <Link
-                              to="/briefings/$briefingId"
-                              params={{ briefingId: String(briefing.id) }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] hover:border-blue-500/50 transition-all text-xs font-bold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-blue-400"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              {t('briefingLibrary.table.view')}
-                            </Link>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            {briefing.id != null && (
+                              <ExportMenu 
+                                briefing={{
+                                  id: briefing.id,
+                                  uuid: briefing.uuid ?? null,
+                                  title: briefing.title || '',
+                                  topicName: briefing.topicName || '',
+                                  briefingDate: briefing.briefingDate || '',
+                                }}
+                                variant="ghost"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              />
+                            )}
+                            {briefing.id != null && (
+                              <Link
+                                to="/briefings/$briefingId"
+                                params={{ briefingId: String(briefing.id) }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] hover:border-blue-500/50 transition-all text-xs font-bold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-blue-400"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                {t('briefingLibrary.table.view')}
+                              </Link>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

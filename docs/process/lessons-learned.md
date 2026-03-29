@@ -658,3 +658,20 @@ When implementing a feature that replaces a placeholder page, the task scope mus
 The EXISTS subquery pattern (Lesson 1.1) was successfully validated in POV-161 for source-based briefing filtering.
 - **Pattern:** `EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)` correctly filters briefings that contain summaries from a specific source without introducing cartesian products on the paginated main query.
 - **Confirmed:** This approach correctly interacts with Panache's `.count()` and `.page()` methods, producing accurate pagination metadata.
+
+---
+
+## 30. Client-Side SEO & Premium Export (POV-162)
+
+### 30.1 Dynamic Metadata in SPAs (React Helmet)
+For Single Page Applications (SPAs) like Povzetkar, setting route-specific metadata (Title, OpenGraph tags) is critical for professional sharing.
+- **The Trap:** Relying on static `index.html` tags results in all shared links having the same generic title and description (e.g., "Povzetkar | AI-Powered Intelligence").
+- **The Standard:** Use `react-helmet-async` to inject dynamic tags at the route level. Wrap the entire application in a `HelmetProvider` and use the `<Helmet>` component to set `og:title` and `og:description` derived from the specific briefing's content (e.g., the title and a snippet of the executive summary). This ensures rich previews when shared on Slack, LinkedIn, or Discord.
+
+### 30.2 "Executive-Grade" Print Standardization
+Exporting intelligence for physical reading requires a different aesthetic from the "Midnight Slate" digital UI.
+- **The Trap:** Direct HTML-to-PDF or Print-Window exports of a dark-themed UI result in high ink consumption and poor readability.
+- **The Standard:** Implement a dedicated **Black & White print-ready HTML export**. Use high-contrast serif typography (`Times New Roman`, `Georgia`) and high-contrast ratios. Serif fonts are empirically better for reading long-form physical reports. Ensure all background colors are removed (`bg-white`) and text is strictly black (`text-black`).
+
+### 30.3 Opt-in Privacy & UUID Generation
+- **The Standard:** Shared briefings should be **Private by Default**. Implement an "Opt-in" model where a secure, non-guessable UUID is only generated upon explicit user request ("Enable Share Link"). This prevents accidental exposure and allows for instant revocation of access by deleting the UUID entry in the database.

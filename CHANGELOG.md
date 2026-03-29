@@ -15,6 +15,10 @@ Work for the next release (v0.15.0) is focused on **Operational Excellence and A
 - **Backend (POV-161):** Extended `GET /api/v1/briefings` with `search` (LIKE on title/metaSummary) and `sourceId` (EXISTS subquery) query parameters for advanced filtering.
 - **Briefing Detail (POV-161):** Implemented the **Briefing Detail** page (`/briefings/{id}`) with full markdown rendering of AI-generated briefing text, a highlighted Executive Summary card, and a Source Content grid displaying analyzed content items with thumbnails and external links.
 - **i18n (POV-161):** Full localization support for both English and Slovenian across the Briefing Library and Briefing Detail pages.
+- **Export & Share (POV-162):** Implemented an **Opt-in Sharing Model**. Briefings are private by default; users must explicitly "Enable Share Link" to generate a secure UUID-based public URL.
+- **Public UI (POV-162):** Developed a premium, standalone **Public Briefing Page** (`/s/$uuid`) for recipients. Features include a Sun/Moon theme toggle, an EN/SL language toggle for UI labels, and locale-aware date formatting.
+- **Export Capabilities (POV-162):** Implemented a high-fidelity **Black & White print-ready HTML export** using `marked`. Exported files feature topic-aware filenames (e.g., `Topic_Title.html`) and serif-based typography optimized for physical printing.
+- **SEO (POV-162):** Integrated `react-helmet-async` for dynamic SEO and OpenGraph metadata on shared briefings, ensuring rich previews (title/summary) when shared on social media or Slack.
 
 ## [0.14.0] - 2026-03-28
 

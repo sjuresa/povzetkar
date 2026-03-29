@@ -350,7 +350,13 @@
     "sourceItems": "Izvorni material",
     "sourcesCount": "{{count}} analiziranih virov",
     "openOriginal": "Odpri izvornik",
+    "seeSummary": "Poglej povzetek",
     "notFound": "Poročilo ni najdeno",
-    "notFoundDesc": "Zahtevano poročilo ni bilo mogoče pridobiti ali ne obstaja."
+    "notFoundDesc": "Zahtevano poročilo ni bilo mogoče pridobiti ali ne obstaja.",
+    "public": {
+      "sharedSubtitle": "Deljeno obveščevalno poročilo",
+      "generatedBy": "Ustvarjeno s Povzetkarjem - UI analitik za vaše vsebine",
+      "ctaStart": "Ustvari svoje poročilo"
+    }
   }
 }

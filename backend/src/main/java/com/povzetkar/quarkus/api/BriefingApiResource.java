@@ -15,10 +15,12 @@ import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -132,5 +134,38 @@ public class BriefingApiResource extends BaseApiResource {
                 .orElseThrow(() -> new NotFoundException("Briefing with id " + id + " not found."));
 
         return briefingMapper.toDetailDTO(briefing);
+    }
+
+    @POST
+    @Path("/{id}/share")
+    @Transactional
+    @RolesAllowed(Permission.V_BRIEFING_VIEW)
+    @Operation(summary = "Enable sharing for a briefing", description = "Generates a public UUID for the briefing to enable unauthenticated access.")
+    @APIResponse(responseCode = "200", description = "Sharing enabled successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
+    @APIResponse(responseCode = "404", description = "Briefing not found")
+    public String shareBriefing(@PathParam("id") Long id) {
+        User user = getAuthenticatedUser();
+        Briefing briefing = Briefing.<Briefing>find("id = ?1 and topic.user = ?2", id, user)
+                .firstResultOptional()
+                .orElseThrow(() -> new NotFoundException("Briefing not found."));
+        
+        briefing.share();
+        return briefing.uuid;
+    }
+
+    @POST
+    @Path("/{id}/unshare")
+    @Transactional
+    @RolesAllowed(Permission.V_BRIEFING_VIEW)
+    @Operation(summary = "Disable sharing for a briefing", description = "Removes the public UUID for the briefing to disable unauthenticated access.")
+    @APIResponse(responseCode = "204", description = "Sharing disabled successfully")
+    @APIResponse(responseCode = "404", description = "Briefing not found")
+    public void unshareBriefing(@PathParam("id") Long id) {
+        User user = getAuthenticatedUser();
+        Briefing briefing = Briefing.<Briefing>find("id = ?1 and topic.user = ?2", id, user)
+                .firstResultOptional()
+                .orElseThrow(() -> new NotFoundException("Briefing not found."));
+        
+        briefing.unshare();
     }
 }
