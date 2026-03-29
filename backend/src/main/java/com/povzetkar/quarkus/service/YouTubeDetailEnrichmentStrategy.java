@@ -105,7 +105,8 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
                 List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
                 channelOpt = items.stream().findFirst();
             } else {
-                channelOpt = youtubeDataApiClient.fetchChannelByUsername(resolved.substring(5));
+                String usernameToFetch = resolved.startsWith("user:") ? resolved.substring(5) : resolved;
+                channelOpt = youtubeDataApiClient.fetchChannelByUsername(usernameToFetch);
             }
 
             if (channelOpt.isEmpty()) {

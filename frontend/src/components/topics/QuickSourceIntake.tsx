@@ -61,7 +61,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
     if (isValidating) {
       setValidationStatus('validating');
     } else if (isSuccess && detailsResponse) {
-      const finalName = (detailsResponse as { data?: { name?: string } })?.data?.name;
+      const finalName = detailsResponse?.data?.name;
       
       if (finalName) {
         setValidationStatus('valid');
