@@ -153,8 +153,8 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             // For /c/ or other prefixes, treat as handle if not an ID
             return "@" + candidate;
         }
-        
-        return null; // No fallback to magic prefixing
+
+        return (trimmed.contains("://") || trimmed.contains("www.")) ? null : trimmed;
     }
 
     private void enrichSources(List<ContentSource> sources, String successLog, String failureLog) {
