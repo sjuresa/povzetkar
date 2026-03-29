@@ -60,7 +60,25 @@ public class VideoSummaryService {
      */
     public String createBriefingFromSummaries(GenAiClient client, String rawSummaries, String date, String topicName, String promptTemplate) {
         String template = (promptTemplate != null && !promptTemplate.isBlank()) ? promptTemplate : Prompts.SUMMARIES_SUMMARY_PROMPT;
-        String finalPrompt = template.formatted(topicName, date, rawSummaries);
+        
+        // Support both legacy %s (for default prompt) and new {{variable}} syntax
+        String finalPrompt;
+        if (template.contains("{{")) {
+            finalPrompt = template
+                    .replace("{{topic}}", topicName != null ? topicName : "")
+                    .replace("{{date}}", date != null ? date : "")
+                    .replace("{{summaries}}", rawSummaries != null ? rawSummaries : "")
+                    .replace("{{content}}", rawSummaries != null ? rawSummaries : "");
+                    
+            // Safety: if the user defined a custom prompt but forgot {{summaries}}, append them at the end
+            if (!template.contains("{{summaries}}") && !template.contains("{{content}}") && rawSummaries != null) {
+                finalPrompt += "\n\n--- CONTENT TO SUMMARIZE ---\n\n" + rawSummaries;
+            }
+        } else {
+            // Legacy/Default %s substitution
+            finalPrompt = template.formatted(topicName, date, rawSummaries);
+        }
+        
         Content content = Content.fromParts(Part.fromText(finalPrompt));
         String description = "Daily briefing for topic '" + topicName + "' on " + date;
         return generateContent(client, content, description, null, null);
