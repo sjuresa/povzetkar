@@ -36,7 +36,7 @@ public abstract class BriefingMapper {
 
     @Named("mapExecutiveSummary")
     protected String mapExecutiveSummary(Briefing entity) {
-        return entity.getExecutiveSummary();
+        return entity.metaSummary;
     }
 
     @Named("mapBriefingText")
@@ -46,7 +46,7 @@ public abstract class BriefingMapper {
         }
         return entity.summaries.stream()
                 .sorted(Comparator.comparing(s -> s.id))
-                .map(s -> s.summaryText)
+                .map(s -> "\n\n<a id=\"item-" + (s.contentItem != null ? s.contentItem.id : 0) + "\"></a>\n\n" + s.summaryText)
                 .collect(Collectors.joining("\n\n---\n\n"));
     }
 

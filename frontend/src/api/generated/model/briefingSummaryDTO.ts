@@ -9,9 +9,9 @@ import type { LocalDate } from './localDate';
 
 export interface BriefingSummaryDTO {
   id?: number;
+  uuid?: string;
   topicId?: number;
   topicName?: string;
   title?: string;
   briefingDate?: LocalDate;
-  uuid?: string;
 }

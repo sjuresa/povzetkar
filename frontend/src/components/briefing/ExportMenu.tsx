@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../../util/cn';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useGetApiV1BriefingsId, usePostApiV1BriefingsIdShare, usePostApiV1BriefingsIdUnshare } from '../../api/generated/briefings/briefings';
 import { marked } from 'marked';
 
 interface ExportMenuProps {
@@ -44,46 +45,38 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
   }, [briefing.uuid]);
 
   // Defer fetching full content until needed (if not already provided)
-  const { refetch } = useQuery({
-    queryKey: ['briefing-detail', briefing.id],
-    queryFn: () => fetch(`/api/v1/briefings/${briefing.id}`).then(res => res.json().then(d => d.data)),
-    enabled: false,
+  const briefingDetailQuery = useGetApiV1BriefingsId(briefing.id!, {
+    query: {
+      enabled: false,
+    }
   });
 
-  const shareMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/v1/briefings/${briefing.id}/share`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) throw new Error('Failed to enable sharing');
-      const envelope = await res.json();
-      return envelope.data;
-    },
-    onSuccess: (newUuid: string) => {
-      setLocalUuid(newUuid);
-      queryClient.invalidateQueries({ queryKey: ['briefings'] });
-      queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
-      toast.success('Public sharing enabled');
-    },
-    onError: () => toast.error('Failed to enable sharing')
+  const shareMutation = usePostApiV1BriefingsIdShare({
+    mutation: {
+      onSuccess: (response) => {
+        // response.data is the UUID string
+        const newUuid = response.data;
+        if (newUuid) {
+          setLocalUuid(newUuid);
+        }
+        queryClient.invalidateQueries({ queryKey: ['briefings'] });
+        queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
+        toast.success('Public sharing enabled');
+      },
+      onError: () => toast.error('Failed to enable sharing')
+    }
   });
 
-  const unshareMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/v1/briefings/${briefing.id}/unshare`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) throw new Error('Failed to disable sharing');
-    },
-    onSuccess: () => {
-      setLocalUuid(null);
-      queryClient.invalidateQueries({ queryKey: ['briefings'] });
-      queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
-      toast.success('Public sharing disabled');
-    },
-    onError: () => toast.error('Failed to disable sharing')
+  const unshareMutation = usePostApiV1BriefingsIdUnshare({
+    mutation: {
+      onSuccess: () => {
+        setLocalUuid(null);
+        queryClient.invalidateQueries({ queryKey: ['briefings'] });
+        queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
+        toast.success('Public sharing disabled');
+      },
+      onError: () => toast.error('Failed to disable sharing')
+    }
   });
 
   // Close menu when clicking outside
@@ -116,11 +109,11 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     
     setIsExporting(true);
     try {
-      const data = await refetch();
-      if (!data.data) throw new Error('Failed to fetch briefing detail');
+      const { data: response } = await briefingDetailQuery.refetch();
+      if (!response?.data) throw new Error('Failed to fetch briefing detail');
       return { 
-        text: data.data.briefingText, 
-        summary: data.data.executiveSummary 
+        text: response.data.briefingText, 
+        summary: response.data.executiveSummary 
       };
     } catch (err) {
       toast.error('Could not prepare export data');
@@ -154,8 +147,8 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     if (!data) return;
 
     // Use marked to parse markdown to HTML
-    const summaryHtml = marked.parse(data.summary);
-    const textHtml = marked.parse(data.text);
+    const summaryHtml = marked.parse(data.summary || '');
+    const textHtml = marked.parse(data.text || '');
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -290,7 +283,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
 
             {!localUuid ? (
               <button
-                onClick={() => shareMutation.mutate()}
+                onClick={() => shareMutation.mutate({ id: briefing.id! })}
                 disabled={shareMutation.isPending}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
               >
@@ -322,7 +315,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
                 </button>
 
                 <button
-                  onClick={() => unshareMutation.mutate()}
+                  onClick={() => unshareMutation.mutate({ id: briefing.id! })}
                   disabled={unshareMutation.isPending}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group"
                 >

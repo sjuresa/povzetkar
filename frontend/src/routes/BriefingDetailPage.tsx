@@ -3,6 +3,8 @@ import { useGetApiV1BriefingsId } from '../api/generated/briefings/briefings';
 import { Skeleton } from '../components/ui/Skeleton';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
+import { sl, enUS } from 'date-fns/locale';
 import {
   ArrowLeft,
   Calendar,
@@ -12,7 +14,9 @@ import {
   AlertCircle,
   Youtube,
   Globe,
+  ArrowDown,
 } from 'lucide-react';
+import rehypeRaw from 'rehype-raw';
 import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, ContentItem } from '../api/generated/model';
 
@@ -23,7 +27,7 @@ import type { BriefingDetailDTO, ContentItem } from '../api/generated/model';
  * Part of POV-161 implementation.
  */
 export function BriefingDetailPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { briefingId } = useParams({ strict: false });
   const id = Number(briefingId);
 
@@ -68,6 +72,9 @@ export function BriefingDetailPage() {
 
   const sourceItems = (briefing.sourceContentItems || []) as ContentItem[];
 
+  // Clean redundant title from metaSummary
+  const cleanSynthesis = briefing.executiveSummary?.replace(/^#\s+.*\n?/, '').trim();
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Back Navigation */}
@@ -107,7 +114,9 @@ export function BriefingDetailPage() {
             <Calendar className="w-4 h-4" />
             <span>
               {briefing.briefingDate
-                ? new Date(briefing.briefingDate + 'T00:00:00').toLocaleDateString()
+                ? format(new Date(briefing.briefingDate + 'T00:00:00'), 'PPP', { 
+                    locale: i18n.language === 'sl' ? sl : enUS 
+                  })
                 : '—'}
             </span>
           </div>
@@ -122,97 +131,82 @@ export function BriefingDetailPage() {
         </div>
       </div>
 
-      {/* Executive Summary Card */}
-      {briefing.executiveSummary && (
-        <div className="glass border border-blue-500/20 rounded-3xl p-6 md:p-8 bg-blue-500/5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-              <FileText className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-blue-400">
-              {t('briefingDetail.executiveSummary')}
-            </h2>
-          </div>
-          <div className="prose prose-invert prose-sm max-w-none text-[var(--color-text-secondary)] leading-relaxed">
-            <ReactMarkdown>{briefing.executiveSummary}</ReactMarkdown>
+      {/* Executive Summary Section */}
+      {cleanSynthesis && (
+        <div className="glass border border-blue-500/20 rounded-3xl p-6 md:p-10 bg-blue-500/5 shadow-xl shadow-blue-500/5 transition-all">
+          <div className="prose prose-invert prose-lg max-w-none text-[var(--color-text-secondary)] leading-relaxed italic">
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{cleanSynthesis}</ReactMarkdown>
           </div>
         </div>
       )}
 
-      {/* Full Briefing Content */}
-      {briefing.briefingText && (
-        <div className="glass border border-[var(--color-border-subtle)] rounded-3xl p-6 md:p-10 shadow-xl shadow-black/5">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-secondary)] mb-6">
-            {t('briefingDetail.fullBriefing')}
-          </h2>
-          <article className="prose prose-invert max-w-none">
-            <ReactMarkdown>{briefing.briefingText}</ReactMarkdown>
-          </article>
-        </div>
-      )}
-
-      {/* Source Content Items */}
+      {/* Source Reference Grid - MOVED UP BEFORE CONTENT */}
       {sourceItems.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-secondary)]">
+        <div className="space-y-6">
+          <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--color-text-secondary)] ml-2">
             {t('briefingDetail.sourceItems')}
           </h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             {sourceItems.map((item) => (
               <div
                 key={item.id}
-                className="glass border border-[var(--color-border-subtle)] rounded-2xl p-5 hover:border-blue-500/30 transition-all group"
+                className="glass border border-[var(--color-border-subtle)] rounded-2xl p-5 hover:border-blue-500/30 transition-all group flex flex-col"
               >
-                <div className="flex items-start gap-4">
-                  {/* Thumbnail or platform icon */}
+                <div className="flex items-start gap-4 mb-4">
                   {item.thumbnailUrl ? (
                     <img
                       src={item.thumbnailUrl}
-                      alt={item.title || ''}
+                      alt=""
                       className="w-24 h-16 rounded-xl object-cover flex-shrink-0 bg-[var(--color-surface-deep)]"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-[var(--color-surface-deep)] flex items-center justify-center flex-shrink-0 text-[var(--color-text-secondary)]">
+                    <div className="w-24 h-16 rounded-xl bg-[var(--color-surface-deep)] flex items-center justify-center flex-shrink-0 text-[var(--color-text-secondary)]">
                       {item.contentSource?.platform === 'YOUTUBE' ? (
-                        <Youtube className="w-5 h-5 text-red-500" />
+                        <Youtube className="w-6 h-6 text-red-500" />
                       ) : (
-                        <Globe className="w-5 h-5 text-blue-500" />
+                        <Globe className="w-6 h-6 text-blue-500" />
                       )}
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-[var(--color-text-primary)] text-sm line-clamp-2 group-hover:text-blue-400 transition-colors">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-[var(--color-text-secondary)]">
+                    <a href={item.sourceUrl || '#'} target="_blank" rel="noopener noreferrer">
+                      <h3 className="font-bold text-[var(--color-text-primary)] text-sm line-clamp-2 group-hover:text-blue-400 transition-colors leading-snug">
+                        {item.title}
+                      </h3>
+                    </a>
+                    <div className="flex items-center gap-3 mt-2 text-[10px] text-[var(--color-text-secondary)] uppercase tracking-tight">
                       {item.contentSource?.name && (
                         <span className="truncate">{item.contentSource.name}</span>
                       )}
-                      {item.durationSeconds != null && item.durationSeconds > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {Math.round(item.durationSeconds / 60)}m
-                        </span>
-                      )}
                     </div>
                   </div>
-
-                  {item.sourceUrl && (
-                    <a
-                      href={item.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-xl hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-blue-400 transition-all flex-shrink-0"
-                      title={t('briefingDetail.openOriginal')}
+                </div>
+                
+                <div className="mt-auto flex items-center justify-between">
+                   <a
+                      href={`#item-${item.id}`}
+                      className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-400/80 hover:text-blue-400 transition-colors uppercase tracking-widest"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <ArrowDown className="w-3 h-3" />
+                      {t('briefingDetail.seeSummary')}
                     </a>
-                  )}
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Full Detailed Content */}
+      {briefing.briefingText && (
+        <div className="glass border border-[var(--color-border-subtle)] rounded-3xl p-6 md:p-10 shadow-xl shadow-black/5">
+          <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--color-text-secondary)] mb-10">
+            {t('briefingDetail.fullBriefing')}
+          </h2>
+          <article className="prose prose-invert max-w-none prose-headings:text-blue-400 prose-headings:font-extrabold prose-p:leading-relaxed">
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{briefing.briefingText}</ReactMarkdown>
+          </article>
         </div>
       )}
     </div>

@@ -350,6 +350,7 @@
     "sourceItems": "Izvorni material",
     "sourcesCount": "{{count}} analiziranih virov",
     "openOriginal": "Odpri izvornik",
+    "seeSummary": "Poglej povzetek",
     "notFound": "Poročilo ni najdeno",
     "notFoundDesc": "Zahtevano poročilo ni bilo mogoče pridobiti ali ne obstaja.",
     "public": {

@@ -10,6 +10,7 @@ import type { LocalDate } from './localDate';
 
 export interface BriefingDetailDTO {
   id?: number;
+  uuid?: string;
   topicId?: number;
   topicName?: string;
   title?: string;
@@ -17,5 +18,4 @@ export interface BriefingDetailDTO {
   executiveSummary?: string;
   briefingText?: string;
   sourceContentItems?: ContentItem[];
-  uuid?: string;
 }

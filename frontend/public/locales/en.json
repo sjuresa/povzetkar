@@ -350,6 +350,7 @@
     "sourceItems": "Source Content",
     "sourcesCount": "{{count}} source(s) analyzed",
     "openOriginal": "Open original",
+    "seeSummary": "See summary",
     "notFound": "Briefing Not Found",
     "notFoundDesc": "The requested briefing could not be retrieved or does not exist.",
     "public": {
