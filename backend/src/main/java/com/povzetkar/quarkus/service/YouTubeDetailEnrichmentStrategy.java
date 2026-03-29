@@ -26,7 +26,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     private static final Pattern HANDLE_PATTERN = Pattern.compile("^@([a-zA-Z0-9._-]+)$");
     private static final Pattern CHANNEL_ID_PATTERN = Pattern.compile("^UC[a-zA-Z0-9_-]{22}$");
-    private static final Pattern URL_PATTERN = Pattern.compile("https?://(?:www\\.)?youtube\\.com/(?:@|channel/|c/|user/)?([a-zA-Z0-9._-]+)");
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://(?:www\\.)?youtube\\.com/(?:(@[a-zA-Z0-9._-]+)|(channel/|c/|user/)([a-zA-Z0-9._-]+))");
 
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
@@ -103,19 +103,9 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
                 channelOpt = youtubeDataApiClient.fetchChannelByHandle(resolved);
             } else if (CHANNEL_ID_PATTERN.matcher(resolved).matches()) {
                 List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
-                channelOpt = Optional.ofNullable(items).stream().flatMap(List::stream).findFirst();
-            } else if (resolved.startsWith("user:")) {
-                channelOpt = youtubeDataApiClient.fetchChannelByUsername(resolved.substring(5));
+                channelOpt = items.stream().findFirst();
             } else {
-                // Fallback: try handle first, then ID, then username (as last resort)
-                channelOpt = youtubeDataApiClient.fetchChannelByHandle("@" + resolved);
-                if (channelOpt.isEmpty()) {
-                    List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
-                    channelOpt = Optional.ofNullable(items).stream().flatMap(List::stream).findFirst();
-                }
-                if (channelOpt.isEmpty()) {
-                    channelOpt = youtubeDataApiClient.fetchChannelByUsername(resolved);
-                }
+                channelOpt = youtubeDataApiClient.fetchChannelByUsername(resolved.substring(5));
             }
 
             if (channelOpt.isEmpty()) {
@@ -144,17 +134,24 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             return trimmed;
         }
         
-        // 3. URL Extraction
+        // 3. URL Extraction - requires explicit channel-related prefix
         Matcher urlMatcher = URL_PATTERN.matcher(trimmed);
         if (urlMatcher.find()) {
-            String candidate = urlMatcher.group(1);
-            if (trimmed.contains("/channel/") || CHANNEL_ID_PATTERN.matcher(candidate).matches()) {
-                return candidate; // It's an ID
+            if (urlMatcher.group(1) != null) {
+                return urlMatcher.group(1); // It's an @handle
             }
-            if (trimmed.contains("/user/")) {
-                return "user:" + candidate; // Special prefix for username lookup
+            
+            String prefix = urlMatcher.group(2);
+            String candidate = urlMatcher.group(3);
+            
+            if ("channel/".equals(prefix) || CHANNEL_ID_PATTERN.matcher(candidate).matches()) {
+                return candidate;
             }
-            return "@" + candidate; // Assume handle for other URL types
+            if ("user/".equals(prefix)) {
+                return "user:" + candidate;
+            }
+            // For /c/ or other prefixes, treat as handle if not an ID
+            return "@" + candidate;
         }
         
         return null; // No fallback to magic prefixing
