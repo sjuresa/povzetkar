@@ -244,6 +244,57 @@ class YouTubeDetailEnrichmentStrategyTest {
     }
 
     @Test
+    void testFetchDetailsByChannelUrl_success() throws IOException {
+        // Given
+        String channelId = "UCvPyVWLnAgmz841qhX67yag";
+        String url = "https://www.youtube.com/channel/" + channelId;
+        Channel testChannel = createTestChannel(channelId, "Veritasium", "Desc", 1000000L);
+        
+        when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenReturn(List.of(testChannel));
+
+        // When
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(url);
+
+        // Then
+        assertTrue(details.isPresent());
+        verify(mockYouTubeDataApiClient, times(1)).fetchChannels(List.of(channelId));
+    }
+
+    @Test
+    void testFetchDetailsByUserUrl_success() throws IOException {
+        // Given
+        String username = "veritasium";
+        String url = "https://www.youtube.com/user/" + username;
+        Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", "Veritasium", "Desc", 1000000L);
+        
+        when(mockYouTubeDataApiClient.fetchChannelByUsername(username)).thenReturn(Optional.of(testChannel));
+
+        // When
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(url);
+
+        // Then
+        assertTrue(details.isPresent());
+        verify(mockYouTubeDataApiClient, times(1)).fetchChannelByUsername(username);
+    }
+
+    @Test
+    void testFetchDetailsByCustomUrl_success() throws IOException {
+        // Given
+        String customName = "veritasium";
+        String url = "https://www.youtube.com/c/" + customName;
+        Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", "Veritasium", "Desc", 1000000L);
+        
+        when(mockYouTubeDataApiClient.fetchChannelByHandle("@" + customName)).thenReturn(Optional.of(testChannel));
+
+        // When
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(url);
+
+        // Then
+        assertTrue(details.isPresent());
+        verify(mockYouTubeDataApiClient, times(1)).fetchChannelByHandle("@" + customName);
+    }
+
+    @Test
     void testFetchDetails_invalidUrl() {
         // Given
         String url = "https://www.google.com";

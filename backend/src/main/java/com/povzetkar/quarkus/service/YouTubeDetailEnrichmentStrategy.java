@@ -145,13 +145,13 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             String prefix = urlMatcher.group(2);
             String candidate = urlMatcher.group(3);
             
-            if ("channel/".equals(prefix) || CHANNEL_ID_PATTERN.matcher(candidate).matches()) {
+            if ("channel/".equals(prefix)) {
                 return candidate;
             }
             if ("user/".equals(prefix)) {
                 return "user:" + candidate;
             }
-            // For /c/ or other prefixes, treat as handle if not an ID
+            // For /c/ URLs (legacy custom URLs) or other cases, the modern equivalent is a handle.
             return "@" + candidate;
         }
 
