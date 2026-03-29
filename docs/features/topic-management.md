@@ -19,6 +19,13 @@ Each topic can have its own AI instructions. This allows you to differentiate ho
 ### Content Source Association
 You can link multiple content sources (e.g., RSS feeds, YouTube channels) to a single topic. When a briefing is triggered for a topic, Povzetkar will fetch content from all associated sources, aggregate it, and then summarize it using the topic's prompt template.
 
+### Real-time Source Validation (YouTube)
+To ensure data integrity, YouTube content sources are validated in real-time during entry:
+- **Debounced Lookup**: Input is validated 500ms after the user stops typing to minimize API quota usage.
+- **Identifier Resolution**: Supports YouTube handles (e.g., `@veritasium`), Channel IDs (e.g., `UCvPyVWLnAgmz841qhX67yag`), and full channel URLs.
+- **Visual Feedback**: Real-time status indicators (Loading, Success, Invalid, Warning) show the channel name and availability before adding.
+- **Resilience**: If the YouTube API is unreachable, a "Warning" state allows for a "Force Add" to ensure the user is never blocked by external service outages.
+
 ### Optimistic Locking
 To prevent concurrent editing issues, Povzetkar uses **Optimistic Locking**. 
 - The backend checks a `version` field before every update (PATCH).

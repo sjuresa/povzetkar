@@ -675,3 +675,25 @@ Exporting intelligence for physical reading requires a different aesthetic from 
 
 ### 30.3 Opt-in Privacy & UUID Generation
 - **The Standard:** Shared briefings should be **Private by Default**. Implement an "Opt-in" model where a secure, non-guessable UUID is only generated upon explicit user request ("Enable Share Link"). This prevents accidental exposure and allows for instant revocation of access by deleting the UUID entry in the database.
+---
+
+## 31. Quality Hardening & Cross-Platform Stability (POV-163)
+
+### 31.1 Strict Async Linting (no-floating-promises)
+Modern React applications with complex event handlers (e.g., download, share, query invalidation) often suffer from unhandled promises that can lead to race conditions or missed state updates.
+- **The Trap:** Using `queryClient.invalidateQueries()` or `navigator.clipboard.writeText()` directly inside an `onClick` handler without `await` or `void`. This triggers strict ESLint `@typescript-eslint/no-floating-promises` warnings in production profiles.
+- **The Standard:** Always wrap non-awaited async calls in `void` (e.g., `void queryClient.invalidateQueries(...)`) to explicitly signal that the promise is intended to be floating. For primary actions (e.g., data mutations), use `async/await` and proper error boundaries within the handler.
+
+### 31.2 Cross-Platform Maven Wrapper Execution
+In monorepos shared between Windows (CMD/PS) and Linux (Bash/CI), the `./mvnw` prefix is a common source of friction.
+- **The Trap:** Removing `./` from `package.json` scripts (e.g., changing `./mvnw` to `mvnw`) to fix local Windows execution errors. This **breaks** standard Linux and CI/CD environments where the current directory is not in the PATH.
+- **The Standard:** Always **maintain the `./mvnw` prefix** in `package.json` to ensure compatibility with Linux/CI environments. Windows developers should use a POSIX-compatible shell (e.g., Git Bash, WSL) or configure their PowerShell environment to support the `./` prefix for local scripts.
+
+### 31.3 Automated UX Audit Tuning
+Automated UX scripts can produce high volumes of false positives if their regex patterns are too broad.
+- **The Trap:** A script flagging `StatCard.tsx` for "missing form labels" because it contains the word "card" (matching `re.search(r'card', content)`).
+- **The Standard:** Use word-boundary anchors (`\bcard\b`) or context-aware tagging (e.g., checking only within `<form>` tags) to minimize noise. Similarly, "Hick's Law" audits must distinguish between **Navigation Menus** (which should stay under 7 items) and **Data Grids/Lists** (which naturally have many more).
+
+### 31.4 Defensive Source Entry (Debounced Presence Check)
+- **The Trap:** Allowing users to submit complex external identifiers (e.g., YouTube Channel IDs or URLs) without checking if they exist. This causes downstream failures (404s) in background enrichment jobs that are expensive to retry and difficult to report back to the user asynchronously.
+- **The Standard:** Implement a **Live existence check** in the "Add Source" dialog. Using a debounced input handler that calls the external API (YouTube Data API v3) *before* the user hits "Add" provides immediate feedback and prevents dirtying the database with dead references.

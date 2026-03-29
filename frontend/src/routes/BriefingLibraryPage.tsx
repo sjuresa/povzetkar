@@ -8,7 +8,7 @@ import { Link } from '@tanstack/react-router';
 import { Search, FileText, Calendar, X, SlidersHorizontal } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
-import type { BriefingSummaryDTO } from '../api/generated/model';
+
 import { ExportMenu } from '../components/briefing/ExportMenu';
 
 /**
@@ -48,7 +48,7 @@ export function BriefingLibraryPage() {
   }, [debouncedSearch, topicId, sourceId, startDate, endDate]);
 
   const data = response?.data;
-  const items = (data?.items || []) as BriefingSummaryDTO[];
+  const items = data?.items || [];
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / size);
 

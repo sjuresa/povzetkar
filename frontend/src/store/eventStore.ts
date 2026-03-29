@@ -31,8 +31,9 @@ export const useEventStore = create<EventState>((set) => ({
     })),
   clearJob: (jobId) =>
     set((state) => {
-      const { [jobId]: _, ...remainingJobs } = state.jobs;
-      return { jobs: remainingJobs };
+      const updatedJobs = { ...state.jobs };
+      delete updatedJobs[jobId];
+      return { jobs: updatedJobs };
     }),
   setLastEvent: (type) => set({ lastEvent: type }),
   setConnectionStatus: (status) => set({ connectionStatus: status }),

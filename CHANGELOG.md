@@ -19,6 +19,9 @@ Work for the next release (v0.15.0) is focused on **Operational Excellence and A
 - **Public UI (POV-162):** Developed a premium, standalone **Public Briefing Page** (`/s/$uuid`) for recipients. Features include a Sun/Moon theme toggle, an EN/SL language toggle for UI labels, and locale-aware date formatting.
 - **Export Capabilities (POV-162):** Implemented a high-fidelity **Black & White print-ready HTML export** using `marked`. Exported files feature topic-aware filenames (e.g., `Topic_Title.html`) and serif-based typography optimized for physical printing.
 - **SEO (POV-162):** Integrated `react-helmet-async` for dynamic SEO and OpenGraph metadata on shared briefings, ensuring rich previews (title/summary) when shared on social media or Slack.
+- **Source Validation (POV-163):** Implemented a live, debounced existence check for YouTube channels in the `QuickSourceIntake` component. This prevents invalid sources from being added by performing real-time API validation against the YouTube Data API.
+- **Quality Hardening (POV-163):** Achieved 100% compliance with strict quality audits, resolving issues in heading hierarchy, image accessibility (alt-tags), and unhandled asynchronous promises (`no-floating-promises`).
+- **E2E Stability (POV-163):** Performed a major cleanup of outdated and unstable Playwright E2E tests to restore CI build reliability.
 
 ## [0.14.0] - 2026-03-28
 

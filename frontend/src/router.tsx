@@ -38,6 +38,11 @@ const rootRoute = createRootRouteWithContext<MyRouterContext>()({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  validateSearch: (search: Record<string, unknown>): { notice?: string } => {
+    return {
+      notice: (search.notice as string) || undefined,
+    };
+  },
   component: LandingPage,
   beforeLoad: async ({ context }) => {
     // If we haven't checked auth yet, do it once
