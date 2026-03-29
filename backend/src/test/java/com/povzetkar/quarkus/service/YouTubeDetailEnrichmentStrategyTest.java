@@ -37,6 +37,7 @@ class YouTubeDetailEnrichmentStrategyTest {
 
     @BeforeEach
     void setup() {
+        strategy.clearCache();
         Mockito.reset(mockYouTubeDataApiClient);
         PanacheMock.mock(ContentSource.class);
     }
@@ -158,7 +159,7 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testFetchDetails_success() throws IOException {
         // Given
-        String channelId = "testChannelId";
+        String channelId = "UCtestChannelId123456789"; // 24 chars
         String channelName = "Test Channel";
         String channelDescription = "A test channel description.";
         long subscriberCount = 12345L;
@@ -180,7 +181,7 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testFetchDetails_notFound() throws IOException {
         // Given
-        String channelId = "nonExistentChannel";
+        String channelId = "UCnonExistentChannel1234"; // 24 chars
         when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenReturn(Collections.emptyList());
 
         // When
@@ -194,7 +195,7 @@ class YouTubeDetailEnrichmentStrategyTest {
     @Test
     void testFetchDetails_apiError() throws IOException {
         // Given
-        String channelId = "errorChannel";
+        String channelId = "UCerrorChannel1234567890"; // 24 chars
         when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenThrow(new IOException("API Error"));
 
         // When
@@ -203,5 +204,55 @@ class YouTubeDetailEnrichmentStrategyTest {
         // Then
         assertTrue(details.isEmpty());
         verify(mockYouTubeDataApiClient, times(1)).fetchChannels(List.of(channelId));
+    }
+
+    @Test
+    void testFetchDetailsByHandle_success() throws IOException {
+        // Given
+        String handle = "@veritasium";
+        String channelName = "Veritasium";
+        Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", channelName, "Desc", 1000000L);
+        
+        // We'll need to mock the new method in YouTubeDataApiClient
+        when(mockYouTubeDataApiClient.fetchChannelByHandle(handle)).thenReturn(testChannel);
+
+        // When
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(handle);
+
+        // Then
+        assertTrue(details.isPresent());
+        assertEquals(channelName, details.get().name());
+        verify(mockYouTubeDataApiClient, times(1)).fetchChannelByHandle(handle);
+    }
+
+    @Test
+    void testFetchDetailsByFullUrl_success() throws IOException {
+        // Given
+        String url = "https://www.youtube.com/@veritasium";
+        String channelName = "Veritasium";
+        Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", channelName, "Desc", 1000000L);
+        
+        when(mockYouTubeDataApiClient.fetchChannelByHandle("@veritasium")).thenReturn(testChannel);
+
+        // When
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(url);
+
+        // Then
+        assertTrue(details.isPresent());
+        assertEquals(channelName, details.get().name());
+        verify(mockYouTubeDataApiClient, times(1)).fetchChannelByHandle("@veritasium");
+    }
+
+    @Test
+    void testFetchDetails_invalidUrl() {
+        // Given
+        String url = "https://www.google.com";
+
+        // When
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(url);
+
+        // Then
+        assertTrue(details.isEmpty());
+        verifyNoInteractions(mockYouTubeDataApiClient);
     }
 }

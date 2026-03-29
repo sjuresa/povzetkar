@@ -27,8 +27,8 @@ export function LandingPage() {
   );
 
   const { data: metadata } = useSystemMetadata();
-  const search = useSearch({ from: '/' }) as { notice?: string };
-  const [showNotice, setShowNotice] = useState(!!search.notice);
+  const { notice } = useSearch({ from: '/' });
+  const [showNotice, setShowNotice] = useState(!!notice);
 
   const toggleLanguage = () => {
     const newLng = i18n.language === 'en' ? 'sl' : 'en';
@@ -54,7 +54,7 @@ export function LandingPage() {
           toggleTheme={toggleTheme}
         />
 
-        {showNotice && search.notice === 'restricted' && (
+        {showNotice && notice === 'restricted' && (
           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="bg-amber-950/90 border border-amber-500/50 backdrop-blur-md rounded-2xl p-4 flex items-start gap-3 shadow-2xl shadow-amber-950/50">
               <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />

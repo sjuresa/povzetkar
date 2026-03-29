@@ -152,7 +152,7 @@ export function BriefingDetailPage() {
                   {item.contentItem?.thumbnailUrl ? (
                     <img
                       src={item.contentItem.thumbnailUrl}
-                      alt=""
+                      alt={item.contentItem?.title || 'Thumbnail'}
                       className="w-full aspect-video rounded-xl object-cover bg-[var(--color-surface-deep)]"
                     />
                   ) : (

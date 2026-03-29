@@ -33,7 +33,7 @@ export function PublicBriefingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-base)] px-4 text-center">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">{t('briefingDetail.notFound')}</h1>
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">{t('briefingDetail.notFound')}</h2>
           <p className="text-[var(--color-text-secondary)]">{t('briefingDetail.notFoundDesc')}</p>
           <a href="/" className="mt-6 inline-block text-indigo-400 hover:text-indigo-300 transition-colors">
             Povzetkar
@@ -76,7 +76,7 @@ export function PublicBriefingPage() {
 
             {/* Language Toggle Button */}
             <button
-              onClick={() => i18n.changeLanguage(i18n.language === 'sl' ? 'en' : 'sl')}
+              onClick={() => void i18n.changeLanguage(i18n.language === 'sl' ? 'en' : 'sl')}
               className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
               title={i18n.language === 'sl' ? 'Switch to English' : 'Preklopi na Slovenščino'}
             >
@@ -136,7 +136,11 @@ export function PublicBriefingPage() {
                 <div key={item.contentItem?.id} className="group flex flex-col p-5 rounded-2xl bg-[var(--color-surface-base)] border border-[var(--color-border-subtle)] hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-300">
                   <div className="flex flex-col gap-4 mb-4">
                      {item.contentItem?.thumbnailUrl ? (
-                         <img src={item.contentItem.thumbnailUrl} alt="" className="w-full aspect-video rounded-lg object-cover bg-slate-800" />
+                         <img 
+                           src={item.contentItem.thumbnailUrl} 
+                           alt={item.contentItem.title || 'Source thumbnail'} 
+                           className="w-full aspect-video rounded-lg object-cover bg-slate-800" 
+                         />
                      ) : (
                          <div className="w-full aspect-video rounded-lg bg-slate-800 flex items-center justify-center">
                              <Hash className="w-8 h-8 text-slate-600" />

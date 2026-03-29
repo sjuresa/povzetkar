@@ -44,6 +44,19 @@ public class YouTubeDataApiClient {
         return Optional.ofNullable(channels).orElse(Collections.emptyList());
     }
 
+    public Channel fetchChannelByHandle(String handle) throws IOException {
+        List<Channel> channels = youTubeService.channels()
+                .list(List.of("contentDetails", "snippet", "statistics"))
+                .setForHandle(handle)
+                .setKey(apiKey)
+                .execute()
+                .getItems();
+        if (channels == null || channels.isEmpty()) {
+            return null;
+        }
+        return channels.getFirst();
+    }
+
     public PlaylistItemListResponse executePlaylistItemsRequest(String playlistId, String pageToken) throws IOException {
         return executePlaylistItemsRequest(playlistId, pageToken, 50L);
     }

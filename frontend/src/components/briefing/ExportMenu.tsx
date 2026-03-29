@@ -56,15 +56,15 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     mutation: {
       onSuccess: (response) => {
         // response.data is the UUID string
-        const newUuid = response.data;
+        const newUuid = response.data as unknown as string;
         if (newUuid) {
           setLocalUuid(newUuid);
         }
-        queryClient.invalidateQueries({ queryKey: ['briefings'] });
-        queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
+        void queryClient.invalidateQueries({ queryKey: ['briefings'] });
+        void queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
         toast.success('Public sharing enabled');
       },
-      onError: () => toast.error('Failed to enable sharing')
+      onError: () => { toast.error('Failed to enable sharing'); }
     }
   });
 
@@ -72,11 +72,11 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     mutation: {
       onSuccess: () => {
         setLocalUuid(null);
-        queryClient.invalidateQueries({ queryKey: ['briefings'] });
-        queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
+        void queryClient.invalidateQueries({ queryKey: ['briefings'] });
+        void queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
         toast.success('Public sharing disabled');
       },
-      onError: () => toast.error('Failed to disable sharing')
+      onError: () => { toast.error('Failed to disable sharing'); }
     }
   });
 
@@ -110,15 +110,15 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     
     setIsExporting(true);
     try {
-      const { data: response } = await briefingDetailQuery.refetch();
-      const detail = response?.data;
+      const detailsResponse = await briefingDetailQuery.refetch();
+      const detail = detailsResponse.data?.data;
       if (!detail) throw new Error('Failed to fetch briefing detail');
       
       return { 
         metaSummary: detail.metaSummary || '', 
         content: detail.summaries?.map(s => s.summaryText).join('\n\n---\n\n') || ''
       };
-    } catch (err) {
+    } catch {
       toast.error('Could not prepare export data');
       return null;
     } finally {
@@ -228,7 +228,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
       toast.success('Share link copied to clipboard');
       setTimeout(() => setIsCopied(false), 2000);
       setIsOpen(false);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy link');
     }
   };
@@ -264,7 +264,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
         )}>
           <div className="p-1.5 space-y-1">
             <button
-              onClick={exportMarkdown}
+              onClick={() => { void exportMarkdown(); }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
             >
               <FileText className="w-4 h-4 text-slate-500 group-hover:text-indigo-400" />
@@ -275,7 +275,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
             </button>
 
             <button
-              onClick={exportHtml}
+              onClick={() => { void exportHtml(); }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
             >
               <Code className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
@@ -290,7 +290,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
             {localUuid ? (
               <>
                 <button
-                  onClick={copyShareLink}
+                  onClick={() => { void copyShareLink(); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
                 >
                   {isCopied ? (
@@ -305,7 +305,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
                 </button>
 
                 <button
-                  onClick={() => unshareMutation.mutate({ id: briefing.id! })}
+                  onClick={() => { void unshareMutation.mutate({ id: briefing.id! }); }}
                   disabled={unshareMutation.isPending}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group"
                 >
@@ -322,7 +322,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
               </>
             ) : (
               <button
-                onClick={() => shareMutation.mutate({ id: briefing.id! })}
+                onClick={() => { void shareMutation.mutate({ id: briefing.id! }); }}
                 disabled={shareMutation.isPending}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
               >

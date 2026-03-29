@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -21,8 +24,15 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeDetailEnrichmentStrategy.class);
 
+    private static final Pattern HANDLE_PATTERN = Pattern.compile("^@([a-zA-Z0-9._-]+)$");
+    private static final Pattern CHANNEL_ID_PATTERN = Pattern.compile("^UC[a-zA-Z0-9_-]{22}$");
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://(?:www\\.)?youtube\\.com/(?:@|channel/|c/|user/)?([a-zA-Z0-9._-]+)");
+
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
+    
+    // Simple 1-hour in-memory cache for validation results
+    private final Map<String, Optional<ContentSourceDetailService.ContentSourceDetails>> validationCache = new ConcurrentHashMap<>();
 
     @Inject
     public YouTubeDetailEnrichmentStrategy(YouTubeDataApiClient youtubeDataApiClient,
@@ -57,20 +67,82 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     @Override
     public Optional<ContentSourceDetailService.ContentSourceDetails> fetchDetails(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
+        return validationCache.computeIfAbsent(identifier, this::doFetchDetails);
+    }
+
+    public void clearCache() {
+        validationCache.clear();
+    }
+
+    private Optional<ContentSourceDetailService.ContentSourceDetails> doFetchDetails(String input) {
+        String resolved = resolveIdentifier(input);
+        if (resolved == null) {
+            logger.warn("Could not resolve YouTube identifier from input: {}", input);
+            return Optional.empty();
+        }
+
         try {
-            List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(identifier));
-            if (items == null || items.isEmpty()) {
-                logger.warn("Channel not found for ID: {}", identifier);
+            Channel channel;
+            if (resolved.startsWith("@")) {
+                channel = youtubeDataApiClient.fetchChannelByHandle(resolved);
+            } else if (CHANNEL_ID_PATTERN.matcher(resolved).matches()) {
+                List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
+                channel = (items != null && !items.isEmpty()) ? items.getFirst() : null;
+            } else {
+                // Fallback: try handle first, then ID
+                channel = youtubeDataApiClient.fetchChannelByHandle("@" + resolved);
+                if (channel == null) {
+                    List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
+                    channel = (items != null && !items.isEmpty()) ? items.getFirst() : null;
+                }
+            }
+
+            if (channel == null) {
+                logger.warn("Channel not found for resolved identifier: {}", resolved);
                 return Optional.empty();
             }
 
-            Channel channel = items.getFirst();
             return Optional.of(extractContentSourceDetails(channel));
 
         } catch (IOException e) {
-            logger.error("Failed to fetch details for channel ID: {}", identifier, e);
+            logger.error("Failed to fetch details for identifier: {}", resolved, e);
             return Optional.empty();
         }
+    }
+
+    private String resolveIdentifier(String input) {
+        String trimmed = input.trim();
+        
+        // 1. Direct Handle
+        if (HANDLE_PATTERN.matcher(trimmed).matches()) {
+            return trimmed;
+        }
+        
+        // 2. Direct ID
+        if (CHANNEL_ID_PATTERN.matcher(trimmed).matches()) {
+            return trimmed;
+        }
+        
+        // 3. URL Extraction
+        Matcher urlMatcher = URL_PATTERN.matcher(trimmed);
+        if (urlMatcher.find()) {
+            String candidate = urlMatcher.group(1);
+            if (trimmed.contains("/channel/")) {
+                return candidate; // It's an ID
+            }
+            return "@" + candidate; // Assume handle for other URL types
+        }
+        
+        // 4. Fallback: handle if it looks like one
+        if (!trimmed.contains("/") && !trimmed.contains(" ")) {
+            return trimmed.contains("@") ? trimmed : "@" + trimmed;
+        }
+        
+        return null;
     }
 
     private void enrichSources(List<ContentSource> sources, String successLog, String failureLog) {
