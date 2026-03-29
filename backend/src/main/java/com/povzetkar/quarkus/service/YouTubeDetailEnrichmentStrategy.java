@@ -26,7 +26,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     private static final Pattern HANDLE_PATTERN = Pattern.compile("^@([a-zA-Z0-9._-]+)$");
     private static final Pattern CHANNEL_ID_PATTERN = Pattern.compile("^UC[a-zA-Z0-9_-]{22}$");
-    private static final Pattern URL_PATTERN = Pattern.compile("https?://(?:www\\.)?youtube\\.com/(?:(@[a-zA-Z0-9._-]+)|(channel/|c/|user/)([a-zA-Z0-9._-]+))");
+    private static final Pattern URL_PATTERN = Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/(?:(@[a-zA-Z0-9._-]+)|(channel/|c/|user/)([a-zA-Z0-9._-]+))");
 
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
