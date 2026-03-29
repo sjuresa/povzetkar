@@ -32,7 +32,9 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     private final int batchSize;
     
     // Simple 1-hour in-memory cache for validation results
-    private final Map<String, Optional<ContentSourceDetailService.ContentSourceDetails>> validationCache = new ConcurrentHashMap<>();
+    private final Map<String, CachedItem<Optional<ContentSourceDetailService.ContentSourceDetails>>> validationCache = new ConcurrentHashMap<>();
+
+    private record CachedItem<T>(T value, long expiry) {}
 
     @Inject
     public YouTubeDetailEnrichmentStrategy(YouTubeDataApiClient youtubeDataApiClient,
@@ -71,7 +73,14 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             return Optional.empty();
         }
 
-        return validationCache.computeIfAbsent(identifier, this::doFetchDetails);
+        CachedItem<Optional<ContentSourceDetailService.ContentSourceDetails>> cached = validationCache.get(identifier);
+        if (cached != null && cached.expiry() > System.currentTimeMillis()) {
+            return cached.value();
+        }
+
+        Optional<ContentSourceDetailService.ContentSourceDetails> details = doFetchDetails(identifier);
+        validationCache.put(identifier, new CachedItem<>(details, System.currentTimeMillis() + 3600000));
+        return details;
     }
 
     public void clearCache() {
@@ -86,27 +95,27 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         }
 
         try {
-            Channel channel;
+            Optional<Channel> channelOpt;
             if (resolved.startsWith("@")) {
-                channel = youtubeDataApiClient.fetchChannelByHandle(resolved);
+                channelOpt = youtubeDataApiClient.fetchChannelByHandle(resolved);
             } else if (CHANNEL_ID_PATTERN.matcher(resolved).matches()) {
                 List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
-                channel = (items != null && !items.isEmpty()) ? items.getFirst() : null;
+                channelOpt = Optional.ofNullable(items).stream().flatMap(List::stream).findFirst();
             } else {
                 // Fallback: try handle first, then ID
-                channel = youtubeDataApiClient.fetchChannelByHandle("@" + resolved);
-                if (channel == null) {
+                channelOpt = youtubeDataApiClient.fetchChannelByHandle("@" + resolved);
+                if (channelOpt.isEmpty()) {
                     List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
-                    channel = (items != null && !items.isEmpty()) ? items.getFirst() : null;
+                    channelOpt = Optional.ofNullable(items).stream().flatMap(List::stream).findFirst();
                 }
             }
 
-            if (channel == null) {
+            if (channelOpt.isEmpty()) {
                 logger.warn("Channel not found for resolved identifier: {}", resolved);
                 return Optional.empty();
             }
 
-            return Optional.of(extractContentSourceDetails(channel));
+            return Optional.of(extractContentSourceDetails(channelOpt.get()));
 
         } catch (IOException e) {
             logger.error("Failed to fetch details for identifier: {}", resolved, e);
@@ -135,11 +144,6 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
                 return candidate; // It's an ID
             }
             return "@" + candidate; // Assume handle for other URL types
-        }
-        
-        // 4. Fallback: handle if it looks like one
-        if (!trimmed.contains("/") && !trimmed.contains(" ")) {
-            return trimmed.contains("@") ? trimmed : "@" + trimmed;
         }
         
         return null;

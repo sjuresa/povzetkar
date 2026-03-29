@@ -214,7 +214,7 @@ class YouTubeDetailEnrichmentStrategyTest {
         Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", channelName, "Desc", 1000000L);
         
         // We'll need to mock the new method in YouTubeDataApiClient
-        when(mockYouTubeDataApiClient.fetchChannelByHandle(handle)).thenReturn(testChannel);
+        when(mockYouTubeDataApiClient.fetchChannelByHandle(handle)).thenReturn(Optional.of(testChannel));
 
         // When
         Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(handle);
@@ -232,7 +232,7 @@ class YouTubeDetailEnrichmentStrategyTest {
         String channelName = "Veritasium";
         Channel testChannel = createTestChannel("UCvPyVWLnAgmz841qhX67yag", channelName, "Desc", 1000000L);
         
-        when(mockYouTubeDataApiClient.fetchChannelByHandle("@veritasium")).thenReturn(testChannel);
+        when(mockYouTubeDataApiClient.fetchChannelByHandle("@veritasium")).thenReturn(Optional.of(testChannel));
 
         // When
         Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(url);
