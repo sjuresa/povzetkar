@@ -50,4 +50,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Mapper Audit Field Standardization:** (Completed in v0.14.0 - POV-157) Centralized exclusions for auditable entities using @MappingConfig.
 *   **Real-time Platform Validation:** (Moved to v0.15.0 - POV-163) Implement debounced "Check Now" button in the `Add Source` dialog.
 *   **Topic Template Preview:** (Backlog) Add a "Preview with Template" action in the `TopicForm`.
+*   **Context-Aware UX Audit:** (POV-163 Backlog) Refine `ux_audit.py` to distinguish between global navigation menus (subject to Hick's Law) and content grids/data tables.
+*   **Cross-platform Script Wrapper:** (POV-163 Backlog) Implement a lightweight Node.js or Python wrapper for `package.json` scripts to handle `./mvnw` vs `mvnw.cmd` transitions transparently across all shells.
 *   **Frontend Lint Refactoring:** (Completed in v0.14.0 - POV-159) Resolved persistent unused variable warnings and standardized useState destructuring.
