@@ -106,11 +106,11 @@ class BriefingApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("data.title", equalTo("Weekly AI Update"))
-                .body("data.executiveSummary", containsString("Summary of everything"))
-                .body("data.briefingText", containsString("Full markdown text here."))
-                .body("data.sourceContentItems", hasSize(1))
-                .body("data.sourceContentItems[0].title", equalTo("AI Breakthrough"))
-                .body("data.sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
+                .body("data.metaSummary", containsString("Summary of everything"))
+                .body("data.summaries", hasSize(1))
+                .body("data.summaries[0].summaryText", containsString("Full markdown text here."))
+                .body("data.summaries[0].contentItem.title", equalTo("AI Breakthrough"))
+                .body("data.summaries[0].contentItem.durationSeconds", is(600)); // Default 10 mins in builder
     }
 
     @Test

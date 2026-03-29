@@ -61,7 +61,7 @@ class PublicBriefingApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("data.title", equalTo("Shared Briefing"))
-                .body("data.executiveSummary", containsString("Public content"));
+                .body("data.metaSummary", containsString("Public content"));
     }
 
     @Test
