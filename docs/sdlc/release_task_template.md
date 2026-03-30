@@ -7,7 +7,7 @@
 Finalize all documentation for the vX.Y.Z release. This involves cleaning up the changelog, updating the retrospective status, marking tasks as completed, updating the roadmap, reviewing project-wide documentation, and preparing the codebase for release (removing SNAPSHOT).
 
 ## Requirements
-1.  **Changelog (`changelog.md`):**
+1.  **Changelog (`CHANGELOG.md`):**
     *   Update release date to today's date.
     *   **Editorial Cleanup:** Remove internal refactoring noise (e.g., specific class refactorings that don't affect public behavior), consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during the current development cycle.
     *   Move all changes from the `[Unreleased]` section to a new version section (e.g., `[vX.Y.Z] - YYYY-MM-DD`).
@@ -30,8 +30,11 @@ Finalize all documentation for the vX.Y.Z release. This involves cleaning up the
     *   Mark vX.Y.Z as `✅ Completed`.
     *   Update the revision history.
 7.  **Project-Wide Documentation Review:**
+    *   **Planning Audit:** Run `python scripts/qa/validate-planning.py --current-version vX.Y.Z --fail-on all`.
     *   **General Refresh:** Review `docs/analysis`, `docs/overview`, `docs/sdlc` and update if needed based on vX.Y.Z changes.
     *   **Agent Protocol:** Check if `AGENT.md` needs updates based on process changes.
     *   **Methodology:** Check `07_development_methodology_comparison.md` for updates.
-8.  **Finalize `pom.xml`:**
-    *   Remove the `-SNAPSHOT` suffix from the project version (e.g., `0.7.0`).
+8.  **Finalize Project Versions:**
+    *   Remove the `-SNAPSHOT` suffix from the project version using `node scripts/update-version.cjs <version>` (e.g., `<version>` is `0.7.0` without the `v`).
+9.  **Sync Landing Page Metadata:**
+    *   Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes.

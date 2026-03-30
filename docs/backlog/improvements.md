@@ -19,7 +19,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### Backend & Architecture
 
-*   **Job Audit Cleanup:** (Completed in v0.15.0 - POV-165) Implement a separate cleanup task for `JobExecutionAudit` records using a 90-day retention policy.
 *   **Job Retention Policy for `background_jobs` table:** (POV-165 follow-up) Implement a similar retention policy (e.g., 30 days) for the `background_jobs` table itself to prevent historical bloat.
 *   **Dynamic Cron Scheduling:** (Backlog) Allow administrators to configure maintenance cron expressions via UI/API without requiring application restarts.
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
@@ -30,7 +29,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Standardize Exception Message Assertions in Tests:** Create a helper or wrapper for `ApiException` (and other external exceptions) to extract clean error messages, or standardize error message assertions in tests to handle variable message formats (e.g., including status codes) more robustly.
 *   **Advanced Idempotency (Full HTTP Response Replay):** Upgrade the current Idempotency-Key validation to fully cache and replay the exact HTTP response (including 400/500 `ProblemDetail` errors) for duplicate POST command requests, preventing any backend re-execution upon retry.
 *   **Recursive Briefings (Map-Reduce):** Implementing hierarchical summarization for extremely long content sets or timeframes (Deferred from v0.12).
-*   **QA Health & Master Test Suite:** (Completed in v0.15.0 - POV-166) Centralized all regression scenarios into a permanent suite and established US->UC->TC traceability.
 *   **Fix Qute Template Lints:** There are numerous lint warnings/errors in `admin.html`, `main.html`, etc. regarding unresolved objects (`activeTab`, `item`, etc.). These should be investigated and fixed to ensure a clean build and IDE experience.
 *   **Primary Identity Resolution:** Refactor `UserMapper` to deterministically resolve a "primary" identity/provider when multiple OIDC accounts are linked to a single user.
 *   **Background Jobs Cleanup Strategy:** (Moved to v0.16.0) Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items to prevent historical database bloat.
@@ -50,7 +48,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Automatic Summary Generation Validation:** Add a backend check to prevent re-triggering "Generate Summaries" if a job for the same topic is already `RUNNING` or `QUEUED` to prevent resource waste.
 *   **Improved Toast Actionability:** Enhance toast notifications with "View Job" or "Refresh Page" buttons for `COMPLETED` or `FAILED` states.
 *   **Mapper Audit Field Standardization:** (Completed in v0.14.0 - POV-157) Centralized exclusions for auditable entities using @MappingConfig.
-*   **Real-time Platform Validation:** (Moved to v0.15.0 - POV-163) Implement debounced "Check Now" button in the `Add Source` dialog.
 *   **Topic Template Preview:** (Backlog) Add a "Preview with Template" action in the `TopicForm`.
 *   **Context-Aware UX Audit:** (POV-163 Backlog) Refine `ux_audit.py` to distinguish between global navigation menus (subject to Hick's Law) and content grids/data tables.
 *   **Cross-platform Script Wrapper:** (POV-163 Backlog) Implement a lightweight Node.js or Python wrapper for `package.json` scripts to handle `./mvnw` vs `mvnw.cmd` transitions transparently across all shells.
@@ -65,3 +62,11 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 +*   **v0.16.0 Mandatory P0 Automation Debt**:
 +    *   [ ] **TC-GRX-002 (Global Error Handling)**: Implement Playwright scenario for Error Boundary triggering. (Legacy Gap from v0.13).
 +    *   [ ] **TC-SEC-002 (Role Protection)**: Implement Playwright scenario for Admin-only route access (`/admin/*`) for non-admin users. (Legacy Gap from v0.11).
++    *   [ ] **TC-LIB-001 (Briefing Search Flow)**: Add Playwright E2E test (PW-04) for the library search flow.
++    *   [ ] **TC-LIB-002 (Share Link Lifecycle)**: Add Playwright E2E test (PW-05) for the Share Link generation and validation lifecycle.
++
++### UX & Observability Debt
++
++*   **Toggle-Based State Unification:** Implement standard pattern for optimistic UI on toggle-based actions (e.g. "Share Link" creation) to avoid visual blinks on refetching.
++*   **Playwright Maintenance Strategy:** Define robust locators and state isolation to stabilize E2E tests and prevent regression flakiness.
++*   **Full-Text Search Migration:** Consider migrating the `BriefingLibrary` search to `pg_trgm` or Lucene when briefing volume justifies it (1000+).

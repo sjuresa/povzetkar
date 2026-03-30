@@ -189,6 +189,8 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.15: Advanced Archive & Operational Excellence
 
+**Status:** ✅ Completed
+
 **Goal:** Finalize the transition to a full-featured analytical platform with historical archives and enterprise-grade observability.
 
 ### Key Tasks & Implementation Steps:
@@ -283,6 +285,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.3     | March 30, 2026     | Povzetkar AI | Marked v0.15 as completed and finalized release notes.                                                                                                                   |
 | 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0/v0.16.0 scope, moved postponed items (Admin UI, DAST), and clarified job cleanup tasks.                                                                  |
 | 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                                                   |
 | 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15.                              |
