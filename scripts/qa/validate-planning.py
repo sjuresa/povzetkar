@@ -78,11 +78,11 @@ class PlanningValidator:
         # Format: | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
         lines = content.splitlines()
         for line in lines:
-            if line.strip().startswith('| **TC-'):
+            match = re.match(r'^\s*\|\s*\*\*?(TC-[A-Z]+-\d+)\*\*?\s*\|', line)
+            if match:
+                tc_id = match.group(1)
                 parts = [p.strip() for p in line.split('|')]
                 if len(parts) >= 7:
-                    # parts[0] is empty because of leading |
-                    tc_id = parts[1].replace('**', '')
                     priority = parts[2].replace('**', '')
                     related_uc = parts[3]
                     version = parts[4].strip('[]')
@@ -112,7 +112,7 @@ class PlanningValidator:
                 ref_id = match.group(2)
                 
                 if link_path:
-                    target_filename = Path(link_path).name
+                    target_filename = Path(link_path.split('#')[0]).name
                 else:
                     # Infer target from ID prefix if bare
                     if ref_id.startswith('UC-'):
