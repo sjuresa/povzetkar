@@ -30,7 +30,7 @@ jobs:
         python-version: '3.12'
 
     - name: Planning & Traceability Audit
-      run: python scripts/validate-planning.py --current-version v0.15.0 --fail-on all
+      run: python scripts/qa/validate-planning.py --current-version v0.15.0 --fail-on all
       continue-on-error: true
 
     - name: Set up JDK 25

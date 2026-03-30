@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Dict, Set, Optional
 
 # --- Constants & Defaults ---
-DEFAULT_CONFIG = ".agent/planning-validator-config.json"
+DEFAULT_CONFIG = "scripts/qa/planning-validator-config.json"
 
 class Colors:
     HEADER = '\033[95m'
@@ -103,13 +103,26 @@ class PlanningValidator:
         
         for task_file in task_files:
             content = task_file.read_text(encoding='utf-8')
-            # Look for IDs in parentheses near doc links
-            # Example: [use_cases.md](../analysis/use_cases.md) (UC-5)
-            # Or [test_specification.md](../analysis/test_specification.md) (TC-LIB-001)
-            pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)\s*\((UC-\d+|TC-[A-Z]+-\d+)\)', re.MULTILINE)
+            # Look for IDs in parentheses, optionally preceded by a markdown link
+            # Examples:
+            # 1. [use_cases.md](../analysis/use_cases.md) (UC-5)  -> Linked
+            # 2. (UC-5)                                          -> Bare (Inferred)
+            pattern = re.compile(r'(?:\[[^\]]*\]\(([^)]+)\)\s*)?\((UC-\d+|TC-[A-Z]+-\d+)\)', re.MULTILINE)
             for match in pattern.finditer(content):
-                target_filename = match.group(2).split('/')[-1]
-                ref_id = match.group(3)
+                link_path = match.group(1)
+                ref_id = match.group(2)
+                
+                if link_path:
+                    target_filename = Path(link_path).name
+                else:
+                    # Infer target from ID prefix if bare
+                    if ref_id.startswith('UC-'):
+                        target_filename = self.use_cases_fn
+                    elif ref_id.startswith('TC-'):
+                        target_filename = self.test_spec_fn
+                    else:
+                        target_filename = "unknown"
+
                 self.task_links.append({
                     "src_file": task_file.name,
                     "target_file": target_filename,
@@ -143,9 +156,9 @@ class PlanningValidator:
         
         for uc_id in self.use_cases:
             if uc_id not in mapped_ucs:
-                self.log_violation("WARNING", "use_cases.md", uc_id, 
+                self.log_violation("WARNING", self.use_cases_fn, uc_id, 
                                  f"Use Case {uc_id} has no mapped Test Case", 
-                                 "Add a corresponding TC in test_specification.md")
+                                 f"Add a corresponding TC in {self.test_spec_fn}")
 
     def validate_automation_guardrail(self):
         p0_label = self.config['priority']['p0_label']
