@@ -31,6 +31,7 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.9. Prepare Development Branch**: Create the new version branch (e.g., `v0.7.0`) from `main` and update version numbers using `node scripts/update-version.cjs <version>-SNAPSHOT`.
 - [ ] **1.10. Document Standard (Formatting)**: For all non-trivial documents created or updated, ensure that the **Revision History** section is placed at the **END** of the file to prioritize immediate access to core content.
 - [ ] **1.11. Final Expert Review**: Perform a mandatory final review of the version plan, specifically checking for:
+    - [ ] **Planning Audit**: Run `python scripts/validate-planning.py --current-version vX.Y.Z` to ensure all task links and traceability mappings are valid. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for failure response.
     - [ ] **i18n Readiness**: Impact on localization files (`en.json`, `sl.json`).
     - [ ] **Security Audit**: Port exposures, sensitive data in logs, and Docker isolation.
     - [ ] **Ops Readiness**: Verification of rollback/panic-switch procedures in `RUNBOOK.md`.
@@ -58,7 +59,6 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] Log any non-critical improvements discovered to `docs/backlog/improvements.md`.
 - [ ] **2.8. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
 - [ ] **2.9. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
-
 - [ ] **2.10. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
     - **Assess the issue:**
         1.  Is it a **critical usability blocker** that prevents core functionality?
@@ -66,8 +66,8 @@ This document provides a comprehensive checklist for our development process. It
     - **Decide:**
         -   If **both** answers are YES: Pause, discuss, and agree to update the current version's task plan (`*-tasks.md`) to include the fix.
         -   If **either** answer is NO: Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
- 
 - [ ] **2.11. Master Specification Sync**: Verify that the task's final outcome (feature or logic fix) is accurately reflected in `docs/analysis/test_specification.md`. Ensure all new P0 Test Cases are marked for automation within one version.
+    - [ ] **Planning Audit**: Run `python scripts/validate-planning.py --current-version vX.Y.Z` to verify the traceability chain (Task -> UC -> TC) remains intact. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for mandatory sync requirements.
 
 ## Phase 3: Version Finalization
 
@@ -79,10 +79,11 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] Update `docs/versions/vX.Y.Z-tasks.md`: Ensure all tasks are marked `(Completed)` and add a final revision entry.
     - [ ] Update `docs/versions/vX.Y.Z-planning-process.md`: Add a final revision entry.
     - [ ] Review and clean `docs/backlog/improvements.md` based on completed work and new findings.
-- [ ] **3.2. Project-Wide Documentation Review:** Execute the following prompts to ensure project-wide documentation is up-to-date with any process changes or learnings from the completed version:
-    - [ ] **General Refresh:** "We are finalizing version vX.Y.Z. Please review the documents for this version (`docs/versions/vX.Y.Z-planning-process.md`, `docs/versions/vX.Y.Z-tasks.md`, `docs/retrospectives/vX.Y.Z-retrospective.md`) and check if the project documentation in `docs/` needs to be refreshed based on this (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`, `docs/strategy`). Today is [Current Date]."
-    - [ ] **Agent Protocol Check:** "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
-    - [ ] **Methodology Update:** "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
+- [ ] **3.2. Project-Wide Documentation Review**: Execute the following prompts to ensure project-wide documentation is up-to-date with any process changes or learnings from the completed version:
+    - [ ] **Planning Audit**: Perform a final whole-project audit using `python scripts/validate-planning.py --current-version vX.Y.Z --fail-on all`. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for release blocking criteria.
+    - [ ] **General Refresh**: "We are finalizing version vX.Y.Z. Please review the documents for this version (`docs/versions/vX.Y.Z-planning-process.md`, `docs/versions/vX.Y.Z-tasks.md`, `docs/retrospectives/vX.Y.Z-retrospective.md`) and check if the project documentation in `docs/` needs to be refreshed based on this (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`, `docs/strategy`). Today is [Current Date]."
+    - [ ] **Agent Protocol Check**: "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
+    - [ ] **Methodology Update**: "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
 - [ ] **3.3. Finalize Project Versions**: Remove the `-SNAPSHOT` suffix using `node scripts/update-version.cjs <version>`.
 - [ ] **3.4. Finalize `CHANGELOG.md`:**
     - [ ] **Editorial Cleanup:** Remove internal refactoring noise and consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during development.
@@ -101,6 +102,8 @@ This document provides a comprehensive checklist for our development process. It
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 2.5     | March 30, 2026   | Povzetkar AI | Linked [Documentation Validation Protocol](../process/validation-protocol.md) for rule enforcement. |
+| 2.4     | March 30, 2026   | Povzetkar AI | Mandated Planning Audit via `validate-planning.py` across all phases.       |
 | 2.3     | March 30, 2026   | Povzetkar AI | Mandated Master Spec Sync (2.11) and US->UC Traceability (1.6) for Operational Excellence. |
 | 2.2     | March 28, 2026   | Povzetkar AI | Mandated ASCII Wireframes (1.5), Resilience Analysis (1.7), and Dependency Audits (1.11). |
 | 2.1     | March 28, 2026   | Povzetkar AI | Mandated Master Test Suite (1.6), P-levels/Skill Mapping (1.7), and Expert Review (1.11). |

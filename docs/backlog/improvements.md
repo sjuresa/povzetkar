@@ -59,3 +59,11 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Business Intelligence Dashboard:** Extend Grafana with "User Engagement" metrics, tracking the most popular content sources and briefing generation patterns per user.
 *   **Test Case Re-indexing Script:** (POV-166 follow-up) Develop a Python utility to automatically re-index `test_specification.md` and update all mapping references in Section 9 to prevent manual errors during large-scale refactors.
 *   **Traceability Heatmap:** (POV-166 follow-up) Implement a visual representation (or Markdown table generator) showing the percentage of Test Cases covered by automated Playwright scenarios (PW-X) vs. manual ones.
+
++### Compliance & Documentation Debt
++
++*   **v0.16.0 Mandatory P0 Automation Debt**:
++    *   [ ] **TC-GRX-002 (Global Error Handling)**: Implement Playwright scenario for Error Boundary triggering. (Legacy Gap from v0.13).
++    *   [ ] **TC-SEC-002 (Role Protection)**: Implement Playwright scenario for Admin-only route access (`/admin/*`) for non-admin users. (Legacy Gap from v0.11).
++*   **Planning Validator: Version-Aware Skips**: (Planned in POV-167) Upgrade `validate-planning.py` to support `validate:skip until vX.Y.Z` to prevent "permanent debt" beyond the agreed version.
++*   **Traceability Heatmap**: (POV-166 follow-up) Implement a visual representation (or Markdown table generator) showing the percentage of Test Cases covered by automated Playwright scenarios (PW-X) vs. manual ones.
