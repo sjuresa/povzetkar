@@ -715,3 +715,34 @@ Automated UX scripts can produce high volumes of false positives if their regex 
   3. Repeat until no more records match. 
   
   This ensures that each chunk is committed independently, and the database remains responsive. Since `DELETE ... LIMIT` is not standard across all SQL dialects (like PostgreSQL), use a two-step `SELECT id ... LIMIT X` followed by `DELETE ... WHERE id IN (...)` for a portable and performant implementation in Hibernate.
+
+---
+
+## 32. Permanent Master Test Specification (POV-166)
+
+### 32.1 3-Digit Sequential Indexing (`TC-DOM-0XX`)
+As a project grows, simple sequential IDs (`TC-01`, `TC-02`) quickly become ambiguous, especially when multiple domains (Ingestion, Reporting, UI) are being developed in parallel.
+- **The Trap:** Using duplicate IDs or unstructured lists leads to "Test Debt" where it's unclear which scenarios are automated and which are manual placeholders.
+- **The Standard:** Implement a **3-digit sequential index** prefixed by a Domain code (e.g., `TC-REP-024`). The 3-digit format (`001`-`999`) provides enough headroom for large-scale enterprise suites and ensures consistent sorting in documentation and test runners.
+
+### 32.2 Domain 0: Global Resilience (GRX)
+Cross-cutting stability features (Error Boundaries, Skeleton Loaders, Theme Persistence) often "fall through the cracks" because they don't belong to a specific functional feature like "YouTube Ingestion."
+- **The Trap:** Only testing the "Happy Path" of a feature while ignoring the baseline UI resilience that makes the app feel "Premium."
+- **The Standard:** Establish a **Domain 0 (Global Resilience & UX)**. This domain is mandatory for every release and covers the baseline "Polish" that must hold true across all pages. This includes verifying that a user never sees a raw white screen (Skeletons) and that errors are caught by boundaries rather than crashing the tab.
+
+---
+
+## 33. Requirements Traceability Hardening (POV-166)
+
+### 33.1 The US ➔ UC ➔ TC Chain
+In rapid agile development, User Stories often become disconnected from the actual implementation and testing.
+- **The Trap:** Implementing a "Use Case" that doesn't actually satisfy the original "User Story," or writing a "Test Case" that doesn't verify the core requirement.
+- **The Standard:** Enforce a strict **Traceability Chain**:
+  1. **User Story (US-ID)**: The high-level "Why" (defined in `01_functional_requirements.md`).
+  2. **Use Case (UC-ID)**: The "How" (defined in `use_cases.md`), explicitly linked to a `US-ID`.
+  3. **Test Case (TC-ID)**: The "Verify" (defined in `test_specification.md`), explicitly linked to a `UC-ID`.
+  
+  This 1:1:M mapping ensures that every requirement is covered by at least one test, and every test exists to satisfy a specific user requirement.
+
+### 33.2 Process Gates for Documentation Sync
+- **The Standard:** Documentation parity must be an **Explicit Phase 2 Gate** in the development checklist. Do not wait until the end of the release to "clean up" docs. Every task must include a "Master Specification Sync" step where new scenarios are added and old ones updated BEFORE the task is marked as complete.

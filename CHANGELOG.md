@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
 
 ### Added
+- **Quality Assurance (POV-166):** Established a permanent, living **Master Test Specification** (`test_specification.md`) with 3-digit sequential indexing (`TC-DOM-0XX`). Centralized all functional and non-functional regression scenarios from v0.12 through v0.15.
+- **Requirements Traceability (POV-166):** Hardened the documentation stack by assigning unique IDs to all **User Stories (US-X)** and formalizing the mapping from User Stories ➔ Use Cases ➔ Test Cases.
+- **Global Resilience (POV-166):** Introduced **Domain 0: GRX** specifically for baseline UI/UX stability (Skeleton loaders, Error boundaries, Theme persistence), ensuring core resilience is verified in every release.
+- **Process Guardrails (POV-166):** Updated the **Development Process Checklist** with a mandatory "Master Specification Sync" step, enforcing documentation integrity as a Phase 2 completion gate.
 - **Operational Maintenance (POV-165):** Implemented a 90-day retention policy for `JobExecutionAudit` records. The system now performs a "Safety-First" chunked deletion (1,000 records per transaction) daily at 03:00 UTC, preventing database performance degradation from historical log accumulation.
 - **Observability (POV-165):** Integrated Prometheus metrics for the retention job, exposing `povzetkar_maintenance_audits_purged_total` to track long-term data hygiene.
 - **Frontend Infrastructure (POV-165):** Upgraded the frontend build environment to **Node 24 LTS** and updated `@types/node` to `^24.0.0`, ensuring compatibility with the latest runtime and improved build-time type safety.
