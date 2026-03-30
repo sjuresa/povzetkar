@@ -8,4 +8,4 @@ scrape_configs:
     # The 'backend' is on the host during dev
     static_configs:
       - targets: ['host.docker.internal:8080']
-    bearer_token: 'dev-token-povzetkar-2025'
+    bearer_token: '${METRICS_SCRAPE_TOKEN}'

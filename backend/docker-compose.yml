@@ -32,6 +32,12 @@ services:
       - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    environment:
+      - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN}
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--enable-feature=expand-external-variables"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

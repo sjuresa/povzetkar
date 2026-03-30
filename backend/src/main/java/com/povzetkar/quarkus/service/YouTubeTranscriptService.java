@@ -20,10 +20,6 @@ public class YouTubeTranscriptService {
     private final YoutubeTranscriptApi youtubeTranscriptApi;
     private final MeterRegistry registry;
 
-    public YouTubeTranscriptService() {
-        this(new TimeTextFormatter(), TranscriptApiFactory.createDefault(), null);
-    }
-
     @Inject
     public YouTubeTranscriptService(MeterRegistry registry) {
         this(new TimeTextFormatter(), TranscriptApiFactory.createDefault(), registry);

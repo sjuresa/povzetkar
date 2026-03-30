@@ -3,7 +3,7 @@ apiVersion: 1
 providers:
   - name: 'Povzetkar'
     orgId: 1
-    folder: ''
+    folder: 'Povzetkar'
     type: file
     disableDeletion: false
     editable: true
