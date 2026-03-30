@@ -5,6 +5,8 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
     private final long cacheExpiryMs;
+    private final MeterRegistry registry;
     
     // Simple 1-hour in-memory cache for validation results
     private final Map<String, CachedItem<Optional<ContentSourceDetailService.ContentSourceDetails>>> validationCache = new ConcurrentHashMap<>();
@@ -40,10 +43,12 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     @Inject
     public YouTubeDetailEnrichmentStrategy(YouTubeDataApiClient youtubeDataApiClient,
                                            @ConfigProperty(name = "youtube.api.batch-size", defaultValue = "50") int batchSize,
-                                           @ConfigProperty(name = "youtube.validation.cache-expiry-ms", defaultValue = "3600000") long cacheExpiryMs) {
+                                           @ConfigProperty(name = "youtube.validation.cache-expiry-ms", defaultValue = "3600000") long cacheExpiryMs,
+                                           MeterRegistry registry) {
         this.youtubeDataApiClient = youtubeDataApiClient;
         this.batchSize = batchSize;
         this.cacheExpiryMs = cacheExpiryMs;
+        this.registry = registry;
     }
 
     @Override
@@ -93,6 +98,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     private Optional<ContentSourceDetailService.ContentSourceDetails> doFetchDetails(String input) {
         String resolved = resolveIdentifier(input);
         if (resolved == null) {
+            registry.counter("povzetkar_source_validation_failed_total", Tags.of("error_type", "unresolved_identifier")).increment();
             logger.warn("Could not resolve YouTube identifier from input: {}", input);
             return Optional.empty();
         }
@@ -110,6 +116,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             }
 
             if (channelOpt.isEmpty()) {
+                registry.counter("povzetkar_source_validation_failed_total", Tags.of("error_type", "channel_not_found")).increment();
                 logger.warn("Channel not found for resolved identifier: {}", resolved);
                 return Optional.empty();
             }
@@ -117,6 +124,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             return Optional.of(extractContentSourceDetails(channelOpt.get()));
 
         } catch (IOException e) {
+            registry.counter("povzetkar_source_validation_failed_total", Tags.of("error_type", "io_exception")).increment();
             logger.error("Failed to fetch details for identifier: {}", resolved, e);
             return Optional.empty();
         }

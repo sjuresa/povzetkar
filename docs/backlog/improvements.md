@@ -53,3 +53,5 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Context-Aware UX Audit:** (POV-163 Backlog) Refine `ux_audit.py` to distinguish between global navigation menus (subject to Hick's Law) and content grids/data tables.
 *   **Cross-platform Script Wrapper:** (POV-163 Backlog) Implement a lightweight Node.js or Python wrapper for `package.json` scripts to handle `./mvnw` vs `mvnw.cmd` transitions transparently across all shells.
 *   **Frontend Lint Refactoring:** (Completed in v0.14.0 - POV-159) Resolved persistent unused variable warnings and standardized useState destructuring.
+*   **Grafana Alerting implementation:** Define alerting thresholds for `Total Orchestration Failures > 10` to send notifications to Slack or Email.
+*   **Business Intelligence Dashboard:** Extend Grafana with "User Engagement" metrics, tracking the most popular content sources and briefing generation patterns per user.

@@ -6,6 +6,9 @@ import io.github.thoroldvix.api.TranscriptFormatter;
 import io.github.thoroldvix.api.TranscriptRetrievalException;
 import io.github.thoroldvix.api.YoutubeTranscriptApi;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,18 +18,21 @@ public class YouTubeTranscriptService {
     private static final Logger log = LoggerFactory.getLogger(YouTubeTranscriptService.class);
     private final TranscriptFormatter formatter;
     private final YoutubeTranscriptApi youtubeTranscriptApi;
+    private final MeterRegistry registry;
 
     public YouTubeTranscriptService() {
-        this(new TimeTextFormatter());
+        this(new TimeTextFormatter(), TranscriptApiFactory.createDefault(), null);
     }
 
-    YouTubeTranscriptService(TranscriptFormatter formatter) {
-        this(formatter, TranscriptApiFactory.createDefault());
+    @Inject
+    public YouTubeTranscriptService(MeterRegistry registry) {
+        this(new TimeTextFormatter(), TranscriptApiFactory.createDefault(), registry);
     }
 
-    YouTubeTranscriptService(TranscriptFormatter formatter, YoutubeTranscriptApi youtubeTranscriptApi) {
+    YouTubeTranscriptService(TranscriptFormatter formatter, YoutubeTranscriptApi youtubeTranscriptApi, MeterRegistry registry) {
         this.formatter = formatter;
         this.youtubeTranscriptApi = youtubeTranscriptApi;
+        this.registry = registry;
     }
 
     public String getTranscript(String videoId) {
@@ -34,16 +40,28 @@ public class YouTubeTranscriptService {
             log.warn("getTranscript called with a null or blank video ID.");
             return "";
         }
+
+        Timer.Sample sample = (registry != null) ? Timer.start(registry) : null;
         try {
             TranscriptContent transcriptContent = youtubeTranscriptApi.listTranscripts(videoId)
                     .findTranscript()
                     .fetch();
 
-            return formatter.format(transcriptContent);
+            String result = formatter.format(transcriptContent);
+            if (sample != null) {
+                sample.stop(registry.timer("povzetkar_transcript_duration_seconds"));
+            }
+            return result;
         } catch (IllegalArgumentException e) {
+            if (registry != null) {
+                registry.counter("povzetkar_transcript_service_failed_total", "error_type", "invalid_format").increment();
+            }
             log.warn("The provided video ID '{}' has an invalid format.", videoId, e);
             return "";
         } catch (TranscriptRetrievalException e) {
+            if (registry != null) {
+                registry.counter("povzetkar_transcript_service_failed_total", "error_type", "retrieval_exception").increment();
+            }
             log.error("Could not retrieve transcript for video ID '{}'. The video may be unavailable or private.", videoId, e);
             return "";
         }

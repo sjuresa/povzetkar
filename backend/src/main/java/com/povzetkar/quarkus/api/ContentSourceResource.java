@@ -14,6 +14,8 @@ import com.povzetkar.quarkus.service.ContentSourceDetailService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -67,14 +69,17 @@ public class ContentSourceResource extends BaseApiResource {
     
     private final ContentSourceDetailService contentSourceDetailService;
     private final ContentSourceMapper contentSourceMapper;
+    private final MeterRegistry registry;
 
     @Inject
     public ContentSourceResource(ContentSourceDetailService contentSourceDetailService,
                                  ContentSourceMapper contentSourceMapper,
-                                 UserContextService userContextService) {
+                                 UserContextService userContextService,
+                                 MeterRegistry registry) {
         super(userContextService);
         this.contentSourceDetailService = contentSourceDetailService;
         this.contentSourceMapper = contentSourceMapper;
+        this.registry = registry;
     }
 
     @GET
@@ -191,6 +196,10 @@ public class ContentSourceResource extends BaseApiResource {
         contentSource.persist();
         logger.info("Created new ContentSource: {} [{}] (id: {})", contentSource.name, contentSource.sourceIdentifier, contentSource.id);
         
+        registry.counter("povzetkar_source_added_total", 
+                Tags.of("platform", createDTO.platform()))
+                .increment();
+
         contentSourceDetailService.enrichContentSource(contentSource);
         return Response.created(URI.create("/api/v1/sources/" + contentSource.id))
                 .entity(contentSourceMapper.toDTO(contentSource))

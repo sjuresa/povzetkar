@@ -16,6 +16,9 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
 import java.time.Instant;
@@ -33,6 +36,7 @@ public class OrchestrationManager {
     private static final StructuredLogger logger = StructuredLogger.getLogger(OrchestrationManager.class);
     private static final String ORCHESTRATION_PREVIEW = "orchestration_preview";
     public static final String ORCHESTRATION_MANUAL_TOPIC = "orchestration_manual_topic";
+    private static final String TOPIC_ID = "topicId";
 
     private final OrchestrationLockService orchestrationLockService;
     private final TopicProcessor topicProcessor;
@@ -40,6 +44,8 @@ public class OrchestrationManager {
     private final ManagedExecutor managedExecutor;
     private final JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
     private final EventBroadcaster eventBroadcaster;
+    private final MeterRegistry registry;
+    private final AtomicInteger activeOrchestrations = new AtomicInteger(0);
 
     @Inject
     public OrchestrationManager(OrchestrationLockService orchestrationLockService,
@@ -47,13 +53,18 @@ public class OrchestrationManager {
                                 BriefingService briefingService,
                                 ManagedExecutor managedExecutor,
                                 JustInTimeSummarizationScheduler justInTimeSummarizationScheduler,
-                                EventBroadcaster eventBroadcaster) {
+                                EventBroadcaster eventBroadcaster,
+                                MeterRegistry registry) {
         this.orchestrationLockService = orchestrationLockService;
         this.topicProcessor = topicProcessor;
         this.briefingService = briefingService;
         this.managedExecutor = managedExecutor;
         this.justInTimeSummarizationScheduler = justInTimeSummarizationScheduler;
         this.eventBroadcaster = eventBroadcaster;
+        this.registry = registry;
+        
+        // Register the gauge
+        this.registry.gauge("povzetkar_active_orchestrations_current", activeOrchestrations);
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
@@ -64,7 +75,9 @@ public class OrchestrationManager {
             MESSAGE, "Scheduled content orchestration triggered."
         );
         // Scheduled runs should always process pending items and new content.
-        return executeSummarizationStepForDate(LocalDate.now(), true, true, null);
+        activeOrchestrations.incrementAndGet();
+        return executeSummarizationStepForDate(LocalDate.now(), true, true, null)
+                .onTermination().invoke(activeOrchestrations::decrementAndGet);
     }
 
     public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {
@@ -87,7 +100,7 @@ public class OrchestrationManager {
             SUMMARIZE, request.summarize(),
             CREATE_BRIEFING, request.createBriefing(),
             "previewOnly", request.previewOnly(),
-            "topicId", request.topicId(),
+            TOPIC_ID, request.topicId(),
             MESSAGE, "Manual orchestration triggered."
         );
 
@@ -95,6 +108,7 @@ public class OrchestrationManager {
             return runOrchestrationPreview(request);
         }
 
+        activeOrchestrations.incrementAndGet();
         Uni<Void> summarizationTask;
         if (request.processPending() || request.summarize()) {
             List<Uni<Void>> dailySummarizationTasks = actualStartDate.datesUntil(actualEndDate.plusDays(1))
@@ -147,6 +161,7 @@ public class OrchestrationManager {
             END_DATE, actualEndDate,
             MESSAGE, "Manual orchestration failed unexpectedly"
         ))
+        .onTermination().invoke(activeOrchestrations::decrementAndGet)
         .replaceWithVoid();
     }
 
@@ -353,7 +368,7 @@ public class OrchestrationManager {
             ACTION, PENDING_ITEMS,
             STATUS, STARTED,
             DATE, orchestrationDate,
-            "topicId", topicId,
+            TOPIC_ID, topicId,
             MESSAGE, "Checking for content items to retry or pending from previous runs."
         );
         return processPendingAndRetryItemsByPage(orchestrationDate, topicId, 0);
@@ -375,7 +390,7 @@ public class OrchestrationManager {
         params.put("start", orchestrationDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
         params.put("end", orchestrationDate.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
         if (topicId != null) {
-            params.put("topicId", topicId);
+            params.put(TOPIC_ID, topicId);
         }
 
         return Uni.createFrom().item(() -> ContentItem.<ContentItem>find(query, params)
@@ -424,7 +439,7 @@ public class OrchestrationManager {
             ACTION, BRIEFING_GENERATION,
             STATUS, STARTED,
             DATE, briefingDate,
-            "topicId", topicId,
+            TOPIC_ID, topicId,
             MESSAGE, "Starting parallel briefing generation for topics."
         );
         List<User> activeUsers = User.listAllActive();
@@ -459,12 +474,15 @@ public class OrchestrationManager {
                     DATE, briefingDate,
                     MESSAGE, "Finished parallel briefing generation for all topics."
                 ))
-                .onFailure().invoke(ex -> logger.error(ex,
-                    ACTION, BRIEFING_GENERATION,
-                    STATUS, FAILED,
-                    DATE, briefingDate,
-                    MESSAGE, "Parallel briefing generation failed unexpectedly"
-                ));
+                .onFailure().invoke(ex -> {
+                    registry.counter("povzetkar_briefing_generation_failed_total").increment();
+                    logger.error(ex,
+                        ACTION, BRIEFING_GENERATION,
+                        STATUS, FAILED,
+                        DATE, briefingDate,
+                        MESSAGE, "Parallel briefing generation failed unexpectedly"
+                    );
+                });
     }
 
     public Uni<Void> generateBriefingForTopicUni(Long topicId, LocalDate briefingDate) {
@@ -477,7 +495,7 @@ public class OrchestrationManager {
                         ACTION, BRIEFING_GENERATION,
                         STATUS, SKIPPED,
                         REASON, "topic_not_found",
-                        "topicId", topicId,
+                        TOPIC_ID, topicId,
                         MESSAGE, "Topic not found for briefing generation.");
                     return;
                 }
@@ -516,11 +534,22 @@ public class OrchestrationManager {
                 QuarkusTransaction.requiringNew().run(
                         () -> briefingService.generateBriefing(topic, briefingDate, availableSummaries, metaSummary));
 
+                // Metric increment
+                registry.counter("povzetkar_briefing_generated_total",
+                        Tags.of("topic_id", String.valueOf(topicId),
+                                "status", "success",
+                                "user_id", topic.user != null ? String.valueOf(topic.user.id) : "unknown"))
+                        .increment();
+
             } catch (Exception e) {
+                registry.counter("povzetkar_briefing_generated_total",
+                        Tags.of("topic_id", String.valueOf(topicId),
+                                "status", "failed"))
+                        .increment();
                 logger.error(e,
                         ACTION, BRIEFING_GENERATION,
                         STATUS, FAILED,
-                        "topicId", topicId,
+                        TOPIC_ID, topicId,
                         DATE, briefingDate,
                         MESSAGE, "An unexpected error occurred during briefing generation.");
             }
@@ -528,20 +557,21 @@ public class OrchestrationManager {
     }
 
     public Uni<Void> runSummarizationForTopicOnly(Topic topic, LocalDate date) {
+        String summarizationManualTopic = "summarization_manual_topic";
         logger.info(
-                ACTION, "summarization_manual_topic",
+                ACTION, summarizationManualTopic,
                 STATUS, STARTED,
                 TOPIC_NAME, topic.name,
                 DATE, date,
                 MESSAGE, "Manual summarization triggered for single topic.");
         return topicProcessor.processTopicUni(topic, date, true)
                 .onItem().invoke(() -> logger.info(
-                        ACTION, "summarization_manual_topic",
+                        ACTION, summarizationManualTopic,
                         STATUS, FINISHED,
                         TOPIC_NAME, topic.name,
                         MESSAGE, "Manual summarization finished for single topic."))
                 .onFailure().invoke(ex -> logger.error(ex,
-                        ACTION, "summarization_manual_topic",
+                        ACTION, summarizationManualTopic,
                         STATUS, FAILED,
                         TOPIC_NAME, topic.name,
                         MESSAGE, "Manual summarization failed unexpectedly for single topic."));

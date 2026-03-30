@@ -61,6 +61,16 @@ Object[] result = (Object[]) em.createNativeQuery(
 - **The Trap:** Persisting audit logs or job audit trails within the same transaction as the main business logic. If the business transaction rolls back (e.g., due to a constraint violation), the audit record is also lost, leaving no trace of the failure.
 - **The Standard:** Always wrap persistence of audit records (API audits, job execution audits) in **`QuarkusTransaction.requiringNew()`**. This ensures the audit record is committed independently of the success or failure of the main operation, providing a reliable diagnostic trail.
 
+### 1.7 Docker Project-Based Volume Prefixes
+- **The Trap:** When moving a `docker-compose.yml` to a different directory (e.g., from root to `/backend`), Docker Compose automatically changes the project name (and thus the volume prefix) from `povzetkar_` to `backend_`. This causes the application to start with a fresh, empty volume even if the original data still exists in the old volume.
+- **The Standard:** When strict data continuity is required across directory shifts, explicitly define the volume name and set it to `external: true` in `docker-compose.yml`. Use descriptive names like `povzetkar_postgres_dev_data` instead of relative names that rely on folder-based prefixes.
+   ```yaml
+   volumes:
+     postgres_dev_data:
+       external: true
+       name: povzetkar_postgres_dev_data
+   ```
+
 ---
 
 ## 2. API Design & Consistency
