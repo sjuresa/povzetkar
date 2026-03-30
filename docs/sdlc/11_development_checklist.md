@@ -18,7 +18,7 @@ This document provides a comprehensive checklist for our development process. It
     - [ ] Include **UI/UX Discovery (Skeletons)**: For all UI tasks, define the layout grid and element placement using **ASCII Wireframes**.
     - [ ] Include **API & Dependency Audit**: Check status of external services (e.g., YouTube API) and library security *before* planning implementation.
 - [ ] **1.6. Define Use Cases & Test Cases**: 
-    - [ ] For all user-facing or complex features, create/update `docs/analysis/use_cases.md` to map User Stories to concrete interaction flows.
+    - [ ] For all user-facing or complex features, create/update `docs/analysis/use_cases.md` to map **User Story IDs (US-X)** to concrete interaction flows.
     - [ ] Update **`docs/analysis/test_specification.md`** (Master Suite). Map every new Use Case to at least one Test Case (TC) and define the testing methodology (Manual, Unit, Playwright).
 - [ ] **1.7. Create Task Breakdown**: Create a new `docs/versions/vX.Y-tasks.md` file.
     - [ ] Include a **Time Estimation Summary** with per-task estimates and contingency.
@@ -66,6 +66,8 @@ This document provides a comprehensive checklist for our development process. It
     - **Decide:**
         -   If **both** answers are YES: Pause, discuss, and agree to update the current version's task plan (`*-tasks.md`) to include the fix.
         -   If **either** answer is NO: Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
+ 
+- [ ] **2.11. Master Specification Sync**: Verify that the task's final outcome (feature or logic fix) is accurately reflected in `docs/analysis/test_specification.md`. Ensure all new P0 Test Cases are marked for automation within one version.
 
 ## Phase 3: Version Finalization
 
@@ -99,6 +101,7 @@ This document provides a comprehensive checklist for our development process. It
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 2.3     | March 30, 2026   | Povzetkar AI | Mandated Master Spec Sync (2.11) and US->UC Traceability (1.6) for Operational Excellence. |
 | 2.2     | March 28, 2026   | Povzetkar AI | Mandated ASCII Wireframes (1.5), Resilience Analysis (1.7), and Dependency Audits (1.11). |
 | 2.1     | March 28, 2026   | Povzetkar AI | Mandated Master Test Suite (1.6), P-levels/Skill Mapping (1.7), and Expert Review (1.11). |
 | 2.0     | March 28, 2026   | Povzetkar AI | Integrated `update-version.cjs` for monorepo version synchronization (Phase 1 & Phase 3). |
