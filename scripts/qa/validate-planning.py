@@ -78,7 +78,7 @@ class PlanningValidator:
         # Format: | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
         lines = content.splitlines()
         for line in lines:
-            match = re.match(r'^\s*\|\s*\*\*?(TC-[A-Z]+-\d+)\*\*?\s*\|', line)
+            match = re.match(r'^\s*\|\s*\**?(TC-[A-Z]+-\d+)\**?\s*\|', line)
             if match:
                 tc_id = match.group(1)
                 parts = [p.strip() for p in line.split('|')]
