@@ -82,7 +82,7 @@ class PlanningValidator:
                 if len(parts) >= 7:
                     # parts[0] is empty because of leading |
                     tc_id = parts[1].replace('**', '')
-                    priority = parts[2]
+                    priority = parts[2].replace('**', '')
                     related_uc = parts[3]
                     version = parts[4].strip('[]')
                     name = parts[5]
@@ -99,11 +99,7 @@ class PlanningValidator:
 
     def parse_tasks(self):
         glob_pattern = self.config['docs']['tasks_glob']
-        # Extract directory and pattern
-        glob_pattern.split('/')[0]
-        file_part = glob_pattern.split('/')[-1]
-        
-        task_files = list((self.root / "docs/versions").glob(file_part))
+        task_files = list(self.root.glob(glob_pattern))
         
         for task_file in task_files:
             content = task_file.read_text(encoding='utf-8')
