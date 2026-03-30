@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.api.OrchestrationRequest;
 import com.povzetkar.quarkus.api.dto.SseEventDTO;
+import com.povzetkar.quarkus.exception.BriefingGenerationException;
 import com.povzetkar.quarkus.exception.CircuitBreakerOpenException;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
@@ -37,6 +38,7 @@ public class OrchestrationManager {
     private static final String ORCHESTRATION_PREVIEW = "orchestration_preview";
     public static final String ORCHESTRATION_MANUAL_TOPIC = "orchestration_manual_topic";
     private static final String TOPIC_ID = "topicId";
+    private static final String TAG_TOPIC_ID = "topic_id";
     private static final String SUMMARIZATION_MANUAL_TOPIC = "summarization_manual_topic";
 
     private final OrchestrationLockService orchestrationLockService;
@@ -156,7 +158,7 @@ public class OrchestrationManager {
         })
         .onItem().invoke(() -> eventBroadcaster.broadcast(SseEventDTO.of("ORCHESTRATION_COMPLETED", "Manual orchestration finished successfully.")))
         .onFailure().invoke(ex -> {
-            registry.counter("povzetkar_orchestration_failed_total", Tags.of("topic_id", request.topicId() != null ? String.valueOf(request.topicId()) : "all")).increment();
+            registry.counter("povzetkar_orchestration_failed_total", Tags.of(TAG_TOPIC_ID, request.topicId() != null ? String.valueOf(request.topicId()) : "all")).increment();
             logger.error(ex,
                 ACTION, ORCHESTRATION_MANUAL,
                 STATUS, FAILED,
@@ -543,7 +545,7 @@ public class OrchestrationManager {
 
                 // Metric increment
                 registry.counter("povzetkar_briefing_generated_total",
-                        Tags.of("topic_id", String.valueOf(topicId),
+                        Tags.of(TAG_TOPIC_ID, String.valueOf(topicId),
                                 "status", "success",
                                 "user_id", topic.user != null ? String.valueOf(topic.user.id) : "unknown"))
                         .increment();
@@ -551,7 +553,7 @@ public class OrchestrationManager {
             } catch (Exception e) {
                 String userIdTag = (topic != null && topic.user != null) ? String.valueOf(topic.user.id) : "unknown";
                 registry.counter("povzetkar_briefing_generated_total",
-                        Tags.of("topic_id", String.valueOf(topicId),
+                        Tags.of(TAG_TOPIC_ID, String.valueOf(topicId),
                                 "status", "failed",
                                 "user_id", userIdTag))
                         .increment();
@@ -561,6 +563,7 @@ public class OrchestrationManager {
                         TOPIC_ID, topicId,
                         DATE, briefingDate,
                         MESSAGE, "An unexpected error occurred during briefing generation.");
+                throw new BriefingGenerationException("Failed to generate briefing for topic: " + topicId, e);
             }
         }));
     }

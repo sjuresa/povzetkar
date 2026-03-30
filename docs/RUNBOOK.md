@@ -56,7 +56,8 @@ The local database environment is managed by Docker Compose and is located in th
     GOOGLE_API_KEYS=your_google_api_keys_here
     FRONTEND_URL=http://localhost:5173
     
-    # Monitoring (Metrics Scraping Token - generate a random secret for this)
+    # Monitoring (Metrics Scraping Token - generate a random secret for this!)
+    # USE A STRONG UNIQUE SECRET IN PRODUCTION. DO NOT USE THIS PLACEHOLDER.
     METRICS_SCRAPE_TOKEN=your-strong-random-secret-here
     ```
 
@@ -273,7 +274,7 @@ The application requires several environment variables to function correctly. Th
 | `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 | `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
 | `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
-| `METRICS_SCRAPE_TOKEN`      | Prometheus scrape security token        | `povzetkar-shared-metrics-secret-2026` (fixed token for secure metric scraping)                                           |
+| `METRICS_SCRAPE_TOKEN`      | Prometheus scrape security token        | `<your-random-secret>` (Required for secure metric scraping in prod)                                           |
 
 **Docker Run Example:**
 
@@ -616,7 +617,10 @@ To prevent unauthorized access to internal metrics, the `/q/metrics` endpoint is
 
 - **Variable:** `METRICS_SCRAPE_TOKEN`
 - **Default (Dev):** Unprotected
-- **Default (Docker):** `povzetkar-shared-metrics-secret-2026`
+- **Default (Docker):** `your-random-secret` (Must be configured via .env)
+
+> [!IMPORTANT]
+> **Use a strong, unique secret.** Do not use weak or shared secrets for `METRICS_SCRAPE_TOKEN`. This token provides access to internal system metrics.
 
 **Verifying metrics access:**
 ```bash

@@ -42,7 +42,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   grafana:
-    image: grafana/grafana:11.4.0
+    image: grafana/grafana-oss:12.4.0
     container_name: povzetkar-grafana
     ports:
       - "3000:3000"
