@@ -742,7 +742,7 @@ In rapid agile development, User Stories often become disconnected from the actu
   2. **Use Case (UC-ID)**: The "How" (defined in `use_cases.md`), explicitly linked to a `US-ID`.
   3. **Test Case (TC-ID)**: The "Verify" (defined in `test_specification.md`), explicitly linked to a `UC-ID`.
   
-  This 1:1:M mapping ensures that every requirement is covered by at least one test, and every test exists to satisfy a specific user requirement.
+  This traceability chain ensures that every requirement is covered by at least one test, and every test exists to satisfy a specific user requirement.
 
 ### 33.2 Process Gates for Documentation Sync
 - **The Standard:** Documentation parity must be an **Explicit Phase 2 Gate** in the development checklist. Do not wait until the end of the release to "clean up" docs. Every task must include a "Master Specification Sync" step where new scenarios are added and old ones updated BEFORE the task is marked as complete.
