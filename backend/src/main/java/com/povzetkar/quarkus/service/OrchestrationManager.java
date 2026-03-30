@@ -37,6 +37,7 @@ public class OrchestrationManager {
     private static final String ORCHESTRATION_PREVIEW = "orchestration_preview";
     public static final String ORCHESTRATION_MANUAL_TOPIC = "orchestration_manual_topic";
     private static final String TOPIC_ID = "topicId";
+    private static final String SUMMARIZATION_MANUAL_TOPIC = "summarization_manual_topic";
 
     private final OrchestrationLockService orchestrationLockService;
     private final TopicProcessor topicProcessor;
@@ -154,13 +155,16 @@ public class OrchestrationManager {
             }
         })
         .onItem().invoke(() -> eventBroadcaster.broadcast(SseEventDTO.of("ORCHESTRATION_COMPLETED", "Manual orchestration finished successfully.")))
-        .onFailure().invoke(ex -> logger.error(ex,
-            ACTION, ORCHESTRATION_MANUAL,
-            STATUS, FAILED,
-            START_DATE, actualStartDate,
-            END_DATE, actualEndDate,
-            MESSAGE, "Manual orchestration failed unexpectedly"
-        ))
+        .onFailure().invoke(ex -> {
+            registry.counter("povzetkar_orchestration_failed_total", Tags.of("topic_id", request.topicId() != null ? String.valueOf(request.topicId()) : "all")).increment();
+            logger.error(ex,
+                ACTION, ORCHESTRATION_MANUAL,
+                STATUS, FAILED,
+                START_DATE, actualStartDate,
+                END_DATE, actualEndDate,
+                MESSAGE, "Manual orchestration failed unexpectedly"
+            );
+        })
         .onTermination().invoke(activeOrchestrations::decrementAndGet)
         .replaceWithVoid();
     }
@@ -487,9 +491,11 @@ public class OrchestrationManager {
 
     public Uni<Void> generateBriefingForTopicUni(Long topicId, LocalDate briefingDate) {
         return Uni.createFrom().completionStage(managedExecutor.runAsync(() -> {
+            Topic topic = null;
             try {
                 // Step 1: Read data in a transaction
-                Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(topicId));
+                topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(topicId));
+                
                 if (topic == null) {
                     logger.warn(
                         ACTION, BRIEFING_GENERATION,
@@ -528,11 +534,12 @@ public class OrchestrationManager {
                         TOPIC_NAME, topic.name,
                         DATE, briefingDate,
                         MESSAGE, "Briefing needs to be regenerated. Generating meta-summary.");
-                String metaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
 
+                final String finalMetaSummary = briefingService.getMetaSummaryFromAI(topic, availableSummaries, briefingDate);
+                final Topic finalTopicToPersist = topic;
                 // Step 3: Write data in a new transaction
                 QuarkusTransaction.requiringNew().run(
-                        () -> briefingService.generateBriefing(topic, briefingDate, availableSummaries, metaSummary));
+                        () -> briefingService.generateBriefing(finalTopicToPersist, briefingDate, availableSummaries, finalMetaSummary));
 
                 // Metric increment
                 registry.counter("povzetkar_briefing_generated_total",
@@ -542,10 +549,11 @@ public class OrchestrationManager {
                         .increment();
 
             } catch (Exception e) {
+                String userIdTag = (topic != null && topic.user != null) ? String.valueOf(topic.user.id) : "unknown";
                 registry.counter("povzetkar_briefing_generated_total",
                         Tags.of("topic_id", String.valueOf(topicId),
                                 "status", "failed",
-                                "user_id", "unknown"))
+                                "user_id", userIdTag))
                         .increment();
                 logger.error(e,
                         ACTION, BRIEFING_GENERATION,
@@ -558,21 +566,20 @@ public class OrchestrationManager {
     }
 
     public Uni<Void> runSummarizationForTopicOnly(Topic topic, LocalDate date) {
-        String summarizationManualTopic = "summarization_manual_topic";
         logger.info(
-                ACTION, summarizationManualTopic,
+                ACTION, SUMMARIZATION_MANUAL_TOPIC,
                 STATUS, STARTED,
                 TOPIC_NAME, topic.name,
                 DATE, date,
                 MESSAGE, "Manual summarization triggered for single topic.");
         return topicProcessor.processTopicUni(topic, date, true)
                 .onItem().invoke(() -> logger.info(
-                        ACTION, summarizationManualTopic,
+                        ACTION, SUMMARIZATION_MANUAL_TOPIC,
                         STATUS, FINISHED,
                         TOPIC_NAME, topic.name,
                         MESSAGE, "Manual summarization finished for single topic."))
                 .onFailure().invoke(ex -> logger.error(ex,
-                        ACTION, summarizationManualTopic,
+                        ACTION, SUMMARIZATION_MANUAL_TOPIC,
                         STATUS, FAILED,
                         TOPIC_NAME, topic.name,
                         MESSAGE, "Manual summarization failed unexpectedly for single topic."));

@@ -641,11 +641,12 @@ Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard, which tra
 ### 13.4 Custom Business Metrics
 
 All custom Povzetkar metrics use the `povzetkar_` prefix:
-- `povzetkar_briefing_generation_total`: Counter for successful briefings.
-- `povzetkar_briefing_generation_failed_total`: Counter for failed briefings.
+- `povzetkar_briefing_generated_total`: Counter for success/failed briefings (with `status="success|failed"`, `topic_id`, `user_id` tags).
 - `povzetkar_active_orchestrations_current`: Gauge for active threads.
+- `povzetkar_source_added_total`: Counter for content sources added (with `platform` tag).
 - `povzetkar_youtube_validation_failed_total`: Counter for source intake errors.
 - `povzetkar_transcript_retrieval_duration_seconds`: Timer for transcript fetching.
+- `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
 
 ## 14. API Response Structure (Envelopes)
 

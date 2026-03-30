@@ -44,7 +44,7 @@ public class YouTubeTranscriptService {
                     .fetch();
 
             String result = formatter.format(transcriptContent);
-            sample.stop(registry.timer("povzetkar_transcript_duration_seconds"));
+            sample.stop(registry.timer("povzetkar_transcript_retrieval_duration_seconds"));
             return result;
         } catch (IllegalArgumentException e) {
             registry.counter("povzetkar_transcript_service_failed_total", "error_type", "invalid_format").increment();

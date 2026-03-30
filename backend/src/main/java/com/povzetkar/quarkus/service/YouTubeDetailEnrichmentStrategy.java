@@ -98,7 +98,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     private Optional<ContentSourceDetailService.ContentSourceDetails> doFetchDetails(String input) {
         String resolved = resolveIdentifier(input);
         if (resolved == null) {
-            registry.counter("povzetkar_source_validation_failed_total", Tags.of("error_type", "unresolved_identifier")).increment();
+            registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", "unresolved_identifier")).increment();
             logger.warn("Could not resolve YouTube identifier from input: {}", input);
             return Optional.empty();
         }
@@ -116,7 +116,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             }
 
             if (channelOpt.isEmpty()) {
-                registry.counter("povzetkar_source_validation_failed_total", Tags.of("error_type", "channel_not_found")).increment();
+                registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", "channel_not_found")).increment();
                 logger.warn("Channel not found for resolved identifier: {}", resolved);
                 return Optional.empty();
             }
@@ -124,7 +124,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             return Optional.of(extractContentSourceDetails(channelOpt.get()));
 
         } catch (IOException e) {
-            registry.counter("povzetkar_source_validation_failed_total", Tags.of("error_type", "io_exception")).increment();
+            registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", "io_exception")).increment();
             logger.error("Failed to fetch details for identifier: {}", resolved, e);
             return Optional.empty();
         }
