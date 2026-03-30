@@ -19,7 +19,9 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### Backend & Architecture
 
-*   **Job Audit Cleanup:** (Moved to v0.15.0 - POV-165) Implement a separate cleanup task for `JobExecutionAudit` records using a 90-day retention policy.
+*   **Job Audit Cleanup:** (Completed in v0.15.0 - POV-165) Implement a separate cleanup task for `JobExecutionAudit` records using a 90-day retention policy.
+*   **Job Retention Policy for `background_jobs` table:** (POV-165 follow-up) Implement a similar retention policy (e.g., 30 days) for the `background_jobs` table itself to prevent historical bloat.
+*   **Dynamic Cron Scheduling:** (Backlog) Allow administrators to configure maintenance cron expressions via UI/API without requiring application restarts.
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
 *   **Content Deduplication Engine:** Basic hash-based or semantic deduplication of sources (Deferred from v0.12).
 *   **GenAI Rate Limiting (TPM/RPM):** Advanced token-per-minute and request-per-minute management for GenAI providers (Deferred from v0.12).

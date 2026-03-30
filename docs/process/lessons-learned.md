@@ -707,3 +707,11 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### 31.4 Defensive Source Entry (Debounced Presence Check)
 - **The Trap:** Allowing users to submit complex external identifiers (e.g., YouTube Channel IDs or URLs) without checking if they exist. This causes downstream failures (404s) in background enrichment jobs that are expensive to retry and difficult to report back to the user asynchronously.
 - **The Standard:** Implement a **Live existence check** in the "Add Source" dialog. Using a debounced input handler that calls the external API (YouTube Data API v3) *before* the user hits "Add" provides immediate feedback and prevents dirtying the database with dead references.
+### 1.8 Chunked Data Deletion (Retention)
+- **The Trap:** Attempting to delete a large volume of historical data (e.g., "Initial Big Cleanup") in a single transaction. This can cause the transaction to time out, exhaust the database's undo logs, or hold exclusive locks on the table for an extended period, blocking other operations.
+- **The Standard:** Always implement mass deletions using a **chunked, multi-transactional loop**. 
+  1. Retrieve a limited set of IDs (e.g., 1,000) for records that meet the deletion criteria.
+  2. Delete exactly those IDs in a new, independent transaction (`QuarkusTransaction.requiringNew()`).
+  3. Repeat until no more records match. 
+  
+  This ensures that each chunk is committed independently, and the database remains responsive. Since `DELETE ... LIMIT` is not standard across all SQL dialects (like PostgreSQL), use a two-step `SELECT id ... LIMIT X` followed by `DELETE ... WHERE id IN (...)` for a portable and performant implementation in Hibernate.

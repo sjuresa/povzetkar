@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -80,6 +81,34 @@ public class JobExecutionAudit extends PanacheEntityBase {
             }
 
             audit.persist();
+        });
+    }
+
+    /**
+     * Deletes a chunk of audit records older than the specified cutoff.
+     * Uses a two-step pattern to implement chunking:
+     * 1. Retrieve IDs of the oldest 'limit' records.
+     * 2. Delete those specific records by ID.
+     *
+     * @param cutoff The timestamp before which records should be deleted.
+     * @param limit The maximum number of records to delete in this chunk.
+     * @return The number of records actually deleted.
+     */
+    public static long deleteOldestChunk(Instant cutoff, int limit) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            // Step 1: Get the paged IDs (Oldest first)
+            List<Long> ids = getEntityManager()
+                .createQuery("SELECT e.id FROM JobExecutionAudit e WHERE e.createdAt < :cutoff ORDER BY e.createdAt ASC", Long.class)
+                .setParameter("cutoff", cutoff)
+                .setMaxResults(limit)
+                .getResultList();
+
+            if (ids.isEmpty()) {
+                return 0L;
+            }
+
+            // Step 2: Delete specifically those IDs
+            return delete("id IN ?1", ids);
         });
     }
 

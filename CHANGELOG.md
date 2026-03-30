@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
 
 ### Added
+- **Operational Maintenance (POV-165):** Implemented a 90-day retention policy for `JobExecutionAudit` records. The system now performs a "Safety-First" chunked deletion (1,000 records per transaction) daily at 03:00 UTC, preventing database performance degradation from historical log accumulation.
+- **Observability (POV-165):** Integrated Prometheus metrics for the retention job, exposing `povzetkar_maintenance_audits_purged_total` to track long-term data hygiene.
+- **Frontend Infrastructure (POV-165):** Upgraded the frontend build environment to **Node 24 LTS** and updated `@types/node` to `^24.0.0`, ensuring compatibility with the latest runtime and improved build-time type safety.
 - **Briefing Library (POV-161):** Implemented a searchable, filterable **Briefing Library** page (`/briefings`), replacing the previous placeholder. Users can now search briefings by keyword, filter by Topic, Source, or Date Range, and paginate through their complete briefing archive.
 - **Backend (POV-161):** Extended `GET /api/v1/briefings` with `search` (LIKE on title/metaSummary) and `sourceId` (EXISTS subquery) query parameters for advanced filtering.
 - **Briefing Detail (POV-161):** Implemented the **Briefing Detail** page (`/briefings/{id}`) with full markdown rendering of AI-generated briefing text, a highlighted Executive Summary card, and a Source Content grid displaying analyzed content items with thumbnails and external links.
