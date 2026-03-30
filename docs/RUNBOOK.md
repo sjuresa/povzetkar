@@ -56,8 +56,8 @@ The local database environment is managed by Docker Compose and is located in th
     GOOGLE_API_KEYS=your_google_api_keys_here
     FRONTEND_URL=http://localhost:5173
     
-    # Monitoring (Metrics Scraping Token)
-    METRICS_SCRAPE_TOKEN=povzetkar-shared-metrics-secret-2026
+    # Monitoring (Metrics Scraping Token - generate a random secret for this)
+    METRICS_SCRAPE_TOKEN=your-strong-random-secret-here
     ```
 
     **Frontend (`frontend/.env`):**

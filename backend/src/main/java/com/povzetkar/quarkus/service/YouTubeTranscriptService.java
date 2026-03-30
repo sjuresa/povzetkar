@@ -37,27 +37,21 @@ public class YouTubeTranscriptService {
             return "";
         }
 
-        Timer.Sample sample = (registry != null) ? Timer.start(registry) : null;
+        Timer.Sample sample = Timer.start(registry);
         try {
             TranscriptContent transcriptContent = youtubeTranscriptApi.listTranscripts(videoId)
                     .findTranscript()
                     .fetch();
 
             String result = formatter.format(transcriptContent);
-            if (sample != null) {
-                sample.stop(registry.timer("povzetkar_transcript_duration_seconds"));
-            }
+            sample.stop(registry.timer("povzetkar_transcript_duration_seconds"));
             return result;
         } catch (IllegalArgumentException e) {
-            if (registry != null) {
-                registry.counter("povzetkar_transcript_service_failed_total", "error_type", "invalid_format").increment();
-            }
+            registry.counter("povzetkar_transcript_service_failed_total", "error_type", "invalid_format").increment();
             log.warn("The provided video ID '{}' has an invalid format.", videoId, e);
             return "";
         } catch (TranscriptRetrievalException e) {
-            if (registry != null) {
-                registry.counter("povzetkar_transcript_service_failed_total", "error_type", "retrieval_exception").increment();
-            }
+            registry.counter("povzetkar_transcript_service_failed_total", "error_type", "retrieval_exception").increment();
             log.error("Could not retrieve transcript for video ID '{}'. The video may be unavailable or private.", videoId, e);
             return "";
         }

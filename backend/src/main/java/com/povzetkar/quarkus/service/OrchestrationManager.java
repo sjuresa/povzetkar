@@ -10,15 +10,14 @@ import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.util.StructuredLogger;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
 import java.time.Instant;
@@ -26,6 +25,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.povzetkar.quarkus.util.LogKeys.*;
@@ -544,7 +544,8 @@ public class OrchestrationManager {
             } catch (Exception e) {
                 registry.counter("povzetkar_briefing_generated_total",
                         Tags.of("topic_id", String.valueOf(topicId),
-                                "status", "failed"))
+                                "status", "failed",
+                                "user_id", "unknown"))
                         .increment();
                 logger.error(e,
                         ACTION, BRIEFING_GENERATION,
