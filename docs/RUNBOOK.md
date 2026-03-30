@@ -1,22 +1,21 @@
 # Povzetkar Runbook
 
-**Version:** 2.0
-
-## Revision History
-| Version | Date               | Author       | Changes                                                                 |
-|---------|--------------------|--------------|-------------------------------------------------------------------------|
-| 2.2     | March 16, 2026     | Povzetkar AI | Added Documentation for FRONTEND_URL and Open Redirect protection. |
-| 2.1     | March 14, 2026     | Povzetkar AI | Updated for Monorepo, Frontend Initialization (POV-136), and Vite 8. |
-| 2.0     | March 13, 2026     | Povzetkar AI | Added documentation for Task 17 (SSE Stream) and Task 18 (Admin/Audit). |
-| 1.9     | March 13, 2026     | Povzetkar AI | Added documentation for Idempotency, Optimistic Locking, SSE, and Envelopes. |
-| 1.8     | March 13, 2026     | Povzetkar AI | Added documentation for Correlation IDs, Audit Logs, and Metrics.       |
-| 1.7     | January 22, 2026   | Povzetkar AI | Added documentation for admin history pagination configuration.         |
-| 1.6     | January 18, 2026   | Povzetkar AI | Added instructions for containerized execution (Docker/Podman).         |
-| 1.5     | January 13, 2026   | Povzetkar AI | Updated manual orchestration instructions for v0.7.0 granular controls. |
-| 1.4     | November 1, 2025   | Povzetkar AI | Updated for v0.6: removed legacy app, simplified run instructions.      |
-| 1.2     | September 17, 2025 | Povzetkar AI | Added instructions for Content Source Management.                       |
-| 1.1     | September 17, 2025 | Povzetkar AI | Added instructions for verifying the pgvector extension.                |
-| 1.0     | August 16, 2025    | Povzetkar AI | Initial version based on the upcoming Quarkus multi-module project.     |
+## Table of Contents
+- [1. Introduction](#1-introduction)
+- [2. Prerequisites](#2-prerequisites)
+- [3. Local Environment Setup](#3-local-environment-setup)
+- [4. Resetting the Local Database](#4-resetting-the-local-database)
+- [5. Verifying Database State](#5-verifying-database-state)
+- [6. Running the Application](#6-running-the-application)
+- [7. Running Tests](#7-running-tests)
+- [8. Security & Code Quality](#8-security-code-quality)
+- [9. Containerized Execution (Docker/Podman)](#9-containerized-execution-dockerpodman)
+- [10. Application Usage](#10-application-usage)
+- [11. Compliance & Monitoring](#11-compliance-monitoring)
+- [12. Real-Time Event Stream (SSE)](#12-real-time-event-stream-sse)
+- [13. Monitoring & Observability](#13-monitoring-observability)
+- [14. API Response Structure (Envelopes)](#14-api-response-structure-envelopes)
+- [15. Secrets Management](#15-secrets-management)
 
 ## 1. Introduction
 
@@ -56,6 +55,10 @@ The local database environment is managed by Docker Compose and is located in th
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
     FRONTEND_URL=http://localhost:5173
+    
+    # Monitoring (Metrics Scraping Token - generate a random secret for this!)
+    # USE A STRONG UNIQUE SECRET IN PRODUCTION. DO NOT USE THIS PLACEHOLDER.
+    METRICS_SCRAPE_TOKEN=your-strong-random-secret-here
     ```
 
     **Frontend (`frontend/.env`):**
@@ -271,6 +274,7 @@ The application requires several environment variables to function correctly. Th
 | `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 | `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
 | `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
+| `METRICS_SCRAPE_TOKEN`      | Prometheus scrape security token        | `<your-random-secret>` (Required for secure metric scraping in prod)                                           |
 
 **Docker Run Example:**
 
@@ -597,7 +601,58 @@ The application provides a centralized **Server-Sent Events (SSE)** endpoint for
     curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events/stream
     ```
 
-## 13. API Response Structure (Envelopes)
+## 13. Monitoring & Observability
+
+Povzetkar v0.15.0+ includes a built-in monitoring stack based on **Micrometer**, **Prometheus**, and **Grafana**.
+
+### 13.1 Infrastructure Overview
+
+The monitoring infrastructure is defined in `backend/docker-compose.yml`:
+- **Prometheus**: Scrapes metrics from the Quarkus application.
+- **Grafana**: Visualizes metrics via pre-provisioned dashboards.
+
+### 13.2 Metrics Scrape Security
+
+To prevent unauthorized access to internal metrics, the `/q/metrics` endpoint is protected by a fixed Bearer Token in production.
+
+- **Variable:** `METRICS_SCRAPE_TOKEN`
+- **Default (Dev):** Unprotected
+- **Default (Docker):** `your-random-secret` (Must be configured via .env)
+
+> [!IMPORTANT]
+> **Use a strong, unique secret.** Do not use weak or shared secrets for `METRICS_SCRAPE_TOKEN`. This token provides access to internal system metrics.
+
+**Verifying metrics access:**
+```bash
+# This should return 401 Unauthorized in production settings
+curl -I http://localhost:8080/q/metrics
+
+# This should return 200 OK with Prometheus formatted metrics
+curl -H "Authorization: Bearer <your_token>" http://localhost:8080/q/metrics
+```
+
+### 13.3 Dashboards-as-Code
+
+Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard, which tracks:
+- **Briefing Health**: Success vs. Failure rates.
+- **System Load**: Active orchestration threads.
+- **Ingestion Success**: Content source creation and YouTube API errors.
+
+**Accessing Grafana:**
+- **URL**: `http://localhost:3000`
+- **Default Credentials**: `admin` / `admin` (change on first login).
+
+### 13.4 Custom Business Metrics
+
+All custom Povzetkar metrics use the `povzetkar_` prefix:
+- `povzetkar_briefing_generated_total`: Counter for success/failed briefings (with `status="success|failed"`, `topic_id`, `user_id` tags).
+- `povzetkar_active_orchestrations_current`: Gauge for active threads.
+- `povzetkar_source_added_total`: Counter for content sources added (with `platform` tag).
+- `povzetkar_youtube_validation_failed_total`: Counter for source intake errors.
+- `povzetkar_transcript_retrieval_duration_seconds`: Timer for transcript fetching.
+- `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
+
+## 14. API Response Structure (Envelopes)
 
 All REST API responses (except for special streams like SSE) are wrapped in a standard **JSON Envelope** to ensure consistency across the platform.
 

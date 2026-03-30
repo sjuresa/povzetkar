@@ -21,7 +21,11 @@ Work for the next release (v0.15.0) is focused on **Operational Excellence and A
 - **SEO (POV-162):** Integrated `react-helmet-async` for dynamic SEO and OpenGraph metadata on shared briefings, ensuring rich previews (title/summary) when shared on social media or Slack.
 - **Source Validation (POV-163):** Implemented a live, debounced existence check for YouTube channels in the `QuickSourceIntake` component. This prevents invalid sources from being added by performing real-time API validation against the YouTube Data API.
 - **Quality Hardening (POV-163):** Achieved 100% compliance with strict quality audits, resolving issues in heading hierarchy, image accessibility (alt-tags), and unhandled asynchronous promises (`no-floating-promises`).
-- **E2E Stability (POV-163):** Performed a major cleanup of outdated and unstable Playwright E2E tests to restore CI build reliability.
+- **Observability (POV-164):** Integrated a full **Prometheus & Grafana** monitoring stack into the local development environment (`backend/docker-compose.yml`).
+- **Backend Instrumentation (POV-164):** Instrumented core services (`OrchestrationManager`, `YouTubeTranscriptService`, `ContentSourceResource`) with Micrometer-based metrics (summarization rates, failure counters, active thread gauges).
+- **Security (POV-164):** Implemented a secure Bearer Token authentication mechanism (`METRICS_SCRAPE_TOKEN`) for the `/q/metrics` endpoint, ensuring that sensitive performance data is not exposed to unauthorized pollers.
+- **Visual Excellence (POV-164):** Developed the **"Povzetkar Baseline" Grafana Dashboard** with real-time throughput tracking, failure distribution, and active orchestration gauges, utilizing automated provisioning (Dashboards-as-Code).
+- **Documentation (POV-164):** Fully documented the monitoring infrastructure, secret management, and verification procedures in `docs/RUNBOOK.md`.
 
 ## [0.14.0] - 2026-03-28
 
