@@ -85,7 +85,7 @@
 
 ## 9. Automation Status (Playwright Repository)
 
-| Scenario ID | Name | TC Reference | Status |
+| Scenario ID | Name | TC Reference | Automation Status |
 |:---|:---|:---|:---|
 | **PW-001** | Auth Guard Redirect | TC-SEC-003, TC-GRX-004 | **Implemented** (v0.14) |
 | **PW-002** | Brand & Title Smoke | TC-UI-001, TC-UI-002 | **Implemented** (v0.14) |
