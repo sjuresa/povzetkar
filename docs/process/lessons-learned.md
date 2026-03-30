@@ -746,3 +746,20 @@ In rapid agile development, User Stories often become disconnected from the actu
 
 ### 33.2 Process Gates for Documentation Sync
 - **The Standard:** Documentation parity must be an **Explicit Phase 2 Gate** in the development checklist. Do not wait until the end of the release to "clean up" docs. Every task must include a "Master Specification Sync" step where new scenarios are added and old ones updated BEFORE the task is marked as complete.
+## 34. Automated Planning Integrity (POV-167)
+
+### 34.1 Regex-Based ID Extraction over Cosmetic Headers
+- **The Trap:** Attempting to parse documentation based on markdown headers (e.g., `### UC-1`) is brittle, as developers often change titles or formatting for readability.
+- **The Standard:** Use **Regex-Based Identifier Extraction** that targets unique IDs (e.g. `(UC-\d+)` or `(TC-[A-Z]+-\d+)`) regardless of their surrounding context. This ensures the audit tool remains robust against cosmetic changes in the documentation.
+
+### 34.2 The "Time-Bomb" Skip Pattern
+- **The Trap:** Allowing generic "skip" comments (e.g., `<!-- validate:skip -->`) leads to permanent technical debt that is invisible to the audit tool once bypassed.
+- **The Standard:** Implement **Version-Aware Skips** (`<!-- validate:skip until vX.Y.Z -->`).
+    1. The audit tool is run with the `--current-version` flag.
+    2. If a skip is encountered, the tool compares the "until" version with the "current" version.
+    3. If `until_version <= current_version`, the skip is **automatically invalidated**, and the violation is surfaced as a critical error.
+    
+    This pattern transforms documentation debt into a time-bound obligation that must be either resolved or explicitly extended with a new deadline in every release.
+
+### 34.3 Real-World Sync Verification (Phase 2 Gate)
+- **The Standard:** Never mark a task as "Complete" without running a **Phase 2 Audit** (Step 2.11). This caught 4 critical documentation regressions in v0.15.0 that were missed during manual peer review, proving that automated consistency checks are mandatory for scaling a complex documentation stack.

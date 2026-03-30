@@ -1,0 +1,28 @@
+{
+  "docs": {
+    "tasks_glob": "docs/versions/v*-tasks.md",
+    "use_cases": "docs/analysis/use_cases.md",
+    "test_spec": "docs/analysis/test_specification.md"
+  },
+  "automation": {
+    "safe_keywords": [
+      "Playwright",
+      "Integration",
+      "Script",
+      "Unit",
+      "**Playwright**",
+      "Manual/PW"
+    ],
+    "manual_keywords": [
+      "Manual",
+      "Planned"
+    ]
+  },
+  "priority": {
+    "p0_label": "**P0**",
+    "all_levels": ["**P0**", "**P1**", "**P2**"]
+  },
+  "thresholds": {
+    "p0_automation_max_version_delta": 1
+  }
+}

@@ -23,6 +23,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Planning & Traceability Audit
+      run: python scripts/qa/validate-planning.py --current-version v0.15.0 --fail-on all
+      continue-on-error: true
 
     - name: Set up JDK 25
       uses: actions/setup-java@v4
