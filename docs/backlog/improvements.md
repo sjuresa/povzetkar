@@ -57,5 +57,5 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Frontend Lint Refactoring:** (Completed in v0.14.0 - POV-159) Resolved persistent unused variable warnings and standardized useState destructuring.
 *   **Grafana Alerting implementation:** Define alerting thresholds for `Total Orchestration Failures > 10` to send notifications to Slack or Email.
 *   **Business Intelligence Dashboard:** Extend Grafana with "User Engagement" metrics, tracking the most popular content sources and briefing generation patterns per user.
-*   **Test Case Re-indexing Script:** (POV-166 follow-up) Develop a Python utility to automatically re-index `test_specification.md` and update all mapping references in Section 7 to prevent manual errors during large-scale refactors.
+*   **Test Case Re-indexing Script:** (POV-166 follow-up) Develop a Python utility to automatically re-index `test_specification.md` and update all mapping references in Section 9 to prevent manual errors during large-scale refactors.
 *   **Traceability Heatmap:** (POV-166 follow-up) Implement a visual representation (or Markdown table generator) showing the percentage of Test Cases covered by automated Playwright scenarios (PW-X) vs. manual ones.
