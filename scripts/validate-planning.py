@@ -26,9 +26,13 @@ class PlanningValidator:
         self.current_version = current_version
         self.violations = []
         
+        # Doc filenames from config for dynamic comparison
+        self.use_cases_fn = Path(self.config['docs']['use_cases']).name
+        self.test_spec_fn = Path(self.config['docs']['test_spec']).name
+        
         # State
         self.use_cases = {} # ID -> Title
-        self.test_cases = {} # ID -> {uc, version, priority, automation, name}
+        self.test_cases = {} # ID -> {uc, version, priority, automation, name, raw}
         self.task_links = [] # {file, id, target_file}
 
     def _load_config(self, path: str) -> dict:
@@ -51,7 +55,7 @@ class PlanningValidator:
     def parse_use_cases(self):
         path = self.root / self.config['docs']['use_cases']
         if not path.exists():
-            self.log_violation("CRITICAL", str(path), "N/A", "Use cases file missing", "Ensure docs/analysis/use_cases.md exists.")
+            self.log_violation("CRITICAL", str(path), "N/A", "Use cases file missing", f"Ensure {self.config['docs']['use_cases']} exists.")
             return
 
         content = path.read_text(encoding='utf-8')
@@ -65,7 +69,7 @@ class PlanningValidator:
     def parse_test_spec(self):
         path = self.root / self.config['docs']['test_spec']
         if not path.exists():
-            self.log_violation("CRITICAL", str(path), "N/A", "Test spec file missing", "Ensure docs/analysis/test_specification.md exists.")
+            self.log_violation("CRITICAL", str(path), "N/A", "Test spec file missing", f"Ensure {self.config['docs']['test_spec']} exists.")
             return
 
         content = path.read_text(encoding='utf-8')
@@ -121,16 +125,16 @@ class PlanningValidator:
             target = link['target_file']
             ref_id = link['id']
             
-            if target == "use_cases.md":
+            if target == self.use_cases_fn:
                 if ref_id not in self.use_cases:
                     self.log_violation("CRITICAL", link['src_file'], ref_id, 
                                      f"Broken reference to Use Case: {ref_id}", 
-                                     f"Ensure {ref_id} exists in use_cases.md")
-            elif target == "test_specification.md":
+                                     f"Ensure {ref_id} exists in {self.use_cases_fn}")
+            elif target == self.test_spec_fn:
                 if ref_id not in self.test_cases:
                     self.log_violation("CRITICAL", link['src_file'], ref_id, 
                                      f"Broken reference to Test Case: {ref_id}", 
-                                     f"Ensure {ref_id} exists in test_specification.md")
+                                     f"Ensure {ref_id} exists in {self.test_spec_fn}")
 
     def validate_traceability(self):
         # Every UC must have at least one TC
