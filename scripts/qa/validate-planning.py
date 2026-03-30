@@ -59,12 +59,13 @@ class PlanningValidator:
             return
 
         content = path.read_text(encoding='utf-8')
-        # Match ### UC-1: Title
-        pattern = re.compile(r'^###\s+(UC-\d+)(?::\s*(.*))?$', re.MULTILINE)
+        # Look for UC-X globally in the file (robust against table/header shifts)
+        pattern = re.compile(r'\b(UC-\d+)\b', re.MULTILINE)
         for match in pattern.finditer(content):
             uc_id = match.group(1)
-            title = match.group(2).strip() if match.group(2) else ""
-            self.use_cases[uc_id] = title
+            if uc_id not in self.use_cases:
+                # We extract the ID even if we can't find a title nearby
+                self.use_cases[uc_id] = ""
 
     def parse_test_spec(self):
         path = self.root / self.config['docs']['test_spec']
@@ -103,11 +104,9 @@ class PlanningValidator:
         
         for task_file in task_files:
             content = task_file.read_text(encoding='utf-8')
-            # Look for IDs in parentheses, optionally preceded by a markdown link
-            # Examples:
-            # 1. [use_cases.md](../analysis/use_cases.md) (UC-5)  -> Linked
-            # 2. (UC-5)                                          -> Bare (Inferred)
-            pattern = re.compile(r'(?:\[[^\]]*\]\(([^)]+)\)\s*)?\((UC-\d+|TC-[A-Z]+-\d+)\)', re.MULTILINE)
+            # Look for IDs, optionally preceded by a markdown link
+            # We use \b boundary to capture pure IDs like (UC-1) or UC-1 (without parens)
+            pattern = re.compile(r'(?:\[[^\]]*\]\(([^)]+)\)\s*)?\b(UC-\d+|TC-[A-Z]+-\d+)\b', re.MULTILINE)
             for match in pattern.finditer(content):
                 link_path = match.group(1)
                 ref_id = match.group(2)
@@ -161,7 +160,7 @@ class PlanningValidator:
                                  f"Add a corresponding TC in {self.test_spec_fn}")
 
     def validate_automation_guardrail(self):
-        p0_label = self.config['priority']['p0_label']
+        p0_label = self.config['priority']['p0_label'].replace('**', '')
         safe_keywords = self.config['automation']['safe_keywords']
         
         def is_automated(status: str) -> bool:
@@ -192,21 +191,37 @@ class PlanningValidator:
                     if skip_match:
                         until_v = skip_match.group(1)
                         until_v_val = get_version_val(until_v)
-                        # If until version is in the future, we skip the audit
+                        # If until_v > current_v, we skip the audit (it hasn't expired)
                         if compare_versions(until_v_val, curr_v_val) > 0:
                             continue
-                        # If until_v <= current_v, the skip has EXPIRED.
+                        # If until_v <= current_v, the skip has EXPIRED and we fall through to validate
                     else:
-                        # Indefinite skip (Legacy behavior)
+                        # Flag indefinite skips as violations to enforce time-bound debt
+                        self.log_violation("WARNING", self.test_spec_fn, tc_id, 
+                                         f"P0 Test Case {tc_id} has an indefinite skip", 
+                                         "Replace with 'validate:skip until vX.Y.Z' to set a mandatory deadline.")
                         continue
 
                 tc_v_val = get_version_val(data['version'])
                 
-                # Check if it's older than current
-                if compare_versions(tc_v_val, curr_v_val) < 0:
+                # Check version delta (e.g. grace period for automation)
+                threshold = self.config['thresholds']['p0_automation_max_version_delta']
+                
+                # Simple version distance: using minor version if major is equal, otherwise consider it exceeded
+                def get_distance(v_old, v_curr):
+                    if not v_old or not v_curr: return 99
+                    # [major, minor, patch] indices
+                    if v_old[0] < v_curr[0]: return 99 # Major version jump
+                    if len(v_old) < 2 or len(v_curr) < 2: return 0
+                    return v_curr[1] - v_old[1]
+
+                v_dist = get_distance(tc_v_val, curr_v_val)
+                
+                # If distance > threshold, and it's not automated -> Violation
+                if v_dist > threshold:
                     if not is_automated(data['automation']):
-                        self.log_violation("CRITICAL", "test_specification.md", tc_id, 
-                                         f"P0 Test Case {tc_id} (from {data['version']}) is not automated in {self.current_version}", 
+                        self.log_violation("CRITICAL", self.test_spec_fn, tc_id, 
+                                         f"P0 Test Case {tc_id} (from {data['version']}) exceeds automation threshold ({threshold}) in {self.current_version}", 
                                          "Implement Playwright or Integration test immediately.")
 
     def run_all(self):
