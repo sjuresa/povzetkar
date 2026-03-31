@@ -35,9 +35,9 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
 
   const getBadgeClass = (badge: string) => {
     switch(badge) {
-      case 'new': return 'bg-blue-500';
-      case 'fixed': return 'bg-emerald-500';
-      case 'improved': return 'bg-amber-500';
+      case 'new': return 'bg-blue-500 text-white';
+      case 'fixed': return 'bg-emerald-500 text-white';
+      case 'improved': return 'bg-amber-500 text-white';
       default: return 'bg-[var(--color-border-subtle)] text-[var(--color-text-primary)]';
     }
   };
@@ -172,7 +172,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                       <div className={`absolute top-0 -left-[10px] w-4 h-4 shadow-[4px_4px_0px_black] ${idx === 0 ? 'bg-[var(--color-accent)]' : 'bg-black'}`} />
                       <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <span className={`px-3 py-1 text-white text-[10px] font-black uppercase tracking-widest ${getBadgeClass(entry.badge)}`}>
+                          <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${getBadgeClass(entry.badge)}`}>
                             {t(`system.changelog.badges.${entry.badge}`)}
                           </span>
                           <span className="text-xs font-bold text-[var(--color-text-secondary)]">{entry.date}</span>
