@@ -61,6 +61,16 @@ Object[] result = (Object[]) em.createNativeQuery(
 - **The Trap:** Persisting audit logs or job audit trails within the same transaction as the main business logic. If the business transaction rolls back (e.g., due to a constraint violation), the audit record is also lost, leaving no trace of the failure.
 - **The Standard:** Always wrap persistence of audit records (API audits, job execution audits) in **`QuarkusTransaction.requiringNew()`**. This ensures the audit record is committed independently of the success or failure of the main operation, providing a reliable diagnostic trail.
 
+### 1.7 Docker Project-Based Volume Prefixes
+- **The Trap:** When moving a `docker-compose.yml` to a different directory (e.g., from root to `/backend`), Docker Compose automatically changes the project name (and thus the volume prefix) from `povzetkar_` to `backend_`. This causes the application to start with a fresh, empty volume even if the original data still exists in the old volume.
+- **The Standard:** When strict data continuity is required across directory shifts, explicitly define the volume name and set it to `external: true` in `docker-compose.yml`. Use descriptive names like `povzetkar_postgres_dev_data` instead of relative names that rely on folder-based prefixes.
+   ```yaml
+   volumes:
+     postgres_dev_data:
+       external: true
+       name: povzetkar_postgres_dev_data
+   ```
+
 ---
 
 ## 2. API Design & Consistency
@@ -643,3 +653,113 @@ When displaying project metadata (Roadmap, Changelog) on public-facing pages (La
 - **The Standard:** Use a **Synchronization Script** (e.g., `scripts/sync_metadata.py`) to parse the actual project documentation (`CHANGELOG.md`, `roadmap.md`) and automatically update the frontend `i18n` source files. This ensures the Landing Page is always "truthful" relative to the release state.
 - **Requirement:** Markdown headers used by extraction scripts must remain stable (e.g., `## [Release Version]` format).
 - **Execution:** This sync should be a mandatory pre-commit or pre-release step in the development workflow (Phase 3.5).
+
+---
+
+## 29. Placeholder Scope Identification (POV-161)
+
+### 29.1 Explicit Placeholder Audit in Task Planning
+When implementing a feature that replaces a placeholder page, the task scope must explicitly audit and list ALL related placeholder components — not just the primary one.
+- **The Trap (POV-161):** The BriefingLibraryPage was clearly in scope, but the BriefingDetailPage placeholder was only identified as needing implementation after the user flagged it during review.
+- **The Standard:** During the planning phase (Step 3), grep the codebase for placeholder-style components (e.g., "coming soon", static text-only components) related to the feature domain and explicitly include them in the implementation plan.
+- **Command:** `grep -rn "coming soon\|placeholder\|stub" frontend/src/routes/ --include="*.tsx"`
+
+### 29.2 EXISTS Subquery vs JOIN for Filtered Pagination
+The EXISTS subquery pattern (Lesson 1.1) was successfully validated in POV-161 for source-based briefing filtering.
+- **Pattern:** `EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)` correctly filters briefings that contain summaries from a specific source without introducing cartesian products on the paginated main query.
+- **Confirmed:** This approach correctly interacts with Panache's `.count()` and `.page()` methods, producing accurate pagination metadata.
+
+---
+
+## 30. Client-Side SEO & Premium Export (POV-162)
+
+### 30.1 Dynamic Metadata in SPAs (React Helmet)
+For Single Page Applications (SPAs) like Povzetkar, setting route-specific metadata (Title, OpenGraph tags) is critical for professional sharing.
+- **The Trap:** Relying on static `index.html` tags results in all shared links having the same generic title and description (e.g., "Povzetkar | AI-Powered Intelligence").
+- **The Standard:** Use `react-helmet-async` to inject dynamic tags at the route level. Wrap the entire application in a `HelmetProvider` and use the `<Helmet>` component to set `og:title` and `og:description` derived from the specific briefing's content (e.g., the title and a snippet of the executive summary). This ensures rich previews when shared on Slack, LinkedIn, or Discord.
+
+### 30.2 "Executive-Grade" Print Standardization
+Exporting intelligence for physical reading requires a different aesthetic from the "Midnight Slate" digital UI.
+- **The Trap:** Direct HTML-to-PDF or Print-Window exports of a dark-themed UI result in high ink consumption and poor readability.
+- **The Standard:** Implement a dedicated **Black & White print-ready HTML export**. Use high-contrast serif typography (`Times New Roman`, `Georgia`) and high-contrast ratios. Serif fonts are empirically better for reading long-form physical reports. Ensure all background colors are removed (`bg-white`) and text is strictly black (`text-black`).
+
+### 30.3 Opt-in Privacy & UUID Generation
+- **The Standard:** Shared briefings should be **Private by Default**. Implement an "Opt-in" model where a secure, non-guessable UUID is only generated upon explicit user request ("Enable Share Link"). This prevents accidental exposure and allows for instant revocation of access by deleting the UUID entry in the database.
+---
+
+## 31. Quality Hardening & Cross-Platform Stability (POV-163)
+
+### 31.1 Strict Async Linting (no-floating-promises)
+Modern React applications with complex event handlers (e.g., download, share, query invalidation) often suffer from unhandled promises that can lead to race conditions or missed state updates.
+- **The Trap:** Using `queryClient.invalidateQueries()` or `navigator.clipboard.writeText()` directly inside an `onClick` handler without `await` or `void`. This triggers strict ESLint `@typescript-eslint/no-floating-promises` warnings in production profiles.
+- **The Standard:** Always wrap non-awaited async calls in `void` (e.g., `void queryClient.invalidateQueries(...)`) to explicitly signal that the promise is intended to be floating. For primary actions (e.g., data mutations), use `async/await` and proper error boundaries within the handler.
+
+### 31.2 Cross-Platform Maven Wrapper Execution
+In monorepos shared between Windows (CMD/PS) and Linux (Bash/CI), the `./mvnw` prefix is a common source of friction.
+- **The Trap:** Removing `./` from `package.json` scripts (e.g., changing `./mvnw` to `mvnw`) to fix local Windows execution errors. This **breaks** standard Linux and CI/CD environments where the current directory is not in the PATH.
+- **The Standard:** Always **maintain the `./mvnw` prefix** in `package.json` to ensure compatibility with Linux/CI environments. Windows developers should use a POSIX-compatible shell (e.g., Git Bash, WSL) or configure their PowerShell environment to support the `./` prefix for local scripts.
+
+### 31.3 Automated UX Audit Tuning
+Automated UX scripts can produce high volumes of false positives if their regex patterns are too broad.
+- **The Trap:** A script flagging `StatCard.tsx` for "missing form labels" because it contains the word "card" (matching `re.search(r'card', content)`).
+- **The Standard:** Use word-boundary anchors (`\bcard\b`) or context-aware tagging (e.g., checking only within `<form>` tags) to minimize noise. Similarly, "Hick's Law" audits must distinguish between **Navigation Menus** (which should stay under 7 items) and **Data Grids/Lists** (which naturally have many more).
+
+### 31.4 Defensive Source Entry (Debounced Presence Check)
+- **The Trap:** Allowing users to submit complex external identifiers (e.g., YouTube Channel IDs or URLs) without checking if they exist. This causes downstream failures (404s) in background enrichment jobs that are expensive to retry and difficult to report back to the user asynchronously.
+- **The Standard:** Implement a **Live existence check** in the "Add Source" dialog. Using a debounced input handler that calls the external API (YouTube Data API v3) *before* the user hits "Add" provides immediate feedback and prevents dirtying the database with dead references.
+### 1.8 Chunked Data Deletion (Retention)
+- **The Trap:** Attempting to delete a large volume of historical data (e.g., "Initial Big Cleanup") in a single transaction. This can cause the transaction to time out, exhaust the database's undo logs, or hold exclusive locks on the table for an extended period, blocking other operations.
+- **The Standard:** Always implement mass deletions using a **chunked, multi-transactional loop**. 
+  1. Retrieve a limited set of IDs (e.g., 1,000) for records that meet the deletion criteria.
+  2. Delete exactly those IDs in a new, independent transaction (`QuarkusTransaction.requiringNew()`).
+  3. Repeat until no more records match. 
+  
+  This ensures that each chunk is committed independently, and the database remains responsive. Since `DELETE ... LIMIT` is not standard across all SQL dialects (like PostgreSQL), use a two-step `SELECT id ... LIMIT X` followed by `DELETE ... WHERE id IN (...)` for a portable and performant implementation in Hibernate.
+
+---
+
+## 32. Permanent Master Test Specification (POV-166)
+
+### 32.1 3-Digit Sequential Indexing (`TC-DOM-0XX`)
+As a project grows, simple sequential IDs (`TC-01`, `TC-02`) quickly become ambiguous, especially when multiple domains (Ingestion, Reporting, UI) are being developed in parallel.
+- **The Trap:** Using duplicate IDs or unstructured lists leads to "Test Debt" where it's unclear which scenarios are automated and which are manual placeholders.
+- **The Standard:** Implement a **3-digit sequential index** prefixed by a Domain code (e.g., `TC-REP-024`). The 3-digit format (`001`-`999`) provides enough headroom for large-scale enterprise suites and ensures consistent sorting in documentation and test runners.
+
+### 32.2 Domain 0: Global Resilience (GRX)
+Cross-cutting stability features (Error Boundaries, Skeleton Loaders, Theme Persistence) often "fall through the cracks" because they don't belong to a specific functional feature like "YouTube Ingestion."
+- **The Trap:** Only testing the "Happy Path" of a feature while ignoring the baseline UI resilience that makes the app feel "Premium."
+- **The Standard:** Establish a **Domain 0 (Global Resilience & UX)**. This domain is mandatory for every release and covers the baseline "Polish" that must hold true across all pages. This includes verifying that a user never sees a raw white screen (Skeletons) and that errors are caught by boundaries rather than crashing the tab.
+
+---
+
+## 33. Requirements Traceability Hardening (POV-166)
+
+### 33.1 The US ➔ UC ➔ TC Chain
+In rapid agile development, User Stories often become disconnected from the actual implementation and testing.
+- **The Trap:** Implementing a "Use Case" that doesn't actually satisfy the original "User Story," or writing a "Test Case" that doesn't verify the core requirement.
+- **The Standard:** Enforce a strict **Traceability Chain**:
+  1. **User Story (US-ID)**: The high-level "Why" (defined in `01_functional_requirements.md`).
+  2. **Use Case (UC-ID)**: The "How" (defined in `use_cases.md`), explicitly linked to a `US-ID`.
+  3. **Test Case (TC-ID)**: The "Verify" (defined in `test_specification.md`), explicitly linked to a `UC-ID`.
+  
+  This traceability chain ensures that every requirement is covered by at least one test, and every test exists to satisfy a specific user requirement.
+
+### 33.2 Process Gates for Documentation Sync
+- **The Standard:** Documentation parity must be an **Explicit Phase 2 Gate** in the development checklist. Do not wait until the end of the release to "clean up" docs. Every task must include a "Master Specification Sync" step where new scenarios are added and old ones updated BEFORE the task is marked as complete.
+## 34. Automated Planning Integrity (POV-167)
+
+### 34.1 Regex-Based ID Extraction over Cosmetic Headers
+- **The Trap:** Attempting to parse documentation based on markdown headers (e.g., `### UC-1`) is brittle, as developers often change titles or formatting for readability.
+- **The Standard:** Use **Regex-Based Identifier Extraction** that targets unique IDs (e.g. `(UC-\d+)` or `(TC-[A-Z]+-\d+)`) regardless of their surrounding context. This ensures the audit tool remains robust against cosmetic changes in the documentation.
+
+### 34.2 The "Time-Bomb" Skip Pattern
+- **The Trap:** Allowing generic "skip" comments (e.g., `<!-- validate:skip -->`) leads to permanent technical debt that is invisible to the audit tool once bypassed.
+- **The Standard:** Implement **Version-Aware Skips** (`<!-- validate:skip until vX.Y.Z -->`).
+    1. The audit tool is run with the `--current-version` flag.
+    2. If a skip is encountered, the tool compares the "until" version with the "current" version.
+    3. If `until_version <= current_version`, the skip is **automatically invalidated**, and the violation is surfaced as a critical error.
+    
+    This pattern transforms documentation debt into a time-bound obligation that must be either resolved or explicitly extended with a new deadline in every release.
+
+### 34.3 Real-World Sync Verification (Phase 2 Gate)
+- **The Standard:** Never mark a task as "Complete" without running a **Phase 2 Audit** (Step 2.11). This caught 4 critical documentation regressions in v0.15.0 that were missed during manual peer review, proving that automated consistency checks are mandatory for scaling a complex documentation stack.

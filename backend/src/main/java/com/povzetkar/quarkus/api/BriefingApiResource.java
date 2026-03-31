@@ -1,24 +1,27 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
-import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.BriefingPaginatedResponse;
+import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -36,8 +39,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
-
-import com.povzetkar.quarkus.api.util.FilterBuilder;
 
 @Path("/api/v1/briefings")
 @ApplicationScoped
@@ -63,8 +64,13 @@ public class BriefingApiResource extends BaseApiResource {
             description = "List of briefings retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BriefingPaginatedResponse.class))
     )
+    @Parameter(name = "search", description = "Keyword search across briefing title and executive summary")
+    @Parameter(name = "sourceId", description = "Filter briefings containing summaries from a specific content source")
+    @Transactional
     public BriefingPaginatedResponse getBriefings(
             @QueryParam("topicId") Long topicId,
+            @QueryParam("sourceId") Long sourceId,
+            @QueryParam("search") @DefaultValue("") String search,
             @QueryParam("startDate") LocalDate startDate,
             @QueryParam("endDate") LocalDate endDate,
             @QueryParam("sort") List<String> sort,
@@ -80,15 +86,31 @@ public class BriefingApiResource extends BaseApiResource {
         filterBuilder.and("briefingDate >= :startDate", "startDate", startDate);
         filterBuilder.and("briefingDate <= :endDate", "endDate", endDate);
 
+        if (sourceId != null) {
+            filterBuilder.and(
+                    "EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)",
+                    "sourceId", sourceId);
+        }
+
+        if (search != null && !search.isBlank()) {
+            String escapedSearch = search.toLowerCase()
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+            filterBuilder.and(
+                    "(lower(title) LIKE :search ESCAPE '!' OR lower(metaSummary) LIKE :search ESCAPE '!')",
+                    "search", "%" + escapedSearch + "%");
+        }
+
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "status"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "title"));
         PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
         long count = query.count();
         List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()
                 .map(briefingMapper::toSummaryDTO)
                 .toList();
- 
+
         return new BriefingPaginatedResponse(dtoList, count, pageIndex, clampedPageSize);
     }
 
@@ -112,5 +134,38 @@ public class BriefingApiResource extends BaseApiResource {
                 .orElseThrow(() -> new NotFoundException("Briefing with id " + id + " not found."));
 
         return briefingMapper.toDetailDTO(briefing);
+    }
+
+    @POST
+    @Path("/{id}/share")
+    @Transactional
+    @RolesAllowed(Permission.V_BRIEFING_VIEW)
+    @Operation(summary = "Enable sharing for a briefing", description = "Generates a public UUID for the briefing to enable unauthenticated access.")
+    @APIResponse(responseCode = "200", description = "Sharing enabled successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
+    @APIResponse(responseCode = "404", description = "Briefing not found")
+    public String shareBriefing(@PathParam("id") Long id) {
+        User user = getAuthenticatedUser();
+        Briefing briefing = Briefing.<Briefing>find("id = ?1 and topic.user = ?2", id, user)
+                .firstResultOptional()
+                .orElseThrow(() -> new NotFoundException("Briefing not found."));
+        
+        briefing.share();
+        return briefing.uuid;
+    }
+
+    @POST
+    @Path("/{id}/unshare")
+    @Transactional
+    @RolesAllowed(Permission.V_BRIEFING_VIEW)
+    @Operation(summary = "Disable sharing for a briefing", description = "Removes the public UUID for the briefing to disable unauthenticated access.")
+    @APIResponse(responseCode = "204", description = "Sharing disabled successfully")
+    @APIResponse(responseCode = "404", description = "Briefing not found")
+    public void unshareBriefing(@PathParam("id") Long id) {
+        User user = getAuthenticatedUser();
+        Briefing briefing = Briefing.<Briefing>find("id = ?1 and topic.user = ?2", id, user)
+                .firstResultOptional()
+                .orElseThrow(() -> new NotFoundException("Briefing not found."));
+        
+        briefing.unshare();
     }
 }

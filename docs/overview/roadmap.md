@@ -189,22 +189,33 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.15: Advanced Archive & Operational Excellence
 
+**Status:** ✅ Completed
+
 **Goal:** Finalize the transition to a full-featured analytical platform with historical archives and enterprise-grade observability.
 
 ### Key Tasks & Implementation Steps:
 1.  **Briefing Mastery & User UX:**
-    *   Implement a searchable "Briefing Library" archive with advanced filtering and grouping.
-    *   Exporting and sharing capabilities for generated briefings.
-    *   Full i18n Migration: systematically migrate all remaining hardcoded strings in Dashboard and Audit Log.
-    *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
-2.  **Administrative Command Center:**
-    *   Build the "Admin User Management" UI for managing roles and account statuses.
+    *   Implement a searchable "Briefing Library" archive with advanced filtering and mobile-first responsive layouts (POV-161).
+    *   Implement Markdown/HTML export and internal link sharing with UUID-based security (POV-162).
+    *   Implement real-time YouTube source validation with debounced existence checks (POV-163).
+2.  **Hardening & Operational Excellence:**
+    *   Implement Prometheus metrics and Grafana dashboards for system-wide monitoring (POV-164).
+    *   **Self-Cleaning Infra (Audits)**: Implement a background job to purge `JobExecutionAudit` records with 90-day retention (POV-165).
+    *   **QA Health & Master Test Suite**: Centralize all regression scenarios into a permanent suite and migrate remaining Integration Tests to the `@TestTransaction` pattern (POV-166).
+
+## v0.16: Administrative Control & Hardening
+
+**Goal:** Establish full operational control over the platform and integrate advanced security auditing into the release cycle.
+
+### Key Tasks & Implementation Steps:
+1.  **Administrative Command Center:**
+    *   Build the "Admin User Management" UI for managing roles, account statuses, and permissions.
     *   Comprehensive "Background Job Dashboard" with full operational control (Cancel, Restart, Audit).
-3.  **Hardening & Operational Excellence:**
-    *   Implement Prometheus metrics and Grafana dashboards for system-wide monitoring.
+2.  **Product Refinement & Security:**
+    *   Self-Cleaning Infra (Jobs): Implement a background job to purge the background_jobs table of old COMPLETED or FAILED items (Background Jobs Cleanup Strategy).
     *   Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
-    *   **Self-Cleaning Infra**: Implement a background job to purge `JobExecutionAudit` records (90-day retention).
-    *   **QA Health**: Migrate remaining Integration Tests to the `@TestTransaction` pattern.
+    *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
+    *   **Full i18n Audit**: Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 
 ## v1.0: RAG & Conversational Interface
 
@@ -274,8 +285,10 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                      |
-| 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15. |
+| 3.3     | March 30, 2026     | Povzetkar AI | Marked v0.15 as completed and finalized release notes.                                                                                                                   |
+| 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0/v0.16.0 scope, moved postponed items (Admin UI, DAST), and clarified job cleanup tasks.                                                                  |
+| 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                                                   |
+| 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15.                              |
 | 2.9     | March 24, 2026     | Povzetkar AI | Marked v0.13.0 as completed and finalized release documentation.                                                                                                         |
 | 2.8     | March 19, 2026     | Povzetkar AI | Split v0.13 into v0.13.0 (Input/UX) and v0.14.0 (Output/Admin).                                                                                                          |
 | 2.7     | March 18, 2026     | Povzetkar AI | Marked v0.12.0 as completed and solidified v0.13.0 scope.                                                                                                                |

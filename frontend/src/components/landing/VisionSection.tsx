@@ -9,7 +9,7 @@ export function VisionSection() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
          <div className="space-y-16">
             <div className="space-y-8">
-               <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] italic">
+               <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] italic">
                   {t('landing.vision.title')}
                </h2>
                <div className="space-y-6 max-w-xl">

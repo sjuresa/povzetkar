@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 @Table(name = "briefings")
 public class Briefing extends BaseAuditableEntity {
     public static final String RECENT_BRIEFINGS_QUERY = """
-            select new com.povzetkar.quarkus.api.dto.BriefingSummaryDTO(b.id, b.topic.id, b.topic.name, b.title, b.briefingDate)
+            select new com.povzetkar.quarkus.api.dto.BriefingSummaryDTO(b.id, b.uuid, b.topic.id, b.topic.name, b.title, b.briefingDate)
             from Briefing b where b.topic.user = ?1 order by b.briefingDate desc""";
 
     @Id
@@ -56,6 +56,19 @@ public class Briefing extends BaseAuditableEntity {
     @Column(name = "briefing_date", nullable = false)
     public LocalDate briefingDate;
 
+    @Column(unique = true, length = 36)
+    public String uuid;
+
+    public void share() {
+        if (this.uuid == null) {
+            this.uuid = java.util.UUID.randomUUID().toString();
+        }
+    }
+
+    public void unshare() {
+        this.uuid = null;
+    }
+
     @ManyToMany
     @JoinTable(name = "briefing_summaries",
             joinColumns = @JoinColumn(name = "briefing_id"),
@@ -81,6 +94,14 @@ public class Briefing extends BaseAuditableEntity {
 
     public static Optional<Briefing> findByTopicAndDate(Long topicId, LocalDate briefingDate) {
         return find("topic.id = ?1 and briefingDate = ?2", topicId, briefingDate).firstResultOptional();
+    }
+
+    public static Optional<Briefing> findByUuid(String uuid) {
+        return find("uuid", uuid).firstResultOptional();
+    }
+
+    public static Optional<Briefing> findByUuidWithAssociations(String uuid) {
+        return find("select distinct b from Briefing b left join fetch b.topic left join fetch b.summaries s left join fetch s.contentItem where b.uuid = ?1", uuid).firstResultOptional();
     }
 
     public String getExecutiveSummary() {

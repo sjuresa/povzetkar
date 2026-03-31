@@ -8,6 +8,7 @@ import {
 import { LandingPage } from './routes/LandingPage';
 import { DashboardPage } from './routes/DashboardPage';
 import { BriefingDetailPage } from './routes/BriefingDetailPage';
+import { BriefingLibraryPage } from './routes/BriefingLibraryPage';
 import { AuditLogPage } from './routes/AuditLogPage';
 import { ErrorPage } from './routes/ErrorPage';
 import { ProfilePage } from './routes/ProfilePage';
@@ -16,6 +17,7 @@ import { ContentManagementPage } from './routes/ContentManagementPage';
 import { TopicsPage } from './pages/topics/TopicsPage';
 import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
 import { SourceDetailPage } from './routes/SourceDetailPage';
+import { PublicBriefingPage } from './routes/PublicBriefingPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -36,6 +38,11 @@ const rootRoute = createRootRouteWithContext<MyRouterContext>()({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  validateSearch: (search: Record<string, unknown>): { notice?: string } => {
+    return {
+      notice: (search.notice as string) || undefined,
+    };
+  },
   component: LandingPage,
   beforeLoad: async ({ context }) => {
     // If we haven't checked auth yet, do it once
@@ -56,8 +63,13 @@ const protectedLayoutRoute = createRoute({
       await context.auth.checkAuth();
     }
     
+    // We must read the fresh state from zustand, not the React snapshot,
+    // because checkAuth() just updated the store asynchronously.
+    const useAuthStore = (await import('./store/authStore')).useAuthStore;
+    const isActuallyAuthenticated = useAuthStore.getState().isAuthenticated;
+    
     // Final check - if still not authenticated, redirect to landing
-    if (!context.auth.isAuthenticated) {
+    if (!isActuallyAuthenticated) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/' });
     }
@@ -89,15 +101,11 @@ const topicsRoute = createRoute({
   component: TopicsPage,
 });
 
-// Briefings Placeholder
+// Briefing Library Route
 const briefingsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/briefings',
-  component: () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 italic">
-      All briefings list coming soon
-    </div>
-  ),
+  component: BriefingLibraryPage,
 });
 
 // Sources Routes
@@ -124,8 +132,11 @@ const briefingDetailRoute = createRoute({
 const adminLayoutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/admin',
-  beforeLoad: ({ context }) => {
-    const hasAdminPerm = context.auth.user?.permissions?.some(p => 
+  beforeLoad: async () => {
+    const useAuthStore = (await import('./store/authStore')).useAuthStore;
+    const user = useAuthStore.getState().user;
+    
+    const hasAdminPerm = user?.permissions?.some(p => 
       ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW'].includes(p)
     );
     
@@ -155,9 +166,17 @@ const adminJobsRoute = createRoute({
   component: () => <div className="p-8 text-slate-400 italic">Background Jobs Admin coming soon...</div>,
 });
 
+// 7. Public Sharing Route
+const publicShareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/s/$uuid',
+  component: PublicBriefingPage,
+});
+
 // 5. Create Route Tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  publicShareRoute,
   protectedLayoutRoute.addChildren([
     dashboardRoute,
     profileRoute,

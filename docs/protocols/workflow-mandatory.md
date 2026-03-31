@@ -7,16 +7,22 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   If a `agent_logs/task.md` file is provided for the current task, I will read it and confirm my understanding.
 *   If one is not provided, my first action will be to create a `agent_logs/task.md` file based on your request. All subsequent work will be based on this document.
 
-**Step 2: Information Gathering**
+**Step 2: Information Gathering & Evidence Collection**
 *   I will identify and list the specific information I need to find within the codebase to fulfill the request safely.
-*   I will use the available tools to read the necessary files to fill these knowledge gaps, stating which files I am reading and why.
+*   I will use available tools to read files and identify the **Truth** (current implementation).
+*   **Evidence Mandate**: I must explicitly list the absolute file paths and specific code snippets (methods, classes, signatures) I have analyzed to ground my plan in facts.
 
-**Step 3: Present Findings & A Detailed Plan**
-*   I will present my findings from the code as a list of facts.
-*   Based *only* on these facts, I will propose a step-by-step plan.
-*   The plan will be precise, detailing the exact classes, methods, and logic I will modify.
-*   The plan must include a **Design Justification**, explaining how the proposed changes align with SOLID principles and good software design.
-*   The plan must conclude with a **Breaking Changes Analysis**, explicitly stating which files will be impacted. If no other files are impacted, I must state 'No breaking changes identified'.
+**Step 3: Present Findings & A High-Precision Plan**
+*   **Findings**: I will present my findings as a bulleted list of verified facts from the code.
+*   **Detailed Plan**: Based *only* on these facts, I will propose a modular, step-by-step plan organized by **Phases** (Phasing Mandate).
+*   **Execution Depth**: The plan must be precise, detailing:
+    *   Exact classes, methods, and signatures to be created or modified.
+    *   Specific logic details (e.g., "Add a `@PrePersist` hook for UUID generation").
+    *   Database migration details (exact Flyway version and SQL goal).
+    *   Frontend component structure and specific design tokens/icons to be used.
+*   **Design Justification**: Explain how the changes align with SOLID principles, Clean Code standards, and the project's existing architecture.
+*   **Verification Strategy**: For every major step, I must state how it will be verified (e.g., "Manual check of blob download," "Integration test for service layer").
+*   **Breaking Changes Analysis**: List any potential side effects or state 'No breaking changes identified'.
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before taking ANY further action, including archiving the plan.

@@ -270,47 +270,156 @@
       "changelog": "Posodobitve",
       "roadmap": "Pot vizije"
     },
+    "footer": {
+      "built_with": "Sistemski metapodatki zaključeni.",
+      "close": "Zapri raziskovanje"
+    },
+    "changelog_entries": [
+      {
+        "version": "v0.16.0",
+        "title": "Posodobitev v0.16.0",
+        "date": "V teku",
+        "desc": "",
+        "badge": "new"
+      },
+      {
+        "version": "0.15.0",
+        "title": "Posodobitev 0.15.0",
+        "date": "2026-03-30",
+        "desc": "Verzija 0.15.0 se osredotoča na **Operativno odličnost in Napredno analitiko**, pri čemer prinaša \"Analitično globino\" prek iskalnega **Arhiva poročil (Briefing Archive)**, popolnoma **Izvozljivo inteligenco** v Markdown/HTML formatu in robustno preverjanje vhodnih podatkov v realnem času. Uvaja tudi strokovno opazljivost sistema (observability) prek integracij **Prometheus in Grafana**, utrjuje arhitekturo s **samodejnimi opravili za čiščenje podatkov** ter centralizira stabilnost platforme z uvedbo **Glavne specifikacije za testiranje (Master Test Specification)**, ki je neposredno povezana s preverljivimi uporabniškimi zgodbami.",
+        "badge": "new"
+      },
+      {
+        "version": "0.14.0",
+        "title": "Posodobitev 0.14.0",
+        "date": "2026-03-28",
+        "desc": "Verzija 0.14.0 se osredotoča na **Prilagodljivost, Zanesljivost in Celovitost podatkov**. Ključne novosti vključujejo **Oprijete predloge za ukaze (Custom Prompt Templates)** na ravni tematik, utrjeno izvajalsko okolje **Distroless Java 25 Runtime** in premium, v destilarno usmerjeno **Vstopno stran (Landing Page)**. Uporabniški nadzor je znatno okrepljen z novim **Pogovornim oknom ob zagonu orkestracije (Orchestration Trigger Dialog)** (ki omogoča suhe zagone in prilagajanje parametrov) in globalno **Nadzorno ploščo za upravljanje z vsebinami (Content Management Dashboard)**, ki nudi skrbniški pregled nad celotnim procesom zajemanja podatkov.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.13.0",
+        "title": "Posodobitev v0.13.0",
+        "date": "2026-03-24",
+        "desc": "Verzija 0.13.0 se osredotoča na **Temelje uporabniške izkušnje, Odpornost in Utrditev infrastrukture**. Prinaša okrepljen omrežni sloj z avtomatiziranimi ponovitvami, globalno mejo za napake (Error Boundary) za okrevanje po katastrofalnih napakah ter lokalizirano uporabniško okolje s podporo za teme. Ključni poudarki vključujejo novo stran uporabniškega profila, podporo za dva jezika (angleščina/slovenščina) ter robusten sistem za svetlo/temno/sistemsko temo. Ta izdaja močno stabilizira tudi zaledni sistem s trajnim sistemom **Revizije izvajanja opravil (Job Execution Audit)** ter obsežno strategijo **Upravljanja s skrivnostmi (Secrets Management)**.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.12.0",
+        "title": "Posodobitev v0.12.0",
+        "date": "2026-03-18",
+        "desc": "Verzija 0.12.0 predstavlja pomembno prelomnico v razvoju Povzetkarja, saj projekt prehaja v profesionalno, produkcijsko pripravljeno Full-Stack aplikacijo. Izdaja zaključuje arhitekturo monorepozitorija z združitvijo visoko odzivnega React/TypeScript čelnega dela z varno Quarkus zaledno logiko. Ključne novosti zajemajo poenoteno Docker strategijo postavitve s samodejnim varnostnim skeniranjem, premium Nadzorno središče (Dashboard Hub) s prikazom opravil v realnem času (SSE) ter obsežen UI vmesnik z revizijskimi dnevniki (Audit Log Admin UI).",
+        "badge": "new"
+      },
+      {
+        "version": "v0.11.0",
+        "title": "Posodobitev v0.11.0",
+        "date": "2026-03-12",
+        "desc": "Verzija 0.11.0 prinaša bistvene izboljšave za nadzor in varnost v realnem času. Izdaja vključuje nov tok dogodkov (SSE) za žive posodobitve opravil, celovito revizijo zahtevkov na API ter centraliziran sistem nadzora dostopa na podlagi dovoljenj. Operativne izboljšave zajemajo optimizacijo JPQL, konsolidirane metrike zdravja sistema in standardizirano obravnavo napak v celotnem API-ju.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.10.0",
+        "title": "Posodobitev v0.10.0",
+        "date": "2026-02-20",
+        "desc": "Verzija 0.10.0 transformira aplikacijo v varno, več-uporabniško platformo. Ta večja izdaja integrira Google OIDC za brezhibno avtentikacijo in zagotavlja strogo podatkovno izolacijo, tako da uporabniki vidijo izključno svoje teme ter vire. Poleg tega prinaša strukturirano OpenAPI dokumentacijo in strukturne izboljšave, kot so filtri za minimalno trajanje videoposnetkov ter stabilnejše revidiranje.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.9.0",
+        "title": "Posodobitev v0.9.0",
+        "date": "2026-02-05",
+        "desc": "Verzija 0.9.0 se osredotoča na **Operativne izboljšave in Skrbniška orodja**. Izdaja stabilizira osrednjo logiko aplikacije z uvedbo vzorca Circuit Breaker, ki pomaga preprečiti posledice ob zunanjih izpadih API-ja (npr. GenAI 503 napake). Hkrati bogati nabor orodij za skrbnike in prinaša zmožnosti kot so predogled orkestracije, sledenje porabi GenAI kvot in paginacijo zgodovine.",
+        "badge": "new"
+      },
+      {
+        "version": "0.8.0",
+        "title": "Posodobitev 0.8.0",
+        "date": "2026-01-20",
+        "desc": "Verzija 0.8.0 omogoča **Samostojno namestitev aplikacije**. Oskrbuje platformo z nujno konfiguracijo za prevajanje in delovanje Quarkus aplikacije kot nevsiljive slike zabojnika OCI (via Jib). Izdaja tudi znatno nadgradi nadzor preklapljanja sistema in spremljanje poteka z implementacijo standardiziranega Logfmt zapisovanja dnevnikov.",
+        "badge": "new"
+      },
+      {
+        "version": "0.7.0",
+        "title": "Posodobitev 0.7.0",
+        "date": "2026-01-13",
+        "desc": "Verzija 0.7.0 se osredotoča na **Operativno odličnost**, z začetkom obsežne nadgradnje ogrodja na preverjeno različico Quarkus 3.27.1 LTS. Izdaja prinaša bistvene izboljšave na nivoju skrbniškega nadzora in omogoča neposreden vizualni nadzor procesov.",
+        "badge": "new"
+      }
+    ],
+    "roadmap_phases": [
+      {
+        "title": "v0.16: Administrative Control & Hardening",
+        "desc": "Vzpostavitev popolnega operativnega nadzora nad platformo in integracija napredne varnostne revizije v cikel izdajanja posodobitev."
+      },
+      {
+        "title": "v1.0: RAG & Conversational Interface",
+        "desc": "Dostava osrednje funkcionalnosti \"interaktivnega poročila\" (RAG pipeline) ter zaključek serije **Utrjevanja produkcije** s samodejnimi varnostnimi kopijami baz in postopki okrevanja."
+      },
+      {
+        "title": "v1.1: Expansion & Advanced Analytics",
+        "desc": "Razširitev platforminih sposobnosti zbiranja in sestavljanja informacij z dodajanjem novih podatkovnih virov in analitičnih funkcij."
+      },
+      {
+        "title": "v1.2: Content Creation & Refinement",
+        "desc": ""
+      }
+    ],
     "changelog": {
       "title": "Strateške posodobitve",
       "badges": {
         "new": "NOVO",
         "improved": "IZB",
         "fixed": "POP"
-      },
-      "entry1_title": "Posodobitev v0.14.0",
-      "entry1_desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infras...",
-      "entry1_date": "V teku",
-      "entry2_title": "Posodobitev v0.13.0",
-      "entry2_desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
-      "entry2_date": "2026-03-24",
-      "entry3_title": "Posodobitev v0.12.0",
-      "entry3_desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
-      "entry3_date": "2026-03-18",
-      "entry4_title": "Posodobitev v0.11.0",
-      "entry4_desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
-      "entry4_date": "2026-03-12"
+      }
     },
     "roadmap": {
-      "title": "Pot vizije",
-      "q1_title": "v1.0: RAG & Pogovorni vmesnik",
-      "q2_title": "v1.1: Razširitev & Napredna analitika",
-      "q3_title": "v1.2: Ustvarjanje vsebin & Izpopolnjevanje",
-      "q4_title": "v1.3: Sodelovalna analiza",
-      "q5_title": "v2.0: Enotna platforma za analitike",
-      "q1_desc_full": "Dostava jedrne funkcije \"interaktivnega poročila\" (RAG cevovod) in zaključek serije **Production Hardening** z avtomatiziranimi varnostnimi kopijami baze podatkov.",
-      "q2_desc_full": "Razširitev zmogljivosti zbiranja inteligence platforme z dodajanjem novih virov podatkov in analitičnih funkcij.",
-      "q3_desc_full": "Implementacija orodij za ustvarjanje vsebin in sodelovalnih funkcij za izpopolnjevanje znanja.",
-      "q4_desc_full": "Uvedba napredne sinteze in modulov za sodelovalno analizo za deljenje vpogledov na visoki ravni.",
-      "q5_desc_full": "Razširitev platforme v enoten osebni analitični sistem za večdomensko proaktivno razumevanje.",
-      "q1_subtitle": "Mojstrstvo poti znanja",
-      "q2_subtitle": "Implementacija modrosti",
-      "q3_subtitle": "Integriteta platforme",
-      "q4_subtitle": "Inteligentna sinteza",
-      "q5_subtitle": "Univerzalna modrost"
+      "title": "Pot vizije"
+    }
+  },
+  "briefingLibrary": {
+    "title": "Knjižnica poročil",
+    "subtitle": "Iščite in pregledujte vaš celoten arhiv poročil.",
+    "stats": {
+      "totalBriefings": "Skupaj poročil",
+      "totalBriefingsDesc": "V vašem arhivu"
     },
-    "footer": {
-      "built_with": "Sistemski metapodatki zaključeni.",
-      "close": "Zapri raziskovanje"
+    "search": {
+      "placeholder": "Išči poročila po naslovu ali vsebini..."
+    },
+    "filters": {
+      "topic": "Vse teme",
+      "source": "Vsi viri",
+      "startDate": "Datum od",
+      "endDate": "Datum do",
+      "reset": "Počisti filtre"
+    },
+    "table": {
+      "date": "Datum",
+      "topic": "Tema",
+      "title": "Naslov",
+      "actions": "Akcije",
+      "view": "Poglej"
+    },
+    "empty": {
+      "title": "Ni najdenih poročil",
+      "description": "Poskusite prilagoditi iskalne izraze ali filtre.",
+      "clearFilters": "Počisti vse filtre"
+    }
+  },
+  "briefingDetail": {
+    "backToLibrary": "Nazaj v knjižnico",
+    "executiveSummary": "Izvršni povzetek",
+    "fullBriefing": "Celotno poročilo",
+    "sourceItems": "Izvorni material",
+    "sourcesCount": "{{count}} analiziranih virov",
+    "openOriginal": "Odpri izvornik",
+    "seeSummary": "Poglej povzetek",
+    "notFound": "Poročilo ni najdeno",
+    "notFoundDesc": "Zahtevano poročilo ni bilo mogoče pridobiti ali ne obstaja.",
+    "public": {
+      "sharedSubtitle": "Deljeno obveščevalno poročilo",
+      "generatedBy": "Ustvarjeno s Povzetkarjem - UI analitik za vaše vsebine",
+      "ctaStart": "Ustvari svoje poročilo"
     }
   }
 }

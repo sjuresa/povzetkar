@@ -11,6 +11,8 @@ import { LandingNav } from '../components/landing/LandingNav';
 import { HeroSection } from '../components/landing/HeroSection';
 import { VisionSection } from '../components/landing/VisionSection';
 import { LandingFooter } from '../components/landing/LandingFooter';
+import { useSearch } from '@tanstack/react-router';
+import { AlertCircle, X } from 'lucide-react';
 
 export function LandingPage() {
   const { i18n } = useTranslation();
@@ -25,6 +27,8 @@ export function LandingPage() {
   );
 
   const { data: metadata } = useSystemMetadata();
+  const { notice } = useSearch({ from: '/' });
+  const [showNotice, setShowNotice] = useState(!!notice);
 
   const toggleLanguage = () => {
     const newLng = i18n.language === 'en' ? 'sl' : 'en';
@@ -49,6 +53,27 @@ export function LandingPage() {
           toggleLanguage={toggleLanguage}
           toggleTheme={toggleTheme}
         />
+
+        {showNotice && notice === 'restricted' && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="bg-amber-950/90 border border-amber-500/50 backdrop-blur-md rounded-2xl p-4 flex items-start gap-3 shadow-2xl shadow-amber-950/50">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-amber-200">Restricted Content</h3>
+                <p className="text-xs text-amber-400 mt-1 leading-relaxed">
+                  You need to be signed in to view this briefing. Please log in using your Google account.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowNotice(false)}
+                className="text-amber-500/50 hover:text-amber-500 transition-colors"
+                aria-label="Close notice"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <main className="flex-1 pt-40 pb-20 px-8 md:px-16 space-y-48">
           <HeroSection 

@@ -5,15 +5,26 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
+import java.time.Duration;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+
+import com.povzetkar.quarkus.model.MetricErrorType;
 
 @ApplicationScoped
 @EnrichmentStrategy(SourceTypeEnum.YOUTUBE)
@@ -21,14 +32,33 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     private static final Logger logger = LoggerFactory.getLogger(YouTubeDetailEnrichmentStrategy.class);
 
+    private static final Pattern HANDLE_PATTERN = Pattern.compile("^@([a-zA-Z0-9._-]+)$");
+    private static final Pattern CHANNEL_ID_PATTERN = Pattern.compile("^UC[a-zA-Z0-9_-]{22}$");
+    private static final Pattern URL_PATTERN = Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/(?:(@[a-zA-Z0-9._-]+)|(channel/|c/|user/)([a-zA-Z0-9._-]+))");
+
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
+    private final MeterRegistry registry;
+    
+    private final Cache<String, Optional<ContentSourceDetailService.ContentSourceDetails>> validationCache;
 
     @Inject
     public YouTubeDetailEnrichmentStrategy(YouTubeDataApiClient youtubeDataApiClient,
-                                           @ConfigProperty(name = "youtube.api.batch-size", defaultValue = "50") int batchSize) {
+                                           @ConfigProperty(name = "youtube.api.batch-size", defaultValue = "50") int batchSize,
+                                           @ConfigProperty(name = "youtube.validation.cache-expiry-ms", defaultValue = "3600000") long cacheExpiryMs,
+                                           @ConfigProperty(name = "youtube.validation.cache-max-size", defaultValue = "5000") long cacheMaxSize,
+                                           MeterRegistry registry) {
         this.youtubeDataApiClient = youtubeDataApiClient;
         this.batchSize = batchSize;
+        this.registry = registry;
+
+        this.validationCache = Caffeine.newBuilder()
+                .maximumSize(cacheMaxSize)
+                .expireAfterWrite(Duration.ofMillis(cacheExpiryMs))
+                .recordStats()
+                .build();
+                
+        CaffeineCacheMetrics.monitor(registry, this.validationCache, "povzetkar_youtube_validation_cache");
     }
 
     @Override
@@ -57,20 +87,86 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     @Override
     public Optional<ContentSourceDetailService.ContentSourceDetails> fetchDetails(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
+        return validationCache.get(identifier, this::doFetchDetails);
+    }
+
+    public void clearCache() {
+        validationCache.invalidateAll();
+    }
+
+    private Optional<ContentSourceDetailService.ContentSourceDetails> doFetchDetails(String input) {
+        String resolved = resolveIdentifier(input);
+        if (resolved == null) {
+            registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", MetricErrorType.UNRESOLVED_IDENTIFIER)).increment();
+            logger.warn("Could not resolve YouTube identifier from input: {}", input);
+            return Optional.empty();
+        }
+
         try {
-            List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(identifier));
-            if (items == null || items.isEmpty()) {
-                logger.warn("Channel not found for ID: {}", identifier);
+            Optional<Channel> channelOpt;
+            if (resolved.startsWith("@")) {
+                channelOpt = youtubeDataApiClient.fetchChannelByHandle(resolved);
+            } else if (CHANNEL_ID_PATTERN.matcher(resolved).matches()) {
+                List<Channel> items = youtubeDataApiClient.fetchChannels(List.of(resolved));
+                channelOpt = items.stream().findFirst();
+            } else {
+                String usernameToFetch = resolved.startsWith("user:") ? resolved.substring(5) : resolved;
+                channelOpt = youtubeDataApiClient.fetchChannelByUsername(usernameToFetch);
+            }
+
+            if (channelOpt.isEmpty()) {
+                registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", MetricErrorType.CHANNEL_NOT_FOUND)).increment();
+                logger.warn("Channel not found for resolved identifier: {}", resolved);
                 return Optional.empty();
             }
 
-            Channel channel = items.getFirst();
-            return Optional.of(extractContentSourceDetails(channel));
+            return Optional.of(extractContentSourceDetails(channelOpt.get()));
 
         } catch (IOException e) {
-            logger.error("Failed to fetch details for channel ID: {}", identifier, e);
+            registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", MetricErrorType.IO_EXCEPTION)).increment();
+            logger.error("Failed to fetch details for identifier: {}", resolved, e);
             return Optional.empty();
         }
+    }
+
+    private String resolveIdentifier(String input) {
+        String trimmed = input.trim();
+        
+        // 1. Direct Handle
+        if (HANDLE_PATTERN.matcher(trimmed).matches()) {
+            return trimmed;
+        }
+        
+        // 2. Direct ID
+        if (CHANNEL_ID_PATTERN.matcher(trimmed).matches()) {
+            return trimmed;
+        }
+        
+        // 3. URL Extraction - requires explicit channel-related prefix
+        Matcher urlMatcher = URL_PATTERN.matcher(trimmed);
+        if (urlMatcher.find()) {
+            if (urlMatcher.group(1) != null) {
+                return urlMatcher.group(1); // It's an @handle
+            }
+            
+            String prefix = urlMatcher.group(2);
+            String candidate = urlMatcher.group(3);
+            
+            if ("channel/".equals(prefix)) {
+                return candidate;
+            }
+            if ("user/".equals(prefix)) {
+                return "user:" + candidate;
+            }
+            // For /c/ URLs (legacy custom URLs) or other cases, the modern equivalent is a handle.
+            return "@" + candidate;
+        }
+
+        return (trimmed.contains("://") || trimmed.contains("www.")) ? null : trimmed;
     }
 
     private void enrichSources(List<ContentSource> sources, String successLog, String failureLog) {

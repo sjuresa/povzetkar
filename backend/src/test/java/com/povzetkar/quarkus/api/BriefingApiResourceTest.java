@@ -106,11 +106,11 @@ class BriefingApiResourceTest {
                 .then()
                 .statusCode(200)
                 .body("data.title", equalTo("Weekly AI Update"))
-                .body("data.executiveSummary", containsString("Summary of everything"))
-                .body("data.briefingText", containsString("Full markdown text here."))
-                .body("data.sourceContentItems", hasSize(1))
-                .body("data.sourceContentItems[0].title", equalTo("AI Breakthrough"))
-                .body("data.sourceContentItems[0].durationSeconds", is(600)); // Default 10 mins in builder
+                .body("data.metaSummary", containsString("Summary of everything"))
+                .body("data.summaries", hasSize(1))
+                .body("data.summaries[0].summaryText", containsString("Full markdown text here."))
+                .body("data.summaries[0].contentItem.title", equalTo("AI Breakthrough"))
+                .body("data.summaries[0].contentItem.durationSeconds", is(600)); // Default 10 mins in builder
     }
 
     @Test
@@ -120,5 +120,105 @@ class BriefingApiResourceTest {
                 .when().get("/api/v1/briefings")
                 .then()
                 .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSearchFilter() {
+        given()
+                .queryParam("search", "Weekly")
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("Weekly AI Update"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSearchNoResults() {
+        given()
+                .queryParam("search", "nonexistent-keyword-xyz")
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(0))
+                .body("data", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSourceIdFilter() {
+        // Get the source ID from the test setup (first source persisted)
+        ContentSource source = ContentSource.<ContentSource>findAll().firstResult();
+
+        given()
+                .queryParam("sourceId", source.id)
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].title", equalTo("Weekly AI Update"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testGetBriefingsWithSourceIdNoResults() {
+        given()
+                .queryParam("sourceId", 999999)
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(0))
+                .body("data", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testShareBriefing() {
+        // Reset UUID
+        given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/unshare")
+                .then()
+                .statusCode(204);
+
+        // Share it
+        String uuid = given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/share")
+                .then()
+                .statusCode(200)
+                .extract().path("data");
+
+        given()
+                .when().get("/api/v1/public/briefings/" + uuid)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testUnshareBriefing() {
+        // Share it first
+        String uuid = given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/share")
+                .then()
+                .statusCode(200)
+                .extract().path("data");
+
+        // Unshare it
+        given()
+                .contentType(io.restassured.http.ContentType.JSON)
+                .when().post("/api/v1/briefings/" + testBriefing.id + "/unshare")
+                .then()
+                .statusCode(204);
+
+        // Verify public API returns 404
+        given()
+                .when().get("/api/v1/public/briefings/" + uuid)
+                .then()
+                .statusCode(404);
     }
 }

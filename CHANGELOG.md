@@ -5,10 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] (v0.16.0)
+
+## [0.15.0] - 2026-03-30
 
 ### Summary
-Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
+Version 0.15.0 focuses on **Operational Excellence and Advanced Analytics**, delivering "Analytical Depth" through a searchable **Briefing Archive**, fully **Exportable intelligence** in Markdown/HTML, and robust real-time input validation. It also introduces enterprise-grade observability via **Prometheus and Grafana** integrations, solidifies the architecture with **self-cleaning retention jobs**, and centralizes the platform's stability through the establishment of a **Master Test Specification** linked to verifiable user stories.
+
+### Added
+- **Quality Assurance (POV-166):** Established a permanent, living **Master Test Specification** (`test_specification.md`) with 3-digit sequential indexing (`TC-DOM-0XX`). Centralized all functional and non-functional regression scenarios from v0.12 through v0.15.
+- **Requirements Traceability (POV-166):** Hardened the documentation stack by assigning unique IDs to all **User Stories (US-X)** and formalizing the mapping from User Stories ➔ Use Cases ➔ Test Cases.
+- **Planning Integrity (POV-167):** Developed scripts/qa/validate-planning.py, an automated audit tool that enforces deep traceability between tasks, use cases, and test specifications. Features a **Version-Aware Automation Guardrail** that flags critical (P0) test cases missing automation. Includes a "Time-Bomb" mechanism (validate:skip until vX.Y.Z) to prevent indefinite technical debt accumulation.
+- **Global Resilience (POV-166):** Introduced **Domain 0: GRX** specifically for baseline UI/UX stability (Skeleton loaders, Error boundaries, Theme persistence), ensuring core resilience is verified in every release.
+- **Process Guardrails (POV-166):** Updated the **Development Process Checklist** with a mandatory "Master Specification Sync" step, enforcing documentation integrity as a Phase 2 completion gate.
+- **Operational Maintenance (POV-165):** Implemented a 90-day retention policy for `JobExecutionAudit` records. The system now performs a "Safety-First" chunked deletion (1,000 records per transaction) daily at 03:00 UTC, preventing database performance degradation from historical log accumulation.
+- **Observability (POV-165):** Integrated Prometheus metrics for the retention job, exposing `povzetkar_maintenance_audits_purged_total` to track long-term data hygiene.
+- **Frontend Infrastructure (POV-165):** Upgraded the frontend build environment to **Node 24 LTS** and updated `@types/node` to `^24.0.0`, ensuring compatibility with the latest runtime and improved build-time type safety.
+- **Briefing Library (POV-161):** Implemented a searchable, filterable **Briefing Library** page (`/briefings`), replacing the previous placeholder. Users can now search briefings by keyword, filter by Topic, Source, or Date Range, and paginate through their complete briefing archive.
+- **Backend (POV-161):** Extended `GET /api/v1/briefings` with `search` (LIKE on title/metaSummary) and `sourceId` (EXISTS subquery) query parameters for advanced filtering.
+- **Briefing Detail (POV-161):** Implemented the **Briefing Detail** page (`/briefings/{id}`) with full markdown rendering of AI-generated briefing text, a highlighted Executive Summary card, and a Source Content grid displaying analyzed content items with thumbnails and external links.
+- **i18n (POV-161):** Full localization support for both English and Slovenian across the Briefing Library and Briefing Detail pages.
+- **Export & Share (POV-162):** Implemented an **Opt-in Sharing Model**. Briefings are private by default; users must explicitly "Enable Share Link" to generate a secure UUID-based public URL.
+- **Public UI (POV-162):** Developed a premium, standalone **Public Briefing Page** (`/s/$uuid`) for recipients. Features include a Sun/Moon theme toggle, an EN/SL language toggle for UI labels, and locale-aware date formatting.
+- **Export Capabilities (POV-162):** Implemented a high-fidelity **Black & White print-ready HTML export** using `marked`. Exported files feature topic-aware filenames (e.g., `Topic_Title.html`) and serif-based typography optimized for physical printing.
+- **SEO (POV-162):** Integrated `react-helmet-async` for dynamic SEO and OpenGraph metadata on shared briefings, ensuring rich previews (title/summary) when shared on social media or Slack.
+- **Source Validation (POV-163):** Implemented a live, debounced existence check for YouTube channels in the `QuickSourceIntake` component. This prevents invalid sources from being added by performing real-time API validation against the YouTube Data API.
+- **Quality Hardening (POV-163):** Achieved 100% compliance with strict quality audits, resolving issues in heading hierarchy, image accessibility (alt-tags), and unhandled asynchronous promises (`no-floating-promises`).
+- **Observability (POV-164):** Integrated a full **Prometheus & Grafana** monitoring stack into the local development environment (`backend/docker-compose.yml`).
+- **Backend Instrumentation (POV-164):** Instrumented core services (`OrchestrationManager`, `YouTubeTranscriptService`, `ContentSourceResource`) with Micrometer-based metrics (summarization rates, failure counters, active thread gauges).
+- **Security (POV-164):** Implemented a secure Bearer Token authentication mechanism (`METRICS_SCRAPE_TOKEN`) for the `/q/metrics` endpoint, ensuring that sensitive performance data is not exposed to unauthorized pollers.
+- **Visual Excellence (POV-164):** Developed the **"Povzetkar Baseline" Grafana Dashboard** with real-time throughput tracking, failure distribution, and active orchestration gauges, utilizing automated provisioning (Dashboards-as-Code).
+- **Documentation (POV-164):** Fully documented the monitoring infrastructure, secret management, and verification procedures in `docs/RUNBOOK.md`.
 
 ## [0.14.0] - 2026-03-28
 

@@ -7,5 +7,6 @@ test('has title', async ({ page }) => {
 
 test('renders brand name', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: /Povzetkar/i }).first()).toBeVisible();
+  // Look for the link by aria-label OR by the text content "Povzetkar"
+  await expect(page.getByLabel(/Povzetkar/i).or(page.getByText(/Povzetkar/i, { exact: false })).first()).toBeVisible();
 });

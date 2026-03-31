@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, GitBranch, History, Map, Loader2, BrainCircuit } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
-
-interface SystemMetadataProps {
-  readonly isOpen: boolean;
-  readonly onClose: () => void;
-  readonly initialTab?: 'changelog' | 'roadmap' | 'wisdom';
-}
 
 export interface SystemMetadataData {
   readonly version: string;
@@ -16,9 +11,43 @@ export interface SystemMetadataData {
   readonly releaseDate: string;
 }
 
+interface SystemMetadataProps {
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly initialTab?: 'changelog' | 'roadmap' | 'wisdom';
+}
+
+interface ChangelogEntry {
+  readonly version: string;
+  readonly title: string;
+  readonly date: string;
+  readonly desc: string;
+  readonly badge: string;
+}
+
+interface RoadmapPhase {
+  readonly title: string;
+  readonly desc: string;
+}
+
 export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: SystemMetadataProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'changelog' | 'roadmap' | 'wisdom'>(initialTab);
+
+  const changelogEntriesRaw = t('system.changelog_entries', { returnObjects: true });
+  const roadmapPhasesRaw = t('system.roadmap_phases', { returnObjects: true });
+
+  const changelogEntries = Array.isArray(changelogEntriesRaw) ? (changelogEntriesRaw as ChangelogEntry[]) : [];
+  const roadmapPhases = Array.isArray(roadmapPhasesRaw) ? (roadmapPhasesRaw as RoadmapPhase[]) : [];
+
+  const getBadgeClass = (badge: string) => {
+    switch(badge) {
+      case 'new': return 'bg-blue-500 text-white';
+      case 'fixed': return 'bg-emerald-500 text-white';
+      case 'improved': return 'bg-amber-500 text-white';
+      default: return 'bg-[var(--color-border-subtle)] text-[var(--color-text-primary)]';
+    }
+  };
 
   // Sync tab when opening or prop changes
   useEffect(() => {
@@ -145,61 +174,23 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                 </h3>
                 
                 <div className="space-y-12">
-                  <div className="relative pl-8 border-l-4 border-black">
-                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-[var(--color-accent)] shadow-[4px_4px_0px_black]" />
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.new')}</span>
-                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry1_date')}</span>
+                  {changelogEntries.map((entry, idx) => (
+                    <div key={idx} className={`relative pl-8 border-l-4 ${idx === 0 ? 'border-[var(--color-accent)]' : 'border-black opacity-80'}`}>
+                      <div className={`absolute top-0 -left-[10px] w-4 h-4 shadow-[4px_4px_0px_black] ${idx === 0 ? 'bg-[var(--color-accent)]' : 'bg-black'}`} />
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${getBadgeClass(entry.badge)}`}>
+                            {t(`system.changelog.badges.${entry.badge}`)}
+                          </span>
+                          <span className="text-xs font-bold text-[var(--color-text-secondary)]">{entry.date}</span>
+                        </div>
+                        <h4 className="text-xl font-black tracking-tight">{entry.title}</h4>
+                        <div className="text-[var(--color-text-secondary)] leading-relaxed max-w-2xl prose prose-neutral dark:prose-invert prose-sm">
+                          <ReactMarkdown>{entry.desc}</ReactMarkdown>
+                        </div>
                       </div>
-                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry1_title')}</h4>
-                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                        {t('system.changelog.entry1_desc')}
-                      </p>
                     </div>
-                  </div>
-
-                  <div className="relative pl-8 border-l-4 border-black">
-                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-black" />
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-[var(--color-border-subtle)] text-black text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.improved')}</span>
-                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry2_date')}</span>
-                      </div>
-                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry2_title')}</h4>
-                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                        {t('system.changelog.entry2_desc')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="relative pl-8 border-l-4 border-black">
-                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-[var(--color-accent)]" />
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.new')}</span>
-                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry3_date')}</span>
-                      </div>
-                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry3_title')}</h4>
-                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                        {t('system.changelog.entry3_desc')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="relative pl-8 border-l-4 border-black opacity-60">
-                    <div className="absolute top-0 -left-[10px] w-4 h-4 bg-black" />
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest">{t('system.changelog.badges.fixed')}</span>
-                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">{t('system.changelog.entry4_date')}</span>
-                      </div>
-                      <h4 className="text-xl font-black tracking-tight">{t('system.changelog.entry4_title')}</h4>
-                      <p className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl">
-                        {t('system.changelog.entry4_desc')}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
@@ -227,21 +218,14 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                 </h3>
                 
                 <div className="relative pl-12 border-l-4 border-black space-y-20">
-                   {[
-                    { title: t('system.roadmap.q1_title'), subtitle: t('system.roadmap.q1_subtitle'), desc: t('system.roadmap.q1_desc_full') },
-                    { title: t('system.roadmap.q2_title'), subtitle: t('system.roadmap.q2_subtitle'), desc: t('system.roadmap.q2_desc_full') },
-                    { title: t('system.roadmap.q3_title'), subtitle: t('system.roadmap.q3_subtitle'), desc: t('system.roadmap.q3_desc_full') },
-                    { title: t('system.roadmap.q4_title'), subtitle: t('system.roadmap.q4_subtitle'), desc: t('system.roadmap.q4_desc_full') },
-                    { title: t('system.roadmap.q5_title'), subtitle: t('system.roadmap.q5_subtitle'), desc: t('system.roadmap.q5_desc_full') }
-                  ].map((phase, idx) => (
+                  {roadmapPhases.map((phase, idx) => (
                     <div key={idx} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
                       <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
                       <div className="space-y-3">
                         <h4 className="text-sm font-black uppercase tracking-widest text-[var(--color-accent)]">{phase.title}</h4>
-                        <h3 className="text-2xl font-black uppercase tracking-tight">{phase.subtitle}</h3>
-                        <p className="text-lg font-bold text-[var(--color-text-secondary)] leading-relaxed max-w-2xl">
-                           {phase.desc}
-                        </p>
+                        <div className="text-lg font-medium text-[var(--color-text-secondary)] leading-relaxed max-w-2xl prose prose-neutral dark:prose-invert prose-lg">
+                           <ReactMarkdown>{phase.desc}</ReactMarkdown>
+                        </div>
                       </div>
                     </div>
                   ))}

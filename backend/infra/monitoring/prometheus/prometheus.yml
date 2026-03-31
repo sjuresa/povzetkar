@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'povzetkar-backend'
+    metrics_path: '/q/metrics'
+    # The 'backend' is on the host during dev
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    bearer_token: '${METRICS_SCRAPE_TOKEN}'

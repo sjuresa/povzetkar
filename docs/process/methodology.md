@@ -62,7 +62,7 @@ Our lifecycle is divided into four distinct phases.
 
 ### Phase 3: Version Finalization
 *Goal: Clean up and prepare for release.*
-1.  **Documentation Review:** We review project-wide docs (`docs/sdlc`, `docs/analysis`) to ensure they match the new reality.
+1.  **Documentation Review:** We review project-wide docs (`docs/sdlc`, `docs/analysis`) to ensure they match the new reality. This includes a mandatory **Planning Audit** to verify traceability (see [Documentation Validation Protocol](validation-protocol.md)).
 2.  **Cleanup:** We finalize the `pom.xml` (remove snapshots) and `CHANGELOG.md`.
 
 ### Phase 4: Release
