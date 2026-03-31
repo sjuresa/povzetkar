@@ -270,47 +270,110 @@
       "changelog": "Updates",
       "roadmap": "Vision Path"
     },
+    "footer": {
+      "built_with": "Release metadata finalized.",
+      "close": "Close Discovery"
+    },
+    "changelog_entries": [
+      {
+        "version": "v0.16.0",
+        "title": "Update v0.16.0",
+        "date": "In Progress",
+        "desc": "",
+        "badge": "new"
+      },
+      {
+        "version": "0.15.0",
+        "title": "Update 0.15.0",
+        "date": "2026-03-30",
+        "desc": "Version 0.15.0 focuses on **Operational Excellence and Advanced Analytics**, delivering \"Analytical Depth\" through a searchable **Briefing Archive**, fully **Exportable intelligence** in Markdown/HTML, and robust real-time input validation. It also introduces enterprise-grade observability via **Prometheus and Grafana** integrations, solidifies the architecture with **self-cleaning retention jobs**, and centralizes the platform's stability through the establishment of a **Master Test Specification** linked to verifiable user stories.",
+        "badge": "new"
+      },
+      {
+        "version": "0.14.0",
+        "title": "Update 0.14.0",
+        "date": "2026-03-28",
+        "desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Key highlights include **Custom Prompt Templates** at the topic level, a hardened **Distroless Java 25 Runtime**, and a premium distillery-inspired **Landing Page**. User control is significantly enhanced with a new **Orchestration Trigger Dialog** (allowing dry-runs and parameter refinement) and a global **Content Management Dashboard** for administrative oversight of the ingestion pipeline.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.13.0",
+        "title": "Update v0.13.0",
+        "date": "2026-03-24",
+        "desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with automated retries, a global Error Boundary for catastrophic failure recovery, and a localized, themeable user environment. Key highlights include the new User Profile page, dual-language support (English/Slovenian), and a robust Light/Dark/System theme system with persistence. This release also solidifies the backend with a persistent **Job Execution Audit** system and a comprehensive **Secrets Management** strategy (fail-fast validation and masking), ensuring a professional and secure platform for content orchestration.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.12.0",
+        "title": "Update v0.12.0",
+        "date": "2026-03-18",
+        "desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack application. This release finalizes the monorepo architecture, integrating a high-performance React/TypeScript frontend with a hardened Quarkus backend. Key highlights include a unified Docker deployment strategy with automated security scanning, a premium glassmorphic Dashboard Hub with real-time SSE job tracking, and a comprehensive Audit Log Admin UI for technical observability. With 100% end-to-end type safety, robust authentication guards, and a standardized API contract, version 0.12.0 establishes a rock-solid foundation for scalable content orchestration.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.11.0",
+        "title": "Update v0.11.0",
+        "date": "2026-03-12",
+        "desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for live job updates, comprehensive API request auditing, and a centralized permission-based access control system. Operational improvements include JPQL projection optimizations, consolidated health metrics, and standardized error handling across the entire API layer. The integration of static analysis and vulnerability scanning further hardens the application's security posture.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.10.0",
+        "title": "Update v0.10.0",
+        "date": "2026-02-20",
+        "desc": "Version 0.10.0 transforms the application into a secure, multi-tenant platform. This major release integrates Google OIDC for seamless authentication, ensures strict data isolation so users only see their own topics and content sources, and provides a polished developer experience with OpenAPI documentation and standardized project structures. Additionally, structural enhancements like a minimum duration filter for videos and robust auditing capabilities have been introduced.",
+        "badge": "new"
+      },
+      {
+        "version": "v0.9.0",
+        "title": "Update v0.9.0",
+        "date": "2026-02-05",
+        "desc": "Version 0.9.0 focuses on **Operational Refinement & Admin Tools**. This release stabilizes the application's core logic by introducing a Circuit Breaker pattern to increase resilience against external API failures (like GenAI 503s) and enhances the administrator's toolkit with features like Orchestration Preview, GenAI usage tracking, and history pagination. A comprehensive Methodology guide has also been established.",
+        "badge": "new"
+      },
+      {
+        "version": "0.8.0",
+        "title": "Update 0.8.0",
+        "date": "2026-01-20",
+        "desc": "Version 0.8.0 introduces **Standalone Application Deployment**. It provides the necessary configuration to build and run the Quarkus application as an immutable, OCI-compliant container image (via Jib) without relying on development mode. This release also significantly improves observability by implementing a structured Logfmt logging pattern for key processing steps.",
+        "badge": "new"
+      },
+      {
+        "version": "0.7.0",
+        "title": "Update 0.7.0",
+        "date": "2026-01-13",
+        "desc": "Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.27.1 LTS. This ensures the platform is built on a secure, stable, and modern foundation. This release also introduces significant improvements to administrative control, allowing for granular orchestration and fine-grained topic management.",
+        "badge": "new"
+      }
+    ],
+    "roadmap_phases": [
+      {
+        "title": "v0.16: Administrative Control & Hardening",
+        "desc": "Establish full operational control over the platform and integrate advanced security auditing into the release cycle."
+      },
+      {
+        "title": "v1.0: RAG & Conversational Interface",
+        "desc": "Deliver the core \"interactive report\" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures."
+      },
+      {
+        "title": "v1.1: Expansion & Advanced Analytics",
+        "desc": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features."
+      },
+      {
+        "title": "v1.2: Content Creation & Refinement",
+        "desc": ""
+      }
+    ],
     "changelog": {
       "title": "Strategic Updates",
       "badges": {
         "new": "NEW",
         "improved": "IMP",
         "fixed": "FIX"
-      },
-      "entry1_title": "Update v0.14.0",
-      "entry1_desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. The current work is centered on **Custom Topic Management**, **Infras...",
-      "entry1_date": "In Progress",
-      "entry2_title": "Update v0.13.0",
-      "entry2_desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
-      "entry2_date": "2026-03-24",
-      "entry3_title": "Update v0.12.0",
-      "entry3_desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
-      "entry3_date": "2026-03-18",
-      "entry4_title": "Update v0.11.0",
-      "entry4_desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
-      "entry4_date": "2026-03-12"
+      }
     },
     "roadmap": {
-      "title": "Vision Path",
-      "q1_title": "v0.14: Output Mastery & UX Refinement",
-      "q2_title": "v0.15: Advanced Archive & Operational Excellence",
-      "q3_title": "v1.0: RAG & Conversational Interface",
-      "q4_title": "v1.1: Expansion & Advanced Analytics",
-      "q5_title": "v1.2: Content Creation & Refinement",
-      "q1_desc_full": "Empower users with advanced reporting tools and give administrators full control over system operations and user management.",
-      "q2_desc_full": "Finalize the transition to a full-featured analytical platform with historical archives and enterprise-grade observability.",
-      "q3_desc_full": "Deliver the core \"interactive report\" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.",
-      "q4_desc_full": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features.",
-      "q5_desc_full": "",
-      "q1_subtitle": "Knowledge Path Mastery",
-      "q2_subtitle": "Wisdom Implementation",
-      "q3_subtitle": "Platform Integrity",
-      "q4_subtitle": "Intelligent Synthesis",
-      "q5_subtitle": "Universal Wisdom"
-    },
-    "footer": {
-      "built_with": "Release metadata finalized.",
-      "close": "Close Discovery"
+      "title": "Vision Path"
     }
   },
   "briefingLibrary": {

@@ -5,10 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] (v0.16.0)
+
+## [0.15.0] - 2026-03-30
 
 ### Summary
-Work for the next release (v0.15.0) is focused on **Operational Excellence and Advanced Analytics**, including the **Briefing Library**, **User Management UI**, and **Prometheus/Grafana** monitoring integration.
+Version 0.15.0 focuses on **Operational Excellence and Advanced Analytics**, delivering "Analytical Depth" through a searchable **Briefing Archive**, fully **Exportable intelligence** in Markdown/HTML, and robust real-time input validation. It also introduces enterprise-grade observability via **Prometheus and Grafana** integrations, solidifies the architecture with **self-cleaning retention jobs**, and centralizes the platform's stability through the establishment of a **Master Test Specification** linked to verifiable user stories.
 
 ### Added
 - **Quality Assurance (POV-166):** Established a permanent, living **Master Test Specification** (`test_specification.md`) with 3-digit sequential indexing (`TC-DOM-0XX`). Centralized all functional and non-functional regression scenarios from v0.12 through v0.15.

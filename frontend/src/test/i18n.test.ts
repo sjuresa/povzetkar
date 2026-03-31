@@ -41,7 +41,12 @@ describe('i18n JSON structure', () => {
         for (const part of parts) {
             current = (current as Record<string, unknown>)[part];
         }
-        expect(typeof current).toBe('string');
+        if (Array.isArray(current)) {
+            // Arrays are explicitly allowed for use cases using returnObjects: true
+            expect(Array.isArray(current)).toBe(true);
+        } else {
+            expect(typeof current).toBe('string');
+        }
     };
 
     enKeys.forEach(key => checkValue(en as Record<string, unknown>, key));
