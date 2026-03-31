@@ -27,8 +27,11 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'changelog' | 'roadmap' | 'wisdom'>(initialTab);
 
-  const changelogEntries = t('system.changelog_entries', { returnObjects: true }) as ChangelogEntry[];
-  const roadmapPhases = t('system.roadmap_phases', { returnObjects: true }) as RoadmapPhase[];
+  const changelogEntriesRaw = t('system.changelog_entries', { returnObjects: true });
+  const roadmapPhasesRaw = t('system.roadmap_phases', { returnObjects: true });
+
+  const changelogEntries = Array.isArray(changelogEntriesRaw) ? (changelogEntriesRaw as ChangelogEntry[]) : [];
+  const roadmapPhases = Array.isArray(roadmapPhasesRaw) ? (roadmapPhasesRaw as RoadmapPhase[]) : [];
 
   const getBadgeClass = (badge: string) => {
     switch(badge) {

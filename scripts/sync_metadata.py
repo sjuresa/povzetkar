@@ -130,8 +130,11 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
             if existing:
                 title = existing['title']
                 date_str = existing['date']
-                # Intentionally not inheriting existing['desc'] so that upstream changes 
-                # (like fixing truncations or markdown) flow into the locale automatically.
+                
+                # Preserve the description only if it differs from the current source English text.
+                # If they are identical, it means it was never translated, so we allow upstream updates.
+                if existing.get('desc') and existing['desc'] != entry['desc']:
+                    desc = existing['desc']
             else:
                 title = translate_to_sl(title)
                 date_str = translate_to_sl(date_str)
@@ -176,8 +179,10 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
             existing = next((p for p in data['system'].get('roadmap_phases', []) if p['title'] == title or (p['title'].startswith(title.split(':')[0]) if ':' in title else False)), None)
             if existing:
                 title = existing['title']
-                # Intentionally not inheriting existing['desc'] for roadmap phases so upstream
-                # updates flow linearly into the locale mapping.
+                
+                # Preserve the description only if it differs from the current source English text
+                if existing.get('desc') and existing['desc'] != phase['desc']:
+                    desc = existing['desc']
         
         new_roadmap.append({
             "title": title,
