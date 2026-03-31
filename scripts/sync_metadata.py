@@ -18,15 +18,17 @@ def translate_to_sl(text: str) -> str:
     For complex summaries, it currently returns the original but identifies them for manual review.
     """
     translated = text
-    for en, sl in TRANSLATIONS.items():
+    for en in sorted(TRANSLATIONS.keys(), key=len, reverse=True):
+        sl = TRANSLATIONS[en]
         translated = translated.replace(en, sl)
-    
+
     # Custom logic for "Update vX.Y.Z"
     if text.startswith("Update v"):
         translated = text.replace("Update", "Posodobitev")
         
     return translated
-def parse_changelog(path: str) -> List[Dict[str, str]]:
+
+def parse_changelog(path: str) -> List[Dict[str, str]]:
     with open(path, 'r', encoding='utf-8') as f:
         content = f.read()
     
@@ -132,7 +134,8 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
             if existing:
                 title = existing['title']
                 date_str = existing['date']
-                desc = existing['desc']
+                # Intentionally not inheriting existing['desc'] so that upstream changes 
+                # (like fixing truncations or markdown) flow into the locale automatically.
             else:
                 title = translate_to_sl(title)
                 date_str = translate_to_sl(date_str)
@@ -177,7 +180,8 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
             existing = next((p for p in data['system'].get('roadmap_phases', []) if p['title'] == title or (p['title'].startswith(title.split(':')[0]) if ':' in title else False)), None)
             if existing:
                 title = existing['title']
-                desc = existing['desc']
+                # Intentionally not inheriting existing['desc'] for roadmap phases so upstream
+                # updates flow linearly into the locale mapping.
         
         new_roadmap.append({
             "title": title,

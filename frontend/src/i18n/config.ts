@@ -13,7 +13,7 @@ void i18n
       escapeValue: false, 
     },
     backend: {
-      loadPath: '/locales/{{lng}}.json',
+      loadPath: '/locales/{{lng}}.json?v=' + new Date().getTime(),
     },
     // Using a single namespace for simplicity in this project's single-file-per-language setup
     defaultNS: 'translation',
