@@ -21,10 +21,6 @@ def translate_to_sl(text: str) -> str:
     for en in sorted(TRANSLATIONS.keys(), key=len, reverse=True):
         sl = TRANSLATIONS[en]
         translated = translated.replace(en, sl)
-
-    # Custom logic for "Update vX.Y.Z"
-    if text.startswith("Update v"):
-        translated = text.replace("Update", "Posodobitev")
         
     return translated
 

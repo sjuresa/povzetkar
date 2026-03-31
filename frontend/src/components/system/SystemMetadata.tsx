@@ -175,7 +175,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                           <span className="text-xs font-bold text-[var(--color-text-secondary)]">{entry.date}</span>
                         </div>
                         <h4 className="text-xl font-black tracking-tight">{entry.title}</h4>
-                        <div className="text-[var(--color-text-secondary)] font-bold leading-relaxed max-w-2xl prose prose-neutral dark:prose-invert prose-sm">
+                        <div className="text-[var(--color-text-secondary)] leading-relaxed max-w-2xl prose prose-neutral dark:prose-invert prose-sm">
                           <ReactMarkdown>{entry.desc}</ReactMarkdown>
                         </div>
                       </div>
@@ -213,7 +213,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                       <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
                       <div className="space-y-3">
                         <h4 className="text-sm font-black uppercase tracking-widest text-[var(--color-accent)]">{phase.title}</h4>
-                        <div className="text-lg font-bold text-[var(--color-text-secondary)] leading-relaxed max-w-2xl prose prose-neutral dark:prose-invert">
+                        <div className="text-lg font-medium text-[var(--color-text-secondary)] leading-relaxed max-w-2xl prose prose-neutral dark:prose-invert">
                            <ReactMarkdown>{phase.desc}</ReactMarkdown>
                         </div>
                       </div>
