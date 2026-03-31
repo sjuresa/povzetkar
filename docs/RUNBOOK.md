@@ -648,8 +648,9 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_briefing_generated_total`: Counter for success/failed briefings (with `status="success|failed"`, `topic_id`, `user_id` tags).
 - `povzetkar_active_orchestrations_current`: Gauge for active threads.
 - `povzetkar_source_added_total`: Counter for content sources added (with `platform` tag).
-- `povzetkar_youtube_validation_failed_total`: Counter for source intake errors.
+- `povzetkar_youtube_validation_failed_total`: Counter for source intake errors (with `error_type` tagging `unresolved_identifier`, `channel_not_found`, or `io_exception`).
 - `povzetkar_transcript_retrieval_duration_seconds`: Timer for transcript fetching.
+- `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
 
 ## 14. API Response Structure (Envelopes)

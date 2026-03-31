@@ -12,6 +12,8 @@ import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.povzetkar.quarkus.model.MetricErrorType;
+
 @ApplicationScoped
 public class YouTubeTranscriptService {
 
@@ -47,11 +49,11 @@ public class YouTubeTranscriptService {
             sample.stop(registry.timer("povzetkar_transcript_retrieval_duration_seconds"));
             return result;
         } catch (IllegalArgumentException e) {
-            registry.counter("povzetkar_transcript_service_failed_total", "error_type", "invalid_format").increment();
+            registry.counter("povzetkar_transcript_service_failed_total", "error_type", MetricErrorType.INVALID_FORMAT).increment();
             log.warn("The provided video ID '{}' has an invalid format.", videoId, e);
             return "";
         } catch (TranscriptRetrievalException e) {
-            registry.counter("povzetkar_transcript_service_failed_total", "error_type", "retrieval_exception").increment();
+            registry.counter("povzetkar_transcript_service_failed_total", "error_type", MetricErrorType.RETRIEVAL_EXCEPTION).increment();
             log.error("Could not retrieve transcript for video ID '{}'. The video may be unavailable or private.", videoId, e);
             return "";
         }

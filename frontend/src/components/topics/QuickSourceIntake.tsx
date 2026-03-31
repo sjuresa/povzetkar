@@ -11,6 +11,15 @@ interface QuickSourceIntakeProps {
   onCancel: () => void;
 }
 
+interface ApiErrorResponse {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 const SOURCE_TYPE_YOUTUBE = 1; // From SourceTypeEnum.YOUTUBE
 const SOURCE_TYPE_BLOG = 2;    // From SourceTypeEnum.BLOG
 
@@ -70,8 +79,8 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
         setValidationStatus('idle');
       }
     } else if (isError) {
-      const axiosError = validationApiError as unknown as { response?: { status?: number } };
-      if (axiosError?.response?.status === 404) {
+      const apiError = (validationApiError as unknown) as ApiErrorResponse;
+      if (apiError?.response?.status === 404) {
         setValidationStatus('invalid');
       } else {
         setValidationStatus('warning');
@@ -102,8 +111,8 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
           onSuccess(response.data as ContentSourceDTO);
         },
         onError: (err: unknown) => {
-          const axiosError = err as { response?: { data?: { message?: string } } };
-          setError(axiosError?.response?.data?.message || t('topics.form.quick_add.error_failed', 'Failed to add source'));
+          const apiError = err as ApiErrorResponse;
+          setError(apiError?.response?.data?.message || t('topics.form.quick_add.error_failed', 'Failed to add source'));
         },
       }
     );
