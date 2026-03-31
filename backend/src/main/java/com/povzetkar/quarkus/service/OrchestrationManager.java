@@ -496,7 +496,7 @@ public class OrchestrationManager {
             Topic topic = null;
             try {
                 // Step 1: Read data in a transaction
-                topic = QuarkusTransaction.requiringNew().call(() -> Topic.findById(topicId));
+                topic = QuarkusTransaction.requiringNew().call(() -> Topic.<Topic>find("from Topic t left join fetch t.user where t.id = ?1", topicId).firstResult());
                 
                 if (topic == null) {
                     logger.warn(
