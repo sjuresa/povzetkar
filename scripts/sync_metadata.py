@@ -176,7 +176,7 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
         
         if is_sl:
             # Try to persist existing translations
-            existing = next((p for p in data['system'].get('roadmap_phases', []) if p['title'] == title or (p['title'].startswith(title.split(':')[0]) if ':' in title else False)), None)
+            existing = next((p for p in data['system'].get('roadmap_phases', []) if p['title'] == title or (p['title'].startswith(title.split(':')[0] + ':') if ':' in title else False)), None)
             if existing:
                 title = existing['title']
                 

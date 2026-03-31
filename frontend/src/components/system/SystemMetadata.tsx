@@ -167,7 +167,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                 </h3>
                 
                 <div className="space-y-12">
-                  {Array.isArray(changelogEntries) && changelogEntries.map((entry, idx) => (
+                  {changelogEntries.map((entry, idx) => (
                     <div key={idx} className={`relative pl-8 border-l-4 ${idx === 0 ? 'border-[var(--color-accent)]' : 'border-black opacity-80'}`}>
                       <div className={`absolute top-0 -left-[10px] w-4 h-4 shadow-[4px_4px_0px_black] ${idx === 0 ? 'bg-[var(--color-accent)]' : 'bg-black'}`} />
                       <div className="space-y-4">
@@ -211,7 +211,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                 </h3>
                 
                 <div className="relative pl-12 border-l-4 border-black space-y-20">
-                  {Array.isArray(roadmapPhases) && roadmapPhases.map((phase, idx) => (
+                  {roadmapPhases.map((phase, idx) => (
                     <div key={idx} className={`relative ${idx > 1 ? 'opacity-40' : ''}`}>
                       <span className={`absolute -left-[60px] top-0 w-8 h-8 bg-white border-4 border-black flex items-center justify-center font-black text-xs ${idx === 0 ? 'shadow-[4px_4px_0px_var(--color-accent)]' : ''}`}>0{idx + 1}</span>
                       <div className="space-y-3">
