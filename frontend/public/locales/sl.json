@@ -270,52 +270,110 @@
       "changelog": "Posodobitve",
       "roadmap": "Pot vizije"
     },
+    "footer": {
+      "built_with": "Sistemski metapodatki zaključeni.",
+      "close": "Zapri raziskovanje"
+    },
+    "changelog_entries": [
+      {
+        "version": "v0.16.0",
+        "title": "Posodobitev v0.16.0",
+        "date": "V teku",
+        "desc": "",
+        "badge": "new"
+      },
+      {
+        "version": "0.15.0",
+        "title": "Posodobitev 0.15.0",
+        "date": "2026-03-30",
+        "desc": "Version 0.15.0 focuses on **Operational Excellence and Advanced Analytics**, delivering \"Analytical Depth\" through a searchable **Briefing Archive*...",
+        "badge": "new"
+      },
+      {
+        "version": "0.14.0",
+        "title": "Posodobitev 0.14.0",
+        "date": "2026-03-28",
+        "desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Key highlights include **Custom Prompt Templates** at the topic level...",
+        "badge": "new"
+      },
+      {
+        "version": "v0.13.0",
+        "title": "Posodobitev v0.13.0",
+        "date": "2026-03-24",
+        "desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
+        "badge": "new"
+      },
+      {
+        "version": "v0.12.0",
+        "title": "Posodobitev v0.12.0",
+        "date": "2026-03-18",
+        "desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
+        "badge": "new"
+      },
+      {
+        "version": "v0.11.0",
+        "title": "Posodobitev v0.11.0",
+        "date": "2026-03-12",
+        "desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
+        "badge": "new"
+      },
+      {
+        "version": "v0.10.0",
+        "title": "Posodobitev v0.10.0",
+        "date": "2026-02-20",
+        "desc": "Version 0.10.0 transforms the application into a secure, multi-tenant platform. This major release integrates Google OIDC for seamless authenticati...",
+        "badge": "new"
+      },
+      {
+        "version": "v0.9.0",
+        "title": "Posodobitev v0.9.0",
+        "date": "2026-02-05",
+        "desc": "Version 0.9.0 focuses on **Operational Refinement & Admin Tools**. This release stabilizes the application's core logic by introducing a Circuit Br...",
+        "badge": "new"
+      },
+      {
+        "version": "0.8.0",
+        "title": "Posodobitev 0.8.0",
+        "date": "2026-01-20",
+        "desc": "Version 0.8.0 introduces **Standalone Application Deployment**. It provides the necessary configuration to build and run the Quarkus application as...",
+        "badge": "new"
+      },
+      {
+        "version": "0.7.0",
+        "title": "Posodobitev 0.7.0",
+        "date": "2026-01-13",
+        "desc": "Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.27.1 LTS. This ensures the platform is bu...",
+        "badge": "new"
+      }
+    ],
+    "roadmap_phases": [
+      {
+        "title": "v0.16: Administrative Control & Hardening",
+        "desc": "Establish full operational control over the platform and integrate advanced security auditing into the release cycle."
+      },
+      {
+        "title": "v1.0: RAG & Conversational Interface",
+        "desc": "Deliver the core \"interactive report\" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures."
+      },
+      {
+        "title": "v1.1: Expansion & Advanced Analytics",
+        "desc": "Broaden the platform's intelligence-gathering capabilities by adding new data sources and analytical features."
+      },
+      {
+        "title": "v1.2: Content Creation & Refinement",
+        "desc": ""
+      }
+    ],
     "changelog": {
-      "title": "Strateške posodobitve",
+      "title": "Strategic Posodobitevs",
       "badges": {
         "new": "NOVO",
         "improved": "IZB",
         "fixed": "POP"
-      },
-      "entry1_title": "Posodobitev v0.16.0",
-      "entry1_desc": "",
-      "entry1_date": "V teku",
-      "entry2_title": "Posodobitev 0.15.0",
-      "entry2_desc": "Version 0.15.0 focuses on **Operational Excellence and Advanced Analytics**, delivering \"Analytical Depth\" through a searchable **Briefing Archive*...",
-      "entry2_date": "2026-03-30",
-      "entry3_title": "Posodobitev 0.14.0",
-      "entry3_desc": "Version 0.14.0 focuses on **Customization, Reliability, and Data Integrity**. Key highlights include **Custom Prompt Templates** at the topic level...",
-      "entry3_date": "2026-03-28",
-      "entry4_title": "Posodobitev v0.13.0",
-      "entry4_desc": "Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrastructure Hardening**. It introduces a hardened network layer with au...",
-      "entry4_date": "2026-03-24",
-      "entry5_desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack a...",
-      "entry5_date": "2026-03-18",
-      "entry6_title": "Posodobitev v0.11.0",
-      "entry6_desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for ...",
-      "entry6_date": "2026-03-12"
+      }
     },
     "roadmap": {
-      "title": "Pot vizije",
-      "q1_title": "v1.0: RAG & Pogovorni vmesnik",
-      "q2_title": "v1.1: Razširitev & Napredna analitika",
-      "q3_title": "v1.2: Ustvarjanje vsebin & Izpopolnjevanje",
-      "q4_title": "v1.3: Sodelovalna analiza",
-      "q5_title": "v2.0: Enotna platforma za analitike",
-      "q1_desc_full": "Dostava jedrne funkcije \"interaktivnega poročila\" (RAG cevovod) in zaključek serije **Production Hardening** z avtomatiziranimi varnostnimi kopijami baze podatkov.",
-      "q2_desc_full": "Razširitev zmogljivosti zbiranja inteligence platforme z dodajanjem novih virov podatkov in analitičnih funkcij.",
-      "q3_desc_full": "Implementacija orodij za ustvarjanje vsebin in sodelovalnih funkcij za izpopolnjevanje znanja.",
-      "q4_desc_full": "Uvedba napredne sinteze in modulov za sodelovalno analizo za deljenje vpogledov na visoki ravni.",
-      "q5_desc_full": "Razširitev platforme v enoten osebni analitični sistem za večdomensko proaktivno razumevanje.",
-      "q1_subtitle": "Mojstrstvo poti znanja",
-      "q2_subtitle": "Implementacija modrosti",
-      "q3_subtitle": "Integriteta platforme",
-      "q4_subtitle": "Inteligentna sinteza",
-      "q5_subtitle": "Univerzalna modrost"
-    },
-    "footer": {
-      "built_with": "Sistemski metapodatki zaključeni.",
-      "close": "Zapri raziskovanje"
+      "title": "Pot vizije"
     }
   },
   "briefingLibrary": {

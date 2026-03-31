@@ -26,15 +26,15 @@ def translate_to_sl(text: str) -> str:
         translated = text.replace("Update", "Posodobitev")
         
     return translated
-
-def parse_changelog(path: str) -> List[Dict[str, str]]:
+def parse_changelog(path: str) -> List[Dict[str, str]]:
     with open(path, 'r', encoding='utf-8') as f:
         content = f.read()
     
     version_blocks = re.split(r'##\s+\[', content)[1:]
     
     entries = []
-    for block in version_blocks[:4]:
+    # Increase to 10 entries
+    for block in version_blocks[:10]:
         lines = block.strip().split('\n')
         header = lines[0]
         
@@ -60,14 +60,21 @@ def parse_changelog(path: str) -> List[Dict[str, str]]:
             if bullets:
                 summary = " ".join([f"{b[0]}: {b[1]}" for b in bullets[:2]])
         
-        if len(summary) > 150:
-            summary = summary[:147] + "..."
-            
+        # Detect badge type
+        badge = "new" if len(entries) == 0 else "improved"
+        if "### Added" in block:
+            badge = "new"
+        elif "### Fixed" in block and not "### Added" in block and not "### Improved" in block:
+            badge = "fixed"
+        elif "### Improved" in block or "### Changed" in block:
+            badge = "improved"
+
         entries.append({
             "version": version,
             "date": date_str,
             "title": f"Update {version}",
-            "desc": summary
+            "desc": summary,
+            "badge": badge
         })
     
     return entries
@@ -104,7 +111,7 @@ def parse_roadmap(path: str) -> List[Dict[str, str]]:
             "desc": goal
         })
 
-    return phases[:5]
+    return phases
 
 def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phases: List[Dict[str, str]], lang: str):
     with open(path, 'r', encoding='utf-8') as f:
@@ -112,39 +119,83 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
     
     is_sl = (lang == 'sl')
     
-    # Update Changelog
-    for i, entry in enumerate(changelog_entries):
-        idx = i + 1
+    # Update Changelog Array
+    new_changelog = []
+    for entry in changelog_entries:
         title = entry['title']
-        desc = entry['desc']
         date_str = entry['date']
+        desc = entry['desc']
         
         if is_sl:
-            title = translate_to_sl(title)
-            date_str = translate_to_sl(date_str)
-            # For complex descriptions, we keep original if no translation logic exists
+            # Try to persist existing translations if titles match
+            existing = next((e for e in data['system'].get('changelog_entries', []) if e['version'] == entry['version']), None)
+            if existing:
+                title = existing['title']
+                date_str = existing['date']
+                desc = existing['desc']
+            else:
+                title = translate_to_sl(title)
+                date_str = translate_to_sl(date_str)
+        
+        new_changelog.append({
+            "version": entry['version'],
+            "title": title,
+            "date": date_str,
+            "desc": desc,
+            "badge": entry.get('badge', 'new')
+        })
     
-        data['system']['changelog'][f'entry{idx}_title'] = title
-        data['system']['changelog'][f'entry{idx}_desc'] = desc
-        data['system']['changelog'][f'entry{idx}_date'] = date_str
+    data['system']['changelog_entries'] = new_changelog
     
-    # Update Roadmap
-    for i, phase in enumerate(roadmap_phases):
-        idx = i + 1
+    # Restore/Ensure changelog badges exist
+    if 'changelog' not in data['system']:
+        data['system']['changelog'] = {
+            "title": translate_to_sl("Strategic Updates") if is_sl else "Strategic Updates",
+            "badges": {
+                "new": "NOVO" if is_sl else "NEW",
+                "improved": "IZB" if is_sl else "IMP",
+                "fixed": "POP" if is_sl else "FIX"
+            }
+        }
+    else:
+        # Ensure badges are there specifically
+        if 'badges' not in data['system']['changelog']:
+            data['system']['changelog']['badges'] = {
+                "new": "NOVO" if is_sl else "NEW",
+                "improved": "IZB" if is_sl else "IMP",
+                "fixed": "POP" if is_sl else "FIX"
+            }
+    
+    # Update Roadmap Array
+    new_roadmap = []
+    for phase in roadmap_phases:
         title = phase['title']
         desc = phase['desc']
         
         if is_sl:
-            # We don't overwrite Roadmap titles in SL if they are already significantly different
-            existing_title = data['system']['roadmap'].get(f'q{idx}_title', "")
-            if existing_title and existing_title != title:
-                 # It's likely already translated, so we only update the description if it's empty
-                 if not data['system']['roadmap'].get(f'q{idx}_desc_full'):
-                      data['system']['roadmap'][f'q{idx}_desc_full'] = desc
-                 continue
-                 
-        data['system']['roadmap'][f'q{idx}_title'] = title
-        data['system']['roadmap'][f'q{idx}_desc_full'] = desc
+            # Try to persist existing translations
+            existing = next((p for p in data['system'].get('roadmap_phases', []) if p['title'] == title or (p['title'].startswith(title.split(':')[0]) if ':' in title else False)), None)
+            if existing:
+                title = existing['title']
+                desc = existing['desc']
+        
+        new_roadmap.append({
+            "title": title,
+            "desc": desc
+        })
+    
+    data['system']['roadmap_phases'] = new_roadmap
+
+    # Clean up old roadmap object but keep the title
+    if 'roadmap' in data['system']:
+        title = data['system']['roadmap'].get('title', translate_to_sl("Vision Path") if is_sl else "Vision Path")
+        data['system']['roadmap'] = {
+            "title": title
+        }
+    else:
+        data['system']['roadmap'] = {
+            "title": translate_to_sl("Vision Path") if is_sl else "Vision Path"
+        }
 
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
