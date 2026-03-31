@@ -183,6 +183,8 @@ def update_i18n(path: str, changelog_entries: List[Dict[str, str]], roadmap_phas
                 # Preserve the description only if it differs from the current source English text
                 if existing.get('desc') and existing['desc'] != phase['desc']:
                     desc = existing['desc']
+            else:
+                title = translate_to_sl(title)
         
         new_roadmap.append({
             "title": title,
