@@ -12,13 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
+import java.time.Duration;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 
 @ApplicationScoped
 @EnrichmentStrategy(SourceTypeEnum.YOUTUBE)
@@ -32,23 +36,27 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
 
     private final YouTubeDataApiClient youtubeDataApiClient;
     private final int batchSize;
-    private final long cacheExpiryMs;
     private final MeterRegistry registry;
     
-    // Simple 1-hour in-memory cache for validation results
-    private final Map<String, CachedItem<Optional<ContentSourceDetailService.ContentSourceDetails>>> validationCache = new ConcurrentHashMap<>();
-
-    private record CachedItem<T>(T value, long expiry) {}
+    private final Cache<String, Optional<ContentSourceDetailService.ContentSourceDetails>> validationCache;
 
     @Inject
     public YouTubeDetailEnrichmentStrategy(YouTubeDataApiClient youtubeDataApiClient,
                                            @ConfigProperty(name = "youtube.api.batch-size", defaultValue = "50") int batchSize,
                                            @ConfigProperty(name = "youtube.validation.cache-expiry-ms", defaultValue = "3600000") long cacheExpiryMs,
+                                           @ConfigProperty(name = "youtube.validation.cache-max-size", defaultValue = "5000") long cacheMaxSize,
                                            MeterRegistry registry) {
         this.youtubeDataApiClient = youtubeDataApiClient;
         this.batchSize = batchSize;
-        this.cacheExpiryMs = cacheExpiryMs;
         this.registry = registry;
+
+        this.validationCache = Caffeine.newBuilder()
+                .maximumSize(cacheMaxSize)
+                .expireAfterWrite(Duration.ofMillis(cacheExpiryMs))
+                .recordStats()
+                .build();
+                
+        CaffeineCacheMetrics.monitor(registry, this.validationCache, "povzetkar_youtube_validation_cache");
     }
 
     @Override
@@ -81,18 +89,11 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
             return Optional.empty();
         }
 
-        CachedItem<Optional<ContentSourceDetailService.ContentSourceDetails>> cached = validationCache.get(identifier);
-        if (cached != null && cached.expiry() > System.currentTimeMillis()) {
-            return cached.value();
-        }
-
-        Optional<ContentSourceDetailService.ContentSourceDetails> details = doFetchDetails(identifier);
-        validationCache.put(identifier, new CachedItem<>(details, System.currentTimeMillis() + cacheExpiryMs));
-        return details;
+        return validationCache.get(identifier, this::doFetchDetails);
     }
 
     public void clearCache() {
-        validationCache.clear();
+        validationCache.invalidateAll();
     }
 
     private Optional<ContentSourceDetailService.ContentSourceDetails> doFetchDetails(String input) {

@@ -1,17 +1,18 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
-import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.dto.BriefingPaginatedResponse;
+import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 import com.povzetkar.quarkus.api.util.QueryParser;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
-import com.povzetkar.quarkus.security.Permission;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -39,8 +40,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
-import com.povzetkar.quarkus.api.util.FilterBuilder;
-
 @Path("/api/v1/briefings")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -67,6 +66,7 @@ public class BriefingApiResource extends BaseApiResource {
     )
     @Parameter(name = "search", description = "Keyword search across briefing title and executive summary")
     @Parameter(name = "sourceId", description = "Filter briefings containing summaries from a specific content source")
+    @Transactional
     public BriefingPaginatedResponse getBriefings(
             @QueryParam("topicId") Long topicId,
             @QueryParam("sourceId") Long sourceId,
