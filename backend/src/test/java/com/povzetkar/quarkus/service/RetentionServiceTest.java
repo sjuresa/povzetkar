@@ -60,7 +60,7 @@ class RetentionServiceTest {
     void testPurgeOldAuditLogs_DeletesOnlyRequiredRecords() {
         // Initial state check
         assertEquals(15, JobExecutionAudit.count(), "Should have 15 records before purging");
-        double metricValueBefore = meterRegistry.counter("povzetkar.maintenance.audits_purged_total").count();
+        double metricValueBefore = meterRegistry.counter("povzetkar_maintenance_audits_purged_total").count();
 
         // Trigger retention (Manually, since it's @Scheduled)
         retentionService.purgeOldAuditLogs();
@@ -73,7 +73,7 @@ class RetentionServiceTest {
         assertEquals(5, freshCount, "All survivors must be the fresh or boundary records");
         
         // Metrics verification
-        double metricValueAfter = meterRegistry.counter("povzetkar.maintenance.audits_purged_total").count();
+        double metricValueAfter = meterRegistry.counter("povzetkar_maintenance_audits_purged_total").count();
         assertEquals(10.0, metricValueAfter - metricValueBefore, "Prometheus metric should record exactly 10 deletions.");
     }
 }

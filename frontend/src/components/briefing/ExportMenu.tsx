@@ -105,7 +105,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     if (briefing.metaSummary && briefing.summaries) {
       return { 
         metaSummary: briefing.metaSummary,
-        content: briefing.summaries.map(s => s.summaryText).join('\n\n---\n\n')
+        content: briefing.summaries.map(s => s.summaryText || '').filter(Boolean).join('\n\n---\n\n')
       };
     }
     

@@ -103,7 +103,7 @@ public class BriefingApiResource extends BaseApiResource {
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "status"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "title"));
         PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
         long count = query.count();
         List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
