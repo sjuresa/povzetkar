@@ -35,7 +35,7 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
       case 'new': return 'bg-blue-500';
       case 'fixed': return 'bg-emerald-500';
       case 'improved': return 'bg-amber-500';
-      default: return 'bg-[var(--color-border-subtle)] !text-black';
+      default: return 'bg-[var(--color-border-subtle)] text-[var(--color-text-primary)]';
     }
   };
 
