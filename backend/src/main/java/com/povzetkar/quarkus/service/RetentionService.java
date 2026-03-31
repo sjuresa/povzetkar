@@ -67,7 +67,7 @@ public class RetentionService {
                     chunksProcessed++;
                     
                     // Increment Prometheus metrics for visibility
-                    meterRegistry.counter("povzetkar.maintenance.audits_purged_total").increment(deletedInChunk);
+                    meterRegistry.counter("povzetkar_maintenance_audits_purged_total").increment(deletedInChunk);
 
                     if (chunksProcessed % 10 == 0) {
                         log.info("Purging in progress... {} records deleted in {} chunks", totalDeleted, chunksProcessed);
