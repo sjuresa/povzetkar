@@ -4,6 +4,13 @@ import { X, GitBranch, History, Map, Loader2, BrainCircuit } from 'lucide-react'
 import ReactMarkdown from 'react-markdown';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 
+export interface SystemMetadataData {
+  readonly version: string;
+  readonly environment: string;
+  readonly status: string;
+  readonly releaseDate: string;
+}
+
 interface SystemMetadataProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
