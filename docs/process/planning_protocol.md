@@ -46,7 +46,7 @@ To achieve "Perfection Tier" planning, every version must produce or update the 
 - **Requirements:** 
     - **Version At A Glance**: Table with SSoT Decisions (link to ADRs) and Baseline Audit statuses.
     - **Strategic Discussions**: Documentation of technical debates, strategic pivots (Pivot/Critique/Decision), and rationale.
-    - **Risk Registry**: able documenting potential technical or project risks and their mitigations.
+    - **Risk Registry**: Table documenting potential technical or project risks and their mitigations.
 - **Location:** `docs/versions/vX.Y.Z/planning-process.md`
 
 ### 1.6 Operational Constraints (NFR Alignment)
