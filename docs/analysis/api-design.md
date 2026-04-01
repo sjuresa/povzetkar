@@ -668,7 +668,7 @@ Enables public sharing for an individual summary. Generates and returns a secure
 Disables public sharing by nullifying the associated UUID. Any existing links become invalid (404).
 **Response (204 No Content)**
 
-**`GET /api/v1/summaries/public/{uuid}`**
+**`GET /api/v1/public/summaries/{uuid}`**
 Accesses a sanitized, read-only version of a summary without authentication.
 **Response (200 OK):**
 ```json
