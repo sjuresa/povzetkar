@@ -100,9 +100,49 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 4. Administrator saves the source.
 **Postconditions**: Source is added with high confidence in its validity.
 
+### UC-8: Share Individual Summary
+**Actor**: User/Administrator
+**Related Stories**: US-16.3
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Preconditions**: A summary exists for a content item.
+**Main Flow**:
+1. User views a Briefing or Administrator views Content Management.
+2. User/Administrator clicks "Share" on a specific summary item.
+3. System generates a unique public UUID for the summary.
+4. User/Administrator copies the public link to the clipboard.
+5. External viewer accesses the link without authentication.
+**Postconditions**: Individual summary is visible to the public until unshared.
+
+### UC-9: Complete Onboarding Checklist
+**Actor**: New User
+**Related Stories**: US-16.4
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Preconditions**: User has just registered or has no topics/briefings.
+**Main Flow**:
+1. User logs in and lands on the Dashboard.
+2. System displays a 5-step checklist (Topics, Sources, Trigger, Read, Share).
+3. User performs the required action (e.g., creates a topic).
+4. System automatically checks off the corresponding item in the list.
+5. User completes all steps and reaches 100% progress.
+**Postconditions**: User is successfully onboarded and understands the system flow.
+
+### UC-10: React to Job Completion Toasts
+**Actor**: User
+**Related Stories**: US-16.2, US-16.8
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Preconditions**: A background job (orchestration) is running.
+**Main Flow**:
+1. System completes the background job and sends an SSE event.
+2. System displays a toast notification with a sound (Success or Failure).
+3. System includes an "Action" button in the toast (e.g., [View Briefing]).
+4. User clicks the button in the toast.
+5. System navigates the user directly to the relevant view.
+**Postconditions**: User experiences a seamless transition from job completion to result consumption.
+
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.3     | April 01, 2026 | Povzetkar AI | Added UC-8, UC-9, UC-10 for v0.16.0 (User Experience Focus). |
 | 1.2     | March 30, 2026 | Povzetkar AI | Mapped User Story IDs to all Use Cases for Traceability Matrix hardening (POV-166). |
 | 1.1     | 2026-03-28 | Povzetkar AI | Added UC-5, UC-6, UC-7 for v0.15.0 planning. |
 | 1.0     | 2026-03-25 | Povzetkar AI | Initial draft based on FRD v1.3 and v0.14.0 Planning (POV-152/153/155). |

@@ -13,21 +13,11 @@ This document provides a comprehensive checklist for our development process. It
 - [ ] **1.3. Define High-Level Goals:** Review the `roadmap.md` and agree on the primary objectives for the new version.
 - [ ] **1.4. Define Testing Strategy:** For any new functionality (especially with a UI component), ask "How will we test this in a way that is proportional to the investment?". The decision must be documented in the `planning-process.md`.
 - [ ] **1.5. Identify Spike Tasks:** Review goals for high technical uncertainty. If any exist, create a dedicated "Spike" task to de-risk future development.
-- [ ] **1.6. Document Planning Process**: Create a `docs/versions/vX.Y-planning-process.md` file using the "Decision Log" style.
-    - [ ] Include **Planning Evolution & Justification**: Document brainstorming discussions and pro/con analysis.
-    - [ ] Include **Testing Strategy**: Proportional complexity mapping to `use_cases.md`.
-    - [ ] Include **UI/UX Discovery (Skeletons)**: For all UI tasks, define the layout grid and element placement using **ASCII Wireframes**.
-    - [ ] Include **API & Dependency Audit**: Check status of external services (e.g., YouTube API) and library security *before* planning implementation.
+- [ ] **1.6. Document Planning Process**: Create the `docs/versions/vX.Y-planning-process.md` file. Content MUST strictly follow the **[Planning Protocol (PPP)](../process/planning_protocol.md)** standard (Brainstorming Logic, ADRs, Expert Triad Review).
 - [ ] **1.7. Define Use Cases & Test Cases**:
-    - [ ] For all user-facing or complex features, create/update `docs/analysis/use_cases.md` to map **User Story IDs (US-X)** to concrete interaction flows.
-    - [ ] Update **`docs/analysis/test_specification.md`** (Master Suite). Map every new Use Case to at least one Test Case (TC) and define the testing methodology (Manual, Unit, Playwright).
-- [ ] **1.8. Create Task Breakdown**: Create a new `docs/versions/vX.Y-tasks.md` file.
-    - [ ] Include a **Time Estimation Summary** with per-task estimates and contingency.
-    - [ ] Assign **Prioritization (P-levels)**: P0 (Critical/Core), P1 (High), P2 (Enhancement), P3 (Maint).
-    - [ ] **Task Specification**: Every task must have a `## Context` and a `## Definition of Done`.
-    - [ ] **Resilience & Error States**: Every task must define system behavior for **failure scenarios** (e.g., network timeout, API down, database locked).
-    - [ ] **Skill Mapping**: Tag each task with required AI skills (e.g., `@[skills/api-patterns]`).
-    - [ ] For every `feat` task, ensure a corresponding `test` sub-task is defined.
+    - [ ] Create/Update `docs/analysis/use_cases.md` and `docs/analysis/test_specification.md`.
+    - [ ] **Traceability**: Ensure US -> UC -> TC mapping as per the PPP **Traceability Matrix** requirement.
+- [ ] **1.8. Create Task Breakdown**: Create the `docs/versions/vX.Y-tasks.md` file following the **PPP Standard** (P-levels, ASCII Wireframes, Resilience Analysis, Context Linking).
 - [ ] **1.9. Initialize Retrospective Draft**: Create a `docs/retrospectives/vX.Y.Z-retrospective.md` file with initial sections to capture learnings and observations throughout the development cycle.
 - [ ] **1.10. Document Standard (Formatting)**: For all non-trivial documents created or updated, ensure that the **Revision History** section is placed at the **END** of the file to prioritize immediate access to core content.
 - [ ] **1.11. Final Expert Review**: Perform a mandatory final review of the version plan, specifically checking for:
@@ -102,6 +92,7 @@ This document provides a comprehensive checklist for our development process. It
 ## Revision History
 | Version | Date             | Author       | Changes                                                                                                                             |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 2.7     | April 01, 2026   | Povzetkar AI | Integrated [Project Planning Protocol (PPP)](../process/planning_protocol.md) as a mandatory standard for Phase 1. |
 | 2.6     | March 30, 2026   | Povzetkar AI | Relocated script to `scripts/qa/`, removed hardcoded filenames, and hardened ID extraction logic. |
 | 2.5     | March 30, 2026   | Povzetkar AI | Linked [Documentation Validation Protocol](../process/validation-protocol.md) for rule enforcement. |
 | 2.4     | March 30, 2026   | Povzetkar AI | Mandated Planning Audit via `validate-planning.py` across all phases.       |

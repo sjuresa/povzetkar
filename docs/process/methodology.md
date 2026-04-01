@@ -9,7 +9,7 @@ Our development process is a **Pragmatic Hybrid Agile** approach, tailored speci
 
 1.  **Structure over Chaos:** We use strict checklists (`11_development_checklist.md`) and protocols (`AGENT.md`) to maintain discipline in an asynchronous environment.
 2.  **Flow over Batches:** We strictly limit Work In Progress (WIP) to **1**. We finish one task completely before starting the next.
-3.  **Documentation as Code:** Documentation is not an afterthought; it is a first-class deliverable. Plans, retrospectives, and architectural decisions are committed alongside the code.
+3.  **Documentation as Code:** Documentation is not an afterthought; it is a first-class deliverable. Plans (`PPP`), retrospectives, and architectural decisions (`ADRs`) are committed alongside the code to ensure a permanent and searchable source of truth.
 4.  **Continuous Learning:** Every version concludes with a retrospective that directly feeds action items into the next version's process.
 5.  **Asynchronous Pair Programming:** You act as the "navigator" (strategic direction), and I act as the "driver" (tactical implementation).
 
@@ -47,7 +47,7 @@ Our lifecycle is divided into four distinct phases.
 2.  **Goal Definition:** We select high-level goals from the `roadmap.md`.
 3.  **Testing Strategy:** We explicitly decide the testing approach for new features (e.g., "Unit tests for logic, Integration tests for API, Manual plan for UI"). *Learned in v0.6.1.*
 4.  **Spike Identification:** High-risk or uncertain tasks are isolated as "Spikes" (research tasks) to be tackled first. *Learned in v0.6.2.*
-5.  **Output:** A `vX.Y-planning-process.md` (rationale) and `vX.Y-tasks.md` (execution list).
+5.  **Output:** A `vX.Y-planning-process.md` (rationale) and `vX.Y-tasks.md` (execution list) following the mandatory **[Project Planning Protocol (PPP)](planning_protocol.md)**. This ensures that every task has a technical and visual "blueprint" (ADR, UI Manifesto) before coding begins.
 
 ### Phase 2: Task Execution (The Core Loop)
 *Goal: Implement one task at a time with high quality.*
