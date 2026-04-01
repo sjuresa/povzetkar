@@ -662,7 +662,7 @@ Accesses a sanitized, read-only version of a summary without authentication.
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
-| 1.3 | April 01, 2026 | Povzetkar AI | Added Section 3.9 for Individual Summary Sharing (POV-173). |
+| 1.3     | April 01, 2026 | Povzetkar AI | Added Section 3.9 for Individual Summary Sharing (POV-172). |
 | 1.2     | March 30, 2026 | Povzetkar AI | Mandated ID header correlation and X-Correlation-ID tracing. |
 | 1.1     | 2026-03-25 | Povzetkar AI | Added 202 Accepted Async Job contract and SSE stream definitions. |
 | 1.0     | 2023-10-25 | Povzetkar AI | Initialized API Contract for v0.11.0 foundation. |

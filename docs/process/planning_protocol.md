@@ -51,7 +51,9 @@ To achieve "Perfection Tier" planning, every version must produce or update the 
 
 ### 1.6 Operational Constraints (NFR Alignment)
 - **Goal:** Define *how well* the feature must perform to meet project standards.
-- **Requirements:** Every P0/P1 task must specify a performance budget (e.g., "Latency < 500ms", "Maximum bundle size increase per feature < 10KB"). 
+- **Requirements:** 
+    - **Baseline Audit**: Before setting constraints, the current state MUST be measured (e.g., using Lighthouse, Micrometer, or Build stats).
+    - **Performance Budget**: Every P0/P1 task must specify a budget based on the baseline (e.g., "Latency < 500ms", "Maximum bundle size increase per feature < 10KB"). 
 - **Reference:** [Non-Functional Requirements](../sdlc/02_non_functional_requirements.md).
 
 ---
@@ -116,4 +118,6 @@ To ensure pragmatism and speed, the protocol is **Elastic**. Not every version r
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.4     | 2026-04-01 | Povzetkar AI | Formally mandated Baseline Audit requirement for all Operational Constraints (NFRs). |
+| 1.3     | 2026-04-01 | Povzetkar AI | Corrected Time Estimation Summary requirement to individual task level based on v0.15.0 pattern. |
 | 1.0     | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol.    |
