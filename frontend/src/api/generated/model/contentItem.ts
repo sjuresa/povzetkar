@@ -23,7 +23,9 @@ export interface ContentItem {
   /** Error code if status is FAILED */
   errorCode?: string;
   durationSeconds?: number;
+  formattedDuration?: string;
   thumbnailUrl?: string;
+  authorName?: string;
   contentSource?: ContentSourceDTO;
   /** First associated topic name */
   topicName?: string;

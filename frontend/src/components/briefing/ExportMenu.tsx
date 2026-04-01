@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '../../util/cn';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useGetApiV1BriefingsId, usePostApiV1BriefingsIdShare, usePostApiV1BriefingsIdUnshare } from '../../api/generated/briefings/briefings';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -31,15 +32,17 @@ interface ExportMenuProps {
   variant?: 'ghost' | 'outline' | 'primary';
   className?: string;
   align?: 'left' | 'right';
+  readOnly?: boolean;
 }
 
-export function ExportMenu({ briefing, variant = 'outline', className, align = 'right' }: Readonly<ExportMenuProps>) {
+export function ExportMenu({ briefing, variant = 'outline', className, align = 'right', readOnly = false }: Readonly<ExportMenuProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [localUuid, setLocalUuid] = useState<string | null>(briefing.uuid);
   const menuRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Sync state if uuid changes externally
   useEffect(() => {
@@ -63,9 +66,9 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
         }
         void queryClient.invalidateQueries({ queryKey: ['briefings'] });
         void queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
-        toast.success('Public sharing enabled');
+        toast.success(t('briefingDetail.export.toasts.shareEnabled'));
       },
-      onError: () => { toast.error('Failed to enable sharing'); }
+      onError: () => { toast.error(t('briefingDetail.export.toasts.shareEnableFailed')); }
     }
   });
 
@@ -75,9 +78,9 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
         setLocalUuid(null);
         void queryClient.invalidateQueries({ queryKey: ['briefings'] });
         void queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
-        toast.success('Public sharing disabled');
+        toast.success(t('briefingDetail.export.toasts.shareDisabled'));
       },
-      onError: () => { toast.error('Failed to disable sharing'); }
+      onError: () => { toast.error(t('briefingDetail.export.toasts.shareDisableFailed')); }
     }
   });
 
@@ -120,7 +123,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
         content: detail.summaries?.map(s => s.summaryText).join('\n\n---\n\n') || ''
       };
     } catch {
-      toast.error('Could not prepare export data');
+      toast.error(t('briefingDetail.export.toasts.exportDataError'));
       return null;
     } finally {
       setIsExporting(false);
@@ -144,7 +147,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     const fileName = `${safeTopic}_${safeTitle}.md`;
     
     downloadFile(content, fileName, 'text/markdown');
-    toast.success('Markdown exported');
+    toast.success(t('briefingDetail.export.toasts.markdownSuccess'));
     setIsOpen(false);
   };
 
@@ -172,7 +175,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     const fileName = `${safeTopic}_${safeTitle}.html`;
     
     downloadFile(htmlContent, fileName, 'text/html');
-    toast.success('HTML exported (B&W Print Ready)');
+    toast.success(t('briefingDetail.export.toasts.htmlSuccess'));
     setIsOpen(false);
   };
 
@@ -181,11 +184,11 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     try {
       await navigator.clipboard.writeText(url);
       setIsCopied(true);
-      toast.success('Share link copied to clipboard');
+      toast.success(t('briefingDetail.export.toasts.copySuccess'));
       setTimeout(() => setIsCopied(false), 2000);
       setIsOpen(false);
     } catch {
-      toast.error('Failed to copy link');
+      toast.error(t('briefingDetail.export.toasts.copyFailed'));
     }
   };
 
@@ -209,7 +212,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
         aria-haspopup="true"
       >
         <Download className="w-4 h-4" />
-        <span>Export</span>
+        <span>{t('briefingDetail.export.button')}</span>
         <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
 
@@ -225,8 +228,8 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
             >
               <FileText className="w-4 h-4 text-slate-500 group-hover:text-indigo-400" />
               <div className="flex-1 text-left">
-                <p className="font-medium">Markdown</p>
-                <p className="text-[10px] text-slate-500">Plain text format</p>
+                <p className="font-medium">{t('briefingDetail.export.markdown')}</p>
+                <p className="text-[10px] text-slate-500">{t('briefingDetail.export.markdownDesc')}</p>
               </div>
             </button>
 
@@ -236,62 +239,64 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
             >
               <Code className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
               <div className="flex-1 text-left">
-                <p className="font-medium">HTML / Print</p>
-                <p className="text-[10px] text-slate-500">B&W Print Ready</p>
+                <p className="font-medium">{t('briefingDetail.export.html')}</p>
+                <p className="text-[10px] text-slate-500">{t('briefingDetail.export.htmlDesc')}</p>
               </div>
             </button>
 
             <div className="my-1 border-t border-slate-800" />
 
-            {localUuid ? (
-              <>
+            {!readOnly && (
+              localUuid ? (
+                <>
+                  <button
+                    onClick={() => { void copyShareLink(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
+                  >
+                    {isCopied ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
+                    )}
+                    <div className="flex-1 text-left">
+                      <p className="font-medium">{t('briefingDetail.export.copyLink')}</p>
+                      <p className="text-[10px] text-slate-500">{t('briefingDetail.export.copyLinkDesc')}</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => { void unshareMutation.mutate({ id: briefing.id! }); }}
+                    disabled={unshareMutation.isPending}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group"
+                  >
+                    {unshareMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 text-rose-500/50 group-hover:text-rose-500" />
+                    )}
+                    <div className="flex-1 text-left">
+                      <p className="font-medium">{t('briefingDetail.export.disableShare')}</p>
+                      <p className="text-[10px] text-rose-500/60">{t('briefingDetail.export.disableShareDesc')}</p>
+                    </div>
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => { void copyShareLink(); }}
+                  onClick={() => { void shareMutation.mutate({ id: briefing.id! }); }}
+                  disabled={shareMutation.isPending}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
                 >
-                  {isCopied ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
+                  {shareMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
                   ) : (
-                    <Copy className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
+                    <Share2 className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
                   )}
                   <div className="flex-1 text-left">
-                    <p className="font-medium">Copy Share Link</p>
-                    <p className="text-[10px] text-slate-500">URL for public access</p>
+                    <p className="font-medium">{t('briefingDetail.export.enableShare')}</p>
+                    <p className="text-[10px] text-slate-500">{t('briefingDetail.export.enableShareDesc')}</p>
                   </div>
                 </button>
-
-                <button
-                  onClick={() => { void unshareMutation.mutate({ id: briefing.id! }); }}
-                  disabled={unshareMutation.isPending}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group"
-                >
-                  {unshareMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4 text-rose-500/50 group-hover:text-rose-500" />
-                  )}
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">Disable Share Link</p>
-                    <p className="text-[10px] text-rose-500/60">Invalidates public URL</p>
-                  </div>
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => { void shareMutation.mutate({ id: briefing.id! }); }}
-                disabled={shareMutation.isPending}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
-              >
-                {shareMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
-                ) : (
-                  <Share2 className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
-                )}
-                <div className="flex-1 text-left">
-                  <p className="font-medium">Enable Share Link</p>
-                  <p className="text-[10px] text-slate-500">Generate a public URL</p>
-                </div>
-              </button>
+              )
             )}
           </div>
         </div>

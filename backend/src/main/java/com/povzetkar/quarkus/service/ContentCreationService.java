@@ -86,16 +86,31 @@ public class ContentCreationService {
 
     private Part createVideoSummaryTextPart(YouTubeVideo video, String transcript) {
         String sourceType = transcript.isBlank() ? "video url" : "video transcript";
-        String prompt = Prompts.VIDEO_SUMMARY_PROMPT.formatted(
-                sourceType,
-                video.sourceUrl,
-                video.title,
-                video.sourceUrl,
-                video.authorName,
-                video.formattedPublishedAt(),
-                video.formattedDuration(),
-                transcript
-        );
-        return Part.fromText(prompt);
+        String template = Prompts.VIDEO_SUMMARY_PROMPT;
+
+        String finalPrompt;
+        if (template.contains("{{")) {
+            finalPrompt = template
+                    .replace("{{sourceType}}", sourceType)
+                    .replace("{{sourceUrl}}", video.sourceUrl != null ? video.sourceUrl : "")
+                    .replace("{{title}}", video.title != null ? video.title : "")
+                    .replace("{{author}}", video.authorName != null ? video.authorName : "")
+                    .replace("{{publishedAt}}", video.formattedPublishedAt())
+                    .replace("{{duration}}", video.formattedDuration())
+                    .replace("{{transcript}}", transcript != null ? transcript : "");
+        } else {
+            // Fallback to legacy index-based formatting if template isn't migrated
+            finalPrompt = template.formatted(
+                    sourceType,
+                    video.sourceUrl,
+                    video.title,
+                    video.sourceUrl,
+                    video.authorName,
+                    video.formattedPublishedAt(),
+                    video.formattedDuration(),
+                    transcript
+            );
+        }
+        return Part.fromText(finalPrompt);
     }
 }

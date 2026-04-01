@@ -20,6 +20,10 @@ public record SummaryDTO(
         @Schema(description = "Duration in seconds (if applicable).")
         Long durationSeconds,
         @Schema(description = "The platform of the content (e.g., YOUTUBE, BLOG).")
-        String platform
+        String platform,
+        @Schema(description = "The name of the author or content creator.")
+        String authorName,
+        @Schema(description = "Human-readable formatted duration (e.g., 12m 45s).")
+        String formattedDuration
 ) {
 }

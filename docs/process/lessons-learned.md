@@ -761,5 +761,41 @@ In rapid agile development, User Stories often become disconnected from the actu
     
     This pattern transforms documentation debt into a time-bound obligation that must be either resolved or explicitly extended with a new deadline in every release.
 
-### 34.3 Real-World Sync Verification (Phase 2 Gate)
-- **The Standard:** Never mark a task as "Complete" without running a **Phase 2 Audit** (Step 2.11). This caught 4 critical documentation regressions in v0.15.0 that were missed during manual peer review, proving that automated consistency checks are mandatory for scaling a complex documentation stack.
+
+---
+
+## 35. AI Prompt Architecture & Templating (POV-170)
+
+### 35.1 "System-as-Frame, AI-as-Intelligence"
+- **The Trap:** Including UI-level structural elements (e.g., `## Daily Briefing`, `### 1. Executive Summary`) directly in AI prompts. This tightly couples the AI output to a specific UI version, leading to redundant headers, inconsistent styling, and a fragile "all-or-nothing" rendering model.
+- **The Standard:** Strip all structural metadata and section numbering from AI prompts. The AI should generate **Pure Intelligence** (clean markdown sections), while the **Frontend System** provides the structural **Frame** (consistent UI headers, platform icons, and links). This ensures a professional, version-stable, and theme-aware presentation.
+
+### 35.2 Named Variable Injection ({{variable}})
+- **The Trap:** Using legacy positional formatting (`String.formatted("%s", ...)`) for complex multi-variable prompts. This is extremely fragile; changing the order of variables in the template requires a corresponding change in the Java caller, leading to "Silent Data Mismatches" that are difficult to debug.
+- **The Standard:** Migrate all prompt templates to an explicit **named variable** syntax (e.g., `{{title}}`, `{{transcript}}`, `{{summaries}}`).
+- **Implementation:** Use a simple `.replace("{{var}}", value)` chain in the service layer. This makes templates human-readable, order-independent, and robust against future prompt iterations.
+
+## 36. Data Model Evolution (POV-170)
+
+### 36.1 Metadata Promotion (Base Entity Elevation)
+- **The Trap:** Storing high-value metadata (e.g., `authorName`) only in specific subclasses (e.g., `YouTubeVideo`) while the primary API returns the base type (`ContentItem`). This prevents the UI from performing universal attribution without complex casting or additional API calls.
+- **The Standard:** When a metadata field becomes a requirement for "Global Resilience" or "UX Consistency" (e.g., showing the author in a briefing), **promote** that field to the **Base Entity** (`ContentItem`) and the **Global DTO**.
+- **Refactoring Tip:** In `SINGLE_TABLE` inheritance, moving a field to the base class is schema-safe if the column mapping remains identical. This provides immediate, type-safe access to attribution data across all content types (Videos, Articles, Podcasts).
+
+---
+
+## 37. Responsive Layout & Header Resilience (POV-170)
+
+### 37.1 The "flex-1 Wrap Trap"
+- **The Trap:** Using `flex-1` on both a long text element (e.g., a page title) and its sibling (e.g., a spacer or a small action menu) within a `flex-row` container. This causes the title to "fight" for space even when the sibling is empty or small, resulting in premature line-wrapping on medium-sized screens (tablets/laptops).
+- **The Standard:** In editorial headers (Briefing Titles), always prioritize the text element by using **`flex-1 min-w-0`** and removing width-restricted spacers.
+- **Implementation Pattern:** 
+    ```tsx
+    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <h1 className="text-3xl lg:text-5xl font-extrabold leading-[1.1] flex-1 min-w-0">
+        {title}
+      </h1>
+      <ActionMenu className="flex-shrink-0" />
+    </div>
+    ```
+    This ensures the title consumes all *actually* available space before wrapping, while the action menu maintains its fixed width without compressing the primary content.

@@ -33,7 +33,8 @@
     },
     "filter": "Filtriraj",
     "edit": "Uredi",
-    "delete": "Izbriši"
+    "delete": "Izbriši",
+    "generated_by": "Ustvaril Povzetkar"
   },
   "profile": {
     "title": "Vaš Profil",
@@ -201,11 +202,14 @@
       "noItems": "Ni najdenih elementov za trenutne filtre."
     },
     "modal": {
-      "title": "AI povzetek vsebine",
+      "title": "AI Povzetek Vsebine",
       "reference": "Referenca",
+      "author": "Avtor",
+      "published": "Objavljeno",
+      "duration": "Trajanje",
       "notAvailable": "Povzetek ni na voljo",
-      "notAvailableSub": "Povzetka ni bilo mogoče pridobiti.",
-      "close": "Zapri bralnik"
+      "notAvailableSub": "Zahtevanega povzetka ni bilo mogoče pridobiti.",
+      "close": "Zapri Bralnik"
     }
   },
   "landing": {
@@ -408,8 +412,9 @@
   },
   "briefingDetail": {
     "backToLibrary": "Nazaj v knjižnico",
-    "executiveSummary": "Izvršni povzetek",
-    "fullBriefing": "Celotno poročilo",
+    "title": "Poročilo za {{topic}}, {{date}}",
+    "executiveSummary": "Povzetek za vodstvo",
+    "fullBriefing": "Podrobni povzetki",
     "sourceItems": "Izvorni material",
     "sourcesCount": "{{count}} analiziranih virov",
     "openOriginal": "Odpri izvornik",
@@ -420,6 +425,30 @@
       "sharedSubtitle": "Deljeno obveščevalno poročilo",
       "generatedBy": "Ustvarjeno s Povzetkarjem - UI analitik za vaše vsebine",
       "ctaStart": "Ustvari svoje poročilo"
+    },
+    "export": {
+      "button": "Izvoz",
+      "markdown": "Markdown",
+      "markdownDesc": "Navadno besedilo",
+      "html": "HTML / Tiskanje",
+      "htmlDesc": "Pripravljeno za ČB tisk",
+      "copyLink": "Kopiraj povezavo",
+      "copyLinkDesc": "URL za javni dostop",
+      "disableShare": "Onemogoči deljenje",
+      "disableShareDesc": "Razveljavi javni URL",
+      "enableShare": "Omogoči deljenje",
+      "enableShareDesc": "Ustvari javni URL",
+      "toasts": {
+        "shareEnabled": "Javno deljenje omogočeno",
+        "shareDisabled": "Javno deljenje onemogočeno",
+        "shareEnableFailed": "Napaka pri omogočanju deljenja",
+        "shareDisableFailed": "Napaka pri onemogočanju deljenja",
+        "copySuccess": "Povezava kopirana v odložišče",
+        "copyFailed": "Napaka pri kopiranju povezave",
+        "exportDataError": "Napaka pri pripravi podatkov za izvoz",
+        "markdownSuccess": "Markdown uspešno izvožen",
+        "htmlSuccess": "HTML uspešno izvožen (pripravljeno za tisk)"
+      }
     }
   }
 }

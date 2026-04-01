@@ -19,9 +19,6 @@ public class YouTubeVideo extends ContentItem {
     @Column(name = "video_id", unique = true)
     public String videoId;
 
-    @Column(name = "author_name")
-    public String authorName;
-
     @Column(name = "channel_id")
     public String channelId;
 

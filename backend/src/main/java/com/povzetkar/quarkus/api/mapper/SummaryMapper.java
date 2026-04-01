@@ -17,6 +17,8 @@ public interface SummaryMapper {
     @Mapping(target = "publishedAt", source = "contentItem.publishedAt")
     @Mapping(target = "durationSeconds", source = "contentItem", qualifiedByName = "mapDurationSeconds")
     @Mapping(target = "platform", expression = "java(mapPlatform(entity))")
+    @Mapping(target = "authorName", source = "contentItem.authorName")
+    @Mapping(target = "formattedDuration", source = "contentItem", qualifiedByName = "mapFormattedDuration")
     SummaryDTO toDTO(Summary entity);
 
     default String mapPlatform(Summary entity) {
@@ -30,6 +32,14 @@ public interface SummaryMapper {
     default Long mapDurationSeconds(ContentItem entity) {
         if (entity instanceof YouTubeVideo yt && yt.duration != null) {
             return yt.duration.toSeconds();
+        }
+        return null;
+    }
+
+    @Named("mapFormattedDuration")
+    default String mapFormattedDuration(ContentItem entity) {
+        if (entity instanceof YouTubeVideo yt && yt.duration != null) {
+            return yt.formattedDuration();
         }
         return null;
     }

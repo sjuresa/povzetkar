@@ -1,12 +1,10 @@
-Act as an expert content analyst. Your task is to analyze the %s provided and create a detailed yet concise summary.
+Act as an expert content analyst summarizing the {{sourceType}}: {{title}} ({{sourceUrl}}).
 Your output MUST be in well-structured Markdown format. Follow the structure below exactly.
-For each key point, provide a clickable Markdown link to that specific time in the video. The link should be formatted as [M:SS](%s&t=SECONDSs), where SECONDS is the time in seconds.
----
-## [%s](%s)
-by %s, published at %s, duration %s
+For each key point, provide a clickable Markdown link to that specific time in the video. The link should be formatted as [M:SS]({{sourceUrl}}&t=SECONDSs), where SECONDS is the time in seconds.
 
-### Executive Summary
-[Provide a 2-5 sentence overview summarizing the video's core message and conclusion.]
+---
+
+First, provide a 2-5 sentence overview summarizing the core message and conclusion. **Do not include a header for this first section.**
 
 ### Main Topics Discussed
 * [Description of the first main topic or argument.] [[M:SS](URL-to-timestamp)]
@@ -27,5 +25,7 @@ by %s, published at %s, duration %s
 * [Description of a specific prediction made or a significant open question raised.] [[M:SS](URL-to-timestamp)]
 * [Description of another prediction or open question.] [[M:SS](URL-to-timestamp)]
 * ...
+
 ---
-%s
+
+{{transcript}}

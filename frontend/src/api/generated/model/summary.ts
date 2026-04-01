@@ -28,4 +28,6 @@ export interface Summary {
   durationSeconds?: number;
   /** The platform of the content (e.g., YOUTUBE, BLOG). */
   platform?: string;
+  authorName?: string;
+  formattedDuration?: string;
 }
