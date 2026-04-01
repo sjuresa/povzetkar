@@ -202,6 +202,7 @@ Manually triggers an asynchronous briefing generation job for the topic.
     "sourceContentItems": [
       {
         "id": 999,
+        "summaryId": 123,
         "title": "State of AI 2023",
         "sourceUrl": "https://youtube.com/watch?v=...",
         "publishedAt": "2023-10-24T10:00:00Z",
@@ -341,6 +342,7 @@ Detailed view including fetched transcript and generated summary text.
 {
   "data": {
     "id": 305,
+    "summaryId": 123,
     "sourceId": 201,
     "title": "New AI Models compared",
     "transcriptText": "Hello everyone today we are looking at...",
@@ -627,6 +629,29 @@ Allows regular users to track the status of asynchronous operations they initiat
 ### 3.9. Public Summary Sharing (`/api/v1/summaries`)
 *Required Permission: `BRIEFING_VIEW` (to share your own), `NONE` (to view public links)*
 
+**`GET /api/v1/summaries`**
+List all generated summaries. Supports filtering by `?contentItemId={id}` and `?topicId={id}`.
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": 123,
+      "contentItemId": 305,
+      "title": "Quantum Computing Fundamentals",
+      "summaryTextSnippet": "Quantum bits (qubits) leverage superposition...",
+      "createdAt": "2023-10-25T14:30:00Z"
+    }
+  ],
+  "meta": {
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": { "page": 0, "size": 20, "totalElements": 1, "totalPages": 1, "hasNext": false }
+  },
+  "error": null
+}
+```
+
 **`POST /api/v1/summaries/{id}/share`**
 Enables public sharing for an individual summary. Generates and returns a secure UUID.
 **Response (200 OK):**
@@ -662,6 +687,7 @@ Accesses a sanitized, read-only version of a summary without authentication.
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.3.1   | April 01, 2026 | Povzetkar AI | Added `GET /api/v1/summaries` and exposed `summaryId` in DTOs. |
 | 1.3     | April 01, 2026 | Povzetkar AI | Added Section 3.9 for Individual Summary Sharing (POV-172). |
 | 1.2     | March 30, 2026 | Povzetkar AI | Mandated ID header correlation and X-Correlation-ID tracing. |
 | 1.1     | 2026-03-25 | Povzetkar AI | Added 202 Accepted Async Job contract and SSE stream definitions. |
