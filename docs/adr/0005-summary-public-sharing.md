@@ -18,8 +18,8 @@ Users want to share summaries with non-authenticated external viewers. However, 
 We will implement a **Resettable UUID mechanism** for public sharing.
 
 Specifically:
--   1.  A new column `public_uuid` (UUID type, unique index) will be added to the **Summary** JPA entity. (Note: The `Briefing` entity already possesses a `uuid` column for entire report sharing; this adds granularity for individual items).
-2.  The `Summary` DTO will be updated to include `publicUuid` and its absolute `shareUrl`.
+-   A new column public_uuid (UUID type, unique index) will be added to the Summary JPA entity. (Note: The Briefing entity already possesses a uuid column for entire report sharing; this adds granularity for individual items).
+-   The Summary DTO will be updated to include publicUuid and its absolute shareUrl.
 -   When a user clicks "Share", a fresh `UUID v4` is generated and persisted.
 -   When a user clicks "Stop Sharing", the `public_uuid` is set to `null`.
 -   If sharing is re-enabled, a **new** UUID is generated, effectively invalidating any old shared links.

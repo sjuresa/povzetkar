@@ -630,13 +630,14 @@ Allows regular users to track the status of asynchronous operations they initiat
 *Required Permission: `BRIEFING_VIEW` (to share your own), `NONE` (to view public links)*
 
 **`GET /api/v1/summaries`**
+*Required Permission: `CONTENT_ITEM_VIEW`*
 List all generated summaries. Supports filtering by `?contentItemId={id}` and `?topicId={id}`.
 **Response (200 OK):**
 ```json
 {
   "data": [
     {
-      "id": 123,
+      "summaryId": 123,
       "contentItemId": 305,
       "title": "Quantum Computing Fundamentals",
       "summaryTextSnippet": "Quantum bits (qubits) leverage superposition...",
@@ -653,6 +654,7 @@ List all generated summaries. Supports filtering by `?contentItemId={id}` and `?
 ```
 
 **`POST /api/v1/summaries/{id}/share`**
+*Required Permission: `CONTENT_ITEM_VIEW`*
 Enables public sharing for an individual summary. Generates and returns a secure UUID.
 **Response (200 OK):**
 ```json
@@ -665,10 +667,12 @@ Enables public sharing for an individual summary. Generates and returns a secure
 ```
 
 **`POST /api/v1/summaries/{id}/unshare`**
+*Required Permission: `CONTENT_ITEM_VIEW`*
 Disables public sharing by nullifying the associated UUID. Any existing links become invalid (404).
 **Response (204 No Content)**
 
 **`GET /api/v1/public/summaries/{uuid}`**
+*Required Permission: `NONE`*
 Accesses a sanitized, read-only version of a summary without authentication.
 **Response (200 OK):**
 ```json
