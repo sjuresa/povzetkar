@@ -70,3 +70,10 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 +*   **Toggle-Based State Unification:** Implement standard pattern for optimistic UI on toggle-based actions (e.g. "Share Link" creation) to avoid visual blinks on refetching.
 +*   **Playwright Maintenance Strategy:** Define robust locators and state isolation to stabilize E2E tests and prevent regression flakiness.
 +*   **Full-Text Search Migration:** Consider migrating the `BriefingLibrary` search to `pg_trgm` or Lucene when briefing volume justifies it (1000+).
+
+### Process & Tooling (PPP Extensions)
+
+*   **Semantic AI Planning Validator:** Upgrade `validate-planning.py` to use an LLM-based "Semantic Checker" to verify that ADRs and UI Manifestos actually address the problems defined in User Stories/Use Cases.
+*   **Living Documentation (Two-way Sync):** Implement a development-time gate that forces a return-to-planning phase if implementation deviates from the UI Manifesto or ADRs. Ensures the "Map is the Territory".
+*   **Automated Performance Auditing in Tasks:** Integrate the Performance Budgeting (NFRs) directly into the `validate-planning.py` to ensure every P0/P1 task has defined operational constraints.
+*   **Discovery Phase Standardization:** Formalize the Socratic Discovery and Brainstorming phase in the Project Planning Protocol (PPP) as a mandatory pre-req for Task ID generation (POV-X).

@@ -202,6 +202,7 @@ Manually triggers an asynchronous briefing generation job for the topic.
     "sourceContentItems": [
       {
         "id": 999,
+        "summaryId": 123,
         "title": "State of AI 2023",
         "sourceUrl": "https://youtube.com/watch?v=...",
         "publishedAt": "2023-10-24T10:00:00Z",
@@ -341,6 +342,7 @@ Detailed view including fetched transcript and generated summary text.
 {
   "data": {
     "id": 305,
+    "summaryId": 123,
     "sourceId": 201,
     "title": "New AI Models compared",
     "transcriptText": "Hello everyone today we are looking at...",
@@ -623,3 +625,74 @@ Allows regular users to track the status of asynchronous operations they initiat
   "error": null
 }
 ```
+
+### 3.9. Public Summary Sharing (`/api/v1/summaries`)
+*Required Permission: `BRIEFING_VIEW` (to share your own), `NONE` (to view public links)*
+
+**`GET /api/v1/summaries`**
+*Required Permission: `CONTENT_ITEM_VIEW`*
+List all generated summaries. Supports filtering by `?contentItemId={id}` and `?topicId={id}`.
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "summaryId": 123,
+      "contentItemId": 305,
+      "title": "Quantum Computing Fundamentals",
+      "summaryTextSnippet": "Quantum bits (qubits) leverage superposition...",
+      "createdAt": "2023-10-25T14:30:00Z"
+    }
+  ],
+  "meta": {
+    "timestamp": "2023-10-25T14:30:00Z",
+    "correlationId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "pagination": { "page": 0, "size": 20, "totalElements": 1, "totalPages": 1, "hasNext": false }
+  },
+  "error": null
+}
+```
+
+**`POST /api/v1/summaries/{id}/share`**
+*Required Permission: `CONTENT_ITEM_VIEW`*
+Enables public sharing for an individual summary. Generates and returns a secure UUID.
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "publicUuid": "8f2d472a-4b9a-4c2d-9e12-3b4c5d6e7f8a",
+    "shareUrl": "https://povzetkar.ai/s/8f2d472a-4b9a-4c2d-9e12-3b4c5d6e7f8a"
+  }
+}
+```
+
+**`POST /api/v1/summaries/{id}/unshare`**
+*Required Permission: `CONTENT_ITEM_VIEW`*
+Disables public sharing by nullifying the associated UUID. Any existing links become invalid (404).
+**Response (204 No Content)**
+
+**`GET /api/v1/public/summaries/{uuid}`**
+*Required Permission: `NONE`*
+Accesses a sanitized, read-only version of a summary without authentication.
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "title": "Quantum Computing Fundamentals",
+    "summaryText": "### Key Takeaways\n- Quantum bits (qubits) leverage superposition...",
+    "sourceName": "Science Daily",
+    "sourceUrl": "https://youtube.com/watch?v=...",
+    "publishedAt": "2023-10-24T10:00:00Z"
+  }
+}
+```
+*(Backend Implementation Note: The `PublicSummaryDTO` MUST NOT include internal `id`, `ownerId`, `auditTrail`, or any other metadata that could expose system structure.)*
+
+## 4. Revision History
+| Version | Date       | Author       | Changes                                                                 |
+|:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.3.1   | April 01, 2026 | Povzetkar AI | Added `GET /api/v1/summaries` and exposed `summaryId` in DTOs. |
+| 1.3     | April 01, 2026 | Povzetkar AI | Added Section 3.9 for Individual Summary Sharing (POV-172). |
+| 1.2     | March 30, 2026 | Povzetkar AI | Mandated ID header correlation and X-Correlation-ID tracing. |
+| 1.1     | 2026-03-25 | Povzetkar AI | Added 202 Accepted Async Job contract and SSE stream definitions. |
+| 1.0     | 2023-10-25 | Povzetkar AI | Initialized API Contract for v0.11.0 foundation. |

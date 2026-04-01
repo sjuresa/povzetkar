@@ -10,9 +10,10 @@
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-GRX-001** | **P0** | - | [v0.13] | Skeleton Loading Pattern | **Playwright** | Slow APIs trigger shimmer skeletons instead of blank white screens. |
-| **TC-GRX-002** | **P0** | - | [v0.13] | Global Error Catching | Manual | Toasts appear for transient errors; Error boundary shows for fatal crashes. <!-- validate:skip until v0.16.0 - Legacy Gap; Planned for next release --> |
+| **TC-GRX-002** | **P0** | - | [v0.13] | Global Error Catching | **Playwright** | Toasts appear for transient errors; Error boundary shows for fatal crashes. |
 | **TC-GRX-003** | **P0** | - | [v0.13] | Theme Switching | **Playwright** | Light/Dark theme persists across page reloads and browser sessions. |
 | **TC-GRX-004** | **P0** | - | [v0.12] | OIDC Handshake & Persistence | **Playwright** | Login redirect flow works and session remains active after refresh. |
+| **TC-GRX-005** | **P1** | UC-10 | [v0.16] | Toast Actionability | Manual/PW | Toast contains a clickable button and plays sound on trigger. |
 
 ## 1. Domain: Briefing & Intelligence (LIB)
 
@@ -41,6 +42,7 @@
 | **TC-EXP-001** | **P1** | UC-6 | [v0.15] | Markdown Export | Manual | Downloaded file has correct headers and formatting. |
 | **TC-EXP-002** | **P1** | UC-6 | [v0.15] | HTML Export | Manual | Downloaded file is a valid stand-alone HTML document. |
 | **TC-EXP-003** | **P1** | UC-6 | [v0.15] | Shareable Link | Manual | Direct URL correctly resolves to the briefing view. |
+| **TC-EXP-004** | **P1** | UC-8 | [v0.16] | Individual Summary Read | Manual | Public access to summary UUID is successful without login. |
 
 ## 4. Domain: Observability & Monitoring (MON)
 
@@ -56,7 +58,7 @@
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-SEC-001** | **P0** | - | [v0.13] | Profile Visibility | Manual/PW | `/me` data matches the currently authenticated user. |
-| **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | Manual | Admin sections (Sources) are blocked for generic users. <!-- validate:skip until v0.16.0 - Legacy Gap; Planned for next release --> |
+| **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | **Playwright** | Admin sections (Sources) are blocked for generic users. |
 | **TC-SEC-003** | **P0** | - | [v0.12] | Auth Guard Redirect | **Playwright** | Unauthenticated users visiting `/dashboard` are redirected to `/`. |
 
 ## 6. Domain: General UX & Brand (UI)
@@ -66,6 +68,7 @@
 | **TC-UI-001** | **P2** | - | [v0.14] | Brand Visibility | **Playwright** | Logo/Brand name "Povzetkar" prominently visible on landing. |
 | **TC-UI-002** | **P2** | - | [v0.14] | Site Title | **Playwright** | Browser tab title contains the word "Povzetkar". |
 | **TC-UI-003** | **P1** | - | [v0.12] | Responsive SideNav | Manual | Sidebar correctly collapses on smaller screens without breaking layout. |
+| **TC-UI-004** | **P1** | UC-9 | [v0.16] | Dashboard Onboarding | **Playwright** | New users see the 5-step checklist; Progress updates on action. |
 
 ## 7. Domain: Admin & System (ADM)
 
@@ -89,13 +92,15 @@
 |:---|:---|:---|:---|
 | **PW-001** | Auth Guard Redirect | TC-SEC-003, TC-GRX-004 | **Implemented** (v0.14) |
 | **PW-002** | Brand & Title Smoke | TC-UI-001, TC-UI-002 | **Implemented** (v0.14) |
-| **PW-003** | YT Source Validation | TC-TS-003 | **Planned (v0.15.0)** |
-| **PW-004** | Briefing Archive Search | TC-LIB-002 | **Planned (v0.15.0)** |
-| **PW-005** | Global Resilience Smoke | TC-GRX-001, TC-GRX-003 | **Planned (v0.16.0)** |
+| **PW-003** | YT Source Validation | TC-TS-003 | **Planned (v0.16.0)** |
+| **PW-004** | Briefing Archive Search | TC-LIB-002 | **Planned (v0.16.0)** |
+| **PW-005** | Global Resilience Smoke | TC-GRX-001, TC-GRX-003, TC-GRX-002 | **Planned (v0.16.0)** |
+| **PW-006** | Role Protection | TC-SEC-002 | **Planned (v0.16.0)** |
+| **PW-007** | Dashboard Onboarding | TC-UI-004 | **Planned (v0.16.0)** |
 
 ---
 
-## Appendix: Decommissioned Scenarios
+## 10. Appendix: Decommissioned Scenarios
 
 *No scenarios deprecated yet.*
 
@@ -104,6 +109,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.3     | April 01, 2026 | Povzetkar AI | Added TC-GRX-005, TC-EXP-004, TC-UI-004 for v0.16.0 UX Focus. Resolved legacy skips for TC-GRX-002 and TC-SEC-002 by promoting to **Playwright** automation. |
 | 2.2     | March 30, 2026 | Povzetkar AI | Mandated Priority column (P0-P2) for automated auditing (POV-167). |
 | 2.1     | March 30, 2026 | Povzetkar AI | Added Domain 8: Core Ingestion (ING) to bridge legacy core functionality gaps from v0.1-v0.11. |
 | 2.0     | March 30, 2026 | Povzetkar AI | Centralized Master Spec. Introduced Domain 0 (GRX), 3-digit indexing, and requirements traceability (v0.12-v0.15). |
