@@ -85,16 +85,17 @@ This repository follows a mandatory modular documentation standard. Use the tabl
 | 🏗️ **Engineering** | Technical Decisions & Blueprints | [ADRs](./docs/adr/), [API Design](./docs/analysis/api-design.md), [Planning Protocol](./docs/process/planning_protocol.md) |
 | 🔍 **Analysis** | Requirements & Traceability | [Use Cases](./docs/analysis/use_cases.md), [Test Specification](./docs/analysis/test_specification.md) |
 | 🛠️ **SDLC & Ops** | Maintenance & Framework | [SDLC Repository](./docs/sdlc/), [Checklist](./docs/sdlc/11_development_checklist.md), [NFRs](./docs/sdlc/02_non_functional_requirements.md), [Runbook](./docs/RUNBOOK.md) |
-| 📦 **Versions** | Active Cycle & Archives | [v0.16.0 Hub](./docs/versions/v0.16.0/planning-process.md), [v0.15.0 Tasks](./docs/versions/v0.15.0-tasks.md) |
+| 📦 **Versions** | Active Cycle & Archives | [v0.16.0 Hub](./docs/versions/v0.16.0/v0.16.0-planning-process.md), [v0.15.0 Tasks](./docs/versions/v0.15.0-tasks.md) |
 | 🕰️ **History** | Learnings & Growth | [Retrospectives](./docs/retrospectives/), [Backlog](./docs/backlog/), [Spikes](./docs/spikes/) |
 
 > [!TIP]
 > Exploring the complete system? Visit the [**Full Documentation Root**](./docs/) for all technical guides, knowledge items, and research spikes.
 
 ### 🚀 Current Cycle: v0.16.0 (User Experience Focus)
-- **Active Plan**: [Planning Hub (v0.16.0)](./docs/versions/v0.16.0/planning-process.md)
-- **Execution Roadmap**: [Task List (v0.16.0)](./docs/versions/v0.16.0/tasks.md)
-- **Design Blueprint**: [UI/UX Manifesto (v0.16.0)](./docs/versions/v0.16.0/ui-ux-manifesto.md)
+- **Active Plan**: [Planning Hub (v0.16.0)](./docs/versions/v0.16.0/v0.16.0-planning-process.md)
+- **Execution Roadmap**: [Task List (v0.16.0)](./docs/versions/v0.16.0/v0.16.0-tasks.md)
+- **Design Blueprint**: [UI/UX Manifesto (v0.16.0)](./docs/versions/v0.16.0/v0.16.0-ui-ux-manifesto.md)
+- **Localization**: [i18n Audit (v0.16.0)](./docs/versions/v0.16.0/v0.16.0-i18n-audit.md)
 
 ---
 

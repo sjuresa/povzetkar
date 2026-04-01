@@ -31,19 +31,27 @@ To achieve "Perfection Tier" planning, every version must produce or update the 
 ### 1.4 Detailed Task Breakdown (POV-ID)
 - **Goal:** Actionable, high-context task list.
 - **Requirements:** 
-    - Git-style titles (feat/fix/style/test).
-    - **ASCII Wireframes** for all UI tasks.
-    - **Resilience & Error States**: Define system behavior for failure scenarios.
+    - **Time Estimation Summary**: Individual estimates for each task ID with a Total and Contingency (20%).
+    - **Global Definition of Done (DoD)**: Mandatory section covering Code Quality, i18n, Testing, and **Documentation Refresh** (updating Runbooks, Specifications, and Architecture docs).
+    - **Task Metadata**: Each task must include:
+        - Git-style titles (feat/fix/style/test).
+        - **ASCII Wireframes** (for UI tasks).
+        - **Resilience & Error States**: System behavior for failure scenarios.
+        - **Context / Documentation**: Links to related ADRs, Specifications, or Use Cases.
+        - **Required Skills**: Tagging with specific agent skills (e.g., `@[skills/clean-code]`).
 - **Location:** `docs/versions/vX.Y.Z/tasks.md`
 
 ### 1.5 Version Master Hub (SSoT)
 - **Goal:** Unified entry point for the release.
-- **Requirements:** Must contain a "Version At A Glance" table with SSoT Decisions and Baseline Audits.
+- **Requirements:** 
+    - **Version At A Glance**: Table with SSoT Decisions (link to ADRs) and Baseline Audit statuses.
+    - **Strategic Discussions**: Documentation of technical debates, strategic pivots (Pivot/Critique/Decision), and rationale.
+    - **Risk Registry**: Table documentings potential technical or project risks and their mitigations.
 - **Location:** `docs/versions/vX.Y.Z/planning-process.md`
 
 ### 1.6 Operational Constraints (NFR Alignment)
 - **Goal:** Define *how well* the feature must perform to meet project standards.
-- **Requirements:** Every P0/P1 task must specify a performance budget (e.g., "Latency < 500ms", "Bundle size < +10KB"). 
+- **Requirements:** Every P0/P1 task must specify a performance budget (e.g., "Latency < 500ms", "Maximum bundle size increase per feature < 10KB"). 
 - **Reference:** [Non-Functional Requirements](../sdlc/02_non_functional_requirements.md).
 
 ---
@@ -108,4 +116,4 @@ To ensure pragmatism and speed, the protocol is **Elastic**. Not every version r
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
-| 1.0     | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol based on v0.16.0 excellence standards.    |
+| 1.0     | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol.    |
