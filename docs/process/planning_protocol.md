@@ -46,7 +46,7 @@ To achieve "Perfection Tier" planning, every version must produce or update the 
 - **Requirements:** 
     - **Version At A Glance**: Table with SSoT Decisions (link to ADRs) and Baseline Audit statuses.
     - **Strategic Discussions**: Documentation of technical debates, strategic pivots (Pivot/Critique/Decision), and rationale.
-    - **Risk Registry**: Table documentings potential technical or project risks and their mitigations.
+    - **Risk Registry**: able documenting potential technical or project risks and their mitigations.
 - **Location:** `docs/versions/vX.Y.Z/planning-process.md`
 
 ### 1.6 Operational Constraints (NFR Alignment)
@@ -118,6 +118,4 @@ To ensure pragmatism and speed, the protocol is **Elastic**. Not every version r
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
-| 1.4     | 2026-04-01 | Povzetkar AI | Formally mandated Baseline Audit requirement for all Operational Constraints (NFRs). |
-| 1.3     | 2026-04-01 | Povzetkar AI | Corrected Time Estimation Summary requirement to individual task level based on v0.15.0 pattern. |
 | 1.0     | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol.    |
