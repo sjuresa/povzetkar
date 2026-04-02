@@ -54,9 +54,17 @@
 - **Implementation:** 
   - Annotate JAX-RS methods with `@Operation` for summaries and descriptions.
   - Use `@APIResponse` and `@Content` (with `@Schema`) to document specific response bodies and status codes.
-  - For complex generic responses like `ApiEnvelopeDTO<T>`, create `private static` inner helper classes that extend the generic DTO with a specific type and use them in the `@Schema(implementation = ...)` attribute. This allows OpenAPI to generate precise schemas for each endpoint's response envelope.
+  - For complex generic responses like ApiEnvelopeDTO<T>, create private static inner helper classes that extend the generic DTO with a specific type and use them in the @Schema(implementation = ...) attribute. This allows OpenAPI to generate precise schemas for each endpoint's response envelope.
+
+## Production Security
+- **The Trap:** Accidentally exposing Swagger UI in production provides a detailed map of your API to potential attackers.
+- **The Standard:** Always explicitly disable Swagger UI in the production profile.
+- **Configuration:** Use %prod.quarkus.swagger-ui.always-include=false in application.properties. This is a critical security measure to minimize the attack surface of the application.
 
 ## Authentication & Session Management (BFF Pattern)
+
+### Access Control for Public Data
+- **The Standard:** Content sources and content items are public data and do not belong to a specific user. Access control should not be based on user ownership for these entities.
 
 ### Direct OIDC Initiation for SPAs
 - **The Problem:** In a BFF (Backend-for-Frontend) architecture, directing a Single Page Application (SPA) to a server-side "Login" page before the OIDC provider (Google) adds a redundant user interaction.

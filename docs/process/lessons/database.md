@@ -32,8 +32,10 @@ When background jobs or data-sync commands fail, the exception stack trace can b
 - **The Standard:** Use JPQL constructor expressions (`SELECT NEW com.dto.MyDTO(p.id, p.name) FROM ...`) for read-only aggregation or summary endpoints. This moves the mapping logic to the database level, significantly reduces I/O traffic, and lowers the memory footprint of the application.
 
 ## Stable Identity (Equals & HashCode)
-- **The Trap:** Relying on default `Object.equals()` or standard JPA identity can cause entities to be treated as different objects when reloaded across transaction boundaries or passed into asynchronous collection-based task queues.
-- **The Standard:** Always implement stable `equals()` and `hashCode()` using **Business Keys** (e.g., `slug`, `username`, `videoId`). This guarantees consistent object identity across different Hibernate sessions and prevents the creation of logical duplicates in sets or maps during background processing.
+- **The Trap:** Relying on default Object.equals() or standard JPA identity can cause entities to be treated as different objects when reloaded across transaction boundaries or passed into asynchronous collection-based task queues.
+- **The Standard:** Always implement stable equals() and hashCode() using **Business Keys** (e.g., slug, username, videoId).
+- **Generated IDs:** For entities with a generated ID, implement hashCode() to use the ID's hash code when not null and fall back to a stable alternative like super.hashCode() when the ID is null: return id != null ? id.hashCode() : super.hashCode();.
+- **Lazy Associations:** When implementing equals() and hashCode() for an entity with a lazily-loaded (FetchType.LAZY) association, use the associated entity's ID (e.g., associatedEntity.id) for comparisons to avoid triggering unnecessary database queries or LazyInitializationException.
 
 ## Consolidated Count Queries
 When multiple aggregate counts are needed at once (e.g., for a dashboard or metrics endpoint), avoid multiple roundtrips with `count()`. Use a single native query with sub-selects to collapse them into one result row.

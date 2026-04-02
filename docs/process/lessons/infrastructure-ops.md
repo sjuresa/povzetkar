@@ -24,8 +24,9 @@
 - **The Standard:** Use a `@Provider`-annotated `ContainerResponseFilter` to persist audit records. This captures both the request context and the final response status. Wrap audit persistence in `QuarkusTransaction.requiringNew()`.
 - **Resilience:** Audit filters must catch all exceptions and log a warning. Audit failures must never propagate as API errors to clients.
 
-### Logger Consistency
-- **The Standard:** Standardize on **SLF4J (`org.slf4j.Logger`)** as the primary logging facade. For structured logging with key-value pairs, use the custom `StructuredLogger` helper.
+## Logger Consistency
+- **The Standard:** Standardize on SLF4J (org.slf4j.Logger) as the primary logging facade. For structured logging with key-value pairs, use the custom StructuredLogger helper.
+- **Sanitization:** When logging client-provided identifiers, assess their potential to contain sensitive data. If the content could be sensitive (e.g., PII, tokens), use robust sanitization like hashing or masking, as merely removing control characters is insufficient. Simple sanitization is only appropriate for guaranteed non-sensitive identifiers like UUIDs.
 
 ### StructuredLogger Argument Count Safety
 - **The Standard:** Always ensure that `StructuredLogger` calls have an **even number** of arguments for key-value pairs. Use the explicit `(Throwable t, Object... keyValuePairs)` overload when logging an exception.
@@ -54,6 +55,11 @@
 
 ## Defensive Source Entry (Debounced Presence Check)
 - **The Standard:** Implement a **Live existence check** (e.g., YouTube API) in the "Add Source" dialog before the user hits "Add". This prevents dirtying the database with dead references.
+
+## Automated UX Audit Tuning
+Automated UX scripts can produce high volumes of false positives if their regex patterns are too broad.
+- **The Trap:** A script flagging StatCard.tsx for "missing form labels" because it contains the word "card" (matching re.search(r'card', content)).
+- **The Standard:** Use word-boundary anchors (\bcard\b) or context-aware tagging (e.g., checking only within <form> tags) to minimize noise. Similarly, "Hick's Law" audits must distinguish between Navigation Menus (which should stay under 7 items) and Data Grids/Lists (which naturally have many more).
 
 ---
 
