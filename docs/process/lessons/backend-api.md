@@ -54,7 +54,7 @@
 - **Implementation:** 
   - Annotate JAX-RS methods with `@Operation` for summaries and descriptions.
   - Use `@APIResponse` and `@Content` (with `@Schema`) to document specific response bodies and status codes.
-  - For complex generic responses like ApiEnvelopeDTO<T>, create private static inner helper classes that extend the generic DTO with a specific type and use them in the @Schema(implementation = ...) attribute. This allows OpenAPI to generate precise schemas for each endpoint's response envelope.
+  - For complex generic responses like `ApiEnvelopeDTO<T>`, create private static inner helper classes that extend the generic DTO with a specific type and use them in the `@Schema(implementation = ...)` attribute. This allows OpenAPI to generate precise schemas for each endpoint's response envelope.
 
 ## Production Security
 - **The Trap:** Accidentally exposing Swagger UI in production provides a detailed map of your API to potential attackers.
@@ -107,7 +107,7 @@ When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus
 - **The Standard:** When a metadata field becomes a requirement for "Global Resilience" or "UX Consistency" (e.g., showing the author in a briefing), **promote** that field to the **Base Entity** (`ContentItem`) and the **Global DTO**.
 
 ### Single-Pass Template Variable Replacement (Matcher Strategy)
-- **The Trap:** Chaining `String.replace()` or iteratively using `StringBuilder.indexOf/replace` for multiple variables. These "multi-pass" approaches result in O(V * N) complexity, causing high memory overhead and performance degradation on large inputs like transcripts.
+- **The Trap:** Chaining `String.replace()` or iteratively using `StringBuilder.indexOf/replace` for multiple variables. These "multi-pass" approaches result in `O(V * N)` complexity, causing high memory overhead and performance degradation on large inputs like transcripts.
 - **The Standard:** Use **java.util.regex.Matcher.appendReplacement()** with a **pre-compiled static Pattern**. This provides a true O(N) single-pass scan while eliminating the overhead of repeated regex compilation.
 
 ---

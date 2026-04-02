@@ -58,8 +58,8 @@
 
 ## Automated UX Audit Tuning
 Automated UX scripts can produce high volumes of false positives if their regex patterns are too broad.
-- **The Trap:** A script flagging StatCard.tsx for "missing form labels" because it contains the word "card" (matching re.search(r'card', content)).
-- **The Standard:** Use word-boundary anchors (\bcard\b) or context-aware tagging (e.g., checking only within <form> tags) to minimize noise. Similarly, "Hick's Law" audits must distinguish between Navigation Menus (which should stay under 7 items) and Data Grids/Lists (which naturally have many more).
+- **The Trap:** A script flagging `StatCard.tsx` for "missing form labels" because it contains the word "card" (matching `re.search(r'card', content)`).
+- **The Standard:** Use word-boundary anchors (`\bcard\b`) or context-aware tagging (e.g., checking only within `<form>` tags) to minimize noise. Similarly, "Hick's Law" audits must distinguish between Navigation Menus (which should stay under 7 items) and Data Grids/Lists (which naturally have many more).
 
 ---
 
