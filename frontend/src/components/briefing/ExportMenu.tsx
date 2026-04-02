@@ -202,6 +202,7 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
     <div className={cn("relative", className)} ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-testid="unique-export-dropdown-trigger"
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95",
           variantsList[variant],
