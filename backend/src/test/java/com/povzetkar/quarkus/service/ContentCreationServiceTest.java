@@ -110,4 +110,41 @@ class ContentCreationServiceTest {
             assertThat(content).isNull();
         }
     }
+
+    @Test
+    @DisplayName("should replace all known variables in the prompt")
+    void shouldReplaceAllKnownVariables() {
+        // Arrange
+        YouTubeVideo video = new YouTubeVideo("vid", "Test Title", "https://yt.com/vid", "Author X", "Channel", Instant.now(), Duration.ofMinutes(10));
+        video.transcript = "Test Transcript Content";
+
+        // Act
+        Content content = contentCreationService.createContentForVideo(video);
+
+        // Assert
+        assertThat(content.parts()).isPresent();
+        String text = content.parts().get().getFirst().text().get();
+
+        assertThat(text).contains("summarizing the video transcript");
+        assertThat(text).contains("Test Title");
+        assertThat(text).contains("(https://yt.com/vid)");
+        assertThat(text).contains("Test Transcript Content");
+    }
+
+    @Test
+    @DisplayName("should handle null video fields gracefully")
+    void shouldHandleNullVideoFields() {
+        // Arrange
+        YouTubeVideo video = new YouTubeVideo("vid", null, "https://yt.com/dummy", null, "Channel", Instant.now(), Duration.ofMinutes(5));
+
+        // Act
+        Content content = contentCreationService.createContentForVideo(video);
+
+        // Assert
+        assertThat(content.parts()).isPresent();
+        String text = content.parts().get().getFirst().text().get();
+
+        assertThat(text).doesNotContain(": null");
+        assertThat(text).contains("summarizing the video url:  (https://yt.com/dummy)");
+    }
 }

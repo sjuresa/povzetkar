@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class ContentCreationService {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(ContentCreationService.class);
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(.+?)\\}\\}");
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(.+?)}}");
     private final int transcriptThresholdMinutes;
 
     private final YouTubeTranscriptService youTubeTranscriptService;
@@ -90,7 +90,8 @@ public class ContentCreationService {
     }
 
     private Part createVideoSummaryTextPart(YouTubeVideo video, String transcript) {
-        String sourceType = transcript.isBlank() ? "video url" : "video transcript";
+        String safeTranscript = transcript != null ? transcript : "";
+        String sourceType = safeTranscript.isBlank() ? "video url" : "video transcript";
         String template = Prompts.VIDEO_SUMMARY_PROMPT;
 
         String finalPrompt;
@@ -102,7 +103,7 @@ public class ContentCreationService {
                     "author", video.authorName != null ? video.authorName : "",
                     "publishedAt", video.formattedPublishedAt(),
                     "duration", video.formattedDuration(),
-                    "transcript", transcript != null ? transcript : ""
+                    "transcript", safeTranscript
             );
 
             Matcher matcher = VARIABLE_PATTERN.matcher(template);
@@ -126,7 +127,7 @@ public class ContentCreationService {
                     video.authorName,
                     video.formattedPublishedAt(),
                     video.formattedDuration(),
-                    transcript
+                    safeTranscript
             );
         }
         return Part.fromText(finalPrompt);

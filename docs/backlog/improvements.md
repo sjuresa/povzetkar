@@ -78,3 +78,4 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Living Documentation (Two-way Sync):** Implement a development-time gate that forces a return-to-planning phase if implementation deviates from the UI Manifesto or ADRs. Ensures the "Map is the Territory".
 *   **Automated Performance Auditing in Tasks:** Integrate the Performance Budgeting (NFRs) directly into the `validate-planning.py` to ensure every P0/P1 task has defined operational constraints.
 *   **Discovery Phase Standardization:** Formalize the Socratic Discovery and Brainstorming phase in the Project Planning Protocol (PPP) as a mandatory pre-req for Task ID generation (POV-X).
+*   **Full Supply Chain & Asset Audit:** Conduct a high-precision audit across the **Four Pillars** (Media, Code/Dependencies, Services/SaaS, and Infrastructure). Ensure proper attribution, license compatibility, performance optimization, and usage hygiene for all external dependencies.

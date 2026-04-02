@@ -18,8 +18,8 @@ Specifically:
 1.  **Success**: A short "Ding" (<300ms) for briefing completion.
 2.  **Error**: A dual-tone "Alert" for job failures.
 3.  **Info**: A neutral "Chime" for generic system messages.
-4.  Implementation will use a lightweight sound library (e.g., `use-sound` in React) to handle pre-loading and browser audio context management.
-5.  Audio will be **muted by default** until the first user interaction, adhering to modern browser autoplay policies.
+4.  Implementation will use the **Native Web Audio API** (via a custom hook) with **synthesized oscillators** (`OscillatorNode`) to achieve a zero-byte asset footprint while avoiding external dependencies.
+5.  Audio will be **muted by default** until the first user interaction, adhering to modern browser autoplay policies. Error-handling will ensure silent failure if the playback is blocked.
 
 ## Consequences
 

@@ -8,11 +8,12 @@ const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_U
 import { useShallow } from 'zustand/react/shallow';
 
 export function useJobEvents() {
-  const { updateJobStatus, setLastEvent, setConnectionStatus } = useEventStore(
+  const { updateJobStatus, setLastEvent, setConnectionStatus, triggerNotificationSound } = useEventStore(
     useShallow((state) => ({
       updateJobStatus: state.updateJobStatus,
       setLastEvent: state.setLastEvent,
       setConnectionStatus: state.setConnectionStatus,
+      triggerNotificationSound: state.triggerNotificationSound,
     }))
   );
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -47,14 +48,14 @@ export function useJobEvents() {
         const data = payload.data;
         logger.info('[SSE] Job status changed', { jobData: data }); // Replaced console.log with logger.info
         
-        if (!data || !data.jobId) {
-          logger.warn('[SSE] Received malformed JOB_STATUS_CHANGED event', { payload }); // Replaced console.warn with logger.warn
+        if (!data?.jobId || !data.jobType) {
+          logger.warn('[SSE] Received malformed JOB_STATUS_CHANGED event', { payload });
           return;
         }
 
         updateJobStatus(data);
         
-        const jobName = data.jobType.toLowerCase().replace(/_/g, ' ');
+        const jobName = data.jobType.toLowerCase().replaceAll('_', ' ');
         const details = data.details ? `: ${data.details}` : '';
 
         // Show toast for significant changes
@@ -67,11 +68,13 @@ export function useJobEvents() {
             description: `Successfully processed${details}.`,
             duration: 5000,
           });
+          triggerNotificationSound('success');
         } else if (data.status === 'FAILED') {
           toast.error(`Job Failed: ${jobName}`, {
             description: `An error occurred while processing${details}.`,
             duration: 7000,
           });
+          triggerNotificationSound('error');
         }
       } catch (err) {
         logger.error('[SSE] Failed to parse JOB_STATUS_CHANGED event', { error: err as Error }); // Replaced console.error with logger.error
@@ -86,6 +89,7 @@ export function useJobEvents() {
           description: message,
           duration: 5000,
         });
+        triggerNotificationSound('success');
       } catch (err) {
         logger.error('[SSE] Failed to parse ORCHESTRATION_COMPLETED event', { error: err as Error });
       }
@@ -99,6 +103,7 @@ export function useJobEvents() {
           description: message,
           duration: 7000,
         });
+        triggerNotificationSound('info');
       } catch (err) {
         logger.error('[SSE] Failed to parse ORCHESTRATION_PREVIEW_COMPLETED event', { error: err as Error });
       }

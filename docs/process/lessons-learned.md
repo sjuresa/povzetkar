@@ -100,6 +100,7 @@ Object[] result = (Object[]) em.createNativeQuery(
 - **Filter Precision:** Enveloping filters must strictly target successful (2xx) status codes. Wrapping error responses (4xx/5xx) leads to inconsistent "double-enveloped" structures that break client-side error handling logic.
 - **Name Binding:** Prefer JAX-RS Name Binding (custom annotations like `@Enveloped`) over URL path prefix scanning to target filters. URL scanning is brittle and prone to bypasses as new resources are added.
 
+
 ### 2.6 Optimistic Locking (Concurrency Control)
 - **The Trap:** Deleting or updating entities based solely on their ID without version checks can lead to the "lost update" problem, where concurrent changes by different users overwrite each other or an entity is deleted while another user is trying to update it.
 - **The Standard:** Implement **Optimistic Locking** using the `@Version` field on entities. 
@@ -130,14 +131,31 @@ Object[] result = (Object[]) em.createNativeQuery(
 
 ---
 
-## 3. Asynchronous Execution & System Commands
+## 3. Frontend & UX Patterns
 
-### 3.1 Async Transaction Boundaries
+### 3.1 Auditory Feedback & Asset Minimization
+When adding auditory feedback (toasts, alerts) to a web application, the traditional approach of using `.mp3` or `.wav` files introduces multiple overheads:
+- **Bundle Size:** Even small assets add up, especially if high-fidelity is requested.
+- **Latency:** Fetching assets from a CDN/server can lead to delayed feedback on the first trigger.
+- **Maintenance:** Managing licenses (CCBY/CC0 attribution), bitrates, and broken external links (404s).
+
+- **The Standard:** Use the **Native Web Audio API (`OscillatorNode`)** to synthesize UI sounds dynamically in the browser. 
+  - **Zero-Byte Footprint:** 0KB asset overhead as the sound is code-generated.
+  - **Instant Feedback:** No network latency for the first play.
+  - **Absolute Control:** Frequencies, envelopes, and durations are easily adjustable in code without re-exporting files.
+  - **Autoplay Handling:** Initialize the `AudioContext` only on the first user interaction to comply with modern browser security policies. Silent-fail `play()` calls to prevent technical errors from ruining the premium feel.
+
+
+---
+
+## 4. Asynchronous Execution & System Commands
+
+### 4.1 Async Transaction Boundaries
 When refactoring endpoints to CQRS command models or executing orchestration `Uni` subscriptions executed in the background:
 - **The Trap:** Self-invoking `@Transactional` methods from within a background executor thread (lacking a CDI/JTA request context) completely bypasses the CDI interceptor proxy. This leads to `jakarta.transaction.TransactionRequiredException` when attempting to `.persist()` entities in the background task.
 - **The Standard:** Always define explicit, programmatic transaction boundaries for background DB operations. Use `io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> { ... })` or `.call(...)`. Do not rely solely on `@Transactional` for methods called within a `Runnable` or pipeline executing on a worker thread.
 
-### 3.2 Testing Async State with Awaitility & Panache
+### 4.2 Testing Async State with Awaitility & Panache
 Testing asynchronous REST actions (e.g., a `202 Accepted` that queues a job) requires `Awaitility` to assert the eventual state change.
 - **The Trap:** Using Panache Active Record static methods (e.g., `BackgroundJob.listAll()`) inside `await().until(...)` conditions throws `IllegalStateException` or `ContextNotActiveException`. Panache fails to locate the active CDI context on Awaitility's separate polling thread, even if wrapped in a `QuarkusTransaction`.
 - **The Standard:** Inside Awaitility polling conditions, bypass Panache completely. Inject the raw `EntityManager` (`@Inject EntityManager em;`) and execute standard HQL queries within an explicit programmatic transaction block:
@@ -150,20 +168,20 @@ Testing asynchronous REST actions (e.g., a `202 Accepted` that queues a job) req
   });
   ```
 
-### 3.3 Accurate Timestamping & Auditing
+### 4.3 Accurate Timestamping & Auditing
 - **The Standard:** Do not guess timestamps retroactively (e.g., applying "fallback" `startedAt` timestamps when a job reaches `COMPLETED` if it was somehow skipped). Enforce strict state-transition boundaries. `startedAt` must ONLY be assigned precisely when the state machine transitions from `QUEUED`/`PENDING` directly into `RUNNING` to correctly preserve latency and queue duration metrics.
 
-### 3.4 Integration Testing with `@TestSecurity`
+### 4.4 Integration Testing with `@TestSecurity`
 When testing endpoints protected by `@RolesAllowed` that accept multiple roles (e.g., `@RolesAllowed({"user", "admin"})`), the `@TestSecurity` annotation must provide **all** roles expected by the authorization logic if the test relies on specific user attributes.
 - **The Trap:** Using `@TestSecurity(user = "testuser", roles = {"ADMIN_JOB_UPDATE"})` might fail with `401 Unauthorized` or `403 Forbidden` if the endpoint or surrounding security context also expects the base `"user"` role for standard operations.
 - **The Standard:** Always map the exact full suite of roles the test user hypothetically possesses: `@TestSecurity(user = "testuser", roles = {"user", "ADMIN_JOB_UPDATE"})`.
 
-### 3.5 Explicit Timezones in Testing & API Logic
+### 4.5 Explicit Timezones in Testing & API Logic
 When asserting logic bound to rolling windows (e.g., "last 7 days") or specific dates, relying on the system default timezone is fragile.
 - **The Trap:** Using `LocalDate.now()` in both the application and the test suite can lead to inconsistent behavior across different environments (local vs CI) or when tests run across midnight boundaries.
 - **The Standard:** Always instantiate dates and timestamps explicitly relative to UTC. Use `LocalDate.now(java.time.ZoneOffset.UTC)` for server-side logic and identically in the test builder setup to guarantee deterministic evaluation.
 
-### 3.6 Declarative Authorization Semantics (`@RolesAllowed`)
+### 4.6 Declarative Authorization Semantics (`@RolesAllowed`)
 When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_B"})` in Quarkus:
 - **The Standard:** Remember that passing an array of roles evaluates as a logical **OR** condition, meaning the user only needs *at least one* of the specified roles to gain access to the method. Do not natively assume an `AND` condition or strip declarative annotations for manual `if` block checks unless specifically building complex, field-level access control within the method scope itself.
 
@@ -191,7 +209,7 @@ When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_
 - **The Trap:** Passing a raw string name directly to `Enum.valueOf()` in a REST resource. If the input is malformed, it throws an internal `IllegalArgumentException`, which the default Quarkus exception mapper might catch as a `500 Internal Server Error`, obscuring the real cause (bad input).
 - **The Standard:** Always wrap enum conversions from request parameters in a `try-catch` block and throw a specialized **`BadRequestException`** with a descriptive message (e.g. "Invalid platform type: 'unknown'"). This ensures the client receives a correct `400` status code instead of a generic system crash.
 
-### 3.7 Asynchronous Testing: Avoiding `Thread.sleep`
+### 4.7 Asynchronous Testing: Avoiding `Thread.sleep`
 - **The Trap:** Using `Thread.sleep()` to wait for asynchronous operations in tests (e.g., waiting for a background job to finish or a lock to appear in the database). This leads to flaky tests, slow execution, and brittle code that fails unpredictably depending on environmental load.
 - **The Standard:** Always use **Awaitility** to poll for the expected state change. Awaitility provides built-in support for timeouts, polling intervals, and clear failure messages.
   ```java
@@ -206,9 +224,9 @@ When securing endpoints with multiple roles via `@RolesAllowed({"ROLE_A", "ROLE_
 
 ---
 
-## 4. Reactive Programming (Mutiny)
+## 5. Reactive Programming (Mutiny)
 
-### 4.1 Separation of I/O and Transformation
+### 5.1 Separation of I/O and Transformation
 When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you should strictly separate blocking operations from data transformations.
 - **The Trap:** Mixing database queries and DTO mapping within the same worker-thread block (e.g., inside `QuarkusTransaction.requiringNew().call(...)`) obscures the pipeline's structure and can keep worker threads occupied with CPU-bound mapping logic longer than necessary.
 - **The Standard:** Use worker threads purely for the blocking I/O (the database query) and explicitly switch back to the event loop using `.emitOn(Infrastructure.getDefaultExecutor())` before performing CPU-bound data transformations (like DTO mapping) via `.map()`. This ensures worker threads are released as soon as the I/O is complete.
@@ -220,49 +238,49 @@ When building reactive pipelines with Mutiny (e.g., `Uni` or `Multi`), you shoul
       .map(entities -> entities.stream().map(mapper::toDTO).toList()); // Transformation on Event Loop
   ```
 
-### 4.2 Blocking Initial Logic in Reactive Endpoints
+### 5.2 Blocking Initial Logic in Reactive Endpoints
 - **The Trap:** Assuming that a method returning `Uni` is automatically "safe" from blocking the event loop. The method body itself starts execution on the event loop thread.
 - **The Standard:** If any logic *before* the first asynchronous operation in the method is blocking (e.g., resolving the current user from the database), you must either use `@Blocking` on the method or explicitly offload the initial logic: `Uni.createFrom().item(this::getBlockingData).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`.
 
-### 4.3 Parallelizing Independent Queries (BFF Aggregation)
+### 5.3 Parallelizing Independent Queries (BFF Aggregation)
 When building "Backend-for-Frontend" (BFF) aggregation endpoints that fetch multiple disjoint datasets:
 - **The Trap:** Executing database queries sequentially leads to additive latency, and aggregating results via positional access (e.g., `tuple.getItem1()`) is fragile and lacks type safety.
 - **The Standard:** Use `Uni.combine().all().unis(u1, u2, u3).with(this::assemble)` to execute independent, worker-offloaded queries in parallel. The `with()` method provides a fully typed signature for the aggregation function (Function3, etc.), and using a **method reference** (e.g., `this::assemble`) is the most idiomatic way to handle the result aggregation.
 - **Resilience:** For high-visibility dashboards, wrap each individual `Uni` with `.onFailure().recoverWithItem(defaultValue)` before combining. This implements **graceful degradation**, ensuring that a single failing background query doesn't crash the entire request, allowing the UI to display partial data.
 - **Centralization:** Centralize specialized JPQL queries (especially those using `select new (...)` projection) as `public static final String` constants within the target entity. This improves reusability, keeps the resource class clean, and maintains the query logic close to the domain model it pertains to.
 
-### 4.4 Transaction Type Safety in Pipelines
+### 5.4 Transaction Type Safety in Pipelines
 - **The Trap:** Assuming `QuarkusTransaction.requiringNew().call(Supplier<T>)` returns a reactive `Uni<T>`. In the standard Hibernate ORM (blocking) extension, it returns the raw type `T`.
 - **The Standard:** When integrating blocking transactions into a Mutiny pipeline, you must manually wrap the call: `Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(supplier::get)).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`. This ensures the blocking transaction starts and ends on the correct worker thread.
 
-### 4.5 Collection Type Safety in Mutiny
+### 5.5 Collection Type Safety in Mutiny
 - **The Trap:** Using `List.of()` as a default value in a reactive pipeline (e.g., in `recoverWithItem()` or as a fallback in a generic method). Without explicit type arguments, `List.of()` creates an empty `List<Object>`. Due to type erasure, this can be unsafely wrapped in a `Uni<List<T>>`, only to fail with a `ClassCastException` at runtime when the pipeline tries to consume the item as a `List<T>`.
 - **The Standard:** Always prefer **`Collections.emptyList()`** for empty collection defaults in reactive chains. It allows for better type inference and prevents runtime casting failures. If the compiler still struggles, provide an explicit generic hint at the method call site (e.g., `this.<List<T>>executeInTransactionIf(...)`).
 
 ---
 
-## 5. Development Process & Architecture
+## 6. Development Process & Architecture
 
-### 5.1 Spec-First API Design
+### 6.1 Spec-First API Design
 - **The Trap:** Starting with backend implementation (Entities/Repositories) often leads to an API that exposes internal database structures, resulting in a non-idiomatic "Backend-for-Frontend" (BFF) experience.
 - **The Standard:** Always finalize the **Frontend Specification** and **API Contract** *before* beginning backend implementation. This ensures the API is tailored to UI requirements, defines consistent envelope contracts, and catches design inconsistencies (pagination, enums, error models) during the design phase rather than implementation.
 
-### 5.2 Test Data Builder Pattern
+### 6.2 Test Data Builder Pattern
 - **The Trap:** Manually instantiating complex entities in every test file leads to brittle test suites. Adding a new mandatory field to an entity requires a "mass-fix" across hundreds of test lines.
 - **The Standard:** Implement the **Test Data Builder Pattern**. Centralize entity creation in fluent builders (e.g., `TopicBuilder`, `BriefingBuilder`) with sensible defaults and `.withId()` capabilities. This decouples the test logic from entity structural changes and significantly reduces boilerplate.
 
 ---
 
-## 6. API Documentation (OpenAPI / Swagger)
+## 7. API Documentation (OpenAPI / Swagger)
 
-### 6.1 Documentation as Truth
+### 7.1 Documentation as Truth
 - **The Standard:** Use `quarkus-smallrye-openapi` to generate the API contract directly from the code. This ensures the documentation never drifts from the actual implementation ("Code is Truth").
 - **Implementation:** 
   - Annotate JAX-RS methods with `@Operation` for summaries and descriptions.
   - Use `@APIResponse` and `@Content` (with `@Schema`) to document specific response bodies and status codes.
   - For complex generic responses like `ApiEnvelopeDTO<T>`, create `private static` inner helper classes that extend the generic DTO with a specific type and use them in the `@Schema(implementation = ...)` attribute. This allows OpenAPI to generate precise schemas for each endpoint's response envelope.
 
-### 6.2 Production Security
+### 7.2 Production Security
 - **The Trap:** Accidentally exposing Swagger UI in production provides a detailed map of your API to potential attackers.
 - **The Standard:** Always explicitly disable Swagger UI in the production profile.
 - **Configuration:** Use `%prod.quarkus.swagger-ui.always-include=false` in `application.properties`. This is a critical security measure to minimize the attack surface of the application.
@@ -555,11 +573,11 @@ For optimal performance and SEO in a Dual-Language application:
 
 ---
 
-### 3.8 Transactional Consistency in Background Jobs
+### 4.8 Transactional Consistency in Background Jobs
 - **The Problem:** Background jobs triggered from executor threads lack a default CDI request or transaction context. This leads to `ContextNotActiveException` when calling Panache methods.
 - **The Standard:** Always wrap background database operations in an explicit programmatic transaction: `QuarkusTransaction.requiringNew().call(() -> { ... })`.
 
-### 3.9 Eager Loading for Background Processing
+### 4.9 Eager Loading for Background Processing
 - **The Problem:** When processing entities in a *new* transaction (common in background jobs), lazy-loaded collections (like `@ManyToMany`) will throw `LazyInitializationException` if they weren't fetched in the same transaction session.
 - **The Standard:** Implement dedicated finders that use `JOIN FETCH` (e.g., `Topic.findByIdWithSources()`) to eagerly load all required associations before passing the entity to the background worker. Avoid relying on open-session-in-view patterns for background tasks.
 
