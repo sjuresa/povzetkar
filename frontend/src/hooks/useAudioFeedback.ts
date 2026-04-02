@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useEventStore } from '../store/eventStore';
 import logger from '../util/logger';
 
@@ -24,18 +24,25 @@ export function useAudioFeedback() {
   }, []);
 
   // Initialize AudioContext on first notification (to comply with autoplay)
-  const initAudio = () => {
+  const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (globalThis.AudioContext || (globalThis as any).webkitAudioContext)();
+      const AudioContextClass = globalThis.AudioContext || (globalThis as any).webkitAudioContext;
+      if (AudioContextClass) {
+        audioContextRef.current = new AudioContextClass();
+      } else {
+        logger.warn('[Audio] Web Audio API is not supported in this browser');
+      }
     }
     return audioContextRef.current;
-  };
+  }, []);
 
   /**
    * Synthesize a notification sound
    */
-  const playSound = (type: 'success' | 'error' | 'info') => {
+  const playSound = useCallback((type: 'success' | 'error' | 'info') => {
     const ctx = initAudio();
+    if (!ctx) return;
+
     if (ctx.state === 'suspended') {
       ctx.resume().catch((e: unknown) => logger.debug('[Audio] Could not resume context', { error: e }));
     }
@@ -60,8 +67,8 @@ export function useAudioFeedback() {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, now); // A5
         osc.frequency.exponentialRampToValueAtTime(1320, now + 0.1); // Slide up to E6
-        gain.gain.setValueAtTime(0.5, now); // Increased from 0.1
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5); // Fast fade
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
         osc.start(now);
         osc.stop(now + 0.5);
         break;
@@ -71,7 +78,7 @@ export function useAudioFeedback() {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(440, now); // A4
         osc.frequency.setValueAtTime(330, now + 0.1); // Slide down to E4
-        gain.gain.setValueAtTime(0.4, now); // Increased from 0.15
+        gain.gain.setValueAtTime(0.4, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
         osc.start(now);
         osc.stop(now + 0.4);
@@ -81,24 +88,29 @@ export function useAudioFeedback() {
         // A neutral chime
         osc.type = 'sine';
         osc.frequency.setValueAtTime(660, now); // E5
-        gain.gain.setValueAtTime(0.3, now); // Increased from 0.05
+        gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
         osc.start(now);
         osc.stop(now + 0.3);
         break;
     }
-  };
+  }, [initAudio]);
+
+  const lastPlayedTimestamp = useRef<number>(0);
 
   // React to notification signals
   useEffect(() => {
-    if (!lastNotification) return;
+    if (!lastNotification || lastNotification.timestamp <= lastPlayedTimestamp.current) return;
+
+    // Pulse suppression: Record that we have handled this notification
+    lastPlayedTimestamp.current = lastNotification.timestamp;
 
     try {
       playSound(lastNotification.type);
       logger.debug(`[Audio] Synthesized ${lastNotification.type} notification`);
     } catch (error) {
       // Autoplay policy usually blocks this until first user interaction
-      logger.debug(`[Audio] Playback blocked by browser policy (no user interaction yet)`);
+      logger.debug(`[Audio] Playback failed`, { error });
     }
-  }, [lastNotification]);
+  }, [lastNotification, playSound]);
 }
