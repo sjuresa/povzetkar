@@ -13,6 +13,16 @@ export function useAudioFeedback() {
   
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  // Cleanup AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch((e: unknown) => logger.debug('[Audio] Error closing context', { error: e }));
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
+
   // Initialize AudioContext on first notification (to comply with autoplay)
   const initAudio = () => {
     if (!audioContextRef.current) {
@@ -27,7 +37,7 @@ export function useAudioFeedback() {
   const playSound = (type: 'success' | 'error' | 'info') => {
     const ctx = initAudio();
     if (ctx.state === 'suspended') {
-      ctx.resume().catch((e) => logger.debug('[Audio] Could not resume context', e));
+      ctx.resume().catch((e: unknown) => logger.debug('[Audio] Could not resume context', { error: e }));
     }
 
     const osc = ctx.createOscillator();
@@ -35,6 +45,12 @@ export function useAudioFeedback() {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    // Disconnect nodes after playback to assist garbage collection
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
 
     const now = ctx.currentTime;
 

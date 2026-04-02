@@ -102,7 +102,7 @@ public class ContentCreationService {
                     "author", video.authorName != null ? video.authorName : "",
                     "publishedAt", video.formattedPublishedAt(),
                     "duration", video.formattedDuration(),
-                    "transcript", transcript != null ? transcript : ""
+                    "transcript", transcript
             );
 
             Matcher matcher = VARIABLE_PATTERN.matcher(template);
