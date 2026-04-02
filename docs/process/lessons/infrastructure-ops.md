@@ -12,7 +12,7 @@
 
 ### Dependency Vulnerability Scanning
 - **The Trap:** Relying on local dependency checks lacks centralized visibility of security issues.
-- **The Standard:** Integrate vulnerability scanning (e.g., Trivy) directy into the CI/CD pipeline. Configure explicit exit codes and severity levels to break the build when actionable CVEs are discovered.
+- **The Standard:** Integrate vulnerability scanning (e.g., Trivy) directly into the CI/CD pipeline. Configure explicit exit codes and severity levels to break the build when actionable CVEs are discovered.
 
 ## Observability & Request Tracing
 
@@ -53,7 +53,7 @@
 - **The Standard:** Implement **Version-Aware Skips** (`<!-- validate:skip until vX.Y.Z -->`). The audit tool should automatically invalidate skips if the current version is greater than or equal to the "until" version.
 
 ## Defensive Source Entry (Debounced Presence Check)
-- **The Standard:** Implement a **Live existence check** (e.g., YouTube API) in the "Add Source" dialog before the user hits "Add". This preventing dirtying the database with dead references.
+- **The Standard:** Implement a **Live existence check** (e.g., YouTube API) in the "Add Source" dialog before the user hits "Add". This prevents dirtying the database with dead references.
 
 ---
 
