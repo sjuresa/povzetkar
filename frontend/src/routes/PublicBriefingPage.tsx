@@ -1,5 +1,18 @@
 import { useParams } from '@tanstack/react-router';
-import { Loader2, Calendar, Hash, ExternalLink, Sun, Moon, Languages, ArrowDown } from 'lucide-react';
+import { 
+  Loader2, 
+  ExternalLink, 
+  Sun, 
+  Moon, 
+  Languages, 
+  ArrowDown, 
+  Youtube, 
+  Globe, 
+  Hash,
+  Calendar,
+  Clock,
+  Timer
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { sl, enUS } from 'date-fns/locale';
@@ -91,39 +104,42 @@ export function PublicBriefingPage() {
       </header>
 
       <main className="max-w-screen-2xl mx-auto px-4 pt-12 sm:px-16">
-        <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="flex items-center gap-2 text-indigo-500 text-sm font-medium mb-3 uppercase tracking-wider">
-             <Hash className="w-4 h-4" />
-             <span>{briefing.topicName}</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-text-primary)] tracking-tight leading-tight mb-4">
-            {briefing.title}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--color-text-primary)] text-glow leading-[1.1] flex-1 min-w-0">
+            {t('briefingDetail.title', { 
+              topic: briefing.topicName, 
+              date: briefing.briefingDate
+                ? format(new Date(briefing.briefingDate + 'T00:00:00'), 'PPP', { 
+                    locale: i18n.language === 'sl' ? sl : enUS 
+                  })
+                : '—'
+            })}
           </h1>
-          <div className="flex items-center gap-4 text-[var(--color-text-secondary)] text-sm">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" />
-              <span>
-                {format(
-                  briefing.briefingDate ? new Date(briefing.briefingDate) : new Date(), 
-                  i18n.language === 'sl' ? 'd. MMMM yyyy' : 'MMMM do, yyyy',
-                  { locale: i18n.language === 'sl' ? sl : enUS }
-                )}
-              </span>
-            </div>
-          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 text-sm mt-3 font-black italic uppercase tracking-[0.2em] opacity-60 mb-10">
+          {briefing.summaries && briefing.summaries.length > 0 && (
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              {t('briefingDetail.sourcesCount', { count: briefing.summaries.length })}
+            </span>
+          )}
         </div>
 
 
         {/* Executive Summary / AI Synthesis */}
-        {briefing.metaSummary && (
-          <div className="mb-12 p-8 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 animate-in fade-in slide-in-from-bottom-2 duration-1000">
-            <article className="prose prose-indigo max-w-none prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed text-lg italic">
-              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                {briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim()}
-              </ReactMarkdown>
-            </article>
-          </div>
-        )}
+        {briefing.metaSummary && (() => {
+          const cleanedText = briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim();
+          const hasAlphaFirst = /^\p{L}/u.test(cleanedText);
+          
+          return (
+            <div className="mb-16 p-10 md:p-16 rounded-[2.5rem] bg-indigo-500/[0.03] border-l-8 border-indigo-500/50 shadow-2xl shadow-indigo-500/5 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+              <article className={`prose prose-indigo max-w-none prose-p:text-[var(--color-text-primary)] prose-p:leading-[1.6] text-2xl italic font-serif font-medium opacity-100 selection:bg-indigo-500/30 ${hasAlphaFirst ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-indigo-400' : ''}`}>
+                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                  {cleanedText}
+                </ReactMarkdown>
+              </article>
+            </div>
+          );
+        })()}
 
         {/* Source Items - The Reference Grid */}
         {briefing.summaries && briefing.summaries.length > 0 && (
@@ -158,9 +174,19 @@ export function PublicBriefingPage() {
                                {item.contentItem?.title}
                            </h3>
                          )}
-                         <p className="text-[10px] text-[var(--color-text-secondary)] mt-1 truncate">
-                             {item.contentItem?.contentSource?.name}
-                         </p>
+                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
+                             <span className="text-[10px] font-black text-indigo-400 uppercase tracking-tight">{item.contentItem?.authorName}</span>
+                             <span className="text-[10px] text-[var(--color-text-secondary)] opacity-40">•</span>
+                             <span className="text-[10px] text-[var(--color-text-secondary)] font-bold">
+                               {item.contentItem?.publishedAt && format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}
+                             </span>
+                             {item.contentItem?.formattedDuration && (
+                               <>
+                                 <span className="text-[10px] text-[var(--color-text-secondary)] opacity-40">•</span>
+                                 <span className="text-[10px] text-amber-500/90 font-bold">{item.contentItem.formattedDuration}</span>
+                               </>
+                             )}
+                         </div>
                      </div>
                   </div>
                   <div className="mt-auto flex items-center justify-between">
@@ -179,14 +205,13 @@ export function PublicBriefingPage() {
         )}
 
         {/* CTA Section */}
-        <div className="text-center py-12 mb-12 border-y border-[var(--color-border-subtle)] bg-[var(--color-background-base)]/50">
-            <p className="text-[var(--color-text-secondary)] text-sm mb-6">{t('briefingDetail.public.generatedBy')}</p>
+        <div className="text-center py-20 mb-20 border-y border-[var(--color-border-subtle)] bg-[var(--color-background-alt)]/20 rounded-[3rem]">
             <a 
                 href="/" 
-                className="inline-flex items-center gap-2 px-10 py-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-2xl shadow-indigo-500/30 active:scale-95 text-lg"
+                className="inline-flex items-center gap-3 px-12 py-6 rounded-3xl bg-indigo-600 hover:bg-indigo-500 text-white font-black transition-all shadow-2xl shadow-indigo-500/40 active:scale-95 text-xl tracking-tight"
             >
                 {t('briefingDetail.public.ctaStart')}
-                <ExternalLink className="w-5 h-5" />
+                <ExternalLink className="w-6 h-6" />
             </a>
         </div>
 
@@ -197,8 +222,57 @@ export function PublicBriefingPage() {
               <div 
                 key={item.contentItem?.id} 
                 id={`item-${item.contentItem?.id}`}
-                className="scroll-mt-24 pt-8 border-t border-[var(--color-border-subtle)] first:border-0 first:pt-0"
+                className="scroll-mt-24 pt-12 border-t border-[var(--color-border-subtle)] first:border-0 first:pt-0"
               >
+                {/* Minimalist Source Header */}
+                <div className="flex items-start gap-4 mb-8 group/source">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 flex-shrink-0 group-hover/source:bg-indigo-500/20 transition-colors">
+                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? (
+                      <Youtube className="w-6 h-6 text-red-500" />
+                    ) : (
+                      <Globe className="w-6 h-6" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
+                           {item.contentItem?.authorName || t('briefingDetail.unknownAuthor')}
+                        </span>
+                        
+                        {(item.contentItem?.publishedAt || item.contentItem?.formattedDuration) && (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            {item.contentItem?.publishedAt && (
+                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
+                                <Calendar className="w-3 h-3 text-emerald-500/70" />
+                                <span>{format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}</span>
+                                <span className="opacity-30 mx-0.5">•</span>
+                                <Clock className="w-3 h-3 text-indigo-500/70" />
+                                <span>{format(new Date(item.contentItem.publishedAt), 'HH:mm')}</span>
+                              </div>
+                            )}
+                            
+                            {item.contentItem?.formattedDuration && (
+                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
+                                <span className="opacity-30 mr-1.5">|</span>
+                                <Timer className="w-3 h-3 text-amber-500/70" />
+                                <span className="text-amber-500/90">{item.contentItem.formattedDuration}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                     </div>
+                    <a 
+                      href={item.contentItem?.sourceUrl || '#'} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-2xl font-black text-[var(--color-text-primary)] hover:text-indigo-400 theme-transition flex items-center gap-2 group/link leading-tight mt-1"
+                    >
+                      <span className="truncate">{item.contentItem?.title}</span>
+                      <ExternalLink className="w-4 h-4 text-[var(--color-text-secondary)] group-hover/link:text-indigo-400 transition-colors" />
+                    </a>
+                  </div>
+                </div>
+
                 <article className="prose prose-indigo max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-hr:border-[var(--color-border-subtle)]">
                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                      {item.summaryText || ''}
@@ -209,6 +283,19 @@ export function PublicBriefingPage() {
           </div>
         )}
       </main>
+
+      {/* Footer Branding */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-16 pt-24 pb-12 text-center space-y-4 border-t border-[var(--color-border-subtle)]/30">
+        <p className="text-sm font-black text-[var(--color-text-primary)] tracking-[0.3em] uppercase opacity-80">
+          Povzetkar AI
+        </p>
+        <p className="text-[10px] text-[var(--color-text-secondary)] font-medium uppercase tracking-[0.2em] opacity-40">
+          {t('common.generated_by')} — AI-Powered Intelligence Aggregator
+        </p>
+        <p className="text-[10px] text-[var(--color-text-secondary)]/30 uppercase tracking-[0.1em]">
+          &copy; {new Date().getFullYear()} sjuresa/povzetkar
+        </p>
+      </div>
     </div>
   );
 }

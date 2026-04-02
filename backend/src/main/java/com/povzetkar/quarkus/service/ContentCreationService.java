@@ -9,10 +9,15 @@ import com.povzetkar.quarkus.util.StructuredLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @ApplicationScoped
 public class ContentCreationService {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(ContentCreationService.class);
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(.+?)\\}\\}");
     private final int transcriptThresholdMinutes;
 
     private final YouTubeTranscriptService youTubeTranscriptService;
@@ -86,16 +91,44 @@ public class ContentCreationService {
 
     private Part createVideoSummaryTextPart(YouTubeVideo video, String transcript) {
         String sourceType = transcript.isBlank() ? "video url" : "video transcript";
-        String prompt = Prompts.VIDEO_SUMMARY_PROMPT.formatted(
-                sourceType,
-                video.sourceUrl,
-                video.title,
-                video.sourceUrl,
-                video.authorName,
-                video.formattedPublishedAt(),
-                video.formattedDuration(),
-                transcript
-        );
-        return Part.fromText(prompt);
+        String template = Prompts.VIDEO_SUMMARY_PROMPT;
+
+        String finalPrompt;
+        if (template.contains("{{")) {
+            Map<String, String> plainValues = Map.of(
+                    "sourceType", sourceType,
+                    "sourceUrl", video.sourceUrl != null ? video.sourceUrl : "",
+                    "title", video.title != null ? video.title : "",
+                    "author", video.authorName != null ? video.authorName : "",
+                    "publishedAt", video.formattedPublishedAt(),
+                    "duration", video.formattedDuration(),
+                    "transcript", transcript != null ? transcript : ""
+            );
+
+            Matcher matcher = VARIABLE_PATTERN.matcher(template);
+            StringBuilder sb = new StringBuilder();
+
+            while (matcher.find()) {
+                String key = matcher.group(1);
+                // Fallback to original placeholder if key not found in map
+                String value = plainValues.getOrDefault(key, matcher.group(0));
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
+            }
+            matcher.appendTail(sb);
+            finalPrompt = sb.toString();
+        } else {
+            // Fallback to legacy index-based formatting if template isn't migrated
+            finalPrompt = template.formatted(
+                    sourceType,
+                    video.sourceUrl,
+                    video.title,
+                    video.sourceUrl,
+                    video.authorName,
+                    video.formattedPublishedAt(),
+                    video.formattedDuration(),
+                    transcript
+            );
+        }
+        return Part.fromText(finalPrompt);
     }
 }

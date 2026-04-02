@@ -16,6 +16,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Full Component Internationalization:** (Moved to v0.16.0) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 *   **Theme Transition Animations:** (Moved to v0.16.0) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
+*   **Restore Content Duration Display (POV-170 Follow-up):** Investigate and resolve the backend gap where `formattedDuration` is missing for some content items in the briefing response.
 
 ### Backend & Architecture
 

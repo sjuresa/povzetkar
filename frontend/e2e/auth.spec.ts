@@ -4,7 +4,7 @@ test('login button redirects to /auth/login', async ({ page }) => {
   await page.goto('/');
   
   // Find the login button and click it
-  const loginButton = page.getByRole('button', { name: /Get Key Insights/i });
+  const loginButton = page.getByRole('button', { name: /Create your first briefing/i });
   await expect(loginButton).toBeVisible();
   
   // Intercept the navigation to /auth/login

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] (v0.16.0)
 
+### Added
+- **Briefing UI Polish (POV-170):** Standardized source metadata with a high-contrast icon-based header (`Calendar`, `Clock`, `Timer`), restoring prominence to publication date and time.
+- **Header Layout Fix (POV-170):** Optimized briefing titles to occupy the full container width, solving a layout regression where long titles wrapped prematurely across internal and public views.
+- **Data Model (POV-170):** Promoted `authorName` to the base `ContentItem` entity and DTO, enabling universal attribution across all current and future content types.
+
+### Changed
+- **AI Prompt Cleanup (POV-170):** Stripped redundant UI-level headers (`## Daily Briefing`, `### 1. Executive Summary`, etc.) and metadata from the AI summarization prompts. The AI now generates "Pure Intelligence," while the System provides the structural "Frame."
+- **Prompt Architecture (POV-170):** Migrated all summarization templates to a named `{{variable}}` syntax (e.g., `{{title}}`, `{{transcript}}`), replacing fragile positional `%s` formatting and improving template maintainability.
+- **Backend Infrastructure (POV-170):** Updated `ContentCreationService` and `VideoSummaryService` to support the new template variable injection logic.
+- **Cleanup (POV-170):** Simplified shared briefing and summary views by removing unimplemented export/sharing features to maintain a clean interface.
+
 ## [0.15.0] - 2026-03-30
 
 ### Summary
