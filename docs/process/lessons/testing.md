@@ -1,0 +1,63 @@
+# Testing Patterns & Standards
+
+## Testing Async State with Awaitility & Panache
+Testing asynchronous REST actions (e.g., a `202 Accepted` that queues a job) requires `Awaitility` to assert the eventual state change.
+- **The Trap:** Using Panache Active Record static methods (e.g., `BackgroundJob.listAll()`) inside `await().until(...)` conditions throws `IllegalStateException`. Panache fails to locate the active CDI context on Awaitility's separate polling thread.
+- **The Standard:** Inside Awaitility polling conditions, bypass Panache. Inject the raw `EntityManager` (`@Inject EntityManager em;`) and execute standard HQL queries within an explicit programmatic transaction block.
+  ```java
+  await().atMost(5, TimeUnit.SECONDS).until(() -> {
+      List<BackgroundJob> jobs = QuarkusTransaction.requiringNew().call(() -> 
+          em.createQuery("FROM BackgroundJob", BackgroundJob.class).getResultList()
+      );
+      return jobs.size() == 1 && jobs.getFirst().status == JobStatus.COMPLETED;
+  });
+  ```
+
+## Avoiding `Thread.sleep`
+- **The Trap:** Using `Thread.sleep()` to wait for asynchronous operations in tests leads to flaky and slow tests.
+- **The Standard:** Always use **Awaitility** to poll for the expected state change. Awaitility provides built-in support for timeouts and clear failure messages.
+
+## Integration Testing with `@TestSecurity`
+When testing endpoints protected by `@RolesAllowed` that accept multiple roles (e.g., `@RolesAllowed({"user", "admin"})`):
+- **The Trap:** Using `@TestSecurity(user = "testuser", roles = {"ADMIN_JOB_UPDATE"})` might fail if the endpoint also expects the base `"user"` role.
+- **The Standard:** Always map the exact full suite of roles the test user hypothetically possesses: `@TestSecurity(user = "testuser", roles = {"user", "ADMIN_JOB_UPDATE"})`.
+
+## Explicit Timezones in Testing & API Logic
+When asserting logic bound to rolling windows (e.g., "last 7 days") or specific dates:
+- **The Trap:** Using `LocalDate.now()` in both the application and the test suite can lead to inconsistent behavior across different environments (local vs CI).
+- **The Standard:** Always instantiate dates and timestamps explicitly relative to UTC. Use `LocalDate.now(java.time.ZoneOffset.UTC)` for server-side logic and identically in the test builder setup.
+
+## Vitest Coverage Engine Requirements
+- **The Trap:** Forgetting to install the coverage provider separately. Vitest core does not include the coverage engine; you must explicitly add `@vitest/coverage-v8` as a dev dependency.
+- **The Standard:** When enabling code coverage in the frontend (`vitest run --coverage`), ensure the configuration explicitly excludes `node_modules`, `dist`, and configuration files (like `eslint.config.js`).
+
+## Permanent Master Test Specification (POV-166)
+
+### 3-Digit Sequential Indexing (`TC-DOM-0XX`)
+As a project grows, simple sequential IDs (`TC-01`) quickly become ambiguous.
+- **The Standard:** Implement a **3-digit sequential index** prefixed by a Domain code (e.g., `TC-REP-024`). The 3-digit format (`001`-`999`) provides headroom for large-scale enterprise suites and ensures consistent sorting.
+
+### Domain 0: Global Resilience (GRX)
+Cross-cutting stability features (Error Boundaries, Skeleton Loaders, Theme Persistence) often "fall through the cracks."
+- **The Standard:** Establish a **Domain 0 (Global Resilience & UX)**. This domain is mandatory for every release and covers the baseline "Polish" that must hold true across all pages.
+
+## Requirements Traceability Hardening (POV-166)
+
+### The US ➔ UC ➔ TC Chain
+In rapid agile development, User Stories often become disconnected from the actual implementation and testing.
+- **The Standard:** Enforce a strict **Traceability Chain**:
+  1. **User Story (US-ID)**: The high-level "Why".
+  2. **Use Case (UC-ID)**: The "How", explicitly linked to a `US-ID`.
+  3. **Test Case (TC-ID)**: The "Verify", explicitly linked to a `UC-ID`.
+  
+  This chain ensures that every requirement is covered by at least one test, and every test exists to satisfy a specific user requirement.
+
+### Process Gates for Documentation Sync
+- **The Standard:** Documentation parity must be an **Explicit Phase 2 Gate** in the development checklist. Do not wait until the end of the release to "clean up" docs. Every task must include a "Master Specification Sync" step where new scenarios are added and old ones updated BEFORE the task is marked as complete.
+
+---
+
+## Related Documents
+- [Master Test Specification](../../analysis/test_specification.md)
+- [Development Checklist](../../sdlc/11_development_checklist.md)
+

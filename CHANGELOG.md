@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Data Model (POV-170):** Promoted `authorName` to the base `ContentItem` entity and DTO, enabling universal attribution across all current and future content types.
 - **Auditory Feedback Framework (POV-171):** Implemented a standardized audio notification system for system events. Features zero-asset overhead via dynamic **Web Audio API synthesis** (`OscillatorNode`).
 - **Legal Compliance (POV-171):** Established a centralized **Third-Party Assets & Compliance Registry** (`LEGAL.md`) to track all media, code, and infrastructure dependencies.
+- **Knowledge Base Modularization (POV-172):** Decomposed the monolithic `lessons-learned.md` into 6 domain-specific guides (`database.md`, `backend-api.md`, `frontend-ux.md`, `reactive.md`, `testing.md`, `infrastructure-ops.md`) and a consolidated legacy archive.
+- **Knowledge Portal (POV-172):** Transformed the root `lessons-learned.md` into a high-visibility portal featuring curated v0.16.0 technical highlights and structured navigation.
 
 ### Changed
 - **AI Prompt Cleanup (POV-170):** Stripped redundant UI-level headers (`## Daily Briefing`, `### 1. Executive Summary`, etc.) and metadata from the AI summarization prompts. The AI now generates "Pure Intelligence," while the System provides the structural "Frame."
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cleanup (POV-170):** Simplified shared briefing and summary views by removing unimplemented export/sharing features to maintain a clean interface.
 - **Event Store (POV-171):** Extended `eventStore.ts` with a transient `lastNotification` signal to decouple auditory triggers from business logic.
 - **Job Events (POV-171):** Integrated auditory signaling into the `useJobEvents.ts` SSE listener, triggering sounds for `COMPLETED`, `FAILED`, and `ORCHESTRATION_COMPLETED` events.
+- **Documentation Architecture (POV-172):** Migrated to a modular sub-directory structure (`docs/process/lessons/`) with stripped numeric prefixes and hardened relative link integrity for improved discoverability and AI context efficiency.
 
 ## [0.15.0] - 2026-03-30
 
