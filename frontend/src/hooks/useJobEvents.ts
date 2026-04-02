@@ -48,8 +48,8 @@ export function useJobEvents() {
         const data = payload.data;
         logger.info('[SSE] Job status changed', { jobData: data }); // Replaced console.log with logger.info
         
-        if (!data?.jobId) {
-          logger.warn('[SSE] Received malformed JOB_STATUS_CHANGED event', { payload }); // Replaced console.warn with logger.warn
+        if (!data?.jobId || !data.jobType) {
+          logger.warn('[SSE] Received malformed JOB_STATUS_CHANGED event', { payload });
           return;
         }
 

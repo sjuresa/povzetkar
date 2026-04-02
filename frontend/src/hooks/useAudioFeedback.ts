@@ -39,12 +39,12 @@ export function useAudioFeedback() {
   /**
    * Synthesize a notification sound
    */
-  const playSound = useCallback((type: 'success' | 'error' | 'info') => {
+  const playSound = useCallback(async (type: 'success' | 'error' | 'info') => {
     const ctx = initAudio();
     if (!ctx) return;
 
     if (ctx.state === 'suspended') {
-      ctx.resume().catch((e: unknown) => logger.debug('[Audio] Could not resume context', { error: e }));
+      await ctx.resume();
     }
 
     const osc = ctx.createOscillator();
@@ -105,12 +105,16 @@ export function useAudioFeedback() {
     // Pulse suppression: Record that we have handled this notification
     lastPlayedTimestamp.current = lastNotification.timestamp;
 
-    try {
-      playSound(lastNotification.type);
-      logger.debug(`[Audio] Synthesized ${lastNotification.type} notification`);
-    } catch (error) {
-      // Autoplay policy usually blocks this until first user interaction
-      logger.debug(`[Audio] Playback failed`, { error });
-    }
+    const triggerSound = async () => {
+      try {
+        await playSound(lastNotification.type);
+        logger.debug(`[Audio] Synthesized ${lastNotification.type} notification`);
+      } catch (error) {
+        // Autoplay policy usually blocks this until first user interaction
+        logger.debug(`[Audio] Playback failed, likely due to autoplay policy.`, { error });
+      }
+    };
+
+    void triggerSound();
   }, [lastNotification, playSound]);
 }
