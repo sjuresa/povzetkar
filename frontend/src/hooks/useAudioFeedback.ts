@@ -26,7 +26,7 @@ export function useAudioFeedback() {
   // Initialize AudioContext on first notification (to comply with autoplay)
   const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
-      const AudioContextClass = globalThis.AudioContext || (globalThis as any).webkitAudioContext;
+      const AudioContextClass = globalThis.AudioContext || (globalThis as typeof globalThis & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
         audioContextRef.current = new AudioContextClass();
       } else {
