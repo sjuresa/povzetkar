@@ -812,12 +812,12 @@ In rapid agile development, User Stories often become disconnected from the actu
     </div>
     ```
     This safeguard prevents fragile "half-broken" styling from reaching production when dealing with non-deterministic content sources.
-### 37.2 Multi-Pass Replacement Avoidance (Map + StringBuilder)
-- **The Trap:** Chaining multiple `String.replace()` calls for template variable injection (e.g., `.replace("{{title}}", title).replace("{{author}}", author)...`). Since strings are immutable in Java, every `replace()` call creates a new intermediate `String` object and performs a full scan of the content. For large templates with many variables (e.g., transcripts), this results in O(V * N) complexity (where V is the number of variables and N is the string length) and significant heap pressure.
-- **The Standard:** Use a **Map-based StringBuilder replacement pattern**. Even if iterating over keys, perform manual `indexOf`/`replace` on a `StringBuilder` to avoid constant `String` allocations.
+### 37.3 Single-Pass Template Variable Replacement (Matcher Strategy)
+- **The Trap:** Chaining `String.replace()` or iteratively using `StringBuilder.indexOf/replace` for multiple variables. These "multi-pass" approaches result in O(V * N) complexity (V=variables, N=length), causing high memory overhead and performance degradation on large inputs like transcripts.
+- **The Standard:** Use **java.util.regex.Matcher.appendReplacement()**. This provides a true O(N) single-pass scan that resolves all placeholders in one go.
 - **Implementation Pattern:** 
-  1. Define a `Map` of variables and their values.
-  2. Use a `StringBuilder` initialized with the template.
-  3. Iterate through the map, using `sb.indexOf` and `sb.replace` to update the buffer in-place.
+  1. Define a `Map<String, String>` of plain variable names (without `{{ }}`).
+  2. Use a Pattern like `\\{\\{(.+?)\\}\\}` to capture the key inside the curly braces.
+  3. Iterate with `matcher.find()`, resolve the value from the map using the captured group, and use `matcher.appendReplacement(sb, Matcher.quoteReplacement(value))`.
   
-  This provides significantly better memory characteristics than `String.replace()` and is simpler to implement than a full `Matcher`-based single-pass scanner for most simple templating needs.
+  This is the most efficient pattern for production-grade prompt templating, especially when dealing with non-deterministic or massive GenAI inputs.

@@ -10,6 +10,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class ContentCreationService {
@@ -92,24 +94,27 @@ public class ContentCreationService {
 
         String finalPrompt;
         if (template.contains("{{")) {
-            Map<String, String> values = Map.of(
-                    "{{sourceType}}", sourceType,
-                    "{{sourceUrl}}", video.sourceUrl != null ? video.sourceUrl : "",
-                    "{{title}}", video.title != null ? video.title : "",
-                    "{{author}}", video.authorName != null ? video.authorName : "",
-                    "{{publishedAt}}", video.formattedPublishedAt(),
-                    "{{duration}}", video.formattedDuration(),
-                    "{{transcript}}", transcript
+            Map<String, String> plainValues = Map.of(
+                    "sourceType", sourceType,
+                    "sourceUrl", video.sourceUrl != null ? video.sourceUrl : "",
+                    "title", video.title != null ? video.title : "",
+                    "author", video.authorName != null ? video.authorName : "",
+                    "publishedAt", video.formattedPublishedAt(),
+                    "duration", video.formattedDuration(),
+                    "transcript", transcript != null ? transcript : ""
             );
 
-            StringBuilder sb = new StringBuilder(template);
-            values.forEach((key, value) -> {
-                int index = sb.indexOf(key);
-                while (index != -1) {
-                    sb.replace(index, index + key.length(), value);
-                    index = sb.indexOf(key, index + value.length());
-                }
-            });
+            Pattern pattern = Pattern.compile("\\{\\{(.+?)\\}\\}");
+            Matcher matcher = pattern.matcher(template);
+            StringBuilder sb = new StringBuilder();
+
+            while (matcher.find()) {
+                String key = matcher.group(1);
+                // Fallback to original placeholder if key not found in map
+                String value = plainValues.getOrDefault(key, matcher.group(0));
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
+            }
+            matcher.appendTail(sb);
             finalPrompt = sb.toString();
         } else {
             // Fallback to legacy index-based formatting if template isn't migrated
