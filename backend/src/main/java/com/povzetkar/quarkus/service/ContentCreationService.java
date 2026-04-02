@@ -9,6 +9,8 @@ import com.povzetkar.quarkus.util.StructuredLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.Map;
+
 @ApplicationScoped
 public class ContentCreationService {
 
@@ -90,14 +92,25 @@ public class ContentCreationService {
 
         String finalPrompt;
         if (template.contains("{{")) {
-            finalPrompt = template
-                    .replace("{{sourceType}}", sourceType)
-                    .replace("{{sourceUrl}}", video.sourceUrl != null ? video.sourceUrl : "")
-                    .replace("{{title}}", video.title != null ? video.title : "")
-                    .replace("{{author}}", video.authorName != null ? video.authorName : "")
-                    .replace("{{publishedAt}}", video.formattedPublishedAt())
-                    .replace("{{duration}}", video.formattedDuration())
-                    .replace("{{transcript}}", transcript != null ? transcript : "");
+            Map<String, String> values = Map.of(
+                    "{{sourceType}}", sourceType,
+                    "{{sourceUrl}}", video.sourceUrl != null ? video.sourceUrl : "",
+                    "{{title}}", video.title != null ? video.title : "",
+                    "{{author}}", video.authorName != null ? video.authorName : "",
+                    "{{publishedAt}}", video.formattedPublishedAt(),
+                    "{{duration}}", video.formattedDuration(),
+                    "{{transcript}}", transcript
+            );
+
+            StringBuilder sb = new StringBuilder(template);
+            values.forEach((key, value) -> {
+                int index = sb.indexOf(key);
+                while (index != -1) {
+                    sb.replace(index, index + key.length(), value);
+                    index = sb.indexOf(key, index + value.length());
+                }
+            });
+            finalPrompt = sb.toString();
         } else {
             // Fallback to legacy index-based formatting if template isn't migrated
             finalPrompt = template.formatted(

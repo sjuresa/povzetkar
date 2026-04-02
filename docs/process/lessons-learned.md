@@ -812,3 +812,12 @@ In rapid agile development, User Stories often become disconnected from the actu
     </div>
     ```
     This safeguard prevents fragile "half-broken" styling from reaching production when dealing with non-deterministic content sources.
+### 37.2 Multi-Pass Replacement Avoidance (Map + StringBuilder)
+- **The Trap:** Chaining multiple `String.replace()` calls for template variable injection (e.g., `.replace("{{title}}", title).replace("{{author}}", author)...`). Since strings are immutable in Java, every `replace()` call creates a new intermediate `String` object and performs a full scan of the content. For large templates with many variables (e.g., transcripts), this results in O(V * N) complexity (where V is the number of variables and N is the string length) and significant heap pressure.
+- **The Standard:** Use a **Map-based StringBuilder replacement pattern**. Even if iterating over keys, perform manual `indexOf`/`replace` on a `StringBuilder` to avoid constant `String` allocations.
+- **Implementation Pattern:** 
+  1. Define a `Map` of variables and their values.
+  2. Use a `StringBuilder` initialized with the template.
+  3. Iterate through the map, using `sb.indexOf` and `sb.replace` to update the buffer in-place.
+  
+  This provides significantly better memory characteristics than `String.replace()` and is simpler to implement than a full `Matcher`-based single-pass scanner for most simple templating needs.
