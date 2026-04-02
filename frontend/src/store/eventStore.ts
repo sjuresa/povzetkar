@@ -42,5 +42,5 @@ export const useEventStore = create<EventState>((set) => ({
     }),
   setLastEvent: (type) => set({ lastEvent: type }),
   setConnectionStatus: (status) => set({ connectionStatus: status }),
-  triggerNotificationSound: (type) => set({ lastNotification: { type, timestamp: Date.now() } }),
+  triggerNotificationSound: (type) => set((state) => ({ lastNotification: { type, timestamp: Math.max(Date.now(), (state.lastNotification?.timestamp || 0) + 1) } })),
 }));
