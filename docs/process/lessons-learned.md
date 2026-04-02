@@ -98,6 +98,22 @@ Object[] result = (Object[]) em.createNativeQuery(
 - **The Standard:** Use a JAX-RS `ContainerResponseFilter` (e.g., `GlobalResponseEnvelopeFilter`) to automatically wrap all successful responses in a standard envelope. API resources should return the **raw DTO** or **`PaginatedResponse`** directly. This keeps the resource code clean and ensures a consistent response structure across the entire API.
 - **Exception:** Do not wrap responses that are already envelopes (like `ApiErrorDTO`) or those that should not have an envelope (e.g., raw file downloads or non-JSON responses).
 - **Filter Precision:** Enveloping filters must strictly target successful (2xx) status codes. Wrapping error responses (4xx/5xx) leads to inconsistent "double-enveloped" structures that break client-side error handling logic.
+
+---
+
+## 3. Frontend & UX Patterns
+
+### 3.1 Auditory Feedback & Asset Minimization
+When adding auditory feedback (toasts, alerts) to a web application, the traditional approach of using `.mp3` or `.wav` files introduces multiple overheads:
+- **Bundle Size:** Even small assets add up, especially if high-fidelity is requested.
+- **Latency:** Fetching assets from a CDN/server can lead to delayed feedback on the first trigger.
+- **Maintenance:** Managing licenses (CCBY/CC0 attribution), bitrates, and broken external links (404s).
+
+- **The Standard:** Use the **Native Web Audio API (`OscillatorNode`)** to synthesize UI sounds dynamically in the browser. 
+  - **Zero-Byte Footprint:** 0KB asset overhead as the sound is code-generated.
+  - **Instant Feedback:** No network latency for the first play.
+  - **Absolute Control:** Frequencies, envelopes, and durations are easily adjustable in code without re-exporting files.
+  - **Autoplay Handling:** Initialize the `AudioContext` only on the first user interaction to comply with modern browser security policies. Silent-fail `play()` calls to prevent technical errors from ruining the premium feel.
 - **Name Binding:** Prefer JAX-RS Name Binding (custom annotations like `@Enveloped`) over URL path prefix scanning to target filters. URL scanning is brittle and prone to bypasses as new resources are added.
 
 ### 2.6 Optimistic Locking (Concurrency Control)

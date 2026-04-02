@@ -12,6 +12,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
 import { SystemMetadata } from '../system/SystemMetadata';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
+import { useAudioFeedback } from '../../hooks/useAudioFeedback';
 
 interface AppShellProps {
   readonly children: ReactNode;
@@ -20,6 +21,9 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   // Initialize SSE event stream for jobs
   useJobEvents();
+
+  // Initialize Auditory Feedback
+  useAudioFeedback();
 
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
 
