@@ -799,3 +799,16 @@ In rapid agile development, User Stories often become disconnected from the actu
     </div>
     ```
     This ensures the title consumes all *actually* available space before wrapping, while the action menu maintains its fixed width without compressing the primary content.
+
+### 37.2 Drop-Cap Safety (Pseudo-Element Side Effects)
+- **The Trap:** Applying `first-letter:` pseudo-element styling directly to AI-generated or dynamic content (like a summary). If the text accidentally starts with a space, a quotation mark, or a markdown symbol (e.g. `*`), the CSS will decorate the symbol instead of the letter, or result in unpredictable spacing.
+- **The Standard:** Always verify that the first non-whitespace character is alphabetic before applying drop-cap classes.
+- **Implementation Pattern:** 
+    ```tsx
+    const isLetter = /^\p{L}/u.test(text.trim());
+    // ...
+    <div className={`prose ${isLetter ? 'first-letter:float-left ...' : ''}`}>
+      {text}
+    </div>
+    ```
+    This safeguard prevents fragile "half-broken" styling from reaching production when dealing with non-deterministic content sources.

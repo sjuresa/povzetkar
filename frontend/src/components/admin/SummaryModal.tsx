@@ -123,7 +123,7 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
             <article className="w-full">
               {summary.executiveSummary && (
                 <div className="mb-12 p-10 md:p-14 rounded-[2.5rem] bg-indigo-500/[0.03] border-l-8 border-indigo-500/50 shadow-2xl shadow-indigo-500/5 animate-in fade-in slide-in-from-left-4 duration-1000">
-                  <div className="prose prose-indigo max-w-none text-2xl italic font-serif font-medium text-[var(--color-text-primary)] leading-[1.6] opacity-100 selection:bg-indigo-500/30 first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-indigo-400">
+                  <div className={`prose prose-indigo max-w-none text-2xl italic font-serif font-medium text-[var(--color-text-primary)] leading-[1.6] opacity-100 selection:bg-indigo-500/30 ${/^\p{L}/u.test(summary.executiveSummary.trim()) ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-indigo-400' : ''}`}>
                     <p>{summary.executiveSummary}</p>
                   </div>
                 </div>

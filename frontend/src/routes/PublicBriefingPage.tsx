@@ -126,15 +126,20 @@ export function PublicBriefingPage() {
 
 
         {/* Executive Summary / AI Synthesis */}
-        {briefing.metaSummary && (
-          <div className="mb-16 p-10 md:p-16 rounded-[2.5rem] bg-indigo-500/[0.03] border-l-8 border-indigo-500/50 shadow-2xl shadow-indigo-500/5 animate-in fade-in slide-in-from-bottom-2 duration-1000">
-            <article className="prose prose-indigo max-w-none prose-p:text-[var(--color-text-primary)] prose-p:leading-[1.6] text-2xl italic font-serif font-medium opacity-100 selection:bg-indigo-500/30 first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-indigo-400">
-              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                {briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim()}
-              </ReactMarkdown>
-            </article>
-          </div>
-        )}
+        {briefing.metaSummary && (() => {
+          const cleanedText = briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim();
+          const hasAlphaFirst = /^\p{L}/u.test(cleanedText);
+          
+          return (
+            <div className="mb-16 p-10 md:p-16 rounded-[2.5rem] bg-indigo-500/[0.03] border-l-8 border-indigo-500/50 shadow-2xl shadow-indigo-500/5 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+              <article className={`prose prose-indigo max-w-none prose-p:text-[var(--color-text-primary)] prose-p:leading-[1.6] text-2xl italic font-serif font-medium opacity-100 selection:bg-indigo-500/30 ${hasAlphaFirst ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-indigo-400' : ''}`}>
+                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                  {cleanedText}
+                </ReactMarkdown>
+              </article>
+            </div>
+          );
+        })()}
 
         {/* Source Items - The Reference Grid */}
         {briefing.summaries && briefing.summaries.length > 0 && (

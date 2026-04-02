@@ -135,15 +135,20 @@ export function BriefingDetailPage() {
       </div>
 
       {/* Executive Summary Section */}
-      {briefing.metaSummary && (
-        <div className="glass border-l-8 border-blue-500/50 rounded-[2.5rem] p-12 md:p-20 bg-blue-500/[0.04] shadow-2xl shadow-blue-500/10 transition-all animate-in slide-in-from-left-4 duration-1000">
-          <div className="prose prose-invert prose-2xl max-w-none text-[var(--color-text-primary)] leading-[1.6] italic font-serif font-medium opacity-100 selection:bg-blue-500/30 first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-blue-400">
-            <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-              {briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim()}
-            </ReactMarkdown>
+      {briefing.metaSummary && (() => {
+        const cleanedMeta = briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim();
+        const hasAlphaStart = /^\p{L}/u.test(cleanedMeta);
+        
+        return (
+          <div className="glass border-l-8 border-blue-500/50 rounded-[2.5rem] p-12 md:p-20 bg-blue-500/[0.04] shadow-2xl shadow-blue-500/10 transition-all animate-in slide-in-from-left-4 duration-1000">
+            <div className={`prose prose-invert prose-2xl max-w-none text-[var(--color-text-primary)] leading-[1.6] italic font-serif font-medium opacity-100 selection:bg-blue-500/30 ${hasAlphaStart ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-blue-400' : ''}`}>
+              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                {cleanedMeta}
+              </ReactMarkdown>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Source Reference Grid - MOVED UP BEFORE CONTENT */}
       {briefing.summaries && briefing.summaries.length > 0 && (
