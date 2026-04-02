@@ -20,7 +20,7 @@ import {
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { ExportMenu } from '../components/briefing/ExportMenu';
-import type { BriefingDetailDTO } from '../api/generated/model';
+import type { BriefingDetailDTO, BriefingItemDTO } from '../api/generated/model';
 
 /**
  * BriefingDetailPage renders the full content of a single briefing.
@@ -110,12 +110,13 @@ export function BriefingDetailPage() {
           </h1>
           {briefing.id != null && (
             <ExportMenu 
-              briefing={{
+              type="briefing"
+              data={{
                 id: briefing.id,
                 uuid: briefing.uuid ?? null,
                 title: briefing.title || '',
                 topicName: briefing.topicName || '',
-                briefingDate: briefing.briefingDate || '',
+                date: briefing.briefingDate || '',
                 metaSummary: briefing.metaSummary || '',
                 summaries: briefing.summaries || [],
               }}
@@ -157,7 +158,7 @@ export function BriefingDetailPage() {
             {t('briefingDetail.sourceItems')}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {briefing.summaries.map((item) => (
+            {briefing.summaries.map((item: BriefingItemDTO) => (
               <div
                 key={item.contentItem?.id}
                 className="glass border border-[var(--color-border-subtle)] rounded-2xl p-5 hover:border-blue-500/30 transition-all group flex flex-col"
@@ -227,7 +228,7 @@ export function BriefingDetailPage() {
             <div className="h-px bg-[var(--color-border-subtle)] flex-1"></div>
           </div>
           <div className="space-y-16">
-            {briefing.summaries.map((item) => (
+            {briefing.summaries.map((item: BriefingItemDTO) => (
               <div 
                 key={item.contentItem?.id} 
                 id={`item-${item.contentItem?.id}`}
@@ -242,44 +243,67 @@ export function BriefingDetailPage() {
                       <Globe className="w-6 h-6" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-0.5">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
-                           {item.contentItem?.authorName || t('briefingDetail.unknownAuthor')}
-                        </span>
-                        
-                        {(item.contentItem?.publishedAt || item.contentItem?.formattedDuration) && (
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            {item.contentItem?.publishedAt && (
-                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
-                                <Calendar className="w-3 h-3 text-emerald-500/70" />
-                                <span>{format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}</span>
-                                <span className="opacity-30 mx-0.5">•</span>
-                                <Clock className="w-3 h-3 text-indigo-500/70" />
-                                <span>{format(new Date(item.contentItem.publishedAt), 'HH:mm')}</span>
-                              </div>
-                            )}
-                            
-                            {item.contentItem?.formattedDuration && (
-                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
-                                <span className="opacity-30 mr-1.5">|</span>
-                                <Timer className="w-3 h-3 text-amber-500/70" />
-                                <span className="text-amber-500/90">{item.contentItem.formattedDuration}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                     </div>
-                    <a 
-                      href={item.contentItem?.sourceUrl || '#'} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-2xl font-black text-[var(--color-text-primary)] hover:text-blue-400 theme-transition flex items-center gap-2 group/link leading-tight mt-1"
-                    >
-                      <span className="truncate">{item.contentItem?.title}</span>
-                      <ExternalLink className="w-4 h-4 text-[var(--color-text-secondary)] group-hover/link:text-blue-400 transition-colors" />
-                    </a>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-0.5">
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                                 {item.contentItem?.authorName || t('briefingDetail.unknownAuthor')}
+                              </span>
+                              
+                              {(item.contentItem?.publishedAt || item.contentItem?.formattedDuration) && (
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                  {item.contentItem?.publishedAt && (
+                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
+                                      <Calendar className="w-3 h-3 text-emerald-500/70" />
+                                      <span>{format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}</span>
+                                      <span className="opacity-30 mx-0.5">•</span>
+                                      <Clock className="w-3 h-3 text-indigo-500/70" />
+                                      <span>{format(new Date(item.contentItem.publishedAt), 'HH:mm')}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {item.contentItem?.formattedDuration && (
+                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
+                                      <span className="opacity-30 mr-1.5">|</span>
+                                      <Timer className="w-3 h-3 text-amber-500/70" />
+                                      <span className="text-amber-500/90">{item.contentItem.formattedDuration}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                           </div>
+                          <a 
+                            href={item.contentItem?.sourceUrl || '#'} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-2xl font-black text-[var(--color-text-primary)] hover:text-blue-400 theme-transition flex items-center gap-2 group/link leading-tight mt-1"
+                          >
+                            <span className="truncate">{item.contentItem?.title}</span>
+                            <ExternalLink className="w-4 h-4 text-[var(--color-text-secondary)] group-hover/link:text-blue-400 transition-colors" />
+                          </a>
+                        </div>
+
+                        <div className="bg-[var(--color-surface-deep)]/40 p-4 rounded-3xl border border-[var(--color-border-subtle)] md:w-80">
+                           {item.contentItem?.id != null && (
+                             <ExportMenu 
+                               type="summary"
+                               data={{
+                                 id: item.contentItem.id,
+                                 uuid: item.uuid || null,
+                                 title: item.contentItem.title || '',
+                                 topicName: briefing.topicName || '',
+                                 date: item.contentItem.publishedAt || new Date().toISOString(),
+                                 metaSummary: '',
+                                 summaries: [{ summaryText: item.summaryText || '' }]
+                               }}
+                               variant="ghost"
+                               className="w-full"
+                             />
+                           )}
+                        </div>
+                      </div>
+                    </div>
                 </div>
 
                 <article className="prose prose-invert max-w-none prose-headings:text-bold prose-headings:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-p:text-[var(--color-text-secondary)]">

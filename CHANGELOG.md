@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event Store (POV-171):** Extended `eventStore.ts` with a transient `lastNotification` signal to decouple auditory triggers from business logic.
 - **Job Events (POV-171):** Integrated auditory signaling into the `useJobEvents.ts` SSE listener, triggering sounds for `COMPLETED`, `FAILED`, and `ORCHESTRATION_COMPLETED` events.
 - **Documentation Architecture (POV-172):** Migrated to a modular sub-directory structure (`docs/process/lessons/`) with stripped numeric prefixes and hardened relative link integrity for improved discoverability and AI context efficiency.
+- **Unified Sharing & Export (POV-173):** Consolidated summary and briefing sharing into a single polymorphic `ExportMenu` component, granting individual summaries full Markdown and HTML export capabilities.
 
 ## [0.15.0] - 2026-03-30
 

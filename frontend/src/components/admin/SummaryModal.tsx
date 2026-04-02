@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { useTranslation } from 'react-i18next';
+import { ExportMenu } from '../briefing/ExportMenu';
 
 interface SummaryModalProps {
   itemId: number | null;
@@ -88,12 +89,30 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
                 </div>
               </div>
            </div>
-              <button 
-                onClick={onClose}
-                className="p-3 rounded-2xl hover:bg-white/5 text-[var(--color-text-secondary)] hover:text-white transition-all active:scale-90"
-              >
-                <X size={24} />
-              </button>
+              <div className="flex items-center gap-2">
+                {(summary && itemId != null) ? (
+                  <ExportMenu 
+                    type="summary"
+                    data={{
+                      id: itemId,
+                      uuid: summary.uuid || null,
+                      title: summary.title || t('contentManagement.modal.title'),
+                      topicName: t('common.summary'),
+                      date: summary.publishedAt || new Date().toISOString(),
+                      metaSummary: summary.executiveSummary || '',
+                      summaries: [{ summaryText: summary.summaryText || '' }]
+                    }}
+                    variant="ghost"
+                    align="right"
+                  />
+                ) : null}
+                <button 
+                  onClick={onClose}
+                  className="p-3 rounded-2xl hover:bg-white/5 text-[var(--color-text-secondary)] hover:text-white transition-all active:scale-90"
+                >
+                  <X size={24} />
+                </button>
+              </div>
            </div>
 
         {/* Modal Content */}
@@ -141,7 +160,8 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
         </div>
 
         {/* Modal Footer */}
-        <div className="p-6 md:px-10 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl flex justify-end items-center">
+        <div className="p-6 md:px-10 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="w-full md:w-auto" />
            <button 
              onClick={onClose}
              className="w-full md:w-auto px-8 py-3 rounded-2xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-bold transition-all active:scale-95 border border-[var(--color-border-subtle)]"

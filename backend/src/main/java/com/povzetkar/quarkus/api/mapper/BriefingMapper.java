@@ -40,7 +40,8 @@ public abstract class BriefingMapper {
                 .sorted(Comparator.comparing(s -> s.id))
                 .map(s -> new BriefingItemDTO(
                         contentItemMapper.toDTO(s.contentItem),
-                        s.summaryText
+                        s.summaryText,
+                        s.uuid
                 ))
                 .collect(Collectors.toList());
     }

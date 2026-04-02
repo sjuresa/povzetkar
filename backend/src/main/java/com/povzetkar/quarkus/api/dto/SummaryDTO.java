@@ -24,6 +24,8 @@ public record SummaryDTO(
         @Schema(description = "The name of the author or content creator.")
         String authorName,
         @Schema(description = "Human-readable formatted duration (e.g., 12m 45s).")
-        String formattedDuration
+        String formattedDuration,
+        @Schema(description = "The public UUID for sharing, null if not shared.")
+        String uuid
 ) {
 }

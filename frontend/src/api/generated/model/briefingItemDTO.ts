@@ -10,4 +10,5 @@ import type { ContentItem } from './contentItem';
 export interface BriefingItemDTO {
   contentItem?: ContentItem;
   summaryText?: string;
+  uuid?: string;
 }

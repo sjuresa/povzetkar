@@ -18,6 +18,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import jakarta.transaction.Transactional;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -263,6 +264,39 @@ public class ContentItemApiResource extends BaseApiResource {
         
         ContentItem updatedItem = contentItemAdminService.updateStatus(itemToUpdate, dto.status(), "ADMIN");
         return mapToDTO(updatedItem);
+    }
+
+    @POST
+    @Path("/{id}/summary/share")
+    @Transactional
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Enable sharing for a summary", description = "Generates a public UUID for the summary of a specific content item.")
+    @APIResponse(responseCode = "200", description = "Sharing enabled successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
+    @APIResponse(responseCode = "404", description = "Summary not found")
+    public String shareSummary(@PathParam("id") Long id) {
+        Summary summary = Summary.findByContentIdWithAssociations(id);
+        if (summary == null) {
+            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
+        }
+        
+        summary.share();
+        return summary.uuid;
+    }
+
+    @POST
+    @Path("/{id}/summary/unshare")
+    @Transactional
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Disable sharing for a summary", description = "Removes the public UUID for the summary to disable unauthenticated access.")
+    @APIResponse(responseCode = "204", description = "Sharing disabled successfully")
+    @APIResponse(responseCode = "404", description = "Summary not found")
+    public void unshareSummary(@PathParam("id") Long id) {
+        Summary summary = Summary.findByContentIdWithAssociations(id);
+        if (summary == null) {
+            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
+        }
+        
+        summary.unshare();
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
