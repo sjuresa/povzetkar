@@ -773,7 +773,7 @@ In rapid agile development, User Stories often become disconnected from the actu
 ### 35.2 Named Variable Injection ({{variable}})
 - **The Trap:** Using legacy positional formatting (`String.formatted("%s", ...)`) for complex multi-variable prompts. This is extremely fragile; changing the order of variables in the template requires a corresponding change in the Java caller, leading to "Silent Data Mismatches" that are difficult to debug.
 - **The Standard:** Migrate all prompt templates to an explicit **named variable** syntax (e.g., `{{title}}`, `{{transcript}}`, `{{summaries}}`).
-- **Implementation:** Use a simple `.replace("{{var}}", value)` chain in the service layer. This makes templates human-readable, order-independent, and robust against future prompt iterations.
+- **Implementation:** Use the single-pass **Matcher strategy** described in Section 37.3. This makes templates human-readable, order-independent, and robust against future prompt iterations.
 
 ## 36. Data Model Evolution (POV-170)
 
@@ -814,10 +814,10 @@ In rapid agile development, User Stories often become disconnected from the actu
     This safeguard prevents fragile "half-broken" styling from reaching production when dealing with non-deterministic content sources.
 ### 37.3 Single-Pass Template Variable Replacement (Matcher Strategy)
 - **The Trap:** Chaining `String.replace()` or iteratively using `StringBuilder.indexOf/replace` for multiple variables. These "multi-pass" approaches result in O(V * N) complexity (V=variables, N=length), causing high memory overhead and performance degradation on large inputs like transcripts.
-- **The Standard:** Use **java.util.regex.Matcher.appendReplacement()**. This provides a true O(N) single-pass scan that resolves all placeholders in one go.
+- **The Standard:** Use **java.util.regex.Matcher.appendReplacement()** with a **pre-compiled static Pattern**. This provides a true O(N) single-pass scan while eliminating the overhead of repeated regex compilation.
 - **Implementation Pattern:** 
-  1. Define a `Map<String, String>` of plain variable names (without `{{ }}`).
-  2. Use a Pattern like `\\{\\{(.+?)\\}\\}` to capture the key inside the curly braces.
+  1. Define a `private static final Pattern` like `\\{\\{(.+?)\\}\\}` at the class level.
+  2. Define a `Map<String, String>` of plain variable names (without `{{ }}`).
   3. Iterate with `matcher.find()`, resolve the value from the map using the captured group, and use `matcher.appendReplacement(sb, Matcher.quoteReplacement(value))`.
   
-  This is the most efficient pattern for production-grade prompt templating, especially when dealing with non-deterministic or massive GenAI inputs.
+  This is the gold standard for production-grade prompt templating in high-frequency ApplicationScoped services.

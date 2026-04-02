@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class ContentCreationService {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(ContentCreationService.class);
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(.+?)\\}\\}");
     private final int transcriptThresholdMinutes;
 
     private final YouTubeTranscriptService youTubeTranscriptService;
@@ -104,8 +105,7 @@ public class ContentCreationService {
                     "transcript", transcript != null ? transcript : ""
             );
 
-            Pattern pattern = Pattern.compile("\\{\\{(.+?)\\}\\}");
-            Matcher matcher = pattern.matcher(template);
+            Matcher matcher = VARIABLE_PATTERN.matcher(template);
             StringBuilder sb = new StringBuilder();
 
             while (matcher.find()) {
