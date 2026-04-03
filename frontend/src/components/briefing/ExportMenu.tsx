@@ -17,12 +17,17 @@ import { useTranslation } from 'react-i18next';
 import { 
   useGetApiV1BriefingsId, 
   usePostApiV1BriefingsIdShare, 
-  usePostApiV1BriefingsIdUnshare 
+  usePostApiV1BriefingsIdUnshare,
+  getGetApiV1BriefingsQueryKey,
+  getGetApiV1BriefingsIdQueryKey
 } from '../../api/generated/briefings/briefings';
 import { 
   usePostApiV1ContentItemsIdSummaryShare, 
-  usePostApiV1ContentItemsIdSummaryUnshare 
+  usePostApiV1ContentItemsIdSummaryUnshare,
+  getGetApiV1ContentItemsQueryKey,
+  getGetApiV1ContentItemsIdQueryKey
 } from '../../api/generated/content-items/content-items';
+import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
@@ -58,20 +63,14 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     setLocalUuid(data.uuid);
   }, [data.uuid]);
 
-  const onShareSuccess = (keys: string[], successMsg: string, isShare: boolean) => (res?: unknown) => {
+  const onShareSuccess = (invalidationAction: () => void, successMsg: string, isShare: boolean) => (res?: unknown) => {
     if (isShare) {
       const newUuid = (res as { data: string }).data;
       if (newUuid) setLocalUuid(newUuid);
     } else {
       setLocalUuid(null);
     }
-    keys.forEach(key => {
-      if (key === 'briefing-detail') {
-        void queryClient.invalidateQueries({ queryKey: [key, data.id] });
-      } else {
-        void queryClient.invalidateQueries({ queryKey: [key] });
-      }
-    });
+    invalidationAction();
     toast.success(t(successMsg));
   };
 
@@ -86,14 +85,20 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
 
   const briefingShare = usePostApiV1BriefingsIdShare({
     mutation: {
-      onSuccess: onShareSuccess(['briefings', 'briefing-detail'], 'briefingDetail.export.toasts.shareEnabled', true),
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareEnabled', true),
       onError: onShareError('briefingDetail.export.toasts.shareEnableFailed')
     }
   });
 
   const briefingUnshare = usePostApiV1BriefingsIdUnshare({
     mutation: {
-      onSuccess: onShareSuccess(['briefings', 'briefing-detail'], 'briefingDetail.export.toasts.shareDisabled', false),
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareDisabled', false),
       onError: onShareError('briefingDetail.export.toasts.shareDisableFailed')
     }
   });
@@ -101,14 +106,22 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
   // Summary hooks
   const summaryShare = usePostApiV1ContentItemsIdSummaryShare({
     mutation: {
-      onSuccess: onShareSuccess(['content-items', 'source-items'], 'briefingDetail.export.toasts.shareEnabled', true),
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1SourcesQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareEnabled', true),
       onError: onShareError('briefingDetail.export.toasts.shareEnableFailed')
     }
   });
 
   const summaryUnshare = usePostApiV1ContentItemsIdSummaryUnshare({
     mutation: {
-      onSuccess: onShareSuccess(['content-items', 'source-items'], 'briefingDetail.export.toasts.shareDisabled', false),
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1SourcesQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareDisabled', false),
       onError: onShareError('briefingDetail.export.toasts.shareDisableFailed')
     }
   });

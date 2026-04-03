@@ -99,7 +99,7 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
                       title: summary.title || t('contentManagement.modal.title'),
                       topicName: t('common.summary'),
                       date: summary.publishedAt || new Date().toISOString(),
-                      metaSummary: '',
+                      metaSummary: summary.executiveSummary || '',
                       summaries: [{ summaryText: summary.summaryText || '' }]
                     }}
                     variant="ghost"
