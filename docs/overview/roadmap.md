@@ -203,7 +203,24 @@ This document outlines the concrete steps for implementing the features describe
     *   **Self-Cleaning Infra (Audits)**: Implement a background job to purge `JobExecutionAudit` records with 90-day retention (POV-165).
     *   **QA Health & Master Test Suite**: Centralize all regression scenarios into a permanent suite and migrate remaining Integration Tests to the `@TestTransaction` pattern (POV-166).
 
-## v0.16: Administrative Control & Hardening
+## v0.16: Readability & User Experience
+
+**Goal:** Transform the application into a "Professional Grade" SaaS by establishing perfect theme-awareness, sensory feedback, and zero-friction onboarding.
+
+### Key Tasks & Implementation Steps:
+1.  **Sensory & Content Polish:**
+    *   **Prompt Cleanup**: Remove redundant headings and source lists from AI output (POV-170).
+    *   **Auditory Feedback**: Implement a full sound framework for Success, Error, and Info notifications (POV-171).
+2.  **User Value & Portability:**
+    *   **Summary Sharing**: Enable individual summary sharing via vanity short URLs (`/s/{uuid}`) following the briefing pattern (POV-172).
+    *   **Actionable UX**: Add direct "View Job" actions to toast notifications (POV-177).
+3.  **Onboarding & Discovery:**
+    *   **Interactive Onboarding**: Build a 5-step gamified checklist with LocalStorage persistence and "Osebni asistent" tone (POV-173).
+4.  **Theme Modernization (Zinc Palette):**
+    *   **Semantic Migration**: Systematically replace all hardcoded Tailwind dark classes with semantic variables (POV-174/175).
+    *   **Fluid Motion**: Implement smooth 300ms CSS transitions for all theme toggles (POV-176).
+
+## v0.17: Administrative Control & Hardening
 
 **Goal:** Establish full operational control over the platform and integrate advanced security auditing into the release cycle.
 
@@ -211,11 +228,11 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Administrative Command Center:**
     *   Build the "Admin User Management" UI for managing roles, account statuses, and permissions.
     *   Comprehensive "Background Job Dashboard" with full operational control (Cancel, Restart, Audit).
-2.  **Product Refinement & Security:**
-    *   Self-Cleaning Infra (Jobs): Implement a background job to purge the background_jobs table of old COMPLETED or FAILED items (Background Jobs Cleanup Strategy).
-    *   Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
-    *   **UX Polish**: Add smooth CSS transitions to background and text colors for premium theme switching.
-    *   **Full i18n Audit**: Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
+2.  **Hardening & Operational Excellence:**
+    *   **DAST Integration**: Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
+    *   **Observability Upgrade**: Implement complex Grafana alerting thresholds for system health.
+    *   **Advanced Retention**: Implement specialized pg_trgm/Lucene full-text search as volume justifies.
+
 
 ## v1.0: RAG & Conversational Interface
 
@@ -285,7 +302,8 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 3.3     | March 30, 2026     | Povzetkar AI | Marked v0.15 as completed and finalized release notes.                                                                                                                   |
+| 3.4     | April 1, 2026      | Povzetkar AI | Strategically pivoted v0.16.0 to "User Experience Focus" and restored v0.17.0 for "Administrative Control & Hardening". |
+| 3.3     | March 30, 2026     | Povzetkar AI | Marked v0.15 as completed and finalized release notes.                                                                                    |
 | 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0/v0.16.0 scope, moved postponed items (Admin UI, DAST), and clarified job cleanup tasks.                                                                  |
 | 3.1     | March 28, 2026     | Povzetkar AI | Marked v0.14.0 as completed (POV-159).                                                                                                                                   |
 | 3.0     | March 25, 2026     | Povzetkar AI | Finalized v0.14.0 planning and task breakdown (POV-152). Shifted deferred features and backlog polish (Animations, i18n, Cleanup) to v0.15.                              |
