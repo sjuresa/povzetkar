@@ -6,9 +6,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @RegisterForReflection
 @Schema(name = "PublicShare", description = "Polymorphic wrapper for public shared content")
 public record PublicShareDTO(
-    @Schema(required = true, enumeration = {"BRIEFING", "SUMMARY"})
-    String type,
-    @Schema(required = true)
+    @Schema(required = true, description = "The type of content being shared")
+    PublicInsightType type,
+    
+    @Schema(
+        required = true, 
+        oneOf = {BriefingDetailDTO.class, PublicSummaryDTO.class},
+        description = "The shared content payload (Briefing or Summary)"
+    )
     Object data
 ) {
 }

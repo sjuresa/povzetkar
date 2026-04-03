@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.PublicInsightType;
 import com.povzetkar.quarkus.api.dto.PublicShareDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.BriefingMapper;
@@ -64,7 +65,7 @@ public class PublicShareApiResource {
         if (briefingId.isPresent()) {
             Briefing briefing = Briefing.findByIdWithAssociations(briefingId.get())
                     .orElseThrow(() -> new NotFoundException("Briefing no longer available."));
-            return new PublicShareDTO("BRIEFING", briefingMapper.toDetailDTO(briefing));
+            return new PublicShareDTO(PublicInsightType.BRIEFING, briefingMapper.toDetailDTO(briefing));
         }
 
         // Step 2: Lightweight lookup for Summary ID
@@ -75,7 +76,7 @@ public class PublicShareApiResource {
         if (summaryId.isPresent()) {
             Summary summary = Summary.findByIdWithAssociations(summaryId.get())
                     .orElseThrow(() -> new NotFoundException("Summary no longer available."));
-            return new PublicShareDTO("SUMMARY", summaryMapper.toPublicDTO(summary));
+            return new PublicShareDTO(PublicInsightType.SUMMARY, summaryMapper.toPublicDTO(summary));
         }
 
         throw new NotFoundException("Shared content not found or no longer public.");
