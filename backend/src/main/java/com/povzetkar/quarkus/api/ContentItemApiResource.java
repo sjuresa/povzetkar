@@ -274,11 +274,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "200", description = "Sharing enabled successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
     @APIResponse(responseCode = "404", description = "Summary not found")
     public String shareSummary(@PathParam("id") Long id) {
-        Summary summary = Summary.findByContentIdWithAssociations(id);
-        if (summary == null) {
-            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
-        }
-        
+        Summary summary = findSummaryByContentItemId(id);
         summary.share();
         return summary.uuid;
     }
@@ -291,12 +287,16 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "204", description = "Sharing disabled successfully")
     @APIResponse(responseCode = "404", description = "Summary not found")
     public void unshareSummary(@PathParam("id") Long id) {
-        Summary summary = Summary.findByContentIdWithAssociations(id);
-        if (summary == null) {
-            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
-        }
-        
+        Summary summary = findSummaryByContentItemId(id);
         summary.unshare();
+    }
+
+    private Summary findSummaryByContentItemId(Long contentItemId) {
+        Summary summary = Summary.findByContentIdWithAssociations(contentItemId);
+        if (summary == null) {
+            throw new NotFoundException("Summary for ContentItem " + contentItemId + NOT_FOUND);
+        }
+        return summary;
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
