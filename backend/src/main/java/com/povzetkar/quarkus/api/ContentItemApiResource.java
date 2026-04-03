@@ -179,10 +179,8 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item or summary not found")
     public SummaryDTO getSummaryByItemId(@PathParam("id") Long id) {
-        Summary entity = Summary.findByContentIdWithAssociations(id);
-        if (entity == null) {
-            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
-        }
+        Summary entity = Summary.findByContentIdWithAssociations(id)
+                .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + id + NOT_FOUND));
         return summaryMapper.toDTO(entity);
     }
 
@@ -292,11 +290,8 @@ public class ContentItemApiResource extends BaseApiResource {
     }
 
     private Summary findSummaryByContentItemId(Long contentItemId) {
-        Summary summary = Summary.findByContentIdWithAssociations(contentItemId);
-        if (summary == null) {
-            throw new NotFoundException("Summary for ContentItem " + contentItemId + NOT_FOUND);
-        }
-        return summary;
+        return Summary.findByContentIdWithAssociations(contentItemId)
+                .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + contentItemId + NOT_FOUND));
     }
 
     private ContentItem findAndValidateContentItemForAction(Long id) {
