@@ -16,9 +16,12 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Auditory Feedback (POV-171)**: 
 > UI sounds are now synthesized dynamically using the **Native Web Audio API**. This provides a 0KB asset weight and instant low-latency feedback without external asset dependencies.
 
-> [!NOTE]
 > **Documentation Modularization (POV-172)**: 
 > The monolithic Knowledge Base has been decomposed into specialized domain guides to improve discovery and maintainability.
+
+> [!TIP]
+> **Polymorphic UI Components (POV-173)**: 
+> We have unified sharing/export logic into a single, type-aware component. This ensures feature parity across entities (Briefings vs. Summaries) and eliminates context-specific UI debt.
 
 ---
 

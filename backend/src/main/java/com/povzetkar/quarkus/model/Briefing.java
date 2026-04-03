@@ -89,7 +89,7 @@ public class Briefing extends BaseAuditableEntity {
     }
 
     public static Optional<Briefing> findByIdWithAssociations(Long briefingId) {
-        return find("select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1", briefingId).firstResultOptional();
+        return find("select distinct b from Briefing b left join fetch b.topic left join fetch b.summaries s left join fetch s.contentItem ci left join fetch ci.contentSource where b.id = ?1", briefingId).firstResultOptional();
     }
 
     public static Optional<Briefing> findByTopicAndDate(Long topicId, LocalDate briefingDate) {
@@ -101,7 +101,7 @@ public class Briefing extends BaseAuditableEntity {
     }
 
     public static Optional<Briefing> findByUuidWithAssociations(String uuid) {
-        return find("select distinct b from Briefing b left join fetch b.topic left join fetch b.summaries s left join fetch s.contentItem where b.uuid = ?1", uuid).firstResultOptional();
+        return find("select distinct b from Briefing b left join fetch b.topic left join fetch b.summaries s left join fetch s.contentItem ci left join fetch ci.contentSource where b.uuid = ?1", uuid).firstResultOptional();
     }
 
     public String getExecutiveSummary() {

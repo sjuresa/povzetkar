@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Entity
@@ -22,6 +23,9 @@ public class Summary extends BaseAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
+
+    @Column(name = "uuid", unique = true, length = 36)
+    public String uuid;
 
     @Column(name = "summary_text", nullable = false)
     public String summaryText;
@@ -45,18 +49,40 @@ public class Summary extends BaseAuditableEntity {
         this.briefingDate = briefingDate;
     }
 
+    public void share() {
+        if (this.uuid == null) {
+            this.uuid = java.util.UUID.randomUUID().toString();
+        }
+    }
+
+    public void unshare() {
+        this.uuid = null;
+    }
+
     public static Summary findByContentId(Long id){
         return find("contentItem.id", id).firstResult();
     }
 
-    public static Summary findByContentIdWithAssociations(Long contentId) {
-        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResult();
+    public static Optional<Summary> findByIdWithAssociations(Long id) {
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE s.id = ?1", id).firstResultOptional();
+    }
+
+    public static Optional<Summary> findByUuidWithAssociations(String uuid) {
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE s.uuid = ?1", uuid).firstResultOptional();
+    }
+
+    public static Optional<Summary> findByContentIdWithAssociations(Long contentId) {
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResultOptional();
     }
 
     public static List<Summary> findByTopicAndDateRange(Long topicId, LocalDate date) {
         return find("from Summary s where s.contentItem.contentSource.id in " +
                         "(select cs.id from ContentSource cs join cs.topics t where t.id = ?1) and s.briefingDate = ?2 order by s.id",
                 topicId, date).list();
+    }
+
+    public static Optional<Summary> findByUuid(String uuid) {
+        return find("uuid", uuid).firstResultOptional();
     }
 
     public String getExecutiveSummary() {

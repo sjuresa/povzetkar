@@ -17,6 +17,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Theme Transition Animations:** (Moved to v0.16.0) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
 *   **Restore Content Duration Display (POV-170 Follow-up):** Investigate and resolve the backend gap where `formattedDuration` is missing for some content items in the briefing response.
+*   **Unified API Error Handling for Sharing Hooks (POV-173 Follow-up):** Refactor the `onSuccess`/`onError` handlers in `ExportMenu` to use a shared functional pattern for toast notifications, reducing duplication between briefing and summary mutations.
 
 ### Backend & Architecture
 

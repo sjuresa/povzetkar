@@ -14,75 +14,135 @@ import { toast } from 'sonner';
 import { cn } from '../../util/cn';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useGetApiV1BriefingsId, usePostApiV1BriefingsIdShare, usePostApiV1BriefingsIdUnshare } from '../../api/generated/briefings/briefings';
+import { 
+  useGetApiV1BriefingsId, 
+  usePostApiV1BriefingsIdShare, 
+  usePostApiV1BriefingsIdUnshare,
+  getGetApiV1BriefingsQueryKey,
+  getGetApiV1BriefingsIdQueryKey
+} from '../../api/generated/briefings/briefings';
+import { 
+  usePostApiV1ContentItemsIdSummaryShare, 
+  usePostApiV1ContentItemsIdSummaryUnshare,
+  getGetApiV1ContentItemsQueryKey,
+  getGetApiV1ContentItemsIdQueryKey
+} from '../../api/generated/content-items/content-items';
+import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
 
 interface ExportMenuProps {
-  briefing: {
+  data: {
     id?: number;
     uuid: string | null;
     title: string;
     topicName: string;
-    briefingDate: string;
+    date: string;
     metaSummary?: string;
     summaries?: { summaryText?: string }[];
   };
+  type?: 'briefing' | 'summary';
   variant?: 'ghost' | 'outline' | 'primary';
   className?: string;
   align?: 'left' | 'right';
   readOnly?: boolean;
 }
 
-export function ExportMenu({ briefing, variant = 'outline', className, align = 'right', readOnly = false }: Readonly<ExportMenuProps>) {
+export function ExportMenu({ data, type = 'briefing', variant = 'outline', className, align = 'right', readOnly = false }: Readonly<ExportMenuProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [localUuid, setLocalUuid] = useState<string | null>(briefing.uuid);
+  const [localUuid, setLocalUuid] = useState<string | null>(data.uuid);
   const menuRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   // Sync state if uuid changes externally
   useEffect(() => {
-    setLocalUuid(briefing.uuid);
-  }, [briefing.uuid]);
+    setLocalUuid(data.uuid);
+  }, [data.uuid]);
 
-  // Defer fetching full content until needed (if not already provided)
-  const briefingDetailQuery = useGetApiV1BriefingsId(briefing.id!, {
-    query: {
-      enabled: false,
+  const onShareSuccess = (invalidationAction: () => void, successMsg: string, isShare: boolean) => (res?: unknown) => {
+    if (isShare) {
+      const newUuid = (res as { data: string }).data;
+      if (newUuid) setLocalUuid(newUuid);
+    } else {
+      setLocalUuid(null);
     }
+    invalidationAction();
+    toast.success(t(successMsg));
+  };
+
+  const onShareError = (errorMsg: string) => () => {
+    toast.error(t(errorMsg));
+  };
+
+  // Briefing hooks
+  const briefingDetailQuery = useGetApiV1BriefingsId(data.id!, {
+    query: { enabled: false }
   });
 
-  const shareMutation = usePostApiV1BriefingsIdShare({
+  const briefingShare = usePostApiV1BriefingsIdShare({
     mutation: {
-      onSuccess: (response) => {
-        // response.data is the UUID string
-        const newUuid = response.data as unknown as string;
-        if (newUuid) {
-          setLocalUuid(newUuid);
-        }
-        void queryClient.invalidateQueries({ queryKey: ['briefings'] });
-        void queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
-        toast.success(t('briefingDetail.export.toasts.shareEnabled'));
-      },
-      onError: () => { toast.error(t('briefingDetail.export.toasts.shareEnableFailed')); }
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareEnabled', true),
+      onError: onShareError('briefingDetail.export.toasts.shareEnableFailed')
     }
   });
 
-  const unshareMutation = usePostApiV1BriefingsIdUnshare({
+  const briefingUnshare = usePostApiV1BriefingsIdUnshare({
     mutation: {
-      onSuccess: () => {
-        setLocalUuid(null);
-        void queryClient.invalidateQueries({ queryKey: ['briefings'] });
-        void queryClient.invalidateQueries({ queryKey: ['briefing-detail', briefing.id] });
-        toast.success(t('briefingDetail.export.toasts.shareDisabled'));
-      },
-      onError: () => { toast.error(t('briefingDetail.export.toasts.shareDisableFailed')); }
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1BriefingsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareDisabled', false),
+      onError: onShareError('briefingDetail.export.toasts.shareDisableFailed')
     }
   });
+
+  // Summary hooks
+  const summaryShare = usePostApiV1ContentItemsIdSummaryShare({
+    mutation: {
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1SourcesQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareEnabled', true),
+      onError: onShareError('briefingDetail.export.toasts.shareEnableFailed')
+    }
+  });
+
+  const summaryUnshare = usePostApiV1ContentItemsIdSummaryUnshare({
+    mutation: {
+      onSuccess: onShareSuccess(() => {
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1SourcesQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getGetApiV1ContentItemsIdQueryKey(data.id!) });
+      }, 'briefingDetail.export.toasts.shareDisabled', false),
+      onError: onShareError('briefingDetail.export.toasts.shareDisableFailed')
+    }
+  });
+
+  const isPending = briefingShare.isPending || briefingUnshare.isPending || summaryShare.isPending || summaryUnshare.isPending;
+
+  const handleShare = () => {
+    if (type === 'briefing') {
+      briefingShare.mutate({ id: data.id! });
+    } else {
+      summaryShare.mutate({ id: data.id! });
+    }
+  };
+
+  const handleUnshare = () => {
+    if (type === 'briefing') {
+      briefingUnshare.mutate({ id: data.id! });
+    } else {
+      summaryUnshare.mutate({ id: data.id! });
+    }
+  };
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -105,10 +165,17 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
   };
 
   const ensureData = async () => {
-    if (briefing.metaSummary && briefing.summaries) {
+    if (type === 'summary') {
+        return {
+            metaSummary: data.metaSummary || '',
+            content: data.summaries?.[0]?.summaryText || ''
+        };
+    }
+
+    if (data.metaSummary && data.summaries) {
       return { 
-        metaSummary: briefing.metaSummary,
-        content: briefing.summaries.map(s => s.summaryText || '').filter(Boolean).join('\n\n---\n\n')
+        metaSummary: data.metaSummary,
+        content: data.summaries.map(s => s.summaryText || '').filter(Boolean).join('\n\n---\n\n')
       };
     }
     
@@ -131,19 +198,19 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
   };
 
   const exportMarkdown = async () => {
-    const data = await ensureData();
-    if (!data) return;
+    const result = await ensureData();
+    if (!result) return;
 
     const content = generateBriefingMarkdown({
-      title: briefing.title,
-      topicName: briefing.topicName,
-      briefingDate: briefing.briefingDate,
-      metaSummary: data.metaSummary,
-      content: data.content
+      title: data.title,
+      topicName: data.topicName,
+      briefingDate: data.date,
+      metaSummary: result.metaSummary,
+      content: result.content
     });
     
-    const safeTopic = briefing.topicName.replaceAll(/\s+/g, '_');
-    const safeTitle = briefing.title.replaceAll(/\s+/g, '_');
+    const safeTopic = data.topicName.replaceAll(/\s+/g, '_');
+    const safeTitle = data.title.replaceAll(/\s+/g, '_');
     const fileName = `${safeTopic}_${safeTitle}.md`;
     
     downloadFile(content, fileName, 'text/markdown');
@@ -152,26 +219,26 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
   };
 
   const exportHtml = async () => {
-    const data = await ensureData();
-    if (!data) return;
+    const result = await ensureData();
+    if (!result) return;
 
     // Use marked to parse markdown to HTML and sanitize the output
-    const unsafeSummaryHtml = marked.parse(data.metaSummary || '') as string;
-    const unsafeContentHtml = marked.parse(data.content || '') as string;
+    const unsafeSummaryHtml = marked.parse(result.metaSummary || '') as string;
+    const unsafeContentHtml = marked.parse(result.content || '') as string;
     
     const summaryHtml = DOMPurify.sanitize(unsafeSummaryHtml);
     const textHtml = DOMPurify.sanitize(unsafeContentHtml);
 
     const htmlContent = generateBriefingHtml({
-      title: briefing.title,
-      topicName: briefing.topicName,
-      briefingDate: briefing.briefingDate,
+      title: data.title,
+      topicName: data.topicName,
+      briefingDate: data.date,
       summaryHtml,
       contentHtml: textHtml
     });
     
-    const safeTopic = briefing.topicName.replaceAll(/\s+/g, '_');
-    const safeTitle = briefing.title.replaceAll(/\s+/g, '_');
+    const safeTopic = data.topicName.replaceAll(/\s+/g, '_');
+    const safeTitle = data.title.replaceAll(/\s+/g, '_');
     const fileName = `${safeTopic}_${safeTitle}.html`;
     
     downloadFile(htmlContent, fileName, 'text/html');
@@ -206,9 +273,9 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95",
           variantsList[variant],
-          isExporting && "opacity-70 cursor-wait"
+          (isExporting || isPending) && "opacity-70 cursor-wait"
         )}
-        disabled={isExporting}
+        disabled={isExporting || isPending}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -219,58 +286,58 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
 
       {isOpen && (
         <div className={cn(
-          "absolute top-full mt-2 z-50 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl shadow-black/80 backdrop-blur-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+          "absolute top-full mt-2 z-50 w-64 rounded-2xl bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] shadow-2xl shadow-black/80 backdrop-blur-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
           align === 'right' ? 'right-0' : 'left-0'
         )}>
           <div className="p-1.5 space-y-1">
             <button
               onClick={() => { void exportMarkdown(); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors group"
             >
-              <FileText className="w-4 h-4 text-slate-500 group-hover:text-indigo-400" />
+              <FileText className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-indigo-400" />
               <div className="flex-1 text-left">
                 <p className="font-medium">{t('briefingDetail.export.markdown')}</p>
-                <p className="text-[10px] text-slate-500">{t('briefingDetail.export.markdownDesc')}</p>
+                <p className="text-[10px] opacity-60">{t('briefingDetail.export.markdownDesc')}</p>
               </div>
             </button>
 
             <button
               onClick={() => { void exportHtml(); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors group"
             >
-              <Code className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
+              <Code className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-amber-400" />
               <div className="flex-1 text-left">
                 <p className="font-medium">{t('briefingDetail.export.html')}</p>
-                <p className="text-[10px] text-slate-500">{t('briefingDetail.export.htmlDesc')}</p>
+                <p className="text-[10px] opacity-60">{t('briefingDetail.export.htmlDesc')}</p>
               </div>
             </button>
 
-            <div className="my-1 border-t border-slate-800" />
+            <div className="my-1 border-t border-[var(--color-border-subtle)] opacity-50" />
 
             {!readOnly && (
               localUuid ? (
                 <>
                   <button
                     onClick={() => { void copyShareLink(); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors group"
                   >
                     {isCopied ? (
                       <Check className="w-4 h-4 text-emerald-400" />
                     ) : (
-                      <Copy className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
+                      <Copy className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-emerald-400" />
                     )}
                     <div className="flex-1 text-left">
                       <p className="font-medium">{t('briefingDetail.export.copyLink')}</p>
-                      <p className="text-[10px] text-slate-500">{t('briefingDetail.export.copyLinkDesc')}</p>
+                      <p className="text-[10px] opacity-60">{t('briefingDetail.export.copyLinkDesc')}</p>
                     </div>
                   </button>
 
                   <button
-                    onClick={() => { void unshareMutation.mutate({ id: briefing.id! }); }}
-                    disabled={unshareMutation.isPending}
+                    onClick={handleUnshare}
+                    disabled={isPending}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group"
                   >
-                    {unshareMutation.isPending ? (
+                    {isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Trash2 className="w-4 h-4 text-rose-500/50 group-hover:text-rose-500" />
@@ -283,18 +350,18 @@ export function ExportMenu({ briefing, variant = 'outline', className, align = '
                 </>
               ) : (
                 <button
-                  onClick={() => { void shareMutation.mutate({ id: briefing.id! }); }}
-                  disabled={shareMutation.isPending}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
+                  onClick={handleShare}
+                  disabled={isPending}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors group"
                 >
-                  {shareMutation.isPending ? (
+                  {isPending ? (
                     <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
                   ) : (
-                    <Share2 className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
+                    <Share2 className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-emerald-400" />
                   )}
                   <div className="flex-1 text-left">
                     <p className="font-medium">{t('briefingDetail.export.enableShare')}</p>
-                    <p className="text-[10px] text-slate-500">{t('briefingDetail.export.enableShareDesc')}</p>
+                    <p className="text-[10px] opacity-60">{t('briefingDetail.export.enableShareDesc')}</p>
                   </div>
                 </button>
               )

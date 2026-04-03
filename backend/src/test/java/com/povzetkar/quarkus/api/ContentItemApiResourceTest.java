@@ -175,9 +175,44 @@ class ContentItemApiResourceTest {
 
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
-    void testGetSummary_NotFound() {
+    void testShareSummary() {
+        // Share it
+        String uuid = given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + completedItem.id + "/summary/share")
+                .then()
+                .statusCode(200)
+                .extract().path("data");
+
         given()
-                .when().get("/api/v1/content-items/" + pendingItem.id + "/summary")
+                .when().get("/api/v1/public/resolve/" + uuid)
+                .then()
+                .statusCode(200)
+                .body("data.type", equalTo("SUMMARY"))
+                .body("data.data.title", equalTo("Completed"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testUnshareSummary() {
+        // Share it first
+        String uuid = given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + completedItem.id + "/summary/share")
+                .then()
+                .statusCode(200)
+                .extract().path("data");
+
+        // Unshare it
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + completedItem.id + "/summary/unshare")
+                .then()
+                .statusCode(204);
+
+        // Verify public API returns 404
+        given()
+                .when().get("/api/v1/public/resolve/" + uuid)
                 .then()
                 .statusCode(404);
     }

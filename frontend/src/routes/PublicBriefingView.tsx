@@ -1,6 +1,4 @@
-import { useParams } from '@tanstack/react-router';
 import { 
-  Loader2, 
   ExternalLink, 
   Sun, 
   Moon, 
@@ -9,9 +7,7 @@ import {
   Youtube, 
   Globe, 
   Hash,
-  Calendar,
-  Clock,
-  Timer
+  Calendar
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
@@ -19,42 +15,17 @@ import { sl, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { useThemeStore } from '../store/themeStore';
-
-import { useGetApiV1PublicBriefingsUuid } from '../api/generated/public-briefings/public-briefings';
-
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import type { BriefingDetailDTO } from '../api/generated/model';
 
-export function PublicBriefingPage() {
-  const { uuid } = useParams({ from: '/s/$uuid' });
+interface PublicBriefingViewProps {
+  briefing: BriefingDetailDTO;
+}
+
+export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
   const { theme, setTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
-
-  const { data: response, isLoading, error } = useGetApiV1PublicBriefingsUuid(uuid);
-  const briefing = response?.data;
-
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-base)]">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !briefing) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-base)] px-4 text-center">
-        <div>
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">{t('briefingDetail.notFound')}</h2>
-          <p className="text-[var(--color-text-secondary)]">{t('briefingDetail.notFoundDesc')}</p>
-          <a href="/" className="mt-6 inline-block text-indigo-400 hover:text-indigo-300 transition-colors">
-            Povzetkar
-          </a>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[var(--color-background-base)] text-[var(--color-text-primary)] pb-20 transition-colors">
@@ -65,20 +36,19 @@ export function PublicBriefingPage() {
         <meta property="og:description" content={briefing.metaSummary?.slice(0, 200) + '...'} />
         <meta property="og:type" content="article" />
       </Helmet>
-      {/* Public Header */}
+
+      {/* Shared Header (Common to all public views) */}
       <header className="sticky top-0 z-10 border-b border-[var(--color-border-subtle)] bg-[var(--color-background-base)]/80 backdrop-blur-md px-4 py-4 sm:px-16">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">P</div>
+            <a href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white group-hover:scale-105 transition-transform">P</div>
               <span className="font-bold text-[var(--color-text-primary)] hidden sm:inline">Povzetkar</span>
-            </div>
+            </a>
             
-            {/* Theme Toggle Button */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
-              title={theme === 'dark' ? t('common.theme_settings.light') : t('common.theme_settings.dark')}
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
@@ -87,11 +57,9 @@ export function PublicBriefingPage() {
               )}
             </button>
 
-            {/* Language Toggle Button */}
             <button
               onClick={() => void i18n.changeLanguage(i18n.language === 'sl' ? 'en' : 'sl')}
               className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
-              title={i18n.language === 'sl' ? 'Switch to English' : 'Preklopi na Slovenščino'}
             >
               <Languages className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
               <span className="text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-primary)]">
@@ -116,6 +84,7 @@ export function PublicBriefingPage() {
             })}
           </h1>
         </div>
+
         <div className="flex flex-wrap items-center gap-4 text-sm mt-3 font-black italic uppercase tracking-[0.2em] opacity-60 mb-10">
           {briefing.summaries && briefing.summaries.length > 0 && (
             <span className="text-xs text-[var(--color-text-secondary)]">
@@ -124,8 +93,7 @@ export function PublicBriefingPage() {
           )}
         </div>
 
-
-        {/* Executive Summary / AI Synthesis */}
+        {/* Executive Summary */}
         {briefing.metaSummary && (() => {
           const cleanedText = briefing.metaSummary.replace(/^#\s+.*\n?/, '').trim();
           const hasAlphaFirst = /^\p{L}/u.test(cleanedText);
@@ -141,7 +109,7 @@ export function PublicBriefingPage() {
           );
         })()}
 
-        {/* Source Items - The Reference Grid */}
+        {/* Reference Grid */}
         {briefing.summaries && briefing.summaries.length > 0 && (
           <div className="space-y-8 mb-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
             <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--color-text-secondary)] mb-6 text-center">
@@ -180,20 +148,11 @@ export function PublicBriefingPage() {
                              <span className="text-[10px] text-[var(--color-text-secondary)] font-bold">
                                {item.contentItem?.publishedAt && format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}
                              </span>
-                             {item.contentItem?.formattedDuration && (
-                               <>
-                                 <span className="text-[10px] text-[var(--color-text-secondary)] opacity-40">•</span>
-                                 <span className="text-[10px] text-amber-500/90 font-bold">{item.contentItem.formattedDuration}</span>
-                               </>
-                             )}
                          </div>
                      </div>
                   </div>
                   <div className="mt-auto flex items-center justify-between">
-                      <a 
-                        href={`#item-${item.contentItem?.id}`} 
-                        className="inline-flex items-center gap-2 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider"
-                      >
+                      <a href={`#item-${item.contentItem?.id}`} className="inline-flex items-center gap-2 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider">
                         {t('briefingDetail.seeSummary')}
                         <ArrowDown className="w-3 h-3" />
                       </a>
@@ -204,75 +163,40 @@ export function PublicBriefingPage() {
           </div>
         )}
 
-        {/* CTA Section */}
         <div className="text-center py-20 mb-20 border-y border-[var(--color-border-subtle)] bg-[var(--color-background-alt)]/20 rounded-[3rem]">
-            <a 
-                href="/" 
-                className="inline-flex items-center gap-3 px-12 py-6 rounded-3xl bg-indigo-600 hover:bg-indigo-500 text-white font-black transition-all shadow-2xl shadow-indigo-500/40 active:scale-95 text-xl tracking-tight"
-            >
+            <a href="/" className="inline-flex items-center gap-3 px-12 py-6 rounded-3xl bg-indigo-600 hover:bg-indigo-500 text-white font-black transition-all shadow-2xl shadow-indigo-500/40 active:scale-95 text-xl tracking-tight">
                 {t('briefingDetail.public.ctaStart')}
                 <ExternalLink className="w-6 h-6" />
             </a>
         </div>
 
-        {/* Full Content / Detailed Report */}
+        {/* Detailed Sections */}
         {briefing.summaries && briefing.summaries.length > 0 && (
           <div className="space-y-16 mb-16">
             {briefing.summaries.map((item) => (
-              <div 
-                key={item.contentItem?.id} 
-                id={`item-${item.contentItem?.id}`}
-                className="scroll-mt-24 pt-12 border-t border-[var(--color-border-subtle)] first:border-0 first:pt-0"
-              >
-                {/* Minimalist Source Header */}
+              <div key={item.contentItem?.id} id={`item-${item.contentItem?.id}`} className="scroll-mt-24 pt-12 border-t border-[var(--color-border-subtle)] first:border-0 first:pt-0">
                 <div className="flex items-start gap-4 mb-8 group/source">
                   <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 flex-shrink-0 group-hover/source:bg-indigo-500/20 transition-colors">
-                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? (
-                      <Youtube className="w-6 h-6 text-red-500" />
-                    ) : (
-                      <Globe className="w-6 h-6" />
-                    )}
+                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? <Youtube className="w-6 h-6 text-red-500" /> : <Globe className="w-6 h-6" />}
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-0.5">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
                            {item.contentItem?.authorName || t('briefingDetail.unknownAuthor')}
                         </span>
-                        
-                        {(item.contentItem?.publishedAt || item.contentItem?.formattedDuration) && (
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            {item.contentItem?.publishedAt && (
-                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
-                                <Calendar className="w-3 h-3 text-emerald-500/70" />
-                                <span>{format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}</span>
-                                <span className="opacity-30 mx-0.5">•</span>
-                                <Clock className="w-3 h-3 text-indigo-500/70" />
-                                <span>{format(new Date(item.contentItem.publishedAt), 'HH:mm')}</span>
-                              </div>
-                            )}
-                            
-                            {item.contentItem?.formattedDuration && (
-                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
-                                <span className="opacity-30 mr-1.5">|</span>
-                                <Timer className="w-3 h-3 text-amber-500/70" />
-                                <span className="text-amber-500/90">{item.contentItem.formattedDuration}</span>
-                              </div>
-                            )}
+                        {item.contentItem?.publishedAt && (
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
+                            <Calendar className="w-3 h-3 text-emerald-500/70" />
+                            <span>{format(new Date(item.contentItem.publishedAt), 'MMM d, yyyy')}</span>
                           </div>
                         )}
                      </div>
-                    <a 
-                      href={item.contentItem?.sourceUrl || '#'} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-2xl font-black text-[var(--color-text-primary)] hover:text-indigo-400 theme-transition flex items-center gap-2 group/link leading-tight mt-1"
-                    >
+                    <a href={item.contentItem?.sourceUrl || '#'} target="_blank" rel="noopener noreferrer" className="text-2xl font-black text-[var(--color-text-primary)] hover:text-indigo-400 theme-transition flex items-center gap-2 group/link leading-tight mt-1">
                       <span className="truncate">{item.contentItem?.title}</span>
                       <ExternalLink className="w-4 h-4 text-[var(--color-text-secondary)] group-hover/link:text-indigo-400 transition-colors" />
                     </a>
                   </div>
                 </div>
-
                 <article className="prose prose-indigo max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-hr:border-[var(--color-border-subtle)]">
                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                      {item.summaryText || ''}
@@ -284,18 +208,13 @@ export function PublicBriefingPage() {
         )}
       </main>
 
-      {/* Footer Branding */}
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-16 pt-24 pb-12 text-center space-y-4 border-t border-[var(--color-border-subtle)]/30">
-        <p className="text-sm font-black text-[var(--color-text-primary)] tracking-[0.3em] uppercase opacity-80">
-          Povzetkar AI
-        </p>
+      <footer className="max-w-screen-2xl mx-auto px-4 sm:px-16 pt-24 pb-12 text-center space-y-4 border-t border-[var(--color-border-subtle)]/30">
+        <p className="text-sm font-black text-[var(--color-text-primary)] tracking-[0.3em] uppercase opacity-80">Povzetkar AI</p>
         <p className="text-[10px] text-[var(--color-text-secondary)] font-medium uppercase tracking-[0.2em] opacity-40">
           {t('common.generated_by')} — AI-Powered Intelligence Aggregator
         </p>
-        <p className="text-[10px] text-[var(--color-text-secondary)]/30 uppercase tracking-[0.1em]">
-          &copy; {new Date().getFullYear()} sjuresa/povzetkar
-        </p>
-      </div>
+        <p className="text-[10px] text-[var(--color-text-secondary)]/30 uppercase tracking-[0.1em]">&copy; {new Date().getFullYear()} sjuresa/povzetkar</p>
+      </footer>
     </div>
   );
 }

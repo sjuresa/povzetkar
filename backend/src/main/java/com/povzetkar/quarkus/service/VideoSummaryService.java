@@ -82,14 +82,6 @@ public class VideoSummaryService {
         Content content = Content.fromParts(Part.fromText(finalPrompt));
         String description = "Daily briefing for topic '" + topicName + "' on " + date;
         
-        logger.info(
-            LogKeys.ACTION, "ai_briefing_prompt_debug",
-            LogKeys.TOPIC_NAME, topicName,
-            LogKeys.DATE, date,
-            "prompt_length", finalPrompt.length(),
-            "raw_prompt_preview", finalPrompt.substring(0, Math.min(finalPrompt.length(), 500))
-        );
-
         return generateContent(client, content, description, null, null);
     }
 

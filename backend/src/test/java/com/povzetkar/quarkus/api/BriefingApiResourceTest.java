@@ -192,9 +192,11 @@ class BriefingApiResourceTest {
                 .extract().path("data");
 
         given()
-                .when().get("/api/v1/public/briefings/" + uuid)
+                .when().get("/api/v1/public/resolve/" + uuid)
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .body("data.type", equalTo("BRIEFING"))
+                .body("data.data.title", equalTo("Weekly AI Update"));
     }
 
     @Test
@@ -217,7 +219,7 @@ class BriefingApiResourceTest {
 
         // Verify public API returns 404
         given()
-                .when().get("/api/v1/public/briefings/" + uuid)
+                .when().get("/api/v1/public/resolve/" + uuid)
                 .then()
                 .statusCode(404);
     }

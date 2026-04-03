@@ -266,12 +266,13 @@ export function BriefingLibraryPage() {
                           <div className="flex items-center justify-end gap-2">
                             {briefing.id != null && (
                               <ExportMenu 
-                                briefing={{
+                                type="briefing"
+                                data={{
                                   id: briefing.id,
                                   uuid: briefing.uuid ?? null,
                                   title: briefing.title || '',
                                   topicName: briefing.topicName || '',
-                                  briefingDate: briefing.briefingDate || '',
+                                  date: briefing.briefingDate || '',
                                 }}
                                 variant="ghost"
                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
