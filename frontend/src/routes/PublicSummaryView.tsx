@@ -20,7 +20,7 @@ interface PublicSummaryViewProps {
   summary: PublicSummary;
 }
 
-export function PublicSummaryView({ summary }: PublicSummaryViewProps) {
+export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>) {
   const { theme, setTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -28,9 +28,9 @@ export function PublicSummaryView({ summary }: PublicSummaryViewProps) {
     <div className="min-h-screen bg-[var(--color-background-base)] text-[var(--color-text-primary)] pb-20 transition-colors">
       <Helmet>
         <title>{summary.title} | Povzetkar</title>
-        <meta name="description" content={summary.summaryText?.slice(0, 160) + '...'} />
+        <meta name="description" content={summary.summaryText ? `${summary.summaryText.slice(0, 160)}...` : ''} />
         <meta property="og:title" content={summary.title} />
-        <meta property="og:description" content={summary.summaryText?.slice(0, 200) + '...'} />
+        <meta property="og:description" content={summary.summaryText ? `${summary.summaryText.slice(0, 200)}...` : ''} />
         <meta property="og:type" content="article" />
       </Helmet>
 
@@ -100,7 +100,7 @@ export function PublicSummaryView({ summary }: PublicSummaryViewProps) {
                     </h1>
                     <div className="flex items-center gap-2 text-sm text-indigo-400 font-bold opacity-80 group-hover:opacity-100 transition-opacity">
                         <LinkIcon className="w-4 h-4" />
-                        <span>{summary.sourceUrl ? new URL(summary.sourceUrl).hostname : ''}</span>
+                        <span>{(() => { try { return summary.sourceUrl ? new URL(summary.sourceUrl).hostname : ''; } catch { return ''; } })()}</span>
                     </div>
                 </a>
             </div>
