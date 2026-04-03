@@ -60,15 +60,16 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
 
   const onShareSuccess = (keys: string[], successMsg: string, isShare: boolean) => (res?: unknown) => {
     if (isShare) {
-      const newUuid = res as string;
+      const newUuid = (res as { data: string }).data;
       if (newUuid) setLocalUuid(newUuid);
     } else {
       setLocalUuid(null);
     }
     keys.forEach(key => {
-      void queryClient.invalidateQueries({ queryKey: [key] });
       if (key === 'briefing-detail') {
-          void queryClient.invalidateQueries({ queryKey: ['briefing-detail', data.id] });
+        void queryClient.invalidateQueries({ queryKey: [key, data.id] });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: [key] });
       }
     });
     toast.success(t(successMsg));
