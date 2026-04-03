@@ -118,17 +118,17 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
 
   const handleShare = () => {
     if (type === 'briefing') {
-      void briefingShare.mutate({ id: data.id! });
+      briefingShare.mutate({ id: data.id! });
     } else {
-      void summaryShare.mutate({ id: data.id! });
+      summaryShare.mutate({ id: data.id! });
     }
   };
 
   const handleUnshare = () => {
     if (type === 'briefing') {
-      void briefingUnshare.mutate({ id: data.id! });
+      briefingUnshare.mutate({ id: data.id! });
     } else {
-      void summaryUnshare.mutate({ id: data.id! });
+      summaryUnshare.mutate({ id: data.id! });
     }
   };
 
@@ -155,8 +155,8 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
   const ensureData = async () => {
     if (type === 'summary') {
         return {
-            metaSummary: '',
-            content: data.metaSummary || (data.summaries?.[0]?.summaryText) || ''
+            metaSummary: data.metaSummary || '',
+            content: data.summaries?.[0]?.summaryText || ''
         };
     }
 

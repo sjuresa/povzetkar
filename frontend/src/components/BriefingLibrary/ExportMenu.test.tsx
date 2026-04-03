@@ -3,6 +3,12 @@ import { ExportMenu } from '../briefing/ExportMenu';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@testing-library/jest-dom';
 import { describe, it, expect, afterEach, vi } from 'vitest';
+import { generateBriefingMarkdown } from '../../util/exportTemplates';
+
+vi.mock('../../util/exportTemplates', () => ({
+  generateBriefingHtml: vi.fn(() => '<html>test</html>'),
+  generateBriefingMarkdown: vi.fn(() => '# Markdown test'),
+}));
 
 // Mock the generated hooks to avoid actual API calls
 vi.mock('../../api/generated/briefings/briefings', () => ({
@@ -17,9 +23,9 @@ vi.mock('../../api/generated/content-items/content-items', () => ({
 }));
 
 // Mock URL and Blob for export triggers
-if (typeof window !== 'undefined') {
-  window.URL.createObjectURL = vi.fn();
-  window.URL.revokeObjectURL = vi.fn();
+if (globalThis.window !== undefined) {
+  globalThis.window.URL.createObjectURL = vi.fn();
+  globalThis.window.URL.revokeObjectURL = vi.fn();
 }
 
 afterEach(() => {
@@ -95,7 +101,39 @@ describe('ExportMenu Polymorphic Behavior', () => {
 
     // Verify file creation was attempted (async)
     await vi.waitFor(() => {
-        expect(window.URL.createObjectURL).toHaveBeenCalled();
+        expect(globalThis.window.URL.createObjectURL).toHaveBeenCalled();
+    });
+  });
+
+  it('correctly extracts summary data for export', async () => {
+    const summaryData = {
+        ...mockSummaryData,
+        metaSummary: 'TL;DR Text',
+        summaries: [{ summaryText: 'Full Summary Text' }]
+    };
+
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <ExportMenu type="summary" data={summaryData} />
+      </QueryClientProvider>
+    );
+
+    const trigger = container.querySelector('[data-testid="unique-export-dropdown-trigger"]');
+    if (trigger) fireEvent.click(trigger);
+
+    const markdownBtn = screen.getAllByText(/briefingDetail.export.markdown/i)[0].closest('button');
+    if (markdownBtn) {
+        fireEvent.click(markdownBtn);
+    }
+
+    await vi.waitFor(() => {
+        // Verify that the template generator received the CORRECTED structure
+        expect(generateBriefingMarkdown).toHaveBeenCalled();
+        const callArgs = vi.mocked(generateBriefingMarkdown).mock.calls[0];
+        expect(callArgs[0]).toMatchObject({
+            metaSummary: 'TL;DR Text',
+            content: 'Full Summary Text'
+        });
     });
   });
 });
