@@ -14,6 +14,7 @@ public class BriefingBuilder {
     private String title = "Default Briefing Title";
     private String metaSummary = "### 1. Overall Executive Summary\nDefault Summary\n###";
     private LocalDate briefingDate = LocalDate.now();
+    private String uuid;
     private Set<Summary> summaries = new HashSet<>();
 
     private BriefingBuilder() {
@@ -25,6 +26,11 @@ public class BriefingBuilder {
 
     public BriefingBuilder withId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public BriefingBuilder withUuid(String uuid) {
+        this.uuid = uuid;
         return this;
     }
 
@@ -56,6 +62,7 @@ public class BriefingBuilder {
     public Briefing build() {
         Briefing briefing = new Briefing(topic, title, metaSummary, briefingDate);
         briefing.id = id;
+        briefing.uuid = uuid;
         briefing.summaries = summaries;
         return briefing;
     }

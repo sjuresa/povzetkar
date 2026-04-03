@@ -10,6 +10,7 @@ public class SummaryBuilder {
     private String summaryText = "### Executive Summary\nDefault Content Summary\n###\nFull markdown content";
     private ContentItem contentItem;
     private LocalDate briefingDate = LocalDate.now();
+    private String uuid;
 
     private SummaryBuilder() {
     }
@@ -20,6 +21,11 @@ public class SummaryBuilder {
 
     public SummaryBuilder withId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public SummaryBuilder withUuid(String uuid) {
+        this.uuid = uuid;
         return this;
     }
 
@@ -41,6 +47,7 @@ public class SummaryBuilder {
     public Summary build() {
         Summary summary = new Summary(summaryText, contentItem, briefingDate);
         summary.id = id;
+        summary.uuid = uuid;
         return summary;
     }
 }
