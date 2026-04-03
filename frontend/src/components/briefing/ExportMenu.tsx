@@ -66,7 +66,7 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
   const briefingShare = usePostApiV1BriefingsIdShare({
     mutation: {
       onSuccess: (res) => {
-        const newUuid = res.data as unknown as string;
+        const newUuid = res as unknown as string;
         if (newUuid) setLocalUuid(newUuid);
         void queryClient.invalidateQueries({ queryKey: ['briefings'] });
         void queryClient.invalidateQueries({ queryKey: ['briefing-detail', data.id] });
@@ -92,7 +92,7 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
   const summaryShare = usePostApiV1ContentItemsIdSummaryShare({
     mutation: {
       onSuccess: (res) => {
-        const newUuid = res.data;
+        const newUuid = res as unknown as string;
         if (newUuid) setLocalUuid(newUuid);
         void queryClient.invalidateQueries({ queryKey: ['content-items'] });
         void queryClient.invalidateQueries({ queryKey: ['source-items'] });
