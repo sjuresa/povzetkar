@@ -67,6 +67,10 @@ public class Summary extends BaseAuditableEntity {
         return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE s.id = ?1", id).firstResultOptional();
     }
 
+    public static Optional<Summary> findByUuidWithAssociations(String uuid) {
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE s.uuid = ?1", uuid).firstResultOptional();
+    }
+
     public static Summary findByContentIdWithAssociations(Long contentId) {
         return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResult();
     }
@@ -79,10 +83,6 @@ public class Summary extends BaseAuditableEntity {
 
     public static Optional<Summary> findByUuid(String uuid) {
         return find("uuid", uuid).firstResultOptional();
-    }
-
-    public static Optional<Summary> findByUuidWithAssociations(String uuid) {
-        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE s.uuid = ?1", uuid).firstResultOptional();
     }
 
     public String getExecutiveSummary() {

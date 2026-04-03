@@ -26,7 +26,6 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import java.util.Optional;
 
 @Path("/api/v1/public/resolve")
 @ApplicationScoped
@@ -57,24 +56,16 @@ public class PublicShareApiResource {
     @APIResponse(responseCode = "404", description = "Content not found")
     @Parameter(name = "uuid", in = ParameterIn.PATH, required = true, description = "The public UUID of the shared content", schema = @Schema(type = SchemaType.STRING))
     public PublicShareDTO resolveContent(@PathParam("uuid") String uuid) {
-        // Step 1: Lightweight lookup for Briefing ID
-        Optional<Long> briefingId = Briefing.find("uuid = ?1", uuid)
-                .project(Long.class)
-                .firstResultOptional();
-        
-        if (briefingId.isPresent()) {
-            Briefing briefing = Briefing.findByIdWithAssociations(briefingId.get())
+        // Step 1: Lightweight existence check for Briefing
+        if (Briefing.find("uuid", uuid).count() > 0) {
+            Briefing briefing = Briefing.findByUuidWithAssociations(uuid)
                     .orElseThrow(() -> new NotFoundException("Briefing no longer available."));
             return new PublicShareDTO(PublicInsightType.BRIEFING, briefingMapper.toDetailDTO(briefing));
         }
 
-        // Step 2: Lightweight lookup for Summary ID
-        Optional<Long> summaryId = Summary.find("uuid = ?1", uuid)
-                .project(Long.class)
-                .firstResultOptional();
-        
-        if (summaryId.isPresent()) {
-            Summary summary = Summary.findByIdWithAssociations(summaryId.get())
+        // Step 2: Lightweight existence check for Summary
+        if (Summary.find("uuid", uuid).count() > 0) {
+            Summary summary = Summary.findByUuidWithAssociations(uuid)
                     .orElseThrow(() -> new NotFoundException("Summary no longer available."));
             return new PublicShareDTO(PublicInsightType.SUMMARY, summaryMapper.toPublicDTO(summary));
         }
