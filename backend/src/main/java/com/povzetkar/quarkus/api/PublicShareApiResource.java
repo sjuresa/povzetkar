@@ -56,16 +56,26 @@ public class PublicShareApiResource {
     @APIResponse(responseCode = "404", description = "Content not found")
     @Parameter(name = "uuid", in = ParameterIn.PATH, required = true, description = "The public UUID of the shared content", schema = @Schema(type = SchemaType.STRING))
     public PublicShareDTO resolveContent(@PathParam("uuid") String uuid) {
-        // 1. Try Briefing
-        Optional<Briefing> briefingOpt = Briefing.findByUuidWithAssociations(uuid);
-        if (briefingOpt.isPresent()) {
-            return new PublicShareDTO("BRIEFING", briefingMapper.toDetailDTO(briefingOpt.get()));
+        // Step 1: Lightweight lookup for Briefing ID
+        Optional<Long> briefingId = Briefing.find("uuid = ?1", uuid)
+                .project(Long.class)
+                .firstResultOptional();
+        
+        if (briefingId.isPresent()) {
+            Briefing briefing = Briefing.findByIdWithAssociations(briefingId.get())
+                    .orElseThrow(() -> new NotFoundException("Briefing no longer available."));
+            return new PublicShareDTO("BRIEFING", briefingMapper.toDetailDTO(briefing));
         }
 
-        // 2. Try Summary
-        Optional<Summary> summaryOpt = Summary.findByUuidWithAssociations(uuid);
-        if (summaryOpt.isPresent()) {
-            return new PublicShareDTO("SUMMARY", summaryMapper.toPublicDTO(summaryOpt.get()));
+        // Step 2: Lightweight lookup for Summary ID
+        Optional<Long> summaryId = Summary.find("uuid = ?1", uuid)
+                .project(Long.class)
+                .firstResultOptional();
+        
+        if (summaryId.isPresent()) {
+            Summary summary = Summary.findByIdWithAssociations(summaryId.get())
+                    .orElseThrow(() -> new NotFoundException("Summary no longer available."));
+            return new PublicShareDTO("SUMMARY", summaryMapper.toPublicDTO(summary));
         }
 
         throw new NotFoundException("Shared content not found or no longer public.");

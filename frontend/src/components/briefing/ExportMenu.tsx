@@ -58,6 +58,26 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     setLocalUuid(data.uuid);
   }, [data.uuid]);
 
+  const onShareSuccess = (keys: string[], successMsg: string, isShare: boolean) => (res?: unknown) => {
+    if (isShare) {
+      const newUuid = res as string;
+      if (newUuid) setLocalUuid(newUuid);
+    } else {
+      setLocalUuid(null);
+    }
+    keys.forEach(key => {
+      void queryClient.invalidateQueries({ queryKey: [key] });
+      if (key === 'briefing-detail') {
+          void queryClient.invalidateQueries({ queryKey: ['briefing-detail', data.id] });
+      }
+    });
+    toast.success(t(successMsg));
+  };
+
+  const onShareError = (errorMsg: string) => () => {
+    toast.error(t(errorMsg));
+  };
+
   // Briefing hooks
   const briefingDetailQuery = useGetApiV1BriefingsId(data.id!, {
     query: { enabled: false }
@@ -65,52 +85,30 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
 
   const briefingShare = usePostApiV1BriefingsIdShare({
     mutation: {
-      onSuccess: (res) => {
-        const newUuid = res as unknown as string;
-        if (newUuid) setLocalUuid(newUuid);
-        void queryClient.invalidateQueries({ queryKey: ['briefings'] });
-        void queryClient.invalidateQueries({ queryKey: ['briefing-detail', data.id] });
-        toast.success(t('briefingDetail.export.toasts.shareEnabled'));
-      },
-      onError: () => { toast.error(t('briefingDetail.export.toasts.shareEnableFailed')); }
+      onSuccess: onShareSuccess(['briefings', 'briefing-detail'], 'briefingDetail.export.toasts.shareEnabled', true),
+      onError: onShareError('briefingDetail.export.toasts.shareEnableFailed')
     }
   });
 
   const briefingUnshare = usePostApiV1BriefingsIdUnshare({
     mutation: {
-      onSuccess: () => {
-        setLocalUuid(null);
-        void queryClient.invalidateQueries({ queryKey: ['briefings'] });
-        void queryClient.invalidateQueries({ queryKey: ['briefing-detail', data.id] });
-        toast.success(t('briefingDetail.export.toasts.shareDisabled'));
-      },
-      onError: () => { toast.error(t('briefingDetail.export.toasts.shareDisableFailed')); }
+      onSuccess: onShareSuccess(['briefings', 'briefing-detail'], 'briefingDetail.export.toasts.shareDisabled', false),
+      onError: onShareError('briefingDetail.export.toasts.shareDisableFailed')
     }
   });
 
   // Summary hooks
   const summaryShare = usePostApiV1ContentItemsIdSummaryShare({
     mutation: {
-      onSuccess: (res) => {
-        const newUuid = res as unknown as string;
-        if (newUuid) setLocalUuid(newUuid);
-        void queryClient.invalidateQueries({ queryKey: ['content-items'] });
-        void queryClient.invalidateQueries({ queryKey: ['source-items'] });
-        toast.success(t('briefingDetail.export.toasts.shareEnabled'));
-      },
-      onError: () => { toast.error(t('briefingDetail.export.toasts.shareEnableFailed')); }
+      onSuccess: onShareSuccess(['content-items', 'source-items'], 'briefingDetail.export.toasts.shareEnabled', true),
+      onError: onShareError('briefingDetail.export.toasts.shareEnableFailed')
     }
   });
 
   const summaryUnshare = usePostApiV1ContentItemsIdSummaryUnshare({
     mutation: {
-      onSuccess: () => {
-        setLocalUuid(null);
-        void queryClient.invalidateQueries({ queryKey: ['content-items'] });
-        void queryClient.invalidateQueries({ queryKey: ['source-items'] });
-        toast.success(t('briefingDetail.export.toasts.shareDisabled'));
-      },
-      onError: () => { toast.error(t('briefingDetail.export.toasts.shareDisableFailed')); }
+      onSuccess: onShareSuccess(['content-items', 'source-items'], 'briefingDetail.export.toasts.shareDisabled', false),
+      onError: onShareError('briefingDetail.export.toasts.shareDisableFailed')
     }
   });
 

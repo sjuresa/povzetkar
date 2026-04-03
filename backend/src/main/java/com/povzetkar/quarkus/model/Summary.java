@@ -63,6 +63,10 @@ public class Summary extends BaseAuditableEntity {
         return find("contentItem.id", id).firstResult();
     }
 
+    public static Optional<Summary> findByIdWithAssociations(Long id) {
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE s.id = ?1", id).firstResultOptional();
+    }
+
     public static Summary findByContentIdWithAssociations(Long contentId) {
         return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResult();
     }
