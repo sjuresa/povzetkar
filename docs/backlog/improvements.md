@@ -18,6 +18,8 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
 *   **Restore Content Duration Display (POV-170 Follow-up):** Investigate and resolve the backend gap where `formattedDuration` is missing for some content items in the briefing response.
 *   **Unified API Error Handling for Sharing Hooks (POV-173 Follow-up):** Refactor the `onSuccess`/`onError` handlers in `ExportMenu` to use a shared functional pattern for toast notifications, reducing duplication between briefing and summary mutations.
+*   **Automated Contrast Audit Script (POV-174 Follow-up):** Implement a Playwright-based audit script to verify that theme-aware accent variables (Blue-700, Amber-600) maintain > 4.5:1 contrast across all surface combinations after future CSS changes.
+*   **Shadow Token Standardization (POV-174 Follow-up):** Migrate remaining component-specific shadow classes (e.g., `shadow-xl` in tooltips) to use the new global `--shadow-color` override to ensure 100% theme consistency.
 
 ### Backend & Architecture
 

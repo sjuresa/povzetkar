@@ -6,7 +6,7 @@ interface RecentBriefingListProps {
   briefings: BriefingSummaryDTO[] | undefined;
 }
 
-export function RecentBriefingList({ briefings }: RecentBriefingListProps) {
+export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListProps>) {
   const { t, i18n } = useTranslation();
   if (!briefings || briefings.length === 0) return null;
 
@@ -18,7 +18,7 @@ export function RecentBriefingList({ briefings }: RecentBriefingListProps) {
         </h3>
         <Link 
           to="/briefings" 
-          className="text-sm font-medium text-[var(--color-accent)] hover:underline transition-all"
+          className="text-sm text-interactive text-[var(--color-accent-primary)] hover:underline transition-all"
         >
           {t('dashboard.viewAll')}
         </Link>
@@ -30,16 +30,16 @@ export function RecentBriefingList({ briefings }: RecentBriefingListProps) {
             key={briefing.id}
             to="/briefings/$briefingId"
             params={{ briefingId: briefing.id!.toString() }}
-            className="glass-elevated p-5 rounded-2xl flex items-center justify-between group transition-all hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-accent)]/30 border border-transparent shadow-sm"
+            className="glass-elevated p-5 rounded-2xl flex items-center justify-between group transition-all hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-accent-primary)]/30 border border-transparent shadow-sm"
           >
             <div className="flex items-center space-x-5">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] group-hover:bg-[var(--color-accent-soft)] transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent-primary)] group-hover:bg-[var(--color-accent-primary-soft)] transition-colors shadow-sm">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] mb-0.5">{briefing.title}</p>
+                <p className="text-sm font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-primary)] mb-0.5">{briefing.title}</p>
                 <div className="flex items-center space-x-2 text-xs text-[var(--color-text-secondary)]">
                   <span className="font-medium">{briefing.topicName}</span>
                   <span>•</span>
@@ -48,7 +48,7 @@ export function RecentBriefingList({ briefings }: RecentBriefingListProps) {
               </div>
             </div>
             
-            <div className="pr-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all text-[var(--color-accent)]">
+            <div className="pr-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all text-[var(--color-accent-primary)]">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

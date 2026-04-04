@@ -67,19 +67,19 @@ export function AppShell({ children }: AppShellProps) {
   );
 
   return (
-    <div className="flex h-screen bg-[var(--color-background-base)] text-[var(--color-text-primary)] antialiased overflow-hidden">
+    <div className="flex h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] antialiased overflow-hidden">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarCollapsed ? 'w-20' : 'w-64'
-        } transition-all duration-300 ease-in-out bg-[var(--color-background-alt)] border-r border-[var(--color-border-subtle)] flex flex-col z-50`}
+        } transition-all duration-300 ease-in-out bg-[var(--color-bg-secondary)] border-r border-[var(--color-border-primary)] flex flex-col z-50`}
       >
-        <Link to="/dashboard" className="h-16 flex items-center px-6 border-b border-[var(--color-border-subtle)] outline-none group hover:bg-[var(--color-surface-deep)]/30 transition-colors" aria-label="Povzetkar Dashboard">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/40 group-hover:scale-105 transition-transform">
+        <Link to="/dashboard" className="h-16 flex items-center px-6 border-b border-[var(--color-border-primary)] outline-none group hover:bg-[var(--color-surface-deep)]/30 transition-colors" aria-label="Povzetkar Dashboard">
+          <div className="w-8 h-8 rounded-lg bg-[var(--color-accent-primary)] flex-shrink-0 flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-105 transition-transform">
             P
           </div>
           {!sidebarCollapsed && (
-            <span className="ml-3 font-bold text-xl tracking-tight text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-blue-400 transition-colors">
+            <span className="ml-3 font-bold text-xl tracking-tight text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-[var(--color-accent-primary)] transition-colors">
               Povzetkar
             </span>
           )}
@@ -92,14 +92,14 @@ export function AppShell({ children }: AppShellProps) {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative ${
+                className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative text-interactive ${
                   isActive
-                    ? 'bg-blue-600/10 text-blue-400'
+                    ? 'bg-[var(--color-accent-primary-soft)] text-[var(--color-accent-primary)]'
                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-deep)] hover:text-[var(--color-text-primary)]'
                 }`}
               >
                 <svg
-                  className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
+                  className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -133,14 +133,14 @@ export function AppShell({ children }: AppShellProps) {
                   <Link
                     key={item.name}
                     to={item.path}
-                    className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative ${
+                    className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative text-interactive ${
                       isActive
-                        ? 'bg-amber-500/10 text-amber-400'
+                        ? 'bg-[var(--color-accent-admin-soft)] text-[var(--color-accent-admin)]'
                         : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-deep)] hover:text-[var(--color-text-primary)]'
                     }`}
                   >
                     <svg
-                      className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-amber-500' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
+                      className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-[var(--color-accent-admin)]' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -153,7 +153,7 @@ export function AppShell({ children }: AppShellProps) {
                       </span>
                     )}
                     {sidebarCollapsed && (
-                       <div className="absolute left-full ml-4 px-2 py-1 bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl">
+                       <div className="absolute left-full ml-4 px-2 py-1 bg-[var(--color-surface-elevated)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl">
                         {item.name}
                        </div>
                     )}
@@ -164,10 +164,10 @@ export function AppShell({ children }: AppShellProps) {
           )}
         </nav>
 
-        <div className="p-4 border-t border-[var(--color-border-subtle)] space-y-2">
+        <div className="p-4 border-t border-[var(--color-border-primary)] space-y-2">
           <button
             onClick={() => setIsMetadataOpen(true)}
-            className={`w-full h-10 flex items-center px-3 rounded-lg bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] transition-all group overflow-hidden ${sidebarCollapsed ? 'justify-center' : ''}`}
+            className={`w-full h-10 flex items-center px-3 rounded-lg bg-[var(--color-surface-deep)] border border-[var(--color-border-primary)] hover:border-[var(--color-accent-primary)] transition-all group overflow-hidden ${sidebarCollapsed ? 'justify-center' : ''}`}
           >
             <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 flex-shrink-0 animate-pulse"></div>
             {!sidebarCollapsed && (
@@ -195,9 +195,9 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-8 bg-[var(--color-background-alt)]/50 border-b border-[var(--color-border-subtle)] backdrop-blur-md z-40">
+        <header className="h-16 flex items-center justify-between px-8 bg-[var(--color-bg-secondary)]/50 border-b border-[var(--color-border-primary)] backdrop-blur-md z-40">
           <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)]" title={`Real-time Stream: ${connectionStatus}`}>
+              <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]" title={`Real-time Stream: ${connectionStatus}`}>
                 <span className="relative flex h-2 w-2">
                   {connectionStatus === 'connected' && (
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -209,26 +209,26 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-4 pr-6 border-r border-[var(--color-border-subtle)]">
+            <div className="flex items-center space-x-4 pr-6 border-r border-[var(--color-border-primary)]">
                <LanguageSwitcher />
                <ThemeToggle />
             </div>
 
             <Link 
               to="/me"
-              className="flex items-center space-x-3 pr-6 border-r border-[var(--color-border-subtle)] group hover:bg-[var(--color-surface-deep)]/50 p-1.5 rounded-xl transition-all"
+              className="flex items-center space-x-3 pr-6 border-r border-[var(--color-border-primary)] group hover:bg-[var(--color-surface-deep)]/50 p-1.5 rounded-xl transition-all"
             >
                <div className="text-right hidden sm:block">
                  <p className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight group-hover:text-blue-400 transition-colors">{user?.name || 'User'}</p>
                  <p className="text-xs text-[var(--color-text-secondary)] leading-tight">{user?.email}</p>
                </div>
-               <div className="w-9 h-9 rounded-full bg-[var(--color-surface-deep)] border border-[var(--color-border-subtle)] flex items-center justify-center font-semibold text-[var(--color-text-secondary)] group-hover:border-blue-500/50 group-hover:text-blue-400 transition-all">
+               <div className="w-9 h-9 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center font-semibold text-[var(--color-text-secondary)] group-hover:border-[var(--color-accent-primary)] group-hover:text-[var(--color-accent-primary)] transition-all">
                  {user?.name?.charAt(0) || 'U'}
                </div>
             </Link>
             <button
                onClick={logout}
-               className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+               className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] transition-colors"
             >
                {t('common.logout')}
             </button>
