@@ -39,7 +39,7 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
                 </svg>
               </div>
               <div>
-                <h4 className="text-interactive text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-primary)] transition-colors line-clamp-1">
+                <h4 className="text-sm text-interactive text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-primary)] transition-colors line-clamp-1 mb-0.5">
                   {briefing.title}
                 </h4>
                 <div className="flex items-center space-x-2 text-xs text-[var(--color-text-secondary)]">
