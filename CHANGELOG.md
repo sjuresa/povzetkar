@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Accent Strategy (POV-174):** Introduced a high-contrast **Blue-700** primary accent for Light Mode to ensure visibility on secondary backgrounds (Neutral-100), satisfying the > 4.5:1 contrast requirement.
 - **Admin Branding (POV-174):** Standardized Admin-specific actions with a high-contrast **Amber-800** semantic accent.
 - **Shadow Standardization (POV-174):** Implemented theme-aware global shadow overrides in the Tailwind `@theme` block, ensuring shadows shift naturally with the active theme.
+- [POV-175] New `QueryCountAssert` utility for automated N+1 query detection in integration tests.
 
 ### Changed
 - **AI Prompt Cleanup (POV-170):** Stripped redundant UI-level headers (`## Daily Briefing`, `### 1. Executive Summary`, etc.) and metadata from the AI summarization prompts. The AI now generates "Pure Intelligence," while the System provides the structural "Frame."
@@ -32,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AppShell Refactor (POV-174):** Modernized the application shell by replacing hardcoded Slate/Blue classes with the new Zinc semantic variable taxonomy.
 - **Dashboard Hardening (POV-174):** Refactored `StatCard`, `RecentBriefingList`, and `DashboardPage` to use semantic variables, resolving contrast regressions in active job indicators and icon squares.
 - **Typography Polish (POV-174):** Standardized interactive label weights to `font-weight: 500` and primary headers to `font-weight: 900` to improve legibility in bright neutral environments.
+
+### Fixed
+- [POV-175] Resolved N+1 query bottleneck in `BriefingApiResource.getBriefings` by implementing HQL Join Fetch, reducing database round-trips from O(N) to O(1).
+- [POV-175] Standardized explicit HQL aliasing and sorting prefixes for consistent query construction.
 
 ## [0.15.0] - 2026-03-30
 

@@ -23,6 +23,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Polymorphic UI Components (POV-173)**: 
 > We have unified sharing/export logic into a single, type-aware component. This ensures feature parity across entities (Briefings vs. Summaries) and eliminates context-specific UI debt.
 
+> [!IMPORTANT]
+> **N+1 Optimization & Differential Testing (POV-175)**: 
+> We have eliminated O(N) database bottlenecks in the Briefing API using **HQL Join Fetching**. Performance is now verified via **Differential Query Assertions** (math proof of O(1) complexity), preventing regressions in the CI/CD pipeline.
+
 ---
 
 ## 📚 Domain Directories
