@@ -106,6 +106,14 @@ class BriefingApiResourceTest {
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
     void testNPlusOneOptimization() {
+        // 0. Warm-up calls to initialize caches (Flyway, Auth, Hibernate) and stabilize metrics
+        for (int i = 0; i < 3; i++) {
+            given()
+                    .queryParam("startDate", java.time.LocalDate.now().toString())
+                    .when().get("/api/v1/briefings")
+                    .then().statusCode(200);
+        }
+
         // 1. Measure baseline with 1 briefing (created in setup)
         queryCountAssert.reset();
         given()
@@ -115,22 +123,20 @@ class BriefingApiResourceTest {
                 .statusCode(200)
                 .body("data", hasSize(1));
         
-        // The baseline includes Auth, Count, JoinFetch, and AuditLog
-        // In our current logs, this is ~5-6 queries.
-        // We don't hardcode it; we just measure it.
+        long baseline = queryCountAssert.getActualCount();
 
         // 2. Seed 5 additional briefings
-        io.quarkus.narayana.jta.QuarkusTransaction.begin();
-        for (int i = 0; i < 5; i++) {
-            BriefingBuilder.aBriefing()
-                    .withTopic(testTopic)
-                    .withTitle("Optimization Test " + i)
-                    .withMetaSummary("Summary " + i)
-                    .withBriefingDate(java.time.LocalDate.now().minusDays(i + 1))
-                    .build()
-                    .persistAndFlush();
-        }
-        io.quarkus.narayana.jta.QuarkusTransaction.commit();
+        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+            for (int i = 0; i < 5; i++) {
+                BriefingBuilder.aBriefing()
+                        .withTopic(testTopic)
+                        .withTitle("Optimization Test " + i)
+                        .withMetaSummary("Summary " + i)
+                        .withBriefingDate(java.time.LocalDate.now().minusDays(i + 1))
+                        .build()
+                        .persistAndFlush();
+            }
+        });
 
         // 3. Measure again with 6 briefings
         queryCountAssert.reset();
@@ -141,12 +147,9 @@ class BriefingApiResourceTest {
                 .statusCode(200)
                 .body("data", hasSize(6));
 
-        // If N+1 was present, this would be baseline + 5.
-        // Since it's optimized, it should be EXACTLY THE SAME as the baseline.
-        // Note: The first call might have schema/cache overhead, 
-        // so we allow a very strict range or just check it's not +5.
-        // Given we saw line 362 join fetch, we can even assert it stays < 7.
-        queryCountAssert.assertCount(5); // Adjusting based on sql_audit_2.log observation
+        // Assert the count remains identical to the baseline (Delta = 0)
+        // Mathematically proving O(1) complexity regardless of record count.
+        queryCountAssert.assertCount((int) baseline);
     }
 
     @Test
