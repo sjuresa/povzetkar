@@ -43,7 +43,7 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
                   {briefing.title}
                 </h3>
                 <div className="flex items-center space-x-2 text-xs text-[var(--color-text-secondary)]">
-                  <span className="font-medium">{briefing.topicName}</span>
+                  <span className="text-interactive">{briefing.topicName}</span>
                   <span>•</span>
                   <span>{briefing.briefingDate ? new Date(briefing.briefingDate).toLocaleDateString(i18n.language) : 'Recently'}</span>
                 </div>

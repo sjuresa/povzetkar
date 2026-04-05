@@ -79,7 +79,7 @@ export function AppShell({ children }: AppShellProps) {
             P
           </div>
           {!sidebarCollapsed && (
-            <span className="ml-3 font-bold text-xl tracking-tight text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-[var(--color-accent-primary)] transition-colors">
+            <span className="ml-3 text-header text-xl tracking-tight text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-[var(--color-accent-primary)] transition-colors">
               Povzetkar
             </span>
           )}
