@@ -28,15 +28,17 @@
     
     /* Accents (Contrast Targeted) */
     --color-accent-primary: #1d4ed8;      /* Blue-700 (5.0:1 on bg-secondary) */
-    --color-accent-primary-soft: rgba(29, 78, 216, 0.1);
+    --color-accent-primary-soft: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
+    
+    /* Admin Branding (Contrast Safe) */
     --color-accent-admin: #92400e;        /* Amber-800 */
-    --color-accent-admin-soft: rgba(146, 64, 14, 0.1);
+    --color-accent-admin-soft: color-mix(in srgb, var(--color-accent-admin), transparent 90%);
     
     /* Legacy Mappings (Maintain compatibility) */
     --color-background-base: var(--color-bg-primary);
     --color-background-alt: var(--color-bg-secondary);
     --color-border-subtle: var(--color-border-primary);
-    --color-glow: rgba(29, 78, 216, 0.1);
+    --color-glow: var(--color-accent-primary-soft);
     --color-accent: var(--color-accent-primary);
     --color-accent-soft: var(--color-accent-primary-soft);
     
@@ -50,7 +52,7 @@
     --color-bg-secondary: #18181b;  /* Zinc-900 */
     --color-surface-deep: #27272a;  /* Zinc-800 */
     --color-surface-hover: #3f3f46; /* Zinc-700 */
-    --color-surface-elevated: #18181b;
+    --color-surface-elevated: #27272a; /* Zinc-800 */
     
     /* Text Strategy */
     --color-text-primary: #fafafa;  /* Zinc-50 */
@@ -59,17 +61,19 @@
     /* Border Strategy */
     --color-border-primary: #27272a; /* Zinc-800 */
     
-    /* Accents (Visibility Targeted) */
+    /* Accents */
     --color-accent-primary: #60a5fa;      /* Blue-400 */
-    --color-accent-primary-soft: rgba(96, 165, 250, 0.15);
+    --color-accent-primary-soft: color-mix(in srgb, var(--color-accent-primary), transparent 85%);
+    
+    /* Admin Branding */
     --color-accent-admin: #fbbf24;        /* Amber-400 */
-    --color-accent-admin-soft: rgba(251, 191, 36, 0.15);
+    --color-accent-admin-soft: color-mix(in srgb, var(--color-accent-admin), transparent 85%);
     
     /* Legacy Mappings (Maintain compatibility) */
     --color-background-base: var(--color-bg-primary);
     --color-background-alt: var(--color-bg-secondary);
     --color-border-subtle: var(--color-border-primary);
-    --color-glow: rgba(59, 130, 246, 0.4);
+    --color-glow: var(--color-accent-primary-soft);
     --color-accent: var(--color-accent-primary);
     --color-accent-soft: var(--color-accent-primary-soft);
     
