@@ -103,7 +103,7 @@ public class BriefingApiResource extends BaseApiResource {
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "title"), "b");
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("b.briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "title"), "b");
         
         String hql = "SELECT b FROM Briefing b LEFT JOIN FETCH b.topic t WHERE " + filterBuilder.getQuery();
         PanacheQuery<Briefing> query = Briefing.find(hql, panacheSort, filterBuilder.getParams());
