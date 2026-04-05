@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Legal Compliance (POV-171):** Established a centralized **Third-Party Assets & Compliance Registry** (`LEGAL.md`) to track all media, code, and infrastructure dependencies.
 - **Knowledge Base Modularization (POV-172):** Decomposed the monolithic `lessons-learned.md` into 6 domain-specific guides (`database.md`, `backend-api.md`, `frontend-ux.md`, `reactive.md`, `testing.md`, `infrastructure-ops.md`) and a consolidated legacy archive.
 - **Knowledge Portal (POV-172):** Transformed the root `lessons-learned.md` into a high-visibility portal featuring curated v0.16.0 technical highlights and structured navigation.
+- **Theme Readability (POV-174):** Implemented high-priority Light Mode contrast fixes by migrating to the **Zinc Palette** semantic taxonomy. Achieved WCAG AA (4.5:1) compliance across all core dashboard surfaces.
+- **Accent Strategy (POV-174):** Introduced a high-contrast **Blue-700** primary accent for Light Mode to ensure visibility on secondary backgrounds (Neutral-100), satisfying the > 4.5:1 contrast requirement.
+- **Admin Branding (POV-174):** Standardized Admin-specific actions with a high-contrast **Amber-800** semantic accent.
+- **Shadow Standardization (POV-174):** Implemented theme-aware global shadow overrides in the Tailwind `@theme` block, ensuring shadows shift naturally with the active theme.
 
 ### Changed
 - **AI Prompt Cleanup (POV-170):** Stripped redundant UI-level headers (`## Daily Briefing`, `### 1. Executive Summary`, etc.) and metadata from the AI summarization prompts. The AI now generates "Pure Intelligence," while the System provides the structural "Frame."
@@ -25,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Job Events (POV-171):** Integrated auditory signaling into the `useJobEvents.ts` SSE listener, triggering sounds for `COMPLETED`, `FAILED`, and `ORCHESTRATION_COMPLETED` events.
 - **Documentation Architecture (POV-172):** Migrated to a modular sub-directory structure (`docs/process/lessons/`) with stripped numeric prefixes and hardened relative link integrity for improved discoverability and AI context efficiency.
 - **Unified Sharing & Export (POV-173):** Consolidated summary and briefing sharing into a single polymorphic `ExportMenu` component, granting individual summaries full Markdown and HTML export capabilities.
+- **AppShell Refactor (POV-174):** Modernized the application shell by replacing hardcoded Slate/Blue classes with the new Zinc semantic variable taxonomy.
+- **Dashboard Hardening (POV-174):** Refactored `StatCard`, `RecentBriefingList`, and `DashboardPage` to use semantic variables, resolving contrast regressions in active job indicators and icon squares.
+- **Typography Polish (POV-174):** Standardized interactive label weights to `font-weight: 500` and primary headers to `font-weight: 900` to improve legibility in bright neutral environments.
 
 ## [0.15.0] - 2026-03-30
 

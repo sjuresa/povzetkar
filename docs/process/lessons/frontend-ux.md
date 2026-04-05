@@ -108,8 +108,21 @@ Orval generates `options.headers` as `HeadersInit`. Axios expects a plain object
 - **The Trap:** Applying `first-letter:` styling directly to dynamic content. If the text starts with a space or symbol, the styling breaks.
 - **The Standard:** Verify that the first non-whitespace character is alphabetic before applying drop-cap classes.
 
+## High-Contrast Semantic Theming (POV-174)
+
+### The "Zinc Palette" & Semantic Taxonomy
+Migrating from color-specific variables (e.g., `--color-slate-50`) to semantic descriptors (e.g., `--color-bg-primary`) is essential for maintaining complex dark/light themes.
+- **The Standard:** Always define variables based on their **role (BG, Text, Accent, Surface)** rather than their literal hue.
+- **Contrast Guardrails:** In Light Mode, standard interactive accents like **Blue-600** often fail WCAG AA (4.5:1) when placed on secondary backgrounds like **Neutral-100**.
+  - **The Standard:** Use **Blue-700 (#1d4ed8)** for Light Mode to guarantee a **5.0:1** contrast minimum across all branded surfaces.
+
+### Icon/Surface Separation
+- **The Trap:** Using a "Surface Deep" (Neutral-200) background for icons on a "BG Secondary" (Neutral-100) card. This results in muddy, low-contrast UI.
+- **The Standard:** Use **BG Primary (White)** as the base for accent-colored icon squares on secondary surfaces. This reaches **6.5:1** contrast and creates a "Premium" clean look.
+
 ---
 
 ## Related Documents
 - [ADR-0004: Frontend Architecture](../../adr/0004-frontend-architecture.md)
+- [v0.16.0 UI/UX Manifesto](../../versions/v0.16.0/v0.16.0-ui-ux-manifesto.md)
 - [ADR-0006: Auditory Feedback Framework](../../adr/0006-auditory-feedback-framework.md)

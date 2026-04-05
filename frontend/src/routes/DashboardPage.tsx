@@ -48,17 +48,17 @@ export function DashboardPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
       <div className="flex items-center justify-between">
-        <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] text-glow">
+        <h2 className="text-4xl text-header text-[var(--color-text-primary)] text-glow">
           {t('dashboard.title')}
         </h2>
         <div className="flex items-center space-x-4">
           {activeJobs.length > 0 && (
-            <div className="flex items-center space-x-2 bg-[var(--color-accent-soft)] text-[var(--color-accent)] px-3 py-1.5 rounded-full border border-[var(--color-accent)]/20 animate-pulse">
+            <div className="flex items-center space-x-2 bg-[var(--color-accent-primary-soft)] text-[var(--color-accent-primary)] px-3 py-1.5 rounded-full border border-[var(--color-accent-primary)]/20 animate-pulse">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-accent-primary)] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-accent-primary)]"></span>
               </span>
-              <span className="text-xs font-medium uppercase tracking-wider">
+              <span className="text-xs text-interactive uppercase tracking-wider">
                 {activeJobs.length} {t('dashboard.activeJobs')}
               </span>
             </div>
@@ -68,10 +68,10 @@ export function DashboardPage() {
               void refetch();
             }}
             disabled={isRefetching}
-            className={`p-2 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
+            className={`p-2 rounded-xl border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
             title={t('dashboard.refresh')}
           >
-            <svg className="w-6 h-6 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-[var(--color-accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
@@ -103,7 +103,7 @@ export function DashboardPage() {
             />
           </div>
 
-          <div className="mt-12 bg-[var(--color-background-alt)]/30 p-8 rounded-3xl border border-[var(--color-border-subtle)]/50 backdrop-blur-sm">
+          <div className="mt-12 bg-[var(--color-bg-secondary)]/30 p-8 rounded-3xl border border-[var(--color-border-primary)]/50 backdrop-blur-sm">
             <RecentBriefingList briefings={data?.recentBriefings} />
           </div>
         </>

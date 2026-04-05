@@ -2,37 +2,87 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --color-primary: var(--color-blue-600);
-  --color-primary-hover: var(--color-blue-500);
+  --color-primary: var(--color-accent-primary);
+  --color-accent: var(--color-accent-primary);
+  --color-admin: var(--color-accent-admin);
+  
+  /* Shadow Overrides for theme-awareness */
+  --shadow-color: var(--color-shadow-base);
+  --shadow-sm: 0 1px 2px 0 var(--shadow-color);
+  --shadow-md: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+  --shadow-lg: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
+  --shadow-xl: 0 20px 25px -5px var(--shadow-color), 0 8px 10px -6px var(--shadow-color);
 }
 
 @layer base {
   :root {
-    --color-background-base: #f8fafc; /* slate-50 */
-    --color-background-alt: #f1f5f9;  /* slate-100 */
-    --color-surface-deep: #e2e8f0;     /* slate-200 */
-    --color-surface-hover: #cbd5e1;    /* slate-300 */
+    /* Zinc Palette (Manifesto v0.16.0) */
+    --color-bg-primary: #ffffff;    /* Neutral-50/White */
+    --color-bg-secondary: #f5f5f5;  /* Neutral-100 */
+    --color-surface-deep: #f1f1f1;  /* Neutral-200 */
+    --color-surface-hover: #e5e5e5; /* Neutral-300 */
     --color-surface-elevated: #ffffff;
-    --color-text-primary: #0f172a;     /* slate-900 */
-    --color-text-secondary: #475569;   /* slate-600 */
-    --color-border-subtle: #cbd5e1;    /* slate-300 */
-    --color-glow: rgba(59, 130, 246, 0.1);
-    --color-accent: #2563eb;          /* blue-600 */
-    --color-accent-soft: rgba(37, 99, 235, 0.1);
+    
+    /* Text Strategy */
+    --color-text-primary: #171717;  /* Neutral-900 */
+    --color-text-secondary: #525252; /* Neutral-600 */
+    
+    /* Border Strategy */
+    --color-border-primary: #e5e5e5; /* Neutral-200 */
+    
+    /* Accents (Contrast Targeted) */
+    --color-accent-primary: #1d4ed8;      /* Blue-700 (5.0:1 on bg-secondary) */
+    --color-accent-primary-soft: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
+    
+    /* Admin Branding (Contrast Safe) */
+    --color-accent-admin: #92400e;        /* Amber-800 */
+    --color-accent-admin-soft: color-mix(in srgb, var(--color-accent-admin), transparent 90%);
+    
+    /* Legacy Mappings (Maintain compatibility) */
+    --color-background-base: var(--color-bg-primary);
+    --color-background-alt: var(--color-bg-secondary);
+    --color-border-subtle: var(--color-border-primary);
+    --color-glow: var(--color-accent-primary-soft);
+    --color-accent: var(--color-accent-primary);
+    --color-accent-soft: var(--color-accent-primary-soft);
+    
+    /* Shadows */
+    --color-shadow-base: rgba(0, 0, 0, 0.05);
   }
 
   .dark {
-    --color-background-base: #020617; /* slate-950 */
-    --color-background-alt: #030712;  /* even deeper */
-    --color-surface-deep: #0f172a;     /* slate-900 */
-    --color-surface-hover: #1e293b;    /* slate-800 */
-    --color-surface-elevated: #1e293b; /* slate-800 */
-    --color-text-primary: #f8fafc;     /* slate-50 */
-    --color-text-secondary: #94a3b8;   /* slate-400 */
-    --color-border-subtle: #1e293b;    /* slate-800 */
-    --color-glow: rgba(59, 130, 246, 0.4);
-    --color-accent: #60a5fa;          /* blue-400 */
-    --color-accent-soft: rgba(59, 130, 246, 0.15);
+    /* Zinc Palette (Manifesto v0.16.0) */
+    --color-bg-primary: #09090b;    /* Zinc-950 */
+    --color-bg-secondary: #18181b;  /* Zinc-900 */
+    --color-surface-deep: #27272a;  /* Zinc-800 */
+    --color-surface-hover: #3f3f46; /* Zinc-700 */
+    --color-surface-elevated: #3f3f46; /* Zinc-700 */
+    
+    /* Text Strategy */
+    --color-text-primary: #fafafa;  /* Zinc-50 */
+    --color-text-secondary: #a1a1aa; /* Zinc-400 */
+    
+    /* Border Strategy */
+    --color-border-primary: #27272a; /* Zinc-800 */
+    
+    /* Accents */
+    --color-accent-primary: #60a5fa;      /* Blue-400 */
+    --color-accent-primary-soft: color-mix(in srgb, var(--color-accent-primary), transparent 85%);
+    
+    /* Admin Branding */
+    --color-accent-admin: #fbbf24;        /* Amber-400 */
+    --color-accent-admin-soft: color-mix(in srgb, var(--color-accent-admin), transparent 85%);
+    
+    /* Legacy Mappings (Maintain compatibility) */
+    --color-background-base: var(--color-bg-primary);
+    --color-background-alt: var(--color-bg-secondary);
+    --color-border-subtle: var(--color-border-primary);
+    --color-glow: var(--color-accent-primary-soft);
+    --color-accent: var(--color-accent-primary);
+    --color-accent-soft: var(--color-accent-primary-soft);
+    
+    /* Shadows */
+    --color-shadow-base: rgba(0, 0, 0, 0.4);
   }
 
   html, body, #root {
@@ -50,6 +100,15 @@
 }
 
 @layer utilities {
+  .text-interactive {
+    font-weight: 500;
+  }
+
+  .text-header {
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
   .glass {
     background-color: var(--color-surface-deep);
     opacity: 0.8;
