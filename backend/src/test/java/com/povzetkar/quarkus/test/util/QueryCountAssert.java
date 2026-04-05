@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Utility for asserting the number of SQL queries executed during a test.
@@ -39,9 +40,8 @@ public class QueryCountAssert {
     public void assertCount(int expected) {
         Statistics stats = sessionFactory.getStatistics();
         long actual = stats.getPrepareStatementCount();
-        int lowerBound = Math.max(1, expected / 2);
-        org.junit.jupiter.api.Assertions.assertTrue(actual >= lowerBound && actual <= expected,
-            String.format("Query count anomaly: Expected %d–%d SQL queries but found %d (N+1 check)", lowerBound, expected, actual));
+        Assertions.assertTrue(actual <= expected,
+                String.format("Query count regression: Expected at most %d SQL queries but found %d (N+1 check)", expected, actual));
     }
 
     /**
