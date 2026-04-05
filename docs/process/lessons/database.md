@@ -15,9 +15,23 @@ When building paginated APIs that return entities with collections (e.g., `User`
       return Collections.emptyList();
   }
   
+  ```java
   // Step 2: Fetch the full graph for exactly those IDs
   List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1 ORDER BY u.name ASC", userIds);
   ```
+
+## Join Fetch for To-One Associations in Paginated HQL (POV-175)
+Unlike to-many collections, fetching a **to-one** relationship (e.g., `Briefing` to `Topic`) in a paginated HQL query does **not** create a cartesian product that breaks Hibernate's limit/offset logic.
+- **The Standard:** Use `LEFT JOIN FETCH` directly in the main paged HQL for all `ManyToOne` or `OneToOne` relationships required by the DTO mapper.
+- **Root Aliasing:** Always use an explicit root alias (e.g., `SELECT b FROM Briefing b LEFT JOIN FETCH b.topic t`) to ensure that dynamic filters and sort paths applied to the `PanacheQuery` are unambiguous.
+
+## Differential Query Count Assertions (POV-175)
+When asserting database performance in integration tests, hardcoding an exact query count (e.g., `assertCount(1)`) is brittle because it captures infrastructure overhead (Auth lookups, Audit logging).
+- **The Protocol:** Use the **Differential Strategy**:
+  1. Measure the query count for **1 record**.
+  2. Seed **N additional records**.
+  3. Measure again for **N+1 records**.
+  4. Assert the count remains **identical** (Delta = 0). This mathematically proves the O(1) performance of the Join Fetch regardless of result set size.
 
 ## Source Transparency (POV-148)
 The implementation of the Source Library and Source Detail pages significantly improved system observability. Users can now "drill down" from a high-level briefing to the raw source items that informed it, closing the loop on content transparency.

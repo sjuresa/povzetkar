@@ -140,7 +140,12 @@ Version 0.13.0 focuses on **User Experience Foundations, Resilience, and Infrast
 - **Frontend (POV-148):** Regenerated the **API Client** using Orval to support the new searchable backend parameters.
 - **Frontend (POV-148):** Updated the **Source Detail** page with a "View Summary" action for all processed content items and added a formatted **Duration** column (MM:SS) to the content list.
 
+### Added
+- [POV-175] New `QueryCountAssert` utility for automated N+1 query detection in integration tests.
+
 ### Fixed
+- [POV-175] Resolved N+1 query bottleneck in `BriefingApiResource.getBriefings` by implementing HQL Join Fetch, reducing database round-trips from O(N) to O(1).
+- [POV-175] Standardized explicit HQL aliasing and sorting prefixes for consistent query construction.
 - **Logging (POV-150):** Resolved `IllegalArgumentException` in `StructuredLogger` by adding a `warn(Throwable, Object...)` overload to handle exceptions with context safely.
 - **Testing (POV-150):** Hardened the integration test suite by implementing robust data setup for `User` and `ContentSource` entities, resolving intermittent foreign key constraint violations.
 - **Backend (Orchestration):** Resolved `ContextNotActiveException` in background jobs by wrapping database operations in `QuarkusTransaction.requiringNew()`.

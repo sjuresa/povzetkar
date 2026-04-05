@@ -79,16 +79,16 @@ public class BriefingApiResource extends BaseApiResource {
 
         User user = getAuthenticatedUser();
 
-        FilterBuilder filterBuilder = new FilterBuilder("topic.user = :user")
+        FilterBuilder filterBuilder = new FilterBuilder("b.topic.user = :user")
             .withParam("user", user);
 
-        filterBuilder.and("topic.id = :topicId", "topicId", topicId);
-        filterBuilder.and("briefingDate >= :startDate", "startDate", startDate);
-        filterBuilder.and("briefingDate <= :endDate", "endDate", endDate);
+        filterBuilder.and("b.topic.id = :topicId", "topicId", topicId);
+        filterBuilder.and("b.briefingDate >= :startDate", "startDate", startDate);
+        filterBuilder.and("b.briefingDate <= :endDate", "endDate", endDate);
 
         if (sourceId != null) {
             filterBuilder.and(
-                    "EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)",
+                    "EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF b.summaries AND s.contentItem.contentSource.id = :sourceId)",
                     "sourceId", sourceId);
         }
 
@@ -98,13 +98,16 @@ public class BriefingApiResource extends BaseApiResource {
                 .replace("%", "!%")
                 .replace("_", "!_");
             filterBuilder.and(
-                    "(lower(title) LIKE :search ESCAPE '!' OR lower(metaSummary) LIKE :search ESCAPE '!')",
+                    "(lower(b.title) LIKE :search ESCAPE '!' OR lower(b.metaSummary) LIKE :search ESCAPE '!')",
                     "search", "%" + escapedSearch + "%");
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "title"));
-        PanacheQuery<Briefing> query = Briefing.find(filterBuilder.getQuery(), panacheSort, filterBuilder.getParams());
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("briefingDate").descending(), Set.of("id", "briefingDate", "topic.id", "title"), "b");
+        
+        String hql = "SELECT b FROM Briefing b LEFT JOIN FETCH b.topic t WHERE " + filterBuilder.getQuery();
+        PanacheQuery<Briefing> query = Briefing.find(hql, panacheSort, filterBuilder.getParams());
+        
         long count = query.count();
         List<BriefingSummaryDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()

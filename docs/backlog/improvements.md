@@ -60,6 +60,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Business Intelligence Dashboard:** Extend Grafana with "User Engagement" metrics, tracking the most popular content sources and briefing generation patterns per user.
 *   **Test Case Re-indexing Script:** (POV-166 follow-up) Develop a Python utility to automatically re-index `test_specification.md` and update all mapping references in Section 9 to prevent manual errors during large-scale refactors.
 *   **Traceability Heatmap:** (POV-166 follow-up) Implement a visual representation (or Markdown table generator) showing the percentage of Test Cases covered by automated Playwright scenarios (PW-X) vs. manual ones.
+*   **System-Wide Performance Hardening (POV-175 Follow-up):** Retroactively apply the `QueryCountAssert` differential testing pattern to all 50+ existing integration tests to establish a baseline and prevent N+1 regressions across the entire API surface.
 
 +### Compliance & Documentation Debt
 +
