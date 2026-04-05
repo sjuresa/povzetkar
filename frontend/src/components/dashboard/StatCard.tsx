@@ -28,7 +28,7 @@ export function StatCard({ label, value, icon, description }: Readonly<StatCardP
       </div>
       
       {/* Decorative gradient blur */}
-      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-[var(--color-accent-primary-soft)] rounded-full blur-2xl group-hover:bg-[var(--color-accent-primary)]/10 transition-colors"></div>
+      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-[var(--color-accent-primary-soft)] rounded-full blur-2xl group-hover:bg-[var(--color-accent-primary)]/25 transition-colors"></div>
     </div>
   );
 }
