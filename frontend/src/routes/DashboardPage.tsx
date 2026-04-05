@@ -58,7 +58,7 @@ export function DashboardPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-accent-primary)] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-accent-primary)]"></span>
               </span>
-              <span className="text-xs font-bold uppercase tracking-wider">
+              <span className="text-xs text-interactive uppercase tracking-wider">
                 {activeJobs.length} {t('dashboard.activeJobs')}
               </span>
             </div>
