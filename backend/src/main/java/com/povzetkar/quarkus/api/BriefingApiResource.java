@@ -79,10 +79,10 @@ public class BriefingApiResource extends BaseApiResource {
 
         User user = getAuthenticatedUser();
 
-        FilterBuilder filterBuilder = new FilterBuilder("b.topic.user = :user")
+        FilterBuilder filterBuilder = new FilterBuilder("t.user = :user")
             .withParam("user", user);
 
-        filterBuilder.and("b.topic.id = :topicId", "topicId", topicId);
+        filterBuilder.and("t.id = :topicId", "topicId", topicId);
         filterBuilder.and("b.briefingDate >= :startDate", "startDate", startDate);
         filterBuilder.and("b.briefingDate <= :endDate", "endDate", endDate);
 

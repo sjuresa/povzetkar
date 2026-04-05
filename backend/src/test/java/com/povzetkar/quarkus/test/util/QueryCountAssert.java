@@ -31,15 +31,17 @@ public class QueryCountAssert {
     }
 
     /**
-     * Asserts that exactly (or fewer) the expected number of SQL queries were prepared.
-     * In differential API testing, minor reductions in query counts (due to infra caching)
-     * are successful proofs of O(1) complexity, while any increase proves N+1 regressions.
+     * Asserts that the number of SQL queries falls within an acceptable range of the expected count.
+     * Upper bound: exact match (catches N+1 regressions where count increases).
+     * Lower bound: 50% of expected (catches silent failures where queries stop executing).
+     * Minor reductions from infrastructure caching are tolerated within this range.
      */
     public void assertCount(int expected) {
         Statistics stats = sessionFactory.getStatistics();
         long actual = stats.getPrepareStatementCount();
-        org.junit.jupiter.api.Assertions.assertTrue(actual <= expected, 
-            String.format("Performance Regression: Expected <= %d SQL queries but found %d (N+1 check)", expected, actual));
+        int lowerBound = Math.max(1, expected / 2);
+        org.junit.jupiter.api.Assertions.assertTrue(actual >= lowerBound && actual <= expected,
+            String.format("Query count anomaly: Expected %d–%d SQL queries but found %d (N+1 check)", lowerBound, expected, actual));
     }
 
     /**
