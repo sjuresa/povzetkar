@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Knowledge Portal (POV-172):** Transformed the root `lessons-learned.md` into a high-visibility portal featuring curated v0.16.0 technical highlights and structured navigation.
 - **Theme Readability (POV-174):** Implemented high-priority Light Mode contrast fixes by migrating to the **Zinc Palette** semantic taxonomy. Achieved WCAG AA (4.5:1) compliance across all core dashboard surfaces.
 - **Accent Strategy (POV-174):** Introduced a high-contrast **Blue-700** primary accent for Light Mode to ensure visibility on secondary backgrounds (Neutral-100), satisfying the > 4.5:1 contrast requirement.
-- **Admin Branding (POV-174):** Standardized Admin-specific actions with a high-contrast **Amber-600** semantic accent.
+- **Admin Branding (POV-174):** Standardized Admin-specific actions with a high-contrast **Amber-800** semantic accent.
 - **Shadow Standardization (POV-174):** Implemented theme-aware global shadow overrides in the Tailwind `@theme` block, ensuring shadows shift naturally with the active theme.
 
 ### Changed
