@@ -30,7 +30,7 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
             key={briefing.id}
             to="/briefings/$briefingId"
             params={{ briefingId: briefing.id!.toString() }}
-            className="glass-elevated p-5 rounded-2xl flex items-center justify-between group transition-all hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-accent-primary)]/30 border border-transparent shadow-sm"
+            className="glass p-5 rounded-2xl flex items-center justify-between group transition-all hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-accent-primary)]/30 border border-transparent shadow-sm"
           >
             <div className="flex items-center space-x-5">
               <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent-primary)] group-hover:bg-[var(--color-accent-primary-soft)] transition-colors shadow-sm">
@@ -39,9 +39,9 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
                 </svg>
               </div>
               <div>
-                <h3 className="text-interactive text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-primary)] transition-colors line-clamp-1">
+                <h4 className="text-interactive text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-primary)] transition-colors line-clamp-1">
                   {briefing.title}
-                </h3>
+                </h4>
                 <div className="flex items-center space-x-2 text-xs text-[var(--color-text-secondary)]">
                   <span className="text-interactive">{briefing.topicName}</span>
                   <span>•</span>
