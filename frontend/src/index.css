@@ -64,7 +64,12 @@
     --color-accent-admin-soft: rgba(251, 191, 36, 0.15);
     
     /* Legacy Mappings (Maintain compatibility) */
+    --color-background-base: var(--color-bg-primary);
+    --color-background-alt: var(--color-bg-secondary);
+    --color-border-subtle: var(--color-border-primary);
     --color-glow: rgba(59, 130, 246, 0.4);
+    --color-accent: var(--color-accent-primary);
+    --color-accent-soft: var(--color-accent-primary-soft);
     
     /* Shadows */
     --color-shadow-base: rgba(0, 0, 0, 0.4);
