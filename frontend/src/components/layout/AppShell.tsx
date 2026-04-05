@@ -219,10 +219,10 @@ export function AppShell({ children }: AppShellProps) {
               className="flex items-center space-x-3 pr-6 border-r border-[var(--color-border-primary)] group hover:bg-[var(--color-surface-deep)]/50 p-1.5 rounded-xl transition-all"
             >
                <div className="text-right hidden sm:block">
-                 <p className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight group-hover:text-[var(--color-accent-primary)] transition-colors">{user?.name || 'User'}</p>
+                 <p className="text-sm text-interactive text-[var(--color-text-primary)] leading-tight group-hover:text-[var(--color-accent-primary)] transition-colors">{user?.name || 'User'}</p>
                  <p className="text-xs text-[var(--color-text-secondary)] leading-tight">{user?.email}</p>
                </div>
-               <div className="w-9 h-9 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center font-semibold text-[var(--color-text-secondary)] group-hover:border-[var(--color-accent-primary)] group-hover:text-[var(--color-accent-primary)] transition-all">
+               <div className="w-9 h-9 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-interactive text-[var(--color-text-secondary)] group-hover:border-[var(--color-accent-primary)] group-hover:text-[var(--color-accent-primary)] transition-all">
                  {user?.name?.charAt(0) || 'U'}
                </div>
             </Link>

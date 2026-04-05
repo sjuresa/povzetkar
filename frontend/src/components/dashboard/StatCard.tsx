@@ -20,7 +20,7 @@ export function StatCard({ label, value, icon, description }: Readonly<StatCardP
             <p className="text-xs text-[var(--color-text-secondary)] mt-2 font-medium opacity-70">{description}</p>
           )}
         </div>
-        <div className="p-3 bg-[var(--color-accent-primary-soft)] border border-[var(--color-accent-primary)]/30 shadow-lg rounded-2xl text-[var(--color-accent-primary)] group-hover:scale-110 group-hover:bg-[var(--color-accent-primary)]/30 transition-all duration-300 flex items-center justify-center">
+        <div className="p-3 bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] shadow-lg rounded-2xl text-[var(--color-accent-primary)] group-hover:scale-110 group-hover:bg-[var(--color-accent-primary-soft)] transition-all duration-300 flex items-center justify-center">
           <div className="filter drop-shadow-[0_0_8px_var(--color-accent-primary-soft)]">
             {icon}
           </div>
