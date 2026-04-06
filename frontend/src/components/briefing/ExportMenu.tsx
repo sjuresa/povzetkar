@@ -37,6 +37,14 @@ import rehypeSanitize from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
 
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
+  .use(rehypeSanitize)
+  .use(rehypeStringify);
+
 interface ExportMenuProps {
   data: {
     id?: number;
@@ -227,21 +235,9 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     const result = await ensureData();
     if (!result) return;
 
-    // Optimized Markdown to HTML rendering using unified directly to save bundle size
-    const renderToHtml = (markdown: string) => {
-      return unified()
-        .use(remarkParse)
-        .use(remarkGfm)
-        .use(remarkRehype, { allowDangerousHtml: true })
-        .use(rehypeRaw)
-        .use(rehypeSanitize)
-        .use(rehypeStringify)
-        .processSync(markdown)
-        .toString();
-    };
-
-    const summaryHtml = renderToHtml(result.metaSummary || '');
-    const textHtml = renderToHtml(result.content || '');
+    // Optimized Markdown to HTML rendering using a shared unified processor instance
+    const summaryHtml = processor.processSync(result.metaSummary || '').toString();
+    const textHtml = processor.processSync(result.content || '').toString();
 
     const htmlContent = generateBriefingHtml({
       title: data.title,
