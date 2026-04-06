@@ -9,6 +9,11 @@ function generateUuid(): string {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID();
   }
+  if (globalThis.crypto?.getRandomValues) {
+    return (([1e7] as any) + -1e3 + -4e3 + -8e3 + -1e11).replaceAll(/[018]/g, (c: any) =>
+      (c ^ (globalThis.crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+    );
+  }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, (c) => {
     const r = Math.trunc(Math.random() * 16);
     const v = c === 'x' ? r : (r & 0x3) | 0x8;

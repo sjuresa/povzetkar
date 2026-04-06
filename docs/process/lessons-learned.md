@@ -29,7 +29,7 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 > [!TIP]
 > **Bundle Optimization & Render Consolidation (POV-176)**: 
-> We unified HTML export generation onto `ReactDOMServer.renderToString(<ReactMarkdown>)`. This eliminates the need for separate Markdown parsers (`marked`) and HTML sanitizers (`dompurify`), delegating XSS safety directly to React's native string serialization engines.
+> We unified HTML export generation onto a lean, direct **unified pipeline** (`remark-parse`, `remark-gfm`, `remark-rehype`, `rehype-stringify`). This avoids pulling the expensive `react-dom/server` engine into the browser bundle while maintaining 100% Markdown parity and intrinsic XSS safety.
 
 ---
 

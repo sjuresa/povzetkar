@@ -28,11 +28,13 @@ import {
   getGetApiV1ContentItemsIdQueryKey
 } from '../../api/generated/content-items/content-items';
 import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
-import ReactDOMServer from 'react-dom/server';
-import ReactMarkdown from 'react-markdown';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
-import remarkGfm from 'remark-gfm';
+import rehypeStringify from 'rehype-stringify';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
 
 interface ExportMenuProps {
@@ -225,17 +227,21 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     const result = await ensureData();
     if (!result) return;
 
-    // Use renderToString and ReactMarkdown with rehype plugins to support safe HTML and GFM
-    const summaryHtml = ReactDOMServer.renderToString(
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-        {result.metaSummary || ''}
-      </ReactMarkdown>
-    );
-    const textHtml = ReactDOMServer.renderToString(
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-        {result.content || ''}
-      </ReactMarkdown>
-    );
+    // Optimized Markdown to HTML rendering using unified directly to save bundle size
+    const renderToHtml = (markdown: string) => {
+      return unified()
+        .use(remarkParse)
+        .use(remarkGfm)
+        .use(remarkRehype, { allowDangerousHtml: true })
+        .use(rehypeRaw)
+        .use(rehypeSanitize)
+        .use(rehypeStringify)
+        .processSync(markdown)
+        .toString();
+    };
+
+    const summaryHtml = renderToHtml(result.metaSummary || '');
+    const textHtml = renderToHtml(result.content || '');
 
     const htmlContent = generateBriefingHtml({
       title: data.title,

@@ -99,6 +99,10 @@ Orval generates `options.headers` as `HeadersInit`. Axios expects a plain object
 
 ## Client-Side SEO & Premium Export (POV-162)
 
+### Bundle-Aware Markdown Rendering (POV-176)
+- **The Trap:** Using `ReactDOMServer.renderToString` in the browser to generate HTML from Markdown. This pulls the entire React serialization engine into the bundle (~150KB overhead).
+- **The Standard:** Use the **unified processor** directly (`remark-parse`, `remark-rehype`, `rehype-stringify`). This reuses the same underlying AST logic as `react-markdown` but with a much lighter footprint for static string generation.
+
 ### Dynamic Metadata in SPAs (React Helmet)
 - **The Standard:** Use `react-helmet-async` to inject dynamic tags (`og:title`, `og:description`) at the route level. Deriving metadata from the specific content item ensures rich social previews.
 
