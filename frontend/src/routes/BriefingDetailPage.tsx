@@ -21,6 +21,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, BriefingItemDTO } from '../api/generated/model';
+import { useOnboardingStore } from '../store/onboardingStore';
 
 /**
  * BriefingDetailPage renders the full content of a single briefing.
@@ -49,6 +50,14 @@ export function BriefingDetailPage() {
   });
 
   const briefing = response?.data as BriefingDetailDTO | undefined;
+
+  // Step 4 onboarding: mark 'read' when the user lands on a briefing
+  const markStepComplete = useOnboardingStore((s) => s.markStepComplete);
+  useEffect(() => {
+    if (briefing) {
+      markStepComplete('read');
+    }
+  }, [briefing, markStepComplete]);
 
   if (isLoading) {
     return (

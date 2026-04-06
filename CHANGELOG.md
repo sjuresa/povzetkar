@@ -19,7 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Accent Strategy (POV-174):** Introduced a high-contrast **Blue-700** primary accent for Light Mode to ensure visibility on secondary backgrounds (Neutral-100), satisfying the > 4.5:1 contrast requirement.
 - **Admin Branding (POV-174):** Standardized Admin-specific actions with a high-contrast **Amber-800** semantic accent.
 - **Shadow Standardization (POV-174):** Implemented theme-aware global shadow overrides in the Tailwind `@theme` block, ensuring shadows shift naturally with the active theme.
-- [POV-175] New `QueryCountAssert` utility for automated N+1 query detection in integration tests.
+- **QueryCountAssert (POV-175):** New utility for automated N+1 query detection in integration tests.
+- **Gamified Onboarding (POV-177):** Implemented a 5-step interactive "Golden Path" checklist (Topic, Source, Trigger, Read, Share) to drive user engagement. Features progressive disclosure (pill vs. list) and a celebration state at 100% completion.
+- **Onboarding Persistence (POV-177):** Developed a hybrid Zustand store (`povzetkar_onboarding`) with LocalStorage persistence and automated state synchronization from `DashboardDTO` for existing users.
+- **Visual How-To Guides (POV-177):** Created 5 minimalist AI-generated illustrations and numbered sub-steps for every onboarding goal, providing clear instructions within the application context.
+- **Action Triggers (POV-177):** Integrated automated step completion triggers across `TopicForm`, `TriggerOrchestrationModal`, `BriefingDetailPage`, and `ExportMenu` for a seamless "learning by doing" experience.
+- **Bilingual Onboarding (POV-177):** Full EN/SL localization for all checklist items and modal instructions.
 
 ### Changed
 - **Bundle Optimization (POV-176):** Reduced frontend JavaScript bundle size by replacing the `uuid` package with native `crypto.randomUUID()` and consolidating HTML export parsing onto the existing `react-markdown` engine, completely eliminating `marked` and `dompurify` dependencies from the payload.

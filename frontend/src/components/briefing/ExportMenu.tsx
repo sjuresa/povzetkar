@@ -28,6 +28,7 @@ import {
   getGetApiV1ContentItemsIdQueryKey
 } from '../../api/generated/content-items/content-items';
 import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
+import { useOnboardingStore } from '../../store/onboardingStore';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
@@ -79,7 +80,10 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
   const onShareSuccess = (invalidationAction: () => void, successMsg: string, isShare: boolean) => (res?: unknown) => {
     if (isShare) {
       const newUuid = (res as { data: string }).data;
-      if (newUuid) setLocalUuid(newUuid);
+      if (newUuid) {
+        setLocalUuid(newUuid);
+        useOnboardingStore.getState().markStepComplete('share');
+      }
     } else {
       setLocalUuid(null);
     }

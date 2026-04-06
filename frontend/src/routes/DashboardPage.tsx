@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
 import { StatCard, StatCardSkeleton } from '../components/dashboard/StatCard';
 import type { DashboardDTO } from '../api/generated/model';
@@ -7,6 +8,8 @@ import { useEventStore } from '../store/eventStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
+import { OnboardingChecklist } from '../components/dashboard/OnboardingChecklist';
+import { useOnboardingStore } from '../store/onboardingStore';
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
@@ -23,6 +26,18 @@ export function DashboardPage() {
   });
 
   const data = response?.data as DashboardDTO | undefined;
+
+  const { syncFromDashboard, dismissed } = useOnboardingStore();
+
+  // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
+  useEffect(() => {
+    if (data) {
+      syncFromDashboard(
+        data.stats?.activeTopics,
+        (data.stats?.briefingsGeneratedLast7Days ?? 0) > 0
+      );
+    }
+  }, [data, syncFromDashboard]);
 
   if (isLoading) {
     return (
@@ -47,6 +62,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
+      {!dismissed && <OnboardingChecklist />}
       <div className="flex items-center justify-between">
         <h2 className="text-4xl text-header text-[var(--color-text-primary)] text-glow">
           {t('dashboard.title')}

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { SourceSearchModal } from '../../components/topics/SourceSearchModal';
+import { useOnboardingStore } from '../../store/onboardingStore';
 
 const topicSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -106,6 +107,10 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         };
         await createTopic({ data: create });
         toast.success(t('topics.form.save_success_create'));
+        useOnboardingStore.getState().markStepComplete('topic');
+        if (selectedSources.length > 0) {
+          useOnboardingStore.getState().markStepComplete('source');
+        }
       }
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
       onSuccess();

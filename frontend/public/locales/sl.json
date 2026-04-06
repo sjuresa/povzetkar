@@ -450,5 +450,62 @@
         "htmlSuccess": "HTML uspešno izvožen (pripravljeno za tisk)"
       }
     }
+  },
+  "onboarding": {
+    "title": "Vodnik vašega osebnega asistenta",
+    "subtitle": "Opravite teh 5 korakov za popolno obvladovanje vaše avtomatizirane inteligence.",
+    "progress_label": "{{percent}}% opravljeno",
+    "expand_label": "Vaš vodnik",
+    "collapse": "Pomanjšaj",
+    "learn_more": "Kako?",
+    "close_modal": "Razumem",
+    "celebration_title": "🎉 Vodnik zaključen!",
+    "celebration_subtitle": "Vaš asistent je popolnoma konfiguriran in pripravljen.",
+    "step": {
+      "topic": {
+        "title": "Ustvarite svojo prvo Temo",
+        "desc": "Teme združujejo vaše interese za bolj osredotočene povzetke.",
+        "cta": "Pojdi na Teme",
+        "how1": "Kliknite \"Teme\" v levem meniju.",
+        "how2": "Kliknite \"Nova tema\" za odprtje obrazca.",
+        "how3": "Poimenujte temo (npr. \"Novice o AI\") in kliknite \"Ustvari temo\"."
+      },
+      "source": {
+        "title": "Dodajte prvi vir vsebine",
+        "desc": "Prilepite YouTube povezavo ali RSS feed za začetek zbiranja znanja.",
+        "cta": "Pojdi na Teme",
+        "how1": "Odprite obstoječo temo na strani Tem.",
+        "how2": "Kliknite \"Dodaj vir\" v razdelku Viri.",
+        "how3": "Poiščite vir ali registrirajte nov YouTube kanal / RSS feed.",
+        "how4": "Shranite temo za potrditev vira."
+      },
+      "trigger": {
+        "title": "Zaženite orkestracijo",
+        "desc": "Dovolite asistentu, da obdela vaše vire in pripravi povzetke.",
+        "cta": "Pojdi na Teme",
+        "how1": "Pojdite na stran Tem.",
+        "how2": "Poiščite svojo aktivno temo in kliknite \"Zaženi zdaj\".",
+        "how3": "Nastavite časovni razpon in kliknite \"Začni orkestracijo\".",
+        "how4": "Počakajte ~30 sekund, da asistent obdela vsebino."
+      },
+      "read": {
+        "title": "Preberite svoj prvi Povzetek",
+        "desc": "Preglejte znanje, ki ga je za vas pripravil vaš osebni asistent.",
+        "cta": "Pojdi v Knjižnico",
+        "how1": "Pojdite v \"Knjižnico povzetkov\" v stranski vrstici.",
+        "how2": "Poiščite vaš zadnji ustvarjeni povzetek.",
+        "how3": "Kliknite povzetek za ogled celotne vsebine.",
+        "how4": "Preberite izvršni povzetek in podrobne vpoglede."
+      },
+      "share": {
+        "title": "Delite svoja spoznanja",
+        "desc": "Delite svoje odkritje s svetom s pomočjo javne povezave.",
+        "cta": "Pojdi v Knjižnico",
+        "how1": "Odprite katerikoli povzetek iz knjižnice.",
+        "how2": "Kliknite gumb \"Izvozi\" v glavi strani.",
+        "how3": "Izberite \"Omogoči deljenje\".",
+        "how4": "Kopirajte javno povezavo in jo delite s komer koli."
+      }
+    }
   }
 }

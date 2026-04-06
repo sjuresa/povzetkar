@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { DashboardPage } from './DashboardPage';
 import { useGetApiV1Dashboard } from '../api/generated/dashboard/dashboard';
 import { useEventStore } from '../store/eventStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 
 // Mock the API hooks and store
 vi.mock('../api/generated/dashboard/dashboard', () => ({
@@ -20,13 +21,35 @@ vi.mock('../store/eventStore', () => ({
   useEventStore: vi.fn(),
 }));
 
+vi.mock('../store/onboardingStore', () => ({
+  useOnboardingStore: vi.fn(),
+}));
+
+vi.mock('../components/dashboard/OnboardingChecklist', () => ({
+  OnboardingChecklist: () => <div data-testid="onboarding-checklist">Checklist</div>,
+}));
+
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
+const mockSyncFromDashboard = vi.fn();
+
 const renderDashboard = () => {
   return render(<DashboardPage />);
 };
+
+function setupOnboardingStore(dismissed = false) {
+  vi.mocked(useOnboardingStore).mockReturnValue({
+    dismissed,
+    syncFromDashboard: mockSyncFromDashboard,
+    steps: { topic: false, source: false, trigger: false, read: false, share: false },
+    collapsed: false,
+    markStepComplete: vi.fn(),
+    toggleCollapsed: vi.fn(),
+    setDismissed: vi.fn(),
+  } as any);
+}
 
 describe('DashboardPage', () => {
   it('renders loading state initially', () => {
@@ -39,6 +62,7 @@ describe('DashboardPage', () => {
     } as any);
 
     vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore();
 
     renderDashboard();
     expect(screen.queryByText('dashboard.title')).not.toBeInTheDocument();
@@ -49,11 +73,12 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { data: { stats: { activeTopics: 0 }, recentBriefings: [] } },
+      data: { data: { stats: { activeTopics: 0, briefingsGeneratedLast7Days: 0 }, recentBriefings: [] } },
       refetch: vi.fn(),
     } as any);
 
     vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore();
 
     renderDashboard();
     expect(screen.getByText(/dashboard.empty.welcome/i)).toBeInTheDocument();
@@ -77,6 +102,7 @@ describe('DashboardPage', () => {
     } as any);
 
     vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore();
 
     renderDashboard();
     expect(screen.getByText('dashboard.title')).toBeInTheDocument();
@@ -85,17 +111,57 @@ describe('DashboardPage', () => {
     expect(screen.getByText('AI News')).toBeInTheDocument();
   });
 
+  it('renders OnboardingChecklist when dismissed is false', () => {
+    vi.mocked(useGetApiV1Dashboard).mockReturnValue({
+      isLoading: false, isError: false, isRefetching: false,
+      data: { data: { stats: { activeTopics: 0, briefingsGeneratedLast7Days: 0 }, recentBriefings: [] } },
+      refetch: vi.fn(),
+    } as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore(false);
+
+    renderDashboard();
+    expect(screen.getByTestId('onboarding-checklist')).toBeInTheDocument();
+  });
+
+  it('does not render OnboardingChecklist when dismissed is true', () => {
+    vi.mocked(useGetApiV1Dashboard).mockReturnValue({
+      isLoading: false, isError: false, isRefetching: false,
+      data: { data: { stats: { activeTopics: 0, briefingsGeneratedLast7Days: 0 }, recentBriefings: [] } },
+      refetch: vi.fn(),
+    } as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore(true);
+
+    renderDashboard();
+    expect(screen.queryByTestId('onboarding-checklist')).not.toBeInTheDocument();
+  });
+
+  it('calls syncFromDashboard with correct args when data loads', () => {
+    vi.mocked(useGetApiV1Dashboard).mockReturnValue({
+      isLoading: false, isError: false, isRefetching: false,
+      data: { data: { stats: { activeTopics: 3, briefingsGeneratedLast7Days: 5 }, recentBriefings: [] } },
+      refetch: vi.fn(),
+    } as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore();
+
+    renderDashboard();
+    expect(mockSyncFromDashboard).toHaveBeenCalledWith(3, true);
+  });
+
   it('triggers refetch when refresh button is clicked', () => {
     const refetch = vi.fn();
     vi.mocked(useGetApiV1Dashboard).mockReturnValue({
       isLoading: false,
       isError: false,
       isRefetching: false,
-      data: { data: { stats: { activeTopics: 5 } } },
+      data: { data: { stats: { activeTopics: 5, briefingsGeneratedLast7Days: 0 } } },
       refetch,
     } as any);
 
     vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore();
 
     renderDashboard();
     const refreshBtn = screen.getByTitle('dashboard.refresh');

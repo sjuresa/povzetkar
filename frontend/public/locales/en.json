@@ -450,5 +450,62 @@
         "htmlSuccess": "HTML exported (B&W Print Ready)"
       }
     }
+  },
+  "onboarding": {
+    "title": "Your Assistant's Guide",
+    "subtitle": "Complete these 5 steps to master your automated intelligence.",
+    "progress_label": "{{percent}}% complete",
+    "expand_label": "Your Guide",
+    "collapse": "Minimize",
+    "learn_more": "How?",
+    "close_modal": "Got it",
+    "celebration_title": "🎉 Guide Complete!",
+    "celebration_subtitle": "Your assistant is fully configured and ready.",
+    "step": {
+      "topic": {
+        "title": "Create your first Topic",
+        "desc": "Topics group your interests together for focused briefings.",
+        "cta": "Go to Topics",
+        "how1": "Click \"Topics\" in the left navigation.",
+        "how2": "Click \"New Topic\" to open the creation form.",
+        "how3": "Give your topic a name (e.g., \"AI News\") and click \"Create Topic\"."
+      },
+      "source": {
+        "title": "Add a Content Source",
+        "desc": "Paste a YouTube link or RSS feed to start fetching knowledge.",
+        "cta": "Go to Topics",
+        "how1": "Open your topic from the Topics page.",
+        "how2": "Click \"Add Source\" in the Sources section.",
+        "how3": "Search for an existing source or register a new YouTube / RSS feed.",
+        "how4": "Save your topic to confirm the source."
+      },
+      "trigger": {
+        "title": "Trigger Orchestration",
+        "desc": "Let your assistant process your sources and create summaries.",
+        "cta": "Go to Topics",
+        "how1": "Go to the Topics page.",
+        "how2": "Find your active topic and click \"Run now\".",
+        "how3": "Configure the date range and click \"Start Orchestration\".",
+        "how4": "Wait ~30 seconds for your assistant to process."
+      },
+      "read": {
+        "title": "Read your first Briefing",
+        "desc": "Review the intelligence gathered by your assistant.",
+        "cta": "Go to Briefings",
+        "how1": "Go to the \"Briefing Library\" from the sidebar.",
+        "how2": "Find your latest generated briefing.",
+        "how3": "Click the briefing to open the full content view.",
+        "how4": "Read the executive summary and detailed insights."
+      },
+      "share": {
+        "title": "Share an Insight",
+        "desc": "Share your discovery with the world using a public link.",
+        "cta": "Go to Briefings",
+        "how1": "Open any briefing from the Briefing Library.",
+        "how2": "Click the \"Export\" button in the header.",
+        "how3": "Select \"Enable Share Link\".",
+        "how4": "Copy the public link and share it with anyone."
+      }
+    }
   }
 }

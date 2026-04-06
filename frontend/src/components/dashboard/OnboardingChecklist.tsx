@@ -1,0 +1,202 @@
+import { useState, useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { useOnboardingStore, type OnboardingStep } from '../../store/onboardingStore';
+import { OnboardingStepModal } from './OnboardingStepModal';
+
+const ORDERED_STEPS: OnboardingStep[] = ['topic', 'source', 'trigger', 'read', 'share'];
+
+const STEP_ROUTES: Record<OnboardingStep, string> = {
+  topic: '/topics',
+  source: '/topics',
+  trigger: '/topics',
+  read: '/briefings',
+  share: '/briefings',
+};
+
+export function OnboardingChecklist() {
+  const { t } = useTranslation();
+  const { steps, dismissed, collapsed, toggleCollapsed, setDismissed } = useOnboardingStore();
+  const [openModalStep, setOpenModalStep] = useState<OnboardingStep | null>(null);
+
+  const completedCount = Object.values(steps).filter(Boolean).length;
+  const progress = Math.round((completedCount / ORDERED_STEPS.length) * 100);
+  const activeStep = ORDERED_STEPS.find((s) => !steps[s]) ?? null;
+  const isComplete = progress === 100 && !dismissed;
+
+  // Auto-dismiss after 5s when all steps complete
+  useEffect(() => {
+    if (!isComplete) return;
+    const timer = setTimeout(() => {
+      setDismissed(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isComplete, setDismissed]);
+
+  if (dismissed) return null;
+
+  // Collapsed pill state
+  if (collapsed) {
+    return (
+      <button
+        id="onboarding-checklist-pill"
+        onClick={toggleCollapsed}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all text-sm font-medium text-[var(--color-text-secondary)] animate-in fade-in duration-300"
+        aria-label={`${t('onboarding.expand_label')} — ${t('onboarding.progress_label', { percent: progress })}`}
+      >
+        <span className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
+        <span className="text-[var(--color-text-primary)] font-semibold">{t('onboarding.expand_label')}</span>
+        <span className="text-xs opacity-60">·</span>
+        <span className="text-xs">{t('onboarding.progress_label', { percent: progress })}</span>
+        <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
+      </button>
+    );
+  }
+
+  // Celebration state (100% complete)
+  if (isComplete) {
+    return (
+      <div
+        id="onboarding-celebration"
+        className="w-full glass border border-[var(--color-accent-primary)]/40 rounded-3xl p-8 text-center space-y-3 animate-in fade-in zoom-in-95 duration-500 bg-[var(--color-accent-primary-soft)]"
+      >
+        <p className="text-3xl font-black text-[var(--color-text-primary)]">{t('onboarding.celebration_title')}</p>
+        <p className="text-[var(--color-text-secondary)]">{t('onboarding.celebration_subtitle')}</p>
+        <div className="flex justify-center gap-1 pt-2">
+          {ORDERED_STEPS.map((s) => (
+            <Check key={s} className="w-5 h-5 text-[var(--color-accent-primary)]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Full expanded checklist
+  return (
+    <>
+      <div
+        id="onboarding-checklist"
+        className="w-full glass border border-[var(--color-border-primary)]/60 rounded-3xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-500"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4">
+          <div className="flex-1 min-w-0 mr-4">
+            <h3 className="text-sm font-bold text-[var(--color-text-primary)] uppercase tracking-wider mb-1.5">
+              {t('onboarding.title')}
+            </h3>
+            {/* Progress bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 rounded-full bg-[var(--color-border-primary)]/40 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
+                  role="progressbar"
+                  aria-valuenow={progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                />
+              </div>
+              <span className="text-xs font-bold text-[var(--color-accent-primary)] whitespace-nowrap">
+                {t('onboarding.progress_label', { percent: progress })}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={toggleCollapsed}
+            id="onboarding-collapse-btn"
+            className="p-1.5 rounded-xl text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] transition-colors shrink-0"
+            aria-label={t('onboarding.collapse')}
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Step list */}
+        <div className="px-3 pb-3 space-y-1">
+          {ORDERED_STEPS.map((step, idx) => {
+            const isComplete = steps[step];
+            const isActive = step === activeStep;
+
+            return (
+              <div
+                key={step}
+                id={`onboarding-step-${step}`}
+                className={`rounded-2xl px-4 py-3 transition-all ${
+                  isActive
+                    ? 'bg-[var(--color-accent-primary-soft)] border border-[var(--color-accent-primary)]/20'
+                    : isComplete
+                    ? 'opacity-60'
+                    : 'hover:bg-[var(--color-surface-hover)]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Step icon */}
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                      isComplete
+                        ? 'bg-[var(--color-accent-primary)] text-white'
+                        : isActive
+                        ? 'border-2 border-[var(--color-accent-primary)] text-[var(--color-accent-primary)]'
+                        : 'border-2 border-[var(--color-border-primary)] text-[var(--color-text-secondary)]'
+                    }`}
+                  >
+                    {isComplete ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <span className="text-[10px] font-bold">{idx + 1}</span>
+                    )}
+                  </div>
+
+                  {/* Step title */}
+                  <span
+                    className={`flex-1 text-sm font-semibold ${
+                      isComplete
+                        ? 'line-through text-[var(--color-text-secondary)]'
+                        : 'text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    {t(`onboarding.step.${step}.title`)}
+                  </span>
+
+                  {/* Actions (only on incomplete steps) */}
+                  {!isComplete && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => setOpenModalStep(step)}
+                        id={`onboarding-step-${step}-how`}
+                        className="text-xs text-[var(--color-accent-primary)] hover:underline font-medium"
+                      >
+                        {t('onboarding.learn_more')}
+                      </button>
+                      <Link
+                        to={STEP_ROUTES[step]}
+                        id={`onboarding-step-${step}-cta`}
+                        className={`text-xs font-bold px-3 py-1 rounded-xl transition-all active:scale-95 ${
+                          isActive
+                            ? 'bg-[var(--color-accent-primary)] text-white hover:opacity-90'
+                            : 'border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'
+                        }`}
+                      >
+                        {t(`onboarding.step.${step}.cta`)}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Active step description */}
+                {isActive && (
+                  <p className="mt-2 ml-9 text-xs text-[var(--color-text-secondary)] leading-relaxed animate-in fade-in slide-in-from-top-1 duration-300">
+                    {t(`onboarding.step.${step}.desc`)}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <OnboardingStepModal step={openModalStep} onClose={() => setOpenModalStep(null)} />
+    </>
+  );
+}
