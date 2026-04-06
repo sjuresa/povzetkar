@@ -28,9 +28,22 @@ import {
   getGetApiV1ContentItemsIdQueryKey
 } from '../../api/generated/content-items/content-items';
 import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import rehypeStringify from 'rehype-stringify';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
+
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
+  .use(rehypeSanitize)
+  .use(rehypeStringify);
 
 interface ExportMenuProps {
   data: {
@@ -222,12 +235,13 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     const result = await ensureData();
     if (!result) return;
 
-    // Use marked to parse markdown to HTML and sanitize the output
-    const unsafeSummaryHtml = marked.parse(result.metaSummary || '') as string;
-    const unsafeContentHtml = marked.parse(result.content || '') as string;
-    
-    const summaryHtml = DOMPurify.sanitize(unsafeSummaryHtml);
-    const textHtml = DOMPurify.sanitize(unsafeContentHtml);
+    // Optimized Markdown to HTML rendering using a shared unified processor instance in parallel
+    const [summaryVFile, textVFile] = await Promise.all([
+      processor.process(result.metaSummary || ''),
+      processor.process(result.content || '')
+    ]);
+    const summaryHtml = summaryVFile.toString();
+    const textHtml = textVFile.toString();
 
     const htmlContent = generateBriefingHtml({
       title: data.title,

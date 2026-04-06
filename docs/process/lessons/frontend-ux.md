@@ -13,6 +13,10 @@ Tailwind CSS 4 introduces a 'CSS-first' approach.
 - **The Trap:** Trying to configure Tailwind 4 using a legacy `tailwind.config.js` with unsupported internal plugins.
 - **The Standard:** Leverage `@tailwindcss/vite` and import Tailwind directly in your CSS: `@import 'tailwindcss';`. Keep configurations in CSS variables where possible.
 
+### Bundle Visualization (POV-176)
+- **The Trap:** Unknowingly introducing bloated duplicate libraries.
+- **The Standard:** Use `vite-bundle-visualizer`. It acts as a zero-config integration point to visually dissect chunk proportions. Run `npm run build:stats` to immediately review payload distribution and safeguard the 1.1MB budget when merging UX enhancements.
+
 ## API Integration (Orval & Axios)
 
 ### Strict Linting in API Clients
@@ -94,6 +98,10 @@ Orval generates `options.headers` as `HeadersInit`. Axios expects a plain object
 - **The Standard:** Implement a dedicated **Black & White print-ready HTML export**. Use high-contrast serif typography (`Times New Roman`, `Georgia`). Ensure background colors are removed and text is strictly black.
 
 ## Client-Side SEO & Premium Export (POV-162)
+
+### Bundle-Aware Markdown Rendering (POV-176)
+- **The Trap:** Using `ReactDOMServer.renderToString` in the browser to generate HTML from Markdown. This pulls the entire React serialization engine into the bundle (~150KB overhead).
+- **The Standard:** Use the **unified processor** asynchronously (`.process()`). Reusing a shared module-level processor instance and awaiting the conversion ensures the main thread remains responsive even for large briefing payloads, while maintaining a minimal bundle footprint.
 
 ### Dynamic Metadata in SPAs (React Helmet)
 - **The Standard:** Use `react-helmet-async` to inject dynamic tags (`og:title`, `og:description`) at the route level. Deriving metadata from the specific content item ensures rich social previews.
