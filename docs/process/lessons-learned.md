@@ -27,6 +27,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **N+1 Optimization & Differential Testing (POV-175)**: 
 > We have eliminated O(N) database bottlenecks in the Briefing API using **HQL Join Fetching**. Performance is now verified via **Differential Query Assertions** (math proof of O(1) complexity), preventing regressions in the CI/CD pipeline.
 
+> [!TIP]
+> **Bundle Optimization & Render Consolidation (POV-176)**: 
+> We unified HTML export generation onto `ReactDOMServer.renderToString(<ReactMarkdown>)`. This eliminates the need for separate Markdown parsers (`marked`) and HTML sanitizers (`dompurify`), delegating XSS safety directly to React's native string serialization engines.
+
 ---
 
 ## 📚 Domain Directories

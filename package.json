@@ -8,6 +8,7 @@
     "dev:backend": "cd backend && ../mvnw quarkus:dev",
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend && ./mvnw clean install",
+    "build:stats": "npm run build:stats --prefix frontend",
     "lint": "npm run lint --prefix frontend",
     "test": "npm-run-all test:backend test:frontend",
     "test:backend": "./mvnw test",

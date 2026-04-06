@@ -1,6 +1,15 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+function generateUuid(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, (c) => {
+    const r = Math.trunc(Math.random() * 16);
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 import logger from '../util/logger';
 import { useAuthStore } from '../store/authStore';
 import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
@@ -67,13 +76,13 @@ axiosRetry(client, {
 client.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // 1. Inject Correlation ID for every request
-    config.headers['X-Correlation-ID'] = uuidv4();
+    config.headers['X-Correlation-ID'] = generateUuid();
 
     // 2. Inject Idempotency Key for /commands/* POST requests
     if (config.method?.toLowerCase() === 'post' && config.url?.includes('/commands/')) {
       const customConfig = config as CustomRequestConfig;
       if (!customConfig.idempotencyKey) {
-        customConfig.idempotencyKey = uuidv4();
+        customConfig.idempotencyKey = generateUuid();
       }
       config.headers['Idempotency-Key'] = customConfig.idempotencyKey;
     }

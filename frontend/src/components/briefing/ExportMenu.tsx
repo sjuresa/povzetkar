@@ -28,8 +28,8 @@ import {
   getGetApiV1ContentItemsIdQueryKey
 } from '../../api/generated/content-items/content-items';
 import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import ReactDOMServer from 'react-dom/server';
+import ReactMarkdown from 'react-markdown';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
 
 interface ExportMenuProps {
@@ -222,12 +222,9 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     const result = await ensureData();
     if (!result) return;
 
-    // Use marked to parse markdown to HTML and sanitize the output
-    const unsafeSummaryHtml = marked.parse(result.metaSummary || '') as string;
-    const unsafeContentHtml = marked.parse(result.content || '') as string;
-    
-    const summaryHtml = DOMPurify.sanitize(unsafeSummaryHtml);
-    const textHtml = DOMPurify.sanitize(unsafeContentHtml);
+    // Use renderToString and ReactMarkdown to parse and safely escape HTML
+    const summaryHtml = ReactDOMServer.renderToString(<ReactMarkdown>{result.metaSummary || ''}</ReactMarkdown>);
+    const textHtml = ReactDOMServer.renderToString(<ReactMarkdown>{result.content || ''}</ReactMarkdown>);
 
     const htmlContent = generateBriefingHtml({
       title: data.title,

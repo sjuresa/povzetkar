@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [POV-175] New `QueryCountAssert` utility for automated N+1 query detection in integration tests.
 
 ### Changed
+- **Bundle Optimization (POV-176):** Reduced frontend JavaScript bundle size by replacing the `uuid` package with native `crypto.randomUUID()` and consolidating HTML export parsing onto the existing `react-markdown` engine, completely eliminating `marked` and `dompurify` dependencies from the payload.
+- **Tooling (POV-176):** Added `vite-bundle-visualizer` to development scripts to proactively monitor bundle sizes against the < 1.1MB performance budget.
 - **AI Prompt Cleanup (POV-170):** Stripped redundant UI-level headers (`## Daily Briefing`, `### 1. Executive Summary`, etc.) and metadata from the AI summarization prompts. The AI now generates "Pure Intelligence," while the System provides the structural "Frame."
 - **Prompt Architecture (POV-170):** Migrated all summarization templates to a named `{{variable}}` syntax (e.g., `{{title}}`, `{{transcript}}`), replacing fragile positional `%s` formatting and improving template maintainability.
 - **Backend Infrastructure (POV-170):** Updated `ContentCreationService` and `VideoSummaryService` to support the new template variable injection logic.
