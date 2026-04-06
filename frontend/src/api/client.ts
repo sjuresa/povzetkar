@@ -10,10 +10,11 @@ function generateUuid(): string {
     return globalThis.crypto.randomUUID();
   }
   if (globalThis.crypto?.getRandomValues) {
-    return '10000000-1000-4000-8000-100000000000'.replaceAll(/[018]/g, (c) => {
-      const n = Number(c);
-      return (n ^ (globalThis.crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (n / 4)))).toString(16);
-    });
+    const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // Set version to 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // Set variant to RFC4122
+    const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0'));
+    return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10, 16).join('')}`;
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, (c) => {
     const r = Math.trunc(Math.random() * 16);

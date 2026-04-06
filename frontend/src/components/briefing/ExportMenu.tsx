@@ -235,9 +235,13 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     const result = await ensureData();
     if (!result) return;
 
-    // Optimized Markdown to HTML rendering using a shared unified processor instance asynchronously
-    const summaryHtml = (await processor.process(result.metaSummary || '')).toString();
-    const textHtml = (await processor.process(result.content || '')).toString();
+    // Optimized Markdown to HTML rendering using a shared unified processor instance in parallel
+    const [summaryVFile, textVFile] = await Promise.all([
+      processor.process(result.metaSummary || ''),
+      processor.process(result.content || '')
+    ]);
+    const summaryHtml = summaryVFile.toString();
+    const textHtml = textVFile.toString();
 
     const htmlContent = generateBriefingHtml({
       title: data.title,
