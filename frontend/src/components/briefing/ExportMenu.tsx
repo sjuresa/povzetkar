@@ -30,6 +30,9 @@ import {
 import { getGetApiV1SourcesQueryKey } from '../../api/generated/content-sources/content-sources';
 import ReactDOMServer from 'react-dom/server';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
 import { generateBriefingHtml, generateBriefingMarkdown } from '../../util/exportTemplates';
 
 interface ExportMenuProps {
@@ -222,9 +225,17 @@ export function ExportMenu({ data, type = 'briefing', variant = 'outline', class
     const result = await ensureData();
     if (!result) return;
 
-    // Use renderToString and ReactMarkdown to parse and safely escape HTML
-    const summaryHtml = ReactDOMServer.renderToString(<ReactMarkdown>{result.metaSummary || ''}</ReactMarkdown>);
-    const textHtml = ReactDOMServer.renderToString(<ReactMarkdown>{result.content || ''}</ReactMarkdown>);
+    // Use renderToString and ReactMarkdown with rehype plugins to support safe HTML and GFM
+    const summaryHtml = ReactDOMServer.renderToString(
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+        {result.metaSummary || ''}
+      </ReactMarkdown>
+    );
+    const textHtml = ReactDOMServer.renderToString(
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+        {result.content || ''}
+      </ReactMarkdown>
+    );
 
     const htmlContent = generateBriefingHtml({
       title: data.title,

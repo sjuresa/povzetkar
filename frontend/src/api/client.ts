@@ -1,8 +1,13 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+
+import logger from '../util/logger';
+import { useAuthStore } from '../store/authStore';
+import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
+
 function generateUuid(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, (c) => {
     const r = Math.trunc(Math.random() * 16);
@@ -10,9 +15,6 @@ function generateUuid(): string {
     return v.toString(16);
   });
 }
-import logger from '../util/logger';
-import { useAuthStore } from '../store/authStore';
-import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
 
 /**
  * Custom request config to support idempotency keys and other metadata
