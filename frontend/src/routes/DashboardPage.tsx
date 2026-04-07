@@ -40,7 +40,7 @@ export function DashboardPage() {
   const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0 || (data?.recentBriefings?.length ?? 0) > 0;
   
   const hasNoData = !activeTopics && (!data?.recentBriefings || data.recentBriefings.length === 0);
-  const showWelcome = hasNoData || (!dismissed && !Object.values(steps).every(s => s === true));
+  const showWelcome = hasNoData;
 
   // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
   useEffect(() => {
