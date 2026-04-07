@@ -38,6 +38,7 @@ interface OnboardingState {
   syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => void;
   toggleCollapsed: () => void;
   setDismissed: (dismissed: boolean) => void;
+  reset: () => void;
 }
 
 const initialState = {
@@ -94,6 +95,12 @@ export const useOnboardingStore = create<OnboardingState>()(
       toggleCollapsed: () => set((state) => ({ collapsed: !state.collapsed })),
 
       setDismissed: (dismissed: boolean) => set({ dismissed }),
+
+      reset: () => {
+        set(initialState);
+        // Clean out LocalStorage to prevent re-corruption
+        useOnboardingStore.persist.clearStorage();
+      },
     }),
     {
       name: 'povzetkar_onboarding',
@@ -103,9 +110,9 @@ export const useOnboardingStore = create<OnboardingState>()(
           // Corruption fallback: reset and report
           console.error('[Onboarding] Critical error during state rehydration. Resetting to defaults.', { error });
           
-          // Defer reset to ensure store is fully initialized and assigned to useOnboardingStore
+          // Use the dedicated reset action after initialization
           setTimeout(() => {
-            useOnboardingStore.setState(initialState);
+            useOnboardingStore.getState().reset();
           }, 0);
         }
       },
