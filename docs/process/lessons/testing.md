@@ -36,9 +36,7 @@ Testing components that consume Zustand stores requires careful spy injection.
 - **The Trap:** Patching a store with `useStore.setState({ spyFn: vi.fn() })` *after* the `render()` call. If the component destructures `spyFn` at the top level or inside a `useEffect` during mount, it will capture the "old" real function, not the spy.
 - **The Standard:** Always perform the spy injection and state setup **BEFORE** calling `render`. This ensures that when the component renders, it pulls the mock reference from the store immediately.
 
-## React Effect Cleanup & Timers (POV-177)
-- **The Trap:** Using a local `useState` (e.g. `showCelebration`) inside a dependency array of a `useEffect` that sets a timer. The state update triggers a re-render, which triggers the effect's cleanup, cancelling the timer before it ever fires.
-- **The Standard:** Derive the condition (e.g. `isComplete = progress === 100`) from the store or props. The `useEffect` should only depend on the derived boolean and the action function. This prevents the effect from "self-cancelling" during a render cycle.
+- **The Standard:** Derive the condition (e.g. `isComplete = progress === 100`) from the store or props. Prefer **Manual Acknowledgement** (dismiss buttons) over auto-timers for concluding complex UX flows like celebration states; this eliminates the need for managing `setTimeout` lifecycle and cleanup.
 
 ## Permanent Master Test Specification (POV-166)
 

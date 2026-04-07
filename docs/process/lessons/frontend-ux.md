@@ -14,7 +14,7 @@ Implementation of multi-step interactive checklists requires balancing visibilit
 - **Hybrid State Persistence:** Use `zustand/persist` for the master state.
   - **Reliability:** Implement a `checkCorruption()` effect that resets the store to defaults if critical keys are missing or malformed in `localStorage`.
   - **Synchronization:** If the state is partially derivable from the DB (e.g. `activeTopics > 0` -> Step 1 Complete), perform a manual sync to the store during the Dashboard's `useEffect` to ensure a consistent experience for users across devices.
-- **Celebration UI:** Use a dedicated overlay or card for 100% completion. Implement a 5-second auto-dismiss timer to return the user to the standard dashboard without manual intervention.
+- **Celebration UI:** Use a dedicated overlay or card for 100% completion. Use a **Manual Dismiss Button** (e.g., "Finish Guide") instead of auto-dismiss timers. This respects user reading speeds and provides a clear "Success" milestone that doesn't disappear unexpectedly.
 
 ## Vite, React & Tailwind v4
 Tailwind CSS 4 introduces a 'CSS-first' approach.

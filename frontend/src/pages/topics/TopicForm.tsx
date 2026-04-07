@@ -98,6 +98,11 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         };
         await patchApiV1TopicsId(initialData.id, patch);
         toast.success(t('topics.form.save_success_update'));
+        // Onboarding triggers: also apply when updating (e.g. adding 1st source to existing topic)
+        useOnboardingStore.getState().markStepComplete('topic');
+        if (data.sourceIds.length > 0) {
+          useOnboardingStore.getState().markStepComplete('source');
+        }
       } else {
         const create: TopicCreate = {
           name: data.name,
