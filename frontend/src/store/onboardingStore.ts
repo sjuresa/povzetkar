@@ -34,7 +34,7 @@ interface OnboardingState {
   steps: OnboardingSteps;
   dismissed: boolean;
   collapsed: boolean;
-  markStepComplete: (step: OnboardingStep, silent?: boolean) => void;
+  markStepComplete: (stepOrSteps: OnboardingStep | OnboardingStep[], silent?: boolean) => void;
   syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => void;
   toggleCollapsed: () => void;
   setDismissed: (dismissed: boolean) => void;
@@ -51,13 +51,24 @@ export const useOnboardingStore = create<OnboardingState>()(
     (set, get) => ({
       ...initialState,
 
-      markStepComplete: (step: OnboardingStep, silent = false) => {
-        if (get().steps[step]) return; // idempotent — no duplicate sound
-        set((state) => ({
-          steps: { ...state.steps, [step]: true },
-        }));
-        if (!silent) {
-          useEventStore.getState().triggerNotificationSound('success');
+      markStepComplete: (stepOrSteps: OnboardingStep | OnboardingStep[], silent = false) => {
+        const stepsToMark = Array.isArray(stepOrSteps) ? stepOrSteps : [stepOrSteps];
+        const currentSteps = get().steps;
+        const newSteps = { ...currentSteps };
+        let changed = false;
+
+        stepsToMark.forEach((s) => {
+          if (!newSteps[s]) {
+            newSteps[s] = true;
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          set({ steps: newSteps });
+          if (!silent) {
+            useEventStore.getState().triggerNotificationSound('success');
+          }
         }
       },
 
