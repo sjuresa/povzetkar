@@ -48,13 +48,21 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => {
+        const currentSteps = get().steps;
+        const newSteps = { ...currentSteps };
+        let changed = false;
+
         // If they have briefings, they must have completed topic, source, and trigger steps
         if (hasBriefings) {
-          get().markStepComplete('topic', true);
-          get().markStepComplete('source', true);
-          get().markStepComplete('trigger', true);
+          if (!newSteps.topic) { newSteps.topic = true; changed = true; }
+          if (!newSteps.source) { newSteps.source = true; changed = true; }
+          if (!newSteps.trigger) { newSteps.trigger = true; changed = true; }
         } else if (activeTopics && activeTopics > 0) {
-          get().markStepComplete('topic', true);
+          if (!newSteps.topic) { newSteps.topic = true; changed = true; }
+        }
+
+        if (changed) {
+          set({ steps: newSteps });
         }
       },
 
