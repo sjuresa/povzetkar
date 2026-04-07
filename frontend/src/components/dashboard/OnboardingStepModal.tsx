@@ -2,20 +2,12 @@ import { useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import type { OnboardingStep } from '../../store/onboardingStore';
+import { type OnboardingStep, STEP_ROUTES } from '../../store/onboardingStore';
 
 interface OnboardingStepModalProps {
   step: OnboardingStep | null;
   onClose: () => void;
 }
-
-const STEP_ROUTES: Record<OnboardingStep, string> = {
-  topic: '/topics',
-  source: '/topics',
-  trigger: '/topics',
-  read: '/briefings',
-  share: '/briefings',
-};
 
 const STEP_HOW_COUNTS: Record<OnboardingStep, number> = {
   topic: 3,

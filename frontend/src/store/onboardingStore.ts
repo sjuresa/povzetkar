@@ -12,6 +12,16 @@ export interface OnboardingSteps {
   share: boolean;
 }
 
+export const ORDERED_STEPS: OnboardingStep[] = ['topic', 'source', 'trigger', 'read', 'share'];
+
+export const STEP_ROUTES: Record<OnboardingStep, string> = {
+  topic: '/topics',
+  source: '/topics',
+  trigger: '/topics',
+  read: '/briefings',
+  share: '/briefings',
+};
+
 const DEFAULT_STEPS: OnboardingSteps = {
   topic: false,
   source: false,
@@ -74,7 +84,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       name: 'povzetkar_onboarding',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state, error) => {
-        if (error || !state?.steps) {
+        if (error || (state && !state.steps)) {
           // Corruption fallback: reset and report
           console.error('[Onboarding] Critical error during state rehydration. Resetting to defaults.', { error });
           useOnboardingStore.setState({ 

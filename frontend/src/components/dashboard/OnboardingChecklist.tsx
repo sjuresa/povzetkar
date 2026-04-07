@@ -2,18 +2,8 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
-import { useOnboardingStore, type OnboardingStep } from '../../store/onboardingStore';
+import { useOnboardingStore, type OnboardingStep, ORDERED_STEPS, STEP_ROUTES } from '../../store/onboardingStore';
 import { OnboardingStepModal } from './OnboardingStepModal';
-
-const ORDERED_STEPS: OnboardingStep[] = ['topic', 'source', 'trigger', 'read', 'share'];
-
-const STEP_ROUTES: Record<OnboardingStep, string> = {
-  topic: '/topics',
-  source: '/topics',
-  trigger: '/topics',
-  read: '/briefings',
-  share: '/briefings',
-};
 
 export function OnboardingChecklist() {
   const { t } = useTranslation();
