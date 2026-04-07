@@ -88,19 +88,21 @@ export function OnboardingChecklist() {
               {t('onboarding.title')}
             </h3>
             {/* Progress bar */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-1.5 rounded-full bg-[var(--color-border-primary)]/40 overflow-hidden">
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-3 rounded-full bg-zinc-900/50 border border-[var(--color-border-primary)] shadow-inner overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-700 ease-out"
-                  style={{ width: `${progress}%` }}
+                  className="h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_rgba(var(--color-accent-primary-rgb),0.5)] border-r-2 border-white/20"
+                  style={{ 
+                    width: `${progress}%`,
+                  }}
                   role="progressbar"
                   aria-valuenow={progress}
                   aria-valuemin={0}
                   aria-valuemax={100}
                 />
               </div>
-              <span className="text-xs font-bold text-[var(--color-accent-primary)] whitespace-nowrap">
-                {t('onboarding.progress_label', { percent: progress })}
+              <span className="text-sm font-black text-[var(--color-accent-primary)] whitespace-nowrap min-w-[3rem] text-right">
+                {progress}%
               </span>
             </div>
           </div>

@@ -82,7 +82,7 @@ describe('DashboardPage', () => {
 
     renderDashboard();
     expect(screen.getByText(/dashboard.empty.welcome/i)).toBeInTheDocument();
-    expect(screen.getByText(/dashboard.empty.action/i)).toBeInTheDocument();
+    expect(screen.getByText(/dashboard.empty.subtitle/i)).toBeInTheDocument();
   });
 
   it('renders real data when available', () => {

@@ -32,12 +32,13 @@ export function DashboardPage() {
   // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
   useEffect(() => {
     const activeTopics = data?.stats?.activeTopics;
-    const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0;
+    // hasBriefings means they've done step 3 (Trigger). We check 7 day stats OR if they have ANY recent briefings.
+    const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0 || (data?.recentBriefings?.length ?? 0) > 0;
 
     if (activeTopics !== undefined || hasBriefings) {
       syncFromDashboard(activeTopics, hasBriefings);
     }
-  }, [data?.stats?.activeTopics, data?.stats?.briefingsGeneratedLast7Days, syncFromDashboard]);
+  }, [data?.stats?.activeTopics, data?.stats?.briefingsGeneratedLast7Days, data?.recentBriefings, syncFromDashboard]);
 
   if (isLoading) {
     return (
@@ -61,43 +62,43 @@ export function DashboardPage() {
   const latestBriefingDate = data?.recentBriefings?.[0]?.briefingDate;
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {hasNoData && <EmptyState />}
       {!dismissed && <OnboardingChecklist />}
-      <div className="flex items-center justify-between">
-        <h2 className="text-4xl text-header text-[var(--color-text-primary)] text-glow">
-          {t('dashboard.title')}
-        </h2>
-        <div className="flex items-center space-x-4">
-          {activeJobs.length > 0 && (
-            <div className="flex items-center space-x-2 bg-[var(--color-accent-primary-soft)] text-[var(--color-accent-primary)] px-3 py-1.5 rounded-full border border-[var(--color-accent-primary)]/20 animate-pulse">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-accent-primary)] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-accent-primary)]"></span>
-              </span>
-              <span className="text-xs text-interactive uppercase tracking-wider">
-                {activeJobs.length} {t('dashboard.activeJobs')}
-              </span>
-            </div>
-          )}
-          <button
-            onClick={() => {
-              void refetch();
-            }}
-            disabled={isRefetching}
-            className={`p-2 rounded-xl border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
-            title={t('dashboard.refresh')}
-          >
-            <svg className="w-6 h-6 text-[var(--color-accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
-      </div>
 
-      {hasNoData ? (
-        <EmptyState />
-      ) : (
+      {!hasNoData && (
         <>
+          <div className="flex items-center justify-between mt-2">
+            <h2 className="text-4xl text-header text-[var(--color-text-primary)] text-glow">
+              {t('dashboard.title')}
+            </h2>
+            <div className="flex items-center space-x-4">
+              {activeJobs.length > 0 && (
+                <div className="flex items-center space-x-2 bg-[var(--color-accent-primary-soft)] text-[var(--color-accent-primary)] px-3 py-1.5 rounded-full border border-[var(--color-accent-primary)]/20 animate-pulse">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-accent-primary)] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-accent-primary)]"></span>
+                  </span>
+                  <span className="text-xs text-interactive uppercase tracking-wider">
+                    {activeJobs.length} {t('dashboard.activeJobs')}
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  void refetch();
+                }}
+                disabled={isRefetching}
+                className={`p-2 rounded-xl border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all ${isRefetching ? 'animate-spin opacity-50' : 'hover:scale-110 active:scale-95'}`}
+                title={t('dashboard.refresh')}
+              >
+                <svg className="w-6 h-6 text-[var(--color-accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <StatCard 
               label={t('dashboard.stats.activeTopics')} 
