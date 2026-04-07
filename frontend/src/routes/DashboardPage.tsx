@@ -27,7 +27,13 @@ export function DashboardPage() {
 
   const data = response?.data as DashboardDTO | undefined;
 
-  const { syncFromDashboard, dismissed, steps } = useOnboardingStore();
+  const { syncFromDashboard, dismissed, steps } = useOnboardingStore(
+    useShallow((state) => ({
+      syncFromDashboard: state.syncFromDashboard,
+      dismissed: state.dismissed,
+      steps: state.steps,
+    }))
+  );
 
   const activeTopics = data?.stats?.activeTopics;
   // hasBriefings means they've done step 3 (Trigger). We check 7 day stats OR if they have ANY recent briefings.

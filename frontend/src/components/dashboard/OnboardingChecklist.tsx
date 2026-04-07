@@ -2,12 +2,21 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { useOnboardingStore, type OnboardingStep, ORDERED_STEPS, STEP_ROUTES } from '../../store/onboardingStore';
 import { OnboardingStepModal } from './OnboardingStepModal';
 
 export function OnboardingChecklist() {
   const { t } = useTranslation();
-  const { steps, dismissed, collapsed, toggleCollapsed, setDismissed } = useOnboardingStore();
+  const { steps, dismissed, collapsed, toggleCollapsed, setDismissed } = useOnboardingStore(
+    useShallow((state) => ({
+      steps: state.steps,
+      dismissed: state.dismissed,
+      collapsed: state.collapsed,
+      toggleCollapsed: state.toggleCollapsed,
+      setDismissed: state.setDismissed,
+    }))
+  );
   const [openModalStep, setOpenModalStep] = useState<OnboardingStep | null>(null);
 
   const completedCount = Object.values(steps).filter(Boolean).length;
