@@ -29,7 +29,7 @@ export function DashboardPage() {
 
   const { syncFromDashboard, dismissed, steps } = useOnboardingStore();
   const isComplete = Object.values(steps).every(s => s === true);
-  const showWelcome = !dismissed && !isComplete;
+  const showWelcome = !dismissed;
 
   const activeTopics = data?.stats?.activeTopics;
   // hasBriefings means they've done step 3 (Trigger). We check 7 day stats OR if they have ANY recent briefings.

@@ -17,25 +17,7 @@ export function OnboardingChecklist() {
 
   if (dismissed) return null;
 
-  // Collapsed pill state
-  if (collapsed) {
-    return (
-      <button
-        id="onboarding-checklist-pill"
-        onClick={toggleCollapsed}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all text-sm text-interactive text-[var(--color-text-secondary)] animate-in fade-in duration-300"
-        aria-label={`${t('onboarding.expand_label')} — ${t('onboarding.progress_label', { percent: progress })}`}
-      >
-        <span className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
-        <span className="text-[var(--color-text-primary)] text-interactive">{t('onboarding.expand_label')}</span>
-        <span className="text-xs opacity-60">·</span>
-        <span className="text-xs">{t('onboarding.progress_label', { percent: progress })}</span>
-        <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
-      </button>
-    );
-  }
-
-  // Celebration state (100% complete)
+  // Celebration state (100% complete) - Prioritize over collapsed state for special milestone
   if (isComplete) {
     return (
       <div
@@ -61,6 +43,24 @@ export function OnboardingChecklist() {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // Collapsed pill state
+  if (collapsed) {
+    return (
+      <button
+        id="onboarding-checklist-pill"
+        onClick={toggleCollapsed}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all text-sm text-interactive text-[var(--color-text-secondary)] animate-in fade-in duration-300"
+        aria-label={`${t('onboarding.expand_label')} — ${t('onboarding.progress_label', { percent: progress })}`}
+      >
+        <span className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
+        <span className="text-[var(--color-text-primary)] text-interactive">{t('onboarding.expand_label')}</span>
+        <span className="text-xs opacity-60">·</span>
+        <span className="text-xs">{t('onboarding.progress_label', { percent: progress })}</span>
+        <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
+      </button>
     );
   }
 
