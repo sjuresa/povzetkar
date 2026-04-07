@@ -27,11 +27,10 @@ export function DashboardPage() {
 
   const data = response?.data as DashboardDTO | undefined;
 
-  const { syncFromDashboard, dismissed, steps } = useOnboardingStore(
+  const { syncFromDashboard, dismissed } = useOnboardingStore(
     useShallow((state) => ({
       syncFromDashboard: state.syncFromDashboard,
       dismissed: state.dismissed,
-      steps: state.steps,
     }))
   );
 
@@ -39,7 +38,7 @@ export function DashboardPage() {
   // hasBriefings means they've done step 3 (Trigger). We check 7 day stats OR if they have ANY recent briefings.
   const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0 || (data?.recentBriefings?.length ?? 0) > 0;
   
-  const hasNoData = !activeTopics && (!data?.recentBriefings || data.recentBriefings.length === 0);
+  const hasNoData = !activeTopics && !hasBriefings;
   const showWelcome = hasNoData;
 
   // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data

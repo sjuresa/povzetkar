@@ -40,12 +40,16 @@ interface OnboardingState {
   setDismissed: (dismissed: boolean) => void;
 }
 
+const initialState = {
+  steps: { ...DEFAULT_STEPS },
+  dismissed: false,
+  collapsed: false,
+};
+
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({
-      steps: { ...DEFAULT_STEPS },
-      dismissed: false,
-      collapsed: false,
+      ...initialState,
 
       markStepComplete: (step: OnboardingStep, silent = false) => {
         if (get().steps[step]) return; // idempotent — no duplicate sound
@@ -90,11 +94,7 @@ export const useOnboardingStore = create<OnboardingState>()(
           
           // Defer reset to ensure store is fully initialized and assigned to useOnboardingStore
           setTimeout(() => {
-            useOnboardingStore.setState({ 
-              steps: { ...DEFAULT_STEPS }, 
-              dismissed: false, 
-              collapsed: false 
-            });
+            useOnboardingStore.setState(initialState);
           }, 0);
         }
       },
