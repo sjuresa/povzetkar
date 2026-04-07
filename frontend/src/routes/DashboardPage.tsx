@@ -27,7 +27,9 @@ export function DashboardPage() {
 
   const data = response?.data as DashboardDTO | undefined;
 
-  const { syncFromDashboard, dismissed } = useOnboardingStore();
+  const { syncFromDashboard, dismissed, steps } = useOnboardingStore();
+  const isComplete = Object.values(steps).every(s => s === true);
+  const showWelcome = !dismissed && !isComplete;
 
   // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
   useEffect(() => {
@@ -63,7 +65,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      {hasNoData && <EmptyState />}
+      {showWelcome && <EmptyState />}
       {!dismissed && <OnboardingChecklist />}
 
       {!hasNoData && (
