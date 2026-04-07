@@ -89,9 +89,9 @@ export function OnboardingChecklist() {
             </h3>
             {/* Progress bar */}
             <div className="flex items-center gap-4">
-              <div className="flex-1 h-3 rounded-full bg-zinc-900/50 border border-[var(--color-border-primary)] shadow-inner overflow-hidden">
+              <div className="flex-1 h-3 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] shadow-inner overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_rgba(var(--color-accent-primary-rgb),0.5)] border-r-2 border-white/20"
+                  className="h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-glow)] border-r-2 border-[var(--color-text-secondary)]/20"
                   style={{ 
                     width: `${progress}%`,
                   }}

@@ -74,10 +74,14 @@ export const useOnboardingStore = create<OnboardingState>()(
       name: 'povzetkar_onboarding',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state, error) => {
-        if (error || !state) {
-          // Corruption fallback: reset is handled by Zustand returning default initial state
-          // TODO: In production, report this to an error tracking service (e.g. Sentry)
-          console.error('[Onboarding] Critical error during state rehydration. Falling back to defaults.', { error, state });
+        if (error || !state?.steps) {
+          // Corruption fallback: reset and report
+          console.error('[Onboarding] Critical error during state rehydration. Resetting to defaults.', { error });
+          useOnboardingStore.setState({ 
+            steps: { ...DEFAULT_STEPS }, 
+            dismissed: false, 
+            collapsed: false 
+          });
         }
       },
     }

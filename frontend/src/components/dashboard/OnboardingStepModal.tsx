@@ -51,13 +51,13 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-[var(--color-bg-primary)]/80 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal panel */}
-      <div className="relative z-10 w-full max-w-md glass border border-[var(--color-border-primary)] rounded-3xl shadow-2xl shadow-black/60 overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative z-10 w-full max-w-md glass border border-[var(--color-border-primary)] rounded-3xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Illustration */}
         <div className="relative h-40 overflow-hidden bg-[var(--color-bg-secondary)] flex items-center justify-center">
           <img
