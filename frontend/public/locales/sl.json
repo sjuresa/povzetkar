@@ -461,6 +461,7 @@
     "close_modal": "Razumem",
     "celebration_title": "🎉 Vodnik zaključen!",
     "celebration_subtitle": "Vaš asistent je popolnoma konfiguriran in pripravljen.",
+    "celebration_done": "Zaključi vodič",
     "step": {
       "topic": {
         "title": "Ustvarite svojo prvo Temo",

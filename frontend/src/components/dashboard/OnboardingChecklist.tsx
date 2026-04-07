@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
@@ -25,15 +25,6 @@ export function OnboardingChecklist() {
   const activeStep = ORDERED_STEPS.find((s) => !steps[s]) ?? null;
   const isComplete = progress === 100 && !dismissed;
 
-  // Auto-dismiss after 5s when all steps complete
-  useEffect(() => {
-    if (!isComplete) return;
-    const timer = setTimeout(() => {
-      setDismissed(true);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [isComplete, setDismissed]);
-
   if (dismissed) return null;
 
   // Collapsed pill state
@@ -59,14 +50,25 @@ export function OnboardingChecklist() {
     return (
       <div
         id="onboarding-celebration"
-        className="w-full glass border border-[var(--color-accent-primary)]/40 rounded-3xl p-8 text-center space-y-3 animate-in fade-in zoom-in-95 duration-500 bg-[var(--color-accent-primary-soft)]"
+        className="w-full glass border border-[var(--color-accent-primary)]/40 rounded-3xl p-8 text-center space-y-4 animate-in fade-in zoom-in-95 duration-500 bg-[var(--color-accent-primary-soft)]"
       >
-        <p className="text-3xl font-black text-[var(--color-text-primary)]">{t('onboarding.celebration_title')}</p>
-        <p className="text-[var(--color-text-secondary)]">{t('onboarding.celebration_subtitle')}</p>
-        <div className="flex justify-center gap-1 pt-2">
+        <div className="space-y-2">
+          <p className="text-3xl font-black text-[var(--color-text-primary)]">{t('onboarding.celebration_title')}</p>
+          <p className="text-[var(--color-text-secondary)]">{t('onboarding.celebration_subtitle')}</p>
+        </div>
+        <div className="flex justify-center gap-1">
           {ORDERED_STEPS.map((s) => (
             <Check key={s} className="w-5 h-5 text-[var(--color-accent-primary)]" />
           ))}
+        </div>
+        <div className="pt-2">
+          <button
+            onClick={() => setDismissed(true)}
+            id="onboarding-celebration-done"
+            className="bg-[var(--color-accent-primary)] text-white px-6 py-2.5 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[var(--color-accent-primary)]/20"
+          >
+            {t('onboarding.celebration_done')}
+          </button>
         </div>
       </div>
     );

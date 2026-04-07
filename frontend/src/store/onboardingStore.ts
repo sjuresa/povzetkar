@@ -65,7 +65,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       onRehydrateStorage: () => (state, error) => {
         if (error || !state) {
           // Corruption fallback: reset is handled by Zustand returning default initial state
-          console.warn('[Onboarding] Failed to rehydrate state, resetting to defaults.', error);
+          // TODO: In production, report this to an error tracking service (e.g. Sentry)
+          console.error('[Onboarding] Critical error during state rehydration. Falling back to defaults.', { error, state });
         }
       },
     }

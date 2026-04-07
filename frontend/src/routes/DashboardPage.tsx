@@ -31,13 +31,13 @@ export function DashboardPage() {
 
   // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
   useEffect(() => {
-    if (data) {
-      syncFromDashboard(
-        data.stats?.activeTopics,
-        (data.stats?.briefingsGeneratedLast7Days ?? 0) > 0
-      );
+    const activeTopics = data?.stats?.activeTopics;
+    const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0;
+
+    if (activeTopics !== undefined || hasBriefings) {
+      syncFromDashboard(activeTopics, hasBriefings);
     }
-  }, [data, syncFromDashboard]);
+  }, [data?.stats?.activeTopics, data?.stats?.briefingsGeneratedLast7Days, syncFromDashboard]);
 
   if (isLoading) {
     return (

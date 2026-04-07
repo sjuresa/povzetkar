@@ -461,6 +461,7 @@
     "close_modal": "Got it",
     "celebration_title": "🎉 Guide Complete!",
     "celebration_subtitle": "Your assistant is fully configured and ready.",
+    "celebration_done": "Finish Guide",
     "step": {
       "topic": {
         "title": "Create your first Topic",

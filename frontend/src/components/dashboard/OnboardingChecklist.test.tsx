@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { useOnboardingStore } from '../../store/onboardingStore';
 
@@ -80,7 +80,7 @@ describe('OnboardingChecklist', () => {
     expect(toggleCollapsed).toHaveBeenCalledTimes(1);
   });
 
-  it('shows celebration state immediately at 100% and auto-dismisses after 5 seconds', () => {
+  it('shows celebration state at 100% and dismisses when clicking the done button', () => {
     const setDismissed = vi.fn();
     // Inject spy and 100% state BEFORE render
     useOnboardingStore.setState({
@@ -90,10 +90,10 @@ describe('OnboardingChecklist', () => {
     });
 
     render(<OnboardingChecklist />);
-    // Celebration renders immediately since isComplete is derived
     expect(screen.getByText('onboarding.celebration_title')).toBeInTheDocument();
 
-    act(() => { vi.advanceTimersByTime(5000); });
+    const doneBtn = screen.getByRole('button', { name: 'onboarding.celebration_done' });
+    fireEvent.click(doneBtn);
     expect(setDismissed).toHaveBeenCalledWith(true);
   });
 });
