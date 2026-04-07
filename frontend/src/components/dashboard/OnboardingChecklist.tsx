@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useOnboardingStore, type OnboardingStep, ORDERED_STEPS, STEP_ROUTES } from '../../store/onboardingStore';
 import { OnboardingStepModal } from './OnboardingStepModal';
+import { cn } from '../../util/cn';
 
 export function OnboardingChecklist() {
   const { t } = useTranslation();
@@ -90,7 +91,10 @@ export function OnboardingChecklist() {
             <div className="flex items-center gap-4">
               <div className="flex-1 h-3 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] shadow-inner overflow-hidden">
                 <div
-                  className={'h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-glow)] ' + (progress > 0 && progress < 100 ? 'border-r-2 border-[var(--color-text-secondary)]/20' : '')}
+                  className={cn(
+                    'h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-glow)]',
+                    progress > 0 && progress < 100 && 'border-r-2 border-[var(--color-text-secondary)]/20'
+                  )}
                   style={{ 
                     width: `${progress}%`,
                   }}
@@ -125,13 +129,14 @@ export function OnboardingChecklist() {
               <div
                 key={step}
                 id={`onboarding-step-${step}`}
-                className={`rounded-2xl px-4 py-3 transition-all ${
+                className={cn(
+                  'rounded-2xl px-4 py-3 transition-all',
                   isActive
                     ? 'bg-[var(--color-accent-primary-soft)] border border-[var(--color-accent-primary)]/20'
                     : isStepComplete
                     ? 'opacity-60'
                     : 'hover:bg-[var(--color-surface-hover)]'
-                }`}
+                )}
               >
                 <div className="flex items-center gap-3">
                   {/* Step icon */}
