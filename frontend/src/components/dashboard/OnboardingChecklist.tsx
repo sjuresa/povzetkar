@@ -33,11 +33,11 @@ export function OnboardingChecklist() {
       <button
         id="onboarding-checklist-pill"
         onClick={toggleCollapsed}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all text-sm font-medium text-[var(--color-text-secondary)] animate-in fade-in duration-300"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all text-sm text-interactive text-[var(--color-text-secondary)] animate-in fade-in duration-300"
         aria-label={`${t('onboarding.expand_label')} — ${t('onboarding.progress_label', { percent: progress })}`}
       >
         <span className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
-        <span className="text-[var(--color-text-primary)] font-semibold">{t('onboarding.expand_label')}</span>
+        <span className="text-[var(--color-text-primary)] text-interactive">{t('onboarding.expand_label')}</span>
         <span className="text-xs opacity-60">·</span>
         <span className="text-xs">{t('onboarding.progress_label', { percent: progress })}</span>
         <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
@@ -117,7 +117,7 @@ export function OnboardingChecklist() {
         {/* Step list */}
         <div className="px-3 pb-3 space-y-1">
           {ORDERED_STEPS.map((step, idx) => {
-            const isComplete = steps[step];
+            const isStepComplete = steps[step];
             const isActive = step === activeStep;
 
             return (
@@ -127,7 +127,7 @@ export function OnboardingChecklist() {
                 className={`rounded-2xl px-4 py-3 transition-all ${
                   isActive
                     ? 'bg-[var(--color-accent-primary-soft)] border border-[var(--color-accent-primary)]/20'
-                    : isComplete
+                    : isStepComplete
                     ? 'opacity-60'
                     : 'hover:bg-[var(--color-surface-hover)]'
                 }`}
@@ -136,14 +136,14 @@ export function OnboardingChecklist() {
                   {/* Step icon */}
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                      isComplete
+                      isStepComplete
                         ? 'bg-[var(--color-accent-primary)] text-white'
                         : isActive
                         ? 'border-2 border-[var(--color-accent-primary)] text-[var(--color-accent-primary)]'
                         : 'border-2 border-[var(--color-border-primary)] text-[var(--color-text-secondary)]'
                     }`}
                   >
-                    {isComplete ? (
+                    {isStepComplete ? (
                       <Check className="w-3.5 h-3.5" />
                     ) : (
                       <span className="text-[10px] font-bold">{idx + 1}</span>
@@ -153,7 +153,7 @@ export function OnboardingChecklist() {
                   {/* Step title */}
                   <span
                     className={`flex-1 text-sm font-semibold ${
-                      isComplete
+                      isStepComplete
                         ? 'line-through text-[var(--color-text-secondary)]'
                         : 'text-[var(--color-text-primary)]'
                     }`}
@@ -162,12 +162,12 @@ export function OnboardingChecklist() {
                   </span>
 
                   {/* Actions (only on incomplete steps) */}
-                  {!isComplete && (
+                  {!isStepComplete && (
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => setOpenModalStep(step)}
                         id={`onboarding-step-${step}-how`}
-                        className="text-xs text-[var(--color-accent-primary)] hover:underline font-medium"
+                        className="text-xs text-[var(--color-accent-primary)] hover:underline text-interactive"
                       >
                         {t('onboarding.learn_more')}
                       </button>

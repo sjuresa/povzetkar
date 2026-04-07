@@ -108,13 +108,13 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
             <Link
               to={STEP_ROUTES[step]}
               onClick={onClose}
-              className="flex-1 flex items-center justify-center px-4 py-2.5 bg-[var(--color-accent-primary)] hover:opacity-90 text-white font-bold rounded-2xl transition-all active:scale-95 text-sm"
+              className="flex-1 flex items-center justify-center px-4 py-2.5 bg-[var(--color-accent-primary)] hover:opacity-90 text-white text-interactive rounded-2xl transition-all active:scale-95 text-sm"
             >
               {t(`onboarding.step.${step}.cta`)}
             </Link>
             <button
               onClick={onClose}
-              className="px-4 py-2.5 rounded-2xl border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] font-medium transition-all active:scale-95 text-sm"
+              className="px-4 py-2.5 rounded-2xl border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] text-interactive transition-all active:scale-95 text-sm"
             >
               {t('onboarding.close_modal')}
             </button>
