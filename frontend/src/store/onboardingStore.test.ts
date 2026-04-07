@@ -45,6 +45,12 @@ describe('onboardingStore', () => {
     expect(mockTriggerSound).toHaveBeenCalledWith('success');
   });
 
+  it('markStepComplete does NOT trigger sound in silent mode', () => {
+    useOnboardingStore.getState().markStepComplete('topic', true);
+    expect(mockTriggerSound).not.toHaveBeenCalled();
+    expect(useOnboardingStore.getState().steps.topic).toBe(true);
+  });
+
   it('markStepComplete is idempotent — does not re-trigger sound on second call', () => {
     useOnboardingStore.getState().markStepComplete('topic');
     useOnboardingStore.getState().markStepComplete('topic');
@@ -55,11 +61,16 @@ describe('onboardingStore', () => {
     useOnboardingStore.getState().syncFromDashboard(2, false);
     expect(useOnboardingStore.getState().steps.topic).toBe(true);
     expect(useOnboardingStore.getState().steps.trigger).toBe(false);
+    expect(mockTriggerSound).not.toHaveBeenCalled(); // sync should be silent
   });
 
-  it('syncFromDashboard marks trigger fallback when hasBriefings is true', () => {
+  it('syncFromDashboard marks topic, source, and trigger when hasBriefings is true', () => {
     useOnboardingStore.getState().syncFromDashboard(0, true);
-    expect(useOnboardingStore.getState().steps.trigger).toBe(true);
+    const { steps } = useOnboardingStore.getState();
+    expect(steps.topic).toBe(true);
+    expect(steps.source).toBe(true);
+    expect(steps.trigger).toBe(true);
+    expect(mockTriggerSound).not.toHaveBeenCalled(); // sync should be silent
   });
 
   it('syncFromDashboard marks nothing when values are zero/false', () => {

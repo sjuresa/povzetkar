@@ -65,7 +65,7 @@ export function OnboardingChecklist() {
           <button
             onClick={() => setDismissed(true)}
             id="onboarding-celebration-done"
-            className="bg-[var(--color-accent-primary)] text-white px-6 py-2.5 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[var(--color-accent-primary)]/20"
+            className="bg-[var(--color-accent-primary)] text-white px-6 py-2.5 rounded-2xl text-interactive hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[var(--color-accent-primary)]/20"
           >
             {t('onboarding.celebration_done')}
           </button>
@@ -174,7 +174,7 @@ export function OnboardingChecklist() {
                       <Link
                         to={STEP_ROUTES[step]}
                         id={`onboarding-step-${step}-cta`}
-                        className={`text-xs font-bold px-3 py-1 rounded-xl transition-all active:scale-95 ${
+                        className={`text-xs text-interactive px-3 py-1 rounded-xl transition-all active:scale-95 ${
                           isActive
                             ? 'bg-[var(--color-accent-primary)] text-white hover:opacity-90'
                             : 'border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'

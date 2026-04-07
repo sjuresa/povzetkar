@@ -24,7 +24,7 @@ interface OnboardingState {
   steps: OnboardingSteps;
   dismissed: boolean;
   collapsed: boolean;
-  markStepComplete: (step: OnboardingStep) => void;
+  markStepComplete: (step: OnboardingStep, silent?: boolean) => void;
   syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => void;
   toggleCollapsed: () => void;
   setDismissed: (dismissed: boolean) => void;
@@ -37,21 +37,24 @@ export const useOnboardingStore = create<OnboardingState>()(
       dismissed: false,
       collapsed: false,
 
-      markStepComplete: (step: OnboardingStep) => {
+      markStepComplete: (step: OnboardingStep, silent = false) => {
         if (get().steps[step]) return; // idempotent — no duplicate sound
         set((state) => ({
           steps: { ...state.steps, [step]: true },
         }));
-        useEventStore.getState().triggerNotificationSound('success');
+        if (!silent) {
+          useEventStore.getState().triggerNotificationSound('success');
+        }
       },
 
       syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => {
-        if (activeTopics && activeTopics > 0) {
-          get().markStepComplete('topic');
-        }
-        // Step 3 fallback for returning users who triggered before installing this feature
-        if (hasBriefings && !get().steps.trigger) {
-          get().markStepComplete('trigger');
+        // If they have briefings, they must have completed topic, source, and trigger steps
+        if (hasBriefings) {
+          get().markStepComplete('topic', true);
+          get().markStepComplete('source', true);
+          get().markStepComplete('trigger', true);
+        } else if (activeTopics && activeTopics > 0) {
+          get().markStepComplete('topic', true);
         }
       },
 
