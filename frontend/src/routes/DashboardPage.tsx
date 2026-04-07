@@ -31,16 +31,16 @@ export function DashboardPage() {
   const isComplete = Object.values(steps).every(s => s === true);
   const showWelcome = !dismissed && !isComplete;
 
+  const activeTopics = data?.stats?.activeTopics;
+  // hasBriefings means they've done step 3 (Trigger). We check 7 day stats OR if they have ANY recent briefings.
+  const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0 || (data?.recentBriefings?.length ?? 0) > 0;
+
   // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
   useEffect(() => {
-    const activeTopics = data?.stats?.activeTopics;
-    // hasBriefings means they've done step 3 (Trigger). We check 7 day stats OR if they have ANY recent briefings.
-    const hasBriefings = (data?.stats?.briefingsGeneratedLast7Days ?? 0) > 0 || (data?.recentBriefings?.length ?? 0) > 0;
-
     if (activeTopics !== undefined || hasBriefings) {
       syncFromDashboard(activeTopics, hasBriefings);
     }
-  }, [data?.stats?.activeTopics, data?.stats?.briefingsGeneratedLast7Days, data?.recentBriefings, syncFromDashboard]);
+  }, [activeTopics, hasBriefings, syncFromDashboard]);
 
   if (isLoading) {
     return (
