@@ -90,7 +90,7 @@ export function OnboardingChecklist() {
             <div className="flex items-center gap-4">
               <div className="flex-1 h-3 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] shadow-inner overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-glow)] border-r-2 border-[var(--color-text-secondary)]/20"
+                  className={'h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-glow)] ' + (progress > 0 && progress < 100 ? 'border-r-2 border-[var(--color-text-secondary)]/20' : '')}
                   style={{ 
                     width: `${progress}%`,
                   }}

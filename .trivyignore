@@ -3,12 +3,3 @@
 
 # libexpat: Information disclosure and data integrity issues due to integer overflow
 #CVE-2026-25210
-
-# libpng: Arbitrary code execution due to use-after-free vulnerability
-#CVE-2026-33416
-
-# libpng: Information disclosure and denial of service via out-of-bounds read/write
-#CVE-2026-33636
-
-# glibc: iconv assertion failure leading to remote DoS (crash)
-#CVE-2026-4046
