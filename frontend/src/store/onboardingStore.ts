@@ -110,10 +110,8 @@ export const useOnboardingStore = create<OnboardingState>()(
           // Corruption fallback: reset and report
           console.error('[Onboarding] Critical error during state rehydration. Resetting to defaults.', { error });
           
-          // Use the dedicated reset action after initialization
-          setTimeout(() => {
-            useOnboardingStore.getState().reset();
-          }, 0);
+          // Reset synchronously to ensure consistency before the first render
+          useOnboardingStore.getState().reset();
         }
       },
     }

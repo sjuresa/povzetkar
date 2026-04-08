@@ -34,7 +34,6 @@ export function OnboardingChecklist() {
   if (isComplete) {
     return (
       <div
-        id="onboarding-celebration"
         className="w-full glass border border-[var(--color-accent-primary)]/40 rounded-3xl p-8 text-center space-y-4 animate-in fade-in zoom-in-95 duration-500 bg-[var(--color-accent-primary-soft)]"
       >
         <div className="space-y-2">
@@ -49,7 +48,6 @@ export function OnboardingChecklist() {
         <div className="pt-2">
           <button
             onClick={() => setDismissed(true)}
-            id="onboarding-celebration-done"
             className="bg-[var(--color-accent-primary)] text-white px-6 py-2.5 rounded-2xl text-interactive hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[var(--color-accent-primary)]/20"
           >
             {t('onboarding.celebration_done')}
