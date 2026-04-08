@@ -31,6 +31,13 @@ When asserting logic bound to rolling windows (e.g., "last 7 days") or specific 
 - **The Trap:** Forgetting to install the coverage provider separately. Vitest core does not include the coverage engine; you must explicitly add `@vitest/coverage-v8` as a dev dependency.
 - **The Standard:** When enabling code coverage in the frontend (`vitest run --coverage`), ensure the configuration explicitly excludes `node_modules`, `dist`, and configuration files (like `eslint.config.js`).
 
+## Zustand Mocking Patterns (POV-177)
+Testing components that consume Zustand stores requires careful spy injection.
+- **The Trap:** Patching a store with `useStore.setState({ spyFn: vi.fn() })` *after* the `render()` call. If the component destructures `spyFn` at the top level or inside a `useEffect` during mount, it will capture the "old" real function, not the spy.
+- **The Standard:** Always perform the spy injection and state setup **BEFORE** calling `render`. This ensures that when the component renders, it pulls the mock reference from the store immediately.
+
+- **The Standard:** Derive the condition (e.g. `isComplete = progress === 100`) from the store or props. Prefer **Manual Acknowledgement** (dismiss buttons) over auto-timers for concluding complex UX flows like celebration states; this eliminates the need for managing `setTimeout` lifecycle and cleanup.
+
 ## Permanent Master Test Specification (POV-166)
 
 ### 3-Digit Sequential Indexing (`TC-DOM-0XX`)

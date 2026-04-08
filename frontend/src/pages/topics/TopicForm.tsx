@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { SourceSearchModal } from '../../components/topics/SourceSearchModal';
+import { useOnboardingStore, type OnboardingStep } from '../../store/onboardingStore';
 
 const topicSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -97,6 +98,10 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         };
         await patchApiV1TopicsId(initialData.id, patch);
         toast.success(t('topics.form.save_success_update'));
+        // Onboarding triggers: if they add a source to an existing topic, mark Step 2 complete
+        if ((data.sourceIds?.length ?? 0) > 0) {
+          useOnboardingStore.getState().markStepComplete('source');
+        }
       } else {
         const create: TopicCreate = {
           name: data.name,
@@ -106,6 +111,12 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         };
         await createTopic({ data: create });
         toast.success(t('topics.form.save_success_create'));
+        
+        const steps: OnboardingStep[] = ['topic'];
+        if ((data.sourceIds?.length ?? 0) > 0) {
+          steps.push('source');
+        }
+        useOnboardingStore.getState().markStepComplete(steps);
       }
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
       onSuccess();

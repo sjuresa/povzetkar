@@ -31,6 +31,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Bundle Optimization & Render Consolidation (POV-176)**: 
 > We unified HTML export generation onto a lean, direct **unified pipeline** (`remark-parse`, `remark-gfm`, `remark-rehype`, `rehype-stringify`). This avoids pulling the expensive `react-dom/server` engine into the browser bundle while maintaining 100% Markdown parity and intrinsic XSS safety.
 
+> [!IMPORTANT]
+> **Gamified Onboarding & Hybrid Persistence (POV-177)**: 
+> We implemented an interactive 5-step checklist with **visual how-to guides** and **action-based triggers**. The progress is managed via a hybrid Zustand store that performs a **one-time sync from the DB** for existing users, ensuring the "Golden Path" is always visible and actionable.
+
 ---
 
 ## 📚 Domain Directories

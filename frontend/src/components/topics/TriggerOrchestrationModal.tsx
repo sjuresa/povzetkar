@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../store/themeStore';
 import type { Topic } from '../../api/generated/model';
 import { usePostApiV1OrchestratorRun } from '../../api/generated/orchestrator/orchestrator';
+import { useOnboardingStore } from '../../store/onboardingStore';
 
 interface TriggerOrchestrationModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
           topicId: topic.id
         }
       });
+      useOnboardingStore.getState().markStepComplete('trigger');
       onSuccess?.();
       onClose();
     } catch (error) {

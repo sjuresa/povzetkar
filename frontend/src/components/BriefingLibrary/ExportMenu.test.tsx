@@ -22,6 +22,12 @@ vi.mock('../../api/generated/content-items/content-items', () => ({
   usePostApiV1ContentItemsIdSummaryUnshare: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock('../../store/onboardingStore', () => ({
+  useOnboardingStore: {
+    getState: () => ({ markStepComplete: vi.fn() }),
+  },
+}));
+
 // Mock URL and Blob for export triggers
 if (globalThis.window !== undefined) {
   globalThis.window.URL.createObjectURL = vi.fn();
