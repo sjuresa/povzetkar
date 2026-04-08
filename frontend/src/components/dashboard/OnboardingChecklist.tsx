@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
@@ -19,6 +19,9 @@ export function OnboardingChecklist() {
     }))
   );
   const [openModalStep, setOpenModalStep] = useState<OnboardingStep | null>(null);
+  const handleCloseModal = useCallback(() => {
+    setOpenModalStep(null);
+  }, []);
 
   const completedCount = Object.values(steps).filter(Boolean).length;
   const progress = Math.round((completedCount / ORDERED_STEPS.length) * 100);
@@ -204,7 +207,7 @@ export function OnboardingChecklist() {
         </div>
       </div>
 
-      <OnboardingStepModal step={openModalStep} onClose={() => setOpenModalStep(null)} />
+      <OnboardingStepModal step={openModalStep} onClose={handleCloseModal} />
     </>
   );
 }
