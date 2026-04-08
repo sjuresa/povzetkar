@@ -105,8 +105,8 @@ export const useOnboardingStore = create<OnboardingState>()(
     {
       name: 'povzetkar_onboarding',
       storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state, error) => {
-        if (error || (state && !state.steps)) {
+      onRehydrateStorage: (_state) => (rehydratedState, error) => {
+        if (error || (rehydratedState && !rehydratedState.steps)) {
           // Corruption fallback: reset and report
           console.error('[Onboarding] Critical error during state rehydration. Resetting to defaults.', { error });
           
