@@ -38,8 +38,8 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
+    globalThis.addEventListener('keydown', handleEsc);
+    return () => globalThis.removeEventListener('keydown', handleEsc);
   }, [step, onClose]);
 
   if (!step) return null;
