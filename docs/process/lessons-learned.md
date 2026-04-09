@@ -35,6 +35,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Gamified Onboarding & Hybrid Persistence (POV-177)**: 
 > We implemented an interactive 5-step checklist with **visual how-to guides** and **action-based triggers**. The progress is managed via a hybrid Zustand store that performs a **one-time sync from the DB** for existing users, ensuring the "Golden Path" is always visible and actionable.
 
+> [!IMPORTANT]
+> **Monochromatic Design Hardening (POV-178)**: 
+> We achieved 100% design purity by purging all legacy blue/green color literals. The system now enforces a monochromatic **Zinc-Neutral taxonomy** using a global **`accent-color`** strategy for native form controls and **data-testid** selectors for backend-agnostic E2E stability.
+
 ---
 
 ## 📚 Domain Directories

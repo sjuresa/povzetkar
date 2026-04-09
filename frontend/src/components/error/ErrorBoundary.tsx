@@ -34,12 +34,12 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6 text-center">
-          <h1 className="text-3xl font-bold mb-4">Something went wrong</h1>
-          <p className="text-slate-400 mb-8">An unexpected error has occurred and the application was unable to continue.</p>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] p-6 text-center">
+          <h1 className="text-3xl font-bold mb-4 italic uppercase tracking-tighter">Something went wrong</h1>
+          <p className="text-[var(--color-text-secondary)] mb-8 max-w-md font-medium">An unexpected error has occurred and the application was unable to continue.</p>
           <button
             onClick={() => { (window as Window).location.href = '/'; }}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors font-semibold"
+            className="px-8 py-3 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] hover:bg-[var(--color-action-hover)] rounded-xl transition-all active:scale-95 font-black uppercase tracking-widest text-xs"
           >
             Go to Home
           </button>

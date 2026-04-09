@@ -60,12 +60,12 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--color-surface-elevated)] w-full max-w-xl rounded-[3rem] shadow-3xl border border-[var(--color-border-subtle)] overflow-hidden flex flex-col transition-all duration-500 scale-in shadow-blue-500/10">
+      <div className="bg-[var(--color-bg-primary)] w-full max-w-xl rounded-[28px] border border-[var(--color-border-primary)] overflow-hidden flex flex-col transition-all duration-300 scale-in">
         {/* Header */}
-        <div className="p-6 border-b border-[var(--color-border-subtle)]/50 flex items-center justify-between bg-[var(--color-background-alt)]/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-              <Play className="w-5 h-5 text-blue-600 dark:text-blue-400 fill-current" />
+        <div className="p-6 border-b border-[var(--color-border-primary)] flex items-center justify-between bg-[var(--color-bg-secondary)]">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center">
+              <Play className="w-6 h-6 text-[var(--color-action-primary)] fill-current"  strokeWidth={1.5}/>
             </div>
             <div>
             <h2 className="text-xl font-black text-[var(--color-text-primary)] italic tracking-tight">
@@ -78,9 +78,9 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors"
+            className="p-2 hover:bg-[var(--color-bg-secondary)] rounded-xl transition-colors border border-transparent hover:border-[var(--color-border-primary)]"
           >
-            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]"  strokeWidth={1.5}/>
           </button>
         </div>
 
@@ -88,7 +88,7 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
           {/* Date Range Section */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-text-secondary)]/60 italic">
-              <Calendar className="w-3 h-3" />
+              <Calendar className="w-3 h-3"  strokeWidth={1.5}/>
               {t('topics.form.trigger_modal.date_range_label')}
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -101,7 +101,7 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   style={{ colorScheme: theme }}
-                  className="w-full px-5 py-4 bg-[var(--color-background-base)] border border-[var(--color-border-subtle)] rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-[var(--color-text-primary)] transition-all font-bold"
+                  className="w-full px-5 py-4 bg-transparent border border-[var(--color-border-primary)] rounded-xl focus:ring-1 focus:ring-[var(--color-ring-focus)] focus:border-[var(--color-action-primary)] text-sm text-[var(--color-text-primary)] transition-all font-black uppercase tracking-tighter outline-none"
                 />
               </div>
               <div className="space-y-1.5">
@@ -113,7 +113,7 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   style={{ colorScheme: theme }}
-                  className="w-full px-5 py-4 bg-[var(--color-background-base)] border border-[var(--color-border-subtle)] rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-[var(--color-text-primary)] transition-all font-bold"
+                  className="w-full px-5 py-4 bg-transparent border border-[var(--color-border-primary)] rounded-xl focus:ring-1 focus:ring-[var(--color-ring-focus)] focus:border-[var(--color-action-primary)] text-sm text-[var(--color-text-primary)] transition-all font-black uppercase tracking-tighter outline-none"
                 />
               </div>
             </div>
@@ -122,16 +122,16 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
           {/* Options Section */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--color-text-secondary)]/60 italic">
-              <Settings2 className="w-3 h-3" />
+              <Settings2 className="w-3 h-3"  strokeWidth={1.5}/>
               {t('topics.form.trigger_modal.options_label')}
             </div>
             
             <div className="grid gap-3">
               {/* Option: Process Pending */}
-              <label className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors group ${
+              <label className={`flex items-start gap-4 p-4 rounded-xl md:rounded-[28px] border transition-all group ${
                 previewOnly 
-                  ? 'bg-[var(--color-background-alt)]/30 border-[var(--color-border-subtle)]/50 opacity-50 cursor-not-allowed' 
-                  : 'border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] cursor-pointer'
+                  ? 'bg-[var(--color-bg-secondary)]/30 border-[var(--color-border-primary)]/50 opacity-50 cursor-not-allowed' 
+                  : 'border-[var(--color-border-primary)] hover:border-[var(--color-action-primary)] cursor-pointer'
               }`}>
                 <div className="pt-0.5">
                   <input
@@ -139,27 +139,27 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
                     checked={processPending && !previewOnly}
                     onChange={(e) => setProcessPending(e.target.checked)}
                     disabled={previewOnly}
-                    className="w-5 h-5 rounded-lg border-[var(--color-border-subtle)] bg-[var(--color-background-alt)] text-blue-600 focus:ring-blue-500/20 disabled:opacity-50"
+                    className="w-5 h-5 rounded border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] accent-[var(--color-action-primary)] focus:ring-[var(--color-ring-focus)] focus:ring-offset-0 disabled:opacity-50"
                   />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                    <span className="text-sm font-black uppercase tracking-tighter text-[var(--color-text-primary)]">
                       {t('topics.form.trigger_modal.process_pending_label')}
                     </span>
-                    <ShieldCheck className="w-3 h-3 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-action-primary)] opacity-0 group-hover:opacity-100 transition-opacity"  strokeWidth={1.5}/>
                   </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] opacity-60 leading-relaxed">
                     {t('topics.form.trigger_modal.process_pending_tip')}
                   </p>
                 </div>
               </label>
 
               {/* Option: Summarize */}
-              <label className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors group ${
+              <label className={`flex items-start gap-4 p-4 rounded-xl md:rounded-[28px] border transition-all group ${
                 previewOnly 
-                  ? 'bg-[var(--color-background-alt)]/30 border-[var(--color-border-subtle)]/50 opacity-50 cursor-not-allowed' 
-                  : 'border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] cursor-pointer'
+                  ? 'bg-[var(--color-bg-secondary)]/30 border-[var(--color-border-primary)]/50 opacity-50 cursor-not-allowed' 
+                  : 'border-[var(--color-border-primary)] hover:border-[var(--color-action-primary)] cursor-pointer'
               }`}>
                 <div className="pt-0.5">
                   <input
@@ -167,27 +167,27 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
                     checked={summarize && !previewOnly}
                     onChange={(e) => setSummarize(e.target.checked)}
                     disabled={previewOnly}
-                    className="w-5 h-5 rounded-lg border-[var(--color-border-subtle)] bg-[var(--color-background-alt)] text-blue-600 focus:ring-blue-500/20 disabled:opacity-50"
+                    className="w-5 h-5 rounded border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] accent-[var(--color-action-primary)] focus:ring-[var(--color-ring-focus)] focus:ring-offset-0 disabled:opacity-50"
                   />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                    <span className="text-sm font-black uppercase tracking-tighter text-[var(--color-text-primary)]">
                       {t('topics.form.trigger_modal.summarize_label')}
                     </span>
-                    <FileText className="w-3 h-3 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <FileText className="w-3.5 h-3.5 text-[var(--color-action-primary)] opacity-0 group-hover:opacity-100 transition-opacity"  strokeWidth={1.5}/>
                   </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] opacity-60 leading-relaxed">
                     {t('topics.form.trigger_modal.summarize_tip')}
                   </p>
                 </div>
               </label>
 
               {/* Option: Briefing */}
-              <label className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors group ${
+              <label className={`flex items-start gap-4 p-4 rounded-xl md:rounded-[28px] border transition-all group ${
                 previewOnly 
-                  ? 'bg-[var(--color-background-alt)]/30 border-[var(--color-border-subtle)]/50 opacity-50 cursor-not-allowed' 
-                  : 'border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] cursor-pointer'
+                  ? 'bg-[var(--color-bg-secondary)]/30 border-[var(--color-border-primary)]/50 opacity-50 cursor-not-allowed' 
+                  : 'border-[var(--color-border-primary)] hover:border-[var(--color-action-primary)] cursor-pointer'
               }`}>
                 <div className="pt-0.5">
                   <input
@@ -195,40 +195,40 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
                     checked={createBriefing && !previewOnly}
                     onChange={(e) => setCreateBriefing(e.target.checked)}
                     disabled={previewOnly}
-                    className="w-5 h-5 rounded-lg border-[var(--color-border-subtle)] bg-[var(--color-background-alt)] text-blue-600 focus:ring-blue-500/20 disabled:opacity-50"
+                    className="w-5 h-5 rounded border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] accent-[var(--color-action-primary)] focus:ring-[var(--color-ring-focus)] focus:ring-offset-0 disabled:opacity-50"
                   />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                    <span className="text-sm font-black uppercase tracking-tighter text-[var(--color-text-primary)]">
                       {t('topics.form.trigger_modal.create_briefing_label')}
                     </span>
-                    <Play className="w-3 h-3 text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Play className="w-3.5 h-3.5 text-[var(--color-action-primary)] opacity-0 group-hover:opacity-100 transition-opacity"  strokeWidth={1.5}/>
                   </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] opacity-60 leading-relaxed">
                     {t('topics.form.trigger_modal.create_briefing_tip')}
                   </p>
                 </div>
               </label>
 
               {/* Option: Preview Only */}
-              <label className="flex items-start gap-4 p-4 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-background-alt)]/20 hover:bg-[var(--color-surface-hover)] cursor-pointer transition-colors group">
+              <label className="flex items-start gap-4 p-4 rounded-xl md:rounded-[28px] border border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)]/20 hover:border-[var(--color-action-primary)] cursor-pointer transition-all group">
                 <div className="pt-0.5">
                   <input
                     type="checkbox"
                     checked={previewOnly}
                     onChange={(e) => setPreviewOnly(e.target.checked)}
-                    className="w-5 h-5 rounded-lg border-[var(--color-border-subtle)] bg-[var(--color-background-alt)] text-blue-600 focus:ring-blue-500/20"
+                    className="w-5 h-5 rounded border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] accent-[var(--color-action-primary)] focus:ring-[var(--color-ring-focus)] focus:ring-offset-0"
                   />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                    <span className="text-sm font-black uppercase tracking-tighter text-[var(--color-text-primary)]">
                       {t('topics.form.trigger_modal.preview_only_label')}
                     </span>
-                    <Info className="w-3 h-3 text-blue-500" />
+                    <Info className="w-3.5 h-3.5 text-[var(--color-action-primary)]"  strokeWidth={1.5}/>
                   </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] opacity-60 leading-relaxed">
                     {t('topics.form.trigger_modal.preview_only_tip')}
                   </p>
                 </div>
@@ -238,26 +238,26 @@ export function TriggerOrchestrationModal({ isOpen, onClose, topic, onSuccess }:
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-[var(--color-border-subtle)] bg-[var(--color-background-alt)]/50 flex gap-3">
+        <div className="p-6 border-t border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-4 text-sm font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all active:scale-95"
           >
             {t('common.cancel')}
           </button>
           <button
             onClick={() => { void handleRun(); }}
             disabled={isTriggering}
-            className="flex-[2] flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex-[2] flex items-center justify-center gap-2 py-4 bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] disabled:bg-[var(--color-border-primary)] text-[var(--color-action-primary-text)] rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95"
           >
             {isTriggering ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin"  strokeWidth={1.5}/>
                 {t('topics.form.trigger_modal.triggering')}
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" />
+                <Play className="w-4 h-4 fill-current"  strokeWidth={1.5}/>
                 {t('topics.form.trigger_modal.submit_button')}
               </>
             )}

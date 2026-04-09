@@ -48,14 +48,14 @@ export function ContentManagementPage() {
           </p>
         </div>
         
-        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-2xl px-5 py-3 shadow-lg shadow-blue-900/10">
+        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-5 py-3 shadow-lg shadow-black/5">
           <div className="text-right">
             <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">Global Items</div>
-            <div className="text-xl font-mono text-blue-500 font-bold">{totalCount.toLocaleString()}</div>
+            <div className="text-xl font-mono text-[var(--color-action-primary)] font-bold">{totalCount.toLocaleString()}</div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 ml-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] ml-3">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
         </div>
@@ -73,7 +73,7 @@ export function ContentManagementPage() {
         {isLoading && !items.length ? (
           <div className="space-y-4">
              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+                <Skeleton key={i} className="h-20 w-full rounded-xl md:rounded-[28px]" />
              ))}
           </div>
         ) : items.length > 0 ? (
@@ -89,7 +89,7 @@ export function ContentManagementPage() {
             </div>
           </>
         ) : (
-          <div className="glass border border-[var(--color-border-dashed)] rounded-3xl p-20 text-center animate-pulse">
+          <div className="glass border border-[var(--color-border-dashed)] rounded-xl md:rounded-[28px] p-20 text-center animate-pulse">
              <p className="text-[var(--color-text-secondary)] italic">{t('contentManagement.table.noItems')}</p>
           </div>
         )}

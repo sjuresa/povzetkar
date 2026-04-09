@@ -35,12 +35,12 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
   };
 
   return (
-    <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-3xl p-6 shadow-xl shadow-black/5 backdrop-blur-sm">
+    <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-6 shadow-xl shadow-black/5 backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner">
+          <div className="w-10 h-10 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.04] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-action-primary)] shadow-sm">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
              </svg>
           </div>
           <div>
@@ -58,11 +58,11 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
            </button>
            <button 
              onClick={handleClear}
-             className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
+             className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-status-error)] transition-colors"
              title="Clear Filters"
            >
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
              </svg>
            </button>
         </div>
@@ -76,7 +76,7 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             placeholder="e.g. 1"
-            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)]"
           />
         </div>
         
@@ -85,7 +85,7 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
           <select 
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)]"
           >
             <option value="">Any Method</option>
             <option value="GET">GET</option>
@@ -103,7 +103,7 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             placeholder="e.g. 200"
-            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)]"
           />
         </div>
 
@@ -114,14 +114,14 @@ export function AuditLogFilters({ onFilterChange }: AuditLogFiltersProps) {
             value={correlationId}
             onChange={(e) => setCorrelationId(e.target.value)}
             placeholder="Trace ID (Partial ok)"
-            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all outline-none text-[var(--color-text-primary)]"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)]"
           />
         </div>
 
         <div className="md:col-start-4 lg:col-start-5 flex items-end">
           <button 
             onClick={applyFilters}
-            className="w-full h-[38px] bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-900/30 active:scale-95 transition-all focus:ring-2 focus:ring-amber-500/50 outline-none"
+            className="w-full h-[38px] bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] text-[var(--color-action-primary-text)] rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-[var(--color-action-primary)]/20 active:scale-95 transition-all focus:ring-2 focus:ring-[var(--color-ring-focus)]/50 outline-none"
           >
             Apply Filter
           </button>

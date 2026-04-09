@@ -146,21 +146,21 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
     <div className="relative">
       <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-10">
         {/* Name Input */}
-        <div className="space-y-3">
-          <label className="block text-lg font-bold text-[var(--color-text-primary)]">
+        <div className="group">
+          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] mb-2 px-1">
             {t('topics.form.name_label')}
           </label>
-          <div className="relative group">
+          <div className="relative">
             <input
               {...register('name')}
-              className={`w-full px-6 py-4 rounded-2xl border bg-[var(--color-background-base)] text-[var(--color-text-primary)] transition-all focus:ring-4 focus:ring-blue-500/20 group-hover:shadow-lg ${
-                errors.name ? 'border-red-500 ring-red-200' : 'border-[var(--color-border-subtle)] focus:border-blue-500'
+              className={`w-full px-6 py-4 rounded-xl border bg-transparent text-[var(--color-text-primary)] transition-all outline-none focus:ring-1 focus:ring-[var(--color-ring-focus)] ${
+                errors.name ? 'border-[var(--color-status-error)]' : 'border-[var(--color-border-primary)] focus:border-[var(--color-action-primary)]'
               }`}
               placeholder={t('topics.form.name_placeholder')}
             />
             {errors.name && (
-              <div className="flex items-center mt-2 text-sm text-red-500 font-medium animate-in slide-in-from-left-2 transition-all">
-                <AlertCircle className="w-4 h-4 mr-2" />
+              <div className="flex items-center mt-2 text-xs text-[var(--color-status-error)] font-bold uppercase tracking-tight animate-in fade-in slide-in-from-left-2">
+                <AlertCircle className="w-3.5 h-3.5 mr-2"  strokeWidth={1.5}/>
                 {errors.name.message}
               </div>
             )}
@@ -168,16 +168,16 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         </div>
 
         {/* Toggle */}
-        <div className="bg-[var(--color-background-alt)] p-6 rounded-3xl border border-[var(--color-border-subtle)] flex items-center justify-between transition-all hover:bg-[var(--color-surface-hover)]">
-          <div className="flex items-center space-x-4">
-            <div className={`p-3 rounded-xl ${watch('enabled') ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
-              <Settings className="w-6 h-6" />
+        <div className="bg-[var(--color-bg-secondary)] p-6 rounded-[28px] border border-[var(--color-border-primary)] flex items-center justify-between transition-all hover:border-[var(--color-action-primary)]">
+          <div className="flex items-center space-x-6">
+            <div className={`p-4 rounded-xl border border-[var(--color-border-primary)] ${watch('enabled') ? 'bg-[var(--color-bg-primary)] text-[var(--color-action-primary)]' : 'bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)]'}`}>
+              <Settings className="w-6 h-6"  strokeWidth={1.5}/>
             </div>
             <div>
-              <span className="block text-lg font-bold text-[var(--color-text-primary)]">
+              <span className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] mb-1">
                 {t('topics.form.enabled_label')}
               </span>
-              <span className="text-sm text-[var(--color-text-secondary)] font-medium">
+              <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-text-primary)]">
                 {watch('enabled') ? t('topics.status.active') : t('topics.status.inactive')}
               </span>
             </div>
@@ -189,66 +189,65 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
               className="sr-only peer"
               id="topic-enabled-toggle"
             />
-            <div className="w-14 h-8 bg-[var(--color-surface-deep)] peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600 shadow-inner group-hover:scale-105 transition-transform"></div>
+            <div className="w-14 h-8 bg-[var(--color-surface-deep)] peer-focus:ring-2 peer-focus:ring-[var(--color-ring-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[var(--color-action-primary)] shadow-inner transition-colors"></div>
           </label>
         </div>
 
-        {/* Sources Selection */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="block text-lg font-bold text-[var(--color-text-primary)]">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] px-1">
               {t('topics.form.sources_label')}
             </label>
             <button
               type="button"
               onClick={() => setIsSearchModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] text-[var(--color-action-primary-text)] text-xs font-black uppercase tracking-tighter rounded-xl transition-all active:scale-95"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4"  strokeWidth={1.5}/>
               {t('topics.form.add_source_button', 'Add Source')}
             </button>
           </div>
           
           {selectedSources.length === 0 ? (
-            <div className="p-10 text-center bg-[var(--color-background-alt)] rounded-3xl border border-dashed border-[var(--color-border-subtle)]">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-[var(--color-text-secondary)] font-bold">{t('topics.form.no_sources')}</p>
-              <p className="text-sm text-gray-400 mt-1">{t('topics.form.search_modal.no_results_tip')}</p>
+            <div className="p-10 text-center bg-[var(--color-bg-secondary)] rounded-[28px] border border-[var(--color-border-primary)]">
+              <AlertCircle className="w-12 h-12 text-[var(--color-text-secondary)]/30 mx-auto mb-4"  strokeWidth={1.5}/>
+              <p className="text-[var(--color-text-secondary)] font-black uppercase tracking-tight">{t('topics.form.no_sources')}</p>
+              <p className="text-[10px] text-[var(--color-text-secondary)] opacity-60 uppercase tracking-widest mt-1">{t('topics.form.search_modal.no_results_tip')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2">
               {selectedSources.map((source: ContentSourceDTO) => (
-                <div
-                  key={source.id}
-                  className="flex items-center justify-between p-4 bg-[var(--color-background-base)] rounded-2xl border border-[var(--color-border-subtle)] shadow-sm hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-center min-w-0">
-                    <div className="p-2 rounded-lg bg-[var(--color-background-alt)] mr-3 flex-shrink-0">
-                      <ExternalLink className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <div className="truncate">
-                      <span className="block font-bold truncate text-sm text-[var(--color-text-primary)]">
-                        {source.name || source.sourceIdentifier}
-                      </span>
-                      <span className="block text-[10px] text-[var(--color-text-secondary)] uppercase font-medium">
-                        {source.platform}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSource(source.id!)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors shrink-0"
-                    title="Remove source"
+                  <div
+                    key={source.id}
+                    className="flex items-center justify-between p-4 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-primary)] transition-all hover:border-[var(--color-action-primary)]"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                    <div className="flex items-center min-w-0">
+                      <div className="p-2 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] mr-3 flex-shrink-0">
+                        <ExternalLink className="w-4 h-4 text-[var(--color-text-secondary)]"  strokeWidth={1.5}/>
+                      </div>
+                      <div className="truncate">
+                        <span className="block font-black text-xs uppercase tracking-tight truncate text-[var(--color-text-primary)]">
+                          {source.name || source.sourceIdentifier}
+                        </span>
+                        <span className="block text-[10px] text-[var(--color-text-secondary)]/60 uppercase font-black tracking-widest">
+                          {source.platform}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSource(source.id!)}
+                      className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-status-error)] hover:bg-[var(--color-bg-primary)] rounded-xl transition-all shrink-0"
+                      title="Remove source"
+                    >
+                      <X className="w-4 h-4"  strokeWidth={1.5}/>
+                    </button>
+                  </div>
               ))}
             </div>
           )}
           {errors.sourceIds && (
-            <p className="text-sm text-red-500 font-medium animate-in slide-in-from-left-2">
+            <p className="text-sm text-[var(--color-status-error)] font-medium animate-in slide-in-from-left-2">
               {errors.sourceIds.message}
             </p>
           )}
@@ -259,39 +258,39 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-secondary)] hover:text-blue-500 transition-colors"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] transition-colors"
           >
-            {showAdvanced ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            {showAdvanced ? <ChevronDown className="w-4 h-4"  strokeWidth={1.5}/> : <ChevronRight className="w-4 h-4"  strokeWidth={1.5}/>}
             {t('topics.form.advanced_settings', 'Advanced Settings')}
           </button>
           
           {showAdvanced && (
-            <div className="mt-6 space-y-6 p-6 bg-[var(--color-background-alt)] rounded-3xl border border-[var(--color-border-subtle)] animate-in slide-in-from-top-4 duration-300">
+            <div className="mt-6 space-y-6 p-8 bg-[var(--color-bg-secondary)] rounded-[28px] border border-[var(--color-border-primary)] animate-in slide-in-from-top-4 duration-300">
               {/* Prompt Template */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="block text-lg font-bold text-[var(--color-text-primary)]">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)]">
                     {t('topics.form.prompt_label')}
                   </label>
-                  <span className="flex items-center text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-lg">
-                    <Info className="w-3.5 h-3.5 mr-1.5" />
+                  <span className="flex items-center text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] bg-[var(--color-bg-primary)] px-3 py-1.5 rounded-xl border border-[var(--color-border-primary)]">
+                    <Info className="w-3.5 h-3.5 mr-1.5"  strokeWidth={1.5}/>
                     {t('topics.form.prompt_supports_variables')}
                   </span>
                 </div>
                 <textarea
                   {...register('promptTemplate')}
                   rows={6}
-                  className={`w-full px-6 py-4 rounded-3xl border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] transition-all focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-sm leading-relaxed ${
-                    errors.promptTemplate ? 'border-red-500' : ''
+                  className={`w-full px-6 py-4 rounded-xl border bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] transition-all outline-none focus:ring-1 focus:ring-[var(--color-ring-focus)] focus:border-[var(--color-action-primary)] font-mono text-sm leading-relaxed ${
+                    errors.promptTemplate ? 'border-[var(--color-status-error)]' : 'border-[var(--color-border-primary)]'
                   }`}
                   placeholder={t('topics.form.prompt_placeholder')}
                 />
-                <p className="flex items-start text-sm text-[var(--color-text-secondary)] font-medium leading-relaxed opacity-80">
-                  <Info className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
+                <p className="flex items-start text-xs text-[var(--color-text-secondary)] font-bold uppercase tracking-tight leading-relaxed opacity-60">
+                  <Info className="w-3.5 h-3.5 mr-2 mt-0.5 flex-shrink-0"  strokeWidth={1.5}/>
                   {t('topics.form.prompt_tip')}
                 </p>
                 {errors.promptTemplate && (
-                  <p className="text-sm text-red-500 font-medium">{errors.promptTemplate.message}</p>
+                  <p className="text-sm text-[var(--color-status-error)] font-medium">{errors.promptTemplate.message}</p>
                 )}
               </div>
             </div>
@@ -299,23 +298,23 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
         </div>
 
           {/* Sticky Actions Footer */}
-          <div className="sticky bottom-0 bg-[var(--color-background-base)] py-6 border-t border-[var(--color-border-subtle)] z-10 -mx-2 px-2 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex items-center space-x-4">
+          <div className="sticky bottom-0 bg-[var(--color-bg-primary)] py-8 border-t border-[var(--color-border-primary)] z-10 -mx-6 px-6 flex items-center space-x-4">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 inline-flex items-center justify-center px-8 py-5 bg-blue-600 text-white rounded-[24px] font-bold shadow-xl shadow-blue-500/30 hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              className="flex-1 inline-flex items-center justify-center px-8 py-5 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] rounded-xl font-black uppercase tracking-widest transition-all hover:bg-[var(--color-action-hover)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-base"
             >
               {isSubmitting ? (
-                <Loader2 className="w-6 h-6 animate-spin mr-3" />
+                <Loader2 className="w-6 h-6 animate-spin mr-3"  strokeWidth={1.5}/>
               ) : (
-                <Check className="w-6 h-6 mr-3" />
+                <Check className="w-6 h-6 mr-3"  strokeWidth={1.5}/>
               )}
               {initialData ? t('topics.form.update') : t('topics.form.create')}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="px-8 py-5 rounded-[24px] border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] font-bold hover:bg-[var(--color-background-alt)] transition-all active:scale-95 text-lg"
+              className="px-8 py-5 rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] font-black uppercase tracking-widest hover:text-[var(--color-text-primary)] hover:border-[var(--color-action-primary)] transition-all active:scale-95 text-base"
             >
               {t('common.cancel')}
             </button>

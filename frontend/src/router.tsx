@@ -163,7 +163,7 @@ const contentManagementRoute = createRoute({
 const adminJobsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'jobs',
-  component: () => <div className="p-8 text-slate-400 italic">Background Jobs Admin coming soon...</div>,
+  component: () => <div className="p-8 text-[var(--color-text-secondary)] italic">Background Jobs Admin coming soon...</div>,
 });
 
 // 7. Public Sharing Route

@@ -18,7 +18,7 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
         </h3>
         <Link 
           to="/briefings" 
-          className="text-sm text-interactive text-[var(--color-accent-primary)] hover:underline transition-all"
+          className="text-sm text-interactive text-[var(--color-action-primary)] hover:underline transition-all font-bold"
         >
           {t('dashboard.viewAll')}
         </Link>
@@ -30,16 +30,16 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
             key={briefing.id}
             to="/briefings/$briefingId"
             params={{ briefingId: briefing.id!.toString() }}
-            className="glass p-5 rounded-2xl flex items-center justify-between group transition-all hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-accent-primary)]/30 border border-transparent shadow-sm"
+            className="glass p-5 rounded-xl md:rounded-[28px] flex items-center justify-between group transition-all hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-action-primary)]/30 border border-transparent shadow-sm"
           >
             <div className="flex items-center space-x-5">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent-primary)] group-hover:bg-[var(--color-accent-primary-soft)] transition-colors shadow-sm">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-text-secondary)] group-hover:text-[var(--color-action-primary)] group-hover:bg-[var(--color-action-primary)]/[0.05] transition-colors shadow-sm">
+                <svg className="w-6 h-6"  strokeWidth={1.5} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h4 className="text-sm text-interactive text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-primary)] transition-colors line-clamp-1 mb-0.5">
+                <h4 className="text-sm text-interactive text-[var(--color-text-primary)] group-hover:text-[var(--color-action-primary)] transition-colors line-clamp-1 mb-0.5">
                   {briefing.title}
                 </h4>
                 <div className="flex items-center space-x-2 text-xs text-[var(--color-text-secondary)]">
@@ -50,9 +50,9 @@ export function RecentBriefingList({ briefings }: Readonly<RecentBriefingListPro
               </div>
             </div>
             
-            <div className="pr-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all text-[var(--color-accent-primary)]">
+            <div className="pr-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all text-[var(--color-action-primary)]">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
               </svg>
             </div>
           </Link>
@@ -70,7 +70,7 @@ export function BriefingListSkeleton() {
         <div className="h-4 bg-[var(--color-surface-deep)] rounded w-16"></div>
       </div>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="glass p-5 rounded-2xl flex items-center space-x-5 border border-transparent">
+        <div key={i} className="glass p-5 rounded-xl md:rounded-[28px] flex items-center space-x-5 border border-transparent">
           <div className="w-12 h-12 rounded-xl bg-[var(--color-surface-deep)]"></div>
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-[var(--color-surface-deep)] rounded w-2/3"></div>

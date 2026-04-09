@@ -21,6 +21,8 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Automated Contrast Audit Script (POV-174 Follow-up):** Implement a Playwright-based audit script to verify that theme-aware accent variables (Blue-700, Amber-800) maintain > 4.5:1 contrast across all surface combinations after future CSS changes.
 *   **Shadow Token Standardization (POV-174 Follow-up):** Migrate remaining component-specific shadow classes (e.g., `shadow-xl` in tooltips) to use the new global `--shadow-color` override to ensure 100% theme consistency.
 *   **Onboarding Guide Reset Button (POV-177 Follow-up):** Add a "↺ Reset Guide" button accessible to developers and power users who want to re-walk the onboarding checklist. The `povzetkar_onboarding` key in `localStorage` can be manually cleared via DevTools for now. Low priority — statistically 0% of end users need this.
+*   **Checkbox/Radio Aesthetic Refinement (POV-178 Follow-up):** Consider implementing custom checkbox and radio button designs using SVG masks to achieve a more "Premium" glassmorphic look that transcends native browser form control limitations, while maintaining full accessibility.
+*   **E2E Visual Regression Testing (POV-178 Follow-up):** Integrate visual snapshot testing (Playwright `toHaveScreenshot`) for critical UI states (Trigger Modal, Briefing Viewer) to catch design regressions that don't trigger functional failures.
 
 ### Backend & Architecture
 

@@ -26,6 +26,7 @@ export function AppShell({ children }: AppShellProps) {
   useAudioFeedback();
 
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
@@ -44,9 +45,9 @@ export function AppShell({ children }: AppShellProps) {
   const { data: metadata } = useSystemMetadata();
 
   const getStatusColor = () => {
-    if (connectionStatus === 'connected') return 'bg-emerald-500';
-    if (connectionStatus === 'connecting') return 'bg-amber-500 animate-pulse';
-    return 'bg-red-500';
+    if (connectionStatus === 'connected') return 'bg-[var(--color-status-success)]';
+    if (connectionStatus === 'connecting') return 'bg-[var(--color-status-warning)] animate-pulse';
+    return 'bg-[var(--color-status-error)]';
   };
 
   const navItems = [
@@ -68,18 +69,34 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="flex h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] antialiased overflow-hidden">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] lg:hidden animate-in fade-in duration-300"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`${
           sidebarCollapsed ? 'w-20' : 'w-64'
-        } transition-all duration-300 ease-in-out bg-[var(--color-bg-secondary)] border-r border-[var(--color-border-primary)] flex flex-col z-50`}
+        } fixed inset-y-0 left-0 lg:static transition-all duration-300 ease-in-out bg-[var(--color-bg-secondary)] border-r border-[var(--color-border-primary)] flex flex-col z-[70] ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
       >
-        <Link to="/dashboard" className="h-16 flex items-center px-6 border-b border-[var(--color-border-primary)] outline-none group hover:bg-[var(--color-surface-deep)]/30 transition-colors" aria-label="Povzetkar Dashboard">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-accent-primary)] flex-shrink-0 flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-105 transition-transform">
+        <Link 
+          to="/dashboard" 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="h-16 flex items-center px-6 border-b border-[var(--color-border-primary)] outline-none group hover:bg-[var(--color-surface-deep)]/30 transition-colors" 
+          aria-label="Povzetkar Dashboard"
+          data-testid="brand-logo"
+        >
+          <div className="w-8 h-8 rounded-xl bg-[var(--color-action-primary)] flex-shrink-0 flex items-center justify-center font-bold text-[var(--color-action-primary-text)] shadow-lg group-hover:scale-105 transition-transform">
             P
           </div>
           {!sidebarCollapsed && (
-            <span className="ml-3 text-header text-xl text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-[var(--color-accent-primary)] transition-colors">
+            <span className="ml-3 text-header text-xl text-[var(--color-text-primary)] animate-in fade-in duration-500 group-hover:text-[var(--color-action-primary)] transition-colors">
               Povzetkar
             </span>
           )}
@@ -92,19 +109,20 @@ export function AppShell({ children }: AppShellProps) {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative text-interactive ${
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center px-3 py-3 rounded-xl transition-colors group relative text-interactive ${
                   isActive
-                    ? 'bg-[var(--color-accent-primary-soft)] text-[var(--color-accent-primary)]'
+                    ? 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] shadow-lg shadow-[var(--color-action-primary)]/20'
                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-deep)] hover:text-[var(--color-text-primary)]'
                 }`}
               >
                 <svg
-                  className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
+                  className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-[var(--color-action-primary)]' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
                 </svg>
                 {!sidebarCollapsed && (
                   <span className="ml-3 font-medium transition-opacity duration-300">
@@ -133,19 +151,20 @@ export function AppShell({ children }: AppShellProps) {
                   <Link
                     key={item.name}
                     to={item.path}
-                    className={`flex items-center px-3 py-3 rounded-lg transition-colors group relative text-interactive ${
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center px-3 py-3 rounded-xl transition-colors group relative text-interactive ${
                       isActive
-                        ? 'bg-[var(--color-accent-admin-soft)] text-[var(--color-accent-admin)]'
+                        ? 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] shadow-lg shadow-[var(--color-action-primary)]/20'
                         : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-deep)] hover:text-[var(--color-text-primary)]'
                     }`}
                   >
                     <svg
-                      className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-[var(--color-accent-admin)]' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
+                      className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-[var(--color-action-primary)]' : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
                     </svg>
                     {!sidebarCollapsed && (
                       <span className="ml-3 font-medium transition-opacity duration-300">
@@ -166,19 +185,22 @@ export function AppShell({ children }: AppShellProps) {
 
         <div className="p-4 border-t border-[var(--color-border-primary)] space-y-2">
           <button
-            onClick={() => setIsMetadataOpen(true)}
-            className={`w-full h-10 flex items-center px-3 rounded-lg bg-[var(--color-surface-deep)] border border-[var(--color-border-primary)] hover:border-[var(--color-accent-primary)] transition-all group overflow-hidden ${sidebarCollapsed ? 'justify-center' : ''}`}
+            onClick={() => {
+              setIsMetadataOpen(true);
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full h-10 flex items-center px-3 rounded-xl bg-[var(--color-surface-deep)] border border-[var(--color-border-primary)] hover:border-[var(--color-action-primary)] transition-all group overflow-hidden ${sidebarCollapsed ? 'justify-center' : ''}`}
           >
-            <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 flex-shrink-0 animate-pulse"></div>
+            <div className="w-2 h-2 rounded-full bg-[var(--color-status-success)] mr-2 flex-shrink-0 animate-pulse"></div>
             {!sidebarCollapsed && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)] transition-colors">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] group-hover:text-[var(--color-action-primary)] transition-colors">
                 {metadata?.version}
               </span>
             )}
           </button>
           <button
             onClick={toggleSidebar}
-            className="w-full h-10 flex items-center justify-center rounded-lg bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="w-full h-10 flex items-center justify-center rounded-xl bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
           >
             <svg
               className={`w-5 h-5 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`}
@@ -186,7 +208,7 @@ export function AppShell({ children }: AppShellProps) {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>
         </div>
@@ -195,12 +217,20 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-8 bg-[var(--color-bg-secondary)]/50 border-b border-[var(--color-border-primary)] backdrop-blur-md z-40">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-8 bg-[var(--color-bg-secondary)]/50 border-b border-[var(--color-border-primary)] backdrop-blur-md z-40">
           <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 -ml-2 lg:hidden text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
+            </button>
               <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]" title={`Real-time Stream: ${connectionStatus}`}>
                 <span className="relative flex h-2 w-2">
                   {connectionStatus === 'connected' && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-status-success)] opacity-75"></span>
                   )}
                   <span className={`relative inline-flex rounded-full h-2 w-2 ${getStatusColor()}`}></span>
                 </span>
@@ -216,19 +246,20 @@ export function AppShell({ children }: AppShellProps) {
 
             <Link 
               to="/me"
+              onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center space-x-3 pr-6 border-r border-[var(--color-border-primary)] group hover:bg-[var(--color-surface-deep)]/50 p-1.5 rounded-xl transition-all"
             >
                <div className="text-right hidden sm:block">
-                 <p className="text-sm text-interactive text-[var(--color-text-primary)] leading-tight group-hover:text-[var(--color-accent-primary)] transition-colors">{user?.name || 'User'}</p>
+                 <p className="text-sm text-interactive text-[var(--color-text-primary)] leading-tight group-hover:text-[var(--color-action-primary)] transition-colors">{user?.name || 'User'}</p>
                  <p className="text-xs text-[var(--color-text-secondary)] leading-tight">{user?.email}</p>
                </div>
-               <div className="w-9 h-9 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-interactive text-[var(--color-text-secondary)] group-hover:border-[var(--color-accent-primary)] group-hover:text-[var(--color-accent-primary)] transition-all">
+               <div className="w-9 h-9 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-interactive text-[var(--color-text-secondary)] group-hover:border-[var(--color-action-primary)] group-hover:text-[var(--color-action-primary)] transition-all">
                  {user?.name?.charAt(0) || 'U'}
                </div>
             </Link>
             <button
                onClick={logout}
-               className="px-4 py-2 text-sm text-interactive text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] transition-colors"
+               className="px-4 py-2 text-sm text-interactive text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] transition-colors"
             >
                {t('common.logout')}
             </button>
@@ -242,7 +273,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
           
           {/* Subtle decoration */}
-          <div className="fixed bottom-0 right-0 w-1/2 h-1/2 bg-blue-900/5 rounded-full blur-[120px] pointer-events-none -z-10 translate-x-1/4 translate-y-1/4"></div>
+          <div className="fixed bottom-0 right-0 w-1/2 h-1/2 bg-[var(--color-action-primary)] opacity-5 rounded-full blur-[120px] pointer-events-none -z-10 translate-x-1/4 translate-y-1/4"></div>
         </main>
       </div>
 
@@ -250,13 +281,12 @@ export function AppShell({ children }: AppShellProps) {
       <Toaster 
         position="top-right" 
         expand={true} 
-        richColors 
         closeButton 
         theme={theme as 'light' | 'dark'}
         toastOptions={{
           style: {
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-border-subtle)',
+            background: 'var(--color-bg-secondary)',
+            border: '1px solid var(--color-border-primary)',
             color: 'var(--color-text-primary)',
           },
         }}

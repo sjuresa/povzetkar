@@ -8,8 +8,7 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
-  XCircle,
-  Loader2
+  XCircle
 } from 'lucide-react';
 import { useGetApiV1Topics, deleteApiV1TopicsId } from '../../api/generated/topics/topics';
 import type { Topic } from '../../api/generated/model';
@@ -57,20 +56,38 @@ export const TopicList: React.FC<TopicListProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-        <p className="text-[var(--color-text-secondary)] animate-pulse font-bold">{t('common.loading')}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="bg-[var(--color-bg-secondary)] rounded-[28px] border border-[var(--color-border-primary)] p-8 animate-pulse">
+            <div className="flex items-start justify-between mb-8">
+              <div className="w-12 h-12 bg-[var(--color-skeleton)] rounded-xl md:rounded-[28px]" />
+              <div className="flex space-x-2">
+                <div className="w-10 h-10 bg-[var(--color-skeleton)] rounded-xl" />
+                <div className="w-10 h-10 bg-[var(--color-skeleton)] rounded-xl" />
+              </div>
+            </div>
+            <div className="h-8 bg-[var(--color-skeleton)] rounded-xl w-3/4 mb-4" />
+            <div className="space-y-2 mb-8">
+              <div className="h-4 bg-[var(--color-skeleton)] rounded w-1/2" />
+              <div className="h-4 bg-[var(--color-skeleton)] rounded w-2/3" />
+            </div>
+            <div className="pt-8 border-t border-[var(--color-border-primary)] flex justify-between items-center">
+              <div className="h-6 bg-[var(--color-skeleton)] rounded-full w-24" />
+              <div className="h-4 bg-[var(--color-skeleton)] rounded w-12" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-8 rounded-3xl flex items-start space-x-6">
-        <AlertCircle className="w-8 h-8 text-red-600 mt-1" />
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-status-error)] p-8 rounded-[28px] flex items-start space-x-6">
+        <AlertCircle className="w-8 h-8 text-[var(--color-status-error)] mt-1"  strokeWidth={1.5}/>
         <div>
-          <h3 className="text-2xl text-red-900 dark:text-red-400 font-bold mb-2">{t('common.error')}</h3>
-          <p className="text-red-700 dark:text-red-300 text-lg">{(error as { message?: string })?.message}</p>
+          <h3 className="text-2xl text-[var(--color-text-primary)] font-black mb-2 uppercase tracking-tighter">{t('common.error')}</h3>
+          <p className="text-[var(--color-text-secondary)] text-lg">{(error as { message?: string })?.message}</p>
         </div>
       </div>
     );
@@ -86,11 +103,11 @@ export const TopicList: React.FC<TopicListProps> = ({
 
   if (topics.length === 0) {
     return (
-      <div className="text-center py-32 bg-[var(--color-background-alt)] rounded-[48px] border-2 border-dashed border-[var(--color-border-subtle)]">
-        <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-8">
-          <Settings className="w-12 h-12 text-blue-600" />
+      <div className="text-center py-32 bg-[var(--color-bg-secondary)] rounded-[28px] border border-[var(--color-border-primary)]">
+        <div className="w-24 h-24 bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] rounded-full flex items-center justify-center mx-auto mb-8">
+          <Settings className="w-12 h-12 text-[var(--color-text-secondary)]"  strokeWidth={1.5}/>
         </div>
-        <h3 className="text-3xl font-bold text-[var(--color-text-primary)] mb-4">{t('topics.list.empty_title')}</h3>
+        <h3 className="text-3xl font-black text-[var(--color-text-primary)] mb-4 uppercase tracking-tighter">{t('topics.list.empty_title')}</h3>
         <p className="text-[var(--color-text-secondary)] text-xl max-w-md mx-auto">{t('topics.list.empty_description')}</p>
       </div>
     );
@@ -101,63 +118,63 @@ export const TopicList: React.FC<TopicListProps> = ({
       {filteredTopics.map((topic) => (
         <div 
           key={topic.id}
-          className="group relative bg-[var(--color-surface-elevated)] rounded-[32px] border border-[var(--color-border-subtle)] p-8 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 hover:border-blue-500/30"
+          className="group relative bg-[var(--color-bg-primary)] rounded-[28px] border border-[var(--color-border-primary)] p-8 transition-all duration-300 hover:border-[var(--color-action-primary)] outline-none focus-within:ring-2 focus-within:ring-[var(--color-ring-focus)] focus-within:ring-offset-4 focus-within:ring-offset-[var(--color-bg-primary)]"
         >
           <div className="flex items-start justify-between mb-8">
-            <div className={`p-4 rounded-2xl transition-colors duration-500 ${topic.enabled ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
-              <Settings className="w-6 h-6" />
+            <div className={`p-4 rounded-xl transition-colors duration-300 border border-[var(--color-border-primary)] ${topic.enabled ? 'bg-[var(--color-bg-primary)] text-[var(--color-action-primary)]' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]'}`}>
+              <Settings className="w-6 h-6"  strokeWidth={1.5}/>
             </div>
-            <div className="flex items-center space-x-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-1 group-hover:translate-y-0">
+            <div className="flex items-center space-x-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-all duration-300 justify-end shrink-0">
               <button 
                 onClick={() => { handleRun(topic); }}
-                className="p-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 rounded-xl transition-all hover:scale-110 active:scale-90"
+                className="p-2.5 hover:bg-[var(--color-action-primary)] hover:text-[var(--color-action-primary-text)] text-[var(--color-action-primary)] rounded-xl transition-all active:scale-95"
                 title={t('topics.list.run_now')}
               >
-                <Play className="w-5 h-5 fill-current" />
+                <Play className="w-5 h-5 fill-current"  strokeWidth={1.5}/>
               </button>
               <button 
                 onClick={() => { onEdit?.(topic); }}
-                className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl transition-all hover:scale-110 active:scale-90"
+                className="p-2.5 hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] rounded-xl transition-all active:scale-95"
                 title={t('common.edit')}
               >
-                <Edit2 className="w-5 h-5" />
+                <Edit2 className="w-5 h-5"  strokeWidth={1.5}/>
               </button>
               <button 
                 onClick={() => { void handleDelete(topic); }}
-                className="p-3 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 rounded-xl transition-all hover:scale-110 active:scale-90"
+                className="p-2.5 hover:bg-[var(--color-status-error)] hover:text-[var(--color-action-primary-text)] text-[var(--color-status-error)] rounded-xl transition-all active:scale-95"
                 title={t('common.delete')}
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-5 h-5"  strokeWidth={1.5}/>
               </button>
             </div>
           </div>
 
           <div className="mb-8">
-            <h3 className="text-2xl font-black text-[var(--color-text-primary)] mb-3 group-hover:text-blue-600 transition-colors">
+            <h3 className="text-2xl font-black text-[var(--color-text-primary)] mb-3 group-hover:text-[var(--color-action-primary)] transition-colors uppercase tracking-tighter">
               {topic.name}
             </h3>
             <div className="flex flex-col space-y-3">
-              <div className="flex items-center text-[var(--color-text-secondary)] font-bold text-sm">
-                <Clock className="w-4 h-4 mr-3 text-blue-500 opacity-60" />
+              <div className="flex items-center text-[var(--color-text-secondary)] font-bold text-xs uppercase tracking-tight">
+                <Clock className="w-4 h-4 mr-3 text-[var(--color-text-secondary)] opacity-60"  strokeWidth={1.5}/>
                 {topic.lastRunDate ? new Date(topic.lastRunDate).toLocaleDateString() : t('topics.list.never_run')}
               </div>
-              <div className="flex items-center text-[var(--color-text-secondary)] font-bold text-sm">
-                <CheckCircle2 className="w-4 h-4 mr-3 text-green-500" />
+              <div className="flex items-center text-[var(--color-text-secondary)] font-bold text-xs uppercase tracking-tight">
+                <CheckCircle2 className="w-4 h-4 mr-3 text-[var(--color-text-secondary)] opacity-60"  strokeWidth={1.5}/>
                 {t('topics.list.sources_count', { count: topic.contentSources?.length || 0 })}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-8 border-t border-[var(--color-border-subtle)]">
+          <div className="flex items-center justify-between pt-8 border-t border-[var(--color-border-primary)]">
             <div className="flex items-center">
               {topic.enabled ? (
-                <span className="flex items-center text-xs font-black uppercase tracking-wider text-green-600 bg-green-50 dark:bg-green-900/20 px-4 py-1.5 rounded-full border border-green-200/50 shadow-sm">
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-2" />
+                <span className="flex items-center text-[10px] font-black uppercase tracking-wider text-[var(--color-action-primary)] bg-[var(--color-bg-primary)] px-4 py-1.5 rounded-full border border-[var(--color-action-primary)]/20 shadow-sm">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-2"  strokeWidth={1.5}/>
                   {t('topics.status.active')}
                 </span>
               ) : (
-                <span className="flex items-center text-xs font-black uppercase tracking-wider text-gray-500 bg-gray-50 dark:bg-gray-900/20 px-4 py-1.5 rounded-full border border-gray-200/50">
-                  <XCircle className="w-3.5 h-3.5 mr-2" />
+                <span className="flex items-center text-[10px] font-black uppercase tracking-wider text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-4 py-1.5 rounded-full border border-[var(--color-border-primary)]">
+                  <XCircle className="w-3.5 h-3.5 mr-2"  strokeWidth={1.5}/>
                   {t('topics.status.inactive')}
                 </span>
               )}

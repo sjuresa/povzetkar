@@ -45,11 +45,11 @@ const formatDuration = (seconds?: number) => {
 const getStatusSelectClasses = (status?: ProcessingStatus) => {
   switch (status) {
     case 'COMPLETED':
-      return "text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/5";
+      return "text-[var(--color-status-success)] border-[var(--color-status-success)]/20 hover:bg-[var(--color-status-success)]/5";
     case 'FAILED':
-      return "text-red-500 border-red-500/20 hover:bg-red-500/5";
+      return "text-[var(--color-status-error)] border-[var(--color-status-error)]/20 hover:bg-[var(--color-status-error)]/5";
     default:
-      return "text-amber-500 border-amber-500/20 hover:bg-amber-500/5";
+      return "text-[var(--color-status-warning)] border-[var(--color-status-warning)]/20 hover:bg-[var(--color-status-warning)]/5";
   }
 };
 
@@ -91,16 +91,16 @@ export function SourceDetailPage() {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="flex items-center space-x-4">
-           <Skeleton className="h-16 w-16 rounded-2xl" />
+           <Skeleton className="h-16 w-16 rounded-xl md:rounded-[28px]" />
            <div className="space-y-2">
               <Skeleton className="h-8 w-48" />
               <Skeleton className="h-4 w-32" />
            </div>
         </div>
-        <Skeleton className="h-40 w-full rounded-3xl" />
+        <Skeleton className="h-40 w-full rounded-xl md:rounded-[28px]" />
         <div className="space-y-4">
            <Skeleton className="h-8 w-64" />
-           <Skeleton className="h-96 w-full rounded-3xl" />
+           <Skeleton className="h-96 w-full rounded-xl md:rounded-[28px]" />
         </div>
       </div>
     );
@@ -109,12 +109,12 @@ export function SourceDetailPage() {
   if (!source) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
-          <AlertCircle size={32} />
+        <div className="w-16 h-16 rounded-full bg-[var(--color-status-error)]/10 flex items-center justify-center text-[var(--color-status-error)]">
+          <AlertCircle size={32}  strokeWidth={1.5}/>
         </div>
         <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Source not found</h2>
-        <Link to="/sources" className="text-indigo-500 hover:underline flex items-center">
-          <ChevronLeft size={16} className="mr-1" /> Back to Library
+        <Link to="/sources" className="text-[var(--color-action-primary)] hover:underline flex items-center">
+          <ChevronLeft size={16} className="mr-1"  strokeWidth={1.5}/> Back to Library
         </Link>
       </div>
     );
@@ -126,19 +126,19 @@ export function SourceDetailPage() {
       <div className="flex flex-col space-y-4">
         <Link 
           to="/sources" 
-          className="group flex items-center text-xs font-bold uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-indigo-500 transition-colors w-fit"
+          className="group flex items-center text-xs font-bold uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] transition-colors w-fit"
         >
-          <ChevronLeft size={14} className="mr-1 group-hover:-translate-x-1 transition-transform" />
+          <ChevronLeft size={14} className="mr-1 group-hover:-translate-x-1 transition-transform"  strokeWidth={1.5}/>
           Back to Library
         </Link>
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center space-x-4">
             <div className={cn(
-              "w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl",
-              source.platform === 'YOUTUBE' ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+              "w-16 h-16 rounded-xl md:rounded-[28px] flex items-center justify-center shadow-xl",
+              source.platform === 'YOUTUBE' ? "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]" : "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]"
             )}>
-              {source.platform === 'YOUTUBE' ? <Youtube size={32} /> : <Globe size={32} />}
+              {source.platform === 'YOUTUBE' ? <Youtube size={32}  strokeWidth={1.5}/> : <Globe size={32}  strokeWidth={1.5}/>}
             </div>
             <div>
               <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] text-glow">
@@ -153,16 +153,16 @@ export function SourceDetailPage() {
                   href={source.sourceUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-xs text-indigo-500 hover:underline flex items-center"
+                  className="text-xs text-[var(--color-action-primary)] hover:underline flex items-center"
                 >
-                  Visit Source <ExternalLink size={12} className="ml-1" />
+                  Visit Source <ExternalLink size={12} className="ml-1"  strokeWidth={1.5}/>
                 </a>
               </div>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="glass border border-[var(--color-border-subtle)] rounded-2xl px-6 py-3 text-center">
+            <div className="glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-6 py-3 text-center">
               <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest mb-1">Items Cached</div>
               <div className="text-2xl font-mono font-extrabold text-[var(--color-text-primary)]">{totalCount.toLocaleString()}</div>
             </div>
@@ -171,10 +171,10 @@ export function SourceDetailPage() {
       </div>
 
       {/* Source Info Card */}
-      <div className="glass border border-[var(--color-border-subtle)] rounded-3xl p-8 relative overflow-hidden bg-gradient-to-br from-[var(--color-surface-elevated)] to-transparent">
+      <div className="glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-8 relative overflow-hidden bg-gradient-to-br from-[var(--color-surface-elevated)] to-transparent">
         <div className="max-w-3xl">
           <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
-            <FileText size={18} className="mr-2 text-indigo-500" />
+            <FileText size={18} className="mr-2 text-[var(--color-action-primary)]"  strokeWidth={1.5}/>
             Description
           </h3>
           <p className="text-[var(--color-text-secondary)] leading-relaxed italic">
@@ -187,7 +187,7 @@ export function SourceDetailPage() {
               <div className="flex items-center space-x-2">
                 <div className={cn(
                   "px-2 py-1 rounded text-[10px] font-bold",
-                  source.platform === 'YOUTUBE' ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+                   source.platform === 'YOUTUBE' ? "bg-[var(--color-surface-deep)] text-[var(--color-action-primary)]" : "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]"
                 )}>
                   {source.platform}
                 </div>
@@ -209,7 +209,7 @@ export function SourceDetailPage() {
           <h3 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">Recent Content Items</h3>
         </div>
 
-        <div className="glass border border-[var(--color-border-subtle)] rounded-3xl overflow-hidden shadow-2xl shadow-black/20">
+        <div className="glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] overflow-hidden shadow-2xl shadow-black/20">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -239,7 +239,7 @@ export function SourceDetailPage() {
                     <tr key={item.id} className="hover:bg-[var(--color-surface-hover)] transition-all group">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-[var(--color-text-primary)] group-hover:text-indigo-400 transition-colors line-clamp-1">
+                          <span className="text-sm font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-action-primary)] transition-colors line-clamp-1">
                             {item.title || 'Untitled Item'}
                           </span>
                         </div>
@@ -251,7 +251,7 @@ export function SourceDetailPage() {
                             disabled={isUpdatingStatus}
                             onChange={(e) => handleStatusChange(item.id!, e.target.value as ProcessingStatus)}
                             className={cn(
-                              "text-[10px] font-bold px-2 py-1 rounded-lg border bg-transparent cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/30",
+                              "text-[10px] font-bold px-2 py-1 rounded-xl border bg-transparent cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/30",
                               getStatusSelectClasses(item.processingStatus)
                             )}
                           >
@@ -270,7 +270,7 @@ export function SourceDetailPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center text-xs text-[var(--color-text-secondary)] font-mono">
-                          <Clock size={12} className="mr-1.5" />
+                          <Clock size={12} className="mr-1.5"  strokeWidth={1.5}/>
                           {item.publishedAt ? format(new Date(item.publishedAt), 'MMM d, HH:mm') : 'Unknown'}
                         </div>
                       </td>
@@ -279,20 +279,20 @@ export function SourceDetailPage() {
                           {item.processingStatus === 'COMPLETED' && (
                             <button 
                               onClick={() => setSummaryItemId(item.id as number)}
-                              className="inline-flex items-center p-2 text-indigo-500 hover:text-indigo-400 transition-colors"
+                              className="inline-flex items-center p-2 text-[var(--color-action-primary)] hover:text-[var(--color-action-hover)] transition-colors"
                               title="View Summary"
                             >
-                              <FileText size={16} />
+                              <FileText size={16}  strokeWidth={1.5}/>
                             </button>
                           )}
                           <a 
                             href={item.sourceUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center p-2 text-[var(--color-text-secondary)] hover:text-indigo-500 transition-colors"
+                            className="inline-flex items-center p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] transition-colors"
                             title="View Original"
                           >
-                            <ExternalLink size={16} />
+                            <ExternalLink size={16}  strokeWidth={1.5}/>
                           </a>
                         </div>
                       </td>

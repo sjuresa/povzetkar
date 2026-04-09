@@ -136,6 +136,14 @@ Migrating from color-specific variables (e.g., `--color-slate-50`) to semantic d
 - **The Trap:** Using a "Surface Deep" (Neutral-200) background for icons on a "BG Secondary" (Neutral-100) card. This results in muddy, low-contrast UI.
 - **The Standard:** Use **BG Primary (White)** as the base for accent-colored icon squares on secondary surfaces. This reaches **6.5:1** contrast and creates a "Premium" clean look.
 
+## 100% Monochromatic Design Hardening (POV-178)
+When enforcing a strict monochromatic/institutional design identity:
+- **The Trap:** Relying on browser-default colors for native form controls. Even with a correct label/border color, the native Checkbox or Radio "accent" remains the OS/browser default (often Blue).
+- **The Standard:** Use the **`accent-color`** CSS property.
+  - **Global Enforcement:** Set `input[type="checkbox"], input[type="radio"] { accent-color: var(--color-action-primary); }` in the global CSS base layer.
+  - **Tailwind v4:** Use the `accent-[var(--color-action-primary)]` class on interactive inputs to ensure 100% monochromatic checkmarks.
+- **Icon Taxonomy:** Replace all semantic status tints (Success-Green, Info-Blue) on non-critical icons with the primary action palette (Zinc). Reserved colors should only be used for critical failure/warning states (Red/Amber) to maintain semantic clarity.
+
 ---
 
 ## Related Documents

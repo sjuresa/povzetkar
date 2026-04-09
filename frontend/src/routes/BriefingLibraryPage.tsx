@@ -79,40 +79,40 @@ export function BriefingLibraryPage() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-2xl px-4 py-2">
+        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-4 py-2">
           <div className="text-right">
             <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">
               {t('briefingLibrary.stats.totalBriefings')}
             </div>
-            <div className="text-sm font-mono text-blue-500 font-bold">
+            <div className="text-sm font-mono text-[var(--color-action-primary)] font-bold">
               {totalCount.toLocaleString()} {t('briefingLibrary.stats.totalBriefingsDesc')}
             </div>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 ml-2">
-            <FileText className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] ml-2">
+            <FileText className="w-4 h-4"  strokeWidth={1.5}/>
           </div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-3xl p-6 shadow-xl shadow-black/5 backdrop-blur-sm space-y-4">
+      <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-6 shadow-xl shadow-black/5 backdrop-blur-sm space-y-4">
         {/* Search */}
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] group-focus-within:text-blue-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] group-focus-within:text-[var(--color-action-primary)] transition-colors"  strokeWidth={1.5}/>
           <input
             id="briefing-library-search"
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('briefingLibrary.search.placeholder')}
-            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-2xl pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-[var(--color-text-primary)] shadow-inner"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)] shadow-inner"
           />
         </div>
 
         {/* Filter Row */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
-            <SlidersHorizontal className="w-4 h-4 flex-shrink-0" />
+            <SlidersHorizontal className="w-4 h-4 flex-shrink-0"  strokeWidth={1.5}/>
           </div>
 
           {/* Topic Filter */}
@@ -120,7 +120,7 @@ export function BriefingLibraryPage() {
             id="briefing-library-topic-filter"
             value={topicId || ''}
             onChange={(e) => setTopicId(e.target.value ? Number(e.target.value) : undefined)}
-            className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all min-w-[140px]"
+            className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all min-w-[140px]"
           >
             <option value="">{t('briefingLibrary.filters.topic')}</option>
             {topics.map((topic) => (
@@ -133,7 +133,7 @@ export function BriefingLibraryPage() {
             id="briefing-library-source-filter"
             value={sourceId || ''}
             onChange={(e) => setSourceId(e.target.value ? Number(e.target.value) : undefined)}
-            className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all min-w-[140px]"
+            className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all min-w-[140px]"
           >
             <option value="">{t('briefingLibrary.filters.source')}</option>
             {sources.map((source) => (
@@ -144,25 +144,25 @@ export function BriefingLibraryPage() {
           {/* Date Range */}
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-secondary)] pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-secondary)] pointer-events-none"  strokeWidth={1.5}/>
               <input
                 id="briefing-library-start-date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl pl-9 pr-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl pl-9 pr-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all"
                 placeholder={t('briefingLibrary.filters.startDate')}
               />
             </div>
             <span className="text-[var(--color-text-secondary)] text-xs">—</span>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-secondary)] pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-secondary)] pointer-events-none"  strokeWidth={1.5}/>
               <input
                 id="briefing-library-end-date"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl pl-9 pr-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl pl-9 pr-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all"
                 placeholder={t('briefingLibrary.filters.endDate')}
               />
             </div>
@@ -173,9 +173,9 @@ export function BriefingLibraryPage() {
             <button
               id="briefing-library-clear-filters"
               onClick={clearFilters}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--color-status-error)]/30 text-[var(--color-status-error)] hover:bg-[var(--color-status-error)]/10 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5"  strokeWidth={1.5}/>
               {t('briefingLibrary.filters.reset')}
             </button>
           )}
@@ -197,9 +197,9 @@ export function BriefingLibraryPage() {
 
           if (items.length === 0) {
             return (
-              <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-3xl p-12 text-center">
+              <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-12 text-center">
                 <div className="w-16 h-16 rounded-full bg-[var(--color-surface-deep)] flex items-center justify-center mx-auto mb-4 text-[var(--color-text-secondary)]">
-                  <Search className="w-8 h-8" />
+                  <Search className="w-8 h-8"  strokeWidth={1.5}/>
                 </div>
                 <h3 className="text-lg font-bold text-[var(--color-text-primary)]">
                   {t('briefingLibrary.empty.title')}
@@ -210,7 +210,7 @@ export function BriefingLibraryPage() {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="mt-4 px-4 py-2 rounded-xl bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-all text-sm font-medium cursor-pointer"
+                    className="mt-4 px-4 py-2 rounded-xl bg-[var(--color-action-primary)]/10 text-[var(--color-action-primary)] hover:bg-[var(--color-action-primary)]/20 transition-all text-sm font-medium cursor-pointer"
                   >
                     {t('briefingLibrary.empty.clearFilters')}
                   </button>
@@ -222,7 +222,7 @@ export function BriefingLibraryPage() {
           return (
           <>
             {/* Table */}
-            <div className="glass border border-[var(--color-border-subtle)] rounded-3xl overflow-hidden">
+            <div className="glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -253,12 +253,12 @@ export function BriefingLibraryPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-xs font-bold uppercase tracking-wider text-blue-500 bg-blue-500/10 px-2 py-1 rounded-lg">
+                          <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-action-primary)] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] px-2 py-1 rounded-xl">
                             {briefing.topicName}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-[var(--color-text-primary)] font-medium group-hover:text-blue-400 transition-colors line-clamp-1">
+                          <span className="text-[var(--color-text-primary)] font-medium group-hover:text-[var(--color-action-primary)] transition-colors line-clamp-1">
                             {briefing.title}
                           </span>
                         </td>
@@ -282,9 +282,9 @@ export function BriefingLibraryPage() {
                               <Link
                                 to="/briefings/$briefingId"
                                 params={{ briefingId: String(briefing.id) }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] hover:border-blue-500/50 transition-all text-xs font-bold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-blue-400"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border-subtle)] glass hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-action-primary)]/50 transition-all text-xs font-bold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-[var(--color-action-primary)]"
                               >
-                                <FileText className="w-3.5 h-3.5" />
+                                <FileText className="w-3.5 h-3.5"  strokeWidth={1.5}/>
                                 {t('briefingLibrary.table.view')}
                               </Link>
                             )}
