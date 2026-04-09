@@ -26,7 +26,7 @@ test('login button redirects to /auth/login', async ({ page }) => {
   // We don't want to actually go to Google, so we'll just check if it tries to go to /auth/login
   
   test.setTimeout(60000);
-  await loginButton.click({ force: true });
+  await loginButton.click();
   
   await page.waitForURL(url => url.toString().includes('/auth/login'), { timeout: 15000 });
   
