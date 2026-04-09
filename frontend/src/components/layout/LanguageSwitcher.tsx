@@ -19,9 +19,9 @@ export function LanguageSwitcher() {
   return (
     <button
       onClick={toggleLanguage}
-      className="px-3 py-2 rounded-xl transition-all bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-blue-400 group relative flex items-center space-x-2 border border-[var(--color-border-subtle)]"
+      className="px-3 py-2 rounded-xl transition-all bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] hover:border-[var(--color-action-primary)] text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] group relative flex items-center space-x-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-primary)]"
     >
-      <Languages className="w-5 h-5 transition-transform group-active:scale-95" />
+      <Languages className="w-5 h-5 transition-transform group-active:scale-95" strokeWidth={1.5} />
       <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:block">
         {currentLang.code}
       </span>

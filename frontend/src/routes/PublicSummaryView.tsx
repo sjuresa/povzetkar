@@ -39,7 +39,7 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <a href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white group-hover:scale-105 transition-transform">P</div>
+              <div className="w-8 h-8 rounded-xl bg-[var(--color-action-primary)] flex items-center justify-center font-bold text-[var(--color-action-primary-text)] group-hover:scale-105 transition-transform">P</div>
               <span className="font-bold text-[var(--color-text-primary)] hidden sm:inline">Povzetkar</span>
             </a>
             
@@ -48,9 +48,9 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
               className="p-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
             >
               {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
+                <Sun className="w-4 h-4 text-[var(--color-action-primary)] group-hover:rotate-45 transition-transform"  strokeWidth={1.5}/>
               ) : (
-                <Moon className="w-4 h-4 text-indigo-600 group-hover:-rotate-12 transition-transform" />
+                <Moon className="w-4 h-4 text-[var(--color-text-primary)] group-hover:-rotate-12 transition-transform"  strokeWidth={1.5}/>
               )}
             </button>
 
@@ -58,7 +58,7 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
               onClick={() => void i18n.changeLanguage(i18n.language === 'sl' ? 'en' : 'sl')}
               className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
             >
-              <Languages className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+              <Languages className="w-4 h-4 text-[var(--color-action-primary)] group-hover:scale-110 transition-transform"  strokeWidth={1.5}/>
               <span className="text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-primary)]">
                 {i18n.language === 'sl' ? 'SL' : 'EN'}
               </span>
@@ -73,16 +73,16 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
             {/* Minimalist Source Header */}
             <div className="flex flex-col gap-6 mb-12">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                        <Hash className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)]">
+                        <Hash className="w-6 h-6"  strokeWidth={1.5}/>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-action-primary)]">
                            {summary.authorName || t('briefingDetail.unknownAuthor')}
                         </span>
                         {summary.publishedAt && (
                           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-secondary)]">
-                            <Calendar className="w-3 h-3 text-emerald-500/70" />
+                            <Calendar className="w-3 h-3 text-[var(--color-status-success)]/70"  strokeWidth={1.5}/>
                             <span>{format(new Date(summary.publishedAt), 'MMM d, yyyy')}</span>
                           </div>
                         )}
@@ -95,19 +95,19 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
                   rel="noopener noreferrer" 
                   className="group flex flex-col gap-2"
                 >
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--color-text-primary)] group-hover:text-indigo-400 transition-colors leading-[1.1] text-glow">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--color-text-primary)] group-hover:text-[var(--color-action-primary)] transition-colors leading-[1.1] text-glow">
                         {summary.title}
                     </h1>
-                    <div className="flex items-center gap-2 text-sm text-indigo-400 font-bold opacity-80 group-hover:opacity-100 transition-opacity">
-                        <LinkIcon className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-sm text-[var(--color-action-primary)] font-bold opacity-80 group-hover:opacity-100 transition-opacity">
+                        <LinkIcon className="w-4 h-4"  strokeWidth={1.5}/>
                         <span>{(() => { try { return summary.sourceUrl ? new URL(summary.sourceUrl).hostname : ''; } catch { return ''; } })()}</span>
                     </div>
                 </a>
             </div>
 
             {/* Main Summary Content */}
-            <div className="p-8 md:p-12 rounded-[2.5rem] bg-indigo-500/[0.03] border-l-8 border-indigo-500/50 shadow-2xl shadow-indigo-500/5 mb-16">
-                <article className="prose prose-indigo max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed selection:bg-indigo-500/30">
+            <div className="p-8 md:p-12 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.03] border-l-8 border-[var(--color-action-primary)]/50 shadow-2xl shadow-[var(--color-action-primary)]/5 mb-16">
+                <article className="prose prose-zinc max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed selection:bg-[var(--color-action-primary)]/30">
                     <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                         {summary.summaryText || ''}
                     </ReactMarkdown>
@@ -115,10 +115,10 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
             </div>
 
             {/* CTA Section */}
-            <div className="text-center py-16 border-y border-[var(--color-border-subtle)] bg-[var(--color-background-alt)]/20 rounded-[3rem]">
-                <a href="/" className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black transition-all shadow-xl shadow-indigo-500/30 active:scale-95 text-lg">
+            <div className="text-center py-16 border-y border-[var(--color-border-subtle)] bg-[var(--color-background-alt)]/20 rounded-xl md:rounded-[28px]">
+                <a href="/" className="inline-flex items-center gap-3 px-10 py-5 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] text-[var(--color-action-primary-text)] font-black transition-all shadow-xl shadow-[var(--color-action-primary)]/30 active:scale-95 text-lg">
                     {t('briefingDetail.public.ctaStart')}
-                    <ExternalLink className="w-5 h-5" />
+                    <ExternalLink className="w-5 h-5"  strokeWidth={1.5}/>
                 </a>
             </div>
         </div>

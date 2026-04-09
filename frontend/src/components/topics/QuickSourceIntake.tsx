@@ -119,7 +119,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
   };
 
   return (
-    <div className="space-y-4 p-4 bg-[var(--color-background-alt)] rounded-lg border border-[var(--color-border-subtle)] shadow-sm transition-all duration-300">
+    <div className="space-y-4 p-4 bg-[var(--color-background-alt)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm transition-all duration-300">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t('topics.form.quick_add.title', 'Quick Add Source')}</h3>
         <button
@@ -144,7 +144,7 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-medium rounded-md border transition-all duration-200",
                   platform === p
-                    ? "bg-[var(--color-accent)] border-[var(--color-accent)] text-white shadow-sm"
+                    ? "bg-[var(--color-action-primary)] border-[var(--color-action-primary)] text-[var(--color-action-primary-text)] shadow-sm"
                     : "bg-[var(--color-surface-elevated)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]"
                 )}
               >
@@ -170,44 +170,44 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
               placeholder={platform === 'YOUTUBE' ? t('topics.form.quick_add.identifier_placeholder_youtube', '@handle or channel ID') : t('topics.form.quick_add.identifier_placeholder_blog', 'Blog URL')}
               className={cn(
                 "w-full px-3 py-2 text-sm bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)] border rounded-md focus:outline-none focus:ring-2 transition-all duration-200 pr-10",
-                validationStatus === 'valid' ? "border-green-500/50 focus:ring-green-500/20" : 
-                validationStatus === 'invalid' ? "border-red-500/50 focus:ring-red-500/20" :
-                validationStatus === 'warning' ? "border-amber-500/50 focus:ring-amber-500/20" :
-                "border-[var(--color-border-subtle)] focus:ring-[var(--color-accent-soft)]"
+                validationStatus === 'valid' ? "border-[var(--color-status-success)]/50 focus:ring-[var(--color-status-success)]/20" : 
+                validationStatus === 'invalid' ? "border-[var(--color-status-error)]/50 focus:ring-[var(--color-status-error)]/20" :
+                validationStatus === 'warning' ? "border-[var(--color-status-warning)]/50 focus:ring-[var(--color-status-warning)]/20" :
+                "border-[var(--color-border-subtle)] focus:ring-[var(--color-ring-focus)]"
               )}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-              {validationStatus === 'validating' && <Loader2 className="w-4 h-4 text-[var(--color-accent)] animate-spin" />}
-              {validationStatus === 'valid' && <Check className="w-4 h-4 text-green-500" />}
-              {validationStatus === 'invalid' && <AlertCircle className="w-4 h-4 text-red-500" />}
-              {validationStatus === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" />}
+              {validationStatus === 'validating' && <Loader2 className="w-4 h-4 text-[var(--color-action-primary)] animate-spin"  strokeWidth={1.5}/>}
+              {validationStatus === 'valid' && <Check className="w-4 h-4 text-[var(--color-status-success)]"  strokeWidth={1.5}/>}
+              {validationStatus === 'invalid' && <AlertCircle className="w-4 h-4 text-[var(--color-status-error)]"  strokeWidth={1.5}/>}
+              {validationStatus === 'warning' && <AlertTriangle className="w-4 h-4 text-[var(--color-status-warning)] animate-pulse"  strokeWidth={1.5}/>}
             </div>
           </div>
           
           {validationStatus === 'valid' && validatedName && (
-            <p className="mt-1 text-[11px] text-green-500 font-medium animate-in fade-in slide-in-from-top-1">
+            <p className="mt-1 text-[11px] text-[var(--color-status-success)] font-medium animate-in fade-in slide-in-from-top-1">
               Found: <span className="font-bold">{validatedName}</span>
             </p>
           )}
 
           {validationStatus === 'invalid' && (
-             <p className="mt-1 text-[11px] text-red-500 animate-in fade-in slide-in-from-top-1">
+             <p className="mt-1 text-[11px] text-[var(--color-status-error)] animate-in fade-in slide-in-from-top-1">
                {t('topics.form.quick_add.validation_error_not_found', 'YouTube channel not found. Please check the ID or handle.')}
              </p>
           )}
 
           {validationStatus === 'warning' && (
-             <p className="mt-1 text-[11px] text-amber-500 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 font-medium">
+             <p className="mt-1 text-[11px] text-[var(--color-status-warning)] flex items-center gap-1 animate-in fade-in slide-in-from-top-1 font-medium">
                {t('topics.form.quick_add.validation_warning_api', 'Validation service busy. You can still try to add.')}
              </p>
           )}
         </div>
 
         {platform === 'YOUTUBE' && validationStatus === 'idle' && (
-          <div className="flex gap-2 p-2 bg-[var(--color-accent-soft)] rounded border border-[var(--color-accent)] border-opacity-30">
-            <Info className="w-3.5 h-3.5 text-[var(--color-accent)] shrink-0 mt-0.5" />
+          <div className="flex gap-2 p-2 bg-[var(--color-action-primary)]/[0.03] rounded border border-[var(--color-action-primary)] border-opacity-30">
+            <Info className="w-3.5 h-3.5 text-[var(--color-action-primary)] shrink-0 mt-0.5"  strokeWidth={1.5}/>
             <div className="text-[10px] text-[var(--color-text-primary)] opacity-80">
-              <p className="font-semibold mb-0.5 text-[var(--color-accent)]">{t('topics.form.quick_add.youtube_guidance_title', 'YouTube Tips')}</p>
+              <p className="font-semibold mb-0.5 text-[var(--color-action-primary)]">{t('topics.form.quick_add.youtube_guidance_title', 'YouTube Tips')}</p>
               <ul className="list-disc list-inside space-y-0.5">
                 <li>{t('topics.form.quick_add.youtube_guidance_id', 'Paste @handle (e.g., @veritasium)')}</li>
                 <li>{t('topics.form.quick_add.youtube_guidance_find', 'Or paste the channel URL')}</li>
@@ -217,8 +217,8 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-2 bg-red-500/10 text-red-500 text-xs border border-red-500/30 rounded">
-            <AlertCircle className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 p-2 bg-[var(--color-status-error)]/10 text-[var(--color-status-error)] text-xs border border-[var(--color-status-error)]/30 rounded">
+            <AlertCircle className="w-3.5 h-3.5"  strokeWidth={1.5}/>
             <span>{error}</span>
           </div>
         )}
@@ -227,16 +227,16 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
           type="submit"
           disabled={isPending || !identifier.trim() || validationStatus === 'validating'}
           className={cn(
-            "w-full flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-all duration-200",
-            validationStatus === 'valid' ? "bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/20" :
-            validationStatus === 'invalid' ? "bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-500/20" :
-            validationStatus === 'warning' ? "bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-500/20" :
-            "bg-[var(--color-accent)] hover:bg-[var(--color-primary-hover)] disabled:bg-[var(--color-surface-hover)] disabled:text-[var(--color-text-secondary)]"
+            "w-full flex items-center justify-center gap-2 px-4 py-2 text-[var(--color-action-primary-text)] text-sm font-medium rounded-md transition-all duration-200",
+            validationStatus === 'valid' ? "bg-[var(--color-status-success)]/80 hover:bg-[var(--color-status-success)] shadow-lg shadow-[var(--color-status-success)]/20" :
+            validationStatus === 'invalid' ? "bg-[var(--color-status-warning)]/80 hover:bg-[var(--color-status-warning)] shadow-lg shadow-[var(--color-status-warning)]/20" :
+            validationStatus === 'warning' ? "bg-[var(--color-status-warning)]/80 hover:bg-[var(--color-status-warning)] shadow-lg shadow-[var(--color-status-warning)]/20" :
+            "bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] disabled:bg-[var(--color-surface-hover)] disabled:text-[var(--color-text-secondary)]"
           )}
         >
-          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 
-           validationStatus === 'valid' ? <Check className="w-4 h-4" /> :
-           <AlertTriangle className="w-4 h-4" />}
+          {isPending ? <Loader2 className="w-4 h-4 animate-spin"  strokeWidth={1.5}/> : 
+           validationStatus === 'valid' ? <Check className="w-4 h-4"  strokeWidth={1.5}/> :
+           <AlertTriangle className="w-4 h-4"  strokeWidth={1.5}/>}
           
           {validationStatus === 'invalid' || validationStatus === 'warning' 
             ? t('topics.form.quick_add.force_submit_button', 'Force Add') 

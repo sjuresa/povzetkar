@@ -13,7 +13,7 @@ export function VisionSection() {
                   {t('landing.vision.title')}
                </h2>
                <div className="space-y-6 max-w-xl">
-                  <p className="text-2xl font-black uppercase tracking-tight text-[var(--color-accent)]">
+                  <p className="text-2xl font-black uppercase tracking-tight text-[var(--color-action-primary)]">
                     {t('landing.vision.desc1')}
                   </p>
                   <p className="text-xl font-medium leading-relaxed text-[var(--color-text-secondary)]">
@@ -31,7 +31,7 @@ export function VisionSection() {
                ].map((pillar, idx) => (
                  <div key={idx} className="space-y-3">
                     <h4 className="text-lg font-black uppercase tracking-widest italic flex items-center gap-2">
-                       <div className="w-2 h-6 bg-[var(--color-accent)]"></div>
+                       <div className="w-2 h-6 bg-[var(--color-action-primary)]"></div>
                        {pillar.title}
                     </h4>
                     <p className="text-sm font-bold text-[var(--color-text-secondary)] leading-relaxed">{pillar.desc}</p>
@@ -41,7 +41,7 @@ export function VisionSection() {
          </div>
 
          <div className="relative group perspective-[2000px]">
-            <div className="absolute inset-0 bg-[var(--color-accent)] translate-x-8 translate-y-8 group-hover:translate-x-4 group-hover:translate-y-4 transition-transform duration-700"></div>
+            <div className="absolute inset-0 bg-[var(--color-action-primary)] translate-x-8 translate-y-8 group-hover:translate-x-4 group-hover:translate-y-4 transition-transform duration-700"></div>
             <div className="relative border-4 border-black bg-[var(--color-surface-deep)] overflow-hidden">
                <img 
                  src={heroAsset} 

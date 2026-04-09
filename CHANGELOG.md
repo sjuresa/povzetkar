@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Visual How-To Guides (POV-177):** Created 5 minimalist AI-generated illustrations and numbered sub-steps for every onboarding goal, providing clear instructions within the application context.
 - **Action Triggers (POV-177):** Integrated automated step completion triggers across `TopicForm`, `TriggerOrchestrationModal`, `BriefingDetailPage`, and `ExportMenu` for a seamless "learning by doing" experience.
 - **Bilingual Onboarding (POV-177):** Full EN/SL localization for all checklist items and modal instructions.
+- **Monochromatic UI Hardening (POV-178):** Enforced 100% theme consistency by purging remaining legacy blue/indigo and green color literals across the application. Migrated to a strict monochromatic Zinc-neutral taxonomy.
+- **Form Component Standardization (POV-178):** Implemented a global `accent-color` override for native form controls (checkboxes, radio buttons), ensuring all browser-default interactive elements adhere to the Refined Zinc Bento design tokens.
+- **Trigger Modal Refinement (POV-178):** Standardized input accents and interactive icons within the `TriggerOrchestrationModal`, matching orchestration triggers to the institutional-grade primary action palette.
+- **E2E Stability (POV-178):** Hardened the Playwright test suite by implementing network-level mocking for authentication paths and injecting `data-testid` attributes into critical UI anchors (`brand-logo`, `hero-cta`), eliminating brittle dependencies on layout and localization.
 
 ### Changed
 - **Bundle Optimization (POV-176):** Reduced frontend JavaScript bundle size by replacing the `uuid` package with native `crypto.randomUUID()` and consolidating HTML export parsing onto the existing `react-markdown` engine, completely eliminating `marked` and `dompurify` dependencies from the payload.

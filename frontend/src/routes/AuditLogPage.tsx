@@ -44,14 +44,14 @@ export function AuditLogPage() {
           </p>
         </div>
         
-        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-2xl px-4 py-2">
+        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-4 py-2 hover:bg-[var(--color-surface-hover)] transition-colors group">
            <div className="text-right">
              <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">Database State</div>
-             <div className="text-sm font-mono text-amber-500 font-bold">{totalCount.toLocaleString()} Entries</div>
+             <div className="text-sm font-mono text-[var(--color-action-primary)] font-bold">{totalCount.toLocaleString()} Entries</div>
            </div>
-           <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 ml-2">
+           <div className="w-8 h-8 rounded-xl bg-[var(--color-action-primary)]/[0.05] flex items-center justify-center text-[var(--color-action-primary)] ml-2 group-hover:scale-110 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
               </svg>
            </div>
         </div>

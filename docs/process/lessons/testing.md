@@ -62,6 +62,15 @@ In rapid agile development, User Stories often become disconnected from the actu
 ### Process Gates for Documentation Sync
 - **The Standard:** Documentation parity must be an **Explicit Phase 2 Gate** in the development checklist. Do not wait until the end of the release to "clean up" docs. Every task must include a "Master Specification Sync" step where new scenarios are added and old ones updated BEFORE the task is marked as complete.
 
+## Backend-Agnostic E2E Stability (POV-178)
+When scaling Playwright E2E tests in a complex microservices or OIDC-guarded environment:
+- **The Trap:** Relying on a running local backend and/or OIDC provider for smoke tests. This introduces massive flakiness due to network latency, session expiration, and state contamination.
+- **The Standard:** Implement **Network-Level Mocking** using `page.route`.
+  - **Auth Isolation:** Intercept `/api/v1/users/me` and `/auth/login` to simulate 401 (Unauthenticated) or 200 (Authenticated) states. This allows testing "Redirect to Landing" logic without a real auth server.
+  - **Static Mocking:** Return standard JSON DTOs for core endpoints to test UI rendering paths in isolation from DB state.
+- **Selector Hardening:** Move away from brittle text-based or role-based selectors (`getByText`, `getByRole`) which break on localization or layout shifts.
+  - **The Standard:** Use **`data-testid`** on core navigational anchors (Logo, Hero CTA, Primary Buttons). This decouples test logic from the visual design and i18n layer.
+
 ---
 
 ## Related Documents

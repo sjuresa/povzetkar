@@ -34,7 +34,7 @@ export function OnboardingChecklist() {
   if (isComplete) {
     return (
       <div
-        className="w-full glass border border-[var(--color-accent-primary)]/40 rounded-3xl p-8 text-center space-y-4 animate-in fade-in zoom-in-95 duration-500 bg-[var(--color-accent-primary-soft)]"
+        className="w-full glass border border-[var(--color-accent-primary)]/40 rounded-xl md:rounded-[28px] p-8 text-center space-y-4 animate-in fade-in zoom-in-95 duration-500 bg-[var(--color-accent-primary-soft)]"
       >
         <div className="space-y-2">
           <p className="text-3xl font-black text-[var(--color-text-primary)]">{t('onboarding.celebration_title')}</p>
@@ -42,13 +42,13 @@ export function OnboardingChecklist() {
         </div>
         <div className="flex justify-center gap-1">
           {ORDERED_STEPS.map((s) => (
-            <Check key={s} className="w-5 h-5 text-[var(--color-accent-primary)]" />
+            <Check key={s} className="w-5 h-5 text-[var(--color-action-primary)]"  strokeWidth={1.5}/>
           ))}
         </div>
         <div className="pt-2">
           <button
             onClick={() => setDismissed(true)}
-            className="bg-[var(--color-accent-primary)] text-white px-6 py-2.5 rounded-2xl text-interactive hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[var(--color-accent-primary)]/20"
+            className="bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] px-6 py-2.5 rounded-xl md:rounded-[28px] text-interactive hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[var(--color-action-primary)]/20"
           >
             {t('onboarding.celebration_done')}
           </button>
@@ -66,11 +66,11 @@ export function OnboardingChecklist() {
         className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-primary)] glass hover:bg-[var(--color-surface-hover)] transition-all text-sm text-interactive text-[var(--color-text-secondary)] animate-in fade-in duration-300"
         aria-label={`${t('onboarding.expand_label')} — ${t('onboarding.progress_label', { percent: progress })}`}
       >
-        <span className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
+        <span className="w-2 h-2 rounded-full bg-[var(--color-action-primary)] animate-pulse" />
         <span className="text-[var(--color-text-primary)] text-interactive">{t('onboarding.expand_label')}</span>
         <span className="text-xs opacity-60">·</span>
         <span className="text-xs">{t('onboarding.progress_label', { percent: progress })}</span>
-        <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
+        <ChevronDown className="w-3 h-3 ml-1 opacity-60"  strokeWidth={1.5}/>
       </button>
     );
   }
@@ -80,7 +80,7 @@ export function OnboardingChecklist() {
     <>
       <div
         id="onboarding-checklist"
-        className="w-full glass border border-[var(--color-border-primary)]/60 rounded-3xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-500"
+        className="w-full glass border border-[var(--color-border-primary)]/60 rounded-xl md:rounded-[28px] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-500"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4">
@@ -93,7 +93,7 @@ export function OnboardingChecklist() {
               <div className="flex-1 h-3 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] shadow-inner overflow-hidden">
                 <div
                   className={cn(
-                    'h-full rounded-full bg-[var(--color-accent-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-accent-primary)]',
+                    'h-full rounded-full bg-[var(--color-action-primary)] transition-all duration-1000 ease-in-out shadow-[0_0_12px_var(--color-action-primary)]',
                     progress > 0 && progress < 100 && 'border-r-2 border-[var(--color-text-secondary)]/20'
                   )}
                   style={{ 
@@ -105,7 +105,7 @@ export function OnboardingChecklist() {
                   aria-valuemax={100}
                 />
               </div>
-              <span className="text-sm font-black text-[var(--color-accent-primary)] whitespace-nowrap min-w-[3rem] text-right">
+              <span className="text-sm font-black text-[var(--color-action-primary)] whitespace-nowrap min-w-[3rem] text-right">
                 {progress}%
               </span>
             </div>
@@ -116,7 +116,7 @@ export function OnboardingChecklist() {
             className="p-1.5 rounded-xl text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] transition-colors shrink-0"
             aria-label={t('onboarding.collapse')}
           >
-            <ChevronUp className="w-4 h-4" />
+            <ChevronUp className="w-4 h-4"  strokeWidth={1.5}/>
           </button>
         </div>
 
@@ -131,7 +131,7 @@ export function OnboardingChecklist() {
                 key={step}
                 id={`onboarding-step-${step}`}
                 className={cn(
-                  'rounded-2xl px-4 py-3 transition-all',
+                  'rounded-xl md:rounded-[28px] px-4 py-3 transition-all',
                   isActive
                     ? 'bg-[var(--color-accent-primary-soft)] border border-[var(--color-accent-primary)]/20'
                     : isStepComplete
@@ -144,14 +144,14 @@ export function OnboardingChecklist() {
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
                       isStepComplete
-                        ? 'bg-[var(--color-accent-primary)] text-white'
+                        ? 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)]'
                         : isActive
-                        ? 'border-2 border-[var(--color-accent-primary)] text-[var(--color-accent-primary)]'
+                        ? 'border-2 border-[var(--color-action-primary)] text-[var(--color-action-primary)]'
                         : 'border-2 border-[var(--color-border-primary)] text-[var(--color-text-secondary)]'
                     }`}
                   >
                     {isStepComplete ? (
-                      <Check className="w-3.5 h-3.5" />
+                      <Check className="w-3.5 h-3.5"  strokeWidth={1.5}/>
                     ) : (
                       <span className="text-[10px] font-bold">{idx + 1}</span>
                     )}
@@ -174,7 +174,7 @@ export function OnboardingChecklist() {
                       <button
                         onClick={() => setOpenModalStep(step)}
                         id={`onboarding-step-${step}-how`}
-                        className="text-xs text-[var(--color-accent-primary)] hover:underline text-interactive"
+                        className="text-xs text-[var(--color-action-primary)] hover:underline text-interactive"
                       >
                         {t('onboarding.learn_more')}
                       </button>
@@ -183,7 +183,7 @@ export function OnboardingChecklist() {
                         id={`onboarding-step-${step}-cta`}
                         className={`text-xs text-interactive px-3 py-1 rounded-xl transition-all active:scale-95 ${
                           isActive
-                            ? 'bg-[var(--color-accent-primary)] text-white hover:opacity-90'
+                            ? 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] hover:opacity-90'
                             : 'border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'
                         }`}
                       >

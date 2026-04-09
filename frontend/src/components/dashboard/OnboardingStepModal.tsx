@@ -10,11 +10,11 @@ interface OnboardingStepModalProps {
 }
 
 const STEP_ICONS: Record<OnboardingStep, React.ReactNode> = {
-  topic: <Sparkles className="w-12 h-12" />,
-  source: <Database className="w-12 h-12" />,
-  trigger: <Zap className="w-12 h-12" />,
-  read: <BookOpen className="w-12 h-12" />,
-  share: <Share2 className="w-12 h-12" />,
+  topic: <Sparkles className="w-12 h-12"  strokeWidth={1.5}/>,
+  source: <Database className="w-12 h-12"  strokeWidth={1.5}/>,
+  trigger: <Zap className="w-12 h-12"  strokeWidth={1.5}/>,
+  read: <BookOpen className="w-12 h-12"  strokeWidth={1.5}/>,
+  share: <Share2 className="w-12 h-12"  strokeWidth={1.5}/>,
 };
 
 const STEP_HOW_COUNTS: Record<OnboardingStep, number> = {
@@ -62,7 +62,7 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
       />
 
       {/* Modal panel */}
-      <div className="relative z-10 w-full max-w-md glass border border-[var(--color-border-primary)] rounded-3xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative z-10 w-full max-w-md glass border border-[var(--color-border-primary)] rounded-xl md:rounded-[28px] shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Illustration */}
         <div className="relative h-40 overflow-hidden bg-[var(--color-bg-secondary)] flex items-center justify-center text-[var(--color-accent-primary)]/40">
           {!imageError ? (
@@ -74,7 +74,7 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[var(--color-accent-primary-soft)] to-[var(--color-bg-secondary)] flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-[var(--color-action-primary)]/[0.08] to-[var(--color-bg-secondary)] flex items-center justify-center">
               {STEP_ICONS[step]}
             </div>
           )}
@@ -95,7 +95,7 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
               className="p-1.5 rounded-xl text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] transition-colors shrink-0"
               aria-label="Close"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4"  strokeWidth={1.5}/>
             </button>
           </div>
 
@@ -107,7 +107,7 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
           <ol className="space-y-2">
             {howKeys.map((key, idx) => (
               <li key={key} className="flex items-start gap-3 text-sm">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--color-accent-primary-soft)] text-[var(--color-accent-primary)] text-[11px] font-bold flex items-center justify-center mt-0.5">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] text-[11px] font-bold flex items-center justify-center mt-0.5">
                   {idx + 1}
                 </span>
                 <span className="text-[var(--color-text-secondary)]">{t(key)}</span>
@@ -120,13 +120,13 @@ export function OnboardingStepModal({ step, onClose }: Readonly<OnboardingStepMo
             <Link
               to={STEP_ROUTES[step]}
               onClick={onClose}
-              className="flex-1 flex items-center justify-center px-4 py-2.5 bg-[var(--color-accent-primary)] hover:opacity-90 text-white text-interactive rounded-2xl transition-all active:scale-95 text-sm"
+              className="flex-1 flex items-center justify-center px-4 py-2.5 bg-[var(--color-action-primary)] hover:opacity-90 text-[var(--color-action-primary-text)] text-interactive rounded-xl md:rounded-[28px] transition-all active:scale-95 text-sm"
             >
               {t(`onboarding.step.${step}.cta`)}
             </Link>
             <button
               onClick={onClose}
-              className="px-4 py-2.5 rounded-2xl border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] text-interactive transition-all active:scale-95 text-sm"
+              className="px-4 py-2.5 rounded-xl md:rounded-[28px] border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] text-interactive transition-all active:scale-95 text-sm"
             >
               {t('onboarding.close_modal')}
             </button>
