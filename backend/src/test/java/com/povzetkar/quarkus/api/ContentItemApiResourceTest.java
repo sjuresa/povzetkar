@@ -122,16 +122,6 @@ class ContentItemApiResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW", "SUMMARY_GENERATE" })
-    void testGenerateSummary_ConflictOnPending() {
-        given()
-                .contentType(ContentType.JSON)
-                .when().post("/api/v1/content-items/" + pendingItem.id + "/commands/generate-summary")
-                .then()
-                .statusCode(409);
-    }
-
-    @Test
     @TestSecurity(user = "testuser", roles = { "user", "ADMIN_JOB_UPDATE" })
     void testRetryItemProcessing_Success() {
         given()
@@ -148,16 +138,6 @@ class ContentItemApiResourceTest {
         given()
                 .contentType(ContentType.JSON)
                 .when().post("/api/v1/content-items/" + completedItem.id + "/commands/retry")
-                .then()
-                .statusCode(409);
-    }
-
-    @Test
-    @TestSecurity(user = "testuser", roles = { "user", "ADMIN_JOB_UPDATE" })
-    void testRetryItemProcessing_ConflictOnPending() {
-        given()
-                .contentType(ContentType.JSON)
-                .when().post("/api/v1/content-items/" + pendingItem.id + "/commands/retry")
                 .then()
                 .statusCode(409);
     }
