@@ -20,9 +20,7 @@ interface ContentItemTableProps {
  * Type representing the structure of the cached paginated data.
  */
 interface ContentItemsCache {
-  data?: {
-    items?: ContentItem[];
-  };
+  data?: ContentItem[];
 }
 
 /**
@@ -30,15 +28,15 @@ interface ContentItemsCache {
  * Extracted to reduce function nesting depth.
  */
 const updateItemInList = (oldData: ContentItemsCache | undefined, id: number, updatedItemData: Partial<ContentItem>): ContentItemsCache | undefined => {
-  if (!oldData?.data?.items) return oldData;
+  if (!oldData?.data) return oldData;
   
-  const updatedItems = oldData.data.items.map((item: ContentItem) => 
+  const updatedItems = oldData.data.map((item: ContentItem) => 
     item.id === id ? { ...item, ...updatedItemData } : item
   );
 
   return {
     ...oldData,
-    data: { ...oldData.data, items: updatedItems }
+    data: updatedItems
   };
 };
 
