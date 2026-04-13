@@ -83,6 +83,11 @@ Orval generates `options.headers` as `HeadersInit`. Axios expects a plain object
     2. Map these variables in the Tailwind `@theme` block.
     3. Use a `.dark` class to override these semantic variables. This allows the application to use classes like `bg-background-base` which automatically adapt to the theme.
 
+### The "Universal Transition" Trap (POV-179)
+- **The Trap:** Applying smooth theme easing globally via a universal selector (`*, *::before, *::after { transition: background-color 150ms... }`) to perfectly synchronize dark mode flashes.
+- **The Impact:** This causes severe "Mounting Jank". Every time React mounts a new component (or even a loading spinner), the browser forces it to transition into its default colors. It also makes snappy interactive states feel floaty and unresponsive.
+- **The Standard:** Only apply easing to the root elements or macro-containers (e.g., `html, body, #root`), explicitly transitioning both `background-color` and `color`. When the root containers transition smoothly, instant snaps on nested components are barely perceptible and maintain high interactivity.
+
 ### window.matchMedia Mocking in Vitest
 `window.matchMedia` is not implemented in `JSDOM` by default.
 - **The Standard:** Centralize the mock in `src/test/setup.ts`. Use `Object.defineProperty` and provide a full mock implementation of the `MediaQueryList` interface.
