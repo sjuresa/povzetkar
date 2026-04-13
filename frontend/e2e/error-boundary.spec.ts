@@ -118,9 +118,9 @@ test.describe('Global Error Handling', () => {
     // 4. Hover topic card to reveal action buttons (opacity-0 → opacity-100 on group-hover)
     await topicCard.hover();
 
-    // 5. Click the delete button (it's the 3rd button in the action group: Run, Edit, Delete)
-    const deleteButton = topicCard.locator('button').nth(2);
-    await deleteButton.click({ force: true });
+    // 5. Click the delete button via resilient data-testid
+    const deleteButton = topicCard.getByTestId('delete-topic-button');
+    await deleteButton.click();
 
     // 6. Assert: sonner error toast appears (locale-independent selector)
     await expect(

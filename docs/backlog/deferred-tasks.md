@@ -8,7 +8,7 @@
 - **Resilience & Error States**:
   - **Missing Action**: If action metadata is corrupt, fallback to a standard static notification.
 - **Context / Documentation:**
-  - [ADR-0006](../../adr/0006-auditory-feedback-framework.md)
+  - [ADR-0006](../adr/0006-auditory-feedback-framework.md)
 - **Required Skills**: `@[skills/clean-code]`, `@[skills/frontend-design]`
 - **Performance Budget**:
   - **Toast Latency**: < 50ms for action-enabled renders.
@@ -23,7 +23,7 @@
 - **Resilience & Error States**:
   - **Transaction Timeout**: Ensure purge runs in small batches if volume > 10k.
 - **Context / Documentation:**
-  - [../sdlc/11_development_checklist.md](../../sdlc/11_development_checklist.md)
+  - [../sdlc/11_development_checklist.md](../sdlc/11_development_checklist.md)
 - **Required Skills**: `@[skills/server-management]`
 - **Performance Budget**:
   - **CPU Impact**: Job execution must consume < 5% CPU during nightly window.

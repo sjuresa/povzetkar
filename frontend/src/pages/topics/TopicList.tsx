@@ -34,7 +34,7 @@ export const TopicList: React.FC<TopicListProps> = ({
   const { data: topicsResponse, isLoading, error } = useGetApiV1Topics({ page: 0, size: 100 });
 
   const handleDelete = async (topic: Topic) => {
-    if (!window.confirm(t('topics.list.delete_confirm', { name: topic.name }))) {
+    if (!globalThis.confirm(t('topics.list.delete_confirm', { name: topic.name }))) {
       return;
     }
 
@@ -140,6 +140,7 @@ export const TopicList: React.FC<TopicListProps> = ({
                 <Edit2 className="w-5 h-5"  strokeWidth={1.5}/>
               </button>
               <button 
+                data-testid="delete-topic-button"
                 onClick={() => { void handleDelete(topic); }}
                 className="p-2.5 hover:bg-[var(--color-status-error)] hover:text-[var(--color-action-primary-text)] text-[var(--color-status-error)] rounded-xl transition-all active:scale-95"
                 title={t('common.delete')}
