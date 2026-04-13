@@ -55,7 +55,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Path("/api/v1/content-items")
@@ -299,7 +298,7 @@ public class ContentItemApiResource extends BaseApiResource {
         ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
 
-        if (Objects.equals(ProcessingStatus.COMPLETED, item.processingStatus)) {
+        if (item.processingStatus == ProcessingStatus.COMPLETED) {
             throw new WebApplicationException(
                     "Cannot perform this action on an item in status " + item.processingStatus,
                     Response.Status.CONFLICT);

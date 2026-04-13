@@ -17,10 +17,19 @@ interface ContentItemTableProps {
 }
 
 /**
+ * Type representing the structure of the cached paginated data.
+ */
+interface ContentItemsCache {
+  data?: {
+    items?: ContentItem[];
+  };
+}
+
+/**
  * Helper to update an item within a paginated response list.
  * Extracted to reduce function nesting depth.
  */
-const updateItemInList = (oldData: any, id: number, updatedItemData: Partial<ContentItem>) => {
+const updateItemInList = (oldData: ContentItemsCache | undefined, id: number, updatedItemData: Partial<ContentItem>): ContentItemsCache | undefined => {
   if (!oldData?.data?.items) return oldData;
   
   const updatedItems = oldData.data.items.map((item: ContentItem) => 
@@ -49,7 +58,7 @@ export function ContentItemTable({ items, onViewSummary }: Readonly<ContentItemT
         
         queryClient.setQueriesData(
           { queryKey: getGetApiV1ContentItemsQueryKey() }, 
-          (oldData: any) => updateItemInList(oldData, id, updatedItem.data)
+          (oldData: ContentItemsCache | undefined) => updateItemInList(oldData, id, updatedItem.data)
         );
       },
       onError: () => toast.error(t('common.error')),
