@@ -94,8 +94,8 @@
 | **PW-002** | Brand & Title Smoke | TC-UI-001, TC-UI-002 | **Implemented** (v0.14) |
 | **PW-003** | YT Source Validation | TC-TS-003 | **Planned (v0.16.0)** |
 | **PW-004** | Briefing Archive Search | TC-LIB-002 | **Planned (v0.16.0)** |
-| **PW-005** | Global Resilience Smoke | TC-GRX-001, TC-GRX-003, TC-GRX-002 | **Planned (v0.16.0)** |
-| **PW-006** | Role Protection | TC-SEC-002 | **Planned (v0.16.0)** |
+| **PW-005** | Global Resilience Smoke | TC-GRX-001, TC-GRX-003, TC-GRX-002 | **Implemented** (v0.16) |
+| **PW-006** | Role Protection | TC-SEC-002 | **Implemented** (v0.16) |
 | **PW-007** | Dashboard Onboarding | TC-UI-004 | **Planned (v0.16.0)** |
 
 ---
