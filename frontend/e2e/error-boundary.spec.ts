@@ -73,7 +73,7 @@ test.describe('Global Error Handling', () => {
    */
   test('should show error toast when a mutation fails (GRX-002 transient path)', async ({ page }) => {
     // 1. Mock Topics API — differentiate GET (listing) vs DELETE (failure)
-    await page.route('**/api/v1/topics**', async (route, request) => {
+    await page.route(url => url.pathname.includes('/api/v1/topics'), async (route, request) => {
       if (request.method() === 'GET') {
         await route.fulfill({
           status: 200,
