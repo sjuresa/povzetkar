@@ -21,6 +21,7 @@ interface ContentItemTableProps {
  */
 interface ContentItemsCache {
   data?: ContentItem[];
+  meta?: unknown;
 }
 
 /**

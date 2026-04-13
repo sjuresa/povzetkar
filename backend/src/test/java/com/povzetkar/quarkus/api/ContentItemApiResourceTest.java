@@ -122,6 +122,17 @@ class ContentItemApiResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW", "SUMMARY_GENERATE" })
+    void testGenerateSummary_SuccessOnPending() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + pendingItem.id + "/commands/generate-summary")
+                .then()
+                .statusCode(202)
+                .header("Location", containsString("/api/v1/jobs/"));
+    }
+
+    @Test
     @TestSecurity(user = "testuser", roles = { "user", "ADMIN_JOB_UPDATE" })
     void testRetryItemProcessing_Success() {
         given()
@@ -141,6 +152,17 @@ class ContentItemApiResourceTest {
                 .then()
                 .statusCode(409);
     }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "ADMIN_JOB_UPDATE" })
+    void testRetryItemProcessing_SuccessOnPending() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/content-items/" + pendingItem.id + "/commands/retry")
+                .then()
+                .statusCode(202);
+    }
+
 
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
