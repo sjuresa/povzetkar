@@ -11,17 +11,12 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 ### UI/UX
 
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
-*   **Admin Jobs UI Implementation:** (Moved to v0.16.0) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
+*   **Admin Jobs UI Implementation:** (Moved to deffered) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
-*   **Full Component Internationalization:** (Moved to v0.16.0) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
-*   **Theme Transition Animations:** (Moved to v0.16.0) Add smooth CSS transitions to all background and text colors to make theme switching feel more premium (fluid motion).
+*   **Full Component Internationalization:** (Moved to deffered) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
-*   **Restore Content Duration Display (POV-170 Follow-up):** Investigate and resolve the backend gap where `formattedDuration` is missing for some content items in the briefing response.
-*   **Unified API Error Handling for Sharing Hooks (POV-173 Follow-up):** Refactor the `onSuccess`/`onError` handlers in `ExportMenu` to use a shared functional pattern for toast notifications, reducing duplication between briefing and summary mutations.
-*   **Automated Contrast Audit Script (POV-174 Follow-up):** Implement a Playwright-based audit script to verify that theme-aware accent variables (Blue-700, Amber-800) maintain > 4.5:1 contrast across all surface combinations after future CSS changes.
-*   **Shadow Token Standardization (POV-174 Follow-up):** Migrate remaining component-specific shadow classes (e.g., `shadow-xl` in tooltips) to use the new global `--shadow-color` override to ensure 100% theme consistency.
-*   **Onboarding Guide Reset Button (POV-177 Follow-up):** Add a "↺ Reset Guide" button accessible to developers and power users who want to re-walk the onboarding checklist. The `povzetkar_onboarding` key in `localStorage` can be manually cleared via DevTools for now. Low priority — statistically 0% of end users need this.
-*   **Checkbox/Radio Aesthetic Refinement (POV-178 Follow-up):** Consider implementing custom checkbox and radio button designs using SVG masks to achieve a more "Premium" glassmorphic look that transcends native browser form control limitations, while maintaining full accessibility.
+*   **Responsive Header Layout Refinement (v0.16.0 Finding):** Refactor editorial headers to use a `flex-1 min-w-0` pattern for titles with fixed-width action siblings to prevent parentheses-based premature wrapping on medium-sized screens.
+*   **Explicit Interaction Transition Scoping (v0.16.0 Finding):** Avoid universal transition selectors (`* { transition: ... }`) which cause mounting jank. Implement scoped transition classes (e.g., `transition-surface`) targeted only at macro layout boundaries.
 *   **E2E Visual Regression Testing (POV-178 Follow-up):** Integrate visual snapshot testing (Playwright `toHaveScreenshot`) for critical UI states (Trigger Modal, Briefing Viewer) to catch design regressions that don't trigger functional failures.
 
 ### Backend & Architecture
@@ -38,7 +33,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Recursive Briefings (Map-Reduce):** Implementing hierarchical summarization for extremely long content sets or timeframes (Deferred from v0.12).
 *   **Fix Qute Template Lints:** There are numerous lint warnings/errors in `admin.html`, `main.html`, etc. regarding unresolved objects (`activeTab`, `item`, etc.). These should be investigated and fixed to ensure a clean build and IDE experience.
 *   **Primary Identity Resolution:** Refactor `UserMapper` to deterministically resolve a "primary" identity/provider when multiple OIDC accounts are linked to a single user.
-*   **Background Jobs Cleanup Strategy:** (Moved to v0.16.0) Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items to prevent historical database bloat.
+*   **Background Jobs Cleanup Strategy:** (Moved to v0.17.0) Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items to prevent historical database bloat.
 *   **API Abuse Mitigation (LLM Endpoints):** Implement rate limiting/quotas per user and strict state validation (e.g., preventing regeneration of already `COMPLETED` summaries) for global mutation endpoints like `POST /api/v1/content-items/{id}/commands/generate-summary` to prevent financial risk and queue starvation.
 *   **Advanced Caching Strategies:** Investigate `ETag`, `Cache-Control`, and `Stale-while-revalidate` patterns for Dashboard and Briefings endpoints to reduce database load.
 *   **Fully Reactive Identity Resolution:** Refactor `UserContextService.getCurrentUser()` to return a `Uni<User>`, allowing its removal from the initial JAX-RS method body and enabling the complete removal of the `@Blocking` annotation from reactive endpoints.
@@ -58,20 +53,17 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Topic Template Preview:** (Backlog) Add a "Preview with Template" action in the `TopicForm`.
 *   **Context-Aware UX Audit:** (POV-163 Backlog) Refine `ux_audit.py` to distinguish between global navigation menus (subject to Hick's Law) and content grids/data tables.
 *   **Cross-platform Script Wrapper:** (POV-163 Backlog) Implement a lightweight Node.js or Python wrapper for `package.json` scripts to handle `./mvnw` vs `mvnw.cmd` transitions transparently across all shells.
-*   **Frontend Lint Refactoring:** (Completed in v0.14.0 - POV-159) Resolved persistent unused variable warnings and standardized useState destructuring.
 *   **Grafana Alerting implementation:** Define alerting thresholds for `Total Orchestration Failures > 10` to send notifications to Slack or Email.
 *   **Business Intelligence Dashboard:** Extend Grafana with "User Engagement" metrics, tracking the most popular content sources and briefing generation patterns per user.
 *   **Test Case Re-indexing Script:** (POV-166 follow-up) Develop a Python utility to automatically re-index `test_specification.md` and update all mapping references in Section 9 to prevent manual errors during large-scale refactors.
 *   **Traceability Heatmap:** (POV-166 follow-up) Implement a visual representation (or Markdown table generator) showing the percentage of Test Cases covered by automated Playwright scenarios (PW-X) vs. manual ones.
 *   **System-Wide Performance Hardening (POV-175 Follow-up):** Retroactively apply the `QueryCountAssert` differential testing pattern to all 50+ existing integration tests to establish a baseline and prevent N+1 regressions across the entire API surface.
 
-+### Compliance & Documentation Debt
-+
-+*   **v0.16.0 Mandatory P0 Automation Debt**:
-+    *   [ ] **TC-GRX-002 (Global Error Handling)**: Implement Playwright scenario for Error Boundary triggering. (Legacy Gap from v0.13).
-+    *   [ ] **TC-SEC-002 (Role Protection)**: Implement Playwright scenario for Admin-only route access (`/admin/*`) for non-admin users. (Legacy Gap from v0.11).
-+    *   [ ] **TC-LIB-001 (Briefing Search Flow)**: Add Playwright E2E test (PW-04) for the library search flow.
-+    *   [ ] **TC-LIB-002 (Share Link Lifecycle)**: Add Playwright E2E test (PW-05) for the Share Link generation and validation lifecycle.
+### Compliance & Documentation Debt
+
+*   **P0 Automation Debt**:
+    *   [ ] **TC-LIB-001 (Briefing Search Flow)**: Add Playwright E2E test (PW-04) for the library search flow.
+    *   [ ] **TC-LIB-002 (Share Link Lifecycle)**: Add Playwright E2E test (PW-05) for the Share Link generation and validation lifecycle.
 +
 +### UX & Observability Debt
 +

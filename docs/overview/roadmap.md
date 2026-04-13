@@ -206,6 +206,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.16: Readability & User Experience
 
 **Goal:** Transform the application into a "Professional Grade" SaaS by establishing perfect theme-awareness, sensory feedback, and zero-friction onboarding.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Sensory & Content Polish:**
@@ -302,6 +303,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.5     | April 13, 2026     | Antigravity AI | Marked v0.16.0 as completed and finalized version documentation.                                                                          |
 | 3.4     | April 1, 2026      | Povzetkar AI | Strategically pivoted v0.16.0 to "User Experience Focus" and restored v0.17.0 for "Administrative Control & Hardening". |
 | 3.3     | March 30, 2026     | Povzetkar AI | Marked v0.15 as completed and finalized release notes.                                                                                    |
 | 3.2     | March 28, 2026     | Povzetkar AI | Aligned v0.15.0/v0.16.0 scope, moved postponed items (Admin UI, DAST), and clarified job cleanup tasks.                                                                  |

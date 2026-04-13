@@ -280,10 +280,17 @@
     },
     "changelog_entries": [
       {
-        "version": "v0.16.0",
-        "title": "Posodobitev v0.16.0",
+        "version": "v0.17.0",
+        "title": "Posodobitev v0.17.0",
         "date": "V teku",
         "desc": "",
+        "badge": "new"
+      },
+      {
+        "version": "0.16.0",
+        "title": "Posodobitev 0.16.0",
+        "date": "2026-04-13",
+        "desc": "Različica 0.16.0 se osredotoča na **estetsko utrditev, igrificirano vključevanje in tehnično globino**. Uvaja profesionalno **monokromatsko Zinc taksonomijo**, ki odstranjuje zastarele barvne konstante za doseganje skladnosti z WCAG AA na vseh površinah nadzorne plošče. Izdaja prinaša tudi izkušnjo **igrificiranega uvajanja** z interaktivnim seznamom v 5 korakih, ki uporabnike vodi po »zlati poti«, dopolnjuje pa ga novo **ogrodje za zvočne povratne informacije**. Tehnični temelji so okrepljeni z **avtomatiziranim zaznavanjem N+1 poizvedb**, **modularizirano bazo znanja** in kritično **pokritostjo s testi E2E** za varnost na podlagi vlog ter globalno obravnavo napak.",
         "badge": "new"
       },
       {
@@ -352,7 +359,7 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.16: Administrative Control & Hardening",
+        "title": "v0.17: Administrative Control & Hardening",
         "desc": "Vzpostavitev popolnega operativnega nadzora nad platformo in integracija napredne varnostne revizije v cikel izdajanja posodobitev."
       },
       {

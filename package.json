@@ -1,6 +1,6 @@
 {
   "name": "povzetkar-root",
-  "version": "0.16.0-SNAPSHOT",
+  "version": "0.16.0",
   "private": true,
   "description": "Povzetkar Monorepo Root",
   "scripts": {
