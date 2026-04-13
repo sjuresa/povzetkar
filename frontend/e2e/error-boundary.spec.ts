@@ -63,4 +63,68 @@ test.describe('Global Error Handling', () => {
     
     await expect(page.getByText('A glitch in the matrix')).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
   });
+
+  /**
+   * TC-GRX-002 (Transient Path) / PW-005: Global Error Catching — Toast
+   * Verifies that a mutation failure triggers a visible error toast notification
+   * instead of crashing the entire page. This complements the fatal crash tests above.
+   * 
+   * Flow: Navigate to /topics → hover card → click delete → accept confirm → assert error toast.
+   */
+  test('should show error toast when a mutation fails (GRX-002 transient path)', async ({ page }) => {
+    // 1. Mock Topics API — differentiate GET (listing) vs DELETE (failure)
+    await page.route(url => url.pathname.includes('/api/v1/topics'), async (route, request) => {
+      if (request.method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: {
+              items: [{
+                id: 1,
+                name: 'Test Topic',
+                enabled: true,
+                version: 0,
+                contentSources: [],
+                lastRunDate: null
+              }]
+            },
+            error: null,
+            meta: {
+              timestamp: new Date().toISOString(),
+              pagination: {
+                totalElements: 1, page: 0, size: 100,
+                totalPages: 1, hasNext: false
+              }
+            }
+          })
+        });
+      } else if (request.method() === 'DELETE') {
+        await route.fulfill({ status: 500 });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/topics');
+
+    // 2. Wait for the topic card to render
+    const topicCard = page.locator('div.group').filter({ hasText: 'Test Topic' }).first();
+    await expect(topicCard).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
+
+    // 3. Accept the window.confirm dialog that will appear on delete
+    page.on('dialog', dialog => dialog.accept());
+
+    // 4. Hover topic card to reveal action buttons (opacity-0 → opacity-100 on group-hover)
+    await topicCard.hover();
+
+    // 5. Click the delete button via resilient data-testid
+    const deleteButton = topicCard.getByTestId('delete-topic-button');
+    await deleteButton.click();
+
+    // 6. Assert: sonner error toast appears (locale-independent selector)
+    await expect(
+      page.locator('[data-sonner-toast][data-type="error"]')
+    ).toBeVisible({ timeout: E2E_RESILIENCE_TIMEOUT });
+  });
 });
