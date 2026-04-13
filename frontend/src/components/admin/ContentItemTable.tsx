@@ -4,19 +4,49 @@ import type { ContentItem } from '../../api/generated/model/contentItem';
 import { ProcessingStatus } from '../../api/generated/model/processingStatus';
 import { 
   usePostApiV1ContentItemsIdCommandsStatus, 
-  usePostApiV1ContentItemsIdCommandsGenerateSummary 
+  usePostApiV1ContentItemsIdCommandsGenerateSummary,
+  getGetApiV1ContentItemsQueryKey 
 } from '../../api/generated/content-items/content-items';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { getGetApiV1ContentItemsQueryKey } from '../../api/generated/content-items/content-items';
-import { Check, X, FileText, Sparkles, Youtube, Globe } from 'lucide-react';
+import { Check, X, FileText, Sparkles, Play, Globe } from 'lucide-react';
 
 interface ContentItemTableProps {
   items: ContentItem[];
   onViewSummary: (id: number) => void;
 }
 
-export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps) {
+/**
+ * Type representing the structure of the cached paginated data.
+ * Matches the structure returned by our custom axios instance for paginated endpoints.
+ */
+interface ContentItemsCache {
+  data?: {
+    items?: ContentItem[];
+  };
+}
+
+/**
+ * Helper to update an item within a paginated response list.
+ * Extracted to reduce function nesting depth.
+ */
+const updateItemInList = (oldData: ContentItemsCache | undefined, id: number, updatedItemData: Partial<ContentItem>): ContentItemsCache | undefined => {
+  if (!oldData?.data?.items) return oldData;
+  
+  const updatedItems = oldData.data.items.map((item: ContentItem) => 
+    item.id === id ? { ...item, ...updatedItemData } : item
+  );
+
+  return {
+    ...oldData,
+    data: {
+      ...oldData.data,
+      items: updatedItems
+    }
+  };
+};
+
+export function ContentItemTable({ items, onViewSummary }: Readonly<ContentItemTableProps>) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { mutate: updateStatus, isPending } = usePostApiV1ContentItemsIdCommandsStatus();
@@ -24,25 +54,16 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
 
   const handleStatusChange = (id: number, newStatus: ProcessingStatus) => {
     if (!newStatus) return;
+
     updateStatus({ id, data: { status: newStatus } }, {
       onSuccess: (updatedEntry) => {
         toast.success(t('common.success'));
-        
         const updatedItem = updatedEntry as { data: Partial<ContentItem> };
         
-        queryClient.setQueriesData({ queryKey: getGetApiV1ContentItemsQueryKey() }, (oldData: unknown) => {
-          const data = oldData as { data?: { items?: ContentItem[] } } | undefined;
-          if (!data?.data?.items) return oldData;
-          return {
-            ...data,
-            data: {
-              ...data.data,
-              items: data.data.items.map((item) => 
-                item.id === id ? { ...item, ...updatedItem.data } : item
-              )
-            }
-          };
-        });
+        queryClient.setQueriesData(
+          { queryKey: getGetApiV1ContentItemsQueryKey() }, 
+          (oldData: ContentItemsCache | undefined) => updateItemInList(oldData, id, updatedItem.data)
+        );
       },
       onError: () => toast.error(t('common.error')),
     });
@@ -98,7 +119,7 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
                   </div>
                </div>
                <div className="shrink-0 pt-1">
-                 {item.contentSource?.platform === 'YOUTUBE' ? <Youtube className="w-5 h-5 text-[var(--color-action-primary)]" /> : <Globe className="w-5 h-5 text-[var(--color-action-primary)]" />}
+                 {item.contentSource?.platform === 'YOUTUBE' ? <Play className="w-5 h-5 text-[var(--color-action-primary)]" /> : <Globe className="w-5 h-5 text-[var(--color-action-primary)]" />}
                </div>
             </div>
 
@@ -134,7 +155,7 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
                   ) : (
                     <button 
                       onClick={() => handleGenerateSummary(item.id!)}
-                      disabled={isGenerating || item.processingStatus === 'PENDING'}
+                      disabled={isGenerating}
                       className="p-2 rounded-lg bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] shadow-lg shadow-[var(--color-action-primary)]/10 disabled:opacity-30"
                     >
                        <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-pulse' : ''}`} strokeWidth={1.5}/>
@@ -195,7 +216,7 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
                   <td className="px-6 py-4">
                      <div className="flex items-center space-x-2">
                          <div className="text-[var(--color-action-primary)]/80">
-                            {item.contentSource?.platform === 'YOUTUBE' ? <Youtube className="w-4 h-4"  strokeWidth={1.5}/> : <Globe className="w-4 h-4"  strokeWidth={1.5}/>}
+                            {item.contentSource?.platform === 'YOUTUBE' ? <Play className="w-4 h-4"  strokeWidth={1.5}/> : <Globe className="w-4 h-4"  strokeWidth={1.5}/>}
                          </div>
                          <span className="text-xs font-medium text-[var(--color-text-secondary)] truncate max-w-[120px]">{item.contentSource?.name}</span>
                      </div>
@@ -237,7 +258,7 @@ export function ContentItemTable({ items, onViewSummary }: ContentItemTableProps
                           ) : (
                             <button 
                               onClick={() => handleGenerateSummary(item.id!)}
-                              disabled={isGenerating || item.processingStatus === 'PENDING'}
+                              disabled={isGenerating}
                               className="p-1.5 rounded-xl bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] hover:opacity-90 transition-all border border-[var(--color-action-primary)]/20 shadow-lg shadow-[var(--color-action-primary)]/10 disabled:opacity-30"
                               title={t('contentManagement.table.generateSummary')}
                             >

@@ -31,12 +31,12 @@ public class ContentCreationService {
     public Content createContentForVideo(YouTubeVideo video) {
         if (video.transcript != null && !video.transcript.isBlank()) {
             logger.info(
-                LogKeys.ACTION, LogKeys.CREATE_CONTENT,
-                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-                LogKeys.VIDEO_ID, video.videoId,
-                LogKeys.VIDEO_TITLE, video.title,
-                LogKeys.SOURCE, "existing_transcript",
-                LogKeys.MESSAGE, "Using existing transcript"
+                    LogKeys.ACTION, LogKeys.CREATE_CONTENT,
+                    LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.VIDEO_TITLE, video.title,
+                    LogKeys.SOURCE, "existing_transcript",
+                    LogKeys.MESSAGE, "Using existing transcript"
             );
             Part textPart = createVideoSummaryTextPart(video, video.transcript);
             return Content.fromParts(textPart);
@@ -44,45 +44,45 @@ public class ContentCreationService {
 
         if (video.duration.toMinutes() < transcriptThresholdMinutes) {
             logger.info(
-                LogKeys.ACTION, LogKeys.CREATE_CONTENT,
-                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-                LogKeys.VIDEO_ID, video.videoId,
-                LogKeys.VIDEO_TITLE, video.title,
-                LogKeys.SOURCE, "video_url",
-                LogKeys.MESSAGE, "Video is shorter than threshold, using URL"
+                    LogKeys.ACTION, LogKeys.CREATE_CONTENT,
+                    LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.VIDEO_TITLE, video.title,
+                    LogKeys.SOURCE, "video_url",
+                    LogKeys.MESSAGE, "Video is shorter than threshold, using URL"
             );
             Part textPart = createVideoSummaryTextPart(video, "");
             return Content.fromParts(textPart, Part.fromUri(video.sourceUrl, "video/mp4"));
         }
 
         logger.info(
-            LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
-            LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-            LogKeys.VIDEO_ID, video.videoId,
-            LogKeys.VIDEO_TITLE, video.title,
-            LogKeys.MESSAGE, "Video is longer than threshold, getting transcript"
+                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title,
+                LogKeys.MESSAGE, "Video is longer than threshold, getting transcript"
         );
         String transcript = youTubeTranscriptService.getTranscript(video.videoId);
 
         if (transcript.isBlank()) {
             logger.warn(
-                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
-                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-                LogKeys.VIDEO_ID, video.videoId,
-                LogKeys.VIDEO_TITLE, video.title,
-                LogKeys.STATUS, "failure",
-                LogKeys.MESSAGE, "Could not retrieve transcript"
+                    LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                    LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.VIDEO_TITLE, video.title,
+                    LogKeys.STATUS, "failure",
+                    LogKeys.MESSAGE, "Could not retrieve transcript"
             );
             return null;
         }
 
         logger.info(
-            LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
-            LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-            LogKeys.VIDEO_ID, video.videoId,
-            LogKeys.VIDEO_TITLE, video.title,
-            LogKeys.STATUS, "success",
-            LogKeys.MESSAGE, "Got transcript successfully"
+                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title,
+                LogKeys.STATUS, "success",
+                LogKeys.MESSAGE, "Got transcript successfully"
         );
         video.transcript = transcript;
         Part textPart = createVideoSummaryTextPart(video, transcript);
