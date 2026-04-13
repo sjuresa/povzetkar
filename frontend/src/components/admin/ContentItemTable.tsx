@@ -18,10 +18,12 @@ interface ContentItemTableProps {
 
 /**
  * Type representing the structure of the cached paginated data.
+ * Matches the structure returned by our custom axios instance for paginated endpoints.
  */
 interface ContentItemsCache {
-  data?: ContentItem[];
-  meta?: unknown;
+  data?: {
+    items?: ContentItem[];
+  };
 }
 
 /**
@@ -29,15 +31,18 @@ interface ContentItemsCache {
  * Extracted to reduce function nesting depth.
  */
 const updateItemInList = (oldData: ContentItemsCache | undefined, id: number, updatedItemData: Partial<ContentItem>): ContentItemsCache | undefined => {
-  if (!oldData?.data) return oldData;
+  if (!oldData?.data?.items) return oldData;
   
-  const updatedItems = oldData.data.map((item: ContentItem) => 
+  const updatedItems = oldData.data.items.map((item: ContentItem) => 
     item.id === id ? { ...item, ...updatedItemData } : item
   );
 
   return {
     ...oldData,
-    data: updatedItems
+    data: {
+      ...oldData.data,
+      items: updatedItems
+    }
   };
 };
 
