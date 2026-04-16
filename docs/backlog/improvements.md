@@ -11,9 +11,9 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 ### UI/UX
 
 *   **Real-time Admin Page Updates:** Implement real-time updates for "Pending Content Items" and "Current Running Actions" on the admin page, possibly using WebSockets or polling.
-*   **Admin Jobs UI Implementation:** (Moved to deffered) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
+*   **Admin Jobs UI Implementation:** (Moved to deferred) Implement the `AdminJobsPage.tsx` placeholder with a paginated table, status-based filtering, and manual retry/cancel actions for background jobs.
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
-*   **Full Component Internationalization:** (Moved to deffered) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
+*   **Full Component Internationalization:** (Moved to deferred) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
 *   **Responsive Header Layout Refinement (v0.16.0 Finding):** Refactor editorial headers to use a `flex-1 min-w-0` pattern for titles with fixed-width action siblings to prevent parentheses-based premature wrapping on medium-sized screens.
 *   **Explicit Interaction Transition Scoping (v0.16.0 Finding):** Avoid universal transition selectors (`* { transition: ... }`) which cause mounting jank. Implement scoped transition classes (e.g., `transition-surface`) targeted only at macro layout boundaries.
