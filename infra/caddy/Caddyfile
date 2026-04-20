@@ -2,7 +2,7 @@
     email {$CADDY_EMAIL}
 }
 
-{$DOMAIN_NAME} {
+povzetkar.{$DOMAIN_NAME} {
     # Proxy all requests to the Quarkus app
     reverse_proxy app:8080
 
