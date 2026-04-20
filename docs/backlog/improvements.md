@@ -19,7 +19,7 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 
 ### Backend & Architecture
 
-*   **Job Retention Policy for `background_jobs` table:** (POV-165 follow-up) Implement a similar retention policy (e.g., 30 days) for the `background_jobs` table itself to prevent historical bloat.
+*   **Job Retention Policy for `background_jobs` table:** (POV-165 follow-up / v0.17.0) Implement a retention policy (e.g., 30 days) and automated cleanup job for the `background_jobs` table to prevent historical database bloat from `COMPLETED` or `FAILED` items.
 *   **Dynamic Cron Scheduling:** (Backlog) Allow administrators to configure maintenance cron expressions via UI/API without requiring application restarts.
 *   **Robust Subscriber Count Handling:** Re-evaluate the `subscriberCount` field in `ContentSource` and related classes to use `long` instead of `int` to prevent potential data truncation for very popular channels, as the YouTube API returns a `BigInteger`.
 *   **Content Deduplication Engine:** Basic hash-based or semantic deduplication of sources (Deferred from v0.12).
@@ -31,7 +31,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Recursive Briefings (Map-Reduce):** Implementing hierarchical summarization for extremely long content sets or timeframes (Deferred from v0.12).
 *   **Fix Qute Template Lints:** There are numerous lint warnings/errors in `admin.html`, `main.html`, etc. regarding unresolved objects (`activeTab`, `item`, etc.). These should be investigated and fixed to ensure a clean build and IDE experience.
 *   **Primary Identity Resolution:** Refactor `UserMapper` to deterministically resolve a "primary" identity/provider when multiple OIDC accounts are linked to a single user.
-*   **Background Jobs Cleanup Strategy:** (Moved to v0.17.0) Implement a background job to purge the `background_jobs` table of old `COMPLETED` or `FAILED` items to prevent historical database bloat.
 *   **API Abuse Mitigation (LLM Endpoints):** Implement rate limiting/quotas per user and strict state validation (e.g., preventing regeneration of already `COMPLETED` summaries) for global mutation endpoints like `POST /api/v1/content-items/{id}/commands/generate-summary` to prevent financial risk and queue starvation.
 *   **Advanced Caching Strategies:** Investigate `ETag`, `Cache-Control`, and `Stale-while-revalidate` patterns for Dashboard and Briefings endpoints to reduce database load.
 *   **Fully Reactive Identity Resolution:** Refactor `UserContextService.getCurrentUser()` to return a `Uni<User>`, allowing its removal from the initial JAX-RS method body and enabling the complete removal of the `@Blocking` annotation from reactive endpoints.
