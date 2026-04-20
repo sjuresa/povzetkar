@@ -3,7 +3,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-    image: povzetkar-app:${APP_VERSION:-0.16.0}
+    image: povzetkar-app:${APP_VERSION:?APP_VERSION must be set}
     container_name: povzetkar-app
     restart: always
     # Port 8080 is no longer exposed directly, only accessible via proxy
@@ -52,7 +52,7 @@ services:
       - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     environment:
-      - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN}
+      - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN:?METRICS_SCRAPE_TOKEN must be set}
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -68,7 +68,8 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
+      - DOMAIN_NAME=${DOMAIN_NAME:?DOMAIN_NAME must be set}
+      - CADDY_EMAIL=${CADDY_EMAIL:?CADDY_EMAIL must be set}
     volumes:
       - ../infra/caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
