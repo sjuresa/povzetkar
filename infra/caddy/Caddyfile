@@ -19,6 +19,8 @@
         X-Content-Type-Options "nosniff"
         # Permissions Policy
         Permissions-Policy "interest-cohort=()"
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
     }
 
     # Logging
@@ -35,5 +37,6 @@ grafana.{$DOMAIN_NAME} {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Frame-Options "SAMEORIGIN"
         X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
     }
 }
