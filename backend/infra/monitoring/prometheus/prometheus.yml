@@ -5,7 +5,7 @@ global:
 scrape_configs:
   - job_name: 'povzetkar-backend'
     metrics_path: '/q/metrics'
-    # The 'backend' is on the host during dev
+    # Scrape target: backend application on internal Docker network
     static_configs:
       - targets: ['app:8080']
     bearer_token: '${METRICS_SCRAPE_TOKEN}'
