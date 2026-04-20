@@ -99,6 +99,8 @@
 | **PW-007** | Dashboard Onboarding | TC-UI-004 | **Planned (v0.17.0)** |
 | **PW-008** | Share Link Lifecycle | TC-EXP-003 | **Planned (v0.17.0)** |
 | **PW-009** | Briefing Content View | TC-LIB-001 | **Planned (v0.17.0)** |
+| **PW-010** | Summary Persistence Smoke | TC-EXP-004 | **Planned (v0.17.0)** |
+| **PW-011** | Toast Interaction | TC-GRX-005 | **Planned (v0.17.0)** |
 
 ---
 
@@ -111,6 +113,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.6     | April 20, 2026 | Antigravity AI | Integrated PW-010 and PW-011 for comprehensive backlog traceability. |
 | 2.5     | April 20, 2026 | Antigravity AI | Synchronized Automation Status with backlog. Added PW-008 and PW-009. Corrected P0 coverage gaps. |
 | 2.4     | April 13, 2026 | Antigravity AI | Concluded v0.16.0 Audit. Verified implementation of PW-005/PW-006. Deferred remaining v0.16.0 scenarios to v0.17.0. |
 | 2.3     | April 01, 2026 | Povzetkar AI | Added TC-GRX-005, TC-EXP-004, TC-UI-004 for v0.16.0 UX Focus. Resolved legacy skips for TC-GRX-002 and TC-SEC-002 by promoting to **Playwright** automation. |

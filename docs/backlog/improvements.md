@@ -15,8 +15,6 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 *   **Advanced Audit Log Filtering:** (POV-142 Success-Enhancement) Extend the Audit Log UI with date-range pickers and a "Request Metadata" search capability to improve troubleshooting speed.
 *   **Full Component Internationalization:** (Moved to deferred) Systematic migration of all remaining hardcoded strings in Dashboard, Audit Log, and TopicManager views to the internationalization system.
 *   **Profile Image Upload:** (POV-146 Extension) Implement a profile image upload/management feature for the `/me` page, integrating with the backend user storage.
-*   **Responsive Header Layout Refinement (v0.16.0 Finding):** Refactor editorial headers to use a `flex-1 min-w-0` pattern for titles with fixed-width action siblings to prevent parentheses-based premature wrapping on medium-sized screens.
-*   **Explicit Interaction Transition Scoping (v0.16.0 Finding):** Avoid universal transition selectors (`* { transition: ... }`) which cause mounting jank. Implement scoped transition classes (e.g., `transition-surface`) targeted only at macro layout boundaries.
 *   **E2E Visual Regression Testing (POV-178 Follow-up):** Integrate visual snapshot testing (Playwright `toHaveScreenshot`) for critical UI states (Trigger Modal, Briefing Viewer) to catch design regressions that don't trigger functional failures.
 
 ### Backend & Architecture
@@ -65,12 +63,18 @@ Items listed here are candidates for inclusion in future development cycles. Eac
     *   [ ] **TC-LIB-001 (View Briefing Content)**: Implement Playwright E2E test (PW-009) to verify Markdown rendering and navigation integrity.
 
 *   **Automation Debt (Unscheduled/Deferred)**:
-    *   [ ] **TC-EXP-004 (Individual Summary Read)**: Ensure E2E coverage for the CSPRNG-UUID public access logic.
-    *   [ ] **TC-GRX-005 (Toast Actionability)**: Verify audio synthesis and interactive buttons in toast notifications.
+    *   [ ] **TC-TS-003 (YT Source Validation)**: Implement Playwright E2E test (PW-003) for real-time channel verification.
+    *   [ ] **TC-LIB-002 (Archive Search)**: Add Playwright E2E test (PW-004) for the keyword-based library search flow.
+    *   [ ] **TC-UI-004 (Dashboard Onboarding)**: Implement Playwright E2E test (PW-007) for the interactive checklist progress.
+    *   [ ] **TC-EXP-003 (Shareable Link)**: Add Playwright E2E test (PW-008) for the shared briefing public URL resolution.
+    *   [ ] **TC-EXP-004 (Individual Summary Read)**: Ensure Playwright E2E coverage (PW-010) for the CSPRNG-UUID public access logic.
+    *   [ ] **TC-GRX-005 (Toast Actionability)**: Verify Playwright coverage (PW-011) for audio synthesis and interactive buttons in toast notifications.
 
 ### Deferred & Legacy Debt
 
-*   **Restore Content Duration Display:** Address the parity gap identified in v0.16.0 where backend metadata gaps led to empty duration fields in the UI. (Ref: Retrospective line 39).
+*   **Restore Content Duration Display (v0.16.0 Finding):** Address the parity gap identified where backend metadata gaps led to empty duration fields in the UI. (Ref: Retrospective line 39).
+*   **Responsive Header Layout Refinement (v0.16.0 Finding):** Refactor editorial headers to use a `flex-1 min-w-0` pattern for titles with fixed-width action siblings to prevent parentheses-based premature wrapping on medium-sized screens.
+*   **Explicit Interaction Transition Scoping (v0.16.0 Finding):** Avoid universal transition selectors (`* { transition: ... }`) which cause mounting jank. Implement scoped transition classes targeted only at layout boundaries.
 *   **Automated Contrast Audit Script:** Formalize the `accessibility_checker.py` audit into a dedicated CI gate or localized `npm run audit` workflow.
 *   **Toggle-Based State Unification:** Implement standard pattern for optimistic UI on toggle-based actions (e.g. "Share Link" creation) to avoid visual blinks on refetching.
 *   **Playwright Maintenance Strategy:** Define robust locators and state isolation to stabilize E2E tests and prevent regression flakiness.
