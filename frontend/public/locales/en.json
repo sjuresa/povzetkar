@@ -280,10 +280,17 @@
     },
     "changelog_entries": [
       {
-        "version": "v0.16.0",
-        "title": "Update v0.16.0",
+        "version": "v0.17.0",
+        "title": "Update v0.17.0",
         "date": "In Progress",
         "desc": "",
+        "badge": "new"
+      },
+      {
+        "version": "0.16.0",
+        "title": "Update 0.16.0",
+        "date": "2026-04-13",
+        "desc": "Version 0.16.0 focuses on **Aesthetic Hardening, Gamified Engagement, and Technical Depth**. It introduces a professional **Monochromatic Zinc taxonomy**, purging legacy color literals to achieve WCAG AA compliance across all dashboard surfaces. The release also implements a **Gamified Onboarding** experience with a 5-step interactive checklist to guide users through the 'Golden Path', complemented by a new **Auditory Feedback Framework**. Technical foundations are strengthened with automated **N+1 query detection**, a modularized **Knowledge Base**, and critical **E2E coverage** for role-based security and global error handling.",
         "badge": "new"
       },
       {
@@ -352,7 +359,7 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.16: Administrative Control & Hardening",
+        "title": "v0.17: Administrative Control & Hardening",
         "desc": "Establish full operational control over the platform and integrate advanced security auditing into the release cycle."
       },
       {

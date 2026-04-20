@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (v0.16.0)
+## [Unreleased] (v0.17.0)
+
+## [0.16.0] - 2026-04-13
+
+### Summary
+Version 0.16.0 focuses on **Aesthetic Hardening, Gamified Engagement, and Technical Depth**. It introduces a professional **Monochromatic Zinc taxonomy**, purging legacy color literals to achieve WCAG AA compliance across all dashboard surfaces. The release also implements a **Gamified Onboarding** experience with a 5-step interactive checklist to guide users through the 'Golden Path', complemented by a new **Auditory Feedback Framework**. Technical foundations are strengthened with automated **N+1 query detection**, a modularized **Knowledge Base**, and critical **E2E coverage** for role-based security and global error handling.
 
 ### Added
 - **Briefing UI Polish (POV-170):** Standardized source metadata with a high-contrast icon-based header (`Calendar`, `Clock`, `Timer`), restoring prominence to publication date and time.
