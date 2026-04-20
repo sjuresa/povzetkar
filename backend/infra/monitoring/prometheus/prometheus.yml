@@ -7,5 +7,5 @@ scrape_configs:
     metrics_path: '/q/metrics'
     # The 'backend' is on the host during dev
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      - targets: ['app:8080']
     bearer_token: '${METRICS_SCRAPE_TOKEN}'

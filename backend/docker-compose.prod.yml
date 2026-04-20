@@ -57,8 +57,6 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--enable-feature=expand-external-variables"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - povzetkar-net
 
@@ -72,7 +70,7 @@ services:
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
-      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ../infra/caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
@@ -88,7 +86,7 @@ services:
     expose:
       - "3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:?GF_ADMIN_PASSWORD must be set}
     volumes:
       - grafana_storage:/var/lib/grafana
     depends_on:
