@@ -62,14 +62,19 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 ### Compliance & Documentation Debt
 
 *   **P0 Automation Debt**:
-    *   [ ] **TC-LIB-002 (Archive Search)**: Add Playwright E2E test (PW-004) for the library search flow.
-    *   [ ] **TC-EXP-003 (Share Link Lifecycle)**: Add Playwright E2E test (PW-008) for the Share Link generation and validation lifecycle.
-+
-+### UX & Observability Debt
-+
-+*   **Toggle-Based State Unification:** Implement standard pattern for optimistic UI on toggle-based actions (e.g. "Share Link" creation) to avoid visual blinks on refetching.
-+*   **Playwright Maintenance Strategy:** Define robust locators and state isolation to stabilize E2E tests and prevent regression flakiness.
-+*   **Full-Text Search Migration:** Consider migrating the `BriefingLibrary` search to `pg_trgm` or Lucene when briefing volume justifies it (1000+).
+    *   [ ] **TC-LIB-001 (View Briefing Content)**: Implement Playwright E2E test (PW-009) to verify Markdown rendering and navigation integrity.
+
+*   **Automation Debt (Unscheduled/Deferred)**:
+    *   [ ] **TC-EXP-004 (Individual Summary Read)**: Ensure E2E coverage for the CSPRNG-UUID public access logic.
+    *   [ ] **TC-GRX-005 (Toast Actionability)**: Verify audio synthesis and interactive buttons in toast notifications.
+
+### Deferred & Legacy Debt
+
+*   **Restore Content Duration Display:** Address the parity gap identified in v0.16.0 where backend metadata gaps led to empty duration fields in the UI. (Ref: Retrospective line 39).
+*   **Automated Contrast Audit Script:** Formalize the `accessibility_checker.py` audit into a dedicated CI gate or localized `npm run audit` workflow.
+*   **Toggle-Based State Unification:** Implement standard pattern for optimistic UI on toggle-based actions (e.g. "Share Link" creation) to avoid visual blinks on refetching.
+*   **Playwright Maintenance Strategy:** Define robust locators and state isolation to stabilize E2E tests and prevent regression flakiness.
+*   **Full-Text Search Migration:** Consider migrating the `BriefingLibrary` search to `pg_trgm` or Lucene when briefing volume justifies it (1000+).
 
 ### Process & Tooling (PPP Extensions)
 

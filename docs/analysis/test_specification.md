@@ -97,6 +97,8 @@
 | **PW-005** | Global Resilience Smoke | TC-GRX-001, TC-GRX-003, TC-GRX-002 | **Implemented** (v0.16) |
 | **PW-006** | Role Protection | TC-SEC-002 | **Implemented** (v0.16) |
 | **PW-007** | Dashboard Onboarding | TC-UI-004 | **Planned (v0.17.0)** |
+| **PW-008** | Share Link Lifecycle | TC-EXP-003 | **Planned (v0.17.0)** |
+| **PW-009** | Briefing Content View | TC-LIB-001 | **Planned (v0.17.0)** |
 
 ---
 
@@ -109,6 +111,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.5     | April 20, 2026 | Antigravity AI | Synchronized Automation Status with backlog. Added PW-008 and PW-009. Corrected P0 coverage gaps. |
 | 2.4     | April 13, 2026 | Antigravity AI | Concluded v0.16.0 Audit. Verified implementation of PW-005/PW-006. Deferred remaining v0.16.0 scenarios to v0.17.0. |
 | 2.3     | April 01, 2026 | Povzetkar AI | Added TC-GRX-005, TC-EXP-004, TC-UI-004 for v0.16.0 UX Focus. Resolved legacy skips for TC-GRX-002 and TC-SEC-002 by promoting to **Playwright** automation. |
 | 2.2     | March 30, 2026 | Povzetkar AI | Mandated Priority column (P0-P2) for automated auditing (POV-167). |
