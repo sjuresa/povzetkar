@@ -62,8 +62,8 @@ Items listed here are candidates for inclusion in future development cycles. Eac
 ### Compliance & Documentation Debt
 
 *   **P0 Automation Debt**:
-    *   [ ] **TC-LIB-001 (Briefing Search Flow)**: Add Playwright E2E test (PW-04) for the library search flow.
-    *   [ ] **TC-LIB-002 (Share Link Lifecycle)**: Add Playwright E2E test (PW-05) for the Share Link generation and validation lifecycle.
+    *   [ ] **TC-LIB-002 (Archive Search)**: Add Playwright E2E test (PW-004) for the library search flow.
+    *   [ ] **TC-EXP-003 (Share Link Lifecycle)**: Add Playwright E2E test (PW-008) for the Share Link generation and validation lifecycle.
 +
 +### UX & Observability Debt
 +
