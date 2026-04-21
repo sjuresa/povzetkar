@@ -5,7 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (v0.16.0)
+## [Unreleased] (v0.17.0)
+
+## [0.16.0] - 2026-04-13
+
+### Summary
+Version 0.16.0 focuses on **Aesthetic Hardening, Gamified Engagement, and Technical Depth**. It introduces a professional **Monochromatic Zinc taxonomy**, purging legacy color literals to achieve WCAG AA compliance across all dashboard surfaces. The release also implements a **Gamified Onboarding** experience with a 5-step interactive checklist to guide users through the 'Golden Path', complemented by a new **Auditory Feedback Framework**. Technical foundations are strengthened with automated **N+1 query detection**, a modularized **Knowledge Base**, and critical **E2E coverage** for role-based security and global error handling.
+
+### Added
+- **Briefing UI Polish (POV-170):** Standardized source metadata with a high-contrast icon-based header (`Calendar`, `Clock`, `Timer`), restoring prominence to publication date and time.
+- **Header Layout Fix (POV-170):** Optimized briefing titles to occupy the full container width, solving a layout regression where long titles wrapped prematurely across internal and public views.
+- **Data Model (POV-170):** Promoted `authorName` to the base `ContentItem` entity and DTO, enabling universal attribution across all current and future content types.
+- **Auditory Feedback Framework (POV-171):** Implemented a standardized audio notification system for system events. Features zero-asset overhead via dynamic **Web Audio API synthesis** (`OscillatorNode`).
+- **Legal Compliance (POV-171):** Established a centralized **Third-Party Assets & Compliance Registry** (`LEGAL.md`) to track all media, code, and infrastructure dependencies.
+- **Knowledge Base Modularization (POV-172):** Decomposed the monolithic `lessons-learned.md` into 6 domain-specific guides (`database.md`, `backend-api.md`, `frontend-ux.md`, `reactive.md`, `testing.md`, `infrastructure-ops.md`) and a consolidated legacy archive.
+- **Knowledge Portal (POV-172):** Transformed the root `lessons-learned.md` into a high-visibility portal featuring curated v0.16.0 technical highlights and structured navigation.
+- **Theme Readability (POV-174):** Implemented high-priority Light Mode contrast fixes by migrating to the **Zinc Palette** semantic taxonomy. Achieved WCAG AA (4.5:1) compliance across all core dashboard surfaces.
+- **Accent Strategy (POV-174):** Introduced a high-contrast **Blue-700** primary accent for Light Mode to ensure visibility on secondary backgrounds (Neutral-100), satisfying the > 4.5:1 contrast requirement.
+- **Admin Branding (POV-174):** Standardized Admin-specific actions with a high-contrast **Amber-800** semantic accent.
+- **Shadow Standardization (POV-174):** Implemented theme-aware global shadow overrides in the Tailwind `@theme` block, ensuring shadows shift naturally with the active theme.
+- **QueryCountAssert (POV-175):** New utility for automated N+1 query detection in integration tests.
+- **Gamified Onboarding (POV-177):** Implemented a 5-step interactive "Golden Path" checklist (Topic, Source, Trigger, Read, Share) to drive user engagement. Features progressive disclosure (pill vs. list) and a celebration state at 100% completion.
+- **Onboarding Persistence (POV-177):** Developed a hybrid Zustand store (`povzetkar_onboarding`) with LocalStorage persistence and automated state synchronization from `DashboardDTO` for existing users.
+- **Visual How-To Guides (POV-177):** Created 5 minimalist AI-generated illustrations and numbered sub-steps for every onboarding goal, providing clear instructions within the application context.
+- **Action Triggers (POV-177):** Integrated automated step completion triggers across `TopicForm`, `TriggerOrchestrationModal`, `BriefingDetailPage`, and `ExportMenu` for a seamless "learning by doing" experience.
+- **Bilingual Onboarding (POV-177):** Full EN/SL localization for all checklist items and modal instructions.
+- **Monochromatic UI Hardening (POV-178):** Enforced 100% theme consistency by purging remaining legacy blue/indigo and green color literals across the application. Migrated to a strict monochromatic Zinc-neutral taxonomy.
+- **Form Component Standardization (POV-178):** Implemented a global `accent-color` override for native form controls (checkboxes, radio buttons), ensuring all browser-default interactive elements adhere to the Refined Zinc Bento design tokens.
+- **Trigger Modal Refinement (POV-178):** Standardized input accents and interactive icons within the `TriggerOrchestrationModal`, matching orchestration triggers to the institutional-grade primary action palette.
+- **E2E Stability (POV-178):** Hardened the Playwright test suite by implementing network-level mocking for authentication paths and injecting `data-testid` attributes into critical UI anchors (`brand-logo`, `hero-cta`), eliminating brittle dependencies on layout and localization.
+- **E2E Coverage (POV-180):** Closed critical automation debt by implementing Playwright guards for Role-Protection (TC-SEC-002) and Global Error Catching (TC-GRX-002). Added verification for admin-route redirects and transient error toast notifications.
+
+### Changed
+- **Bundle Optimization (POV-176):** Reduced frontend JavaScript bundle size by replacing the `uuid` package with native `crypto.randomUUID()` and consolidating HTML export parsing onto the existing `react-markdown` engine, completely eliminating `marked` and `dompurify` dependencies from the payload.
+- **Tooling (POV-176):** Added `vite-bundle-visualizer` to development scripts to proactively monitor bundle sizes against the < 1.1MB performance budget.
+- **AI Prompt Cleanup (POV-170):** Stripped redundant UI-level headers (`## Daily Briefing`, `### 1. Executive Summary`, etc.) and metadata from the AI summarization prompts. The AI now generates "Pure Intelligence," while the System provides the structural "Frame."
+- **Prompt Architecture (POV-170):** Migrated all summarization templates to a named `{{variable}}` syntax (e.g., `{{title}}`, `{{transcript}}`), replacing fragile positional `%s` formatting and improving template maintainability.
+- **Backend Infrastructure (POV-170):** Updated `ContentCreationService` and `VideoSummaryService` to support the new template variable injection logic.
+- **Cleanup (POV-170):** Simplified shared briefing and summary views by removing unimplemented export/sharing features to maintain a clean interface.
+- **Event Store (POV-171):** Extended `eventStore.ts` with a transient `lastNotification` signal to decouple auditory triggers from business logic.
+- **Job Events (POV-171):** Integrated auditory signaling into the `useJobEvents.ts` SSE listener, triggering sounds for `COMPLETED`, `FAILED`, and `ORCHESTRATION_COMPLETED` events.
+- **Documentation Architecture (POV-172):** Migrated to a modular sub-directory structure (`docs/process/lessons/`) with stripped numeric prefixes and hardened relative link integrity for improved discoverability and AI context efficiency.
+- **Unified Sharing & Export (POV-173):** Consolidated summary and briefing sharing into a single polymorphic `ExportMenu` component, granting individual summaries full Markdown and HTML export capabilities.
+- **AppShell Refactor (POV-174):** Modernized the application shell by replacing hardcoded Slate/Blue classes with the new Zinc semantic variable taxonomy.
+- **Dashboard Hardening (POV-174):** Refactored `StatCard`, `RecentBriefingList`, and `DashboardPage` to use semantic variables, resolving contrast regressions in active job indicators and icon squares.
+- **Typography Polish (POV-174):** Standardized interactive label weights to `font-weight: 500` and primary headers to `font-weight: 900` to improve legibility in bright neutral environments.
+
+### Fixed
+- [POV-175] Resolved N+1 query bottleneck in `BriefingApiResource.getBriefings` by implementing HQL Join Fetch, reducing database round-trips from O(N) to O(1).
+- [POV-175] Standardized explicit HQL aliasing and sorting prefixes for consistent query construction.
 
 ## [0.15.0] - 2026-03-30
 

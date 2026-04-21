@@ -1,0 +1,42 @@
+{
+    email {$CADDY_EMAIL}
+}
+
+povzetkar.{$DOMAIN_NAME} {
+    # Proxy all requests to the Quarkus app
+    reverse_proxy app:8080
+
+    # Compression for better performance
+    encode zstd gzip
+
+    # Security headers
+    header {
+        # Enable HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Prevent Clickjacking
+        X-Frame-Options "DENY"
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        # Permissions Policy
+        Permissions-Policy "interest-cohort=()"
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Logging
+    log {
+        output stdout
+    }
+}
+
+# Secure access to Grafana
+grafana.{$DOMAIN_NAME} {
+    reverse_proxy grafana:3000
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

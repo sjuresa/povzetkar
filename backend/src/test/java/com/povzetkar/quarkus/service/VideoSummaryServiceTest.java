@@ -99,6 +99,25 @@ class VideoSummaryServiceTest {
         assertTrue(capturedPrompt.contains("CUSTOM PROMPT: AI on 2025-07-17 for Summary 1"));
     }
 
+    @Test
+    @DisplayName("createBriefingFromSummaries should support {{variable}} syntax")
+    void createBriefingFromSummaries_variableSyntax() {
+        String rawSummaries = "Summary 1\n---\nSummary 2";
+        String date = "2025-07-17";
+        String topicName = "AI";
+        String variableTemplate = "Briefing for {{topic}} on {{date}}. Content: {{summaries}}";
+        ArgumentCaptor<Content> contentCaptor = ArgumentCaptor.forClass(Content.class);
+
+        when(mockResponse.text()).thenReturn("Variable Response");
+        when(mockModels.generateContent(anyString(), contentCaptor.capture(), eq(null)))
+                .thenReturn(mockResponse);
+
+        videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName, variableTemplate);
+
+        String capturedPrompt = contentCaptor.getValue().parts().get().get(0).text().get();
+        assertEquals("Briefing for AI on 2025-07-17. Content: Summary 1\n---\nSummary 2", capturedPrompt);
+    }
+
     @ParameterizedTest
     @CsvSource({
             "'--- A summary. ---', 'A summary.'",

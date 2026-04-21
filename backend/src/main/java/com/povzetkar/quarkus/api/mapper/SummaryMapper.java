@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.api.mapper;
 
+import com.povzetkar.quarkus.api.dto.PublicSummaryDTO;
 import com.povzetkar.quarkus.api.dto.SummaryDTO;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -17,7 +18,17 @@ public interface SummaryMapper {
     @Mapping(target = "publishedAt", source = "contentItem.publishedAt")
     @Mapping(target = "durationSeconds", source = "contentItem", qualifiedByName = "mapDurationSeconds")
     @Mapping(target = "platform", expression = "java(mapPlatform(entity))")
+    @Mapping(target = "authorName", source = "contentItem.authorName")
+    @Mapping(target = "formattedDuration", source = "contentItem", qualifiedByName = "mapFormattedDuration")
+    @Mapping(target = "uuid", source = "uuid")
     SummaryDTO toDTO(Summary entity);
+
+    @Mapping(target = "title", source = "contentItem.title")
+    @Mapping(target = "authorName", source = "contentItem.authorName")
+    @Mapping(target = "sourceUrl", source = "contentItem.sourceUrl")
+    @Mapping(target = "publishedAt", source = "contentItem.publishedAt")
+    @Mapping(target = "summaryText", source = "summaryText")
+    PublicSummaryDTO toPublicDTO(Summary entity);
 
     default String mapPlatform(Summary entity) {
         if (entity == null || entity.contentItem == null || entity.contentItem.contentSource == null) {
@@ -30,6 +41,14 @@ public interface SummaryMapper {
     default Long mapDurationSeconds(ContentItem entity) {
         if (entity instanceof YouTubeVideo yt && yt.duration != null) {
             return yt.duration.toSeconds();
+        }
+        return null;
+    }
+
+    @Named("mapFormattedDuration")
+    default String mapFormattedDuration(ContentItem entity) {
+        if (entity instanceof YouTubeVideo yt && yt.duration != null) {
+            return yt.formattedDuration();
         }
         return null;
     }

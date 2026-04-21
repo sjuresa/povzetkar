@@ -31,6 +31,9 @@ public class ContentItem extends BaseAuditableEntity {
     @Column(name = "title", nullable = false)
     public String title;
 
+    @Column(name = "author_name")
+    public String authorName;
+
     @Column(name = "published_at", nullable = false)
     public Instant publishedAt;
 

@@ -17,7 +17,7 @@ import { ContentManagementPage } from './routes/ContentManagementPage';
 import { TopicsPage } from './pages/topics/TopicsPage';
 import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
 import { SourceDetailPage } from './routes/SourceDetailPage';
-import { PublicBriefingPage } from './routes/PublicBriefingPage';
+import { PublicResolverPage } from './routes/PublicResolverPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -163,14 +163,14 @@ const contentManagementRoute = createRoute({
 const adminJobsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'jobs',
-  component: () => <div className="p-8 text-slate-400 italic">Background Jobs Admin coming soon...</div>,
+  component: () => <div className="p-8 text-[var(--color-text-secondary)] italic">Background Jobs Admin coming soon...</div>,
 });
 
 // 7. Public Sharing Route
 const publicShareRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/s/$uuid',
-  component: PublicBriefingPage,
+  component: PublicResolverPage,
 });
 
 // 5. Create Route Tree

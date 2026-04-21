@@ -13,7 +13,7 @@ export function ContentItemFilters({ filters, onFilterChange }: ContentItemFilte
   const topics = topicsData?.data?.items || [];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 glass border border-[var(--color-border-subtle)] rounded-3xl shadow-xl animate-in fade-in duration-1000">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] shadow-xl animate-in fade-in duration-1000">
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-secondary)] px-1">
           {t('contentManagement.filters.topic')}
@@ -21,7 +21,7 @@ export function ContentItemFilters({ filters, onFilterChange }: ContentItemFilte
         <select 
           value={filters.topicId || ''}
           onChange={(e) => onFilterChange({ topicId: e.target.value ? Number(e.target.value) : undefined })}
-          className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all appearance-none cursor-pointer"
+          className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/40 transition-all appearance-none cursor-pointer"
         >
           <option value="">{t('common.filter')}</option>
           {topics.map(topic => (
@@ -37,7 +37,7 @@ export function ContentItemFilters({ filters, onFilterChange }: ContentItemFilte
         <select 
           value={filters.status?.[0] || ''}
           onChange={(e) => onFilterChange({ status: e.target.value ? [e.target.value as ProcessingStatus] : undefined })}
-          className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all appearance-none cursor-pointer"
+          className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-ring-focus)]/40 transition-all appearance-none cursor-pointer"
         >
           <option value="">{t('common.filter')}</option>
           {Object.values(ProcessingStatus).map(status => (

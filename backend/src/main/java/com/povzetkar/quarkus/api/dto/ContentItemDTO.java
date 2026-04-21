@@ -16,7 +16,9 @@ public record ContentItemDTO(
         @Schema(description = "Error code if status is FAILED")
         String errorCode,
         Long durationSeconds,
+        String formattedDuration,
         String thumbnailUrl,
+        String authorName,
         ContentSourceDTO contentSource,
         @Schema(description = "First associated topic name")
         String topicName,

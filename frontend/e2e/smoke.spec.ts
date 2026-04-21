@@ -6,7 +6,14 @@ test('has title', async ({ page }) => {
 });
 
 test('renders brand name', async ({ page }) => {
+  // Force unauthenticated state
+  await page.route('**/api/v1/users/me', route => route.fulfill({
+    status: 401,
+    contentType: 'application/json',
+    body: JSON.stringify({ data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } })
+  }));
+
   await page.goto('/');
   // Look for the link by aria-label OR by the text content "Povzetkar"
-  await expect(page.getByLabel(/Povzetkar/i).or(page.getByText(/Povzetkar/i, { exact: false })).first()).toBeVisible();
+  await expect(page.getByTestId('brand-logo').first()).toBeVisible();
 });

@@ -9,10 +9,15 @@ import com.povzetkar.quarkus.util.StructuredLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @ApplicationScoped
 public class ContentCreationService {
 
     private static final StructuredLogger logger = StructuredLogger.getLogger(ContentCreationService.class);
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(.+?)}}");
     private final int transcriptThresholdMinutes;
 
     private final YouTubeTranscriptService youTubeTranscriptService;
@@ -26,12 +31,12 @@ public class ContentCreationService {
     public Content createContentForVideo(YouTubeVideo video) {
         if (video.transcript != null && !video.transcript.isBlank()) {
             logger.info(
-                LogKeys.ACTION, LogKeys.CREATE_CONTENT,
-                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-                LogKeys.VIDEO_ID, video.videoId,
-                LogKeys.VIDEO_TITLE, video.title,
-                LogKeys.SOURCE, "existing_transcript",
-                LogKeys.MESSAGE, "Using existing transcript"
+                    LogKeys.ACTION, LogKeys.CREATE_CONTENT,
+                    LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.VIDEO_TITLE, video.title,
+                    LogKeys.SOURCE, "existing_transcript",
+                    LogKeys.MESSAGE, "Using existing transcript"
             );
             Part textPart = createVideoSummaryTextPart(video, video.transcript);
             return Content.fromParts(textPart);
@@ -39,45 +44,45 @@ public class ContentCreationService {
 
         if (video.duration.toMinutes() < transcriptThresholdMinutes) {
             logger.info(
-                LogKeys.ACTION, LogKeys.CREATE_CONTENT,
-                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-                LogKeys.VIDEO_ID, video.videoId,
-                LogKeys.VIDEO_TITLE, video.title,
-                LogKeys.SOURCE, "video_url",
-                LogKeys.MESSAGE, "Video is shorter than threshold, using URL"
+                    LogKeys.ACTION, LogKeys.CREATE_CONTENT,
+                    LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.VIDEO_TITLE, video.title,
+                    LogKeys.SOURCE, "video_url",
+                    LogKeys.MESSAGE, "Video is shorter than threshold, using URL"
             );
             Part textPart = createVideoSummaryTextPart(video, "");
             return Content.fromParts(textPart, Part.fromUri(video.sourceUrl, "video/mp4"));
         }
 
         logger.info(
-            LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
-            LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-            LogKeys.VIDEO_ID, video.videoId,
-            LogKeys.VIDEO_TITLE, video.title,
-            LogKeys.MESSAGE, "Video is longer than threshold, getting transcript"
+                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title,
+                LogKeys.MESSAGE, "Video is longer than threshold, getting transcript"
         );
         String transcript = youTubeTranscriptService.getTranscript(video.videoId);
 
         if (transcript.isBlank()) {
             logger.warn(
-                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
-                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-                LogKeys.VIDEO_ID, video.videoId,
-                LogKeys.VIDEO_TITLE, video.title,
-                LogKeys.STATUS, "failure",
-                LogKeys.MESSAGE, "Could not retrieve transcript"
+                    LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                    LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                    LogKeys.VIDEO_ID, video.videoId,
+                    LogKeys.VIDEO_TITLE, video.title,
+                    LogKeys.STATUS, "failure",
+                    LogKeys.MESSAGE, "Could not retrieve transcript"
             );
             return null;
         }
 
         logger.info(
-            LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
-            LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
-            LogKeys.VIDEO_ID, video.videoId,
-            LogKeys.VIDEO_TITLE, video.title,
-            LogKeys.STATUS, "success",
-            LogKeys.MESSAGE, "Got transcript successfully"
+                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.VIDEO_TITLE, video.title,
+                LogKeys.STATUS, "success",
+                LogKeys.MESSAGE, "Got transcript successfully"
         );
         video.transcript = transcript;
         Part textPart = createVideoSummaryTextPart(video, transcript);
@@ -85,17 +90,46 @@ public class ContentCreationService {
     }
 
     private Part createVideoSummaryTextPart(YouTubeVideo video, String transcript) {
-        String sourceType = transcript.isBlank() ? "video url" : "video transcript";
-        String prompt = Prompts.VIDEO_SUMMARY_PROMPT.formatted(
-                sourceType,
-                video.sourceUrl,
-                video.title,
-                video.sourceUrl,
-                video.authorName,
-                video.formattedPublishedAt(),
-                video.formattedDuration(),
-                transcript
-        );
-        return Part.fromText(prompt);
+        String safeTranscript = transcript != null ? transcript : "";
+        String sourceType = safeTranscript.isBlank() ? "video url" : "video transcript";
+        String template = Prompts.VIDEO_SUMMARY_PROMPT;
+
+        String finalPrompt;
+        if (template.contains("{{")) {
+            Map<String, String> plainValues = Map.of(
+                    "sourceType", sourceType,
+                    "sourceUrl", video.sourceUrl != null ? video.sourceUrl : "",
+                    "title", video.title != null ? video.title : "",
+                    "author", video.authorName != null ? video.authorName : "",
+                    "publishedAt", video.formattedPublishedAt(),
+                    "duration", video.formattedDuration(),
+                    "transcript", safeTranscript
+            );
+
+            Matcher matcher = VARIABLE_PATTERN.matcher(template);
+            StringBuilder sb = new StringBuilder();
+
+            while (matcher.find()) {
+                String key = matcher.group(1);
+                // Fallback to original placeholder if key not found in map
+                String value = plainValues.getOrDefault(key, matcher.group(0));
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
+            }
+            matcher.appendTail(sb);
+            finalPrompt = sb.toString();
+        } else {
+            // Fallback to legacy index-based formatting if template isn't migrated
+            finalPrompt = template.formatted(
+                    sourceType,
+                    video.sourceUrl,
+                    video.title,
+                    video.sourceUrl,
+                    video.authorName,
+                    video.formattedPublishedAt(),
+                    video.formattedDuration(),
+                    safeTranscript
+            );
+        }
+        return Part.fromText(finalPrompt);
     }
 }

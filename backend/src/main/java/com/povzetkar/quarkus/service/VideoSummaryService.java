@@ -81,6 +81,7 @@ public class VideoSummaryService {
         
         Content content = Content.fromParts(Part.fromText(finalPrompt));
         String description = "Daily briefing for topic '" + topicName + "' on " + date;
+        
         return generateContent(client, content, description, null, null);
     }
 
@@ -123,7 +124,15 @@ public class VideoSummaryService {
             client.resetFailures();
 
             logApiCallDuration(startTime, description, videoTitle, videoId);
-            return cleanAiResponse(response.text());
+            String rawText = response.text();
+            
+            logger.info(
+                LogKeys.ACTION, "ai_briefing_response_debug",
+                "raw_response_length", rawText != null ? rawText.length() : 0,
+                "raw_response_preview", rawText != null ? rawText.trim().substring(0, Math.min(rawText.trim().length(), 200)) : "NULL"
+            );
+
+            return cleanAiResponse(rawText);
         } catch (ApiException e) {
             if (e.code() == 503) {
                 apiKeyUsageService.incrementErrorCount(client.getName());

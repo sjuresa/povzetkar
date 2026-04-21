@@ -12,9 +12,9 @@ export function HeroSection({ isAuthenticated, login, onOpenRealityCheck }: Hero
 
   const getLevelStyles = (idx: number) => {
     switch (idx) {
-      case 0: return 'opacity-100 hover:text-amber-500';
-      case 1: return 'opacity-80 hover:text-blue-500';
-      default: return 'opacity-60 hover:text-[var(--color-accent)]';
+      case 0: return 'opacity-100 hover:text-[var(--color-action-primary)]';
+      case 1: return 'opacity-80 hover:text-[var(--color-action-primary)]';
+      default: return 'opacity-60 hover:text-[var(--color-action-primary)]';
     }
   };
 
@@ -35,18 +35,19 @@ export function HeroSection({ isAuthenticated, login, onOpenRealityCheck }: Hero
               {isAuthenticated ? (
                  <Link
                    to="/dashboard"
-                   className="group relative px-10 py-5 bg-[var(--color-accent)] text-white font-black uppercase tracking-widest transition-transform active:scale-95 overflow-hidden"
+                   className="group relative px-10 py-5 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] font-black uppercase tracking-widest transition-transform active:scale-95 overflow-hidden"
                  >
                    <span className="relative z-10">{t('landing.hero.cta_primary')}</span>
-                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                   <div className="absolute inset-0 bg-[var(--color-action-primary-text)]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                  </Link>
               ) : (
                 <button
                   onClick={login}
-                  className="group relative px-10 py-5 bg-[var(--color-accent)] text-white font-black uppercase tracking-widest transition-transform active:scale-95 overflow-hidden"
+                  data-testid="hero-cta"
+                  className="group relative px-10 py-5 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] font-black uppercase tracking-widest transition-transform active:scale-95 overflow-hidden"
                 >
                   <span className="relative z-10">{t('landing.hero.cta_primary')}</span>
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-[var(--color-action-primary-text)]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
               )}
               <a
@@ -74,11 +75,11 @@ export function HeroSection({ isAuthenticated, login, onOpenRealityCheck }: Hero
                 <div className="pt-4 border-t-2 border-[var(--color-border-subtle)] flex items-center justify-between">
                    <button 
                      onClick={onOpenRealityCheck}
-                     className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+                     className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] transition-colors"
                    >
                      {t('landing.pyramid.reality_check')}
                    </button>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Active</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-status-success)]">Active</span>
                 </div>
              </div>
           </div>

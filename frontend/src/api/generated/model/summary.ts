@@ -28,4 +28,10 @@ export interface Summary {
   durationSeconds?: number;
   /** The platform of the content (e.g., YOUTUBE, BLOG). */
   platform?: string;
+  /** The name of the author or content creator. */
+  authorName?: string;
+  /** Human-readable formatted duration (e.g., 12m 45s). */
+  formattedDuration?: string;
+  /** The public UUID for sharing, null if not shared. */
+  uuid?: string;
 }

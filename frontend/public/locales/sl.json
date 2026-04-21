@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "dashboard": "Odpri poročilo",
+    "dashboard": "Nadzorna Plošča",
     "briefings": "Središče poročil",
     "topics": "Teme",
     "sources": "Viri",
@@ -33,7 +33,8 @@
     },
     "filter": "Filtriraj",
     "edit": "Uredi",
-    "delete": "Izbriši"
+    "delete": "Izbriši",
+    "generated_by": "Ustvaril Povzetkar"
   },
   "profile": {
     "title": "Vaš Profil",
@@ -62,7 +63,7 @@
     },
     "empty": {
       "welcome": "Dobrodošli v",
-      "subtitle": "Vaš povzetkar z umetno inteligenco je pripravljen. Nastavimo vaše prvo poročilo.",
+      "subtitle": "Vaš inteligentni pomočnik je pripravljen. Sledite spodnjim navodilom za vzpostavitev vašega okolja za avtonomna poročila.",
       "connectTitle": "Povežite vir",
       "connectDesc": "Dodajte YouTube kanal ali RSS vir za začetek spremljanja.",
       "createTopicTitle": "Ustvarite temo",
@@ -201,18 +202,21 @@
       "noItems": "Ni najdenih elementov za trenutne filtre."
     },
     "modal": {
-      "title": "AI povzetek vsebine",
+      "title": "AI Povzetek Vsebine",
       "reference": "Referenca",
+      "author": "Avtor",
+      "published": "Objavljeno",
+      "duration": "Trajanje",
       "notAvailable": "Povzetek ni na voljo",
-      "notAvailableSub": "Povzetka ni bilo mogoče pridobiti.",
-      "close": "Zapri bralnik"
+      "notAvailableSub": "Zahtevanega povzetka ni bilo mogoče pridobiti.",
+      "close": "Zapri Bralnik"
     }
   },
   "landing": {
     "hero": {
       "title": "Univerzalno razumevanje.",
-      "subtitle": "Vaš osebni AI analitik za izluščanje bistva iz informacij.",
-      "cta_primary": "Pridobi ključne uvide",
+      "subtitle": "Samodejno pretvori svoje najljubše YouTube kanale (in kmalu tudi druge vire) v dnevne preglede.",
+      "cta_primary": "Ustvari svoj prvi briefing",
       "cta_vision": "Razišči vizijo"
     },
     "pyramid": {
@@ -276,10 +280,17 @@
     },
     "changelog_entries": [
       {
-        "version": "v0.16.0",
-        "title": "Posodobitev v0.16.0",
+        "version": "v0.17.0",
+        "title": "Posodobitev v0.17.0",
         "date": "V teku",
         "desc": "",
+        "badge": "new"
+      },
+      {
+        "version": "0.16.0",
+        "title": "Posodobitev 0.16.0",
+        "date": "2026-04-13",
+        "desc": "Različica 0.16.0 se osredotoča na **estetsko utrditev, igrificirano vključevanje in tehnično globino**. Uvaja profesionalno **monokromatsko Zinc taksonomijo**, ki odstranjuje zastarele barvne konstante za doseganje skladnosti z WCAG AA na vseh površinah nadzorne plošče. Izdaja prinaša tudi izkušnjo **igrificiranega uvajanja** z interaktivnim seznamom v 5 korakih, ki uporabnike vodi po »zlati poti«, dopolnjuje pa ga novo **ogrodje za zvočne povratne informacije**. Tehnični temelji so okrepljeni z **avtomatiziranim zaznavanjem N+1 poizvedb**, **modularizirano bazo znanja** in kritično **pokritostjo s testi E2E** za varnost na podlagi vlog ter globalno obravnavo napak.",
         "badge": "new"
       },
       {
@@ -348,7 +359,7 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.16: Administrative Control & Hardening",
+        "title": "v0.17: Administrative Control & Hardening",
         "desc": "Vzpostavitev popolnega operativnega nadzora nad platformo in integracija napredne varnostne revizije v cikel izdajanja posodobitev."
       },
       {
@@ -408,8 +419,9 @@
   },
   "briefingDetail": {
     "backToLibrary": "Nazaj v knjižnico",
-    "executiveSummary": "Izvršni povzetek",
-    "fullBriefing": "Celotno poročilo",
+    "title": "Poročilo za {{topic}}, {{date}}",
+    "executiveSummary": "Povzetek za vodstvo",
+    "fullBriefing": "Podrobni povzetki",
     "sourceItems": "Izvorni material",
     "sourcesCount": "{{count}} analiziranih virov",
     "openOriginal": "Odpri izvornik",
@@ -420,6 +432,88 @@
       "sharedSubtitle": "Deljeno obveščevalno poročilo",
       "generatedBy": "Ustvarjeno s Povzetkarjem - UI analitik za vaše vsebine",
       "ctaStart": "Ustvari svoje poročilo"
+    },
+    "export": {
+      "button": "Izvoz",
+      "markdown": "Markdown",
+      "markdownDesc": "Navadno besedilo",
+      "html": "HTML / Tiskanje",
+      "htmlDesc": "Pripravljeno za ČB tisk",
+      "copyLink": "Kopiraj povezavo",
+      "copyLinkDesc": "URL za javni dostop",
+      "disableShare": "Onemogoči deljenje",
+      "disableShareDesc": "Razveljavi javni URL",
+      "enableShare": "Omogoči deljenje",
+      "enableShareDesc": "Ustvari javni URL",
+      "toasts": {
+        "shareEnabled": "Javno deljenje omogočeno",
+        "shareDisabled": "Javno deljenje onemogočeno",
+        "shareEnableFailed": "Napaka pri omogočanju deljenja",
+        "shareDisableFailed": "Napaka pri onemogočanju deljenja",
+        "copySuccess": "Povezava kopirana v odložišče",
+        "copyFailed": "Napaka pri kopiranju povezave",
+        "exportDataError": "Napaka pri pripravi podatkov za izvoz",
+        "markdownSuccess": "Markdown uspešno izvožen",
+        "htmlSuccess": "HTML uspešno izvožen (pripravljeno za tisk)"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Vodnik vašega osebnega asistenta",
+    "subtitle": "Opravite teh 5 korakov za popolno obvladovanje vaše avtomatizirane inteligence.",
+    "progress_label": "{{percent}}% opravljeno",
+    "expand_label": "Vaš vodnik",
+    "collapse": "Pomanjšaj",
+    "learn_more": "Kako?",
+    "close_modal": "Razumem",
+    "celebration_title": "🎉 Vodnik zaključen!",
+    "celebration_subtitle": "Vaš asistent je popolnoma konfiguriran in pripravljen.",
+    "celebration_done": "Zaključi vodič",
+    "step": {
+      "topic": {
+        "title": "Ustvarite svojo prvo Temo",
+        "desc": "Teme združujejo vaše interese za bolj osredotočene povzetke.",
+        "cta": "Pojdi na Teme",
+        "how1": "Kliknite \"Teme\" v levem meniju.",
+        "how2": "Kliknite \"Nova tema\" za odprtje obrazca.",
+        "how3": "Poimenujte temo (npr. \"Novice o AI\") in kliknite \"Ustvari temo\"."
+      },
+      "source": {
+        "title": "Dodajte prvi vir vsebine",
+        "desc": "Prilepite YouTube povezavo ali RSS feed za začetek zbiranja znanja.",
+        "cta": "Pojdi na Teme",
+        "how1": "Odprite obstoječo temo na strani Tem.",
+        "how2": "Kliknite \"Dodaj vir\" v razdelku Viri.",
+        "how3": "Poiščite vir ali registrirajte nov YouTube kanal / RSS feed.",
+        "how4": "Shranite temo za potrditev vira."
+      },
+      "trigger": {
+        "title": "Zaženite orkestracijo",
+        "desc": "Dovolite asistentu, da obdela vaše vire in pripravi povzetke.",
+        "cta": "Pojdi na Teme",
+        "how1": "Pojdite na stran Tem.",
+        "how2": "Poiščite svojo aktivno temo in kliknite \"Zaženi zdaj\".",
+        "how3": "Nastavite časovni razpon in kliknite \"Začni orkestracijo\".",
+        "how4": "Počakajte ~30 sekund, da asistent obdela vsebino."
+      },
+      "read": {
+        "title": "Preberite svoj prvi Povzetek",
+        "desc": "Preglejte znanje, ki ga je za vas pripravil vaš osebni asistent.",
+        "cta": "Pojdi v Knjižnico",
+        "how1": "Pojdite v \"Knjižnico povzetkov\" v stranski vrstici.",
+        "how2": "Poiščite vaš zadnji ustvarjeni povzetek.",
+        "how3": "Kliknite povzetek za ogled celotne vsebine.",
+        "how4": "Preberite izvršni povzetek in podrobne vpoglede."
+      },
+      "share": {
+        "title": "Delite svoja spoznanja",
+        "desc": "Delite svoje odkritje s svetom s pomočjo javne povezave.",
+        "cta": "Pojdi v Knjižnico",
+        "how1": "Odprite katerikoli povzetek iz knjižnice.",
+        "how2": "Kliknite gumb \"Izvozi\" v glavi strani.",
+        "how3": "Izberite \"Omogoči deljenje\".",
+        "how4": "Kopirajte javno povezavo in jo delite s komer koli."
+      }
     }
   }
 }

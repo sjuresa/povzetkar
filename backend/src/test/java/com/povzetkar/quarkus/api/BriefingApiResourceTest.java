@@ -13,8 +13,10 @@ import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.test.util.QueryCountAssert;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +29,9 @@ import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 class BriefingApiResourceTest {
+
+    @Inject
+    QueryCountAssert queryCountAssert;
 
     User testUser;
     Topic testTopic;
@@ -96,6 +101,55 @@ class BriefingApiResourceTest {
                 .body("meta.pagination.totalElements", equalTo(1))
                 .body("data[0].title", equalTo("Weekly AI Update"))
                 .body("data[0].topicName", equalTo("AI News"));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "BRIEFING_VIEW" })
+    void testNPlusOneOptimization() {
+        // 0. Warm-up calls to initialize caches (Flyway, Auth, Hibernate) and stabilize metrics
+        for (int i = 0; i < 3; i++) {
+            given()
+                    .queryParam("startDate", java.time.LocalDate.now().toString())
+                    .when().get("/api/v1/briefings")
+                    .then().statusCode(200);
+        }
+
+        // 1. Measure baseline with 1 briefing (created in setup)
+        queryCountAssert.reset();
+        given()
+                .queryParam("startDate", java.time.LocalDate.now().toString())
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("data", hasSize(1));
+        
+        long baseline = queryCountAssert.getActualCount();
+
+        // 2. Seed 5 additional briefings
+        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+            for (int i = 0; i < 5; i++) {
+                BriefingBuilder.aBriefing()
+                        .withTopic(testTopic)
+                        .withTitle("Optimization Test " + i)
+                        .withMetaSummary("Summary " + i)
+                        .withBriefingDate(java.time.LocalDate.now().minusDays(i + 1))
+                        .build()
+                        .persistAndFlush();
+            }
+        });
+
+        // 3. Measure again with 6 briefings
+        queryCountAssert.reset();
+        given()
+                .queryParam("startDate", java.time.LocalDate.now().minusDays(10).toString())
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(200)
+                .body("data", hasSize(6));
+
+        // Assert the count remains identical to the baseline (Delta = 0)
+        // Mathematically proving O(1) complexity regardless of record count.
+        queryCountAssert.assertCount((int) baseline);
     }
 
     @Test
@@ -192,9 +246,11 @@ class BriefingApiResourceTest {
                 .extract().path("data");
 
         given()
-                .when().get("/api/v1/public/briefings/" + uuid)
+                .when().get("/api/v1/public/resolve/" + uuid)
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .body("data.type", equalTo("BRIEFING"))
+                .body("data.data.title", equalTo("Weekly AI Update"));
     }
 
     @Test
@@ -217,7 +273,7 @@ class BriefingApiResourceTest {
 
         // Verify public API returns 404
         given()
-                .when().get("/api/v1/public/briefings/" + uuid)
+                .when().get("/api/v1/public/resolve/" + uuid)
                 .then()
                 .statusCode(404);
     }

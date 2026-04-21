@@ -40,42 +40,42 @@ export const TopicsPage: React.FC = () => {
             setEditingTopic(undefined);
             setIsFormOpen(true);
           }}
-          className="inline-flex items-center px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/30 hover:bg-blue-700 hover:scale-[1.03] active:scale-95 transition-all text-lg"
+          className="inline-flex items-center px-8 py-4 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] rounded-xl md:rounded-[28px] font-bold shadow-xl shadow-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-hover)] hover:scale-[1.03] active:scale-95 transition-all text-lg"
         >
-          <Plus className="w-6 h-6 mr-3" />
+          <Plus className="w-6 h-6 mr-3"  strokeWidth={1.5}/>
           {t('topics.add_topic')}
         </button>
       </div>
 
       {/* Modern Filter bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--color-background-alt)] p-4 rounded-3xl border border-[var(--color-border-subtle)]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--color-background-alt)] p-4 rounded-xl md:rounded-[28px] border border-[var(--color-border-subtle)]">
         <div className="relative flex-1 group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] group-focus-within:text-blue-600 transition-colors" />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] group-focus-within:text-[var(--color-action-primary)] transition-colors"  strokeWidth={1.5}/>
           <input
             type="text"
             placeholder={t('topics.list.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-14 pr-4 py-4 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+            className="w-full pl-14 pr-4 py-4 rounded-xl md:rounded-[28px] border border-[var(--color-border-subtle)] bg-[var(--color-background-base)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none"
           />
         </div>
         
         {/* Toggle Filter for Active Only */}
         <button
           onClick={() => setShowActiveOnly(!showActiveOnly)}
-          className={`flex items-center px-6 py-4 rounded-2xl border transition-all font-bold ${
+          className={`flex items-center px-6 py-4 rounded-xl md:rounded-[28px] border transition-all font-bold ${
             showActiveOnly 
-              ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' 
+              ? 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] border-[var(--color-action-primary)]/50 shadow-lg shadow-[var(--color-action-primary)]/20' 
               : 'bg-[var(--color-background-base)] text-[var(--color-text-secondary)] border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)]'
           }`}
         >
-          <CheckCircle2 className={`w-5 h-5 mr-2.5 ${showActiveOnly ? 'text-white' : 'text-green-500'}`} />
+          <CheckCircle2 className={`w-5 h-5 mr-2.5 ${showActiveOnly ? 'text-[var(--color-action-primary-text)]' : 'text-[var(--color-text-secondary)]/50'}`}  strokeWidth={1.5}/>
           {t('topics.list.show_active_only')}
         </button>
       </div>
 
       <div className="relative">
-        <div className="absolute -inset-8 bg-gradient-to-r from-blue-500/5 to-purple-500/5 blur-3xl rounded-[40px] pointer-events-none -z-10" />
+        <div className="absolute -inset-8 bg-gradient-to-r from-[var(--color-action-primary)]/5 to-transparent blur-3xl rounded-[40px] pointer-events-none -z-10" />
         <TopicList 
           onEdit={handleEdit} 
           searchQuery={searchQuery} 
@@ -86,7 +86,7 @@ export const TopicsPage: React.FC = () => {
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity"
+            className="absolute inset-0 bg-[var(--color-bg-primary)]/40 backdrop-blur-md transition-opacity"
             onClick={closeForm}
           />
           <div className="relative w-full max-w-2xl bg-[var(--color-surface-elevated)] rounded-[40px] shadow-2xl border border-[var(--color-border-subtle)] overflow-hidden flex flex-col scale-in">
@@ -96,9 +96,9 @@ export const TopicsPage: React.FC = () => {
               </h2>
               <button 
                 onClick={closeForm}
-                className="p-3 hover:bg-[var(--color-background-base)] rounded-2xl transition-all text-[var(--color-text-secondary)] hover:scale-110"
+                className="p-3 hover:bg-[var(--color-background-base)] rounded-xl md:rounded-[28px] transition-all text-[var(--color-text-secondary)] hover:scale-110"
               >
-                <X className="w-8 h-8" />
+                <X className="w-8 h-8"  strokeWidth={1.5}/>
               </button>
             </div>
             

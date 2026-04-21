@@ -47,20 +47,20 @@ export function SourcesLibraryPage() {
           </p>
         </div>
         
-        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-2xl px-4 py-2">
+        <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-4 py-2">
            <div className="text-right">
              <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">Active Sources</div>
-             <div className="text-sm font-mono text-indigo-500 font-bold">{totalCount.toLocaleString()} Integrated</div>
+             <div className="text-sm font-mono text-[var(--color-action-primary)] font-bold">{totalCount.toLocaleString()} Integrated</div>
            </div>
-           <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 ml-2">
-              <Globe className="w-4 h-4" />
+           <div className="w-8 h-8 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] ml-2">
+              <Globe className="w-4 h-4"  strokeWidth={1.5}/>
            </div>
         </div>
       </div>
 
-      <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-3xl p-6 shadow-xl shadow-black/5 backdrop-blur-sm">
+      <div className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-6 shadow-xl shadow-black/5 backdrop-blur-sm">
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] group-focus-within:text-indigo-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] group-focus-within:text-[var(--color-action-primary)] transition-colors"  strokeWidth={1.5}/>
           <input 
             type="text" 
             value={search}
@@ -69,7 +69,7 @@ export function SourcesLibraryPage() {
               setPage(0); // Reset to first page on search
             }}
             placeholder="Search sources by name, identifier or description..."
-            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-2xl pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-[var(--color-text-primary)] shadow-inner"
+            className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)] shadow-inner"
           />
         </div>
       </div>
@@ -82,9 +82,9 @@ export function SourcesLibraryPage() {
              ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-3xl p-12 text-center">
+          <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-[var(--color-surface-deep)] flex items-center justify-center mx-auto mb-4 text-[var(--color-text-secondary)]">
-              <Search className="w-8 h-8" />
+              <Search className="w-8 h-8"  strokeWidth={1.5}/>
             </div>
             <h3 className="text-lg font-bold text-[var(--color-text-primary)]">No sources found</h3>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1">Try adjusting your search terms.</p>
@@ -97,22 +97,22 @@ export function SourcesLibraryPage() {
                   key={source.id}
                   to="/sources/$sourceId"
                   params={{ sourceId: source.id?.toString() || '' }}
-                  className="group glass border border-[var(--color-border-subtle)] rounded-3xl p-6 hover:bg-[var(--color-surface-hover)] hover:border-indigo-500/50 transition-all hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
+                  className="group glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-6 hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-action-primary)]/50 transition-all hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                    {source.platform === 'YOUTUBE' ? <Youtube size={64} /> : <Globe size={64} />}
+                    {source.platform === 'YOUTUBE' ? <Youtube size={64}  strokeWidth={1.5}/> : <Globe size={64}  strokeWidth={1.5}/>}
                   </div>
                   
                   <div className="flex items-start justify-between mb-4">
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center shadow-inner",
-                      source.platform === 'YOUTUBE' ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+                      source.platform === 'YOUTUBE' ? "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]" : "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]"
                     )}>
-                      {source.platform === 'YOUTUBE' ? <Youtube size={20} /> : <Globe size={20} />}
+                      {source.platform === 'YOUTUBE' ? <Youtube size={20}  strokeWidth={1.5}/> : <Globe size={20}  strokeWidth={1.5}/>}
                     </div>
                   </div>
 
-                  <h3 className="font-bold text-[var(--color-text-primary)] text-lg mb-1 truncate group-hover:text-indigo-400 transition-colors">
+                  <h3 className="font-bold text-[var(--color-text-primary)] text-lg mb-1 truncate group-hover:text-[var(--color-action-primary)] transition-colors">
                     {source.name}
                   </h3>
                   <p className="text-xs font-mono text-[var(--color-text-secondary)] mb-3 opacity-70">
@@ -124,7 +124,7 @@ export function SourcesLibraryPage() {
                   </p>
 
                   <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border-subtle)]/50">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded-lg">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-action-primary)] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] px-2 py-1 rounded-xl">
                       {source.platform}
                     </div>
                     <div className="flex items-center text-xs text-[var(--color-text-secondary)]">

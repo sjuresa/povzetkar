@@ -63,3 +63,7 @@ volumes:
     external: true
     name: povzetkar_postgres_test_data
   grafana_storage:
+
+networks:
+  default:
+    name: povzetkar_default

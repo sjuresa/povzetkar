@@ -1,16 +1,21 @@
 import { useEffect } from 'react';
 import { useGetApiV1ContentItemsIdSummary } from '../../api/generated/content-items/content-items';
 import ReactMarkdown from 'react-markdown';
+import { format } from 'date-fns';
 import { Skeleton } from '../ui/Skeleton';
 import { 
   X, 
   Youtube, 
   Globe, 
   FileText, 
-  AlertCircle 
+  AlertCircle,
+  Calendar,
+  Clock,
+  User as UserIcon
 } from 'lucide-react';
 
 import { useTranslation } from 'react-i18next';
+import { ExportMenu } from '../briefing/ExportMenu';
 
 interface SummaryModalProps {
   itemId: number | null;
@@ -25,13 +30,20 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
   );
 
   useEffect(() => {
-    if (itemId) {
-      document.body.style.overflow = 'hidden';
-    }
+    if (!itemId) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEsc);
+
     return () => {
       document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleEsc);
     };
-  }, [itemId]);
+  }, [itemId, onClose]);
 
   if (!itemId) return null;
 
@@ -49,23 +61,59 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
         {/* Modal Header */}
         <div className="p-6 md:p-8 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/40 backdrop-blur-xl flex items-center justify-between">
            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 ring-4 ring-indigo-500/5">
-                {summary?.platform === 'YOUTUBE' ? <Youtube size={24} /> : <Globe size={24} />}
+              <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] ring-4 ring-[var(--color-ring-focus)]/5">
+                {summary?.platform === 'YOUTUBE' ? <Youtube size={24}  strokeWidth={1.5}/> : <Globe size={24}  strokeWidth={1.5}/>}
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-[var(--color-text-primary)]">{t('contentManagement.modal.title')}</h3>
-                <div className="flex items-center text-[10px] text-[var(--color-text-secondary)] font-mono opacity-60 mt-0.5 tracking-wider uppercase">
-                   {t('contentManagement.modal.reference')}: ITEM-{itemId}
+               <div>
+                <h3 className="text-xl font-bold text-[var(--color-text-primary)] leading-tight line-clamp-1">
+                  {summary?.title || t('contentManagement.modal.title')}
+                </h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                   <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)] font-medium">
+                      <UserIcon size={12} className="text-[var(--color-action-primary)]"  strokeWidth={1.5}/>
+                      <span>{summary?.authorName || t('common.loading')}</span>
+                   </div>
+                   <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)] font-medium">
+                      <Calendar size={12} className="text-[var(--color-status-success)]"  strokeWidth={1.5}/>
+                      <span>{summary?.publishedAt ? format(new Date(summary.publishedAt), 'MMM d, yyyy HH:mm') : t('common.loading')}</span>
+                   </div>
+                   {summary?.formattedDuration && (
+                     <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)] font-medium">
+                        <Clock size={12} className="text-[var(--color-status-warning)]"  strokeWidth={1.5}/>
+                        <span>{summary.formattedDuration}</span>
+                     </div>
+                   )}
+                   <div className="flex items-center text-[10px] text-[var(--color-text-secondary)] font-mono opacity-40 tracking-wider uppercase ml-1">
+                      {t('contentManagement.modal.reference')}: ITEM-{itemId}
+                   </div>
                 </div>
               </div>
            </div>
-           <button 
-             onClick={onClose}
-             className="p-3 rounded-2xl hover:bg-white/5 text-[var(--color-text-secondary)] hover:text-white transition-all active:scale-90"
-           >
-             <X size={24} />
-           </button>
-        </div>
+              <div className="flex items-center gap-2">
+                {(summary && itemId != null) ? (
+                  <ExportMenu 
+                    type="summary"
+                    data={{
+                      id: itemId,
+                      uuid: summary.uuid || null,
+                      title: summary.title || t('contentManagement.modal.title'),
+                      topicName: t('common.summary'),
+                      date: summary.publishedAt || new Date().toISOString(),
+                      metaSummary: summary.executiveSummary || '',
+                      summaries: [{ summaryText: summary.summaryText || '' }]
+                    }}
+                    variant="ghost"
+                    align="right"
+                  />
+                ) : null}
+                <button 
+                  onClick={onClose}
+                  className="p-3 rounded-xl md:rounded-[28px] hover:bg-white/5 text-[var(--color-text-secondary)] hover:text-white transition-all active:scale-90"
+                >
+                  <X size={24}  strokeWidth={1.5}/>
+                </button>
+              </div>
+           </div>
 
         {/* Modal Content */}
         <div className="flex-1 overflow-y-auto bg-[var(--color-background-base)] p-6 md:p-12 scroll-smooth">
@@ -75,12 +123,12 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
                 <Skeleton className="h-10 w-3/4" />
                 <Skeleton className="h-6 w-1/2" />
               </div>
-              <Skeleton className="h-48 w-full rounded-3xl" />
+              <Skeleton className="h-48 w-full rounded-xl md:rounded-[28px]" />
             </div>
           ) : summaryError ? (
             <div className="flex flex-col items-center justify-center h-full py-20 text-center space-y-6">
-               <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 ring-8 ring-red-500/5">
-                  <AlertCircle size={40} />
+               <div className="w-20 h-20 rounded-full bg-[var(--color-status-error)]/10 flex items-center justify-center text-[var(--color-status-error)] ring-8 ring-[var(--color-status-error)]/5">
+                  <AlertCircle size={40}  strokeWidth={1.5}/>
                </div>
                <div className="space-y-2">
                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{t('contentManagement.modal.notAvailable')}</p>
@@ -88,30 +136,35 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
                     {t('contentManagement.modal.notAvailableSub')}
                  </p>
                </div>
-               <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-indigo-500 text-white font-bold">{t('common.cancel')}</button>
+               <button onClick={onClose} className="px-8 py-3 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)] text-white font-bold">{t('common.cancel')}</button>
             </div>
           ) : summary ? (
             <article className="w-full">
-              <section className="prose animate-in fade-in slide-in-from-bottom-6 duration-700">
+              {summary.executiveSummary && (
+                <div className="mb-12 p-10 md:p-14 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.03] border-l-8 border-[var(--color-action-primary)]/50 shadow-2xl shadow-[var(--color-action-primary)]/5 animate-in fade-in slide-in-from-left-4 duration-1000">
+                  <div className={`prose prose-zinc max-w-none text-2xl italic font-serif font-medium text-[var(--color-text-primary)] leading-[1.6] opacity-100 selection:bg-[var(--color-action-primary)]/30 ${/^\p{L}/u.test(summary.executiveSummary.trim()) ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-[var(--color-action-primary)]' : ''}`}>
+                    <p>{summary.executiveSummary}</p>
+                  </div>
+                </div>
+              )}
+              <section className="prose prose-zinc max-w-none animate-in fade-in slide-in-from-bottom-6 duration-700 text-[var(--color-text-primary)] leading-relaxed">
                 <ReactMarkdown>{summary.summaryText || ""}</ReactMarkdown>
               </section>
             </article>
           ) : (
             <div className="flex flex-col items-center justify-center h-full py-32 text-[var(--color-text-secondary)] space-y-4">
-              <FileText size={48} className="opacity-20" />
+              <FileText size={48} className="opacity-20"  strokeWidth={1.5}/>
               <p className="italic text-lg">No analysis found for this item.</p>
             </div>
           )}
         </div>
 
         {/* Modal Footer */}
-        <div className="p-6 md:px-10 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl flex justify-between items-center">
-           <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest hidden md:block">
-             AI-Powered Analysis v0.14
-           </div>
+        <div className="p-6 md:px-10 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-deep)]/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="w-full md:w-auto" />
            <button 
              onClick={onClose}
-             className="w-full md:w-auto px-8 py-3 rounded-2xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-bold transition-all active:scale-95 border border-[var(--color-border-subtle)]"
+             className="w-full md:w-auto px-8 py-3 rounded-xl md:rounded-[28px] bg-[var(--color-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-bold transition-all active:scale-95 border border-[var(--color-border-subtle)]"
            >
              {t('contentManagement.modal.close')}
            </button>

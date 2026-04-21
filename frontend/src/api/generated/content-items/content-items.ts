@@ -742,6 +742,204 @@ export function useGetApiV1ContentItemsIdSummary<TData = Awaited<ReturnType<type
 
 
 /**
+ * Generates a public UUID for the summary of a specific content item.
+ * @summary Enable sharing for a summary
+ */
+export type postApiV1ContentItemsIdSummaryShareResponse200 = {
+  data: string
+  status: 200
+}
+
+export type postApiV1ContentItemsIdSummaryShareResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1ContentItemsIdSummaryShareResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1ContentItemsIdSummaryShareResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1ContentItemsIdSummaryShareResponseSuccess = (postApiV1ContentItemsIdSummaryShareResponse200) & {
+  headers: Headers;
+};
+export type postApiV1ContentItemsIdSummaryShareResponseError = (postApiV1ContentItemsIdSummaryShareResponse401 | postApiV1ContentItemsIdSummaryShareResponse403 | postApiV1ContentItemsIdSummaryShareResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1ContentItemsIdSummaryShareResponse = (postApiV1ContentItemsIdSummaryShareResponseSuccess | postApiV1ContentItemsIdSummaryShareResponseError)
+
+export const getPostApiV1ContentItemsIdSummaryShareUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/content-items/${id}/summary/share`
+}
+
+export const postApiV1ContentItemsIdSummaryShare = async (id: number, options?: RequestInit): Promise<postApiV1ContentItemsIdSummaryShareResponse> => {
+  
+  return customInstance<postApiV1ContentItemsIdSummaryShareResponse>(getPostApiV1ContentItemsIdSummaryShareUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1ContentItemsIdSummaryShareMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryShare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryShare>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1ContentItemsIdSummaryShare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryShare>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1ContentItemsIdSummaryShare(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1ContentItemsIdSummaryShareMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryShare>>>
+    
+    export type PostApiV1ContentItemsIdSummaryShareMutationError = void
+
+    /**
+ * @summary Enable sharing for a summary
+ */
+export const usePostApiV1ContentItemsIdSummaryShare = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryShare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryShare>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1ContentItemsIdSummaryShareMutationOptions(options), queryClient);
+    }
+    /**
+ * Removes the public UUID for the summary to disable unauthenticated access.
+ * @summary Disable sharing for a summary
+ */
+export type postApiV1ContentItemsIdSummaryUnshareResponse204 = {
+  data: void
+  status: 204
+}
+
+export type postApiV1ContentItemsIdSummaryUnshareResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1ContentItemsIdSummaryUnshareResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1ContentItemsIdSummaryUnshareResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1ContentItemsIdSummaryUnshareResponseSuccess = (postApiV1ContentItemsIdSummaryUnshareResponse204) & {
+  headers: Headers;
+};
+export type postApiV1ContentItemsIdSummaryUnshareResponseError = (postApiV1ContentItemsIdSummaryUnshareResponse401 | postApiV1ContentItemsIdSummaryUnshareResponse403 | postApiV1ContentItemsIdSummaryUnshareResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1ContentItemsIdSummaryUnshareResponse = (postApiV1ContentItemsIdSummaryUnshareResponseSuccess | postApiV1ContentItemsIdSummaryUnshareResponseError)
+
+export const getPostApiV1ContentItemsIdSummaryUnshareUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/content-items/${id}/summary/unshare`
+}
+
+export const postApiV1ContentItemsIdSummaryUnshare = async (id: number, options?: RequestInit): Promise<postApiV1ContentItemsIdSummaryUnshareResponse> => {
+  
+  return customInstance<postApiV1ContentItemsIdSummaryUnshareResponse>(getPostApiV1ContentItemsIdSummaryUnshareUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1ContentItemsIdSummaryUnshareMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryUnshare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryUnshare>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1ContentItemsIdSummaryUnshare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryUnshare>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1ContentItemsIdSummaryUnshare(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1ContentItemsIdSummaryUnshareMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryUnshare>>>
+    
+    export type PostApiV1ContentItemsIdSummaryUnshareMutationError = void
+
+    /**
+ * @summary Disable sharing for a summary
+ */
+export const usePostApiV1ContentItemsIdSummaryUnshare = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryUnshare>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1ContentItemsIdSummaryUnshare>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1ContentItemsIdSummaryUnshareMutationOptions(options), queryClient);
+    }
+    /**
  * Retrieves a paginated list of content items for a specific source.
  * @summary Get items by source
  */

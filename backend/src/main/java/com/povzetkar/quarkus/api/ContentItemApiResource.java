@@ -18,6 +18,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import jakarta.transaction.Transactional;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -178,10 +179,8 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item or summary not found")
     public SummaryDTO getSummaryByItemId(@PathParam("id") Long id) {
-        Summary entity = Summary.findByContentIdWithAssociations(id);
-        if (entity == null) {
-            throw new NotFoundException("Summary for ContentItem " + id + NOT_FOUND);
-        }
+        Summary entity = Summary.findByContentIdWithAssociations(id)
+                .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + id + NOT_FOUND));
         return summaryMapper.toDTO(entity);
     }
 
@@ -265,11 +264,41 @@ public class ContentItemApiResource extends BaseApiResource {
         return mapToDTO(updatedItem);
     }
 
+    @POST
+    @Path("/{id}/summary/share")
+    @Transactional
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Enable sharing for a summary", description = "Generates a public UUID for the summary of a specific content item.")
+    @APIResponse(responseCode = "200", description = "Sharing enabled successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
+    @APIResponse(responseCode = "404", description = "Summary not found")
+    public String shareSummary(@PathParam("id") Long id) {
+        Summary summary = findSummaryByContentItemId(id);
+        summary.share();
+        return summary.uuid;
+    }
+
+    @POST
+    @Path("/{id}/summary/unshare")
+    @Transactional
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Disable sharing for a summary", description = "Removes the public UUID for the summary to disable unauthenticated access.")
+    @APIResponse(responseCode = "204", description = "Sharing disabled successfully")
+    @APIResponse(responseCode = "404", description = "Summary not found")
+    public void unshareSummary(@PathParam("id") Long id) {
+        Summary summary = findSummaryByContentItemId(id);
+        summary.unshare();
+    }
+
+    private Summary findSummaryByContentItemId(Long contentItemId) {
+        return Summary.findByContentIdWithAssociations(contentItemId)
+                .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + contentItemId + NOT_FOUND));
+    }
+
     private ContentItem findAndValidateContentItemForAction(Long id) {
         ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
 
-        if (Set.of(ProcessingStatus.PENDING, ProcessingStatus.COMPLETED).contains(item.processingStatus)) {
+        if (item.processingStatus == ProcessingStatus.COMPLETED) {
             throw new WebApplicationException(
                     "Cannot perform this action on an item in status " + item.processingStatus,
                     Response.Status.CONFLICT);

@@ -1,9 +1,27 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+
 import logger from '../util/logger';
 import { useAuthStore } from '../store/authStore';
 import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
+
+function generateUuid(): string {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+  if (globalThis.crypto?.getRandomValues) {
+    const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // Set version to 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // Set variant to RFC4122
+    const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0'));
+    return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10, 16).join('')}`;
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, (c) => {
+    const r = Math.trunc(Math.random() * 16);
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 /**
  * Custom request config to support idempotency keys and other metadata
@@ -67,13 +85,13 @@ axiosRetry(client, {
 client.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // 1. Inject Correlation ID for every request
-    config.headers['X-Correlation-ID'] = uuidv4();
+    config.headers['X-Correlation-ID'] = generateUuid();
 
     // 2. Inject Idempotency Key for /commands/* POST requests
     if (config.method?.toLowerCase() === 'post' && config.url?.includes('/commands/')) {
       const customConfig = config as CustomRequestConfig;
       if (!customConfig.idempotencyKey) {
-        customConfig.idempotencyKey = uuidv4();
+        customConfig.idempotencyKey = generateUuid();
       }
       config.headers['Idempotency-Key'] = customConfig.idempotencyKey;
     }

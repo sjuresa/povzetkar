@@ -1,11 +1,5 @@
-# Pending Debian fixes for libexpat and libpng in Distroless (Debian 13)
+# Pending Debian fixes for libexpat in Distroless (Debian 13)
 # These will be removed once Google releases updated images.
 
 # libexpat: Information disclosure and data integrity issues due to integer overflow
 CVE-2026-25210
-
-# libpng: Arbitrary code execution due to use-after-free vulnerability
-CVE-2026-33416
-
-# libpng: Information disclosure and denial of service via out-of-bounds read/write
-CVE-2026-33636
