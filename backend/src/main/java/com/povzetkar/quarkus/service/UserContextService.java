@@ -10,6 +10,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -101,6 +102,8 @@ public class UserContextService {
                     linkIdentity(existingUser, provider, externalId, email);
                     return existingUser;
                 });
+
+        user.lastLoginAt = Instant.now();
 
         // Eagerly initialize roles to avoid LazyInitializationException outside the
         // transaction

@@ -15,6 +15,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +38,9 @@ public class User extends BaseAuditableEntity {
 
     @Column(nullable = false)
     public boolean active = true;
+
+    @Column(name = "last_login_at")
+    public Instant lastLoginAt;
 
     @Column(nullable = false)
     public String name;

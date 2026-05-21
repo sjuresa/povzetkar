@@ -5,6 +5,7 @@
     "topics": "Teme",
     "sources": "Viri",
     "administration": "Administracija",
+    "users": "Upravljanje uporabnikov",
     "auditLogs": "Revizijski sledi",
     "contentManagement": "Upravljanje vsebin",
     "systemJobs": "Sistemska opravila",
@@ -178,6 +179,38 @@
         "preview_only_tip": "Samo pridobi elemente, ne generiraj povzetkov",
         "submit_button": "Zaženi orkestracijo",
         "triggering": "Sprožanje..."
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Upravljanje uporabnikov",
+      "subtitle": "Upravljajte uporabniške račune, nadzorujte dostop in spremljajte aktivnost prijav.",
+      "filters": {
+        "status": "Filtriraj po statusu",
+        "statusAll": "Vsi statusi",
+        "email": "Iskanje po e-pošti..."
+      },
+      "table": {
+        "email": "E-pošta",
+        "status": "Status",
+        "lastLogin": "Zadnja prijava",
+        "created": "Ustvarjeno",
+        "actions": "Dejanja",
+        "never": "Nikoli",
+        "noResults": "Noben uporabnik ne ustreza tem filtrom."
+      },
+      "actions": {
+        "approve": "Odobri",
+        "reject": "Zavrni",
+        "disable": "Onemogoči",
+        "enable": "Omogoči",
+        "reapprove": "Ponovno odobri"
+      },
+      "error": {
+        "self_disable": "Lastnega računa ne morete onemogočiti.",
+        "last_admin": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti.",
+        "invalid_state": "To dejanje ni več veljavno. Seznam uporabnikov je bil osvežen."
       }
     }
   },

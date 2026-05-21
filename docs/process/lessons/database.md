@@ -93,3 +93,31 @@ When executing parallel database tasks using a `ManagedExecutor` or similar thre
 The EXISTS subquery pattern was successfully validated for source-based briefing filtering.
 - **Pattern:** `EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)` correctly filters briefings that contain summaries from a specific source without introducing cartesian products on the paginated main query.
 - **Confirmed:** This approach correctly interacts with Panache's `.count()` and `.page()` methods, producing accurate pagination metadata.
+
+## Dual-Predicate Pattern for Dynamic Filters with Explicit Alias (POV-184)
+When combining dynamic WHERE clauses with Panache's predicate-based `count()` and an explicit-alias `FROM Entity e` HQL query, the alias must be handled separately.
+- **The Trap:** Panache's `Entity.count(predicate, params)` constructs `SELECT COUNT(*) FROM Entity WHERE <predicate>` — with no alias. Using `u.email` inside this predicate causes `Could not interpret path expression 'u.email'`. The same aliased predicate works in `FROM User u WHERE u.email …` but not in `count()`.
+- **The Standard:** Maintain **two parallel StringBuilder instances** — one with bare field names for `count()`, one with the alias prefix for the explicit-alias find query. Keep them in sync at every append site.
+
+```java
+StringBuilder predicate = new StringBuilder();        // bare names → for count()
+StringBuilder aliasedPredicate = new StringBuilder(); // u. prefix  → for FROM User u ...
+Map<String, Object> params = new LinkedHashMap<>();
+
+if (email != null && !email.isBlank()) {
+    predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))");
+    aliasedPredicate.append("LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))");
+    params.put("email", email.strip());
+}
+
+String whereClause = aliasedPredicate.isEmpty() ? "" : "WHERE " + aliasedPredicate;
+
+long totalCount = predicate.isEmpty()
+        ? User.count()
+        : User.count(predicate.toString(), params);
+
+List<User> page = User.<User>find("FROM User u " + whereClause, panacheSort, params)
+        .page(pageIndex, pageSize).list();
+```
+
+- **Corollary — avoid dual code paths:** Do not split into a "no-filter" path using `User.findAll()` and a "filtered" path using explicit-alias HQL. A `Sort.by("u.email")` passed to `findAll()` will also fail because `findAll()` uses no alias. Always use the explicit-alias form for both branches.

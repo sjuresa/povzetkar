@@ -11,6 +11,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
@@ -96,5 +98,28 @@ class UserContextServiceTest {
         User persisted = User.findById(result.id);
         assertThat(persisted).isNotNull();
         assertThat(persisted.identities).hasSize(1);
+    }
+
+    @Test
+    @Transactional
+    void ensureUser_SetsLastLoginAt_OnEverySignIn() {
+        Instant before = Instant.now();
+
+        User result = userContextService.ensureUser("google", "ext-login", "login@example.com", "Login User");
+
+        assertThat(result.lastLoginAt).isNotNull();
+        assertThat(result.lastLoginAt).isAfterOrEqualTo(before);
+    }
+
+    @Test
+    @Transactional
+    void ensureUser_UpdatesLastLoginAt_OnSubsequentSignIn() {
+        User first = userContextService.ensureUser("google", "ext-repeat", "repeat@example.com", "Repeat User");
+        Instant firstLogin = first.lastLoginAt;
+
+        User second = userContextService.ensureUser("google", "ext-repeat", "repeat@example.com", "Repeat User");
+
+        assertThat(second.lastLoginAt).isNotNull();
+        assertThat(second.lastLoginAt).isAfterOrEqualTo(firstLogin);
     }
 }

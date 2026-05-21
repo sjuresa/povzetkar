@@ -1,6 +1,9 @@
 package com.povzetkar.quarkus.api.dto;
 
+import com.povzetkar.quarkus.model.AccountStatus;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +14,9 @@ public record UserDTO(
     String email,
     String authProvider,
     boolean active,
+    AccountStatus accountStatus,
+    Instant lastLoginAt,
+    Instant createdAt,
     List<RoleDTO> roles,
     Set<String> permissions
 ) {}

@@ -17,6 +17,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import com.povzetkar.quarkus.model.AccountStatus;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -93,26 +94,54 @@ public class UserApiResource extends BaseApiResource {
     public PaginatedResponse<UserDTO> getUsers(
             @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("20") int pageSize) {
-        
+            @QueryParam("size") @DefaultValue("20") int pageSize,
+            @QueryParam("accountStatus") AccountStatus accountStatus,
+            @QueryParam("email") String email) {
+
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        long totalCount = User.count();
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("name").ascending(), Set.of("id", "name", "email", "active", "updatedAt"));
-        List<User> usersForPage = User.<User>findAll(panacheSort).page(pageIndex, clampedPageSize).list();
+
+        // Build dynamic WHERE predicate — bare field names for Panache count(), aliased for find()
+        StringBuilder predicate = new StringBuilder();
+        StringBuilder aliasedPredicate = new StringBuilder();
+        Map<String, Object> params = new LinkedHashMap<>();
+
+        // TODO: POV-185 — uncomment once User.accountStatus field is added by the state machine task
+        // if (accountStatus != null) {
+        //     predicate.append("accountStatus = :accountStatus");
+        //     aliasedPredicate.append("u.accountStatus = :accountStatus");
+        //     params.put("accountStatus", accountStatus);
+        // }
+        if (email != null && !email.isBlank()) {
+            if (!predicate.isEmpty()) { predicate.append(" AND "); aliasedPredicate.append(" AND "); }
+            predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))");
+            aliasedPredicate.append("LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))");
+            params.put("email", email.strip());
+        }
+
+        String whereClause = aliasedPredicate.isEmpty() ? "" : "WHERE " + aliasedPredicate;
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("u.email").ascending(),
+                Set.of("email", "accountStatus", "lastLoginAt", "createdAt"), "u");
+
+        long totalCount = predicate.isEmpty()
+                ? User.count()
+                : User.count(predicate.toString(), params);
+
+        List<User> usersForPage = User.<User>find("FROM User u " + whereClause, panacheSort, params)
+                .page(pageIndex, clampedPageSize).list();
 
         if (usersForPage.isEmpty()) {
             return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
         }
 
-        // This is the recommended pattern to work around JPA pagination limitations with joins.
+        // Recommended pattern to work around JPA pagination limitations with joins.
         List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
         List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
-        
-        // ensure we preserve the pagination ordering by mapping from the correctly ordered userIds
+
+        // Preserve pagination ordering
         Map<Long, User> userMap = usersWithRoles.stream().collect(
                 Collectors.toMap(u -> u.id, Function.identity(), (u1, u2) -> u1, LinkedHashMap::new)
         );
-        
+
         List<UserDTO> items = usersForPage.stream()
                 .map(u -> userMap.get(u.id))
                 .map(userMapper::toDTO)
