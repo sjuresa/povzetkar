@@ -41,10 +41,10 @@ export function UsersFilters({ filters, onFiltersChange }: UsersFiltersProps) {
 
   const statusOptions: { value: AccountStatus | ''; label: string }[] = [
     { value: '', label: t('admin.users.filters.statusAll') },
-    { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
-    { value: 'ENABLED', label: 'Enabled' },
-    { value: 'DISABLED', label: 'Disabled' },
-    { value: 'REJECTED', label: 'Rejected' },
+    { value: 'PENDING_APPROVAL', label: t('admin.users.status.pending_approval') },
+    { value: 'ENABLED', label: t('admin.users.status.enabled') },
+    { value: 'DISABLED', label: t('admin.users.status.disabled') },
+    { value: 'REJECTED', label: t('admin.users.status.rejected') },
   ];
 
   return (

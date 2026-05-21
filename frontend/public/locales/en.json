@@ -198,7 +198,18 @@
         "created": "Created",
         "actions": "Actions",
         "never": "Never",
-        "noResults": "No users match these filters."
+        "noResults": "No users match these filters.",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}} days ago",
+        "monthsAgo": "{{count}} mo ago",
+        "yearsAgo": "{{count}} yr ago"
+      },
+      "status": {
+        "pending_approval": "Pending Approval",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "rejected": "Rejected"
       },
       "actions": {
         "approve": "Approve",

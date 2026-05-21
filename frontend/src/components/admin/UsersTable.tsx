@@ -24,17 +24,17 @@ function formatDate(value: unknown): string {
   return new Date(value as string).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function formatRelative(value: unknown, neverLabel: string): string {
+function formatRelative(value: unknown, neverLabel: string, t: (key: string, opts?: object) => string): string {
   if (!value) return neverLabel;
   const date = new Date(value as string);
   const diff = Date.now() - date.getTime();
   const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 30) return `${days} days ago`;
+  if (days === 0) return t('admin.users.table.today');
+  if (days === 1) return t('admin.users.table.yesterday');
+  if (days < 30) return t('admin.users.table.daysAgo', { count: days });
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months} mo ago`;
-  return `${Math.floor(months / 12)} yr ago`;
+  if (months < 12) return t('admin.users.table.monthsAgo', { count: months });
+  return t('admin.users.table.yearsAgo', { count: Math.floor(months / 12) });
 }
 
 function parseSortState(sort: string): SortState {
@@ -153,7 +153,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                 </td>
                 <td className="px-4 py-4">
                   <span className="text-xs text-[var(--color-text-secondary)]">
-                    {formatRelative(user.lastLoginAt, t('admin.users.table.never'))}
+                    {formatRelative(user.lastLoginAt, t('admin.users.table.never'), t)}
                   </span>
                 </td>
                 <td className="px-4 py-4">

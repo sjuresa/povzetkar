@@ -119,8 +119,9 @@ public class UserApiResource extends BaseApiResource {
         }
 
         String whereClause = aliasedPredicate.isEmpty() ? "" : "WHERE " + aliasedPredicate;
+        // TODO: POV-185 — add "accountStatus" to allowed sort fields once User.accountStatus is added
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("u.email").ascending(),
-                Set.of("email", "accountStatus", "lastLoginAt", "createdAt"), "u");
+                Set.of("email", "lastLoginAt", "createdAt"), "u");
 
         long totalCount = predicate.isEmpty()
                 ? User.count()

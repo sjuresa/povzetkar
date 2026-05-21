@@ -198,7 +198,18 @@
         "created": "Ustvarjeno",
         "actions": "Dejanja",
         "never": "Nikoli",
-        "noResults": "Noben uporabnik ne ustreza tem filtrom."
+        "noResults": "Noben uporabnik ne ustreza tem filtrom.",
+        "today": "Danes",
+        "yesterday": "Včeraj",
+        "daysAgo": "Pred {{count}} dnevi",
+        "monthsAgo": "Pred {{count}} mes.",
+        "yearsAgo": "Pred {{count}} leti"
+      },
+      "status": {
+        "pending_approval": "Čaka na odobritev",
+        "enabled": "Omogočen",
+        "disabled": "Onemogočen",
+        "rejected": "Zavrnjen"
       },
       "actions": {
         "approve": "Odobri",
