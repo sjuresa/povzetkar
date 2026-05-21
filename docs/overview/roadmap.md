@@ -230,11 +230,11 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Administrative Command Center:**
     *   **Admin User Management UI** (POV-184): roles, account statuses, and permissions; last-admin server-side guard.
     *   **User Approval Workflow** (POV-185): explicit `PENDING_APPROVAL` state machine ([ADR-0008](../adr/0008-account-activation-state-machine.md)) with admin-driven approval. No email integration (SMTP deferred to v0.18.0+).
-    *   **Background Job Dashboard** (POV-188): cancel, restart, audit trail; replaces the placeholder `AdminJobsPage`.
+    *   **Background Job Dashboard** (POV-188): restart and audit trail for `FAILED` jobs; replaces the placeholder `AdminJobsPage`. Cancel deferred to v0.18.0.
 2.  **Resilience & Polish:**
     *   **Transcript Multi-Provider Pilot** (POV-189): `TranscriptProvider` abstraction ([ADR-0009](../adr/0009-multi-provider-transcript-strategy.md)) + Supadata pilot integration + randomized jitter delay on legacy YouTube path.
     *   **External Links Open in New Tab** (POV-186): `rehype-external-links` plugin in all ReactMarkdown call-sites.
-    *   **Session Expiry Handling** (POV-187): 401 interceptor redirects to `/login?returnTo=…`; ErrorPage reserved for true fatal errors.
+    *   **Session Expiry Handling** (POV-187): 401 interceptor redirects to landing page (`/`) with `notice=session_expired`; `returnTo` preserved in `sessionStorage`; ErrorPage reserved for true fatal errors.
 
 ## v0.18: Hardening & Operational Excellence
 

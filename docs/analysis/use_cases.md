@@ -103,7 +103,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-8: Share Individual Summary
 **Actor**: User/Administrator
 **Related Stories**: US-16.3
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
 **Preconditions**: A summary exists for a content item.
 **Main Flow**:
 1. User views a Briefing or Administrator views Content Management.
@@ -116,7 +116,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-9: Complete Onboarding Checklist
 **Actor**: New User
 **Related Stories**: US-16.4
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
 **Preconditions**: User has just registered or has no topics/briefings.
 **Main Flow**:
 1. User logs in and lands on the Dashboard.
@@ -129,7 +129,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-10: React to Job Completion Toasts
 **Actor**: User
 **Related Stories**: US-16.2, US-16.8
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
 **Preconditions**: A background job (orchestration) is running.
 **Main Flow**:
 1. System completes the background job and sends an SSE event.
@@ -156,18 +156,19 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Actor**: Administrator
 **Related Stories**: US-17.2, US-17.3
 **Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0008](../adr/0008-account-activation-state-machine.md)
-**Preconditions**: A new user has signed in via OIDC; `account.approval.required=true`; user is in `PENDING_APPROVAL` state.
+**Preconditions**: A new user has signed in via OIDC; user is in `PENDING_APPROVAL` state.
 **Main Flow**:
 1. New user signs in via Google OIDC. System creates `User` with `accountStatus = PENDING_APPROVAL`.
-2. New user is shown the `PendingApprovalPage` with sign-out option.
+2. New user sees a generic status banner with "contact administrator" hint and sign-out option.
 3. Administrator opens `/admin/users` and sees a "Pending (N)" badge on the sidebar.
 4. Administrator clicks the badge and reviews the pending list.
 5. Administrator clicks "Approve" (or "Reject") on a pending user.
-6. System transitions `PENDING_APPROVAL → ACTIVE` (or → `DISABLED`) and writes `account_status_history` row.
-7. Next time the user reloads the `PendingApprovalPage`, they get full access (or rejection page).
+6. System transitions `PENDING_APPROVAL → ACTIVE` (or → `DISABLED`); `updatedAt`/`updatedBy` audit fields record the change.
+7. Next time the user reloads, `accountStatus` on `/me` reflects the new state; banner updates accordingly.
 **Postconditions**: User account state transitioned; audit trail recorded.
 
-### UC-13: Operate on Background Jobs (Cancel/Restart/Audit)
+### UC-13: Operate on Background Jobs (Restart/Audit)
+
 **Actor**: Administrator
 **Related Stories**: US-17.4
 **Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md)
@@ -176,10 +177,9 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 1. Administrator navigates to `/admin/jobs`.
 2. System displays paginated job list with start time, type, duration, status.
 3. Administrator filters by type and/or status (e.g., `RUNNING`, `FAILED`).
-4. Administrator clicks "Cancel" on a `RUNNING` job. System sends stop-signal; job exits at next safe checkpoint.
-5. Administrator clicks "Restart" on a `FAILED`/`CANCELLED` job. System spawns a new job with the original parameters.
-6. Administrator opens the audit trail for a job; sees a chronological log of state transitions and the acting admin per change.
-**Postconditions**: Job state transitioned; new audit row written with acting admin user ID.
+4. Administrator clicks "Restart" on a `FAILED` job. System spawns a new job with the original parameters.
+5. Administrator opens the audit trail for a job; sees a chronological log of state transitions and the acting admin per change.
+**Postconditions**: New job spawned; audit row written with acting admin user ID. *(Cancel is deferred to v0.18.0 — requires stop-signal mechanism in `OrchestrationManager`.)*
 
 ### UC-14: Resilient Transcript Fetching with Provider Fallback
 **Actor**: System (orchestrator)

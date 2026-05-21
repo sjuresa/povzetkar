@@ -14,7 +14,7 @@
 | **TC-GRX-003** | **P0** | - | [v0.13] | Theme Switching | **Playwright** | Light/Dark theme persists across page reloads and browser sessions. |
 | **TC-GRX-004** | **P0** | - | [v0.12] | OIDC Handshake & Persistence | **Playwright** | Login redirect flow works and session remains active after refresh. |
 | **TC-GRX-005** | **P1** | UC-10 | [v0.16] | Toast Actionability | Manual/PW | Toast contains a clickable button and plays sound on trigger. |
-| **TC-GRX-006** | **P1** | - | [v0.17] | Session Expiry Redirect | **Playwright** | 401 response redirects user to `/login?returnTo=...` with toast; no ErrorPage shown. |
+| **TC-GRX-006** | **P1** | - | [v0.17] | Session Expiry Redirect | **Playwright** | 401 response redirects user to landing page (`/`) with `notice=session_expired` toast; `returnTo` path preserved in `sessionStorage`; no ErrorPage shown. |
 
 ## 1. Domain: Briefing & Intelligence (LIB)
 
@@ -62,7 +62,7 @@
 | **TC-SEC-001** | **P0** | - | [v0.13] | Profile Visibility | Manual/PW | `/me` data matches the currently authenticated user. |
 | **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | **Playwright** | Admin sections (Sources) are blocked for generic users. |
 | **TC-SEC-003** | **P0** | - | [v0.12] | Auth Guard Redirect | **Playwright** | Unauthenticated users visiting `/dashboard` are redirected to `/`. |
-| **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees `PendingApprovalPage`. |
+| **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees generic status banner. |
 | **TC-SEC-005** | **P0** | UC-12 | [v0.17] | Approval State Transition | Integration | Admin can transition `PENDING_APPROVAL → ACTIVE`/`DISABLED`; audit row written. Last-admin guard prevents self-demotion. |
 
 ## 6. Domain: General UX & Brand (UI)
@@ -81,7 +81,7 @@
 | **TC-ADM-001** | **P2** | - | [v0.12] | Audit Log Search & Filter | Manual | Paging and Keyword search works for tech audit logs. |
 | **TC-ADM-002** | **P2** | UC-3 | [v0.14] | Status Override (Admin Only) | Manual | Admin can force retry of FAILED items via status dropdown. |
 | **TC-ADM-003** | **P0** | UC-11 | [v0.17] | Admin User Management | **Playwright** | Admin can edit roles and disable/enable accounts; UI filter by status works. |
-| **TC-ADM-004** | **P1** | UC-13 | [v0.17] | Background Job Cancel/Restart | **Playwright** | Cancel transitions `RUNNING → CANCELLED`; Restart spawns new job; audit trail records acting admin. |
+| **TC-ADM-004** | **P1** | UC-13 | [v0.17] | Background Job Restart | **Playwright** | Restart spawns new job for `FAILED` job; audit trail records acting admin. Cancel is deferred to v0.18.0. |
 
 ## 8. Domain: Core Ingestion (ING)
 
