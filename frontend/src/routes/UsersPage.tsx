@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { keepPreviousData } from '@tanstack/react-query';
 import { useGetApiV1Users } from '../api/generated/users/users';
@@ -36,15 +36,15 @@ export function UsersPage() {
   const totalCount = data?.totalCount ?? 0;
   const totalPages = Math.ceil(totalCount / size);
 
-  const handleFiltersChange = (newFilters: UsersFiltersType) => {
+  const handleFiltersChange = useCallback((newFilters: UsersFiltersType) => {
     setFilters(newFilters);
     setPage(0);
-  };
+  }, []);
 
-  const handleSortChange = (newSort: string) => {
+  const handleSortChange = useCallback((newSort: string) => {
     setSort(newSort);
     setPage(0);
-  };
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">

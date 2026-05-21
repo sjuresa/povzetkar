@@ -23,10 +23,10 @@ function toDate(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function formatDate(value: unknown): string {
+function formatDate(value: unknown, lang: string): string {
   const d = toDate(value);
   if (!d) return '';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(lang, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function formatRelative(value: unknown, neverLabel: string, t: (key: string, opts?: object) => string): string {
@@ -69,7 +69,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const sortState = parseSortState(sort);
 
@@ -137,7 +137,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                 </td>
                 <td className="px-4 py-4">
                   <span className="text-xs text-[var(--color-text-secondary)]">
-                    {formatDate(user.createdAt)}
+                    {formatDate(user.createdAt, i18n.language)}
                   </span>
                 </td>
                 <td className="px-4 py-4">

@@ -19,6 +19,10 @@ export function UsersFilters({ filters, onFiltersChange }: UsersFiltersProps) {
   const [emailInput, setEmailInput] = useState(filters.email);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const filtersRef = useRef(filters);
+
+  useEffect(() => {
+    setEmailInput(filters.email);
+  }, [filters.email]);
   filtersRef.current = filters;
 
   useEffect(() => {
