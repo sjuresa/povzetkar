@@ -201,9 +201,12 @@
         "noResults": "No users match these filters.",
         "today": "Today",
         "yesterday": "Yesterday",
-        "daysAgo": "{{count}} days ago",
-        "monthsAgo": "{{count}} mo ago",
-        "yearsAgo": "{{count}} yr ago"
+        "daysAgo_one": "{{count}} day ago",
+        "daysAgo_other": "{{count}} days ago",
+        "monthsAgo_one": "{{count}} mo ago",
+        "monthsAgo_other": "{{count}} mo ago",
+        "yearsAgo_one": "{{count}} yr ago",
+        "yearsAgo_other": "{{count}} yr ago"
       },
       "status": {
         "pending_approval": "Pending Approval",
@@ -221,7 +224,8 @@
       "error": {
         "self_disable": "You cannot disable your own account.",
         "last_admin": "Cannot disable the last administrator in the system.",
-        "invalid_state": "This action is no longer valid. The user list has been refreshed."
+        "invalid_state": "This action is no longer valid. The user list has been refreshed.",
+        "not_implemented": "This action is not yet available."
       }
     }
   },

@@ -201,9 +201,12 @@
         "noResults": "Noben uporabnik ne ustreza tem filtrom.",
         "today": "Danes",
         "yesterday": "Včeraj",
-        "daysAgo": "Pred {{count}} dnevi",
-        "monthsAgo": "Pred {{count}} mes.",
-        "yearsAgo": "Pred {{count}} leti"
+        "daysAgo_one": "Pred {{count}} dnem",
+        "daysAgo_other": "Pred {{count}} dnevi",
+        "monthsAgo_one": "Pred {{count}} mes.",
+        "monthsAgo_other": "Pred {{count}} mes.",
+        "yearsAgo_one": "Pred {{count}} letom",
+        "yearsAgo_other": "Pred {{count}} leti"
       },
       "status": {
         "pending_approval": "Čaka na odobritev",
@@ -221,7 +224,8 @@
       "error": {
         "self_disable": "Lastnega računa ne morete onemogočiti.",
         "last_admin": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti.",
-        "invalid_state": "To dejanje ni več veljavno. Seznam uporabnikov je bil osvežen."
+        "invalid_state": "To dejanje ni več veljavno. Seznam uporabnikov je bil osvežen.",
+        "not_implemented": "Ta dejanje še ni na voljo."
       }
     }
   },

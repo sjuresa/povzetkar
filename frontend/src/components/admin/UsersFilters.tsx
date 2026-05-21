@@ -18,17 +18,18 @@ export function UsersFilters({ filters, onFiltersChange }: UsersFiltersProps) {
   const { t } = useTranslation();
   const [emailInput, setEmailInput] = useState(filters.email);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      onFiltersChange({ ...filters, email: emailInput });
+      onFiltersChange({ ...filtersRef.current, email: emailInput });
     }, DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailInput]);
+  }, [emailInput, onFiltersChange]);
 
   const handleStatusChange = (value: string) => {
     onFiltersChange({ ...filters, accountStatus: value ? (value as AccountStatus) : undefined });

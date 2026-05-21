@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
-import { getGetApiV1UsersQueryKey } from '../../api/generated/users/users';
 import type { UserDTO, AccountStatus } from '../../api/generated/model';
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -14,19 +12,26 @@ interface SortState {
 }
 
 interface UsersTableProps {
-  users: UserDTO[];
-  sort: string;
-  onSortChange: (sort: string) => void;
+  readonly users: UserDTO[];
+  readonly sort: string;
+  readonly onSortChange: (sort: string) => void;
+}
+
+function toDate(value: unknown): Date | null {
+  if (!value || typeof value !== 'string') return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function formatDate(value: unknown): string {
-  if (!value) return '';
-  return new Date(value as string).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  const d = toDate(value);
+  if (!d) return '';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function formatRelative(value: unknown, neverLabel: string, t: (key: string, opts?: object) => string): string {
-  if (!value) return neverLabel;
-  const date = new Date(value as string);
+  const date = toDate(value);
+  if (!date) return neverLabel;
   const diff = Date.now() - date.getTime();
   const days = Math.floor(diff / 86400000);
   if (days === 0) return t('admin.users.table.today');
@@ -49,7 +54,7 @@ function nextSort(current: SortState, field: SortField): string {
   return '';
 }
 
-function SortIcon({ field, current }: { field: SortField; current: SortState }) {
+function SortIcon({ field, current }: { readonly field: SortField; readonly current: SortState }) {
   if (current.field !== field) {
     return <span className="ml-1 text-[var(--color-text-secondary)]/30">↕</span>;
   }
@@ -65,39 +70,13 @@ const STATUS_BADGE: Record<string, string> = {
 
 export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const sortState = parseSortState(sort);
 
-  const invalidateUsers = () => {
-    queryClient.invalidateQueries({ queryKey: getGetApiV1UsersQueryKey() });
-  };
-
-  const handleAction = async (userId: number, action: string) => {
-    setPendingUserId(userId);
-    try {
-      // TODO: POV-185 — replace with generated mutation hooks once action endpoints are implemented
-      // POST /api/v1/users/{userId}/{action}
-      const response = await fetch(`/api/v1/users/${userId}/${action}`, { method: 'POST' });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        const code = body?.code ?? '';
-        if (code === 'CANNOT_SELF_DISABLE') {
-          toast.error(t('admin.users.error.self_disable'));
-        } else if (code === 'LAST_ADMIN_REQUIRED') {
-          toast.error(t('admin.users.error.last_admin'));
-        } else if (code === 'INVALID_STATE_TRANSITION') {
-          toast.error(t('admin.users.error.invalid_state'));
-          invalidateUsers();
-        } else {
-          toast.error(`Action failed: ${response.status}`);
-        }
-        return;
-      }
-      invalidateUsers();
-    } finally {
-      setPendingUserId(null);
-    }
+  const handleAction = () => {
+    // TODO: POV-185 — wire up generated mutation hooks once state machine endpoints are implemented
+    setPendingUserId(null);
+    toast.error(t('admin.users.error.not_implemented'));
   };
 
   const thClass = 'px-4 py-3 text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
@@ -134,7 +113,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
         <tbody className="divide-y divide-[var(--color-border-subtle)]/50">
           {users.map((user) => {
             const isPending = pendingUserId === user.id;
-            const status = user.accountStatus as AccountStatus | undefined;
+            const status: AccountStatus | undefined = user.accountStatus;
             return (
               <tr key={user.id} className="hover:bg-[var(--color-surface-hover)]/30 transition-colors group">
                 <td className="px-4 py-4">
@@ -145,7 +124,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                 <td className="px-4 py-4">
                   {status ? (
                     <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight ${STATUS_BADGE[status] ?? ''}`}>
-                      {status.replace('_', ' ')}
+                      {t(`admin.users.status.${status.toLowerCase()}`)}
                     </span>
                   ) : (
                     <span className="text-xs text-[var(--color-text-secondary)]">—</span>
@@ -167,13 +146,13 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                       <>
                         <ActionButton
                           label={t('admin.users.actions.approve')}
-                          onClick={() => handleAction(user.id!, 'approve')}
+                          onClick={() => handleAction()}
                           disabled={isPending}
                           variant="neutral"
                         />
                         <ActionButton
                           label={t('admin.users.actions.reject')}
-                          onClick={() => handleAction(user.id!, 'reject')}
+                          onClick={() => handleAction()}
                           disabled={isPending}
                           variant="destructive"
                         />
@@ -182,7 +161,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                     {status === 'ENABLED' && (
                       <ActionButton
                         label={t('admin.users.actions.disable')}
-                        onClick={() => handleAction(user.id!, 'disable')}
+                        onClick={() => handleAction()}
                         disabled={isPending}
                         variant="destructive"
                       />
@@ -190,7 +169,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                     {(status === 'DISABLED' || status === 'REJECTED') && (
                       <ActionButton
                         label={status === 'REJECTED' ? t('admin.users.actions.reapprove') : t('admin.users.actions.enable')}
-                        onClick={() => handleAction(user.id!, status === 'REJECTED' ? 'approve' : 'enable')}
+                        onClick={() => handleAction()}
                         disabled={isPending}
                         variant="neutral"
                       />
@@ -207,14 +186,14 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
 }
 
 interface ActionButtonProps {
-  label: string;
-  onClick: () => void;
-  disabled: boolean;
-  variant: 'neutral' | 'destructive';
+  readonly label: string;
+  readonly onClick: () => void;
+  readonly disabled: boolean;
+  readonly variant: 'neutral' | 'destructive';
 }
 
 function ActionButton({ label, onClick, disabled, variant }: ActionButtonProps) {
-  const base = 'px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const base = 'px-3 py-1.5 rounded-lg text-[10px] font-medium uppercase tracking-wider transition-all active:scale-95 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed';
   const styles = variant === 'destructive'
     ? `${base} bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 focus:ring-red-500/30`
     : `${base} bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-primary)]/[0.15] focus:ring-[var(--color-ring-focus)]/30`;
