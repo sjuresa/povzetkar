@@ -147,7 +147,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Main Flow**:
 1. Administrator navigates to `/admin/users`.
 2. System displays paginated user list with email, status, role, last login.
-3. Administrator filters by status (e.g., `ACTIVE`, `DISABLED`).
+3. Administrator filters by status (e.g., `ENABLED`, `DISABLED`).
 4. Administrator clicks "Edit roles" on a user, selects/deselects role bindings, and saves.
 5. Administrator disables or enables a user account via the action menu.
 **Postconditions**: User role/status changes persisted; affected user's session invalidated if disabled.
@@ -163,7 +163,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 3. Administrator opens `/admin/users` and sees a "Pending (N)" badge on the sidebar.
 4. Administrator clicks the badge and reviews the pending list.
 5. Administrator clicks "Approve" (or "Reject") on a pending user.
-6. System transitions `PENDING_APPROVAL → ACTIVE` (or → `DISABLED`); `updatedAt`/`updatedBy` audit fields record the change.
+6. System transitions `PENDING_APPROVAL → ENABLED` (or → `DISABLED`); `updatedAt`/`updatedBy` audit fields record the change.
 7. Next time the user reloads, `accountStatus` on `/me` reflects the new state; banner updates accordingly.
 **Postconditions**: User account state transitioned; audit trail recorded.
 
