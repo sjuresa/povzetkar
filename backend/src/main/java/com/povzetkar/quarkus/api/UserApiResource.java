@@ -128,8 +128,10 @@ public class UserApiResource extends BaseApiResource {
                 ? User.count()
                 : User.count(predicate.toString(), params);
 
-        List<Long> userIds = User.<Long>find("SELECT u.id FROM User u " + whereClause, panacheSort, params)
-                .page(pageIndex, clampedPageSize).project(Long.class).list();
+        List<Long> userIds = (params.isEmpty()
+                ? User.find("SELECT u.id FROM User u " + whereClause, panacheSort)
+                : User.find("SELECT u.id FROM User u " + whereClause, panacheSort, params))
+                .project(Long.class).page(pageIndex, clampedPageSize).list();
 
         if (userIds.isEmpty()) {
             return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);

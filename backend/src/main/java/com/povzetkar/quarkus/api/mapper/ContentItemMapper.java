@@ -14,6 +14,7 @@ import java.util.Set;
 public interface ContentItemMapper {
 
     @Mapping(target = "durationSeconds", source = "entity", qualifiedByName = "mapDurationSeconds")
+    @Mapping(target = "formattedDuration", source = "entity", qualifiedByName = "mapFormattedDuration")
     @Mapping(target = "thumbnailUrl", source = "entity", qualifiedByName = "mapThumbnailUrl")
     @Mapping(target = "contentSource", source = "entity.contentSource")
     @Mapping(target = "topicName", source = "entity", qualifiedByName = "mapTopicName")
@@ -31,6 +32,18 @@ public interface ContentItemMapper {
             return yt.duration.toSeconds();
         }
         return null;
+    }
+
+    @Named("mapFormattedDuration")
+    default String mapFormattedDuration(ContentItem entity) {
+        if (!(entity instanceof YouTubeVideo yt) || yt.duration == null) return null;
+        long total = yt.duration.toSeconds();
+        long h = total / 3600;
+        long m = (total % 3600) / 60;
+        long s = total % 60;
+        return h > 0
+                ? String.format("%d:%02d:%02d", h, m, s)
+                : String.format("%d:%02d", m, s);
     }
 
     @Named("mapThumbnailUrl")

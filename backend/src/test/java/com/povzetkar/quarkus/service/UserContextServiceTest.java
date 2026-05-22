@@ -61,7 +61,7 @@ class UserContextServiceTest {
         user.addIdentity(identity);
         identity.persist();
 
-        User result = userContextService.ensureUser("google", "ext123", "test@example.com", "Test User");
+        User result = userContextService.ensureUser("google", "ext123", "test@example.com", "Test User", Instant.now());
 
         assertThat(result.id).isEqualTo(user.id);
     }
@@ -76,7 +76,7 @@ class UserContextServiceTest {
             .build();
         user.persist();
 
-        User result = userContextService.ensureUser("google", "ext123", "test@example.com", "Updated Name");
+        User result = userContextService.ensureUser("google", "ext123", "test@example.com", "Updated Name", Instant.now());
 
         assertThat(result.id).isEqualTo(user.id);
         assertThat(result.identities).hasSize(1);
@@ -88,7 +88,7 @@ class UserContextServiceTest {
     @Test
     @Transactional
     void ensureUser_NewUser_CreatesUserAndIdentity() {
-        User result = userContextService.ensureUser("google", "ext123", "new@example.com", "New User");
+        User result = userContextService.ensureUser("google", "ext123", "new@example.com", "New User", Instant.now());
 
         assertThat(result.id).isNotNull();
         assertThat(result.email).isEqualTo("new@example.com");
@@ -105,7 +105,7 @@ class UserContextServiceTest {
     void ensureUser_SetsLastLoginAt_OnEverySignIn() {
         Instant before = Instant.now();
 
-        User result = userContextService.ensureUser("google", "ext-login", "login@example.com", "Login User");
+        User result = userContextService.ensureUser("google", "ext-login", "login@example.com", "Login User", before);
 
         assertThat(result.lastLoginAt).isNotNull();
         assertThat(result.lastLoginAt).isAfterOrEqualTo(before);
@@ -114,10 +114,12 @@ class UserContextServiceTest {
     @Test
     @Transactional
     void ensureUser_UpdatesLastLoginAt_OnSubsequentSignIn() {
-        User first = userContextService.ensureUser("google", "ext-repeat", "repeat@example.com", "Repeat User");
+        Instant firstTokenIat = Instant.now().minusSeconds(60);
+        User first = userContextService.ensureUser("google", "ext-repeat", "repeat@example.com", "Repeat User", firstTokenIat);
         Instant firstLogin = first.lastLoginAt;
 
-        User second = userContextService.ensureUser("google", "ext-repeat", "repeat@example.com", "Repeat User");
+        Instant secondTokenIat = firstTokenIat.plusSeconds(120);
+        User second = userContextService.ensureUser("google", "ext-repeat", "repeat@example.com", "Repeat User", secondTokenIat);
 
         assertThat(second.lastLoginAt).isNotNull();
         assertThat(second.lastLoginAt).isAfterOrEqualTo(firstLogin);
