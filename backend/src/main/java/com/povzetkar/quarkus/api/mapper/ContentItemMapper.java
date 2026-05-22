@@ -37,10 +37,9 @@ public interface ContentItemMapper {
     @Named("mapFormattedDuration")
     default String mapFormattedDuration(ContentItem entity) {
         if (!(entity instanceof YouTubeVideo yt) || yt.duration == null) return null;
-        long total = yt.duration.toSeconds();
-        long h = total / 3600;
-        long m = (total % 3600) / 60;
-        long s = total % 60;
+        long h = yt.duration.toHours();
+        int m = yt.duration.toMinutesPart();
+        int s = yt.duration.toSecondsPart();
         return h > 0
                 ? String.format("%d:%02d:%02d", h, m, s)
                 : String.format("%d:%02d", m, s);
