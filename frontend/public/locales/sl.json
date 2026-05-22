@@ -5,6 +5,7 @@
     "topics": "Teme",
     "sources": "Viri",
     "administration": "Administracija",
+    "users": "Upravljanje uporabnikov",
     "auditLogs": "Revizijski sledi",
     "contentManagement": "Upravljanje vsebin",
     "systemJobs": "Sistemska opravila",
@@ -178,6 +179,59 @@
         "preview_only_tip": "Samo pridobi elemente, ne generiraj povzetkov",
         "submit_button": "Zaženi orkestracijo",
         "triggering": "Sprožanje..."
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Upravljanje uporabnikov",
+      "subtitle": "Upravljajte uporabniške račune, nadzorujte dostop in spremljajte aktivnost prijav.",
+      "filters": {
+        "status": "Filtriraj po statusu",
+        "statusAll": "Vsi statusi",
+        "email": "Iskanje po e-pošti..."
+      },
+      "table": {
+        "email": "E-pošta",
+        "status": "Status",
+        "lastLogin": "Zadnja prijava",
+        "created": "Ustvarjeno",
+        "actions": "Dejanja",
+        "never": "Nikoli",
+        "noResults": "Noben uporabnik ne ustreza tem filtrom.",
+        "today": "Danes",
+        "yesterday": "Včeraj",
+        "daysAgo_one": "Pred {{count}} dnem",
+        "daysAgo_two": "Pred {{count}} dnevoma",
+        "daysAgo_few": "Pred {{count}} dnevi",
+        "daysAgo_other": "Pred {{count}} dnevi",
+        "monthsAgo_one": "Pred {{count}} mesecem",
+        "monthsAgo_two": "Pred {{count}} mesecema",
+        "monthsAgo_few": "Pred {{count}} meseci",
+        "monthsAgo_other": "Pred {{count}} meseci",
+        "yearsAgo_one": "Pred {{count}} letom",
+        "yearsAgo_two": "Pred {{count}} letoma",
+        "yearsAgo_few": "Pred {{count}} leti",
+        "yearsAgo_other": "Pred {{count}} leti"
+      },
+      "status": {
+        "pending_approval": "Čaka na odobritev",
+        "enabled": "Omogočen",
+        "disabled": "Onemogočen",
+        "rejected": "Zavrnjen"
+      },
+      "actions": {
+        "approve": "Odobri",
+        "reject": "Zavrni",
+        "disable": "Onemogoči",
+        "enable": "Omogoči",
+        "reapprove": "Ponovno odobri"
+      },
+      "error": {
+        "self_disable": "Lastnega računa ne morete onemogočiti.",
+        "last_admin": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti.",
+        "invalid_state": "To dejanje ni več veljavno. Seznam uporabnikov je bil osvežen.",
+        "not_implemented": "Ta dejanje še ni na voljo."
       }
     }
   },

@@ -10,6 +10,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import java.time.Instant;
 
 @ApplicationScoped
 public class OidcSecurityIdentityAugmentor implements SecurityIdentityAugmentor {
@@ -34,7 +35,8 @@ public class OidcSecurityIdentityAugmentor implements SecurityIdentityAugmentor 
             String provider = "google"; // Default provider
 
             // Ensure user exists and is linked
-            User user = userContextService.ensureUser(provider, externalId, email, name);
+            Instant tokenIssuedAt = Instant.ofEpochSecond(jwt.getIssuedAtTime());
+            User user = userContextService.ensureUser(provider, externalId, email, name, tokenIssuedAt);
 
             // Create a new identity augmented with database roles
             QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);

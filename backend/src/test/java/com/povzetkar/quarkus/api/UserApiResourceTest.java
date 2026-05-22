@@ -351,4 +351,70 @@ class UserApiResourceTest {
         em.persist(secondaryAdmin);
         em.flush();
     }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_VIEW"})
+    void testGetUsers_EmailFilter_ReturnsMatchingUsers() {
+        given()
+                .queryParam("email", "admin")
+                .when().get("/api/v1/users")
+                .then()
+                .statusCode(200)
+                .body("data.email", hasItem("admin@example.com"))
+                .body("data.email", not(hasItem("user@example.com")));
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_VIEW"})
+    void testGetUsers_EmailFilter_CaseInsensitive() {
+        given()
+                .queryParam("email", "ADMIN")
+                .when().get("/api/v1/users")
+                .then()
+                .statusCode(200)
+                .body("data.email", hasItem("admin@example.com"));
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_VIEW"})
+    void testGetUsers_EmailFilter_NoMatch_ReturnsEmpty() {
+        given()
+                .queryParam("email", "nonexistent@nowhere.com")
+                .when().get("/api/v1/users")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(0))
+                .body("data", hasSize(0));
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_VIEW"})
+    void testGetUsers_SortByEmail_Ascending() {
+        given()
+                .queryParam("sort", "email,asc")
+                .when().get("/api/v1/users")
+                .then()
+                .statusCode(200)
+                .body("data[0].email", equalTo("admin@example.com"));
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_VIEW"})
+    void testGetUsers_InvalidSortField_Returns400() {
+        given()
+                .queryParam("sort", "username,asc")
+                .when().get("/api/v1/users")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_VIEW"})
+    void testGetUsers_ResponseIncludesLastLoginAt() {
+        given()
+                .when().get("/api/v1/users")
+                .then()
+                .statusCode(200)
+                .body("data[0]", hasKey("lastLoginAt"));
+    }
 }

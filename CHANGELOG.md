@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] (v0.17.0)
 
+### Added (POV-184)
+
+- **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.
+- **`User.lastLoginAt` tracking**: nullable timestamp updated on every OIDC sign-in via `UserContextService.ensureUser()`, including PENDING users; Flyway migration V28.
+- **`AccountStatus` enum stub**: `PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED` — prepared for POV-185 state machine wiring.
+- **`GET /api/v1/users` filter + sort extensions**: `accountStatus` (enum, single-value) and `email` (case-insensitive substring) query params; sort by `email`, `accountStatus`, `lastLoginAt`, `createdAt`.
+- **`UserDTO` expansion**: `accountStatus` and `lastLoginAt` fields exposed; `createdAt` added for UI display.
+- **Sidebar nav entry**: "User Management" added to `AppShell.adminNavItems`; admin layout guard extended with `USER_MGMT_VIEW`.
+- **i18n**: full `en.json` + `sl.json` coverage for all new admin user strings.
+
 ## [0.16.0] - 2026-04-13
 
 ### Summary

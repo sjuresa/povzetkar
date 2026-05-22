@@ -10,6 +10,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -90,7 +91,7 @@ public class UserContextService {
      * @return The User entity, newly created or existing.
      */
     @Transactional
-    public User ensureUser(String provider, String externalId, String email, String name) {
+    public User ensureUser(String provider, String externalId, String email, String name, Instant tokenIssuedAt) {
         User user = UserIdentity.findByProviderAndExternalId(provider, externalId)
                 .map(identity -> identity.user)
                 .orElseGet(() -> {
@@ -101,6 +102,10 @@ public class UserContextService {
                     linkIdentity(existingUser, provider, externalId, email);
                     return existingUser;
                 });
+
+        if (user.lastLoginAt == null || user.lastLoginAt.isBefore(tokenIssuedAt)) {
+            user.lastLoginAt = tokenIssuedAt;
+        }
 
         // Eagerly initialize roles to avoid LazyInitializationException outside the
         // transaction

@@ -5,8 +5,11 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
+import type { AccountStatus } from './accountStatus';
 
 export type GetApiV1UsersParams = {
+accountStatus?: AccountStatus;
+email?: string;
 page?: number;
 size?: number;
 sort?: string[];
