@@ -91,7 +91,7 @@ public class UserContextService {
      * @return The User entity, newly created or existing.
      */
     @Transactional
-    public User ensureUser(String provider, String externalId, String email, String name) {
+    public User ensureUser(String provider, String externalId, String email, String name, Instant tokenIssuedAt) {
         User user = UserIdentity.findByProviderAndExternalId(provider, externalId)
                 .map(identity -> identity.user)
                 .orElseGet(() -> {
@@ -103,7 +103,9 @@ public class UserContextService {
                     return existingUser;
                 });
 
-        user.lastLoginAt = Instant.now();
+        if (user.lastLoginAt == null || user.lastLoginAt.isBefore(tokenIssuedAt)) {
+            user.lastLoginAt = tokenIssuedAt;
+        }
 
         // Eagerly initialize roles to avoid LazyInitializationException outside the
         // transaction
