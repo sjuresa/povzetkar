@@ -127,24 +127,23 @@ public class UserApiResource extends BaseApiResource {
                 ? User.count()
                 : User.count(predicate.toString(), params);
 
-        List<User> usersForPage = User.<User>find("FROM User u " + whereClause, panacheSort, params)
-                .page(pageIndex, clampedPageSize).list();
+        List<Long> userIds = User.<Long>find("SELECT u.id FROM User u " + whereClause, panacheSort, params)
+                .page(pageIndex, clampedPageSize).project(Long.class).list();
 
-        if (usersForPage.isEmpty()) {
+        if (userIds.isEmpty()) {
             return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
         }
 
         // Recommended pattern to work around JPA pagination limitations with joins.
-        List<Long> userIds = usersForPage.stream().map(u -> u.id).toList();
-        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN ?1", userIds);
+        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles LEFT JOIN FETCH u.identities WHERE u.id IN ?1", userIds);
 
         // Preserve pagination ordering
         Map<Long, User> userMap = usersWithRoles.stream().collect(
-                Collectors.toMap(u -> u.id, Function.identity(), (u1, u2) -> u1, LinkedHashMap::new)
+                Collectors.toMap(u -> u.id, Function.identity(), (existing, duplicate) -> existing, LinkedHashMap::new)
         );
 
-        List<UserDTO> items = usersForPage.stream()
-                .map(u -> userMap.get(u.id))
+        List<UserDTO> items = userIds.stream()
+                .map(userMap::get)
                 .map(userMapper::toDTO)
                 .toList();
 

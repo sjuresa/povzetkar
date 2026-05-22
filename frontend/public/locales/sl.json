@@ -202,10 +202,16 @@
         "today": "Danes",
         "yesterday": "Včeraj",
         "daysAgo_one": "Pred {{count}} dnem",
+        "daysAgo_two": "Pred {{count}} dnevoma",
+        "daysAgo_few": "Pred {{count}} dnevi",
         "daysAgo_other": "Pred {{count}} dnevi",
-        "monthsAgo_one": "Pred {{count}} mes.",
-        "monthsAgo_other": "Pred {{count}} mes.",
+        "monthsAgo_one": "Pred {{count}} mesecem",
+        "monthsAgo_two": "Pred {{count}} mesecema",
+        "monthsAgo_few": "Pred {{count}} meseci",
+        "monthsAgo_other": "Pred {{count}} meseci",
         "yearsAgo_one": "Pred {{count}} letom",
+        "yearsAgo_two": "Pred {{count}} letoma",
+        "yearsAgo_few": "Pred {{count}} leti",
         "yearsAgo_other": "Pred {{count}} leti"
       },
       "status": {
