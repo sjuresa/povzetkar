@@ -79,8 +79,8 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
     toast.error(t('admin.users.error.not_implemented'));
   };
 
-  const thClass = 'px-4 py-3 text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
-  const thStaticClass = 'px-4 py-3 text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest text-right';
+  const thClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
+  const thStaticClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest text-right';
 
   if (users.length === 0) {
     return (
@@ -193,7 +193,7 @@ interface ActionButtonProps {
 }
 
 function ActionButton({ label, onClick, disabled, variant }: ActionButtonProps) {
-  const base = 'px-3 py-1.5 rounded-lg text-[10px] font-medium uppercase tracking-wider transition-all active:scale-95 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const base = 'px-3 py-1.5 rounded-lg text-[10px] text-interactive uppercase tracking-wider transition-all active:scale-95 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed';
   const styles = variant === 'destructive'
     ? `${base} bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 focus:ring-red-500/30`
     : `${base} bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-primary)]/[0.15] focus:ring-[var(--color-ring-focus)]/30`;

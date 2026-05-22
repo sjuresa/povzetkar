@@ -114,8 +114,8 @@ public class UserApiResource extends BaseApiResource {
         // }
         if (email != null && !email.isBlank()) {
             if (!predicate.isEmpty()) { predicate.append(" AND "); aliasedPredicate.append(" AND "); }
-            predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))");
-            aliasedPredicate.append("LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))");
+            predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%')) ESCAPE '\\'");
+            aliasedPredicate.append("LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%')) ESCAPE '\\'");
             params.put("email", email.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_"));
         }
 
