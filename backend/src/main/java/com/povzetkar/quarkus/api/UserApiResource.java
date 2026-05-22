@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -115,7 +116,7 @@ public class UserApiResource extends BaseApiResource {
             if (!predicate.isEmpty()) { predicate.append(" AND "); aliasedPredicate.append(" AND "); }
             predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))");
             aliasedPredicate.append("LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))");
-            params.put("email", email.strip());
+            params.put("email", email.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_"));
         }
 
         String whereClause = aliasedPredicate.isEmpty() ? "" : "WHERE " + aliasedPredicate;
@@ -135,7 +136,7 @@ public class UserApiResource extends BaseApiResource {
         }
 
         // Recommended pattern to work around JPA pagination limitations with joins.
-        List<User> usersWithRoles = User.list("FROM User u LEFT JOIN FETCH u.roles LEFT JOIN FETCH u.identities WHERE u.id IN ?1", userIds);
+        List<User> usersWithRoles = User.list("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles LEFT JOIN FETCH u.identities WHERE u.id IN ?1", userIds);
 
         // Preserve pagination ordering
         Map<Long, User> userMap = usersWithRoles.stream().collect(
@@ -144,6 +145,7 @@ public class UserApiResource extends BaseApiResource {
 
         List<UserDTO> items = userIds.stream()
                 .map(userMap::get)
+                .filter(Objects::nonNull)
                 .map(userMapper::toDTO)
                 .toList();
 
