@@ -128,6 +128,8 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
 
   const isActionPending = approve.isPending || reject.isPending || disable.isPending || enable.isPending;
 
+  const sortState = parseSortState(sort);
+
   const thClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
   const thStaticClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest text-right';
 
@@ -144,17 +146,17 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
       <table className="w-full text-left border-collapse">
         <thead className="bg-[var(--color-surface-deep)]/80 border-b border-[var(--color-border-subtle)]">
           <tr>
-            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'email'))}>
-              {t('admin.users.table.email')}<SortIcon field="email" current={parseSortState(sort)} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'email'))}>
+              {t('admin.users.table.email')}<SortIcon field="email" current={sortState} />
             </th>
-            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'accountStatus'))}>
-              {t('admin.users.table.status')}<SortIcon field="accountStatus" current={parseSortState(sort)} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'accountStatus'))}>
+              {t('admin.users.table.status')}<SortIcon field="accountStatus" current={sortState} />
             </th>
-            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'lastLoginAt'))}>
-              {t('admin.users.table.lastLogin')}<SortIcon field="lastLoginAt" current={parseSortState(sort)} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'lastLoginAt'))}>
+              {t('admin.users.table.lastLogin')}<SortIcon field="lastLoginAt" current={sortState} />
             </th>
-            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'createdAt'))}>
-              {t('admin.users.table.created')}<SortIcon field="createdAt" current={parseSortState(sort)} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'createdAt'))}>
+              {t('admin.users.table.created')}<SortIcon field="createdAt" current={sortState} />
             </th>
             <th className={thStaticClass}>{t('admin.users.table.actions')}</th>
           </tr>
