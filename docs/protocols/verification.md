@@ -25,8 +25,12 @@ If any phase fails, I will report the failure and the diagnostic information to 
 This verification occurs only after **all** code modification steps in the approved plan have been successfully completed and have passed the Immediate File-Level Verification.
 
 *   **Behavioral Verification Steps:**
-    *   I must run the relevant unit tests.
-    *   **Goal:** Confirm that the changes have not introduced any regressions or broken existing functionality. I am **forbidden** from declaring a task complete until I receive your explicit confirmation that the tests have passed.
+    *   I must run the **full test suite** for every layer touched by the task — not just tests related to the changed code. Running only targeted tests is forbidden.
+        *   Frontend changes: `npx vitest run` (entire suite).
+        *   Backend changes: `mvn verify` (entire suite including integration tests).
+        *   Both layers touched: run both.
+    *   If any test fails I must determine whether it is pre-existing. If changes are uncommitted, verify by running the suite on the base branch via `git stash -u` then restore via `git stash pop`. If changes are already committed (e.g. during the PR review loop), check out the base branch to run the suite then return to the task branch. Pre-existing failures must be fixed or explicitly escalated to the user; task-introduced failures must always be fixed before proceeding.
+    *   **Goal:** Confirm that the changes have not introduced any regressions or broken existing functionality. I am **forbidden** from proposing a commit message until the full suite passes.
 
 ## The Adherence Vow
 

@@ -49,7 +49,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
 
 **Step 9: Update `CHANGELOG.md`, Update Retrospective, Extract Knowledge, Propose Commit Message and Await Final Confirmation**
-*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification** (The Test Mandate), my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.
+*   After all planned code modifications have been completed and have passed the **Final Behavioral Verification (The Test Mandate)** defined in `docs/protocols/verification.md` — which requires running the full test suite, not just task-related tests — my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.
 *   **Update Retrospective:** I will then update the current version's retrospective file (e.g., `docs/retrospectives/vX.Y-retrospective.md`). I will append any relevant observations, friction points, or learnings from this task to the "What Went Well", "What Didn't Go Well", or "What Have We Learned" sections. I will **not** create a new file.
 *   **Extract Knowledge:** I will explicitly identify any systemic bug fixes, architectural choices, testing constraints, or technical hurdles overcome during this task. If any exist, I MUST append them to `docs/process/lessons-learned.md` to ensure they are available for future tasks.
 *   **Capture Improvements:** I will verify if any non-critical improvements or refactoring opportunities were identified during execution and ensure they are logged in `docs/backlog/improvements.md`.
@@ -58,3 +58,10 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   Before proposing the commit message, I will verify that the task meets all criteria defined in the "Definition of Done" section of the current `*-planning-process.md` document.
 *   After proposing the commit message, my final output for the task **must** be the following question: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"**
 *   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
+
+**Step 10: PR Review Loop (mandatory when a PR exists)**
+*   After the commit is pushed and a PR is open, I MUST fetch all unresolved review threads via `gh pr view --json reviewThreads` (the REST comments endpoint has no `isResolved` field; `reviewThreads` does). Discover the PR number first via `gh pr view --json number -q .number` if not already known.
+*   For each unresolved thread I will assess relevance: fix it if it identifies a genuine defect or improvement within task scope; explicitly explain and skip it if it is stale (already addressed in a previous commit) or out of scope. In all cases I MUST post a reply to the thread on GitHub (`gh api repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies -f body="..."`) to signal my action — without a reply the thread remains visibly unresolved and will reappear in subsequent fetches.
+*   After applying fixes I MUST re-run the full test suite (The Test Mandate in `docs/protocols/verification.md`) before proposing a follow-up commit.
+*   I repeat this loop — fetch → assess → fix/reply → test → commit — until no unresolved threads remain.
+*   Only then is the task eligible to be declared fully complete.
