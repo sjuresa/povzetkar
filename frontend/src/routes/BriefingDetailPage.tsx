@@ -16,12 +16,11 @@ import {
   Clock,
   Timer,
 } from 'lucide-react';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, BriefingItemDTO } from '../api/generated/model';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { YoutubeIcon } from '../components/ui/YoutubeIcon';
+import { REHYPE_PLUGINS } from '../utils/markdown';
 
 /**
  * BriefingDetailPage renders the full content of a single briefing.
@@ -152,7 +151,7 @@ export function BriefingDetailPage() {
         return (
           <div className="glass border-l-8 border-[var(--color-action-primary)]/50 rounded-xl md:rounded-[28px] p-12 md:p-20 bg-[var(--color-action-primary)]/[0.04] shadow-2xl shadow-[var(--color-action-primary)]/10 transition-all animate-in slide-in-from-left-4 duration-1000">
             <div className={`prose prose-zinc prose-2xl max-w-none text-[var(--color-text-primary)] leading-[1.6] italic font-serif font-medium opacity-100 selection:bg-[var(--color-action-primary)]/30 ${hasAlphaStart ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-[var(--color-action-primary)]' : ''}`}>
-              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+              <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                 {cleanedMeta}
               </ReactMarkdown>
             </div>
@@ -316,7 +315,7 @@ export function BriefingDetailPage() {
                 </div>
 
                 <article className="prose prose-zinc max-w-none prose-headings:text-bold prose-headings:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-p:text-[var(--color-text-secondary)]">
-                   <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                   <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                      {item.summaryText || ''}
                    </ReactMarkdown>
                 </article>

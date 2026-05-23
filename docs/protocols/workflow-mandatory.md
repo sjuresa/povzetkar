@@ -23,6 +23,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   **Design Justification**: Explain how the changes align with SOLID principles, Clean Code standards, and the project's existing architecture.
 *   **Verification Strategy**: For every major step, I must state how it will be verified (e.g., "Manual check of blob download," "Integration test for service layer").
 *   **Breaking Changes Analysis**: List any potential side effects or state 'No breaking changes identified'.
+*   **Interview Archive (Design Decisions)**: A table capturing every question asked during the planning interview, the decision reached, and the reasoning behind it. Format: `| # | Question | Decision | Reasoning |`. This section is mandatory whenever a planning interview was conducted prior to the plan.
 
 **Step 4: Await Explicit Approval**
 *   I will stop and wait for your explicit "Yes," "Proceed," or "Approved" before taking ANY further action, including archiving the plan.

@@ -37,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`AccountStatusBanner` status map typed**: `statusKeyMap` uses `Partial<Record<AccountStatus, string>>` for compile-time exhaustiveness.
 - **`UsersTable` sort state memoised**: `parseSortState(sort)` computed once per render into `sortState`; frontend error code extraction typed via generated `ApiErrorDTO`.
 
+### Added (POV-186)
+
+- **External links open in new tab**: All five in-scope `ReactMarkdown` call-sites in `BriefingDetailPage`, `PublicBriefingView`, and `PublicSummaryView` now use `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]` — external links render with `target="_blank"` and `rel="noopener noreferrer"`.
+- **`rehype-external-links ^3.0.0`** added to frontend `dependencies`.
+
 ### Added (POV-184)
 
 - **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.

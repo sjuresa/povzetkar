@@ -12,9 +12,8 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { useThemeStore } from '../store/themeStore';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import type { PublicSummary } from '../api/generated/model';
+import { REHYPE_PLUGINS } from '../utils/markdown';
 
 interface PublicSummaryViewProps {
   summary: PublicSummary;
@@ -108,7 +107,7 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
             {/* Main Summary Content */}
             <div className="p-8 md:p-12 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.03] border-l-8 border-[var(--color-action-primary)]/50 shadow-2xl shadow-[var(--color-action-primary)]/5 mb-16">
                 <article className="prose prose-zinc max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed selection:bg-[var(--color-action-primary)]/30">
-                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                    <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                         {summary.summaryText || ''}
                     </ReactMarkdown>
                 </article>
