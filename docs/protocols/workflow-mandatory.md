@@ -60,8 +60,8 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 *   At this point, I will enter a passive **waiting state**. I will not take any further action on the completed task unless you explicitly instruct me to do so. If you provide a new task or confirm completion, I will clear my context and begin anew.
 
 **Step 10: PR Review Loop (mandatory when a PR exists)**
-*   After the commit is pushed and a PR is open, I MUST fetch all unresolved inline review comments via `gh api repos/{owner}/{repo}/pulls/{pull_number}/comments` (discovering the PR number via `gh pr view --json number -q .number` if necessary).
-*   For each unresolved comment I will assess relevance: fix it if it identifies a genuine defect or improvement within task scope; explicitly explain and skip it if it is stale (already addressed in a previous commit) or out of scope.
-*   After applying fixes I MUST re-run the full test suite (Step 9 Full Test Suite Mandate) before proposing a follow-up commit.
-*   I repeat this loop — fetch → assess → fix → test → commit — until no new unresolved comments remain.
+*   After the commit is pushed and a PR is open, I MUST fetch all unresolved review threads via `gh pr view --json reviewThreads` (the REST comments endpoint has no `isResolved` field; `reviewThreads` does). Discover the PR number first via `gh pr view --json number -q .number` if not already known.
+*   For each unresolved thread I will assess relevance: fix it if it identifies a genuine defect or improvement within task scope; explicitly explain and skip it if it is stale (already addressed in a previous commit) or out of scope. In all cases I MUST post a reply to the thread on GitHub (`gh api repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies -f body="..."`) to signal my action — without a reply the thread remains visibly unresolved and will reappear in subsequent fetches.
+*   After applying fixes I MUST re-run the full test suite (The Test Mandate in `docs/protocols/verification.md`) before proposing a follow-up commit.
+*   I repeat this loop — fetch → assess → fix/reply → test → commit — until no unresolved threads remain.
 *   Only then is the task eligible to be declared fully complete.

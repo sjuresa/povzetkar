@@ -29,7 +29,7 @@ This verification occurs only after **all** code modification steps in the appro
         *   Frontend changes: `npx vitest run` (entire suite).
         *   Backend changes: `mvn verify` (entire suite including integration tests).
         *   Both layers touched: run both.
-    *   If any test fails I must determine whether it is pre-existing (verify by running the suite on the base branch via `git stash -u`, then restore changes via `git stash pop`) or task-introduced. Pre-existing failures must be fixed or explicitly escalated to the user; task-introduced failures must always be fixed before proceeding.
+    *   If any test fails I must determine whether it is pre-existing. If changes are uncommitted, verify by running the suite on the base branch via `git stash -u` then restore via `git stash pop`. If changes are already committed (e.g. during the PR review loop), check out the base branch to run the suite then return to the task branch. Pre-existing failures must be fixed or explicitly escalated to the user; task-introduced failures must always be fixed before proceeding.
     *   **Goal:** Confirm that the changes have not introduced any regressions or broken existing functionality. I am **forbidden** from proposing a commit message until the full suite passes.
 
 ## The Adherence Vow
