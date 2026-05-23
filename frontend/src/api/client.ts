@@ -3,7 +3,6 @@ import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'a
 
 import logger from '../util/logger';
 import { useAuthStore } from '../store/authStore';
-import { router } from '../router';
 import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
 
 function generateUuid(): string {
@@ -153,10 +152,12 @@ client.interceptors.response.use(
     if (response) {
       switch (response.status) {
         case 401: {
+          const authState = useAuthStore.getState();
+          if (!authState.isAuthenticated) break;
           logger.error('[API] Session expired - redirecting to login', { status: response.status });
-          useAuthStore.getState().clearAuth();
-          const { pathname, searchStr } = router.state.location;
-          globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + searchStr);
+          authState.clearAuth();
+          const { pathname, search } = globalThis.location;
+          globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search);
           return new Promise(() => {}); // Never resolves — navigation takes over
         }
         case 403:

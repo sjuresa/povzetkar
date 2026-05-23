@@ -93,6 +93,36 @@ test.describe('Auth & Authorization', () => {
   });
 
   /**
+   * TC-SEC-004 / PW-008: Landing Page 401 Regression
+   * Verifies that an unauthenticated user whose /me call returns 401 stays on the
+   * landing page and is NOT redirected to /auth/login. The interceptor must only
+   * auto-redirect when the user was previously authenticated (session expiry case).
+   */
+  test('unauthenticated /me 401 does not trigger auto-login redirect (SEC-004)', async ({ page }) => {
+    // 1. Mock /me as 401 — unauthenticated user hitting the app for the first time
+    await page.route('**/api/v1/users/me', route => route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' }, meta: { timestamp: new Date().toISOString() } })
+    }));
+
+    // 2. Mock system metadata (public endpoint used by LandingPage)
+    await page.route('**/api/v1/system/metadata', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: {}, error: null, meta: { timestamp: new Date().toISOString() } })
+    }));
+
+    // 3. Navigate to root
+    await page.goto('/');
+
+    // 4. Assert: user stays on landing page, no redirect to /auth/login
+    await page.waitForTimeout(1000);
+    expect(page.url()).not.toContain('/auth/login');
+    expect(page.url()).toMatch(/localhost:\d+\/?$/);
+  });
+
+  /**
    * TC-SEC-002 / PW-006: Role Protection
    * Verifies that admin sections are blocked for users without admin permissions.
    * The adminLayoutRoute.beforeLoad guard in router.tsx checks for ADMIN_AUDIT_LOG_VIEW
