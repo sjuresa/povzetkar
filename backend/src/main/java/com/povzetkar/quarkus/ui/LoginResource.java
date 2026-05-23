@@ -106,13 +106,10 @@ public class LoginResource {
             // It's safe to normalize the original path now, as the main vector is checked.
             URI normalizedUri = new URI(dynamicRedirect).normalize();
             String path = normalizedUri.getRawPath();
-            if (path != null && !path.startsWith("/..")) {
-                String query = normalizedUri.getRawQuery();
-                String fragment = normalizedUri.getRawFragment();
-                StringBuilder sb = new StringBuilder(path);
-                if (query != null) sb.append("?").append(query);
-                if (fragment != null) sb.append("#").append(fragment);
-                return sb.toString();
+            // getAuthority() == null guards against any URI that resolved an authority component
+            // (e.g. a double-slash that slipped past the decoded check above).
+            if (path != null && !path.startsWith("/..") && normalizedUri.getAuthority() == null) {
+                return normalizedUri.toString();
             }
         } catch (IllegalArgumentException | URISyntaxException e) {
             logger.warn("Ignoring malformed redirect parameter: {}", dynamicRedirect, e);
