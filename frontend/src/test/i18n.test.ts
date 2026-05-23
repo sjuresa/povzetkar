@@ -16,22 +16,29 @@ describe('i18n JSON structure', () => {
   const enKeys = getKeys(en as Record<string, unknown>);
   const slKeys = getKeys(sl as Record<string, unknown>);
 
+  // Strip CLDR plural suffixes so each locale can define only the forms
+  // its language requires without failing the parity check.
+  const pluralSuffix = /_(zero|one|two|few|many|other)$/;
+  const normalise = (keys: string[]) =>
+    [...new Set(keys.map(k => k.replace(pluralSuffix, '')))].sort((a, b) => a.localeCompare(b));
+
   it('EN and SL should have the same set of keys', () => {
-    // Check if sl has all en keys
-    enKeys.forEach(key => {
-      if (!slKeys.includes(key)) {
-          console.error(`Missing key in SL: ${key}`);
+    const enNorm = normalise(enKeys);
+    const slNorm = normalise(slKeys);
+
+    enNorm.forEach(key => {
+      if (!slNorm.includes(key)) {
+        console.error(`Missing key in SL: ${key}`);
       }
     });
 
-    // Check if en has all sl keys
-    slKeys.forEach(key => {
-        if (!enKeys.includes(key)) {
-            console.error(`Missing key in EN: ${key}`);
-        }
+    slNorm.forEach(key => {
+      if (!enNorm.includes(key)) {
+        console.error(`Missing key in EN: ${key}`);
+      }
     });
 
-    expect(slKeys.sort()).toEqual(enKeys.sort());
+    expect(slNorm).toEqual(enNorm);
   });
 
   it('all keys should return strings, not objects', () => {

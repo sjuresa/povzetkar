@@ -202,16 +202,10 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "daysAgo_one": "{{count}} day ago",
-        "daysAgo_two": "{{count}} days ago",
-        "daysAgo_few": "{{count}} days ago",
         "daysAgo_other": "{{count}} days ago",
         "monthsAgo_one": "{{count}} mo ago",
-        "monthsAgo_two": "{{count}} mo ago",
-        "monthsAgo_few": "{{count}} mo ago",
         "monthsAgo_other": "{{count}} mo ago",
         "yearsAgo_one": "{{count}} yr ago",
-        "yearsAgo_two": "{{count}} yr ago",
-        "yearsAgo_few": "{{count}} yr ago",
         "yearsAgo_other": "{{count}} yr ago"
       },
       "status": {
