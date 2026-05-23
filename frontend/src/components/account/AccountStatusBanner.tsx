@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { AccountStatus } from '../../api/generated/model/accountStatus';
+import type { AccountStatus } from '../../api/generated/model';
 
 interface AccountStatusBannerProps {
   readonly status: AccountStatus;
@@ -10,7 +10,7 @@ interface AccountStatusBannerProps {
 export function AccountStatusBanner({ status, onRefresh, onSignOut }: AccountStatusBannerProps) {
   const { t } = useTranslation();
 
-  const statusKeyMap: Record<string, string> = {
+  const statusKeyMap: Partial<Record<AccountStatus, string>> = {
     PENDING_APPROVAL: 'pending',
     DISABLED: 'disabled',
     REJECTED: 'rejected',

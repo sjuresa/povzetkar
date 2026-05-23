@@ -134,7 +134,7 @@ public class UserAccountService {
             throw new BadRequestException("Missing If-Match header");
         }
         try {
-            int clientVersion = Integer.parseInt(ifMatch.replace("\"", "").trim());
+            int clientVersion = Integer.parseInt(ifMatch.replaceFirst("^W/", "").replace("\"", "").trim());
             if (user.version == null || user.version != clientVersion) {
                 throw new BusinessRuleException(
                         Response.Status.CONFLICT,

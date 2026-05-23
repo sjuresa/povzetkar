@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @ApplicationScoped
 public class UserContextService {
@@ -21,7 +22,7 @@ public class UserContextService {
     public static final String PROVIDER_GOOGLE = "google";
     public static final String DEMO_USER_EMAIL = "demo@povzetkar.local";
     private final SecurityIdentity securityIdentity;
-    private volatile Long demoUserId; // -1L = looked up but not found; null = not yet looked up
+    private final AtomicLong cachedDemoUserId = new AtomicLong(0); // 0 = uninitialised; -1 = not found
 
     public UserContextService(SecurityIdentity securityIdentity) {
         this.securityIdentity = securityIdentity;
@@ -82,13 +83,19 @@ public class UserContextService {
         return getCurrentUser();
     }
 
-    private synchronized Long resolveDemoUserId() {
-        if (demoUserId == null) {
+    private Long resolveDemoUserId() {
+        long existing = cachedDemoUserId.get();
+        if (existing != 0) return existing == -1L ? null : existing;
+
+        synchronized (this) {
+            existing = cachedDemoUserId.get();
+            if (existing != 0) return existing == -1L ? null : existing;
+
             Long found = User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
                     .map(u -> u.id).orElse(null);
-            demoUserId = (found != null) ? found : -1L;
+            cachedDemoUserId.set(found != null ? found : -1L);
+            return found;
         }
-        return demoUserId == -1L ? null : demoUserId;
     }
 
     /**
