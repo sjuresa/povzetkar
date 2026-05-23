@@ -79,7 +79,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
-  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: getGetApiV1UsersQueryKey() });
+  const invalidateUsers = () => void queryClient.invalidateQueries({ queryKey: getGetApiV1UsersQueryKey() });
 
   const onError = (action: string) => {
     toast.error(t('admin.users.error.action_failed', { action }));
@@ -118,7 +118,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
     },
   });
 
-  const pendingId = approve.isPending || reject.isPending || disable.isPending || enable.isPending;
+  const isActionPending = approve.isPending || reject.isPending || disable.isPending || enable.isPending;
 
   const thClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
   const thStaticClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest text-right';
@@ -188,13 +188,13 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                         <ActionButton
                           label={t('admin.users.actions.approve')}
                           onClick={() => approve.mutate({ id: userId })}
-                          disabled={pendingId}
+                          disabled={isActionPending}
                           variant="neutral"
                         />
                         <ActionButton
                           label={t('admin.users.actions.reject')}
                           onClick={() => reject.mutate({ id: userId })}
-                          disabled={pendingId}
+                          disabled={isActionPending}
                           variant="destructive"
                         />
                       </>
@@ -203,7 +203,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                       <ActionButton
                         label={t('admin.users.actions.disable')}
                         onClick={() => disable.mutate({ id: userId })}
-                        disabled={pendingId}
+                        disabled={isActionPending}
                         variant="destructive"
                       />
                     )}
@@ -211,7 +211,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                       <ActionButton
                         label={status === 'REJECTED' ? t('admin.users.actions.reapprove') : t('admin.users.actions.enable')}
                         onClick={() => enable.mutate({ id: userId })}
-                        disabled={pendingId}
+                        disabled={isActionPending}
                         variant="neutral"
                       />
                     )}
