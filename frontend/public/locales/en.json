@@ -183,6 +183,42 @@
     }
   },
   "admin": {
+    "jobs": {
+      "title": "Background Jobs",
+      "subtitle": "Monitor and manage background processing jobs.",
+      "filter": {
+        "status": "Status",
+        "type": "Job type",
+        "all_statuses": "All Statuses",
+        "all_types": "All Types"
+      },
+      "column": {
+        "started_at": "Started",
+        "type": "Type",
+        "duration": "Duration",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "action": {
+        "restart": "Restart",
+        "view_audit": "Audit trail"
+      },
+      "confirm": {
+        "restart": "Restart this job from scratch?"
+      },
+      "toast": {
+        "restarted": "Job restarted.",
+        "restart_failed": "Failed to restart job."
+      },
+      "empty": "No jobs found matching the current filters.",
+      "audit_modal": {
+        "title": "Audit Trail",
+        "empty": "No audit entries found."
+      },
+      "duration": {
+        "not_started": "—"
+      }
+    },
     "users": {
       "title": "User Management",
       "subtitle": "Manage user accounts, control access, and monitor sign-in activity.",

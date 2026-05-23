@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.JobExecutionAudit;
@@ -24,12 +25,15 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -225,14 +229,16 @@ public class BackgroundJobService {
         jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, details));
     }
 
-    public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, Sort sort, int pageIndex, int pageSize) {
+    public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, JobType jobType, Sort sort, int pageIndex, int pageSize) {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<BackgroundJob> query;
-        if (status != null) {
-            query = BackgroundJob.find("status = ?1", sort, status);
-        } else {
-            query = BackgroundJob.findAll(sort);
-        }
+
+        FilterBuilder filters = new FilterBuilder("");
+        filters.and("status = :status", "status", status);
+        filters.and("type = :jobType", "jobType", jobType);
+
+        PanacheQuery<BackgroundJob> query = filters.getQuery().isEmpty()
+                ? BackgroundJob.findAll(sort)
+                : BackgroundJob.find(filters.getQuery(), sort, filters.getParams());
 
         long totalCount = query.count();
         List<BackgroundJobDTO> items = query.page(pageIndex, clampedPageSize).list().stream()
@@ -240,6 +246,41 @@ public class BackgroundJobService {
                 .toList();
 
         return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
+    }
+
+    private static final Set<JobType> ITEM_LEVEL_JOB_TYPES = Set.of(JobType.GENERATE_ITEM_SUMMARY, JobType.RETRY_ITEM_PROCESSING);
+
+    @Transactional
+    public BackgroundJob restartJob(UUID originalJobId, Long adminUserId) {
+        BackgroundJob original = BackgroundJob.<BackgroundJob>findByIdOptional(originalJobId)
+                .orElseThrow(() -> new NotFoundException("Job not found: " + originalJobId));
+
+        if (original.status != JobStatus.FAILED) {
+            throw new BadRequestException("INVALID_RESTART_STATE");
+        }
+
+        if (ITEM_LEVEL_JOB_TYPES.contains(original.type)) {
+            throw new BadRequestException("INVALID_RESTART_STATE");
+        }
+
+        BackgroundJob newJob = switch (original.type) {
+            case GENERATE_TOPIC_BRIEFING -> {
+                Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(original.topicId));
+                if (topic == null) throw new NotFoundException("Topic not found: " + original.topicId);
+                yield triggerTopicBriefingJob(topic, adminUserId);
+            }
+            case GENERATE_TOPIC_SUMMARIES -> {
+                Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(original.topicId));
+                if (topic == null) throw new NotFoundException("Topic not found: " + original.topicId);
+                yield triggerTopicSummariesJob(topic, adminUserId);
+            }
+            default -> triggerJob(original.type, adminUserId);
+        };
+
+        JobExecutionAudit.logJob(originalJobId, JobStatus.FAILED,
+                "Job restarted by admin userId=" + adminUserId + ". New job ID: " + newJob.id);
+
+        return newJob;
     }
 
     public Optional<BackgroundJob> getJobById(UUID id) {

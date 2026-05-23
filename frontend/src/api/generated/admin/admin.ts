@@ -654,6 +654,110 @@ export function useGetApiV1AdminJobsIdAudit<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Creates a new job using the original job's configuration. Only allowed for FAILED jobs.
+ * @summary Restart a failed job
+ */
+export type postApiV1AdminJobsIdRestartResponse202 = {
+  data: BackgroundJobDTO
+  status: 202
+}
+
+export type postApiV1AdminJobsIdRestartResponse400 = {
+  data: void
+  status: 400
+}
+
+export type postApiV1AdminJobsIdRestartResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1AdminJobsIdRestartResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1AdminJobsIdRestartResponse404 = {
+  data: void
+  status: 404
+}
+
+export type postApiV1AdminJobsIdRestartResponseSuccess = (postApiV1AdminJobsIdRestartResponse202) & {
+  headers: Headers;
+};
+export type postApiV1AdminJobsIdRestartResponseError = (postApiV1AdminJobsIdRestartResponse400 | postApiV1AdminJobsIdRestartResponse401 | postApiV1AdminJobsIdRestartResponse403 | postApiV1AdminJobsIdRestartResponse404) & {
+  headers: Headers;
+};
+
+export type postApiV1AdminJobsIdRestartResponse = (postApiV1AdminJobsIdRestartResponseSuccess | postApiV1AdminJobsIdRestartResponseError)
+
+export const getPostApiV1AdminJobsIdRestartUrl = (id: Uuid,) => {
+
+
+  
+
+  return `/api/v1/admin/jobs/${id}/restart`
+}
+
+export const postApiV1AdminJobsIdRestart = async (id: Uuid, options?: RequestInit): Promise<postApiV1AdminJobsIdRestartResponse> => {
+  
+  return customInstance<postApiV1AdminJobsIdRestartResponse>(getPostApiV1AdminJobsIdRestartUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1AdminJobsIdRestartMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsIdRestart>>, TError,{id: Uuid}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsIdRestart>>, TError,{id: Uuid}, TContext> => {
+
+const mutationKey = ['postApiV1AdminJobsIdRestart'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AdminJobsIdRestart>>, {id: Uuid}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1AdminJobsIdRestart(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1AdminJobsIdRestartMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1AdminJobsIdRestart>>>
+    
+    export type PostApiV1AdminJobsIdRestartMutationError = void
+
+    /**
+ * @summary Restart a failed job
+ */
+export const usePostApiV1AdminJobsIdRestart = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AdminJobsIdRestart>>, TError,{id: Uuid}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1AdminJobsIdRestart>>,
+        TError,
+        {id: Uuid},
+        TContext
+      > => {
+      return useMutation(getPostApiV1AdminJobsIdRestartMutationOptions(options), queryClient);
+    }
+    /**
  * Returns live aggregate counts for system health monitoring.
  * @summary Get system metrics
  */

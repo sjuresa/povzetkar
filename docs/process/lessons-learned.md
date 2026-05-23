@@ -60,6 +60,18 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Vite proxy forwards OIDC 302→Google to the browser; Axios follows it cross-origin causing CORS failure (POV-187)**:
 > In Quarkus `web-app` OIDC mode, unauthenticated API requests receive a 302 redirect to `accounts.google.com`. The Vite dev proxy forwards this 302 back to the browser. Axios (running as XHR) follows the cross-origin redirect to Google, which rejects the CORS preflight — so Axios gets a network error, not a 401, and our interceptor never fires. The fix: add a `proxyRes` handler in `vite.config.ts` that rewrites `302 + Location: accounts.google.com` → `401` for requests with `X-Requested-With: XMLHttpRequest`. This keeps OIDC redirect behaviour intact for normal browser navigations while giving Axios a clean 401 it can handle. Note: `followRedirects: false` does NOT solve this — the proxy passes the 302 to the browser regardless; it's the browser that follows it.
 
+> [!WARNING]
+> **`@TestSecurity` + `getAuthenticatedUser()` require a matching DB row (POV-188)**:
+> `@TestSecurity(user = "admin")` sets the principal name to `"admin"`, but `UserContextService.getCurrentUser()` resolves the User entity by querying `username = "admin"` in the DB. Without a matching row the endpoint returns 401 — not 403. Add a `@BeforeEach` that upserts the test user for any endpoint that calls `getAuthenticatedUser()`.
+
+> [!TIP]
+> **`FilterBuilder` eliminates conditional branching when adding filter parameters (POV-188)**:
+> When a query method gains a second optional filter param, resist the temptation to add an `if/else` branch. Use `FilterBuilder.and()` instead — it composes the JPQL WHERE clause dynamically and handles all 2^N filter combinations with zero branching. See `BackgroundJobService.getJobList()` for the pattern.
+
+> [!TIP]
+> **Sonar `no-nested-conditional` in JSX — replace ternary chain with independent conditions (POV-188)**:
+> The `isLoading ? X : count === 0 ? Y : Z` pattern inside JSX triggers `sonarjs/no-nested-conditional`. Replace with three independent `{condition && <Element />}` expressions. This is cleaner and does not require an extracted helper function.
+
 ## 🚀 Recent Highlights (v0.16.0)
 
 > [!IMPORTANT]

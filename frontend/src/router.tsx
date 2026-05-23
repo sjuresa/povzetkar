@@ -13,6 +13,7 @@ import {SourcesLibraryPage} from './routes/SourcesLibraryPage';
 import {SourceDetailPage} from './routes/SourceDetailPage';
 import {PublicResolverPage} from './routes/PublicResolverPage';
 import {UsersPage} from './routes/UsersPage';
+import {AdminJobsPage} from './routes/AdminJobsPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -156,7 +157,7 @@ const contentManagementRoute = createRoute({
 const adminJobsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'jobs',
-  component: () => <div className="p-8 text-[var(--color-text-secondary)] italic">Background Jobs Admin coming soon...</div>,
+  component: AdminJobsPage,
 });
 
 const usersRoute = createRoute({
