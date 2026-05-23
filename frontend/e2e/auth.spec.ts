@@ -117,7 +117,7 @@ test.describe('Auth & Authorization', () => {
     await page.goto('/');
 
     // 4. Assert: user stays on landing page, no redirect to /auth/login
-    await page.waitForTimeout(1000);
+    await expect(page.getByTestId('hero-cta')).toBeVisible();
     expect(page.url()).not.toContain('/auth/login');
     expect(page.url()).toMatch(/localhost:\d+\/?$/);
   });

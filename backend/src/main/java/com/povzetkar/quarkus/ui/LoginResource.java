@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @ApplicationScoped
 public class LoginResource {
@@ -105,10 +106,12 @@ public class LoginResource {
 
             // It's safe to normalize the original path now, as the main vector is checked.
             URI normalizedUri = new URI(dynamicRedirect).normalize();
-            String path = normalizedUri.getRawPath();
+            // Validate on the decoded path — normalize() does not decode percent-encoded segments,
+            // so %2e%2e would bypass a raw-path check for "/.." traversal.
+            String decoded = Optional.ofNullable(normalizedUri.getPath()).orElse("");
             // getAuthority() == null guards against any URI that resolved an authority component
             // (e.g. a double-slash that slipped past the decoded check above).
-            if (path != null && !path.startsWith("/..") && normalizedUri.getAuthority() == null) {
+            if (!decoded.startsWith("/..") && normalizedUri.getAuthority() == null) {
                 return normalizedUri.toString();
             }
         } catch (IllegalArgumentException | URISyntaxException e) {

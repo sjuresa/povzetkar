@@ -55,6 +55,8 @@ export type UnwrapEnvelope<T> = T extends { data: infer D } ? D : T;
 
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
 
+let sessionExpiredRedirectInProgress = false;
+
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -154,6 +156,8 @@ client.interceptors.response.use(
         case 401: {
           const authState = useAuthStore.getState();
           if (!authState.isAuthenticated) break;
+          if (sessionExpiredRedirectInProgress) return new Promise(() => {});
+          sessionExpiredRedirectInProgress = true;
           logger.error('[API] Session expired - redirecting to login', { status: response.status });
           authState.clearAuth();
           const { pathname, search, hash } = globalThis.location;
