@@ -71,7 +71,7 @@ This rubric must be used to verify the completeness of the execution and complet
 | 2.4  | **Execution Protocol: Logging:** Is every successfully verified action immediately logged to the `execution.md` file?                                               |   ☐    |
 | 2.5  | **Verification: Immediate (Literal):** After every `write_file` or `replace_text`, do I immediately read the file back to confirm its contents?                     |   ☐    |
 | 2.6  | **Verification: Immediate (Syntactic):** After literal verification, do I immediately run `analyze_current_file` to check for syntax/compilation errors?            |   ☐    |
-| 3.1  | **Verification: Final Behavioral:** After all modifications, have I stopped and explicitly asked the user to run the test suite?                                    |   ☐    |
-| 3.2  | **Await Confirmation:** Have I awaited user confirmation that all tests are passing?                                                                                |   ☐    |
+| 3.1  | **Verification: Final Behavioral:** After all modifications, have I run the **full** test suite myself (`npx vitest run` / `mvn verify`) — not just task-related tests? Have I verified any failures are pre-existing (via `git stash` baseline check) rather than task-introduced? |   ☐    |
+| 3.2  | **PR Review Loop:** If a PR exists, have I fetched all unresolved review comments (`gh api .../pulls/<n>/comments`), assessed each one, fixed relevant issues, re-run the full suite, and committed — repeating until no new unresolved comments remain?                          |   ☐    |
 | 3.3  | **Commit Message:** Does the proposed commit message follow the **Commit Message Mandate** (based on `git diff HEAD`, Conventional Commits)?                        |   ☐    |
 | 3.4  | **Final Hand-off:** Is my final output the question: "I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?" |   ☐    |
