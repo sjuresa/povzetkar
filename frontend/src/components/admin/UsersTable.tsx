@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type { UserDTO, AccountStatus } from '../../api/generated/model';
+import type { UserDTO, AccountStatus, ApiErrorDTO } from '../../api/generated/model';
 import {
   getGetApiV1UsersQueryKey,
   postApiV1UsersIdApprove,
@@ -22,6 +22,10 @@ interface UsersTableProps {
   readonly users: UserDTO[];
   readonly sort: string;
   readonly onSortChange: (sort: string) => void;
+}
+
+function extractErrorCode(err: unknown): string | undefined {
+  return (err as { data?: { error?: ApiErrorDTO } } | undefined)?.data?.error?.errorCode;
 }
 
 function toDate(value: unknown): Date | null {
@@ -108,7 +112,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
       postApiV1UsersIdDisable(id, ifMatchHeaders(version)),
     onSuccess: () => { toast.success(t('admin.users.success.disabled')); invalidateUsers(); },
     onError: (err: unknown) => {
-      const code = (err as { data?: { error?: { errorCode?: string } } })?.data?.error?.errorCode;
+      const code = extractErrorCode(err);
       if (code === 'CANNOT_SELF_DISABLE') toast.error(t('admin.users.error.cannot_self_disable'));
       else if (code === 'LAST_ADMIN_REQUIRED') toast.error(t('admin.users.error.last_admin_required'));
       else onError(t('admin.users.actions.disable'));

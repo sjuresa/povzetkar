@@ -7,7 +7,6 @@ import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.security.Permission;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -137,7 +136,9 @@ public class UserAccountService {
         try {
             int clientVersion = Integer.parseInt(ifMatch.replace("\"", "").trim());
             if (user.version == null || user.version != clientVersion) {
-                throw new OptimisticLockException(
+                throw new BusinessRuleException(
+                        Response.Status.CONFLICT,
+                        "OPTIMISTIC_LOCK_ERROR",
                         "Version mismatch: expected " + user.version + " but got " + clientVersion);
             }
         } catch (NumberFormatException _) {
