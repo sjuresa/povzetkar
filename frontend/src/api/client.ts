@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'a
 
 import logger from '../util/logger';
 import { useAuthStore } from '../store/authStore';
+import { router } from '../router';
 import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
 
 function generateUuid(): string {
@@ -151,10 +152,13 @@ client.interceptors.response.use(
 
     if (response) {
       switch (response.status) {
-        case 401:
-          logger.error('[API] Unauthorized - Clearing local session', { status: response.status });
+        case 401: {
+          logger.error('[API] Session expired - redirecting to login', { status: response.status });
           useAuthStore.getState().clearAuth();
-          break;
+          const { pathname, searchStr } = router.state.location;
+          globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + searchStr);
+          return new Promise(() => {}); // Never resolves — navigation takes over
+        }
         case 403:
           logger.error('[API] Forbidden - Insufficient permissions', { status: response.status });
           break;

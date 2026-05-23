@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **External links open in new tab**: All five in-scope `ReactMarkdown` call-sites in `BriefingDetailPage`, `PublicBriefingView`, and `PublicSummaryView` now use `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]` — external links render with `target="_blank"` and `rel="noopener noreferrer"`.
 - **`rehype-external-links ^3.0.0`** added to frontend `dependencies`.
 
+### Fixed (POV-187)
+
+- **Session expiry no longer triggers `ErrorPage`**: The Axios 401 interceptor now calls `clearAuth()` and immediately redirects to `/auth/login?redirect=<currentPath>` instead of re-throwing the error to the error boundary.
+- **Seamless return after re-authentication**: `LoginResource.resolveSafeDestination()` validates and applies the `?redirect=` param after OAuth completes — the user lands directly on their original page with no manual interaction required.
+- **ADR-0010 updated**: Decision revised from `sessionStorage` + landing page banner to direct auto-login via `?redirect=` param; `sessionStorage` not used.
+
 ### Added (POV-184)
 
 - **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.

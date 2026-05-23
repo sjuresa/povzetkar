@@ -44,6 +44,18 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **`rehypeSanitize` Strips Unknown Attributes — Plugin Order Is a Security Constraint (POV-186)**:
 > Always run `rehypeExternalLinks` (and any attribute-adding plugin) **after** `rehypeSanitize`. Running it before causes `target` and `rel` to be silently stripped on every render, defeating the security purpose entirely. Required order: `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]`.
 
+> [!TIP]
+> **`router.state.location.searchStr` vs `search` (POV-187)**:
+> TanStack Router's `ParsedLocation.search` is a **parsed object**, not a string. Stringifying it produces `[object Object]`. The raw query string (e.g., `?foo=bar`) lives on `searchStr: string`. Always use `searchStr` when constructing redirect URLs or anything that requires the raw query string.
+
+> [!IMPORTANT]
+> **Never-resolving promise to suppress error propagation after navigation (POV-187)**:
+> After setting `globalThis.location.href = '...'` to trigger a full-page navigation, JS execution continues briefly before the browser navigates away. If the calling code eventually `throw`s, React's error boundary may fire during that window. Return `new Promise(() => {})` immediately after the location assignment to produce a permanently pending promise — Axios treats it as a cancelled request, the error boundary is never triggered, and the browser navigation takes over cleanly.
+
+> [!TIP]
+> **Read the backend before designing frontend auth flows (POV-187)**:
+> Before implementing `sessionStorage` or client-side redirect logic, check whether the backend already supports a `?redirect=` (or equivalent) parameter. `LoginResource` in this project already validates and applies a `?redirect=<path>` param via `resolveSafeDestination()`. This eliminated the need for `sessionStorage`, a `LandingPage` `useEffect`, and a `validateSearch` union extension — discovered by reading `LoginResource.java` during the planning interview.
+
 ## 🚀 Recent Highlights (v0.16.0)
 
 > [!IMPORTANT]
