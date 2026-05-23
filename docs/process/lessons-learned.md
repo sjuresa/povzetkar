@@ -20,6 +20,22 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **`Map.of()` Limit**:
 > `java.util.Map.of()` supports a maximum of 10 key-value pairs. When `RolePermissionsMap` grows beyond 5 roles, switch to `Map.ofEntries(Map.entry(...), ...)` or `Collections.unmodifiableMap(new HashMap<>(...))`.
 
+> [!IMPORTANT]
+> **HTTP/Service Layer Separation for Optimistic Locking (POV-185)**:
+> ETag parsing (`If-Match` header → version integer) belongs in the resource layer (`BaseApiResource.checkOptimisticLock()`), not in the service. Services should accept a pre-loaded entity. This keeps HTTP protocol concerns out of business logic. Strip weak ETag prefix (`W/"…"`) before parsing to avoid spurious 409s from compliant clients.
+
+> [!WARNING]
+> **Flyway Migrations Are Immutable Once Applied**:
+> Any edit to an applied migration file causes "Migrations have failed validation" on next startup. Never edit an applied migration — always create a new versioned script. This applies even in the same dev session if the local DB was started between the initial apply and the desired change.
+
+> [!TIP]
+> **`@Version` Increments on `em.merge()`**:
+> In JPA, `em.merge()` on a `@Version`-annotated entity increments the version counter. Test helpers that mutate entity state must return the post-merge version and use it in subsequent optimistic-locked request headers. Sending the pre-mutation version will produce a 409 even when the test is logically correct.
+
+> [!TIP]
+> **AtomicLong Double-Checked Locking for Application-Scoped Caches**:
+> For `@ApplicationScoped` beans that lazily resolve a singleton value, use `AtomicLong(0)` where `0` = uninitialised and `-1` = "not found". The hot path reads without synchronisation; the first-write path uses a `synchronized` block with a re-check inside. Avoids a lock on every request while remaining thread-safe under concurrent initialisation.
+
 ## 🚀 Recent Highlights (v0.16.0)
 
 > [!IMPORTANT]
