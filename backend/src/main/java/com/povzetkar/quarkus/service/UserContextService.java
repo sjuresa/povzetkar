@@ -76,16 +76,17 @@ public class UserContextService {
      */
     public Optional<User> getContentViewingUser() {
         if (securityIdentity.hasRole(Permission.ROLE_DEMO)) {
-            if (demoUserId == null) {
-                User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
-                        .ifPresent(u -> demoUserId = u.id);
-            }
-            if (demoUserId != null) {
-                return User.findByIdOptional(demoUserId);
-            }
-            return Optional.empty();
+            return User.findByIdOptional(resolveDemoUserId());
         }
         return getCurrentUser();
+    }
+
+    private synchronized Long resolveDemoUserId() {
+        if (demoUserId == null) {
+            demoUserId = User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
+                    .map(u -> u.id).orElse(null);
+        }
+        return demoUserId;
     }
 
     /**
