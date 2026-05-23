@@ -30,7 +30,7 @@ On 401, the interceptor **automatically initiates re-authentication** by redirec
 401 received in Axios interceptor
   │
   ├─ useAuthStore.getState().clearAuth()
-  ├─ globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search)
+  ├─ globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search + hash)
   │
   └─ [OAuth round-trip — usually invisible if Google session active]
        │
@@ -41,7 +41,7 @@ On 401, the interceptor **automatically initiates re-authentication** by redirec
 
 ### Implementation details
 
-1. **`client.ts` case 401**: import `router` singleton from `../router` (no circular dependency — `router.tsx` imports nothing from `client.ts`). On 401: call `clearAuth()`, read `router.state.location.pathname + search`, set `globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(path)`. Do **not** re-throw — the full-page navigation cancels all pending JS.
+1. **`client.ts` case 401**: use `globalThis.location` (not the router singleton — importing it creates a circular dependency). On 401: check a module-level `sessionExpiredRedirectInProgress` flag to absorb concurrent failures silently, call `clearAuth()`, read `pathname + search + hash` from `globalThis.location`, set `globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(path)`. Return `new Promise(() => {})` — never resolves, preventing error boundary activation during navigation.
 
 2. **Path safety**: delegated entirely to `LoginResource.resolveSafeDestination()` — no client-side validation regex needed. If the path is somehow invalid, the backend defaults to `postLoginUri` (`/dashboard`).
 

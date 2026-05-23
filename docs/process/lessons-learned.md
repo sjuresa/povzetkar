@@ -46,7 +46,7 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 > [!TIP]
 > **`router.state.location.searchStr` vs `search` (POV-187)**:
-> TanStack Router's `ParsedLocation.search` is a **parsed object**, not a string. Stringifying it produces `[object Object]`. The raw query string (e.g., `?foo=bar`) lives on `searchStr: string`. Always use `searchStr` when constructing redirect URLs or anything that requires the raw query string.
+> TanStack Router's `ParsedLocation.search` is a **parsed object**, not a string. Stringifying it produces `[object Object]`. The raw query string (e.g., `?foo=bar`) lives on `searchStr: string`. Always use `searchStr` when constructing redirect URLs in router-aware code. Note: the Axios 401 interceptor in `client.ts` uses `globalThis.location` (not the router) to avoid a circular dependency — `globalThis.location.search` is already a raw string, so `searchStr` does not apply there.
 
 > [!IMPORTANT]
 > **Never-resolving promise to suppress error propagation after navigation (POV-187)**:

@@ -111,7 +111,8 @@ public class LoginResource {
             String decoded = Optional.ofNullable(normalizedUri.getPath()).orElse("");
             // getAuthority() == null guards against any URI that resolved an authority component
             // (e.g. a double-slash that slipped past the decoded check above).
-            if (!decoded.startsWith("/..") && normalizedUri.getAuthority() == null) {
+            // Also block "/\" — some browsers normalise backslash to "/" which could bypass the "//" check.
+            if (!decoded.startsWith("/..") && !decoded.startsWith("/\\") && normalizedUri.getAuthority() == null) {
                 return normalizedUri.toString();
             }
         } catch (IllegalArgumentException | URISyntaxException e) {
