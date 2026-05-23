@@ -37,7 +37,7 @@ public abstract class BaseApiResource {
             throw new InternalServerErrorException("Programming error: checkOptimisticLock called without If-Match header.");
         }
 
-        String cleanVersion = ifMatchHeader.replace("\"", "").trim();
+        String cleanVersion = ifMatchHeader.replaceFirst("^W/", "").replace("\"", "").trim();
         try {
             int clientVersion = Integer.parseInt(cleanVersion);
             if (entity.version == null || entity.version != clientVersion) {

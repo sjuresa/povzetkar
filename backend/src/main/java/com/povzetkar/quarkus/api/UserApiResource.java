@@ -153,7 +153,9 @@ public class UserApiResource extends BaseApiResource {
     @Operation(summary = "Approve a pending user", description = "Transitions account from PENDING_APPROVAL to ENABLED.")
     @APIResponse(responseCode = "200", description = "User approved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
     public UserDTO approveUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
-        return userMapper.toDTO(userAccountService.approve(id, ifMatch));
+        User user = userAccountService.load(id);
+        checkOptimisticLock(user, ifMatch);
+        return userMapper.toDTO(userAccountService.approve(user));
     }
 
     @POST
@@ -165,7 +167,9 @@ public class UserApiResource extends BaseApiResource {
     @Operation(summary = "Reject a pending user", description = "Transitions account from PENDING_APPROVAL to REJECTED.")
     @APIResponse(responseCode = "200", description = "User rejected", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
     public UserDTO rejectUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
-        return userMapper.toDTO(userAccountService.reject(id, ifMatch));
+        User user = userAccountService.load(id);
+        checkOptimisticLock(user, ifMatch);
+        return userMapper.toDTO(userAccountService.reject(user));
     }
 
     @POST
@@ -177,7 +181,9 @@ public class UserApiResource extends BaseApiResource {
     @Operation(summary = "Disable an enabled user", description = "Transitions account from ENABLED to DISABLED.")
     @APIResponse(responseCode = "200", description = "User disabled", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
     public UserDTO disableUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
-        return userMapper.toDTO(userAccountService.disable(id, ifMatch));
+        User user = userAccountService.load(id);
+        checkOptimisticLock(user, ifMatch);
+        return userMapper.toDTO(userAccountService.disable(user));
     }
 
     @POST
@@ -189,6 +195,8 @@ public class UserApiResource extends BaseApiResource {
     @Operation(summary = "Enable a disabled or rejected user", description = "Transitions account from DISABLED or REJECTED to ENABLED.")
     @APIResponse(responseCode = "200", description = "User enabled", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
     public UserDTO enableUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
-        return userMapper.toDTO(userAccountService.enable(id, ifMatch));
+        User user = userAccountService.load(id);
+        checkOptimisticLock(user, ifMatch);
+        return userMapper.toDTO(userAccountService.enable(user));
     }
 }
