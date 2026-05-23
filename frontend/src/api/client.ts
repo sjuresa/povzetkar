@@ -156,8 +156,8 @@ client.interceptors.response.use(
           if (!authState.isAuthenticated) break;
           logger.error('[API] Session expired - redirecting to login', { status: response.status });
           authState.clearAuth();
-          const { pathname, search } = globalThis.location;
-          globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search);
+          const { pathname, search, hash } = globalThis.location;
+          globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search + hash);
           return new Promise(() => {}); // Never resolves — navigation takes over
         }
         case 403:
