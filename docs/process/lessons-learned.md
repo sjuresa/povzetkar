@@ -36,6 +36,14 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **AtomicLong Double-Checked Locking for Application-Scoped Caches**:
 > For `@ApplicationScoped` beans that lazily resolve a singleton value, use `AtomicLong(0)` where `0` = uninitialised and `-1` = "not found". The hot path reads without synchronisation; the first-write path uses a `synchronized` block with a re-check inside. Avoids a lock on every request while remaining thread-safe under concurrent initialisation.
 
+> [!WARNING]
+> **`react-markdown` Plugin Options Must Use Tuple Syntax (POV-186)**:
+> `rehypePlugins` expects `[plugin, options]` tuples — never `plugin(options)` inline. Calling `rehypeExternalLinks({ target: '_blank', rel: [...] })` invokes the factory at render time and passes its return value as the plugin, which crashes at runtime. Correct: `[rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]` as a tuple element in the array.
+
+> [!IMPORTANT]
+> **`rehypeSanitize` Strips Unknown Attributes — Plugin Order Is a Security Constraint (POV-186)**:
+> Always run `rehypeExternalLinks` (and any attribute-adding plugin) **after** `rehypeSanitize`. Running it before causes `target` and `rel` to be silently stripped on every render, defeating the security purpose entirely. Required order: `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]`.
+
 ## 🚀 Recent Highlights (v0.16.0)
 
 > [!IMPORTANT]

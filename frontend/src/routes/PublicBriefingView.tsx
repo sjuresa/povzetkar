@@ -17,13 +17,14 @@ import { Helmet } from 'react-helmet-async';
 import { useThemeStore } from '../store/themeStore';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import rehypeExternalLinks from 'rehype-external-links';
 import type { BriefingDetailDTO } from '../api/generated/model';
 
 interface PublicBriefingViewProps {
   briefing: BriefingDetailDTO;
 }
 
-export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
+export function PublicBriefingView({ briefing }: Readonly<PublicBriefingViewProps>) {
   const { theme, setTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -101,7 +102,7 @@ export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
           return (
             <div className="mb-16 p-10 md:p-16 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.03] border-l-8 border-[var(--color-action-primary)]/50 shadow-2xl shadow-[var(--color-action-primary)]/5 animate-in fade-in slide-in-from-bottom-2 duration-1000">
               <article className={`prose prose-zinc max-w-none prose-p:text-[var(--color-text-primary)] prose-p:leading-[1.6] text-2xl italic font-serif font-medium opacity-100 selection:bg-[var(--color-action-primary)]/30 ${hasAlphaFirst ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-[var(--color-action-primary)]' : ''}`}>
-                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize, [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]]}>
                   {cleanedText}
                 </ReactMarkdown>
               </article>
@@ -198,7 +199,7 @@ export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
                   </div>
                 </div>
                 <article className="prose prose-zinc max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-hr:border-[var(--color-border-subtle)]">
-                   <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                   <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize, [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]]}>
                      {item.summaryText || ''}
                    </ReactMarkdown>
                 </article>
