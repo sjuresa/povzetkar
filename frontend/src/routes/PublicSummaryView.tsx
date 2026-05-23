@@ -12,12 +12,8 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { useThemeStore } from '../store/themeStore';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
-import rehypeExternalLinks from 'rehype-external-links';
 import type { PublicSummary } from '../api/generated/model';
-
-const REHYPE_PLUGINS = [rehypeRaw, rehypeSanitize, [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]] as const;
+import { REHYPE_PLUGINS } from '../utils/markdown';
 
 interface PublicSummaryViewProps {
   summary: PublicSummary;

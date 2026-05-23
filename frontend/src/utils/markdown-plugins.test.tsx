@@ -1,16 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
-import rehypeExternalLinks from 'rehype-external-links';
+import { REHYPE_PLUGINS } from './markdown';
 
-const plugins = [rehypeRaw, rehypeSanitize, [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]] as const;
-
-describe('rehypeExternalLinks plugin chain', () => {
+describe('REHYPE_PLUGINS', () => {
   it('renders external links with target="_blank" and rel="noopener noreferrer"', () => {
     render(
-      <ReactMarkdown rehypePlugins={plugins}>
+      <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
         {'[Visit Example](https://example.com)'}
       </ReactMarkdown>
     );

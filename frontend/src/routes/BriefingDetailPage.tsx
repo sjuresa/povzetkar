@@ -16,15 +16,11 @@ import {
   Clock,
   Timer,
 } from 'lucide-react';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
-import rehypeExternalLinks from 'rehype-external-links';
 import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, BriefingItemDTO } from '../api/generated/model';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { YoutubeIcon } from '../components/ui/YoutubeIcon';
-
-const REHYPE_PLUGINS = [rehypeRaw, rehypeSanitize, [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]] as const;
+import { REHYPE_PLUGINS } from '../utils/markdown';
 
 /**
  * BriefingDetailPage renders the full content of a single briefing.
