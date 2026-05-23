@@ -14,10 +14,10 @@ import type { RoleDTO } from './roleDTO';
  */
 export interface UserDTO {
   id?: number;
+  version?: number;
   name?: string;
   email?: string;
   authProvider?: string;
-  active?: boolean;
   accountStatus?: AccountStatus;
   lastLoginAt?: Instant;
   createdAt?: Instant;

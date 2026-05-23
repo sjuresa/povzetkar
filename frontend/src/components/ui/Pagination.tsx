@@ -1,11 +1,11 @@
 import { cn } from '../../util/cn';
 
 interface PaginationProps {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  isLoading?: boolean;
-  className?: string;
+  readonly page: number;
+  readonly totalPages: number;
+  readonly onPageChange: (page: number) => void;
+  readonly isLoading?: boolean;
+  readonly className?: string;
 }
 
 /**

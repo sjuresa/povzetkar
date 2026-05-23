@@ -2,45 +2,38 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.UserDTO;
-import com.povzetkar.quarkus.api.dto.UserRoleUpdateDTO;
-import com.povzetkar.quarkus.api.dto.UserUpdateDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
-import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.UserMapper;
 import com.povzetkar.quarkus.api.util.QueryParser;
-import com.povzetkar.quarkus.model.Role;
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.service.UserAccountService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.panache.common.Sort;
 import com.povzetkar.quarkus.security.Permission;
+import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import com.povzetkar.quarkus.model.AccountStatus;
-import jakarta.ws.rs.BadRequestException;
+import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,16 +53,18 @@ public class UserApiResource extends BaseApiResource {
     private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
 
     private final UserMapper userMapper;
+    private final UserAccountService userAccountService;
 
     @Inject
-    public UserApiResource(UserMapper userMapper, UserContextService userContextService) {
+    public UserApiResource(UserMapper userMapper, UserContextService userContextService, UserAccountService userAccountService) {
         super(userContextService);
         this.userMapper = userMapper;
+        this.userAccountService = userAccountService;
     }
 
     @GET
     @Path("/me")
-    @RolesAllowed(Permission.ROLE_USER)
+    @Authenticated
     @Transactional
     @Operation(summary = "Get current user profile", description = "Returns the profile and permissions for the authenticated user.")
     @APIResponse(
@@ -101,17 +96,15 @@ public class UserApiResource extends BaseApiResource {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
 
-        // Build dynamic WHERE predicate — bare field names for Panache count(), aliased for find()
         StringBuilder predicate = new StringBuilder();
         StringBuilder aliasedPredicate = new StringBuilder();
         Map<String, Object> params = new LinkedHashMap<>();
 
-        // TODO: POV-185 — uncomment once User.accountStatus field is added by the state machine task
-        // if (accountStatus != null) {
-        //     predicate.append("accountStatus = :accountStatus");
-        //     aliasedPredicate.append("u.accountStatus = :accountStatus");
-        //     params.put("accountStatus", accountStatus);
-        // }
+        if (accountStatus != null) {
+            predicate.append("accountStatus = :accountStatus");
+            aliasedPredicate.append("u.accountStatus = :accountStatus");
+            params.put("accountStatus", accountStatus);
+        }
         if (email != null && !email.isBlank()) {
             if (!predicate.isEmpty()) { predicate.append(" AND "); aliasedPredicate.append(" AND "); }
             predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%')) ESCAPE '\\'");
@@ -120,9 +113,8 @@ public class UserApiResource extends BaseApiResource {
         }
 
         String whereClause = aliasedPredicate.isEmpty() ? "" : "WHERE " + aliasedPredicate;
-        // TODO: POV-185 — add "accountStatus" to allowed sort fields once User.accountStatus is added
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("u.email").ascending(),
-                Set.of("id", "email", "lastLoginAt", "createdAt"), "u");
+                Set.of("id", "email", "lastLoginAt", "createdAt", "accountStatus"), "u");
 
         long totalCount = predicate.isEmpty()
                 ? User.count()
@@ -137,12 +129,10 @@ public class UserApiResource extends BaseApiResource {
             return new PaginatedResponse<>(List.of(), totalCount, pageIndex, clampedPageSize);
         }
 
-        // Recommended pattern to work around JPA pagination limitations with joins.
         List<User> usersWithRoles = User.list("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles LEFT JOIN FETCH u.identities WHERE u.id IN ?1", userIds);
 
-        // Preserve pagination ordering
         Map<Long, User> userMap = usersWithRoles.stream().collect(
-                Collectors.toMap(u -> u.id, Function.identity(), (existing, duplicate) -> existing, LinkedHashMap::new)
+                Collectors.toMap(u -> u.id, Function.identity(), (existing, _) -> existing, LinkedHashMap::new)
         );
 
         List<UserDTO> items = userIds.stream()
@@ -154,142 +144,59 @@ public class UserApiResource extends BaseApiResource {
         return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
     }
 
-    @PATCH
-    @Path("/{id}")
+    @POST
+    @Path("/{id}/approve")
+    @Consumes(MediaType.WILDCARD)
     @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
-    @Operation(summary = "Update user status", description = "Activate or deactivate a user.")
-    @APIResponse(
-            responseCode = "200",
-            description = "User status updated successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
-    )
     @OptimisticLocking
-    public UserDTO updateUserStatus(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch, UserUpdateDTO dto) {
-        User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
-                .firstResultOptional()
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        User currentUser = userContextService.getCurrentUserWithRoles()
-                .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-        
+    @Operation(summary = "Approve a pending user", description = "Transitions account from PENDING_APPROVAL to ENABLED.")
+    @APIResponse(responseCode = "200", description = "User approved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
+    public UserDTO approveUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        User user = userAccountService.load(id);
         checkOptimisticLock(user, ifMatch);
-
-        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
-        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
-
-        // 1. Protection: Only an administrator can manage another administrator account (activate/deactivate)
-        if (userBeingModifiedIsAdmin && !currentUserIsAdmin) {
-            throw new WebApplicationException(
-                Response.status(Response.Status.FORBIDDEN)
-                    .entity("Only an administrator can manage other administrators")
-                    .type(MediaType.TEXT_PLAIN)
-                    .build());
-        }
-
-        if (!dto.active()) {
-            // 2. Protection: Admin cannot deactivate themselves
-            if (user.id.equals(currentUser.id)) {
-                throw new WebApplicationException(
-                    Response.status(Response.Status.CONFLICT)
-                        .entity("Cannot deactivate yourself")
-                        .type(MediaType.TEXT_PLAIN)
-                        .build());
-            }
-
-            // 3. Protection: Do not allow deactivating the last administrator
-            if (isLastAdmin(user)) {
-                 throw new WebApplicationException(
-                    Response.status(Response.Status.CONFLICT)
-                        .entity("Cannot deactivate the last administrator in the system")
-                        .type(MediaType.TEXT_PLAIN)
-                        .build());
-            }
-        }
-
-        user.active = dto.active();
-        user.persist();
-
-        return userMapper.toDTO(user);
+        return userMapper.toDTO(userAccountService.approve(user));
     }
 
-    @PUT
-    @Path("/{id}/roles")
+    @POST
+    @Path("/{id}/reject")
+    @Consumes(MediaType.WILDCARD)
     @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
-    @Operation(summary = "Update user roles", description = "Assign or remove roles for a user.")
-    @APIResponse(
-            responseCode = "200",
-            description = "User roles updated successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
-    )
     @OptimisticLocking
-    public UserDTO updateUserRoles(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch, UserRoleUpdateDTO dto) {
-        User user = User.<User>find("from User u left join fetch u.roles where u.id = ?1", id)
-                .firstResultOptional()
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        User currentUser = userContextService.getCurrentUserWithRoles()
-                .orElseThrow(() -> new NotAuthorizedException(USER_MUST_BE_AUTHENTICATED));
-                
+    @Operation(summary = "Reject a pending user", description = "Transitions account from PENDING_APPROVAL to REJECTED.")
+    @APIResponse(responseCode = "200", description = "User rejected", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
+    public UserDTO rejectUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        User user = userAccountService.load(id);
         checkOptimisticLock(user, ifMatch);
-
-        List<Long> requestedRoleIds = dto.roleIds() != null ? dto.roleIds() : List.of();
-        List<Role> requestedRoles = Role.list("id in ?1", requestedRoleIds);
-        if (requestedRoles.size() != new HashSet<>(requestedRoleIds).size()) {
-            throw new BadRequestException("One or more invalid role IDs provided.");
-        }
-
-        boolean requestContainsAdmin = requestedRoles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
-        boolean userBeingModifiedIsAdmin = user.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
-        boolean currentUserIsAdmin = currentUser.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
-        boolean isSelf = user.id.equals(currentUser.id);
-
-        // 1. Protection: Admin cannot remove their own admin role
-        if (isSelf && userBeingModifiedIsAdmin && !requestContainsAdmin) {
-            throw new WebApplicationException(
-                Response.status(Response.Status.CONFLICT)
-                    .entity("Cannot remove admin role from yourself")
-                    .type(MediaType.TEXT_PLAIN)
-                    .build());
-        }
-
-        // 2. Protection: Only an existing admin can grant or remove the admin role
-        if ((requestContainsAdmin || userBeingModifiedIsAdmin) && !currentUserIsAdmin) {
-            throw new WebApplicationException(
-                Response.status(Response.Status.FORBIDDEN)
-                    .entity("Only an administrator can manage the admin role")
-                    .type(MediaType.TEXT_PLAIN)
-                    .build());
-        }
-
-        // 3. Protection: Do not allow removing the last administrator
-        if (userBeingModifiedIsAdmin && !requestContainsAdmin && isLastAdmin(user)) {
-             throw new WebApplicationException(
-                Response.status(Response.Status.CONFLICT)
-                    .entity("Cannot remove the last administrator from the system")
-                    .type(MediaType.TEXT_PLAIN)
-                    .build());
-        }
-
-        // Apply changes
-        user.roles.clear();
-        user.roles.addAll(new HashSet<>(requestedRoles));
-        user.persist();
-
-        return userMapper.toDTO(user);
+        return userMapper.toDTO(userAccountService.reject(user));
     }
 
-
-    private boolean isLastAdmin(User userBeingModified) {
-        // If the user being modified is an admin
-        boolean isAdmin = userBeingModified.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
-        if (!isAdmin) return false;
-
-        // Count active admins in the system
-        long adminCount = User.find("select u from User u join u.roles r where r.name = ?1 and u.active = true", Permission.ROLE_ADMIN).count();
-        
-        return adminCount <= 1;
+    @POST
+    @Path("/{id}/disable")
+    @Consumes(MediaType.WILDCARD)
+    @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
+    @Transactional
+    @OptimisticLocking
+    @Operation(summary = "Disable an enabled user", description = "Transitions account from ENABLED to DISABLED.")
+    @APIResponse(responseCode = "200", description = "User disabled", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
+    public UserDTO disableUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        User user = userAccountService.load(id);
+        checkOptimisticLock(user, ifMatch);
+        return userMapper.toDTO(userAccountService.disable(user));
     }
 
+    @POST
+    @Path("/{id}/enable")
+    @Consumes(MediaType.WILDCARD)
+    @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
+    @Transactional
+    @OptimisticLocking
+    @Operation(summary = "Enable a disabled or rejected user", description = "Transitions account from DISABLED or REJECTED to ENABLED.")
+    @APIResponse(responseCode = "200", description = "User enabled", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
+    public UserDTO enableUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        User user = userAccountService.load(id);
+        checkOptimisticLock(user, ifMatch);
+        return userMapper.toDTO(userAccountService.enable(user));
+    }
 }

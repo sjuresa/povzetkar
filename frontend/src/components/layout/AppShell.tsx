@@ -13,6 +13,7 @@ import { useThemeStore } from '../../store/themeStore';
 import { SystemMetadata } from '../system/SystemMetadata';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 import { useAudioFeedback } from '../../hooks/useAudioFeedback';
+import { AccountStatusBanner } from '../account/AccountStatusBanner';
 
 interface AppShellProps {
   readonly children: ReactNode;
@@ -28,10 +29,11 @@ export function AppShell({ children }: AppShellProps) {
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
+  const { user, logout, checkAuth, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
       user: state.user,
       logout: state.logout,
+      checkAuth: state.checkAuth,
       sidebarCollapsed: state.sidebarCollapsed,
       toggleSidebar: state.toggleSidebar,
     }))
@@ -266,6 +268,15 @@ export function AppShell({ children }: AppShellProps) {
             </button>
           </div>
         </header>
+
+        {/* Account Status Banner — shown for non-ENABLED users */}
+        {user && user.accountStatus && user.accountStatus !== 'ENABLED' && (
+          <AccountStatusBanner
+            status={user.accountStatus}
+            onRefresh={checkAuth}
+            onSignOut={logout}
+          />
+        )}
 
         {/* Scrollable Page Area */}
         <main className="flex-1 overflow-y-auto p-8 relative">

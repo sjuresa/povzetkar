@@ -227,11 +227,20 @@
         "enable": "Omogoči",
         "reapprove": "Ponovno odobri"
       },
+      "success": {
+        "approved": "Uporabnik uspešno odobren.",
+        "rejected": "Uporabnik zavrnjen.",
+        "disabled": "Uporabnik onemogočen.",
+        "enabled": "Uporabnik omogočen."
+      },
       "error": {
         "self_disable": "Lastnega računa ne morete onemogočiti.",
         "last_admin": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti.",
         "invalid_state": "To dejanje ni več veljavno. Seznam uporabnikov je bil osvežen.",
-        "not_implemented": "Ta dejanje še ni na voljo."
+        "invalid_state_transition": "To dejanje ni več veljavno za trenutno stanje računa.",
+        "action_failed": "Dejanje {{action}} ni uspelo. Poskusite znova.",
+        "cannot_self_disable": "Lastnega računa ne morete onemogočiti.",
+        "last_admin_required": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti."
       }
     }
   },
@@ -568,6 +577,24 @@
         "how3": "Izberite \"Omogoči deljenje\".",
         "how4": "Kopirajte javno povezavo in jo delite s komer koli."
       }
+    }
+  },
+  "account": {
+    "pending": {
+      "title": "Vaš račun čaka na odobritev",
+      "message": "Administrator bo kmalu pregledal vašo prijavo. Ko bo odobritev zaključena, boste lahko uporabljali Povzetkar.",
+      "refresh": "Preveri status",
+      "signout": "Odjava"
+    },
+    "rejected": {
+      "title": "Dostop do računa ni odobren",
+      "message": "Vaša prijava ni bila odobrena. Če menite, da gre za napako, se obrnite na administratorja.",
+      "signout": "Odjava"
+    },
+    "disabled": {
+      "title": "Račun onemogočen",
+      "message": "Vaš račun je bil onemogočen s strani administratorja. Za pomoč se obrnite na administratorja.",
+      "signout": "Odjava"
     }
   }
 }

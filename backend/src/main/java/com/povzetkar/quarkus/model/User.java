@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,8 +38,9 @@ public class User extends BaseAuditableEntity {
     @Email
     public String email;
 
-    @Column(nullable = false)
-    public boolean active = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", length = 50, nullable = false)
+    public AccountStatus accountStatus;
 
     @Column(name = "last_login_at")
     public Instant lastLoginAt;
@@ -66,8 +69,8 @@ public class User extends BaseAuditableEntity {
         this.identities.add(identity);
     }
 
-    public static List<User> listAllActive() {
-        return list("active", true);
+    public static List<User> listAllEnabled() {
+        return list("accountStatus", AccountStatus.ENABLED);
     }
 
     public static List<User> findAllWithTopics() {

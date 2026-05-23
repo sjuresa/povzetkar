@@ -99,7 +99,7 @@ public class TopicApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        User user = getAuthenticatedUser();
+        User user = getContentViewingUser();
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("t.id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"), "t");
         PanacheQuery<Topic> query = Topic.find("select distinct t from Topic t left join fetch t.contentSources where t.user = ?1", panacheSort, user);
         long count = query.count();
@@ -124,7 +124,7 @@ public class TopicApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Topic not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the topic to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public TopicDTO getTopic(@PathParam("id") Long id) {
-        User user = getAuthenticatedUser();
+        User user = getContentViewingUser();
         Topic topic = findResolvedTopic(id, user);
         return topicMapper.toDTO(topic);
     }

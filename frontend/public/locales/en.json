@@ -221,11 +221,20 @@
         "enable": "Enable",
         "reapprove": "Re-approve"
       },
+      "success": {
+        "approved": "User approved successfully.",
+        "rejected": "User rejected.",
+        "disabled": "User disabled.",
+        "enabled": "User enabled."
+      },
       "error": {
         "self_disable": "You cannot disable your own account.",
         "last_admin": "Cannot disable the last administrator in the system.",
         "invalid_state": "This action is no longer valid. The user list has been refreshed.",
-        "not_implemented": "This action is not yet available."
+        "invalid_state_transition": "This action is no longer valid for the current account state.",
+        "action_failed": "Failed to {{action}}. Please try again.",
+        "cannot_self_disable": "You cannot disable your own account.",
+        "last_admin_required": "Cannot disable the last administrator in the system."
       }
     }
   },
@@ -562,6 +571,24 @@
         "how3": "Select \"Enable Share Link\".",
         "how4": "Copy the public link and share it with anyone."
       }
+    }
+  },
+  "account": {
+    "pending": {
+      "title": "Your account is awaiting approval",
+      "message": "An administrator will review your sign-up shortly. You'll be able to use Povzetkar once approval is complete.",
+      "refresh": "Check status",
+      "signout": "Sign out"
+    },
+    "rejected": {
+      "title": "Account access not granted",
+      "message": "Your account sign-up was not approved. Please contact your administrator if you believe this is in error.",
+      "signout": "Sign out"
+    },
+    "disabled": {
+      "title": "Account disabled",
+      "message": "Your account has been disabled by an administrator. Please contact your administrator for assistance.",
+      "signout": "Sign out"
     }
   }
 }

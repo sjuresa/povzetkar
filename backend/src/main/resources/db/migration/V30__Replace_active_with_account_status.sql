@@ -1,0 +1,4 @@
+ALTER TABLE users ADD COLUMN account_status VARCHAR(50);
+UPDATE users SET account_status = CASE WHEN active THEN 'ENABLED' ELSE 'DISABLED' END;
+ALTER TABLE users ALTER COLUMN account_status SET NOT NULL;
+ALTER TABLE users DROP COLUMN active;

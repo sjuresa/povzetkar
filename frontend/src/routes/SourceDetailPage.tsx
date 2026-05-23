@@ -10,11 +10,10 @@ import { ProcessingStatus } from '../api/generated/model/processingStatus';
 import type { ContentItem } from '../api/generated/model';
 import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
-import { 
-  ChevronLeft, 
-  ExternalLink, 
-  Youtube, 
-  Globe, 
+import {
+  ChevronLeft,
+  ExternalLink,
+  Globe,
   Clock, 
   FileText, 
   AlertCircle
@@ -24,6 +23,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { SummaryModal } from '../components/admin/SummaryModal';
+import { YoutubeIcon } from '../components/ui/YoutubeIcon';
 
 /**
  * Helper to format duration in seconds to MM:SS or HH:MM:SS
@@ -138,7 +138,7 @@ export function SourceDetailPage() {
               "w-16 h-16 rounded-xl md:rounded-[28px] flex items-center justify-center shadow-xl",
               source.platform === 'YOUTUBE' ? "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]" : "bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] text-[var(--color-action-primary)]"
             )}>
-              {source.platform === 'YOUTUBE' ? <Youtube size={32}  strokeWidth={1.5}/> : <Globe size={32}  strokeWidth={1.5}/>}
+              {source.platform === 'YOUTUBE' ? <YoutubeIcon size={32}  strokeWidth={1.5}/> : <Globe size={32}  strokeWidth={1.5}/>}
             </div>
             <div>
               <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] text-glow">

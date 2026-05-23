@@ -8,8 +8,8 @@ export interface UsersFilters {
 }
 
 interface UsersFiltersProps {
-  filters: UsersFilters;
-  onFiltersChange: (filters: UsersFilters) => void;
+  readonly filters: UsersFilters;
+  readonly onFiltersChange: (filters: UsersFilters) => void;
 }
 
 const DEBOUNCE_MS = 300;
