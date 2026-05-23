@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -46,6 +47,7 @@ class JobAuditIntegrationTest {
             user.username = "testuser";
             user.email = "test@example.com";
             user.name = "Test User";
+            user.accountStatus = AccountStatus.ENABLED;
             user.persist();
             testUserId = user.id;
 

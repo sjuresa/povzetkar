@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { UserDTO, AccountStatus } from '../../api/generated/model';
+import {
+  getGetApiV1UsersQueryKey,
+  usePostApiV1UsersIdApprove,
+  usePostApiV1UsersIdReject,
+  usePostApiV1UsersIdDisable,
+  usePostApiV1UsersIdEnable,
+} from '../../api/generated/users/users';
 
 type SortDirection = 'asc' | 'desc' | null;
 type SortField = 'email' | 'accountStatus' | 'lastLoginAt' | 'createdAt';
@@ -70,14 +77,48 @@ const STATUS_BADGE: Record<string, string> = {
 
 export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
   const { t, i18n } = useTranslation();
-  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
-  const sortState = parseSortState(sort);
+  const queryClient = useQueryClient();
 
-  const handleAction = () => {
-    // TODO: POV-185 — wire up generated mutation hooks once state machine endpoints are implemented
-    setPendingUserId(null);
-    toast.error(t('admin.users.error.not_implemented'));
+  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: getGetApiV1UsersQueryKey() });
+
+  const onError = (action: string) => {
+    toast.error(t('admin.users.error.action_failed', { action }));
   };
+
+  const approve = usePostApiV1UsersIdApprove({
+    mutation: {
+      onSuccess: () => { toast.success(t('admin.users.success.approved')); invalidateUsers(); },
+      onError: () => onError(t('admin.users.actions.approve')),
+    },
+  });
+
+  const reject = usePostApiV1UsersIdReject({
+    mutation: {
+      onSuccess: () => { toast.success(t('admin.users.success.rejected')); invalidateUsers(); },
+      onError: () => onError(t('admin.users.actions.reject')),
+    },
+  });
+
+  const disable = usePostApiV1UsersIdDisable({
+    mutation: {
+      onSuccess: () => { toast.success(t('admin.users.success.disabled')); invalidateUsers(); },
+      onError: (err: unknown) => {
+        const code = (err as { data?: { error?: { errorCode?: string } } })?.data?.error?.errorCode;
+        if (code === 'CANNOT_SELF_DISABLE') toast.error(t('admin.users.error.cannot_self_disable'));
+        else if (code === 'LAST_ADMIN_REQUIRED') toast.error(t('admin.users.error.last_admin_required'));
+        else onError(t('admin.users.actions.disable'));
+      },
+    },
+  });
+
+  const enable = usePostApiV1UsersIdEnable({
+    mutation: {
+      onSuccess: () => { toast.success(t('admin.users.success.enabled')); invalidateUsers(); },
+      onError: () => onError(t('admin.users.actions.enable')),
+    },
+  });
+
+  const pendingId = approve.isPending || reject.isPending || disable.isPending || enable.isPending;
 
   const thClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
   const thStaticClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest text-right';
@@ -95,25 +136,25 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
       <table className="w-full text-left border-collapse">
         <thead className="bg-[var(--color-surface-deep)]/80 border-b border-[var(--color-border-subtle)]">
           <tr>
-            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'email'))}>
-              {t('admin.users.table.email')}<SortIcon field="email" current={sortState} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'email'))}>
+              {t('admin.users.table.email')}<SortIcon field="email" current={parseSortState(sort)} />
             </th>
-            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'accountStatus'))}>
-              {t('admin.users.table.status')}<SortIcon field="accountStatus" current={sortState} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'accountStatus'))}>
+              {t('admin.users.table.status')}<SortIcon field="accountStatus" current={parseSortState(sort)} />
             </th>
-            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'lastLoginAt'))}>
-              {t('admin.users.table.lastLogin')}<SortIcon field="lastLoginAt" current={sortState} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'lastLoginAt'))}>
+              {t('admin.users.table.lastLogin')}<SortIcon field="lastLoginAt" current={parseSortState(sort)} />
             </th>
-            <th className={thClass} onClick={() => onSortChange(nextSort(sortState, 'createdAt'))}>
-              {t('admin.users.table.created')}<SortIcon field="createdAt" current={sortState} />
+            <th className={thClass} onClick={() => onSortChange(nextSort(parseSortState(sort), 'createdAt'))}>
+              {t('admin.users.table.created')}<SortIcon field="createdAt" current={parseSortState(sort)} />
             </th>
             <th className={thStaticClass}>{t('admin.users.table.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--color-border-subtle)]/50">
           {users.map((user) => {
-            const isPending = pendingUserId === user.id;
             const status: AccountStatus | undefined = user.accountStatus;
+            const userId = user.id as number;
             return (
               <tr key={user.id} className="hover:bg-[var(--color-surface-hover)]/30 transition-colors group">
                 <td className="px-4 py-4">
@@ -146,14 +187,14 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                       <>
                         <ActionButton
                           label={t('admin.users.actions.approve')}
-                          onClick={() => handleAction()}
-                          disabled={isPending}
+                          onClick={() => approve.mutate({ id: userId })}
+                          disabled={pendingId}
                           variant="neutral"
                         />
                         <ActionButton
                           label={t('admin.users.actions.reject')}
-                          onClick={() => handleAction()}
-                          disabled={isPending}
+                          onClick={() => reject.mutate({ id: userId })}
+                          disabled={pendingId}
                           variant="destructive"
                         />
                       </>
@@ -161,16 +202,16 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                     {status === 'ENABLED' && (
                       <ActionButton
                         label={t('admin.users.actions.disable')}
-                        onClick={() => handleAction()}
-                        disabled={isPending}
+                        onClick={() => disable.mutate({ id: userId })}
+                        disabled={pendingId}
                         variant="destructive"
                       />
                     )}
                     {(status === 'DISABLED' || status === 'REJECTED') && (
                       <ActionButton
                         label={status === 'REJECTED' ? t('admin.users.actions.reapprove') : t('admin.users.actions.enable')}
-                        onClick={() => handleAction()}
-                        disabled={isPending}
+                        onClick={() => enable.mutate({ id: userId })}
+                        disabled={pendingId}
                         variant="neutral"
                       />
                     )}

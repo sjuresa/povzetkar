@@ -1,7 +1,18 @@
 import type { AuditLogEntryDTO } from '../../api/generated/model';
 
+const HTTP_METHOD_BADGE: Record<string, string> = {
+  GET: 'bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 shadow-sm',
+  POST: 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] border border-[var(--color-action-primary)] shadow-md',
+  DELETE: 'bg-[var(--color-surface-deep)] text-[var(--color-text-primary)] border border-[var(--color-border-primary)] shadow-sm opacity-80',
+};
+const HTTP_METHOD_BADGE_DEFAULT = 'bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]';
+
+function httpMethodBadge(method: string | undefined): string {
+  return HTTP_METHOD_BADGE[method ?? ''] ?? HTTP_METHOD_BADGE_DEFAULT;
+}
+
 interface AuditLogTableProps {
-  logs: AuditLogEntryDTO[];
+  readonly logs: AuditLogEntryDTO[];
 }
 
 export function AuditLogTable({ logs }: AuditLogTableProps) {
@@ -27,12 +38,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                 </div>
               </td>
               <td className="px-6 py-4">
-                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight ${
-                  log.httpMethod === 'GET' ? 'bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 shadow-sm' :
-                  log.httpMethod === 'POST' ? 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] border border-[var(--color-action-primary)] shadow-md' :
-                  log.httpMethod === 'DELETE' ? 'bg-[var(--color-surface-deep)] text-[var(--color-text-primary)] border border-[var(--color-border-primary)] shadow-sm opacity-80' :
-                  'bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]'
-                }`}>
+                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight ${httpMethodBadge(log.httpMethod)}`}>
                   {log.httpMethod}
                 </span>
               </td>

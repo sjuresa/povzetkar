@@ -27,9 +27,7 @@ import type {
 import type {
   GetApiV1UsersParams,
   PaginatedResponse,
-  UserDTO,
-  UserRoleUpdateDTO,
-  UserUpdateDTO
+  UserDTO
 } from '../model';
 
 import { customInstance } from '../../client';
@@ -293,62 +291,60 @@ export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1Use
 
 
 /**
- * Activate or deactivate a user.
- * @summary Update user status
+ * Transitions account from PENDING_APPROVAL to ENABLED.
+ * @summary Approve a pending user
  */
-export type patchApiV1UsersIdResponse200 = {
+export type postApiV1UsersIdApproveResponse200 = {
   data: UserDTO
   status: 200
 }
 
-export type patchApiV1UsersIdResponse401 = {
+export type postApiV1UsersIdApproveResponse401 = {
   data: void
   status: 401
 }
 
-export type patchApiV1UsersIdResponse403 = {
+export type postApiV1UsersIdApproveResponse403 = {
   data: void
   status: 403
 }
 
-export type patchApiV1UsersIdResponseSuccess = (patchApiV1UsersIdResponse200) & {
+export type postApiV1UsersIdApproveResponseSuccess = (postApiV1UsersIdApproveResponse200) & {
   headers: Headers;
 };
-export type patchApiV1UsersIdResponseError = (patchApiV1UsersIdResponse401 | patchApiV1UsersIdResponse403) & {
+export type postApiV1UsersIdApproveResponseError = (postApiV1UsersIdApproveResponse401 | postApiV1UsersIdApproveResponse403) & {
   headers: Headers;
 };
 
-export type patchApiV1UsersIdResponse = (patchApiV1UsersIdResponseSuccess | patchApiV1UsersIdResponseError)
+export type postApiV1UsersIdApproveResponse = (postApiV1UsersIdApproveResponseSuccess | postApiV1UsersIdApproveResponseError)
 
-export const getPatchApiV1UsersIdUrl = (id: number,) => {
+export const getPostApiV1UsersIdApproveUrl = (id: number,) => {
 
 
   
 
-  return `/api/v1/users/${id}`
+  return `/api/v1/users/${id}/approve`
 }
 
-export const patchApiV1UsersId = async (id: number,
-    userUpdateDTO: UserUpdateDTO, options?: RequestInit): Promise<patchApiV1UsersIdResponse> => {
+export const postApiV1UsersIdApprove = async (id: number, options?: RequestInit): Promise<postApiV1UsersIdApproveResponse> => {
   
-  return customInstance<patchApiV1UsersIdResponse>(getPatchApiV1UsersIdUrl(id),
+  return customInstance<postApiV1UsersIdApproveResponse>(getPostApiV1UsersIdApproveUrl(id),
   {      
     ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      userUpdateDTO,)
+    method: 'POST'
+    
+    
   }
 );}
   
 
 
 
-export const getPatchApiV1UsersIdMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext> => {
+export const getPostApiV1UsersIdApproveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdApprove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdApprove>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['patchApiV1UsersId'];
+const mutationKey = ['postApiV1UsersIdApprove'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -358,10 +354,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchApiV1UsersId>>, {id: number;data: UserUpdateDTO}> = (props) => {
-          const {id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1UsersIdApprove>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
 
-          return  patchApiV1UsersId(id,data,requestOptions)
+          return  postApiV1UsersIdApprove(id,requestOptions)
         }
 
 
@@ -371,85 +367,78 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PatchApiV1UsersIdMutationResult = NonNullable<Awaited<ReturnType<typeof patchApiV1UsersId>>>
-    export type PatchApiV1UsersIdMutationBody = UserUpdateDTO
-    export type PatchApiV1UsersIdMutationError = void
+    export type PostApiV1UsersIdApproveMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1UsersIdApprove>>>
+    
+    export type PostApiV1UsersIdApproveMutationError = void
 
     /**
- * @summary Update user status
+ * @summary Approve a pending user
  */
-export const usePatchApiV1UsersId = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersId>>, TError,{id: number;data: UserUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePostApiV1UsersIdApprove = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdApprove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof patchApiV1UsersId>>,
+        Awaited<ReturnType<typeof postApiV1UsersIdApprove>>,
         TError,
-        {id: number;data: UserUpdateDTO},
+        {id: number},
         TContext
       > => {
-      return useMutation(getPatchApiV1UsersIdMutationOptions(options), queryClient);
+      return useMutation(getPostApiV1UsersIdApproveMutationOptions(options), queryClient);
     }
     /**
- * Assign or remove roles for a user.
- * @summary Update user roles
+ * Transitions account from ENABLED to DISABLED.
+ * @summary Disable an enabled user
  */
-export type putApiV1UsersIdRolesResponse200 = {
+export type postApiV1UsersIdDisableResponse200 = {
   data: UserDTO
   status: 200
 }
 
-export type putApiV1UsersIdRolesResponse400 = {
-  data: void
-  status: 400
-}
-
-export type putApiV1UsersIdRolesResponse401 = {
+export type postApiV1UsersIdDisableResponse401 = {
   data: void
   status: 401
 }
 
-export type putApiV1UsersIdRolesResponse403 = {
+export type postApiV1UsersIdDisableResponse403 = {
   data: void
   status: 403
 }
 
-export type putApiV1UsersIdRolesResponseSuccess = (putApiV1UsersIdRolesResponse200) & {
+export type postApiV1UsersIdDisableResponseSuccess = (postApiV1UsersIdDisableResponse200) & {
   headers: Headers;
 };
-export type putApiV1UsersIdRolesResponseError = (putApiV1UsersIdRolesResponse400 | putApiV1UsersIdRolesResponse401 | putApiV1UsersIdRolesResponse403) & {
+export type postApiV1UsersIdDisableResponseError = (postApiV1UsersIdDisableResponse401 | postApiV1UsersIdDisableResponse403) & {
   headers: Headers;
 };
 
-export type putApiV1UsersIdRolesResponse = (putApiV1UsersIdRolesResponseSuccess | putApiV1UsersIdRolesResponseError)
+export type postApiV1UsersIdDisableResponse = (postApiV1UsersIdDisableResponseSuccess | postApiV1UsersIdDisableResponseError)
 
-export const getPutApiV1UsersIdRolesUrl = (id: number,) => {
+export const getPostApiV1UsersIdDisableUrl = (id: number,) => {
 
 
   
 
-  return `/api/v1/users/${id}/roles`
+  return `/api/v1/users/${id}/disable`
 }
 
-export const putApiV1UsersIdRoles = async (id: number,
-    userRoleUpdateDTO: UserRoleUpdateDTO, options?: RequestInit): Promise<putApiV1UsersIdRolesResponse> => {
+export const postApiV1UsersIdDisable = async (id: number, options?: RequestInit): Promise<postApiV1UsersIdDisableResponse> => {
   
-  return customInstance<putApiV1UsersIdRolesResponse>(getPutApiV1UsersIdRolesUrl(id),
+  return customInstance<postApiV1UsersIdDisableResponse>(getPostApiV1UsersIdDisableUrl(id),
   {      
     ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      userRoleUpdateDTO,)
+    method: 'POST'
+    
+    
   }
 );}
   
 
 
 
-export const getPutApiV1UsersIdRolesMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext> => {
+export const getPostApiV1UsersIdDisableMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdDisable>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdDisable>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['putApiV1UsersIdRoles'];
+const mutationKey = ['postApiV1UsersIdDisable'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -459,10 +448,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, {id: number;data: UserRoleUpdateDTO}> = (props) => {
-          const {id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1UsersIdDisable>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
 
-          return  putApiV1UsersIdRoles(id,data,requestOptions)
+          return  postApiV1UsersIdDisable(id,requestOptions)
         }
 
 
@@ -472,21 +461,209 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PutApiV1UsersIdRolesMutationResult = NonNullable<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>>
-    export type PutApiV1UsersIdRolesMutationBody = UserRoleUpdateDTO
-    export type PutApiV1UsersIdRolesMutationError = void
+    export type PostApiV1UsersIdDisableMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1UsersIdDisable>>>
+    
+    export type PostApiV1UsersIdDisableMutationError = void
 
     /**
- * @summary Update user roles
+ * @summary Disable an enabled user
  */
-export const usePutApiV1UsersIdRoles = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiV1UsersIdRoles>>, TError,{id: number;data: UserRoleUpdateDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePostApiV1UsersIdDisable = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdDisable>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof putApiV1UsersIdRoles>>,
+        Awaited<ReturnType<typeof postApiV1UsersIdDisable>>,
         TError,
-        {id: number;data: UserRoleUpdateDTO},
+        {id: number},
         TContext
       > => {
-      return useMutation(getPutApiV1UsersIdRolesMutationOptions(options), queryClient);
+      return useMutation(getPostApiV1UsersIdDisableMutationOptions(options), queryClient);
+    }
+    /**
+ * Transitions account from DISABLED or REJECTED to ENABLED.
+ * @summary Enable a disabled or rejected user
+ */
+export type postApiV1UsersIdEnableResponse200 = {
+  data: UserDTO
+  status: 200
+}
+
+export type postApiV1UsersIdEnableResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1UsersIdEnableResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1UsersIdEnableResponseSuccess = (postApiV1UsersIdEnableResponse200) & {
+  headers: Headers;
+};
+export type postApiV1UsersIdEnableResponseError = (postApiV1UsersIdEnableResponse401 | postApiV1UsersIdEnableResponse403) & {
+  headers: Headers;
+};
+
+export type postApiV1UsersIdEnableResponse = (postApiV1UsersIdEnableResponseSuccess | postApiV1UsersIdEnableResponseError)
+
+export const getPostApiV1UsersIdEnableUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/users/${id}/enable`
+}
+
+export const postApiV1UsersIdEnable = async (id: number, options?: RequestInit): Promise<postApiV1UsersIdEnableResponse> => {
+  
+  return customInstance<postApiV1UsersIdEnableResponse>(getPostApiV1UsersIdEnableUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1UsersIdEnableMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdEnable>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdEnable>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1UsersIdEnable'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1UsersIdEnable>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1UsersIdEnable(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1UsersIdEnableMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1UsersIdEnable>>>
+    
+    export type PostApiV1UsersIdEnableMutationError = void
+
+    /**
+ * @summary Enable a disabled or rejected user
+ */
+export const usePostApiV1UsersIdEnable = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdEnable>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1UsersIdEnable>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1UsersIdEnableMutationOptions(options), queryClient);
+    }
+    /**
+ * Transitions account from PENDING_APPROVAL to REJECTED.
+ * @summary Reject a pending user
+ */
+export type postApiV1UsersIdRejectResponse200 = {
+  data: UserDTO
+  status: 200
+}
+
+export type postApiV1UsersIdRejectResponse401 = {
+  data: void
+  status: 401
+}
+
+export type postApiV1UsersIdRejectResponse403 = {
+  data: void
+  status: 403
+}
+
+export type postApiV1UsersIdRejectResponseSuccess = (postApiV1UsersIdRejectResponse200) & {
+  headers: Headers;
+};
+export type postApiV1UsersIdRejectResponseError = (postApiV1UsersIdRejectResponse401 | postApiV1UsersIdRejectResponse403) & {
+  headers: Headers;
+};
+
+export type postApiV1UsersIdRejectResponse = (postApiV1UsersIdRejectResponseSuccess | postApiV1UsersIdRejectResponseError)
+
+export const getPostApiV1UsersIdRejectUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/users/${id}/reject`
+}
+
+export const postApiV1UsersIdReject = async (id: number, options?: RequestInit): Promise<postApiV1UsersIdRejectResponse> => {
+  
+  return customInstance<postApiV1UsersIdRejectResponse>(getPostApiV1UsersIdRejectUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+  
+
+
+
+export const getPostApiV1UsersIdRejectMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdReject>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdReject>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['postApiV1UsersIdReject'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1UsersIdReject>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postApiV1UsersIdReject(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiV1UsersIdRejectMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1UsersIdReject>>>
+    
+    export type PostApiV1UsersIdRejectMutationError = void
+
+    /**
+ * @summary Reject a pending user
+ */
+export const usePostApiV1UsersIdReject = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1UsersIdReject>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiV1UsersIdReject>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPostApiV1UsersIdRejectMutationOptions(options), queryClient);
     }
     

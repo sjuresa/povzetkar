@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] (v0.17.0)
 
+### Added (POV-185)
+
+- **Account activation state machine**: Four-state `AccountStatus` enum (`PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED`) replaces `users.active` boolean; Flyway migrations V30–V32.
+- **Admin action endpoints**: `POST /api/v1/users/{id}/approve|reject|disable|enable` — each enforces state-transition guards via `UserAccountService`; self-disable (409) and last-admin (409) protections.
+- **`BusinessRuleException` + mapper**: Structured error codes (`INVALID_STATE_TRANSITION`, `CANNOT_SELF_DISABLE`, `LAST_ADMIN_REQUIRED`) returned in `ApiErrorDTO.errorCode`.
+- **Demo content impersonation**: `UserContextService.getContentViewingUser()` — pending users with the `demo` role transparently see `demo@povzetkar.local` content; no frontend changes required for read paths.
+- **`demo` role + permissions**: New `ROLE_DEMO` constant; `RolePermissionsMap` grants `TOPIC_VIEW`, `BRIEFING_VIEW`, `CONTENT_ITEM_VIEW`; new users created with `PENDING_APPROVAL` + `demo` role.
+- **Demo seed (V32)**: `demo@povzetkar.local` + `Science & Discovery` topic (enabled=false) + Kurzgesagt (`UCsXVk37bltHxD1rDPwtNM8Q`) and Veritasium (`UCHnyfMqiRRG1u-2MsSQLbXA`) YouTube channels.
+- **`GET /me` open to all authenticated users**: Changed from `@RolesAllowed(ROLE_USER)` to `@Authenticated`; pending/disabled/rejected users can always fetch their account status.
+- **`AccountStatusBanner` component**: Persistent sticky banner rendered in `AppShell` for non-ENABLED users; per-state i18n keys (`account.pending.*`, `account.rejected.*`, `account.disabled.*`).
+- **i18n**: Added `account.pending.*`, `account.rejected.*`, `account.disabled.*` keys; added `admin.users.error.invalid_state_transition` to `en.json` and `sl.json`.
+- **RUNBOOK section 15**: Documents approval requirement, admin action endpoints, initial admin seeding (Option A: SQL INSERT; Option B: approve after first sign-in), and demo content purpose.
+
+### Changed (POV-185)
+
+- **`users.active` column removed**: Replaced by `users.account_status VARCHAR(50) NOT NULL`; existing rows backfilled (`active=true` → `ENABLED`, `active=false` → `DISABLED`).
+- **`User.listAllEnabled()`**: Renamed from `listAllActive()`; filters on `accountStatus = ENABLED`; all `OrchestrationManager` call-sites updated.
+- **`UserDTO.active` removed**: Dropped `boolean active` field; `accountStatus` auto-maps via MapStruct (removed null-stub `@Mapping`).
+- **`PATCH /{id}` and `PUT /{id}/roles` deleted**: Old user management endpoints removed; replaced by the four new action endpoints.
+- **Read call-sites migrated**: `TopicApiResource`, `BriefingApiResource`, `DashboardApiResource`, and `TopicResource` (SSR) read paths now use `getContentViewingUser()` for demo impersonation; write paths unchanged.
+- **`UserBuilder` refactored**: `boolean active` replaced by `AccountStatus accountStatus = ENABLED`; `.inactive()` removed; `.pending()` and `.withStatus(AccountStatus)` added.
+
 ### Added (POV-184)
 
 - **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.

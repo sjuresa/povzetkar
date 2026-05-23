@@ -25,6 +25,11 @@ public abstract class BaseApiResource {
                 .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
     }
 
+    protected User getContentViewingUser() {
+        return userContextService.getContentViewingUser()
+                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+    }
+
     protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {
         if (ifMatchHeader == null || ifMatchHeader.isBlank()) {
             // The OptimisticLockingFilter should have already caught this for external requests.

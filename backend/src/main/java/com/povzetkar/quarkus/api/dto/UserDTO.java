@@ -13,7 +13,6 @@ public record UserDTO(
     String name,
     String email,
     String authProvider,
-    boolean active,
     AccountStatus accountStatus,
     Instant lastLoginAt,
     Instant createdAt,

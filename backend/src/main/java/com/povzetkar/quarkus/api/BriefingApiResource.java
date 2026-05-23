@@ -77,7 +77,7 @@ public class BriefingApiResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
-        User user = getAuthenticatedUser();
+        User user = getContentViewingUser();
 
         FilterBuilder filterBuilder = new FilterBuilder("t.user = :user")
             .withParam("user", user);
@@ -129,7 +129,7 @@ public class BriefingApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Briefing not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the briefing to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public BriefingDetailDTO getBriefing(@PathParam("id") Long id) {
-        User user = getAuthenticatedUser();
+        User user = getContentViewingUser();
         Briefing briefing = Briefing.<Briefing>find(
                 "select distinct b from Briefing b left join fetch b.summaries s left join fetch s.contentItem where b.id = ?1 and b.topic.user = ?2",
                 id, user)

@@ -2,7 +2,6 @@ package com.povzetkar.quarkus.model;
 
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
-
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -74,7 +73,7 @@ class UserTest {
 
     @Test
     @Transactional
-    void testUserActiveDefaultValue() {
+    void testUserDefaultAccountStatus() {
         User user = UserBuilder.aUser()
             .withUsername("testuser_active")
             .withEmail("testuser_active@example.com")
@@ -84,7 +83,7 @@ class UserTest {
 
         User retrievedUser = em.find(User.class, user.id);
         assertNotNull(retrievedUser);
-        assertTrue(retrievedUser.active, "Default value for active should be true");
+        assertEquals(AccountStatus.ENABLED, retrievedUser.accountStatus, "Default accountStatus should be ENABLED");
     }
 
     @Test
@@ -94,7 +93,7 @@ class UserTest {
             .withUsername("testuser_retrieve")
             .withEmail("testuser_retrieve@example.com")
             .withName("Another Test User")
-            .inactive()
+            .withStatus(AccountStatus.DISABLED)
             .build();
         persistAndFlush(user);
 
@@ -103,7 +102,7 @@ class UserTest {
         assertEquals(user.id, retrievedUser.id);
         assertEquals("Another Test User", retrievedUser.name);
         assertEquals("testuser_retrieve@example.com", retrievedUser.email);
-        assertFalse(retrievedUser.active);
+        assertEquals(AccountStatus.DISABLED, retrievedUser.accountStatus);
         assertNotNull(retrievedUser.createdAt);
         assertNotNull(retrievedUser.updatedAt);
     }

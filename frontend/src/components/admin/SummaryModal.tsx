@@ -3,16 +3,16 @@ import { useGetApiV1ContentItemsIdSummary } from '../../api/generated/content-it
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { Skeleton } from '../ui/Skeleton';
-import { 
-  X, 
-  Youtube, 
-  Globe, 
-  FileText, 
+import {
+  X,
+  Globe,
+  FileText,
   AlertCircle,
   Calendar,
   Clock,
   User as UserIcon
 } from 'lucide-react';
+import { YoutubeIcon } from '../ui/YoutubeIcon';
 
 import { useTranslation } from 'react-i18next';
 import { ExportMenu } from '../briefing/ExportMenu';
@@ -62,7 +62,7 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
         <div className="p-6 md:p-8 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/40 backdrop-blur-xl flex items-center justify-between">
            <div className="flex items-center space-x-4">
               <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] ring-4 ring-[var(--color-ring-focus)]/5">
-                {summary?.platform === 'YOUTUBE' ? <Youtube size={24}  strokeWidth={1.5}/> : <Globe size={24}  strokeWidth={1.5}/>}
+                {summary?.platform === 'YOUTUBE' ? <YoutubeIcon size={24}  strokeWidth={1.5}/> : <Globe size={24}  strokeWidth={1.5}/>}
               </div>
                <div>
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] leading-tight line-clamp-1">

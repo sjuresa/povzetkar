@@ -57,7 +57,7 @@ public class DashboardApiResource extends BaseApiResource {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = DashboardDTO.class))
     )
     public Uni<DashboardDTO> getDashboard() {
-        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getAuthenticatedUser))
+        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(this::getContentViewingUser))
                 .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
                 .flatMap(this::fetchDashboardData);
     }

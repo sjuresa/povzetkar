@@ -3,8 +3,8 @@ import { ProcessingStatus } from '../../api/generated/model/processingStatus';
 import { useTranslation } from 'react-i18next';
 
 export interface ContentItemFiltersProps {
-  filters: { status?: ProcessingStatus[]; topicId?: number };
-  onFilterChange: (filters: { status?: ProcessingStatus[]; topicId?: number }) => void;
+  readonly filters: { status?: ProcessingStatus[]; topicId?: number };
+  readonly onFilterChange: (filters: { status?: ProcessingStatus[]; topicId?: number }) => void;
 }
 
 export function ContentItemFilters({ filters, onFilterChange }: ContentItemFiltersProps) {

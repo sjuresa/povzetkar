@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.builder.UserBuilder;
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.UserIdentity;
@@ -27,6 +28,7 @@ class UserContextServiceTest {
         cleanup();
         new Role("user").persist();
         new Role("admin").persist();
+        new Role("demo").persist();
     }
 
     @AfterEach
@@ -92,7 +94,9 @@ class UserContextServiceTest {
 
         assertThat(result.id).isNotNull();
         assertThat(result.email).isEqualTo("new@example.com");
-        assertThat(result.roles).anyMatch(r -> r.name.equals("user"));
+        assertThat(result.accountStatus).isEqualTo(AccountStatus.PENDING_APPROVAL);
+        assertThat(result.roles).anyMatch(r -> r.name.equals("demo"));
+        assertThat(result.roles).noneMatch(r -> r.name.equals("user"));
         assertThat(result.identities).hasSize(1);
 
         User persisted = User.findById(result.id);

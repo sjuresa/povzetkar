@@ -1,8 +1,10 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
+import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.OrchestrationManager;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
@@ -226,10 +228,11 @@ class AdminApiResourceTest {
         UUID jobId = UUID.randomUUID();
         String corrId = "corr-" + UUID.randomUUID();
         QuarkusTransaction.requiringNew().run(() -> {
-            com.povzetkar.quarkus.model.User user = new com.povzetkar.quarkus.model.User();
+            com.povzetkar.quarkus.model.User user = new User();
             user.username = "trail-user";
             user.email = "trail@example.com";
             user.name = "Trail User";
+            user.accountStatus = AccountStatus.ENABLED;
             user.persist();
             
             BackgroundJob job = new BackgroundJob(JobType.SYNC_YOUTUBE_FEEDS);

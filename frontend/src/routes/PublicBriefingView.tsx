@@ -1,14 +1,14 @@
-import { 
-  ExternalLink, 
-  Sun, 
-  Moon, 
-  Languages, 
-  ArrowDown, 
-  Youtube, 
-  Globe, 
+import {
+  ExternalLink,
+  Sun,
+  Moon,
+  Languages,
+  ArrowDown,
+  Globe,
   Hash,
   Calendar
 } from 'lucide-react';
+import { YoutubeIcon } from '../components/ui/YoutubeIcon';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { sl, enUS } from 'date-fns/locale';
@@ -177,7 +177,7 @@ export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
               <div key={item.contentItem?.id} id={`item-${item.contentItem?.id}`} className="scroll-mt-24 pt-12 border-t border-[var(--color-border-subtle)] first:border-0 first:pt-0">
                 <div className="flex items-start gap-4 mb-8 group/source">
                   <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] flex-shrink-0 group-hover/source:bg-[var(--color-action-primary)]/20 transition-colors">
-                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? <Youtube className="w-6 h-6"  strokeWidth={1.5}/> : <Globe className="w-6 h-6"  strokeWidth={1.5}/>}
+                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? <YoutubeIcon className="w-6 h-6"  strokeWidth={1.5}/> : <Globe className="w-6 h-6"  strokeWidth={1.5}/>}
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-0.5">

@@ -17,7 +17,6 @@ export interface UserDTO {
   name?: string;
   email?: string;
   authProvider?: string;
-  active?: boolean;
   accountStatus?: AccountStatus;
   lastLoginAt?: Instant;
   createdAt?: Instant;

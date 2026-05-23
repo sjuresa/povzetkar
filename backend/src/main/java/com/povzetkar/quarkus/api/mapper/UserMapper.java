@@ -18,8 +18,6 @@ public abstract class UserMapper {
     @Mapping(target = "authProvider", source = "identities", qualifiedByName = "mapAuthProvider")
     @Mapping(target = "permissions", source = "roles", qualifiedByName = "mapPermissions")
     @Mapping(target = "lastLoginAt", source = "lastLoginAt")
-    // TODO: POV-185 — map accountStatus from User.accountStatus once state machine is implemented
-    @Mapping(target = "accountStatus", expression = "java(null)")
     public abstract UserDTO toDTO(User entity);
 
     @Named("mapAuthProvider")

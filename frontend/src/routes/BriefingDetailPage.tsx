@@ -9,7 +9,6 @@ import { sl, enUS } from 'date-fns/locale';
 import {
   ArrowLeft,
   AlertCircle,
-  Youtube,
   Globe,
   ArrowDown,
   ExternalLink,
@@ -22,6 +21,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, BriefingItemDTO } from '../api/generated/model';
 import { useOnboardingStore } from '../store/onboardingStore';
+import { YoutubeIcon } from '../components/ui/YoutubeIcon';
 
 /**
  * BriefingDetailPage renders the full content of a single briefing.
@@ -182,7 +182,7 @@ export function BriefingDetailPage() {
                   ) : (
                     <div className="w-full aspect-video rounded-xl bg-[var(--color-surface-deep)] flex items-center justify-center text-[var(--color-text-secondary)]">
                       {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? (
-                        <Youtube className="w-8 h-8 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
+                        <YoutubeIcon className="w-8 h-8 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
                       ) : (
                         <Globe className="w-8 h-8 text-[var(--color-action-primary)]"  strokeWidth={1.5}/>
                       )}
@@ -247,7 +247,7 @@ export function BriefingDetailPage() {
                 <div className="flex items-start gap-4 mb-8 group/source">
                   <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] flex-shrink-0 group-hover/source:bg-[var(--color-action-primary)]/20 transition-colors">
                     {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? (
-                      <Youtube className="w-6 h-6 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
+                      <YoutubeIcon className="w-6 h-6 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
                     ) : (
                       <Globe className="w-6 h-6"  strokeWidth={1.5}/>
                     )}
