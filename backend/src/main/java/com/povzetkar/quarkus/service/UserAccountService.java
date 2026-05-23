@@ -7,7 +7,9 @@ import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.security.Permission;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 
@@ -22,8 +24,9 @@ public class UserAccountService {
     }
 
     @Transactional
-    public User approve(Long targetUserId) {
+    public User approve(Long targetUserId, String ifMatch) {
         User user = loadWithRoles(targetUserId);
+        checkOptimisticLock(user, ifMatch);
         assertCurrentStateIs(user, AccountStatus.PENDING_APPROVAL);
         removeRoleByName(user, Permission.ROLE_DEMO);
         addRoleByName(user, Permission.ROLE_USER);
@@ -33,8 +36,9 @@ public class UserAccountService {
     }
 
     @Transactional
-    public User reject(Long targetUserId) {
+    public User reject(Long targetUserId, String ifMatch) {
         User user = loadWithRoles(targetUserId);
+        checkOptimisticLock(user, ifMatch);
         assertCurrentStateIs(user, AccountStatus.PENDING_APPROVAL);
         removeRoleByName(user, Permission.ROLE_DEMO);
         user.accountStatus = AccountStatus.REJECTED;
@@ -43,8 +47,9 @@ public class UserAccountService {
     }
 
     @Transactional
-    public User disable(Long targetUserId) {
+    public User disable(Long targetUserId, String ifMatch) {
         User user = loadWithRoles(targetUserId);
+        checkOptimisticLock(user, ifMatch);
         assertCurrentStateIs(user, AccountStatus.ENABLED);
         assertNotSelf(user);
         assertNotLastAdmin(user);
@@ -54,8 +59,9 @@ public class UserAccountService {
     }
 
     @Transactional
-    public User enable(Long targetUserId) {
+    public User enable(Long targetUserId, String ifMatch) {
         User user = loadWithRoles(targetUserId);
+        checkOptimisticLock(user, ifMatch);
         if (user.accountStatus != AccountStatus.DISABLED && user.accountStatus != AccountStatus.REJECTED) {
             throw new BusinessRuleException(
                     Response.Status.BAD_REQUEST,
@@ -122,5 +128,20 @@ public class UserAccountService {
 
     private void removeRoleByName(User user, String roleName) {
         user.roles.removeIf(r -> roleName.equalsIgnoreCase(r.name));
+    }
+
+    private void checkOptimisticLock(User user, String ifMatch) {
+        if (ifMatch == null || ifMatch.isBlank()) {
+            throw new BadRequestException("Missing If-Match header");
+        }
+        try {
+            int clientVersion = Integer.parseInt(ifMatch.replace("\"", "").trim());
+            if (user.version == null || user.version != clientVersion) {
+                throw new OptimisticLockException(
+                        "Version mismatch: expected " + user.version + " but got " + clientVersion);
+            }
+        } catch (NumberFormatException _) {
+            throw new BadRequestException("Invalid If-Match header format");
+        }
     }
 }

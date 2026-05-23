@@ -21,7 +21,7 @@ public class UserContextService {
     public static final String PROVIDER_GOOGLE = "google";
     public static final String DEMO_USER_EMAIL = "demo@povzetkar.local";
     private final SecurityIdentity securityIdentity;
-    private volatile Long demoUserId;
+    private volatile Long demoUserId; // -1L = looked up but not found; null = not yet looked up
 
     public UserContextService(SecurityIdentity securityIdentity) {
         this.securityIdentity = securityIdentity;
@@ -76,17 +76,19 @@ public class UserContextService {
      */
     public Optional<User> getContentViewingUser() {
         if (securityIdentity.hasRole(Permission.ROLE_DEMO)) {
-            return User.findByIdOptional(resolveDemoUserId());
+            Long id = resolveDemoUserId();
+            return id == null ? Optional.empty() : User.findByIdOptional(id);
         }
         return getCurrentUser();
     }
 
     private synchronized Long resolveDemoUserId() {
         if (demoUserId == null) {
-            demoUserId = User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
+            Long found = User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
                     .map(u -> u.id).orElse(null);
+            demoUserId = (found != null) ? found : -1L;
         }
-        return demoUserId;
+        return demoUserId == -1L ? null : demoUserId;
     }
 
     /**

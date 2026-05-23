@@ -16,9 +16,11 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -130,7 +132,7 @@ public class UserApiResource extends BaseApiResource {
         List<User> usersWithRoles = User.list("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles LEFT JOIN FETCH u.identities WHERE u.id IN ?1", userIds);
 
         Map<Long, User> userMap = usersWithRoles.stream().collect(
-                Collectors.toMap(u -> u.id, Function.identity(), (existing, duplicate) -> existing, LinkedHashMap::new)
+                Collectors.toMap(u -> u.id, Function.identity(), (existing, _) -> existing, LinkedHashMap::new)
         );
 
         List<UserDTO> items = userIds.stream()
@@ -147,10 +149,11 @@ public class UserApiResource extends BaseApiResource {
     @Consumes(MediaType.WILDCARD)
     @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
+    @OptimisticLocking
     @Operation(summary = "Approve a pending user", description = "Transitions account from PENDING_APPROVAL to ENABLED.")
     @APIResponse(responseCode = "200", description = "User approved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
-    public UserDTO approveUser(@PathParam("id") Long id) {
-        return userMapper.toDTO(userAccountService.approve(id));
+    public UserDTO approveUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        return userMapper.toDTO(userAccountService.approve(id, ifMatch));
     }
 
     @POST
@@ -158,10 +161,11 @@ public class UserApiResource extends BaseApiResource {
     @Consumes(MediaType.WILDCARD)
     @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
+    @OptimisticLocking
     @Operation(summary = "Reject a pending user", description = "Transitions account from PENDING_APPROVAL to REJECTED.")
     @APIResponse(responseCode = "200", description = "User rejected", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
-    public UserDTO rejectUser(@PathParam("id") Long id) {
-        return userMapper.toDTO(userAccountService.reject(id));
+    public UserDTO rejectUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        return userMapper.toDTO(userAccountService.reject(id, ifMatch));
     }
 
     @POST
@@ -169,10 +173,11 @@ public class UserApiResource extends BaseApiResource {
     @Consumes(MediaType.WILDCARD)
     @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
+    @OptimisticLocking
     @Operation(summary = "Disable an enabled user", description = "Transitions account from ENABLED to DISABLED.")
     @APIResponse(responseCode = "200", description = "User disabled", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
-    public UserDTO disableUser(@PathParam("id") Long id) {
-        return userMapper.toDTO(userAccountService.disable(id));
+    public UserDTO disableUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        return userMapper.toDTO(userAccountService.disable(id, ifMatch));
     }
 
     @POST
@@ -180,9 +185,10 @@ public class UserApiResource extends BaseApiResource {
     @Consumes(MediaType.WILDCARD)
     @RolesAllowed(Permission.V_USER_MGMT_UPDATE)
     @Transactional
+    @OptimisticLocking
     @Operation(summary = "Enable a disabled or rejected user", description = "Transitions account from DISABLED or REJECTED to ENABLED.")
     @APIResponse(responseCode = "200", description = "User enabled", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
-    public UserDTO enableUser(@PathParam("id") Long id) {
-        return userMapper.toDTO(userAccountService.enable(id));
+    public UserDTO enableUser(@PathParam("id") Long id, @HeaderParam("If-Match") String ifMatch) {
+        return userMapper.toDTO(userAccountService.enable(id, ifMatch));
     }
 }

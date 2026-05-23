@@ -10,6 +10,7 @@ import java.util.Set;
 @Schema(description = "DTO for User profile and permissions")
 public record UserDTO(
     Long id,
+    Integer version,
     String name,
     String email,
     String authProvider,

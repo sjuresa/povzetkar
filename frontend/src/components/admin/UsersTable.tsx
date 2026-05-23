@@ -1,13 +1,13 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { UserDTO, AccountStatus } from '../../api/generated/model';
 import {
   getGetApiV1UsersQueryKey,
-  usePostApiV1UsersIdApprove,
-  usePostApiV1UsersIdReject,
-  usePostApiV1UsersIdDisable,
-  usePostApiV1UsersIdEnable,
+  postApiV1UsersIdApprove,
+  postApiV1UsersIdReject,
+  postApiV1UsersIdDisable,
+  postApiV1UsersIdEnable,
 } from '../../api/generated/users/users';
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -36,7 +36,7 @@ function formatDate(value: unknown, lang: string): string {
   return d.toLocaleDateString(lang, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function formatRelative(value: unknown, neverLabel: string, t: (key: string, opts?: object) => string): string {
+function formatRelative(value: unknown, neverLabel: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const date = toDate(value);
   if (!date) return neverLabel;
   const diff = Date.now() - date.getTime();
@@ -85,37 +85,41 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
     toast.error(t('admin.users.error.action_failed', { action }));
   };
 
-  const approve = usePostApiV1UsersIdApprove({
-    mutation: {
-      onSuccess: () => { toast.success(t('admin.users.success.approved')); invalidateUsers(); },
-      onError: () => onError(t('admin.users.actions.approve')),
+  const ifMatchHeaders = (version: number | undefined) => ({
+    headers: { 'If-Match': String(version ?? 0) },
+  });
+
+  const approve = useMutation({
+    mutationFn: ({ id, version }: { id: number; version: number | undefined }) =>
+      postApiV1UsersIdApprove(id, ifMatchHeaders(version)),
+    onSuccess: () => { toast.success(t('admin.users.success.approved')); invalidateUsers(); },
+    onError: () => onError(t('admin.users.actions.approve')),
+  });
+
+  const reject = useMutation({
+    mutationFn: ({ id, version }: { id: number; version: number | undefined }) =>
+      postApiV1UsersIdReject(id, ifMatchHeaders(version)),
+    onSuccess: () => { toast.success(t('admin.users.success.rejected')); invalidateUsers(); },
+    onError: () => onError(t('admin.users.actions.reject')),
+  });
+
+  const disable = useMutation({
+    mutationFn: ({ id, version }: { id: number; version: number | undefined }) =>
+      postApiV1UsersIdDisable(id, ifMatchHeaders(version)),
+    onSuccess: () => { toast.success(t('admin.users.success.disabled')); invalidateUsers(); },
+    onError: (err: unknown) => {
+      const code = (err as { data?: { error?: { errorCode?: string } } })?.data?.error?.errorCode;
+      if (code === 'CANNOT_SELF_DISABLE') toast.error(t('admin.users.error.cannot_self_disable'));
+      else if (code === 'LAST_ADMIN_REQUIRED') toast.error(t('admin.users.error.last_admin_required'));
+      else onError(t('admin.users.actions.disable'));
     },
   });
 
-  const reject = usePostApiV1UsersIdReject({
-    mutation: {
-      onSuccess: () => { toast.success(t('admin.users.success.rejected')); invalidateUsers(); },
-      onError: () => onError(t('admin.users.actions.reject')),
-    },
-  });
-
-  const disable = usePostApiV1UsersIdDisable({
-    mutation: {
-      onSuccess: () => { toast.success(t('admin.users.success.disabled')); invalidateUsers(); },
-      onError: (err: unknown) => {
-        const code = (err as { data?: { error?: { errorCode?: string } } })?.data?.error?.errorCode;
-        if (code === 'CANNOT_SELF_DISABLE') toast.error(t('admin.users.error.cannot_self_disable'));
-        else if (code === 'LAST_ADMIN_REQUIRED') toast.error(t('admin.users.error.last_admin_required'));
-        else onError(t('admin.users.actions.disable'));
-      },
-    },
-  });
-
-  const enable = usePostApiV1UsersIdEnable({
-    mutation: {
-      onSuccess: () => { toast.success(t('admin.users.success.enabled')); invalidateUsers(); },
-      onError: () => onError(t('admin.users.actions.enable')),
-    },
+  const enable = useMutation({
+    mutationFn: ({ id, version }: { id: number; version: number | undefined }) =>
+      postApiV1UsersIdEnable(id, ifMatchHeaders(version)),
+    onSuccess: () => { toast.success(t('admin.users.success.enabled')); invalidateUsers(); },
+    onError: () => onError(t('admin.users.actions.enable')),
   });
 
   const isActionPending = approve.isPending || reject.isPending || disable.isPending || enable.isPending;
@@ -155,6 +159,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
           {users.map((user) => {
             const status: AccountStatus | undefined = user.accountStatus;
             const userId = user.id as number;
+            const userVersion = user.version;
             return (
               <tr key={user.id} className="hover:bg-[var(--color-surface-hover)]/30 transition-colors group">
                 <td className="px-4 py-4">
@@ -187,13 +192,13 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                       <>
                         <ActionButton
                           label={t('admin.users.actions.approve')}
-                          onClick={() => approve.mutate({ id: userId })}
+                          onClick={() => approve.mutate({ id: userId, version: userVersion })}
                           disabled={isActionPending}
                           variant="neutral"
                         />
                         <ActionButton
                           label={t('admin.users.actions.reject')}
-                          onClick={() => reject.mutate({ id: userId })}
+                          onClick={() => reject.mutate({ id: userId, version: userVersion })}
                           disabled={isActionPending}
                           variant="destructive"
                         />
@@ -202,7 +207,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                     {status === 'ENABLED' && (
                       <ActionButton
                         label={t('admin.users.actions.disable')}
-                        onClick={() => disable.mutate({ id: userId })}
+                        onClick={() => disable.mutate({ id: userId, version: userVersion })}
                         disabled={isActionPending}
                         variant="destructive"
                       />
@@ -210,7 +215,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
                     {(status === 'DISABLED' || status === 'REJECTED') && (
                       <ActionButton
                         label={status === 'REJECTED' ? t('admin.users.actions.reapprove') : t('admin.users.actions.enable')}
-                        onClick={() => enable.mutate({ id: userId })}
+                        onClick={() => enable.mutate({ id: userId, version: userVersion })}
                         disabled={isActionPending}
                         variant="neutral"
                       />

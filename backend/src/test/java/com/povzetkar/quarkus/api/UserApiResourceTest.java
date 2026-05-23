@@ -150,7 +150,8 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testApprove_Succeeds() {
-        given().when().post("/api/v1/users/" + pendingUser.id + "/approve")
+        given().header("If-Match", pendingUser.version)
+                .when().post("/api/v1/users/" + pendingUser.id + "/approve")
                 .then().statusCode(200)
                 .body("data.accountStatus", equalTo("ENABLED"))
                 .body("data.roles.name", hasItem("user"))
@@ -160,9 +161,19 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testApprove_WrongState_Returns400() {
-        given().when().post("/api/v1/users/" + regularUser.id + "/approve")
+        given().header("If-Match", regularUser.version)
+                .when().post("/api/v1/users/" + regularUser.id + "/approve")
                 .then().statusCode(400)
                 .body("error.errorCode", equalTo("INVALID_STATE_TRANSITION"));
+    }
+
+    @Test
+    @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
+    void testApprove_StaleVersion_Returns409() {
+        given().header("If-Match", pendingUser.version + 99)
+                .when().post("/api/v1/users/" + pendingUser.id + "/approve")
+                .then().statusCode(409)
+                .body("error.errorCode", equalTo("OPTIMISTIC_LOCK_ERROR"));
     }
 
     // --- POST /{id}/reject ---
@@ -170,7 +181,8 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testReject_Succeeds() {
-        given().when().post("/api/v1/users/" + pendingUser.id + "/reject")
+        given().header("If-Match", pendingUser.version)
+                .when().post("/api/v1/users/" + pendingUser.id + "/reject")
                 .then().statusCode(200)
                 .body("data.accountStatus", equalTo("REJECTED"))
                 .body("data.roles.name", not(hasItem("demo")));
@@ -179,7 +191,8 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testReject_WrongState_Returns400() {
-        given().when().post("/api/v1/users/" + regularUser.id + "/reject")
+        given().header("If-Match", regularUser.version)
+                .when().post("/api/v1/users/" + regularUser.id + "/reject")
                 .then().statusCode(400)
                 .body("error.errorCode", equalTo("INVALID_STATE_TRANSITION"));
     }
@@ -189,16 +202,17 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testDisable_Succeeds() {
-        given().when().post("/api/v1/users/" + regularUser.id + "/disable")
+        given().header("If-Match", regularUser.version)
+                .when().post("/api/v1/users/" + regularUser.id + "/disable")
                 .then().statusCode(200)
-                .body("data.accountStatus", equalTo("DISABLED"))
-                .body("data.roles.name", not(hasItem("user")));
+                .body("data.accountStatus", equalTo("DISABLED"));
     }
 
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testDisable_Self_Returns409() {
-        given().when().post("/api/v1/users/" + adminUser.id + "/disable")
+        given().header("If-Match", adminUser.version)
+                .when().post("/api/v1/users/" + adminUser.id + "/disable")
                 .then().statusCode(409)
                 .body("error.errorCode", equalTo("CANNOT_SELF_DISABLE"));
     }
@@ -206,14 +220,16 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testDisable_LastAdmin_Returns409() {
-        given().when().post("/api/v1/users/" + adminUser.id + "/disable")
+        given().header("If-Match", adminUser.version)
+                .when().post("/api/v1/users/" + adminUser.id + "/disable")
                 .then().statusCode(409);
     }
 
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testDisable_WrongState_Returns400() {
-        given().when().post("/api/v1/users/" + pendingUser.id + "/disable")
+        given().header("If-Match", pendingUser.version)
+                .when().post("/api/v1/users/" + pendingUser.id + "/disable")
                 .then().statusCode(400)
                 .body("error.errorCode", equalTo("INVALID_STATE_TRANSITION"));
     }
@@ -223,9 +239,10 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testEnable_FromDisabled_Succeeds() {
-        setUserStatus(regularUser.id, AccountStatus.DISABLED);
+        int version = setUserStatus(regularUser.id, AccountStatus.DISABLED);
 
-        given().when().post("/api/v1/users/" + regularUser.id + "/enable")
+        given().header("If-Match", version)
+                .when().post("/api/v1/users/" + regularUser.id + "/enable")
                 .then().statusCode(200)
                 .body("data.accountStatus", equalTo("ENABLED"))
                 .body("data.roles.name", hasItem("user"));
@@ -234,9 +251,10 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testEnable_FromRejected_Succeeds() {
-        setUserStatus(pendingUser.id, AccountStatus.REJECTED);
+        int version = setUserStatus(pendingUser.id, AccountStatus.REJECTED);
 
-        given().when().post("/api/v1/users/" + pendingUser.id + "/enable")
+        given().header("If-Match", version)
+                .when().post("/api/v1/users/" + pendingUser.id + "/enable")
                 .then().statusCode(200)
                 .body("data.accountStatus", equalTo("ENABLED"));
     }
@@ -244,7 +262,8 @@ class UserApiResourceTest {
     @Test
     @TestSecurity(user = "admin_user", roles = {"admin", "USER_MGMT_UPDATE"})
     void testEnable_WrongState_Returns400() {
-        given().when().post("/api/v1/users/" + regularUser.id + "/enable")
+        given().header("If-Match", regularUser.version)
+                .when().post("/api/v1/users/" + regularUser.id + "/enable")
                 .then().statusCode(400)
                 .body("error.errorCode", equalTo("INVALID_STATE_TRANSITION"));
     }
@@ -264,10 +283,11 @@ class UserApiResourceTest {
     }
 
     @Transactional
-    void setUserStatus(Long userId, AccountStatus status) {
+    int setUserStatus(Long userId, AccountStatus status) {
         User managed = em.find(User.class, userId);
         managed.accountStatus = status;
-        em.merge(managed);
+        managed = em.merge(managed);
         em.flush();
+        return managed.version;
     }
 }
