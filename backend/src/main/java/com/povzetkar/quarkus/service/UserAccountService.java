@@ -49,6 +49,7 @@ public class UserAccountService {
         assertNotSelf(user);
         assertNotLastAdmin(user);
         removeRoleByName(user, Permission.ROLE_USER);
+        removeRoleByName(user, Permission.ROLE_ADMIN);
         user.accountStatus = AccountStatus.DISABLED;
         user.persist();
         return user;
@@ -102,7 +103,7 @@ public class UserAccountService {
         boolean isAdmin = user.roles.stream().anyMatch(r -> Permission.ROLE_ADMIN.equalsIgnoreCase(r.name));
         if (!isAdmin) return;
         long enabledAdminCount = User.count(
-                "SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = ?1 AND u.accountStatus = ?2",
+                "FROM User u JOIN u.roles r WHERE r.name = ?1 AND u.accountStatus = ?2",
                 Permission.ROLE_ADMIN, AccountStatus.ENABLED);
         if (enabledAdminCount <= 1) {
             throw new BusinessRuleException(

@@ -76,8 +76,8 @@ export function UsersPage() {
       <div className="space-y-4">
         {isLoading && !data ? (
           <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+            {['a', 'b', 'c', 'd', 'e'].map((id) => (
+              <Skeleton key={id} className="h-16 w-full" />
             ))}
           </div>
         ) : (
