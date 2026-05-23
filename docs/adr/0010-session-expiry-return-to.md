@@ -1,6 +1,7 @@
-# 10. Session Expiry: returnTo via sessionStorage
+# 10. Session Expiry: Auto-Login with ?redirect= Param
 
 Date: 2026-05-21
+Updated: 2026-05-23 (POV-187 planning interview — decision revised, see below)
 
 ## Status
 
@@ -12,68 +13,73 @@ When a user's session expires mid-use (e.g., while reading a briefing), the Axio
 
 The fix requires:
 1. Intercepting the 401 before it reaches the error boundary.
-2. Redirecting the user to the landing page to re-authenticate.
-3. Optionally restoring the user to the page they were on before expiry.
+2. Automatically initiating re-authentication.
+3. Restoring the user to the page they were on before expiry.
 
 Because authentication is handled via server-side OAuth (Google via Quarkus OIDC — see [ADR-0002](0002-auth-mechanism.md)), the `returnTo` path must survive a round-trip through the external OAuth provider. There is no `/login` SPA route; `login()` in `authStore` performs `window.location.href = '/auth/login'`, a full-page redirect.
 
+Critically: Google sessions typically outlast the application session. This means the OAuth round-trip after expiry is usually invisible to the user — no Google login page is shown, and the redirect completes in under a second.
+
 ## Decision
 
-Preserve the `returnTo` path in **`sessionStorage`** before initiating re-authentication. After a successful OAuth round-trip the landing page consumes and clears the stored path, then navigates there via the TanStack Router singleton.
+On 401, the interceptor **automatically initiates re-authentication** by redirecting to `/auth/login?redirect=<currentPath>`. The backend `LoginResource` already validates the `redirect` param via `resolveSafeDestination()` (starts with `/`, no `//`, normalized via `URI.normalize()`), and applies it after the OAuth callback completes. The user is returned to their original page seamlessly.
 
 ### Flow
 
 ```text
 401 received in Axios interceptor
   │
-  ├─ sessionStorage.setItem('auth.returnTo', currentPath + currentSearch)
   ├─ useAuthStore.getState().clearAuth()
-  ├─ router.navigate({ to: '/', search: { notice: 'session_expired' } })
+  ├─ globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search + hash)
   │
-  └─ [User sees landing page with "session expired" toast, clicks Sign In]
+  └─ [OAuth round-trip — usually invisible if Google session active]
        │
-       └─ login() → /auth/login → Google → OAuth callback → lands on /
+       └─ LoginResource: reads ?redirect, validates, redirects browser to returnTo
             │
-            └─ indexRoute.beforeLoad: checkAuth() succeeds
-                 │
-                 └─ LandingPage: reads sessionStorage['auth.returnTo']
-                      ├─ exists  → removeItem, router.navigate({ to: returnTo })
-                      └─ missing → normal landing page render
+            └─ User lands on original page, already authenticated
 ```
 
 ### Implementation details
 
-1. **`client.ts` case 401**: import `router` from `../router` (singleton, no circular dependency since router.tsx imports nothing from client.ts). Import `useAuthStore`. On 401: save path, clear auth, navigate. Guard: if `router.state.location.pathname === '/'`, skip navigate (prevents loop if landing page itself triggers a 401, which should not happen but is defensive).
+1. **`client.ts` case 401**: use `globalThis.location` (not the router singleton — importing it creates a circular dependency). On 401: check a module-level `sessionExpiredRedirectInProgress` flag to absorb concurrent failures silently, call `clearAuth()`, read `pathname + search + hash` from `globalThis.location`, set `globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(path)`. Return `new Promise(() => {})` — never resolves, preventing error boundary activation during navigation.
 
-2. **`returnTo` validation**: before `router.navigate`, validate that the stored path is a relative path (starts with `/`, no `//`, no scheme). If invalid, discard silently — user lands on dashboard.
+2. **Path safety**: delegated entirely to `LoginResource.resolveSafeDestination()` — no client-side validation regex needed. If the path is somehow invalid, the backend defaults to `postLoginUri` (`/dashboard`).
 
-3. **`LandingPage.tsx`**: in `useEffect` (runs after auth check), if `isAuthenticated && sessionStorage['auth.returnTo']` exists, consume and navigate.
+3. **No `LandingPage` changes**: user never visits the landing page during expiry recovery.
 
-4. **`session_expired` notice**: extend existing `notice` search param on `/` (already handles `notice=restricted`) with a `session_expired` case that shows the i18n string `auth.session.expired`.
+4. **No `sessionStorage`**: not needed — the `?redirect=` param survives the OAuth round-trip via the backend.
+
+5. **No notice/toast**: the seamless return to the original page is itself the UX confirmation. A toast would require `sessionStorage` machinery and adds no value when the round-trip is invisible.
 
 ## Alternatives Considered
+
+### sessionStorage + landing page banner (original ADR-0010 decision — superseded)
+
+Original plan: save `returnTo` in `sessionStorage`, redirect to `/?notice=session_expired`, show a banner, user clicks Sign In, after OAuth the LandingPage consumes `sessionStorage` and navigates to `returnTo`.
+
+Rejected during POV-187 planning interview because:
+- Requires the user to manually click Sign In — unnecessary friction when the Google session is still active.
+- The OAuth round-trip is typically invisible (sub-second), so the user would see a confusing landing page flash.
+- `LoginResource` already provides a validated `?redirect=` mechanism, making `sessionStorage` redundant.
+- More moving parts: `sessionStorage` key, `validateSearch` union, `LandingPage` `useEffect`, i18n keys — all eliminated.
 
 ### Backend OAuth `state` parameter (rejected for v0.17.0)
 
 Pass `returnTo` as a query param to `/auth/login`; backend embeds it in the OAuth `state` parameter; after callback, redirects the browser to the stored path.
 
-This is the architecturally canonical OAuth pattern and survives multi-tab scenarios. It was **rejected for v0.17.0** because:
-- Requires non-trivial Quarkus OIDC customization (custom `OidcAuthenticationMechanism` or `TenantResolver`) which would consume the majority of the POV-187 budget (estimated 4-6h total).
-- The sessionStorage approach is a legitimate, widely-used SPA pattern (used by Auth0 SPA SDK, Firebase Auth, etc.) and is not a "hack".
-- For Povzetkar's scale (closed platform, limited user base), multi-tab edge cases are negligible.
-
-This alternative is **not logged as future backlog** — it would require replacing working code with equivalent functionality. The sessionStorage approach is accepted as the permanent solution.
+This is architecturally equivalent to what we implemented — `LoginResource` already does exactly this via `resolveSafeDestination()`. No additional work needed.
 
 ### No `returnTo` (rejected)
 
-On 401, redirect to landing page, user re-authenticates, lands on dashboard. Simpler but materially worse UX — user loses all context of where they were (especially costly when reading a long briefing). Rejected in favour of the sessionStorage approach at no significant cost.
+On 401, redirect to `/auth/login` with no redirect param. User re-authenticates, lands on `/dashboard`. Simpler but materially worse UX — user loses all context of where they were. Rejected.
 
-### TanStack Router `redirect` with `search.returnTo` (rejected)
+### Flash toast before redirect (rejected)
 
-Encode `returnTo` in the URL: `/?returnTo=%2Fbriefings%2F123`. Exposes the destination path in the browser address bar and in server logs for the landing page request. No technical advantage over sessionStorage for this use case.
+Show a React toast, then delay redirect by ~1500ms. Adds artificial latency. Rejected — the page navigates away immediately anyway.
 
 ## Consequences
 
 - The 401 interceptor is the single place in the frontend where session expiry is handled. `ErrorPage` is no longer triggered by expired-session 401s.
-- `sessionStorage` key `auth.returnTo` is a frontend convention; if a future migration to server-side sessions or a different auth library is undertaken, this key must be removed.
-- The `notice=session_expired` search param on `/` must be kept in sync with the `auth.session.expired` i18n key.
+- The `?redirect=` param is validated server-side; invalid paths fall back to `/dashboard`.
+- `LoginResource.resolveSafeDestination()` is now relied upon by both the voluntary login flow and the session-expiry flow.
+- `sessionStorage` key `auth.returnTo` is **not** used — if a future migration introduces it, ensure no collision with this key name.
