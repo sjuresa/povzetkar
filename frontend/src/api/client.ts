@@ -73,7 +73,7 @@ axiosRetry(client, {
     logger.warn(`[API] Retrying request (${retryCount}/3)...`);
   },
   retryCondition: (error) => {
-    // Retry on network errors or transient 5xx status codes
+    if (error.response?.status === 401) return false;
     return isNetworkOrIdempotentRequestError(error) ||
            (!!error.response?.status && [502, 503, 504].includes(error.response.status));
   },
