@@ -21,6 +21,7 @@ public class UserContextService {
     public static final String PROVIDER_GOOGLE = "google";
     public static final String DEMO_USER_EMAIL = "demo@povzetkar.local";
     private final SecurityIdentity securityIdentity;
+    private volatile Long demoUserId;
 
     public UserContextService(SecurityIdentity securityIdentity) {
         this.securityIdentity = securityIdentity;
@@ -75,7 +76,14 @@ public class UserContextService {
      */
     public Optional<User> getContentViewingUser() {
         if (securityIdentity.hasRole(Permission.ROLE_DEMO)) {
-            return User.find("email", DEMO_USER_EMAIL).firstResultOptional();
+            if (demoUserId == null) {
+                User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
+                        .ifPresent(u -> demoUserId = u.id);
+            }
+            if (demoUserId != null) {
+                return User.findByIdOptional(demoUserId);
+            }
+            return Optional.empty();
         }
         return getCurrentUser();
     }
