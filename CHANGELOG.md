@@ -9,25 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (POV-185)
 
-- **Account activation state machine**: Four-state `AccountStatus` enum (`PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED`) replaces `users.active` boolean; Flyway migrations V30–V32.
+- **Account activation state machine**: Four-state `AccountStatus` enum (`PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED`) replaces `users.active` boolean; Flyway migrations V30–V33.
 - **Admin action endpoints**: `POST /api/v1/users/{id}/approve|reject|disable|enable` — each enforces state-transition guards via `UserAccountService`; self-disable (409) and last-admin (409) protections.
+- **Optimistic locking on action endpoints**: `@OptimisticLocking` filter + `BaseApiResource.checkOptimisticLock()` (with weak ETag `W/` stripping) prevents lost updates when two admins act concurrently; `UserDTO.version` exposed so the frontend can forward the current entity version as `If-Match`.
+- **`BusinessRuleException` for version conflicts**: `OPTIMISTIC_LOCK_ERROR` (409) returned via `BusinessRuleExceptionMapper` — consistent structured error shape with all other business rule failures.
 - **`BusinessRuleException` + mapper**: Structured error codes (`INVALID_STATE_TRANSITION`, `CANNOT_SELF_DISABLE`, `LAST_ADMIN_REQUIRED`) returned in `ApiErrorDTO.errorCode`.
 - **Demo content impersonation**: `UserContextService.getContentViewingUser()` — pending users with the `demo` role transparently see `demo@povzetkar.local` content; no frontend changes required for read paths.
 - **`demo` role + permissions**: New `ROLE_DEMO` constant; `RolePermissionsMap` grants `TOPIC_VIEW`, `BRIEFING_VIEW`, `CONTENT_ITEM_VIEW`; new users created with `PENDING_APPROVAL` + `demo` role.
 - **Demo seed (V32)**: `demo@povzetkar.local` + `Science & Discovery` topic (enabled=false) + Kurzgesagt (`UCsXVk37bltHxD1rDPwtNM8Q`) and Veritasium (`UCHnyfMqiRRG1u-2MsSQLbXA`) YouTube channels.
+- **V33 migration**: Backfills `version = 0` for all users where the column is null, ensuring optimistic locking is safe for all pre-existing accounts.
 - **`GET /me` open to all authenticated users**: Changed from `@RolesAllowed(ROLE_USER)` to `@Authenticated`; pending/disabled/rejected users can always fetch their account status.
 - **`AccountStatusBanner` component**: Persistent sticky banner rendered in `AppShell` for non-ENABLED users; per-state i18n keys (`account.pending.*`, `account.rejected.*`, `account.disabled.*`).
-- **i18n**: Added `account.pending.*`, `account.rejected.*`, `account.disabled.*` keys; added `admin.users.error.invalid_state_transition` to `en.json` and `sl.json`.
+- **i18n**: Added `account.pending.*`, `account.rejected.*`, `account.disabled.*` keys; added `admin.users.error.*` keys (`action_failed`, `cannot_self_disable`, `last_admin_required`) and `admin.users.success.*` keys to `en.json` and `sl.json`.
 - **RUNBOOK section 15**: Documents approval requirement, admin action endpoints, initial admin seeding (Option A: SQL INSERT; Option B: approve after first sign-in), and demo content purpose.
+- **eslint-plugin-sonarjs**: Added to `frontend/eslint.config.js`; all pre-existing SonarJS violations across the frontend resolved.
 
 ### Changed (POV-185)
 
 - **`users.active` column removed**: Replaced by `users.account_status VARCHAR(50) NOT NULL`; existing rows backfilled (`active=true` → `ENABLED`, `active=false` → `DISABLED`).
 - **`User.listAllEnabled()`**: Renamed from `listAllActive()`; filters on `accountStatus = ENABLED`; all `OrchestrationManager` call-sites updated.
-- **`UserDTO.active` removed**: Dropped `boolean active` field; `accountStatus` auto-maps via MapStruct (removed null-stub `@Mapping`).
+- **`UserDTO.active` removed**: Dropped `boolean active` field; `accountStatus` and `version` auto-map via MapStruct.
 - **`PATCH /{id}` and `PUT /{id}/roles` deleted**: Old user management endpoints removed; replaced by the four new action endpoints.
 - **Read call-sites migrated**: `TopicApiResource`, `BriefingApiResource`, `DashboardApiResource`, and `TopicResource` (SSR) read paths now use `getContentViewingUser()` for demo impersonation; write paths unchanged.
 - **`UserBuilder` refactored**: `boolean active` replaced by `AccountStatus accountStatus = ENABLED`; `.inactive()` removed; `.pending()` and `.withStatus(AccountStatus)` added.
+- **`UserAccountService` layer separation**: Service methods (`approve`, `reject`, `disable`, `enable`) now accept a pre-loaded `User` entity; ETag parsing and version checking moved to `UserApiResource` via `BaseApiResource.checkOptimisticLock()`, keeping the service free of HTTP protocol concerns.
+- **`UserContextService` demo user cache**: `getContentViewingUser()` caches the demo user ID in an `AtomicLong` with double-checked locking (`0` = uninitialised, `-1` = not found) — eliminates a DB query on every demo-role read request after the first.
+- **`AccountStatusBanner` status map typed**: `statusKeyMap` uses `Partial<Record<AccountStatus, string>>` for compile-time exhaustiveness.
+- **`UsersTable` sort state memoised**: `parseSortState(sort)` computed once per render into `sortState`; frontend error code extraction typed via generated `ApiErrorDTO`.
 
 ### Added (POV-184)
 
