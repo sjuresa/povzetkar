@@ -26,7 +26,7 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 > [!TIP]
 > **Accessibility Baseline for Every New Component (POV-188)**:
-> Every icon-only button needs `aria-label`. Every `<div onClick>` must be `<button type="button">` with `aria-label` and keyboard support. The modal backdrop overlay pattern must use `<button>`, not `<div>`. These are caught by ESLint rules — run `eslint --max-warnings=0` on all changed files before pushing.
+> Every icon-only button needs `aria-label`. Every `<div onClick>` must be `<button type="button">` with `aria-label` and keyboard support. The modal backdrop overlay pattern must use `<button>`, not `<div>`. Some of these are caught by `eslint-plugin-sonarjs` (rules `S6848`, `S1082`) — run `eslint --max-warnings=0` on all changed files before pushing. Note: `eslint-plugin-jsx-a11y` is not currently configured; full a11y coverage requires manual review or adding that plugin.
 
 > [!IMPORTANT]
 > **Account State Machine (POV-185)**:
