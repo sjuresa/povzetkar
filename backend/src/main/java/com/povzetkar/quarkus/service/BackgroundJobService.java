@@ -245,7 +245,7 @@ public class BackgroundJobService {
 
         BackgroundJob newJob = switch (original.type) {
             case GENERATE_TOPIC_BRIEFING, GENERATE_TOPIC_SUMMARIES -> {
-                if (original.topicId == null) throw new NotFoundException("Topic ID missing on job: " + original.id);
+                if (original.topicId == null) throw new BusinessRuleException(Response.Status.BAD_REQUEST, "INVALID_JOB_STATE", "Job has no associated topic and cannot be restarted.");
                 Topic topic = Topic.findByIdWithSources(original.topicId);
                 if (topic == null) throw new NotFoundException("Topic not found: " + original.topicId);
                 yield original.type == JobType.GENERATE_TOPIC_BRIEFING

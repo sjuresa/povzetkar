@@ -153,6 +153,7 @@ public class AdminApiResource extends BaseApiResource {
 
     @POST
     @Path("/" + JOBS_PATH + "/{id}/restart")
+    @Idempotent
     @RolesAllowed(Permission.V_ADMIN_JOB_UPDATE)
     @Operation(summary = "Restart a failed job", description = "Creates a new job using the original job's configuration. Only allowed for FAILED jobs.")
     @APIResponse(responseCode = "202", description = "New job created",
