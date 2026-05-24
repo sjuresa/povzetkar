@@ -52,6 +52,7 @@ This document is the mandatory checklist to be mentally reviewed before any code
 *   [ ] **Idempotency on POST endpoints that create resources:** Any POST endpoint that creates a resource (job trigger, restart) should carry `@Idempotent` to prevent duplicate creation on client retry.
 *   [ ] **`text-interactive` vs `font-bold`:** `text-interactive` is for interactive element labels (button text). Non-interactive labels (`<label>`, `<h3>`, table headers) use `font-bold`. Do not mix them.
 *   [ ] **Array keys:** Never use array index as React key. Use a stable identifier from the data, or a named string constant for static skeleton arrays.
+*   [ ] **Admin tool confirmation modals:** In internal admin tools with a limited user base and easily reversible actions, confirmation modals for destructive actions may be omitted to prioritize operational efficiency — provided the design decision is documented and recovery cost is minimal.
 
 ## 6. Performance & Scalability
 
@@ -69,6 +70,7 @@ This document is the mandatory checklist to be mentally reviewed before any code
 *   [ ] **Document Structure:** Does each modular document start with a Level 1 heading (`#`) and have a logical heading structure?
 *   [ ] **Index Accuracy:** Does the description of a file in any index accurately reflect its contents?
 *   [ ] **Knowledge Base Update:** Have any major architectural workarounds, bug fixes, or new integration patterns discovered during this task been added to `docs/process/lessons-learned.md`?
+*   [ ] **Migration identifiers:** When reviewing database migrations, distinguish between legacy SQL column/enum names being removed and new domain model values. Do not flag a legacy identifier as inconsistent if it is explicitly part of a migration or removal step.
 
 ## 8. Agent-Specific Protocols (AI Context)
 
