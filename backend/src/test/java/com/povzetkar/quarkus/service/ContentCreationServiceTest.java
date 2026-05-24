@@ -3,6 +3,7 @@ package com.povzetkar.quarkus.service;
 import com.google.genai.types.Content;
 import com.google.genai.types.Part;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,13 +26,13 @@ import static org.mockito.Mockito.when;
 class ContentCreationServiceTest {
 
     @Mock
-    private YouTubeTranscriptService transcriptService;
+    private TranscriptOrchestrator transcriptOrchestrator;
 
     private ContentCreationService contentCreationService;
 
     @BeforeEach
     void setUp() {
-        contentCreationService = new ContentCreationService(transcriptService, 60);
+        contentCreationService = new ContentCreationService(transcriptOrchestrator, 60);
     }
 
     @Nested
@@ -74,7 +75,7 @@ class ContentCreationServiceTest {
             assertThat(textPart.text()).isPresent();
             assertThat(textPart.text().get()).contains("Existing transcript");
             
-            verify(transcriptService, never()).getTranscript(any());
+            verify(transcriptOrchestrator, never()).fetch(any());
         }
 
         @Test
@@ -82,7 +83,7 @@ class ContentCreationServiceTest {
         void shouldUseTranscriptForLongVideos() {
             // Arrange
             YouTubeVideo longVideo = new YouTubeVideo("longVideoId", "Long Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
-            when(transcriptService.getTranscript("longVideoId")).thenReturn("This is a transcript.");
+            when(transcriptOrchestrator.fetch("longVideoId")).thenReturn("This is a transcript.");
 
             // Act
             Content content = contentCreationService.createContentForVideo(longVideo);
@@ -101,7 +102,7 @@ class ContentCreationServiceTest {
         void shouldReturnNullIfTranscriptNotAvailable() {
             // Arrange
             YouTubeVideo longVideo = new YouTubeVideo("longVideoId", "Long Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
-            when(transcriptService.getTranscript("longVideoId")).thenReturn("");
+            when(transcriptOrchestrator.fetch("longVideoId")).thenReturn("");
 
             // Act
             Content content = contentCreationService.createContentForVideo(longVideo);

@@ -58,6 +58,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Vite proxy OIDC redirect rewrite**: The Vite dev proxy was forwarding Quarkus OIDC 302 redirects to `accounts.google.com` back to the browser; Axios followed them cross-origin causing CORS failures. A `proxyRes` handler in `vite.config.ts` rewrites 302→Google responses to 401 for XHR requests (`X-Requested-With: XMLHttpRequest`), so the 401 interceptor fires cleanly.
 - **ADR-0010 updated**: Decision revised from `sessionStorage` + landing page banner to direct auto-login via `?redirect=` param; `sessionStorage` not used.
 
+### Added (POV-189)
+
+- **Multi-provider transcript pipeline**: `TranscriptProvider` interface + `TranscriptOrchestrator` replace the single-provider `YouTubeTranscriptService`; ordered fallback chain driven by `transcript.providers.order` config; per-provider `enabled` flag; Micrometer metrics (`transcript.fetch.attempts|successes|failures|duration`) tagged by provider.
+- **`YouTubeLegacyTranscriptProvider`**: wraps existing `thoroldvix` library; configurable random jitter (`jitter.min-ms` / `jitter.max-ms`) before each fetch to defend against OCI IP rate-limiting by YouTube.
+- **`SupadataTranscriptProvider`**: pilot second provider via MicroProfile REST Client (`SupadataClient`); handles 200 (sync) and 202 (async poll, 10 s timeout); converts millisecond chunk offsets to seconds; requires `SUPADATA_API_KEY` env var.
+- **`TranscriptSegment` record**: shared exchange type decoupling both providers from the `thoroldvix` library types.
+- **`transcript_provider_quota_usage` table** (V34 migration): tracks per-provider monthly fetch counts via `ON CONFLICT DO UPDATE` upsert; populated by `TranscriptProviderQuotaService` on every successful fetch.
+- **RUNBOOK §14.1a**: documents transcript provider config flags, enabling Supadata as primary provider, and emitted metrics.
+
+### Changed (POV-189)
+
+- **`TimeTextFormatter`** moved from `service/` to `service/transcript/` package; input type changed from `TranscriptContent` to `List<TranscriptSegment>`.
+- **`ContentCreationService` + `ContentItemService`**: `YouTubeTranscriptService.getTranscript()` replaced by `TranscriptOrchestrator.fetch()`.
+- **`quarkus-rest-client-jackson`** dependency scope promoted from `test` to compile (required for `SupadataClient` serialization at runtime).
+- **ADR-0009** status updated to `Accepted`; Supadata API spike findings (requires full YouTube URL, not `videoId`) documented.
+
+### Removed (POV-189)
+
+- **`YouTubeTranscriptService`**: deleted; replaced by `YouTubeLegacyTranscriptProvider` + `TranscriptOrchestrator`.
+
 ### Added (POV-184)
 
 - **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.

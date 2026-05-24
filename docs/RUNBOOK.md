@@ -709,6 +709,35 @@ The application requires several sensitive configuration values (API keys, datab
 | `GOOGLE_API_KEYS` | `google.api.keys` | Google GenAI API keys (comma-separated for pool rotation) | ✅ |
 | `GOOGLE_OIDC_CLIENT_ID` | `quarkus.oidc.client-id` | Google OIDC OAuth 2.0 Client ID | ✅ |
 | `GOOGLE_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` | Google OIDC OAuth 2.0 Client Secret | ✅ |
+| `SUPADATA_API_KEY` | `quarkus.rest-client.supadata.headers.x-api-key` | Supadata transcript API key | ⬜ (required if supadata provider enabled) |
+
+### 14.1a Transcript Provider Configuration
+
+The transcript fetching pipeline supports multiple providers with runtime-configurable ordering and fallback.
+
+| Config Property | Default | Description |
+|:---|:---|:---|
+| `transcript.providers.order` | `youtube-legacy,supadata` | Comma-separated list of providers tried in order. |
+| `transcript.providers.youtube-legacy.enabled` | `true` | Enable/disable the YouTube legacy (direct scraping) provider. |
+| `transcript.providers.youtube-legacy.jitter.min-ms` | `500` | Minimum random delay before each YouTube fetch (IP rate-limit protection). |
+| `transcript.providers.youtube-legacy.jitter.max-ms` | `2500` | Maximum random delay before each YouTube fetch. |
+| `transcript.providers.supadata.enabled` | `false` | Enable/disable the Supadata provider. Set to `true` and provide `SUPADATA_API_KEY` to activate. |
+| `transcript.providers.supadata.lang` | `en` | ISO 639-1 language code for Supadata transcript requests. Falls back to first available language if the video has no transcript in the requested language. |
+
+**Enabling Supadata as primary provider** (if OCI IPs are blocked by YouTube):
+
+```properties
+transcript.providers.order=supadata,youtube-legacy
+transcript.providers.supadata.enabled=true
+# SUPADATA_API_KEY env var must be set
+```
+
+**Metrics emitted** (all tagged with `provider` label):
+
+- `transcript.fetch.attempts` — counter per provider
+- `transcript.fetch.successes` — counter per provider
+- `transcript.fetch.failures` — counter tagged with `provider` and `reason`
+- `transcript.fetch.duration` — timer per provider
 
 ### 14.2 How Secrets Are Provided
 

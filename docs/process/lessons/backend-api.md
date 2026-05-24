@@ -110,6 +110,16 @@ When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus
 - **The Trap:** Chaining `String.replace()` or iteratively using `StringBuilder.indexOf/replace` for multiple variables. These "multi-pass" approaches result in `O(V * N)` complexity, causing high memory overhead and performance degradation on large inputs like transcripts.
 - **The Standard:** Use **java.util.regex.Matcher.appendReplacement()** with a **pre-compiled static Pattern**. This provides a true O(N) single-pass scan while eliminating the overhead of repeated regex compilation.
 
+## Third-Party Library Beans vs. CDI Factory Pattern (POV-189)
+
+- **The Trap:** Injecting a third-party library type (e.g., `YoutubeTranscriptApi`) as a `@Inject` constructor parameter. If the library does not register itself as a CDI bean, Quarkus throws `UnsatisfiedResolutionException` at startup — even if the type is on the classpath.
+- **The Standard:** The `@Inject` production constructor creates third-party instances via their factory (`TranscriptApiFactory.createDefault()`). The package-private test constructor accepts the instance directly. This keeps the CDI graph clean and makes the test constructor signature stable regardless of how the library is initialized.
+
+## Spike API Contracts Before Writing Providers (POV-189)
+
+- **The Trap:** Implementing a third-party API integration based solely on the vendor's documentation. API docs can be outdated, incomplete, or simply wrong about parameter names and types.
+- **The Standard:** Run a live spike (`curl` or a test harness) against the real API endpoint before writing any provider code. Concretely: Supadata's docs said the transcript endpoint accepts `videoId`, but a live test showed it requires a full `url` parameter (`https://www.youtube.com/watch?v=…`). Catching this during the spike costs 10 minutes; catching it in production costs a silent 400 that looks like a transcript unavailability.
+
 ---
 
 ## Related Documents

@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -27,11 +28,11 @@ public class ContentItemService {
         ERROR
     }
 
-    private final YouTubeTranscriptService youTubeTranscriptService;
+    private final TranscriptOrchestrator transcriptOrchestrator;
 
     @Inject
-    public ContentItemService(YouTubeTranscriptService youTubeTranscriptService) {
-        this.youTubeTranscriptService = youTubeTranscriptService;
+    public ContentItemService(TranscriptOrchestrator transcriptOrchestrator) {
+        this.transcriptOrchestrator = transcriptOrchestrator;
     }
 
     @Transactional
@@ -48,7 +49,7 @@ public class ContentItemService {
         }
 
         try {
-            String transcript = youTubeTranscriptService.getTranscript(video.videoId);
+            String transcript = transcriptOrchestrator.fetch(video.videoId);
             if (transcript != null && !transcript.isBlank()) {
                 video.transcript = transcript;
                 video.errorCode = null;

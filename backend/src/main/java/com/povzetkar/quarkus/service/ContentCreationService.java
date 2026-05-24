@@ -9,6 +9,8 @@ import com.povzetkar.quarkus.util.StructuredLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
+
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,11 +22,11 @@ public class ContentCreationService {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{(.+?)}}");
     private final int transcriptThresholdMinutes;
 
-    private final YouTubeTranscriptService youTubeTranscriptService;
+    private final TranscriptOrchestrator transcriptOrchestrator;
 
-    public ContentCreationService(YouTubeTranscriptService youTubeTranscriptService,
+    public ContentCreationService(TranscriptOrchestrator transcriptOrchestrator,
                                   @ConfigProperty(name = "transcript.threshold.minutes") int threshold) {
-        this.youTubeTranscriptService = youTubeTranscriptService;
+        this.transcriptOrchestrator = transcriptOrchestrator;
         this.transcriptThresholdMinutes = threshold;
     }
 
@@ -62,7 +64,7 @@ public class ContentCreationService {
                 LogKeys.VIDEO_TITLE, video.title,
                 LogKeys.MESSAGE, "Video is longer than threshold, getting transcript"
         );
-        String transcript = youTubeTranscriptService.getTranscript(video.videoId);
+        String transcript = transcriptOrchestrator.fetch(video.videoId);
 
         if (transcript.isBlank()) {
             logger.warn(
