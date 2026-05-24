@@ -224,7 +224,7 @@ This document outlines the concrete steps for implementing the features describe
 ## v0.17: Administrative Control & User Onboarding
 
 **Goal:** Establish operational governance via Admin User Management, an explicit account activation state machine, and live background job control. Harden the transcript ingestion pipeline against IP rate-limiting and polish two long-standing UX friction points (external links and session expiry).
-**Status:** 🚧 In Progress
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Administrative Command Center:**
@@ -321,6 +321,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.7     | 2026-05-24         | Povzetkar AI | Marked v0.17.0 as ✅ Completed.                                                                                                                                                                                   |
 | 3.6     | 2026-05-20         | Povzetkar AI | Refined v0.17.0 scope to "Administrative Control & User Onboarding". Inserted v0.18.0 for "Hardening & Operational Excellence" (DAST, Grafana alerts, full-text search, additional transcript providers, SMTP). |
 | 3.5     | April 13, 2026     | Antigravity AI | Marked v0.16.0 as completed and finalized version documentation.                                                                          |
 | 3.4     | April 1, 2026      | Povzetkar AI | Strategically pivoted v0.16.0 to "User Experience Focus" and restored v0.17.0 for "Administrative Control & Hardening". |
