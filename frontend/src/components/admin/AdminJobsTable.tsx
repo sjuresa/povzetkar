@@ -2,22 +2,13 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type { BackgroundJobDTO, JobType } from '../../api/generated/model';
+import type { BackgroundJobDTO } from '../../api/generated/model';
 import {
   getGetApiV1AdminJobsQueryKey,
   postApiV1AdminJobsIdRestart,
 } from '../../api/generated/admin/admin';
 import { JobAuditModal } from './JobAuditModal';
-
-const JOB_TYPE_LABELS: Record<JobType, string> = {
-  SYNC_YOUTUBE_FEEDS: 'Sync Feeds',
-  GENERATE_BRIEFINGS: 'Generate Briefings',
-  PROCESS_TOPICS_AND_SUMMARIZE: 'Process & Summarize',
-  GENERATE_TOPIC_BRIEFING: 'Topic Briefing',
-  GENERATE_TOPIC_SUMMARIES: 'Topic Summaries',
-  GENERATE_ITEM_SUMMARY: 'Item Summary',
-  RETRY_ITEM_PROCESSING: 'Retry Item',
-};
+import { JOB_TYPE_LABELS } from './jobLabels';
 
 const JOB_STATUS_BADGE: Record<string, string> = {
   QUEUED: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
