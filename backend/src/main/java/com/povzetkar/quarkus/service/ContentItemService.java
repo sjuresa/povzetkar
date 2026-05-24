@@ -53,16 +53,23 @@ public class ContentItemService {
         try {
             if (transcript != null && !transcript.isBlank()) {
                 QuarkusTransaction.requiringNew().run(() -> {
-                    video.transcript = transcript;
-                    video.errorCode = null;
-                    video.errorMessage = null;
-                    video.persist();
+                    YouTubeVideo managed = YouTubeVideo.findById(video.id);
+                    if (managed != null) {
+                        managed.transcript = transcript;
+                        managed.errorCode = null;
+                        managed.errorMessage = null;
+                        managed.persist();
+                    }
                 });
                 Log.infof("Successfully fetched transcript for video ID %s.", video.videoId);
                 return FetchTranscriptResult.SUCCESS;
             } else {
-                QuarkusTransaction.requiringNew().run(() ->
-                        updateVideoStatus(video, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript is not available for this video."));
+                QuarkusTransaction.requiringNew().run(() -> {
+                    YouTubeVideo managed = YouTubeVideo.findById(video.id);
+                    if (managed != null) {
+                        updateVideoStatus(managed, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript is not available for this video.");
+                    }
+                });
                 Log.warnf("Transcript unavailable for video ID %s.", video.videoId);
                 return FetchTranscriptResult.TRANSCRIPT_UNAVAILABLE;
             }
