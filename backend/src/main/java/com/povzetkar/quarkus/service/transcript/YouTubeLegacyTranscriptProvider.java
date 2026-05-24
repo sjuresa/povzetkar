@@ -13,14 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @ApplicationScoped
 public class YouTubeLegacyTranscriptProvider implements TranscriptProvider {
 
     private static final Logger log = LoggerFactory.getLogger(YouTubeLegacyTranscriptProvider.class);
     private static final String PROVIDER_NAME = "youtube-legacy";
-    private static final Random RANDOM = new Random();
 
     private final YoutubeTranscriptApi youtubeTranscriptApi;
     private final TimeTextFormatter formatter;
@@ -79,7 +78,7 @@ public class YouTubeLegacyTranscriptProvider implements TranscriptProvider {
             return;
         }
         int range = Math.max(1, jitterMaxMs - jitterMinMs);
-        int delay = jitterMinMs + RANDOM.nextInt(range);
+        int delay = jitterMinMs + ThreadLocalRandom.current().nextInt(range);
         try {
             Thread.sleep(delay);
         } catch (InterruptedException _) {
