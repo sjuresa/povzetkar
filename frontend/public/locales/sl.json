@@ -399,7 +399,7 @@
         "version": "0.17.0",
         "title": "Posodobitev 0.17.0",
         "date": "2026-05-24",
-        "desc": "Version 0.17.0 establishes **Administrative Control & User Onboarding** — the governance layer that makes Povzetkar production-ready for multi-user deployments. The centerpiece is a full Admin User Management surface backed by an explicit four-state Account Activation State Machine (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), with optimistic-locking guards and demo-content impersonation for new users. The Background Job Dashboard replaces a placeholder, providing restart capability and a full audit-trail modal for failed jobs. On the resilience side, transcript ingestion gains a multi-provider fallback chain (YouTube Legacy + Supadata pilot) with configurable jitter to defend against IP rate-limiting. Two long-standing UX friction points are resolved: external links now open in new tabs across all Markdown surfaces, and session expiry auto-redirects users back to their original page after re-authentication instead of landing them on an error screen.",
+        "desc": "Različica 0.17.0 vzpostavlja **Skrbniški nadzor in uvajanje uporabnikov** — upravljavski sloj, ki Povzetkar pripravlja na večuporabniška okolja. Osrednja novost je celotna skrbniška površina za upravljanje uporabnikov, podprta z eksplicitnim štiristanjskim avtomatom za aktivacijo računov (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), z zaščito pred optimistično blokiranjem in posnemanjem demo vsebine za nove uporabnike. Nadzorna plošča ozadnih opravil nadomešča ogrado ter prinaša možnost ponovnega zagona in modalno revizijsko sled za neuspela opravila. Na strani odpornosti pridobi zajem prepisov verigo nadomestnih ponudnikov (YouTube Legacy + Supadata pilot) s prilagodljivim zamikanjem za obrambo pred omejevanjem hitrosti IP. Odpravljeni sta dve dolgotrajni težavi z UX: zunanje povezave se zdaj odpirajo v novih zavihkih na vseh Markdown površinah, potek seje pa samodejno preusmeri uporabnike nazaj na prvotno stran po ponovni avtentikaciji.",
         "badge": "new"
       },
       {
@@ -476,7 +476,7 @@
     "roadmap_phases": [
       {
         "title": "v0.18: Hardening & Operational Excellence",
-        "desc": "Integrate advanced security auditing into the release cycle and complete observability/operational maturity work deferred from v0.17.0."
+        "desc": "Integracija naprednega varnostnega nadzora v cikel izdaj ter dokončanje dela na področju opazljivosti in operativne zrelosti, preloženega iz v0.17.0."
       },
       {
         "title": "v1.0: RAG & Conversational Interface",
