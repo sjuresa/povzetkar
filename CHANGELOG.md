@@ -37,6 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`AccountStatusBanner` status map typed**: `statusKeyMap` uses `Partial<Record<AccountStatus, string>>` for compile-time exhaustiveness.
 - **`UsersTable` sort state memoised**: `parseSortState(sort)` computed once per render into `sortState`; frontend error code extraction typed via generated `ApiErrorDTO`.
 
+### Added (POV-188)
+
+- **Background Job Dashboard** (`/admin/jobs`): functional `AdminJobsPage` replacing the placeholder div; filters by `jobType` and `status` (apply-on-change dropdowns); table columns Started (sortable), Type, Duration, Status, Actions; 30s auto-refetch when RUNNING jobs are present on the current page.
+- **Restart failed jobs**: `POST /api/v1/admin/jobs/{id}/restart` endpoint (gated by `ADMIN_JOB_UPDATE`); supports 5 restartable job types (system-wide + topic-scoped); item-level jobs return 400; audit entry with admin user ID written to `job_execution_audit` on the original job.
+- **`jobType` filter on `GET /api/v1/admin/jobs`**: new `jobType` query param; `BackgroundJobService.getJobList()` refactored from `if/else` branching to `FilterBuilder` to handle all filter combinations cleanly.
+- **Audit trail modal**: `[📋]` button per row opens a modal showing `JobExecutionAudit` entries for that job, reusing the existing `GET /api/v1/admin/jobs/{id}/audit` endpoint.
+- **i18n**: `admin.jobs.*` keys added to `en.json` and `sl.json`; cancel-related keys omitted (feature deferred to v0.18.0).
+- **`V_ADMIN_JOB_UPDATE` permission**: previously defined but unused — now wired to the restart endpoint.
+
 ### Added (POV-186)
 
 - **External links open in new tab**: All five in-scope `ReactMarkdown` call-sites in `BriefingDetailPage`, `PublicBriefingView`, and `PublicSummaryView` now use `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]` — external links render with `target="_blank"` and `rel="noopener noreferrer"`.

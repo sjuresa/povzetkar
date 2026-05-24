@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.13.0
  */
 import type { JobStatus } from './jobStatus';
+import type { JobType } from './jobType';
 
 export type GetApiV1AdminJobsParams = {
+jobType?: JobType;
 page?: number;
 size?: number;
 sort?: string[];

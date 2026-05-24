@@ -183,6 +183,59 @@
     }
   },
   "admin": {
+    "jobs": {
+      "title": "Background Jobs",
+      "subtitle": "Monitor and manage background processing jobs.",
+      "total_jobs_label": "Total Jobs",
+      "filter": {
+        "status": "Status",
+        "type": "Job type",
+        "all_statuses": "All Statuses",
+        "all_types": "All Types",
+        "clear_title": "Clear Filters"
+      },
+      "column": {
+        "started_at": "Started",
+        "type": "Type",
+        "duration": "Duration",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "action": {
+        "restart": "Restart",
+        "view_audit": "Audit trail"
+      },
+      "confirm": {
+        "restart": "Restart this job from scratch?"
+      },
+      "toast": {
+        "restarted": "Job restarted.",
+        "restart_failed": "Failed to restart job."
+      },
+      "empty": "No jobs found matching the current filters.",
+      "audit_modal": {
+        "title": "Audit Trail",
+        "empty": "No audit entries found."
+      },
+      "duration": {
+        "not_started": "—"
+      },
+      "status": {
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "type": {
+        "sync_youtube_feeds": "Sync Feeds",
+        "generate_briefings": "Generate Briefings",
+        "process_topics_and_summarize": "Process & Summarize",
+        "generate_topic_briefing": "Topic Briefing",
+        "generate_topic_summaries": "Topic Summaries",
+        "generate_item_summary": "Item Summary",
+        "retry_item_processing": "Retry Item"
+      }
+    },
     "users": {
       "title": "User Management",
       "subtitle": "Manage user accounts, control access, and monitor sign-in activity.",
