@@ -24,6 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **RUNBOOK section 15**: Documents approval requirement, admin action endpoints, initial admin seeding (Option A: SQL INSERT; Option B: approve after first sign-in), and demo content purpose.
 - **eslint-plugin-sonarjs**: Added to `frontend/eslint.config.js`; all pre-existing SonarJS violations across the frontend resolved.
 
+### Added (POV-184)
+
+- **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.
+- **`User.lastLoginAt` tracking**: nullable timestamp updated on every OIDC sign-in via `UserContextService.ensureUser()`, including PENDING users; Flyway migration V28.
+- **`AccountStatus` enum stub**: `PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED` — prepared for POV-185 state machine wiring.
+- **`GET /api/v1/users` filter + sort extensions**: `accountStatus` (enum, single-value) and `email` (case-insensitive substring) query params; sort by `email`, `accountStatus`, `lastLoginAt`, `createdAt`.
+- **`UserDTO` expansion**: `accountStatus` and `lastLoginAt` fields exposed; `createdAt` added for UI display.
+- **Sidebar nav entry**: "User Management" added to `AppShell.adminNavItems`; admin layout guard extended with `USER_MGMT_VIEW`.
+- **i18n**: full `en.json` + `sl.json` coverage for all new admin user strings.
+
 ### Changed (POV-185)
 
 - **`users.active` column removed**: Replaced by `users.account_status VARCHAR(50) NOT NULL`; existing rows backfilled (`active=true` → `ENABLED`, `active=false` → `DISABLED`).
@@ -37,15 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`AccountStatusBanner` status map typed**: `statusKeyMap` uses `Partial<Record<AccountStatus, string>>` for compile-time exhaustiveness.
 - **`UsersTable` sort state memoised**: `parseSortState(sort)` computed once per render into `sortState`; frontend error code extraction typed via generated `ApiErrorDTO`.
 
-### Added (POV-188)
-
-- **Background Job Dashboard** (`/admin/jobs`): functional `AdminJobsPage` replacing the placeholder div; filters by `jobType` and `status` (apply-on-change dropdowns); table columns Started (sortable), Type, Duration, Status, Actions; 30s auto-refetch when RUNNING jobs are present on the current page.
-- **Restart failed jobs**: `POST /api/v1/admin/jobs/{id}/restart` endpoint (gated by `ADMIN_JOB_UPDATE`); supports 5 restartable job types (system-wide + topic-scoped); item-level jobs return 400; audit entry with admin user ID written to `job_execution_audit` on the original job.
-- **`jobType` filter on `GET /api/v1/admin/jobs`**: new `jobType` query param; `BackgroundJobService.getJobList()` refactored from `if/else` branching to `FilterBuilder` to handle all filter combinations cleanly.
-- **Audit trail modal**: `[📋]` button per row opens a modal showing `JobExecutionAudit` entries for that job, reusing the existing `GET /api/v1/admin/jobs/{id}/audit` endpoint.
-- **i18n**: `admin.jobs.*` keys added to `en.json` and `sl.json`; cancel-related keys omitted (feature deferred to v0.18.0).
-- **`V_ADMIN_JOB_UPDATE` permission**: previously defined but unused — now wired to the restart endpoint.
-
 ### Added (POV-186)
 
 - **External links open in new tab**: All five in-scope `ReactMarkdown` call-sites in `BriefingDetailPage`, `PublicBriefingView`, and `PublicSummaryView` now use `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]` — external links render with `target="_blank"` and `rel="noopener noreferrer"`.
@@ -57,6 +58,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Seamless return after re-authentication**: `LoginResource.resolveSafeDestination()` validates and applies the `?redirect=` param after OAuth completes — the user lands directly on their original page with no manual interaction required.
 - **Vite proxy OIDC redirect rewrite**: The Vite dev proxy was forwarding Quarkus OIDC 302 redirects to `accounts.google.com` back to the browser; Axios followed them cross-origin causing CORS failures. A `proxyRes` handler in `vite.config.ts` rewrites 302→Google responses to 401 for XHR requests (`X-Requested-With: XMLHttpRequest`), so the 401 interceptor fires cleanly.
 - **ADR-0010 updated**: Decision revised from `sessionStorage` + landing page banner to direct auto-login via `?redirect=` param; `sessionStorage` not used.
+
+### Added (POV-188)
+
+- **Background Job Dashboard** (`/admin/jobs`): functional `AdminJobsPage` replacing the placeholder div; filters by `jobType` and `status` (apply-on-change dropdowns); table columns Started (sortable), Type, Duration, Status, Actions; 30s auto-refetch when RUNNING jobs are present on the current page.
+- **Restart failed jobs**: `POST /api/v1/admin/jobs/{id}/restart` endpoint (gated by `ADMIN_JOB_UPDATE`); supports 5 restartable job types (system-wide + topic-scoped); item-level jobs return 400; audit entry with admin user ID written to `job_execution_audit` on the original job.
+- **`jobType` filter on `GET /api/v1/admin/jobs`**: new `jobType` query param; `BackgroundJobService.getJobList()` refactored from `if/else` branching to `FilterBuilder` to handle all filter combinations cleanly.
+- **Audit trail modal**: `[📋]` button per row opens a modal showing `JobExecutionAudit` entries for that job, reusing the existing `GET /api/v1/admin/jobs/{id}/audit` endpoint.
+- **i18n**: `admin.jobs.*` keys added to `en.json` and `sl.json`; cancel-related keys omitted (feature deferred to v0.18.0).
+- **`V_ADMIN_JOB_UPDATE` permission**: previously defined but unused — now wired to the restart endpoint.
 
 ### Added (POV-189)
 
@@ -77,16 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed (POV-189)
 
 - **`YouTubeTranscriptService`**: deleted; replaced by `YouTubeLegacyTranscriptProvider` + `TranscriptOrchestrator`.
-
-### Added (POV-184)
-
-- **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.
-- **`User.lastLoginAt` tracking**: nullable timestamp updated on every OIDC sign-in via `UserContextService.ensureUser()`, including PENDING users; Flyway migration V28.
-- **`AccountStatus` enum stub**: `PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED` — prepared for POV-185 state machine wiring.
-- **`GET /api/v1/users` filter + sort extensions**: `accountStatus` (enum, single-value) and `email` (case-insensitive substring) query params; sort by `email`, `accountStatus`, `lastLoginAt`, `createdAt`.
-- **`UserDTO` expansion**: `accountStatus` and `lastLoginAt` fields exposed; `createdAt` added for UI display.
-- **Sidebar nav entry**: "User Management" added to `AppShell.adminNavItems`; admin layout guard extended with `USER_MGMT_VIEW`.
-- **i18n**: full `en.json` + `sl.json` coverage for all new admin user strings.
 
 ## [0.16.0] - 2026-04-13
 
