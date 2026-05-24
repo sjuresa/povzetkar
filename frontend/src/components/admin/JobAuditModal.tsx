@@ -29,13 +29,15 @@ export function JobAuditModal({ jobId, onClose }: JobAuditModalProps) {
   if (jobId === null) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
+        onClick={onClose}
+        aria-label={t('common.close')}
+      />
       <div
-        className="bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-[28px] shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col mx-4"
-        onClick={(e) => e.stopPropagation()}
+        className="relative bg-[var(--color-background-alt)] border border-[var(--color-border-subtle)] rounded-[28px] shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col mx-4"
       >
         <div className="flex items-center justify-between p-6 border-b border-[var(--color-border-subtle)]">
           <h3 className="text-lg font-bold text-[var(--color-text-primary)] tracking-tight">
@@ -43,6 +45,7 @@ export function JobAuditModal({ jobId, onClose }: JobAuditModalProps) {
           </h3>
           <button
             onClick={onClose}
+            aria-label={t('common.close')}
             className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors rounded-xl hover:bg-[var(--color-surface-hover)]"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -122,6 +122,7 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                         disabled={restart.isPending}
                         className="px-3 py-1.5 text-[10px] text-interactive uppercase tracking-wider bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 rounded-lg hover:bg-[var(--color-action-primary)]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title={t('admin.jobs.action.restart')}
+                        aria-label={t('admin.jobs.action.restart')}
                       >
                         ↻
                       </button>
@@ -130,6 +131,7 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                       onClick={() => setAuditJobId(job.jobId ?? null)}
                       className="px-3 py-1.5 text-[10px] text-interactive uppercase tracking-wider bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] rounded-lg hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] transition-colors"
                       title={t('admin.jobs.action.view_audit')}
+                      aria-label={t('admin.jobs.action.view_audit')}
                     >
                       📋
                     </button>

@@ -147,7 +147,7 @@ public class AdminApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "type", "status", "startedAt", "endedAt"));
         return backgroundJobService.getJobList(status, jobType, panacheSort, pageIndex, clampedPageSize);
     }
 
