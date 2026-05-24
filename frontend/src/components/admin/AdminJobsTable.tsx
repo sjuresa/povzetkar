@@ -118,7 +118,7 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                   <div className="flex items-center justify-end gap-2">
                     {job.status === 'FAILED' && job.jobType && !ITEM_LEVEL_JOB_TYPES.has(job.jobType) && (
                       <button
-                        onClick={() => job.jobId && restart.mutate({ id: job.jobId })}
+                        onClick={() => job.jobId && globalThis.confirm(t('admin.jobs.confirm.restart')) && restart.mutate({ id: job.jobId })}
                         disabled={restart.isPending}
                         className="px-3 py-1.5 text-[10px] text-interactive uppercase tracking-wider bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 rounded-lg hover:bg-[var(--color-action-primary)]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title={t('admin.jobs.action.restart')}
