@@ -8,7 +8,6 @@ import {
   usePostApiV1AdminJobsIdRestart,
 } from '../../api/generated/admin/admin';
 import { JobAuditModal } from './JobAuditModal';
-import { JOB_TYPE_LABELS } from './jobLabels';
 
 const JOB_STATUS_BADGE: Partial<Record<JobStatus, string>> = {
   QUEUED: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
@@ -99,7 +98,7 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-[var(--color-text-primary)]">
-                    {job.jobType ? JOB_TYPE_LABELS[job.jobType] : '—'}
+                    {job.jobType ? t(`admin.jobs.type.${job.jobType.toLowerCase()}`) : '—'}
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -108,8 +107,8 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight ${JOB_STATUS_BADGE[job.status ?? ''] ?? JOB_STATUS_BADGE_DEFAULT}`}>
-                    {job.status}
+                  <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight ${JOB_STATUS_BADGE[job.status as JobStatus] ?? JOB_STATUS_BADGE_DEFAULT}`}>
+                    {job.status ? t(`admin.jobs.status.${job.status.toLowerCase()}`) : '—'}
                   </span>
                 </td>
                 <td className="px-6 py-4">

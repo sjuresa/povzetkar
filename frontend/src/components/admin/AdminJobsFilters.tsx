@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import type { JobStatus, JobType } from '../../api/generated/model';
-import { JOB_TYPE_LABELS } from './jobLabels';
 
 export interface AdminJobsFilters {
   status?: JobStatus;
@@ -82,7 +81,7 @@ export function AdminJobsFilters({ filters, onFilterChange }: AdminJobsFiltersPr
             >
               <option value="">{t('admin.jobs.filter.all_types')}</option>
               {JOB_TYPES.map((jt) => (
-                <option key={jt} value={jt}>{JOB_TYPE_LABELS[jt]}</option>
+                <option key={jt} value={jt}>{t(`admin.jobs.type.${jt.toLowerCase()}`)}</option>
               ))}
             </select>
           </div>
@@ -91,7 +90,7 @@ export function AdminJobsFilters({ filters, onFilterChange }: AdminJobsFiltersPr
             <button
               onClick={handleClear}
               className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-status-error)] transition-colors"
-              title="Clear Filters"
+              title={t('admin.jobs.filter.clear_title')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />

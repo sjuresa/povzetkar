@@ -70,8 +70,8 @@ export function AdminJobsPage() {
 
         <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-4 py-2 hover:bg-[var(--color-surface-hover)] transition-colors group">
           <div className="text-right">
-            <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">Total Jobs</div>
-            <div className="text-sm font-mono text-[var(--color-action-primary)] font-bold">{totalCount.toLocaleString()}</div>
+            <div className="text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest">{t('admin.jobs.total_jobs_label')}</div>
+            <div className="text-sm font-mono text-[var(--color-action-primary)] text-interactive">{totalCount.toLocaleString()}</div>
           </div>
           <div className="w-8 h-8 rounded-xl bg-[var(--color-action-primary)]/[0.05] flex items-center justify-center text-[var(--color-action-primary)] ml-2 group-hover:scale-110 transition-transform">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

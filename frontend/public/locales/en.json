@@ -186,11 +186,13 @@
     "jobs": {
       "title": "Background Jobs",
       "subtitle": "Monitor and manage background processing jobs.",
+      "total_jobs_label": "Total Jobs",
       "filter": {
         "status": "Status",
         "type": "Job type",
         "all_statuses": "All Statuses",
-        "all_types": "All Types"
+        "all_types": "All Types",
+        "clear_title": "Clear Filters"
       },
       "column": {
         "started_at": "Started",
@@ -217,6 +219,21 @@
       },
       "duration": {
         "not_started": "—"
+      },
+      "status": {
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "type": {
+        "sync_youtube_feeds": "Sync Feeds",
+        "generate_briefings": "Generate Briefings",
+        "process_topics_and_summarize": "Process & Summarize",
+        "generate_topic_briefing": "Topic Briefing",
+        "generate_topic_summaries": "Topic Summaries",
+        "generate_item_summary": "Item Summary",
+        "retry_item_processing": "Retry Item"
       }
     },
     "users": {

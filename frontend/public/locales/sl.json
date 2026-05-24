@@ -186,11 +186,13 @@
     "jobs": {
       "title": "Opravila v ozadju",
       "subtitle": "Spremljajte in upravljajte opravila v ozadju.",
+      "total_jobs_label": "Vsa opravila",
       "filter": {
         "status": "Status",
         "type": "Tip opravila",
         "all_statuses": "Vsi statusi",
-        "all_types": "Vsi tipi"
+        "all_types": "Vsi tipi",
+        "clear_title": "Počisti filtre"
       },
       "column": {
         "started_at": "Začetek",
@@ -217,6 +219,21 @@
       },
       "duration": {
         "not_started": "—"
+      },
+      "status": {
+        "queued": "V čakalni vrsti",
+        "running": "V teku",
+        "completed": "Zaključeno",
+        "failed": "Neuspešno"
+      },
+      "type": {
+        "sync_youtube_feeds": "Sinhronizacija virov",
+        "generate_briefings": "Ustvarjanje povzetkov",
+        "process_topics_and_summarize": "Obdelava in povzemanje",
+        "generate_topic_briefing": "Briefing teme",
+        "generate_topic_summaries": "Povzetki teme",
+        "generate_item_summary": "Povzetek elementa",
+        "retry_item_processing": "Ponovna obdelava elementa"
       }
     },
     "users": {
