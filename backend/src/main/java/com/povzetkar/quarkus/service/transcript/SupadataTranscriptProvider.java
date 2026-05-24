@@ -54,7 +54,7 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
     @Override
     public String fetch(String videoId) throws QuotaExhaustedException, ProviderUnavailableException {
         String url = YOUTUBE_URL_PREFIX + videoId;
-        String asyncJobId = null;
+        String asyncJobId;
         try (Response response = supadataClient.getTranscript(url, lang, false)) {
             int status = response.getStatus();
             if (status == Response.Status.OK.getStatusCode()) {
@@ -105,6 +105,9 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
             }
             try {
                 SupadataJobStatusResponse status = supadataClient.getJobStatus(jobId);
+                if (status == null) {
+                    throw new ProviderUnavailableException(PROVIDER_NAME, "Empty job status response");
+                }
                 if ("completed".equals(status.status())) {
                     return formatChunks(status.content());
                 }
