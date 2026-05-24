@@ -8,6 +8,7 @@ import com.google.genai.errors.ApiException;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.api.OrchestrationRequest;
 import com.povzetkar.quarkus.model.*;
+import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -48,7 +49,7 @@ class OrchestrationIntegrationTest {
     YouTubeContentFetcherService youTubeContentFetcherService;
 
     @InjectMock
-    YouTubeTranscriptService youTubeTranscriptService;
+    TranscriptOrchestrator transcriptOrchestrator;
 
     @InjectMock
     VideoSummaryService videoSummaryService;
@@ -59,7 +60,7 @@ class OrchestrationIntegrationTest {
     @BeforeEach
     @Transactional
     void setUp() {
-        Mockito.reset(youTubeContentFetcherService, youTubeTranscriptService, videoSummaryService);
+        Mockito.reset(youTubeContentFetcherService, transcriptOrchestrator, videoSummaryService);
         // Clean up database before each test to ensure isolation
         tearDown();
         setupTestData();
@@ -121,7 +122,7 @@ class OrchestrationIntegrationTest {
 
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(longVideo));
-        when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
+        when(transcriptOrchestrator.fetch("video1_id")).thenReturn("Transcript for video 1");
 
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenReturn("Generated Summary for Video");
@@ -138,7 +139,7 @@ class OrchestrationIntegrationTest {
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
-        verify(youTubeTranscriptService).getTranscript("video1_id");
+        verify(transcriptOrchestrator).fetch("video1_id");
         verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
         verify(videoSummaryService).createBriefingFromSummaries(any(GenAiClient.class), anyString(), eq(orchestrationDate.format(DateTimeFormatter.ofPattern("d.M.yyyy"))), eq("Default Topic"), any());
 
@@ -174,7 +175,7 @@ class OrchestrationIntegrationTest {
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
-        verifyNoInteractions(youTubeTranscriptService, videoSummaryService);
+        verifyNoInteractions(transcriptOrchestrator, videoSummaryService);
 
         assertEquals(0, ContentItem.count());
         assertEquals(0, Summary.count());
@@ -194,7 +195,7 @@ class OrchestrationIntegrationTest {
 
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(videoToProcess));
-        when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
+        when(transcriptOrchestrator.fetch("video1_id")).thenReturn("Transcript for video 1");
 
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenThrow(new ApiException(429, "Rate limit exceeded", null));
@@ -203,7 +204,7 @@ class OrchestrationIntegrationTest {
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
-        verify(youTubeTranscriptService).getTranscript("video1_id");
+        verify(transcriptOrchestrator).fetch("video1_id");
         verify(videoSummaryService).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
         verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
 
@@ -232,7 +233,7 @@ class OrchestrationIntegrationTest {
                 "Author 1", "channel1_id", Instant.now(), Duration.ofMinutes(transcriptThresholdMinutes + 1));
         when(youTubeContentFetcherService.fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any()))
                 .thenReturn(List.of(video1));
-        when(youTubeTranscriptService.getTranscript("video1_id")).thenReturn("Transcript for video 1");
+        when(transcriptOrchestrator.fetch("video1_id")).thenReturn("Transcript for video 1");
         when(videoSummaryService.generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString()))
                 .thenReturn("Initial Summary");
 
@@ -338,7 +339,7 @@ class OrchestrationIntegrationTest {
 
         // Then
         verify(youTubeContentFetcherService).fetchYouTubeVideos(any(ContentSource.class), eq(orchestrationDate), any(), any());
-        verify(youTubeTranscriptService, never()).getTranscript(anyString());
+        verify(transcriptOrchestrator, never()).fetch(anyString());
         verify(videoSummaryService, never()).generateContent(any(GenAiClient.class), any(com.google.genai.types.Content.class), anyString(), anyString(), anyString());
         verify(videoSummaryService, never()).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
 

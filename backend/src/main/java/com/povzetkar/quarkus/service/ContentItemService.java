@@ -5,11 +5,12 @@ import com.povzetkar.quarkus.model.ContentProcessingError;
 import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
-import jakarta.transaction.Transactional;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -27,16 +28,16 @@ public class ContentItemService {
         ERROR
     }
 
-    private final YouTubeTranscriptService youTubeTranscriptService;
+    private final TranscriptOrchestrator transcriptOrchestrator;
 
     @Inject
-    public ContentItemService(YouTubeTranscriptService youTubeTranscriptService) {
-        this.youTubeTranscriptService = youTubeTranscriptService;
+    public ContentItemService(TranscriptOrchestrator transcriptOrchestrator) {
+        this.transcriptOrchestrator = transcriptOrchestrator;
     }
 
-    @Transactional
     public FetchTranscriptResult fetchTranscript(Long contentItemId) {
-        Optional<ContentItem> optionalContentItem = ContentItem.findByIdOptional(contentItemId);
+        Optional<ContentItem> optionalContentItem = QuarkusTransaction.requiringNew()
+                .call(() -> Optional.ofNullable(ContentItem.findById(contentItemId)));
         if (optionalContentItem.isEmpty()) {
             Log.warnf("Content item with ID %d not found.", contentItemId);
             return FetchTranscriptResult.NOT_FOUND;
@@ -47,22 +48,33 @@ public class ContentItemService {
             return FetchTranscriptResult.NOT_A_VIDEO;
         }
 
+        String transcript = transcriptOrchestrator.fetch(video.videoId);
+
         try {
-            String transcript = youTubeTranscriptService.getTranscript(video.videoId);
             if (transcript != null && !transcript.isBlank()) {
-                video.transcript = transcript;
-                video.errorCode = null;
-                video.errorMessage = null;
-                video.persist();
+                QuarkusTransaction.requiringNew().run(() -> {
+                    YouTubeVideo managed = YouTubeVideo.findById(video.id);
+                    if (managed != null) {
+                        managed.transcript = transcript;
+                        managed.errorCode = null;
+                        managed.errorMessage = null;
+                        managed.persist();
+                    }
+                });
                 Log.infof("Successfully fetched transcript for video ID %s.", video.videoId);
                 return FetchTranscriptResult.SUCCESS;
             } else {
-                updateVideoStatus(video, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript is not available for this video.");
+                QuarkusTransaction.requiringNew().run(() -> {
+                    YouTubeVideo managed = YouTubeVideo.findById(video.id);
+                    if (managed != null) {
+                        updateVideoStatus(managed, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript is not available for this video.");
+                    }
+                });
                 Log.warnf("Transcript unavailable for video ID %s.", video.videoId);
                 return FetchTranscriptResult.TRANSCRIPT_UNAVAILABLE;
             }
         } catch (PersistenceException e) {
-            Log.errorf(e, "Failed to persist transcript for video ID %s. The transaction will be rolled back.", video.videoId);
+            Log.errorf(e, "Failed to persist transcript for video ID %s.", video.videoId);
             return FetchTranscriptResult.ERROR;
         }
     }

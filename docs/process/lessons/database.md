@@ -76,7 +76,35 @@ Object[] result = (Object[]) em.createNativeQuery(
   
   This ensures that each chunk is committed independently, and the database remains responsive. Since `DELETE ... LIMIT` is not standard across all SQL dialects (like PostgreSQL), use a two-step `SELECT id ... LIMIT X` followed by `DELETE ... WHERE id IN (...)` for a portable and performant implementation in Hibernate.
 
+## Do Not Hold a Transaction Open During External Network Calls (POV-189)
+- **The Trap:** Annotating a service method with `@Transactional` when it also performs external HTTP calls (e.g., fetching a transcript via a REST client) holds a DB connection from the pool open for the entire duration of the network call — including any polling loops. Under load this exhausts the connection pool.
+- **The Standard:** Remove `@Transactional` from any method that mixes network I/O with DB writes. Use `QuarkusTransaction.requiringNew()` to wrap *only* the DB read and the DB write blocks, leaving the network call in a non-transactional context.
+- **The Corollary — detached entities:** Once the first `QuarkusTransaction.requiringNew()` block closes, any entity loaded inside it becomes detached. Calling `persist()` on a detached entity in a subsequent transaction throws `PersistentObjectException`. Always re-load the entity inside each new transaction block via `findById(id)` before modifying or persisting it.
+
+```java
+// WRONG — holds connection open during network call
+@Transactional
+public Result process(Long id) {
+    Entity e = Entity.findById(id);          // DB read — connection held
+    String data = externalApi.fetch(...);     // network call — still holding!
+    e.field = data;
+    e.persist();                             // DB write
+}
+
+// CORRECT — transaction scoped to DB operations only
+public Result process(Long id) {
+    Entity e = QuarkusTransaction.requiringNew().call(() -> Entity.findById(id)); // closed immediately
+    String data = externalApi.fetch(...);    // no transaction held
+    QuarkusTransaction.requiringNew().run(() -> {
+        Entity managed = Entity.findById(e.id); // re-load — entity was detached
+        managed.field = data;
+        managed.persist();
+    });
+}
+```
+
 ## Transactional Consistency in Background Jobs
+
 - **The Problem:** Background jobs triggered from executor threads lack a default CDI request or transaction context. This leads to `ContextNotActiveException` when calling Panache methods.
 - **The Standard:** Always wrap background database operations in an explicit programmatic transaction: `QuarkusTransaction.requiringNew().call(() -> { ... })`.
 
