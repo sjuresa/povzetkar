@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { JobType } from '../../api/generated/model';
 import type { BackgroundJobDTO, JobStatus } from '../../api/generated/model';
 import {
   getGetApiV1AdminJobsQueryKey,
   usePostApiV1AdminJobsIdRestart,
 } from '../../api/generated/admin/admin';
 import { JobAuditModal } from './JobAuditModal';
+
+const ITEM_LEVEL_JOB_TYPES = new Set<JobType>(['GENERATE_ITEM_SUMMARY', 'RETRY_ITEM_PROCESSING']);
 
 const JOB_STATUS_BADGE: Partial<Record<JobStatus, string>> = {
   QUEUED: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
@@ -113,7 +116,7 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end gap-2">
-                    {job.status === 'FAILED' && (
+                    {job.status === 'FAILED' && job.jobType && !ITEM_LEVEL_JOB_TYPES.has(job.jobType) && (
                       <button
                         onClick={() => job.jobId && restart.mutate({ id: job.jobId })}
                         disabled={restart.isPending}
