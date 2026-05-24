@@ -54,8 +54,8 @@ export function JobAuditModal({ jobId, onClose }: JobAuditModalProps) {
         <div className="overflow-y-auto flex-1 p-6">
           {isLoading && (
             <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
+              {['a', 'b', 'c', 'd'].map((k) => (
+                <Skeleton key={k} className="h-14 w-full" />
               ))}
             </div>
           )}
@@ -72,7 +72,7 @@ export function JobAuditModal({ jobId, onClose }: JobAuditModalProps) {
                   className="flex items-start gap-3 p-3 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)]"
                 >
                   <span className={`mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight shrink-0 ${STATUS_BADGE[entry.status ?? ''] ?? STATUS_BADGE_DEFAULT}`}>
-                    {entry.status}
+                    {entry.status ? t(`admin.jobs.status.${entry.status.toLowerCase()}`) : '—'}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-[var(--color-text-primary)] break-words">{entry.message}</p>

@@ -65,7 +65,7 @@ export function AdminJobsFilters({ filters, onFilterChange }: AdminJobsFiltersPr
             >
               <option value="">{t('admin.jobs.filter.all_statuses')}</option>
               {JOB_STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{t(`admin.jobs.status.${s.toLowerCase()}`)}</option>
               ))}
             </select>
           </div>
