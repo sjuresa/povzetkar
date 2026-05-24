@@ -54,10 +54,14 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
     @Override
     public String fetch(String videoId) throws QuotaExhaustedException, ProviderUnavailableException {
         String url = YOUTUBE_URL_PREFIX + videoId;
+        String asyncJobId = null;
         try (Response response = supadataClient.getTranscript(url, lang, false)) {
             int status = response.getStatus();
             if (status == Response.Status.OK.getStatusCode()) {
                 SupadataTranscriptResponse body = response.readEntity(SupadataTranscriptResponse.class);
+                if (body == null) {
+                    throw new ProviderUnavailableException(PROVIDER_NAME, "Empty response body on 200 OK");
+                }
                 return formatChunks(body.content());
             }
             if (status == Response.Status.ACCEPTED.getStatusCode()) {
@@ -65,14 +69,14 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
                 if (async == null || async.jobId() == null) {
                     throw new ProviderUnavailableException(PROVIDER_NAME, "202 response missing jobId");
                 }
-                return pollJobResult(videoId, async.jobId());
-            }
-            if (status == Response.Status.PAYMENT_REQUIRED.getStatusCode()) {
+                asyncJobId = async.jobId();
+            } else if (status == Response.Status.PAYMENT_REQUIRED.getStatusCode()) {
                 log.warn("Supadata quota exhausted for video ID '{}'.", videoId);
                 throw new QuotaExhaustedException(PROVIDER_NAME);
+            } else {
+                log.warn("Supadata returned HTTP {} for video ID '{}'.", status, videoId);
+                throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
             }
-            log.warn("Supadata returned HTTP {} for video ID '{}'.", status, videoId);
-            throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
         } catch (QuotaExhaustedException | ProviderUnavailableException e) {
             throw e;
         } catch (WebApplicationException e) {
@@ -86,6 +90,8 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
             log.warn("Supadata call failed for video ID '{}'.", videoId, e);
             throw new ProviderUnavailableException(PROVIDER_NAME, e);
         }
+        // Response is closed; start polling outside the try-with-resources to release the connection
+        return pollJobResult(videoId, asyncJobId);
     }
 
     private String pollJobResult(String videoId, String jobId) throws ProviderUnavailableException {

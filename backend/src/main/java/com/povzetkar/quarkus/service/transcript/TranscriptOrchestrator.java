@@ -53,7 +53,7 @@ public class TranscriptOrchestrator {
                 String transcript = provider.fetch(videoId);
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_SUCCESSES, TAG_PROVIDER, provider.name()).increment();
-                quotaService.recordFetch(provider.name());
+                recordQuotaBestEffort(provider.name());
                 log.info("Transcript fetched successfully via provider '{}' for video ID '{}'.", provider.name(), videoId);
                 return transcript;
             } catch (QuotaExhaustedException _) {
@@ -68,6 +68,14 @@ public class TranscriptOrchestrator {
         }
         log.error("All transcript providers failed for video ID '{}'.", videoId);
         return "";
+    }
+
+    private void recordQuotaBestEffort(String providerName) {
+        try {
+            quotaService.recordFetch(providerName);
+        } catch (Exception e) {
+            log.error("Failed to record quota usage for provider '{}'.", providerName, e);
+        }
     }
 
     private List<TranscriptProvider> buildOrderedChain(Instance<TranscriptProvider> providers, List<String> order) {

@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 
 import java.time.YearMonth;
+import java.time.ZoneOffset;
 
 @ApplicationScoped
 public class TranscriptProviderQuotaService {
@@ -20,7 +21,7 @@ public class TranscriptProviderQuotaService {
 
     @Transactional(TxType.REQUIRES_NEW)
     public void recordFetch(String providerName) {
-        String period = YearMonth.now().toString();
+        String period = YearMonth.now(ZoneOffset.UTC).toString();
         int updated = em.createNativeQuery(
                         "INSERT INTO transcript_provider_quota_usage (provider_name, period_yyyy_mm, fetches_count) " +
                         "VALUES (:provider, :period, 1) " +
