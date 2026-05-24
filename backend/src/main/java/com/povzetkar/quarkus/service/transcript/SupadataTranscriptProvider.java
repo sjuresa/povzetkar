@@ -70,33 +70,47 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
                     throw new ProviderUnavailableException(PROVIDER_NAME, "202 response missing jobId");
                 }
                 asyncJobId = async.jobId();
-            } else if (status == Response.Status.PAYMENT_REQUIRED.getStatusCode()) {
-                log.warn("Supadata quota exhausted for video ID '{}'.", videoId);
-                throw new QuotaExhaustedException(PROVIDER_NAME);
             } else {
-                log.warn("Supadata returned HTTP {} for video ID '{}'.", status, videoId);
-                throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
+                throwForHttpStatus(status, videoId);
+                return ""; // unreachable, satisfies compiler
             }
         } catch (QuotaExhaustedException | ProviderUnavailableException e) {
             throw e;
         } catch (WebApplicationException e) {
-            int status = e.getResponse().getStatus();
+            throwForWebException(e, videoId);
+            return ""; // unreachable, satisfies compiler
+        } catch (Exception e) {
+            log.warn("Supadata call failed for video ID '{}'.", videoId, e);
+            throw new ProviderUnavailableException(PROVIDER_NAME, e);
+        }
+        // Response is closed; poll outside the try-with-resources to release the connection
+        return pollJobResult(videoId, asyncJobId);
+    }
+
+    private void throwForHttpStatus(int status, String videoId) throws QuotaExhaustedException, ProviderUnavailableException {
+        if (status == Response.Status.PAYMENT_REQUIRED.getStatusCode()) {
+            log.warn("Supadata quota exhausted for video ID '{}'.", videoId);
+            throw new QuotaExhaustedException(PROVIDER_NAME);
+        }
+        log.warn("Supadata returned HTTP {} for video ID '{}'.", status, videoId);
+        throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
+    }
+
+    private void throwForWebException(WebApplicationException e, String videoId) throws QuotaExhaustedException, ProviderUnavailableException {
+        try (Response r = e.getResponse()) {
+            int status = (r != null) ? r.getStatus() : 500;
             log.warn("Supadata call failed with HTTP {} for video ID '{}'.", status, videoId);
             if (status == Response.Status.PAYMENT_REQUIRED.getStatusCode()) {
                 throw new QuotaExhaustedException(PROVIDER_NAME);
             }
             throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
-        } catch (Exception e) {
-            log.warn("Supadata call failed for video ID '{}'.", videoId, e);
-            throw new ProviderUnavailableException(PROVIDER_NAME, e);
         }
-        // Response is closed; start polling outside the try-with-resources to release the connection
-        return pollJobResult(videoId, asyncJobId);
     }
 
     private String pollJobResult(String videoId, String jobId) throws ProviderUnavailableException {
-        long deadline = System.currentTimeMillis() + POLL_TIMEOUT_MS;
-        while (System.currentTimeMillis() < deadline) {
+        long start = System.nanoTime();
+        long timeoutNanos = POLL_TIMEOUT_MS * 1_000_000L;
+        while (System.nanoTime() - start < timeoutNanos) {
             try {
                 Thread.sleep(POLL_INTERVAL_MS);
             } catch (InterruptedException _) {
@@ -116,8 +130,11 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
                     throw new ProviderUnavailableException(PROVIDER_NAME, "Async job failed: " + status.error());
                 }
             } catch (WebApplicationException e) {
-                log.warn("Supadata job status check failed for video ID '{}': HTTP {}", videoId, e.getResponse().getStatus());
-                throw new ProviderUnavailableException(PROVIDER_NAME, "Job status check failed");
+                try (Response r = e.getResponse()) {
+                    int httpStatus = (r != null) ? r.getStatus() : 500;
+                    log.warn("Supadata job status check failed for video ID '{}': HTTP {}", videoId, httpStatus);
+                    throw new ProviderUnavailableException(PROVIDER_NAME, "Job status check failed: HTTP " + httpStatus);
+                }
             }
         }
         log.warn("Supadata polling timed out after {}ms for video ID '{}'.", POLL_TIMEOUT_MS, videoId);
