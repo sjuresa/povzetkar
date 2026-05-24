@@ -40,13 +40,27 @@ This document is the mandatory checklist to be mentally reviewed before any code
 *   [ ] **Readable & Maintainable Tests:** Is the test easy to understand? Does it follow a clear Given/When/Then structure?
 *   [ ] **No Fragile Tests:** Does the test avoid dependencies on implementation details that might change (e.g., asserting on exact error message strings that include variable parts)?
 
-## 5. Performance & Scalability
+## 5. Frontend Consistency (React/i18n/Accessibility)
+
+*Lessons from POV-188: defects in these areas consistently appear in PR reviews and should be caught before the first push.*
+
+*   [ ] **i18n Completeness:** If a value is localized in one component (e.g. status badge in a table), it must be localized in **every** component that renders it (filter dropdowns, modals, audit trails). Search for the raw enum value string across all components.
+*   [ ] **Accessibility — Icon-only buttons:** Every button that contains only an icon or symbol (no visible text) must have `aria-label`. Check all `<button>` elements without visible text.
+*   [ ] **Accessibility — Non-native interactive elements:** Any `<div>`, `<span>`, or other non-interactive element with an `onClick` must be converted to a `<button type="button">` (add `aria-label` only if the button has no visible text — native `<button>` provides keyboard support by default). The backdrop overlay pattern must use `<button>` not `<div>`.
+*   [ ] **Entity field names vs. DTO names:** When building sort whitelists or filter params that reference backend entity fields, verify the name against the actual entity class field (e.g. `BackgroundJob.type`, not the DTO/query-param name `jobType`).
+*   [ ] **Exception type consistency:** Within a single method or service, use one consistent exception class for the same category of error. In this project: `BusinessRuleException` (with `400 Bad Request` and a specific machine-readable error code, e.g. `"INVALID_RESTART_STATE"`) for semantic/state violations where the resource exists, `NotFoundException` only for genuinely missing resources.
+*   [ ] **Idempotency on POST endpoints that create resources:** Any POST endpoint that creates a resource (job trigger, restart) should carry `@Idempotent` to prevent duplicate creation on client retry.
+*   [ ] **`text-interactive` vs `font-bold`:** `text-interactive` (font weight 500) is for interactive element labels — button text and sortable table headers. Non-interactive labels (`<label>`, `<h3>`, static table headers) use `font-bold`. Do not mix them.
+*   [ ] **Array keys:** Never use array index as React key. Use a stable identifier from the data, or a named string constant for static skeleton arrays.
+*   [ ] **Admin tool confirmation modals:** In internal admin tools with a limited user base and easily reversible actions, confirmation modals for destructive actions may be omitted to prioritize operational efficiency — provided the design decision is documented and recovery cost is minimal.
+
+## 6. Performance & Scalability
 
 *   [ ] **Database Efficiency:** Are there any obvious N+1 query problems? Are queries indexed appropriately?
 *   [ ] **Reactive Purity:** Is blocking code (`Thread.sleep`, non-reactive JDBC) avoided in reactive pipelines (`Uni`, `Multi`)?
 *   [ ] **Resource Management:** Are resources like streams or connections properly closed in `finally` blocks or with try-with-resources?
 
-## 6. Refactoring & Documentation Hygiene
+## 7. Refactoring & Documentation Hygiene
 
 *This section is especially critical when moving or renaming files.*
 
@@ -56,13 +70,14 @@ This document is the mandatory checklist to be mentally reviewed before any code
 *   [ ] **Document Structure:** Does each modular document start with a Level 1 heading (`#`) and have a logical heading structure?
 *   [ ] **Index Accuracy:** Does the description of a file in any index accurately reflect its contents?
 *   [ ] **Knowledge Base Update:** Have any major architectural workarounds, bug fixes, or new integration patterns discovered during this task been added to `docs/process/lessons-learned.md`?
+*   [ ] **Migration identifiers:** When reviewing database migrations, distinguish between legacy SQL column/enum names being removed and new domain model values. Do not flag a legacy identifier as inconsistent if it is explicitly part of a migration or removal step.
 
-## 7. Agent-Specific Protocols (AI Context)
+## 8. Agent-Specific Protocols (AI Context)
 
 *   [ ] **Bootstrap Logic:** Does `AGENT.md` contain an explicit, non-negotiable instruction to read required protocols *before* starting work? (The "Cold Start" fix).
 *   [ ] **Token Efficiency:** Is the agent's entry point (`AGENT.md`) lean? Is it loading only the context it needs for the specific task?
 
-## 8. Git Hygiene
+## 9. Git Hygiene
 
 *   [ ] **Conventional Commits:** Does the commit message follow the `type(scope): description` format?
 *   [ ] **Atomic Commits:** Does the commit represent a single, logical change? Are unrelated changes (e.g., a refactoring and a bug fix) in separate commits?

@@ -8,6 +8,26 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ## 🚀 Recent Highlights (v0.17.0)
 
+> [!WARNING]
+> **Frontend i18n Must Be Exhaustive Across All Components (POV-188)**:
+> If a value (e.g. job status enum) is localized in one component, it must be localized in **every** component that renders it — filter dropdowns, modals, audit trails. Omissions are always caught in PR review. Search for raw enum string usage across all components before pushing.
+
+> [!WARNING]
+> **Sort Whitelist Fields Must Match Entity Field Names, Not DTO Names (POV-188)**:
+> `QueryParser.parseSort()` whitelist strings are validated against Panache/HQL entity field names. `BackgroundJob` has `type`, not `jobType` (which is the DTO/query-param name). Always verify against the entity class, not the API contract.
+
+> [!TIP]
+> **Exception Type Consistency: `BusinessRuleException` for Semantic Violations (POV-188)**:
+> Use `BusinessRuleException(Response.Status.BAD_REQUEST, code, message)` for all cases where the resource exists but the operation is semantically invalid (wrong state, missing association). Reserve `NotFoundException` strictly for missing resources. Mixing them in the same method confuses HTTP semantics.
+
+> [!TIP]
+> **`@Idempotent` on All Resource-Creating POST Endpoints (POV-188)**:
+> Any POST endpoint that creates a resource (job trigger, restart) must carry `@Idempotent` to prevent duplicate creation on client retry. Check all existing POST endpoints when adding new ones for consistency.
+
+> [!TIP]
+> **Accessibility Baseline for Every New Component (POV-188)**:
+> Every icon-only button needs `aria-label`. Every `<div onClick>` must be `<button type="button">` (add `aria-label` only if no visible text — native `<button>` provides keyboard support by default). The modal backdrop overlay pattern must use `<button>`, not `<div>`. Some of these are caught by `eslint-plugin-sonarjs` (rules `S6848`, `S1082`) — run `eslint --max-warnings=0` on all changed files before pushing. Note: `eslint-plugin-jsx-a11y` is not currently configured; full a11y coverage requires manual review or adding that plugin.
+
 > [!IMPORTANT]
 > **Account State Machine (POV-185)**:
 > New users arrive as `PENDING_APPROVAL` with only the `demo` role. The `OidcSecurityIdentityAugmentor` re-fetches DB roles on every request — no new server-side session code is needed to invalidate sessions on `disable`. `@Authenticated` on `/me` (not `@RolesAllowed`) is essential so non-ENABLED users can fetch their own status.
