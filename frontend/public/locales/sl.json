@@ -396,10 +396,10 @@
     },
     "changelog_entries": [
       {
-        "version": "v0.17.0",
-        "title": "Posodobitev v0.17.0",
-        "date": "V teku",
-        "desc": "",
+        "version": "0.17.0",
+        "title": "Posodobitev 0.17.0",
+        "date": "2026-05-24",
+        "desc": "Različica 0.17.0 vzpostavlja **Skrbniški nadzor in uvajanje uporabnikov** — upravljavski sloj, ki Povzetkar pripravlja na večuporabniška okolja. Osrednja novost je celotna skrbniška površina za upravljanje uporabnikov, podprta z eksplicitnim štiristanjskim avtomatom za aktivacijo računov (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), z zaščito pred optimistično blokiranjem in posnemanjem demo vsebine za nove uporabnike. Nadzorna plošča ozadnih opravil nadomešča ogrado ter prinaša možnost ponovnega zagona in modalno revizijsko sled za neuspela opravila. Na strani odpornosti pridobi zajem prepisov verigo nadomestnih ponudnikov (YouTube Legacy + Supadata pilot) s prilagodljivim zamikanjem za obrambo pred omejevanjem hitrosti IP. Odpravljeni sta dve dolgotrajni težavi z UX: zunanje povezave se zdaj odpirajo v novih zavihkih na vseh Markdown površinah, potek seje pa samodejno preusmeri uporabnike nazaj na prvotno stran po ponovni avtentikaciji.",
         "badge": "new"
       },
       {
@@ -475,8 +475,8 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.17: Administrative Control & Hardening",
-        "desc": "Vzpostavitev popolnega operativnega nadzora nad platformo in integracija napredne varnostne revizije v cikel izdajanja posodobitev."
+        "title": "v0.18: Hardening & Operational Excellence",
+        "desc": "Integracija naprednega varnostnega nadzora v cikel izdaj ter dokončanje dela na področju opazljivosti in operativne zrelosti, preloženega iz v0.17.0."
       },
       {
         "title": "v1.0: RAG & Conversational Interface",

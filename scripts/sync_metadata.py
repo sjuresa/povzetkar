@@ -47,7 +47,7 @@ def parse_changelog(path: str) -> List[Dict[str, str]]:
              if ver_in_header:
                  version = ver_in_header.group(1)
              else:
-                 raise ValueError(f"Could not determine version from 'Unreleased' header: {header}")
+                 continue  # Empty [Unreleased] section — skip it
 
         summary = ""
         summary_match = re.search(r'### Summary\n(.*?)(?=\n###|\n##|$)', block, re.DOTALL)

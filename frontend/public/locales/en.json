@@ -390,10 +390,10 @@
     },
     "changelog_entries": [
       {
-        "version": "v0.17.0",
-        "title": "Update v0.17.0",
-        "date": "In Progress",
-        "desc": "",
+        "version": "0.17.0",
+        "title": "Update 0.17.0",
+        "date": "2026-05-24",
+        "desc": "Version 0.17.0 establishes **Administrative Control & User Onboarding** — the governance layer that makes Povzetkar production-ready for multi-user deployments. The centerpiece is a full Admin User Management surface backed by an explicit four-state Account Activation State Machine (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), with optimistic-locking guards and demo-content impersonation for new users. The Background Job Dashboard replaces a placeholder, providing restart capability and a full audit-trail modal for failed jobs. On the resilience side, transcript ingestion gains a multi-provider fallback chain (YouTube Legacy + Supadata pilot) with configurable jitter to defend against IP rate-limiting. Two long-standing UX friction points are resolved: external links now open in new tabs across all Markdown surfaces, and session expiry auto-redirects users back to their original page after re-authentication instead of landing them on an error screen.",
         "badge": "new"
       },
       {
@@ -469,8 +469,8 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.17: Administrative Control & Hardening",
-        "desc": "Establish full operational control over the platform and integrate advanced security auditing into the release cycle."
+        "title": "v0.18: Hardening & Operational Excellence",
+        "desc": "Integrate advanced security auditing into the release cycle and complete observability/operational maturity work deferred from v0.17.0."
       },
       {
         "title": "v1.0: RAG & Conversational Interface",

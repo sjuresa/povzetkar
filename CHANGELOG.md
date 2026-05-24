@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (v0.17.0)
+## [Unreleased]
+
+## [0.17.0] - 2026-05-24
+
+### Summary
+Version 0.17.0 establishes **Administrative Control & User Onboarding** — the governance layer that makes Povzetkar production-ready for multi-user deployments. The centerpiece is a full Admin User Management surface backed by an explicit four-state Account Activation State Machine (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), with optimistic-locking guards and demo-content impersonation for new users. The Background Job Dashboard replaces a placeholder, providing restart capability and a full audit-trail modal for failed jobs. On the resilience side, transcript ingestion gains a multi-provider fallback chain (YouTube Legacy + Supadata pilot) with configurable jitter to defend against IP rate-limiting. Two long-standing UX friction points are resolved: external links now open in new tabs across all Markdown surfaces, and session expiry auto-redirects users back to their original page after re-authentication instead of landing them on an error screen.
 
 ### Added (POV-185)
 
@@ -79,8 +84,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (POV-189)
 
-- **`TimeTextFormatter`** moved from `service/` to `service/transcript/` package; input type changed from `TranscriptContent` to `List<TranscriptSegment>`.
-- **`ContentCreationService` + `ContentItemService`**: `YouTubeTranscriptService.getTranscript()` replaced by `TranscriptOrchestrator.fetch()`.
 - **`quarkus-rest-client-jackson`** dependency scope promoted from `test` to compile (required for `SupadataClient` serialization at runtime).
 - **ADR-0009** status updated to `Accepted`; Supadata API spike findings (requires full YouTube URL, not `videoId`) documented.
 
