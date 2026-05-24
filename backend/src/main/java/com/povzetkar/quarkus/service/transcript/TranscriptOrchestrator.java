@@ -72,10 +72,14 @@ public class TranscriptOrchestrator {
 
     private List<TranscriptProvider> buildOrderedChain(Instance<TranscriptProvider> providers, List<String> order) {
         Map<String, TranscriptProvider> byName = StreamSupport.stream(providers.spliterator(), false)
-                .collect(Collectors.toMap(TranscriptProvider::name, Function.identity()));
+                .collect(Collectors.toMap(TranscriptProvider::name, Function.identity(), (a, b) -> {
+                    log.warn("Duplicate TranscriptProvider bean registered for name '{}'; keeping first.", a.name());
+                    return a;
+                }));
 
         return order.stream()
                 .map(String::trim)
+                .distinct()
                 .map(byName::get)
                 .filter(p -> p != null && p.isEnabled())
                 .collect(Collectors.toList());

@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 
 import java.time.YearMonth;
 
@@ -17,7 +18,7 @@ public class TranscriptProviderQuotaService {
         this.em = em;
     }
 
-    @Transactional
+    @Transactional(TxType.REQUIRES_NEW)
     public void recordFetch(String providerName) {
         String period = YearMonth.now().toString();
         int updated = em.createNativeQuery(

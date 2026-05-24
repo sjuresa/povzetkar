@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 public class SupadataTranscriptProvider implements TranscriptProvider {
@@ -119,7 +120,7 @@ public class SupadataTranscriptProvider implements TranscriptProvider {
             return "";
         }
         List<TranscriptSegment> segments = chunks.stream()
-                .map(c -> new TranscriptSegment(c.offset() / 1000.0, c.text()))
+                .map(c -> new TranscriptSegment(c.offset() / 1000.0, Optional.ofNullable(c.text()).orElse("")))
                 .toList();
         return formatter.format(segments);
     }

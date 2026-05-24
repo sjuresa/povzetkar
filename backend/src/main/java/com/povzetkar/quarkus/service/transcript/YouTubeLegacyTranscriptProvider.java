@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @ApplicationScoped
@@ -88,7 +89,7 @@ public class YouTubeLegacyTranscriptProvider implements TranscriptProvider {
 
     private List<TranscriptSegment> toSegments(List<Fragment> fragments) {
         return fragments.stream()
-                .map(f -> new TranscriptSegment(f.getStart(), f.getText()))
+                .map(f -> new TranscriptSegment(f.getStart(), Optional.ofNullable(f.getText()).orElse("")))
                 .toList();
     }
 }
