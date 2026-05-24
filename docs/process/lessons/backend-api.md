@@ -122,6 +122,20 @@ When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus
 
 ---
 
+## Always Close the Response from WebApplicationException (POV-189)
+
+- **The Trap:** When a MicroProfile REST Client throws a `WebApplicationException`, the `Response` object inside it wraps a live HTTP connection from the pool. Reading `e.getResponse().getStatus()` without closing the response leaks that connection. Under repeated failures (e.g., a polling loop retrying a status check) this exhausts the connection pool silently.
+- **The Standard:** Always close the response using try-with-resources, and null-guard before reading the status:
+
+```java
+} catch (WebApplicationException e) {
+    try (Response r = e.getResponse()) {
+        int status = (r != null) ? r.getStatus() : 500;
+        // handle status
+    }
+}
+```
+
 ## Related Documents
 - [ADR-0005: Summary Public Sharing](../../adr/0005-summary-public-sharing.md)
 - [ADR-0007: Onboarding Logic & Persistence](../../adr/0007-onboarding-logic-persistence.md)
