@@ -25,8 +25,9 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.BadRequestException;
+import com.povzetkar.quarkus.api.exception.BusinessRuleException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -256,11 +257,11 @@ public class BackgroundJobService {
                 .orElseThrow(() -> new NotFoundException("Job not found: " + originalJobId));
 
         if (original.status != JobStatus.FAILED) {
-            throw new BadRequestException("INVALID_RESTART_STATE");
+            throw new BusinessRuleException(Response.Status.BAD_REQUEST, "INVALID_RESTART_STATE", "Job must be in FAILED status to restart.");
         }
 
         if (ITEM_LEVEL_JOB_TYPES.contains(original.type)) {
-            throw new BadRequestException("INVALID_RESTART_STATE");
+            throw new BusinessRuleException(Response.Status.BAD_REQUEST, "INVALID_RESTART_STATE", "Item-level jobs cannot be restarted individually.");
         }
 
         BackgroundJob newJob = switch (original.type) {

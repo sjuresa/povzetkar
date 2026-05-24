@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type { BackgroundJobDTO } from '../../api/generated/model';
+import type { BackgroundJobDTO, JobStatus } from '../../api/generated/model';
 import {
   getGetApiV1AdminJobsQueryKey,
-  postApiV1AdminJobsIdRestart,
+  usePostApiV1AdminJobsIdRestart,
 } from '../../api/generated/admin/admin';
 import { JobAuditModal } from './JobAuditModal';
 import { JOB_TYPE_LABELS } from './jobLabels';
 
-const JOB_STATUS_BADGE: Record<string, string> = {
+const JOB_STATUS_BADGE: Partial<Record<JobStatus, string>> = {
   QUEUED: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
   RUNNING: 'bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20',
   COMPLETED: 'bg-green-500/10 text-green-400 border border-green-500/20',
@@ -55,15 +55,16 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
 
   const invalidateJobs = () => void queryClient.invalidateQueries({ queryKey: getGetApiV1AdminJobsQueryKey() });
 
-  const restart = useMutation({
-    mutationFn: (jobId: string) => postApiV1AdminJobsIdRestart(jobId),
-    onSuccess: () => {
-      toast.success(t('admin.jobs.toast.restarted'));
-      invalidateJobs();
-    },
-    onError: () => {
-      toast.error(t('admin.jobs.toast.restart_failed'));
-      invalidateJobs();
+  const restart = usePostApiV1AdminJobsIdRestart({
+    mutation: {
+      onSuccess: () => {
+        toast.success(t('admin.jobs.toast.restarted'));
+        invalidateJobs();
+      },
+      onError: () => {
+        toast.error(t('admin.jobs.toast.restart_failed'));
+        invalidateJobs();
+      },
     },
   });
 
@@ -115,9 +116,9 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                   <div className="flex items-center justify-end gap-2">
                     {job.status === 'FAILED' && (
                       <button
-                        onClick={() => job.jobId && restart.mutate(job.jobId)}
+                        onClick={() => job.jobId && restart.mutate({ id: job.jobId })}
                         disabled={restart.isPending}
-                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 rounded-lg hover:bg-[var(--color-action-primary)]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-[10px] text-interactive uppercase tracking-wider bg-[var(--color-action-primary)]/[0.08] text-[var(--color-action-primary)] border border-[var(--color-action-primary)]/20 rounded-lg hover:bg-[var(--color-action-primary)]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title={t('admin.jobs.action.restart')}
                       >
                         ↻
@@ -125,7 +126,7 @@ export function AdminJobsTable({ jobs, sort, onSortChange }: AdminJobsTableProps
                     )}
                     <button
                       onClick={() => setAuditJobId(job.jobId ?? null)}
-                      className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] rounded-lg hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                      className="px-3 py-1.5 text-[10px] text-interactive uppercase tracking-wider bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] rounded-lg hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] transition-colors"
                       title={t('admin.jobs.action.view_audit')}
                     >
                       📋
