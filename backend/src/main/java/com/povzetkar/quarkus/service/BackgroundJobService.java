@@ -244,17 +244,13 @@ public class BackgroundJobService {
         }
 
         BackgroundJob newJob = switch (original.type) {
-            case GENERATE_TOPIC_BRIEFING -> {
+            case GENERATE_TOPIC_BRIEFING, GENERATE_TOPIC_SUMMARIES -> {
                 if (original.topicId == null) throw new NotFoundException("Topic ID missing on job: " + original.id);
                 Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(original.topicId));
                 if (topic == null) throw new NotFoundException("Topic not found: " + original.topicId);
-                yield triggerTopicBriefingJob(topic, adminUserId);
-            }
-            case GENERATE_TOPIC_SUMMARIES -> {
-                if (original.topicId == null) throw new NotFoundException("Topic ID missing on job: " + original.id);
-                Topic topic = QuarkusTransaction.requiringNew().call(() -> Topic.findByIdWithSources(original.topicId));
-                if (topic == null) throw new NotFoundException("Topic not found: " + original.topicId);
-                yield triggerTopicSummariesJob(topic, adminUserId);
+                yield original.type == JobType.GENERATE_TOPIC_BRIEFING
+                        ? triggerTopicBriefingJob(topic, adminUserId)
+                        : triggerTopicSummariesJob(topic, adminUserId);
             }
             default -> triggerJob(original.type, adminUserId);
         };
