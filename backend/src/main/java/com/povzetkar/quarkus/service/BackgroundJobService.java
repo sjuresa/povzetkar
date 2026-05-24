@@ -204,30 +204,9 @@ public class BackgroundJobService {
             JobExecutionAudit.logJob(jobId, status, auditMessage);
         }
 
-        if (status == JobStatus.RUNNING) {
-            if (job.startedAt == null) {
-                job.startedAt = clock.instant();
-            }
-        } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
-            job.endedAt = clock.instant();
-            if (errorMessage != null) {
-                logger.error("Job [{}] failed with error: {}", jobId, errorMessage);
-                if (errorMessage.length() > BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
-                    job.errorMessage = errorMessage.substring(0, BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
-                } else {
-                    job.errorMessage = errorMessage;
-                }
-            }
-        }
+        applyTimestamps(job, status, jobId, errorMessage);
         job.persist();
-        String details = null;
-        if (job.topicId != null) {
-            Topic topic = Topic.findById(job.topicId);
-            if (topic != null) {
-                details = topic.name;
-            }
-        }
-        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, details));
+        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, resolveTopicDetails(job)));
     }
 
     public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, JobType jobType, Sort sort, int pageIndex, int pageSize) {
@@ -284,6 +263,28 @@ public class BackgroundJobService {
                 "Job restarted by admin userId=" + adminUserId + ". New job ID: " + newJob.id);
 
         return newJob;
+    }
+
+    private void applyTimestamps(BackgroundJob job, JobStatus status, UUID jobId, String errorMessage) {
+        if (status == JobStatus.RUNNING) {
+            if (job.startedAt == null) {
+                job.startedAt = clock.instant();
+            }
+        } else if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
+            job.endedAt = clock.instant();
+            if (errorMessage != null) {
+                logger.error("Job [{}] failed with error: {}", jobId, errorMessage);
+                job.errorMessage = errorMessage.length() > BackgroundJob.ERROR_MESSAGE_MAX_LENGTH
+                        ? errorMessage.substring(0, BackgroundJob.ERROR_MESSAGE_MAX_LENGTH)
+                        : errorMessage;
+            }
+        }
+    }
+
+    private String resolveTopicDetails(BackgroundJob job) {
+        if (job.topicId == null) return null;
+        Topic topic = Topic.findById(job.topicId);
+        return topic != null ? topic.name : null;
     }
 
     public Optional<BackgroundJob> getJobById(UUID id) {

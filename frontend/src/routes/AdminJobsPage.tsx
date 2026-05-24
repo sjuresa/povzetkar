@@ -86,8 +86,8 @@ export function AdminJobsPage() {
       <div className="space-y-4">
         {isLoading && !data ? (
           <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+            {Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={`skeleton-${i}`} className="h-16 w-full" />
             ))}
           </div>
         ) : (
