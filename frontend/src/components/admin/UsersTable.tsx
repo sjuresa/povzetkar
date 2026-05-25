@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { UserDTO, AccountStatus, ApiErrorDTO } from '../../api/generated/model';
@@ -128,7 +129,7 @@ export function UsersTable({ users, sort, onSortChange }: UsersTableProps) {
 
   const isActionPending = approve.isPending || reject.isPending || disable.isPending || enable.isPending;
 
-  const sortState = parseSortState(sort);
+  const sortState = useMemo(() => parseSortState(sort), [sort]);
 
   const thClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest cursor-pointer select-none hover:text-[var(--color-text-primary)] transition-colors';
   const thStaticClass = 'px-4 py-3 text-[10px] text-interactive text-[var(--color-text-secondary)] uppercase tracking-widest text-right';
