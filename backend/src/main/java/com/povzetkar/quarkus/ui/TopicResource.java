@@ -122,7 +122,7 @@ public class TopicResource {
     @Blocking
     public void getTopics(RoutingContext context) {
         Map<String, Object> data = viewUtils.createTemplateData(context);
-        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        Optional<User> currentUserOpt = userContextService.getContentViewingUser();
 
         Map<User, List<Topic>> topicsByUser;
         if (currentUserOpt.isEmpty()) {
@@ -292,7 +292,7 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
         
-        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        Optional<User> currentUserOpt = userContextService.getContentViewingUser();
         if (currentUserOpt.isEmpty()) {
              context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
              return;
@@ -387,7 +387,7 @@ public class TopicResource {
         }
         Long topicId = topicIdOptional.get();
         
-        Optional<User> currentUserOpt = userContextService.getCurrentUser();
+        Optional<User> currentUserOpt = userContextService.getContentViewingUser();
         if (currentUserOpt.isEmpty()) {
              context.response().setStatusCode(404).end(String.format(TOPIC_NOT_FOUND_MSG, topicId));
              return;

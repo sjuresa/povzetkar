@@ -1,22 +1,28 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.UserIdentity;
+import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.security.UserSecurityDetails;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @ApplicationScoped
 public class UserContextService {
 
     public static final String PROVIDER_GOOGLE = "google";
+    public static final String DEMO_USER_EMAIL = "demo@povzetkar.local";
     private final SecurityIdentity securityIdentity;
+    private final AtomicLong cachedDemoUserId = new AtomicLong(0); // 0 = uninitialised; -1 = not found
 
     public UserContextService(SecurityIdentity securityIdentity) {
         this.securityIdentity = securityIdentity;
@@ -66,14 +72,41 @@ public class UserContextService {
     }
 
     /**
-     * Finds a Topic by its ID only if it is owned by the currently authenticated user.
+     * Returns the user whose content should be used for read operations.
+     * Demo-role users see the demo account's content; all others see their own.
+     */
+    public Optional<User> getContentViewingUser() {
+        if (securityIdentity.hasRole(Permission.ROLE_DEMO)) {
+            Long id = resolveDemoUserId();
+            return id == null ? Optional.empty() : User.findByIdOptional(id);
+        }
+        return getCurrentUser();
+    }
+
+    private Long resolveDemoUserId() {
+        long existing = cachedDemoUserId.get();
+        if (existing != 0) return existing == -1L ? null : existing;
+
+        synchronized (this) {
+            existing = cachedDemoUserId.get();
+            if (existing != 0) return existing == -1L ? null : existing;
+
+            Long found = User.find("email", DEMO_USER_EMAIL).<User>firstResultOptional()
+                    .map(u -> u.id).orElse(null);
+            cachedDemoUserId.set(found != null ? found : -1L);
+            return found;
+        }
+    }
+
+    /**
+     * Finds a Topic by its ID only if it is owned by the content-viewing user.
      *
      * @param topicId The ID of the topic to find.
      * @return An Optional containing the Topic if found and owned by the user, otherwise an empty Optional.
      */
     public Optional<Topic> findOwnedTopic(Long topicId) {
-        return getCurrentUser().flatMap(
-                currentUser -> Topic.find("id = ?1 and user = ?2", topicId, currentUser).firstResultOptional());
+        return getContentViewingUser().flatMap(
+                viewingUser -> Topic.find("id = ?1 and user = ?2", topicId, viewingUser).firstResultOptional());
     }
 
     /**
@@ -90,7 +123,7 @@ public class UserContextService {
      * @return The User entity, newly created or existing.
      */
     @Transactional
-    public User ensureUser(String provider, String externalId, String email, String name) {
+    public User ensureUser(String provider, String externalId, String email, String name, Instant tokenIssuedAt) {
         User user = UserIdentity.findByProviderAndExternalId(provider, externalId)
                 .map(identity -> identity.user)
                 .orElseGet(() -> {
@@ -102,6 +135,10 @@ public class UserContextService {
                     return existingUser;
                 });
 
+        if (user.lastLoginAt == null || user.lastLoginAt.isBefore(tokenIssuedAt)) {
+            user.lastLoginAt = tokenIssuedAt;
+        }
+
         // Eagerly initialize roles to avoid LazyInitializationException outside the
         // transaction
         org.hibernate.Hibernate.initialize(user.roles);
@@ -111,13 +148,13 @@ public class UserContextService {
     private User createNewUser(String email, String name) {
         User user = new User();
         user.email = email;
-        user.username = email; // Use email as username for now
+        user.username = email;
         user.name = name;
-        user.active = true;
+        user.accountStatus = AccountStatus.PENDING_APPROVAL;
 
-        Role.find("name", "user").firstResultOptional()
-                .map(Role.class::cast)
-                .ifPresent(user::addRole);
+        Role demoRole = Role.<Role>find("name", Permission.ROLE_DEMO).firstResultOptional()
+                .orElseThrow(() -> new IllegalStateException("Required role not found: " + Permission.ROLE_DEMO));
+        user.addRole(demoRole);
 
         user.persist();
         return user;

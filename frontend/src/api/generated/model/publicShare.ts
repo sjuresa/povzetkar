@@ -5,12 +5,16 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
-import type { PublicShareType } from './publicShareType';
+import type { BriefingDetailDTO } from './briefingDetailDTO';
+import type { PublicInsightType } from './publicInsightType';
+import type { PublicSummary } from './publicSummary';
 
 /**
  * Polymorphic wrapper for public shared content
  */
 export interface PublicShare {
-  type: PublicShareType;
-  data: unknown;
+  /** The type of content being shared */
+  type: PublicInsightType;
+  /** The shared content payload (Briefing or Summary) */
+  data: BriefingDetailDTO | PublicSummary;
 }

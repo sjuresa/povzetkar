@@ -6,6 +6,92 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.17.0)
+
+> [!WARNING]
+> **Frontend i18n Must Be Exhaustive Across All Components (POV-188)**:
+> If a value (e.g. job status enum) is localized in one component, it must be localized in **every** component that renders it — filter dropdowns, modals, audit trails. Omissions are always caught in PR review. Search for raw enum string usage across all components before pushing.
+
+> [!WARNING]
+> **Sort Whitelist Fields Must Match Entity Field Names, Not DTO Names (POV-188)**:
+> `QueryParser.parseSort()` whitelist strings are validated against Panache/HQL entity field names. `BackgroundJob` has `type`, not `jobType` (which is the DTO/query-param name). Always verify against the entity class, not the API contract.
+
+> [!TIP]
+> **Exception Type Consistency: `BusinessRuleException` for Semantic Violations (POV-188)**:
+> Use `BusinessRuleException(Response.Status.BAD_REQUEST, code, message)` for all cases where the resource exists but the operation is semantically invalid (wrong state, missing association). Reserve `NotFoundException` strictly for missing resources. Mixing them in the same method confuses HTTP semantics.
+
+> [!TIP]
+> **`@Idempotent` on All Resource-Creating POST Endpoints (POV-188)**:
+> Any POST endpoint that creates a resource (job trigger, restart) must carry `@Idempotent` to prevent duplicate creation on client retry. Check all existing POST endpoints when adding new ones for consistency.
+
+> [!TIP]
+> **Accessibility Baseline for Every New Component (POV-188)**:
+> Every icon-only button needs `aria-label`. Every `<div onClick>` must be `<button type="button">` (add `aria-label` only if no visible text — native `<button>` provides keyboard support by default). The modal backdrop overlay pattern must use `<button>`, not `<div>`. Some of these are caught by `eslint-plugin-sonarjs` (rules `S6848`, `S1082`) — run `eslint --max-warnings=0` on all changed files before pushing. Note: `eslint-plugin-jsx-a11y` is not currently configured; full a11y coverage requires manual review or adding that plugin.
+
+> [!IMPORTANT]
+> **Account State Machine (POV-185)**:
+> New users arrive as `PENDING_APPROVAL` with only the `demo` role. The `OidcSecurityIdentityAugmentor` re-fetches DB roles on every request — no new server-side session code is needed to invalidate sessions on `disable`. `@Authenticated` on `/me` (not `@RolesAllowed`) is essential so non-ENABLED users can fetch their own status.
+
+> [!TIP]
+> **Demo Impersonation Pattern (POV-185)**:
+> `UserContextService.getContentViewingUser()` detects `securityIdentity.hasRole(ROLE_DEMO)` and transparently returns the demo account's data. Call-sites requiring this are reads only — writes stay on `getAuthenticatedUser()`. A `getContentViewingUser()` helper on `BaseApiResource` delegates to the service and centralizes the unwrap.
+
+> [!TIP]
+> **`Map.of()` Limit**:
+> `java.util.Map.of()` supports a maximum of 10 key-value pairs. When `RolePermissionsMap` grows beyond 5 roles, switch to `Map.ofEntries(Map.entry(...), ...)` or `Collections.unmodifiableMap(new HashMap<>(...))`.
+
+> [!IMPORTANT]
+> **HTTP/Service Layer Separation for Optimistic Locking (POV-185)**:
+> ETag parsing (`If-Match` header → version integer) belongs in the resource layer (`BaseApiResource.checkOptimisticLock()`), not in the service. Services should accept a pre-loaded entity. This keeps HTTP protocol concerns out of business logic. Strip weak ETag prefix (`W/"…"`) before parsing to avoid spurious 409s from compliant clients.
+
+> [!WARNING]
+> **Flyway Migrations Are Immutable Once Applied**:
+> Any edit to an applied migration file causes "Migrations have failed validation" on next startup. Never edit an applied migration — always create a new versioned script. This applies even in the same dev session if the local DB was started between the initial apply and the desired change.
+
+> [!TIP]
+> **`@Version` Increments on `em.merge()`**:
+> In JPA, `em.merge()` on a `@Version`-annotated entity increments the version counter. Test helpers that mutate entity state must return the post-merge version and use it in subsequent optimistic-locked request headers. Sending the pre-mutation version will produce a 409 even when the test is logically correct.
+
+> [!TIP]
+> **AtomicLong Double-Checked Locking for Application-Scoped Caches**:
+> For `@ApplicationScoped` beans that lazily resolve a singleton value, use `AtomicLong(0)` where `0` = uninitialised and `-1` = "not found". The hot path reads without synchronisation; the first-write path uses a `synchronized` block with a re-check inside. Avoids a lock on every request while remaining thread-safe under concurrent initialisation.
+
+> [!WARNING]
+> **`react-markdown` Plugin Options Must Use Tuple Syntax (POV-186)**:
+> `rehypePlugins` expects `[plugin, options]` tuples — never `plugin(options)` inline. Calling `rehypeExternalLinks({ target: '_blank', rel: [...] })` invokes the factory at render time and passes its return value as the plugin, which crashes at runtime. Correct: `[rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]` as a tuple element in the array.
+
+> [!IMPORTANT]
+> **`rehypeSanitize` Strips Unknown Attributes — Plugin Order Is a Security Constraint (POV-186)**:
+> Always run `rehypeExternalLinks` (and any attribute-adding plugin) **after** `rehypeSanitize`. Running it before causes `target` and `rel` to be silently stripped on every render, defeating the security purpose entirely. Required order: `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]`.
+
+> [!TIP]
+> **`router.state.location.searchStr` vs `search` (POV-187)**:
+> TanStack Router's `ParsedLocation.search` is a **parsed object**, not a string. Stringifying it produces `[object Object]`. The raw query string (e.g., `?foo=bar`) lives on `searchStr: string`. Always use `searchStr` when constructing redirect URLs in router-aware code. Note: the Axios 401 interceptor in `client.ts` uses `globalThis.location` (not the router) to avoid a circular dependency — `globalThis.location.search` is already a raw string, so `searchStr` does not apply there.
+
+> [!IMPORTANT]
+> **Never-resolving promise to suppress error propagation after navigation (POV-187)**:
+> After setting `globalThis.location.href = '...'` to trigger a full-page navigation, JS execution continues briefly before the browser navigates away. If the calling code eventually `throw`s, React's error boundary may fire during that window. Return `new Promise(() => {})` immediately after the location assignment to produce a permanently pending promise — Axios treats it as a cancelled request, the error boundary is never triggered, and the browser navigation takes over cleanly.
+
+> [!TIP]
+> **Read the backend before designing frontend auth flows (POV-187)**:
+> Before implementing `sessionStorage` or client-side redirect logic, check whether the backend already supports a `?redirect=` (or equivalent) parameter. `LoginResource` in this project already validates and applies a `?redirect=<path>` param via `resolveSafeDestination()`. This eliminated the need for `sessionStorage`, a `LandingPage` `useEffect`, and a `validateSearch` union extension — discovered by reading `LoginResource.java` during the planning interview.
+
+> [!WARNING]
+> **Vite proxy forwards OIDC 302→Google to the browser; Axios follows it cross-origin causing CORS failure (POV-187)**:
+> In Quarkus `web-app` OIDC mode, unauthenticated API requests receive a 302 redirect to `accounts.google.com`. The Vite dev proxy forwards this 302 back to the browser. Axios (running as XHR) follows the cross-origin redirect to Google, which rejects the CORS preflight — so Axios gets a network error, not a 401, and our interceptor never fires. The fix: add a `proxyRes` handler in `vite.config.ts` that rewrites `302 + Location: accounts.google.com` → `401` for requests with `X-Requested-With: XMLHttpRequest`. This keeps OIDC redirect behaviour intact for normal browser navigations while giving Axios a clean 401 it can handle. Note: `followRedirects: false` does NOT solve this — the proxy passes the 302 to the browser regardless; it's the browser that follows it.
+
+> [!WARNING]
+> **`@TestSecurity` + `getAuthenticatedUser()` require a matching DB row (POV-188)**:
+> `@TestSecurity(user = "admin")` sets the principal name to `"admin"`, but `UserContextService.getCurrentUser()` resolves the User entity by querying `username = "admin"` in the DB. Without a matching row the endpoint returns 401 — not 403. Add a `@BeforeEach` that upserts the test user for any endpoint that calls `getAuthenticatedUser()`.
+
+> [!TIP]
+> **`FilterBuilder` eliminates conditional branching when adding filter parameters (POV-188)**:
+> When a query method gains a second optional filter param, resist the temptation to add an `if/else` branch. Use `FilterBuilder.and()` instead — it composes the JPQL WHERE clause dynamically and handles all 2^N filter combinations with zero branching. See `BackgroundJobService.getJobList()` for the pattern.
+
+> [!TIP]
+> **Sonar `no-nested-conditional` in JSX — replace ternary chain with independent conditions (POV-188)**:
+> The `isLoading ? X : count === 0 ? Y : Z` pattern inside JSX triggers `sonarjs/no-nested-conditional`. Replace with three independent `{condition && <Element />}` expressions. This is cleaner and does not require an extracted helper function.
+
 ## 🚀 Recent Highlights (v0.16.0)
 
 > [!IMPORTANT]

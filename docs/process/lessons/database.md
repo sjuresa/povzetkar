@@ -76,7 +76,35 @@ Object[] result = (Object[]) em.createNativeQuery(
   
   This ensures that each chunk is committed independently, and the database remains responsive. Since `DELETE ... LIMIT` is not standard across all SQL dialects (like PostgreSQL), use a two-step `SELECT id ... LIMIT X` followed by `DELETE ... WHERE id IN (...)` for a portable and performant implementation in Hibernate.
 
+## Do Not Hold a Transaction Open During External Network Calls (POV-189)
+- **The Trap:** Annotating a service method with `@Transactional` when it also performs external HTTP calls (e.g., fetching a transcript via a REST client) holds a DB connection from the pool open for the entire duration of the network call — including any polling loops. Under load this exhausts the connection pool.
+- **The Standard:** Remove `@Transactional` from any method that mixes network I/O with DB writes. Use `QuarkusTransaction.requiringNew()` to wrap *only* the DB read and the DB write blocks, leaving the network call in a non-transactional context.
+- **The Corollary — detached entities:** Once the first `QuarkusTransaction.requiringNew()` block closes, any entity loaded inside it becomes detached. Calling `persist()` on a detached entity in a subsequent transaction throws `PersistentObjectException`. Always re-load the entity inside each new transaction block via `findById(id)` before modifying or persisting it.
+
+```java
+// WRONG — holds connection open during network call
+@Transactional
+public Result process(Long id) {
+    Entity e = Entity.findById(id);          // DB read — connection held
+    String data = externalApi.fetch(...);     // network call — still holding!
+    e.field = data;
+    e.persist();                             // DB write
+}
+
+// CORRECT — transaction scoped to DB operations only
+public Result process(Long id) {
+    Entity e = QuarkusTransaction.requiringNew().call(() -> Entity.findById(id)); // closed immediately
+    String data = externalApi.fetch(...);    // no transaction held
+    QuarkusTransaction.requiringNew().run(() -> {
+        Entity managed = Entity.findById(e.id); // re-load — entity was detached
+        managed.field = data;
+        managed.persist();
+    });
+}
+```
+
 ## Transactional Consistency in Background Jobs
+
 - **The Problem:** Background jobs triggered from executor threads lack a default CDI request or transaction context. This leads to `ContextNotActiveException` when calling Panache methods.
 - **The Standard:** Always wrap background database operations in an explicit programmatic transaction: `QuarkusTransaction.requiringNew().call(() -> { ... })`.
 
@@ -93,3 +121,31 @@ When executing parallel database tasks using a `ManagedExecutor` or similar thre
 The EXISTS subquery pattern was successfully validated for source-based briefing filtering.
 - **Pattern:** `EXISTS (SELECT 1 FROM Summary s WHERE s MEMBER OF summaries AND s.contentItem.contentSource.id = :sourceId)` correctly filters briefings that contain summaries from a specific source without introducing cartesian products on the paginated main query.
 - **Confirmed:** This approach correctly interacts with Panache's `.count()` and `.page()` methods, producing accurate pagination metadata.
+
+## Dual-Predicate Pattern for Dynamic Filters with Explicit Alias (POV-184)
+When combining dynamic WHERE clauses with Panache's predicate-based `count()` and an explicit-alias `FROM Entity e` HQL query, the alias must be handled separately.
+- **The Trap:** Panache's `Entity.count(predicate, params)` constructs `SELECT COUNT(*) FROM Entity WHERE <predicate>` — with no alias. Using `u.email` inside this predicate causes `Could not interpret path expression 'u.email'`. The same aliased predicate works in `FROM User u WHERE u.email …` but not in `count()`.
+- **The Standard:** Maintain **two parallel StringBuilder instances** — one with bare field names for `count()`, one with the alias prefix for the explicit-alias find query. Keep them in sync at every append site.
+
+```java
+StringBuilder predicate = new StringBuilder();        // bare names → for count()
+StringBuilder aliasedPredicate = new StringBuilder(); // u. prefix  → for FROM User u ...
+Map<String, Object> params = new LinkedHashMap<>();
+
+if (email != null && !email.isBlank()) {
+    predicate.append("LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))");
+    aliasedPredicate.append("LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))");
+    params.put("email", email.strip());
+}
+
+String whereClause = aliasedPredicate.isEmpty() ? "" : "WHERE " + aliasedPredicate;
+
+long totalCount = predicate.isEmpty()
+        ? User.count()
+        : User.count(predicate.toString(), params);
+
+List<User> page = User.<User>find("FROM User u " + whereClause, panacheSort, params)
+        .page(pageIndex, pageSize).list();
+```
+
+- **Corollary — avoid dual code paths:** Do not split into a "no-filter" path using `User.findAll()` and a "filtered" path using explicit-alias HQL. A `Sort.by("u.email")` passed to `findAll()` will also fail because `findAll()` uses no alias. Always use the explicit-alias form for both branches.

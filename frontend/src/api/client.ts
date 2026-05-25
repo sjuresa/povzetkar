@@ -55,6 +55,8 @@ export type UnwrapEnvelope<T> = T extends { data: infer D } ? D : T;
 
 const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
 
+let sessionExpiredRedirectInProgress = false;
+
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -72,7 +74,7 @@ axiosRetry(client, {
     logger.warn(`[API] Retrying request (${retryCount}/3)...`);
   },
   retryCondition: (error) => {
-    // Retry on network errors or transient 5xx status codes
+    if (error.response?.status === 401) return false;
     return isNetworkOrIdempotentRequestError(error) ||
            (!!error.response?.status && [502, 503, 504].includes(error.response.status));
   },
@@ -151,10 +153,17 @@ client.interceptors.response.use(
 
     if (response) {
       switch (response.status) {
-        case 401:
-          logger.error('[API] Unauthorized - Clearing local session', { status: response.status });
-          useAuthStore.getState().clearAuth();
-          break;
+        case 401: {
+          const authState = useAuthStore.getState();
+          if (!authState.isAuthenticated) break;
+          if (sessionExpiredRedirectInProgress) return new Promise(() => {});
+          sessionExpiredRedirectInProgress = true;
+          logger.error('[API] Session expired - redirecting to login', { status: response.status });
+          authState.clearAuth();
+          const { pathname, search, hash } = globalThis.location;
+          globalThis.location.href = '/auth/login?redirect=' + encodeURIComponent(pathname + search + hash);
+          return new Promise(() => {}); // Never resolves — navigation takes over
+        }
         case 403:
           logger.error('[API] Forbidden - Insufficient permissions', { status: response.status });
           break;

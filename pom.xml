@@ -6,7 +6,7 @@
 
     <groupId>si.jumis</groupId>
     <artifactId>povzetkar-root</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
     <packaging>pom</packaging>
 
     <name>Povzetkar Root</name>
@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <!-- Shared Dependency Versions -->
-        <quarkus.platform.version>3.34.1</quarkus.platform.version>
+        <quarkus.platform.version>3.35.3</quarkus.platform.version>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
 

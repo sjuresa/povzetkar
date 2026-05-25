@@ -15,6 +15,8 @@ import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import com.povzetkar.quarkus.model.AuditLog;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
+import com.povzetkar.quarkus.model.JobType;
+import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -139,13 +141,33 @@ public class AdminApiResource extends BaseApiResource {
     )
     public PaginatedResponse<BackgroundJobDTO> getJobs(
             @QueryParam("status") JobStatus status,
+            @QueryParam("jobType") JobType jobType,
             @QueryParam("sort") List<String> sort,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
-        
+
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "jobType", "status", "startedAt", "endedAt"));
-        return backgroundJobService.getJobList(status, panacheSort, pageIndex, clampedPageSize);
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("startedAt").descending(), Set.of("id", "type", "status", "startedAt", "endedAt"));
+        return backgroundJobService.getJobList(status, jobType, panacheSort, pageIndex, clampedPageSize);
+    }
+
+    @POST
+    @Path("/" + JOBS_PATH + "/{id}/restart")
+    @Idempotent
+    @RolesAllowed(Permission.V_ADMIN_JOB_UPDATE)
+    @Operation(summary = "Restart a failed job", description = "Creates a new job using the original job's configuration. Only allowed for FAILED jobs.")
+    @APIResponse(responseCode = "202", description = "New job created",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BackgroundJobDTO.class)))
+    @APIResponse(responseCode = "400", description = "Job is not in FAILED state or is an item-level job")
+    @APIResponse(responseCode = "404", description = "Job not found")
+    @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the FAILED job to restart")
+    public Response restartJob(@PathParam("id") UUID id) {
+        User admin = getAuthenticatedUser();
+        BackgroundJob newJob = backgroundJobService.restartJob(id, admin.id);
+        return Response.accepted()
+                .entity(backgroundJobMapper.toDTO(newJob))
+                .type(MediaType.APPLICATION_JSON)
+                .build();
     }
 
     @GET

@@ -13,7 +13,7 @@ test.describe('Auth & Authorization', () => {
     await page.route('**/auth/login', route => route.fulfill({
       status: 200,
       contentType: 'text/html',
-      body: '<html><body>Mock Login Page</body></html>'
+      body: '<html lang="en"><body>Mock Login Page</body></html>'
     }));
 
     await page.goto('/');
@@ -29,6 +29,97 @@ test.describe('Auth & Authorization', () => {
     
     const currentUrl = page.url();
     expect(currentUrl).toContain('/auth/login');
+  });
+
+  /**
+   * TC-SEC-003 / PW-007: Session Expiry Auto-Login
+   * Verifies that a 401 response from a protected API triggers an automatic redirect
+   * to /auth/login with the current path encoded as a ?redirect= param.
+   * The backend LoginResource.resolveSafeDestination() validates and applies the redirect
+   * after OAuth completes, returning the user to their original page.
+   */
+  test('401 from protected API redirects to /auth/login with redirect param (SEC-003)', async ({ page }) => {
+    // 1. Mock Auth — authenticated user on first /me call (session appears valid initially)
+    let meCallCount = 0;
+    await page.route('**/api/v1/users/me', route => {
+      meCallCount++;
+      if (meCallCount === 1) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: { id: 1, name: 'Test User', email: 'user@povzetkar.ai', permissions: ['TOPIC_VIEW'] },
+            error: null,
+            meta: { timestamp: new Date().toISOString() }
+          })
+        });
+      }
+      return route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' }, meta: { timestamp: new Date().toISOString() } })
+      });
+    });
+
+    // 2. Mock dashboard — returns 401 to simulate session expiry mid-use
+    await page.route('**/api/v1/dashboard', route => route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' }, meta: { timestamp: new Date().toISOString() } })
+    }));
+
+    // 3. Intercept the navigation to /auth/login before it leaves the SPA
+    await page.route('**/auth/login**', route => {
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<html lang="en"><body>Mock Login</body></html>'
+      });
+    });
+
+    // 4. Navigate to dashboard (authenticated route)
+    await page.goto('/dashboard');
+
+    // 5. Wait for the redirect to /auth/login to fire
+    await page.waitForURL(url => url.toString().includes('/auth/login'), { timeout: 10000 });
+
+    // 6. Assert: URL contains redirect param pointing to /dashboard
+    const currentUrl = page.url();
+    expect(currentUrl).toContain('/auth/login');
+    expect(currentUrl).toContain('redirect=');
+    const url = new URL(currentUrl);
+    const redirectParam = url.searchParams.get('redirect');
+    expect(redirectParam).toBe('/dashboard');
+  });
+
+  /**
+   * TC-SEC-004 / PW-008: Landing Page 401 Regression
+   * Verifies that an unauthenticated user whose /me call returns 401 stays on the
+   * landing page and is NOT redirected to /auth/login. The interceptor must only
+   * auto-redirect when the user was previously authenticated (session expiry case).
+   */
+  test('unauthenticated /me 401 does not trigger auto-login redirect (SEC-004)', async ({ page }) => {
+    // 1. Mock /me as 401 — unauthenticated user hitting the app for the first time
+    await page.route('**/api/v1/users/me', route => route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' }, meta: { timestamp: new Date().toISOString() } })
+    }));
+
+    // 2. Mock system metadata (public endpoint used by LandingPage)
+    await page.route('**/api/v1/system/metadata', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: {}, error: null, meta: { timestamp: new Date().toISOString() } })
+    }));
+
+    // 3. Navigate to root
+    await page.goto('/');
+
+    // 4. Assert: user stays on landing page, no redirect to /auth/login
+    await expect(page.getByTestId('hero-cta')).toBeVisible();
+    expect(page.url()).not.toContain('/auth/login');
+    expect(page.url()).toMatch(/localhost:\d+\/?$/);
   });
 
   /**

@@ -85,6 +85,22 @@ Mandatory evaluation section in the planning process document covering:
 The planning suite MUST pass the automated validator check:
 `python scripts/qa/validate-planning.py --current-version vX.Y.Z`
 
+### 2.5 Pre-Interview Codebase Audit
+**Before finalizing any task definition that touches existing code**, the relevant source files MUST be read. Task descriptions written from memory or assumed codebase state produce plausible-sounding but factually wrong acceptance criteria, wrong API surface descriptions, and missed architectural constraints.
+
+**Mandatory reads before task interview:**
+- The primary file(s) the task modifies (e.g., the API resource, the frontend component, the service).
+- Any callers or consumers that will be affected by the change.
+- Existing patterns the task is expected to follow (e.g., the AuditLogPage template for a new admin page).
+
+**What to look for:**
+- Does the assumed endpoint / route / component actually exist?
+- Does the assumed model field / enum / method exist?
+- Are there existing patterns (interceptor structure, pagination hooks, error handling) that the task must follow?
+- Are there constraints that would block the proposed approach (e.g., lifecycle methods that overwrite state)?
+
+**Origin:** v0.17.0 planning produced task definitions with a non-existent `/login` route, wrong ReactMarkdown call-site count, and a cancel mechanism that would have been silently overwritten by `executeJobLifecycle` — all discovered only in a second interview round with deliberate source reading. See [v0.17.0 retrospective §4](../retrospectives/v0.17.0-retrospective.md) for the full incident record.
+
 ---
 
 ## 3. Communication Standards

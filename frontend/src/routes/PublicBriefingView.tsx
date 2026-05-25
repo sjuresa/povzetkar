@@ -1,29 +1,28 @@
-import { 
-  ExternalLink, 
-  Sun, 
-  Moon, 
-  Languages, 
-  ArrowDown, 
-  Youtube, 
-  Globe, 
+import {
+  ExternalLink,
+  Sun,
+  Moon,
+  Languages,
+  ArrowDown,
+  Globe,
   Hash,
   Calendar
 } from 'lucide-react';
+import { YoutubeIcon } from '../components/ui/YoutubeIcon';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { sl, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { useThemeStore } from '../store/themeStore';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import type { BriefingDetailDTO } from '../api/generated/model';
+import { REHYPE_PLUGINS } from '../utils/markdown';
 
 interface PublicBriefingViewProps {
   briefing: BriefingDetailDTO;
 }
 
-export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
+export function PublicBriefingView({ briefing }: Readonly<PublicBriefingViewProps>) {
   const { theme, setTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -101,7 +100,7 @@ export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
           return (
             <div className="mb-16 p-10 md:p-16 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.03] border-l-8 border-[var(--color-action-primary)]/50 shadow-2xl shadow-[var(--color-action-primary)]/5 animate-in fade-in slide-in-from-bottom-2 duration-1000">
               <article className={`prose prose-zinc max-w-none prose-p:text-[var(--color-text-primary)] prose-p:leading-[1.6] text-2xl italic font-serif font-medium opacity-100 selection:bg-[var(--color-action-primary)]/30 ${hasAlphaFirst ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-[var(--color-action-primary)]' : ''}`}>
-                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                   {cleanedText}
                 </ReactMarkdown>
               </article>
@@ -177,7 +176,7 @@ export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
               <div key={item.contentItem?.id} id={`item-${item.contentItem?.id}`} className="scroll-mt-24 pt-12 border-t border-[var(--color-border-subtle)] first:border-0 first:pt-0">
                 <div className="flex items-start gap-4 mb-8 group/source">
                   <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] flex-shrink-0 group-hover/source:bg-[var(--color-action-primary)]/20 transition-colors">
-                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? <Youtube className="w-6 h-6"  strokeWidth={1.5}/> : <Globe className="w-6 h-6"  strokeWidth={1.5}/>}
+                    {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? <YoutubeIcon className="w-6 h-6"  strokeWidth={1.5}/> : <Globe className="w-6 h-6"  strokeWidth={1.5}/>}
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-0.5">
@@ -198,7 +197,7 @@ export function PublicBriefingView({ briefing }: PublicBriefingViewProps) {
                   </div>
                 </div>
                 <article className="prose prose-zinc max-w-none prose-headings:text-[var(--color-text-primary)] prose-p:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-hr:border-[var(--color-border-subtle)]">
-                   <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                   <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                      {item.summaryText || ''}
                    </ReactMarkdown>
                 </article>

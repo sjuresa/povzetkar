@@ -5,6 +5,7 @@
     "topics": "Topics",
     "sources": "Sources",
     "administration": "Administration",
+    "users": "User Management",
     "auditLogs": "Audit Logs",
     "contentManagement": "Content Management",
     "systemJobs": "System Jobs",
@@ -181,6 +182,115 @@
       }
     }
   },
+  "admin": {
+    "jobs": {
+      "title": "Background Jobs",
+      "subtitle": "Monitor and manage background processing jobs.",
+      "total_jobs_label": "Total Jobs",
+      "filter": {
+        "status": "Status",
+        "type": "Job type",
+        "all_statuses": "All Statuses",
+        "all_types": "All Types",
+        "clear_title": "Clear Filters"
+      },
+      "column": {
+        "started_at": "Started",
+        "type": "Type",
+        "duration": "Duration",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "action": {
+        "restart": "Restart",
+        "view_audit": "Audit trail"
+      },
+      "confirm": {
+        "restart": "Restart this job from scratch?"
+      },
+      "toast": {
+        "restarted": "Job restarted.",
+        "restart_failed": "Failed to restart job."
+      },
+      "empty": "No jobs found matching the current filters.",
+      "audit_modal": {
+        "title": "Audit Trail",
+        "empty": "No audit entries found."
+      },
+      "duration": {
+        "not_started": "—"
+      },
+      "status": {
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "type": {
+        "sync_youtube_feeds": "Sync Feeds",
+        "generate_briefings": "Generate Briefings",
+        "process_topics_and_summarize": "Process & Summarize",
+        "generate_topic_briefing": "Topic Briefing",
+        "generate_topic_summaries": "Topic Summaries",
+        "generate_item_summary": "Item Summary",
+        "retry_item_processing": "Retry Item"
+      }
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage user accounts, control access, and monitor sign-in activity.",
+      "filters": {
+        "status": "Filter by Status",
+        "statusAll": "All Statuses",
+        "email": "Search by email..."
+      },
+      "table": {
+        "email": "Email",
+        "status": "Status",
+        "lastLogin": "Last Login",
+        "created": "Created",
+        "actions": "Actions",
+        "never": "Never",
+        "noResults": "No users match these filters.",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo_one": "{{count}} day ago",
+        "daysAgo_other": "{{count}} days ago",
+        "monthsAgo_one": "{{count}} mo ago",
+        "monthsAgo_other": "{{count}} mo ago",
+        "yearsAgo_one": "{{count}} yr ago",
+        "yearsAgo_other": "{{count}} yr ago"
+      },
+      "status": {
+        "pending_approval": "Pending Approval",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "disable": "Disable",
+        "enable": "Enable",
+        "reapprove": "Re-approve"
+      },
+      "success": {
+        "approved": "User approved successfully.",
+        "rejected": "User rejected.",
+        "disabled": "User disabled.",
+        "enabled": "User enabled."
+      },
+      "error": {
+        "self_disable": "You cannot disable your own account.",
+        "last_admin": "Cannot disable the last administrator in the system.",
+        "invalid_state": "This action is no longer valid. The user list has been refreshed.",
+        "invalid_state_transition": "This action is no longer valid for the current account state.",
+        "action_failed": "Failed to {{action}}. Please try again.",
+        "cannot_self_disable": "You cannot disable your own account.",
+        "last_admin_required": "Cannot disable the last administrator in the system."
+      }
+    }
+  },
   "contentManagement": {
     "title": "Content Items",
     "subtitle": "Universal registry for all processed content. Manage processing lifecycles and manual status overrides.",
@@ -280,10 +390,10 @@
     },
     "changelog_entries": [
       {
-        "version": "v0.17.0",
-        "title": "Update v0.17.0",
-        "date": "In Progress",
-        "desc": "",
+        "version": "0.17.0",
+        "title": "Update 0.17.0",
+        "date": "2026-05-24",
+        "desc": "Version 0.17.0 establishes **Administrative Control & User Onboarding** — the governance layer that makes Povzetkar production-ready for multi-user deployments. The centerpiece is a full Admin User Management surface backed by an explicit four-state Account Activation State Machine (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), with optimistic-locking guards and demo-content impersonation for new users. The Background Job Dashboard replaces a placeholder, providing restart capability and a full audit-trail modal for failed jobs. On the resilience side, transcript ingestion gains a multi-provider fallback chain (YouTube Legacy + Supadata pilot) with configurable jitter to defend against IP rate-limiting. Two long-standing UX friction points are resolved: external links now open in new tabs across all Markdown surfaces, and session expiry auto-redirects users back to their original page after re-authentication instead of landing them on an error screen.",
         "badge": "new"
       },
       {
@@ -359,8 +469,8 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.17: Administrative Control & Hardening",
-        "desc": "Establish full operational control over the platform and integrate advanced security auditing into the release cycle."
+        "title": "v0.18: Hardening & Operational Excellence",
+        "desc": "Integrate advanced security auditing into the release cycle and complete observability/operational maturity work deferred from v0.17.0."
       },
       {
         "title": "v1.0: RAG & Conversational Interface",
@@ -514,6 +624,24 @@
         "how3": "Select \"Enable Share Link\".",
         "how4": "Copy the public link and share it with anyone."
       }
+    }
+  },
+  "account": {
+    "pending": {
+      "title": "Your account is awaiting approval",
+      "message": "An administrator will review your sign-up shortly. You'll be able to use Povzetkar once approval is complete.",
+      "refresh": "Check status",
+      "signout": "Sign out"
+    },
+    "rejected": {
+      "title": "Account access not granted",
+      "message": "Your account sign-up was not approved. Please contact your administrator if you believe this is in error.",
+      "signout": "Sign out"
+    },
+    "disabled": {
+      "title": "Account disabled",
+      "message": "Your account has been disabled by an administrator. Please contact your administrator for assistance.",
+      "signout": "Sign out"
     }
   }
 }

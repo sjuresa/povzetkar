@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 interface AuditLogFiltersProps {
-  onFilterChange: (filters: {
+  readonly onFilterChange: (filters: {
     userId?: number;
     method?: string;
     status?: number;

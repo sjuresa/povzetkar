@@ -71,6 +71,16 @@ When scaling Playwright E2E tests in a complex microservices or OIDC-guarded env
 - **Selector Hardening:** Move away from brittle text-based or role-based selectors (`getByText`, `getByRole`) which break on localization or layout shifts.
   - **The Standard:** Use **`data-testid`** on core navigational anchors (Logo, Hero CTA, Primary Buttons). This decouples test logic from the visual design and i18n layer.
 
+## Mockito: `Spliterator` Is Single-Use (POV-189)
+
+- **The Trap:** Stubbing `Instance<T>.spliterator()` with `thenReturn(List.of(...).spliterator())` in `@BeforeEach`. A `Spliterator` can only be traversed once. If the orchestrator under test is constructed twice (once in setup, once in the test body), the second construction walks an already-exhausted spliterator and gets an empty provider list — causing silent fallthrough rather than a test failure at the right assertion.
+- **The Standard:** Stub with `thenAnswer(inv -> List.of(...).spliterator())` so each call produces a fresh spliterator.
+
+## Mockito: `WebApplicationException(Response)` Constructor Conflict (POV-189)
+
+- **The Trap:** Constructing `new WebApplicationException(mockResponse)` inside a `thenThrow(...)` expression when the mock's `getStatus()` has a pending stub. The `WebApplicationException(Response)` constructor calls `response.getStatus()` immediately, which Mockito can misinterpret as an unfinished stubbing interaction.
+- **The Standard:** Use the integer-status constructor `new WebApplicationException(500)` in tests. It is simpler, avoids mock entanglement, and the status code is the only thing the provider code reads from the exception anyway.
+
 ---
 
 ## Related Documents

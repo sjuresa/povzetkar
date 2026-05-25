@@ -107,7 +107,7 @@ class TopicProcessorTest {
     }
 
     private void setupCommonMocks(LocalDate orchestrationDate) {
-        mockedUser.when(User::listAllActive).thenReturn(Collections.singletonList(testUser));
+        mockedUser.when(User::listAllEnabled).thenReturn(Collections.singletonList(testUser));
         mockedTopic.when(() -> Topic.findEnabledByUsers(any(List.class))).thenReturn(Collections.singletonList(testTopic));
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(orchestrationDate), eq(null), eq(null)))
@@ -134,7 +134,7 @@ class TopicProcessorTest {
     void testProcessTopicUni_noNewContent() {
         // Given
         LocalDate expectedDate = LocalDate.now();
-        mockedUser.when(User::listAllActive).thenReturn(Collections.singletonList(testUser));
+        mockedUser.when(User::listAllEnabled).thenReturn(Collections.singletonList(testUser));
         mockedTopic.when(() -> Topic.findEnabledByUsers(any(List.class))).thenReturn(Collections.singletonList(testTopic));
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(expectedDate), eq(null), eq(null)))

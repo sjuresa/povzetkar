@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.CorrelationIdFilter;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
+import com.povzetkar.quarkus.api.util.FilterBuilder;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.JobExecutionAudit;
@@ -24,12 +25,16 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import com.povzetkar.quarkus.api.exception.BusinessRuleException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -199,6 +204,64 @@ public class BackgroundJobService {
             JobExecutionAudit.logJob(jobId, status, auditMessage);
         }
 
+        applyTimestamps(job, status, jobId, errorMessage);
+        job.persist();
+        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, resolveTopicDetails(job)));
+    }
+
+    public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, JobType jobType, Sort sort, int pageIndex, int pageSize) {
+        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
+
+        FilterBuilder filters = new FilterBuilder("");
+        filters.and("status = :status", "status", status);
+        filters.and("type = :jobType", "jobType", jobType);
+
+        PanacheQuery<BackgroundJob> query = filters.getQuery().isEmpty()
+                ? BackgroundJob.findAll(sort)
+                : BackgroundJob.find(filters.getQuery(), sort, filters.getParams());
+
+        long totalCount = query.count();
+        List<BackgroundJobDTO> items = query.page(pageIndex, clampedPageSize).list().stream()
+                .map(backgroundJobMapper::toDTO)
+                .toList();
+
+        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
+    }
+
+    private static final Set<JobType> ITEM_LEVEL_JOB_TYPES = Set.of(JobType.GENERATE_ITEM_SUMMARY, JobType.RETRY_ITEM_PROCESSING);
+
+    @Transactional
+    public BackgroundJob restartJob(UUID originalJobId, Long adminUserId) {
+        BackgroundJob original = BackgroundJob.<BackgroundJob>findByIdOptional(originalJobId)
+                .orElseThrow(() -> new NotFoundException("Job not found: " + originalJobId));
+
+        if (original.status != JobStatus.FAILED) {
+            throw new BusinessRuleException(Response.Status.BAD_REQUEST, "INVALID_RESTART_STATE", "Job must be in FAILED status to restart.");
+        }
+
+        if (ITEM_LEVEL_JOB_TYPES.contains(original.type)) {
+            throw new BusinessRuleException(Response.Status.BAD_REQUEST, "INVALID_RESTART_STATE", "Item-level jobs cannot be restarted individually.");
+        }
+
+        BackgroundJob newJob = switch (original.type) {
+            case GENERATE_TOPIC_BRIEFING, GENERATE_TOPIC_SUMMARIES -> {
+                if (original.topicId == null) throw new BusinessRuleException(Response.Status.BAD_REQUEST, "INVALID_JOB_STATE", "Job has no associated topic and cannot be restarted.");
+                Topic topic = Topic.findByIdWithSources(original.topicId);
+                if (topic == null) throw new NotFoundException("Topic not found: " + original.topicId);
+                yield original.type == JobType.GENERATE_TOPIC_BRIEFING
+                        ? triggerTopicBriefingJob(topic, adminUserId)
+                        : triggerTopicSummariesJob(topic, adminUserId);
+            }
+            default -> triggerJob(original.type, adminUserId);
+        };
+
+        JobExecutionAudit.logJob(originalJobId, JobStatus.FAILED,
+                "Job restarted by admin userId=" + adminUserId + ". New job ID: " + newJob.id);
+
+        return newJob;
+    }
+
+    private void applyTimestamps(BackgroundJob job, JobStatus status, UUID jobId, String errorMessage) {
         if (status == JobStatus.RUNNING) {
             if (job.startedAt == null) {
                 job.startedAt = clock.instant();
@@ -207,39 +270,17 @@ public class BackgroundJobService {
             job.endedAt = clock.instant();
             if (errorMessage != null) {
                 logger.error("Job [{}] failed with error: {}", jobId, errorMessage);
-                if (errorMessage.length() > BackgroundJob.ERROR_MESSAGE_MAX_LENGTH) {
-                    job.errorMessage = errorMessage.substring(0, BackgroundJob.ERROR_MESSAGE_MAX_LENGTH);
-                } else {
-                    job.errorMessage = errorMessage;
-                }
+                job.errorMessage = errorMessage.length() > BackgroundJob.ERROR_MESSAGE_MAX_LENGTH
+                        ? errorMessage.substring(0, BackgroundJob.ERROR_MESSAGE_MAX_LENGTH)
+                        : errorMessage;
             }
         }
-        job.persist();
-        String details = null;
-        if (job.topicId != null) {
-            Topic topic = Topic.findById(job.topicId);
-            if (topic != null) {
-                details = topic.name;
-            }
-        }
-        jobStatusEvent.fire(new JobStatusChangedEvent(jobId, status, job.type, details));
     }
 
-    public PaginatedResponse<BackgroundJobDTO> getJobList(JobStatus status, Sort sort, int pageIndex, int pageSize) {
-        final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        PanacheQuery<BackgroundJob> query;
-        if (status != null) {
-            query = BackgroundJob.find("status = ?1", sort, status);
-        } else {
-            query = BackgroundJob.findAll(sort);
-        }
-
-        long totalCount = query.count();
-        List<BackgroundJobDTO> items = query.page(pageIndex, clampedPageSize).list().stream()
-                .map(backgroundJobMapper::toDTO)
-                .toList();
-
-        return new PaginatedResponse<>(items, totalCount, pageIndex, clampedPageSize);
+    private String resolveTopicDetails(BackgroundJob job) {
+        if (job.topicId == null) return null;
+        Topic topic = Topic.findById(job.topicId);
+        return topic != null ? topic.name : null;
     }
 
     public Optional<BackgroundJob> getJobById(UUID id) {

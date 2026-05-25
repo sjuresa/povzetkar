@@ -17,6 +17,7 @@ public abstract class UserMapper {
 
     @Mapping(target = "authProvider", source = "identities", qualifiedByName = "mapAuthProvider")
     @Mapping(target = "permissions", source = "roles", qualifiedByName = "mapPermissions")
+    @Mapping(target = "lastLoginAt", source = "lastLoginAt")
     public abstract UserDTO toDTO(User entity);
 
     @Named("mapAuthProvider")

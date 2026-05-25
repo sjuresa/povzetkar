@@ -103,7 +103,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-8: Share Individual Summary
 **Actor**: User/Administrator
 **Related Stories**: US-16.3
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
 **Preconditions**: A summary exists for a content item.
 **Main Flow**:
 1. User views a Briefing or Administrator views Content Management.
@@ -116,7 +116,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-9: Complete Onboarding Checklist
 **Actor**: New User
 **Related Stories**: US-16.4
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
 **Preconditions**: User has just registered or has no topics/briefings.
 **Main Flow**:
 1. User logs in and lands on the Dashboard.
@@ -129,7 +129,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-10: React to Job Completion Toasts
 **Actor**: User
 **Related Stories**: US-16.2, US-16.8
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0-planning-process.md)
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
 **Preconditions**: A background job (orchestration) is running.
 **Main Flow**:
 1. System completes the background job and sends an SSE event.
@@ -139,9 +139,78 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 5. System navigates the user directly to the relevant view.
 **Postconditions**: User experiences a seamless transition from job completion to result consumption.
 
+### UC-11: Manage User Accounts (Roles & Statuses)
+**Actor**: Administrator
+**Related Stories**: US-17.1
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0003](../adr/0003-authorization-strategy.md)
+**Preconditions**: Administrator is logged in with `USER_MANAGE_PERMISSION`.
+**Main Flow**:
+1. Administrator navigates to `/admin/users`.
+2. System displays paginated user list with email, status, role, last login.
+3. Administrator filters by status (e.g., `ENABLED`, `DISABLED`).
+4. Administrator clicks "Edit roles" on a user, selects/deselects role bindings, and saves.
+5. Administrator disables or enables a user account via the action menu.
+**Postconditions**: User role/status changes persisted; affected user's session invalidated if disabled.
+
+### UC-12: Approve or Reject New User Account
+**Actor**: Administrator
+**Related Stories**: US-17.2, US-17.3
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0008](../adr/0008-account-activation-state-machine.md)
+**Preconditions**: A new user has signed in via OIDC; user is in `PENDING_APPROVAL` state.
+**Main Flow**:
+1. New user signs in via Google OIDC. System creates `User` with `accountStatus = PENDING_APPROVAL`.
+2. New user sees a generic status banner with "contact administrator" hint and sign-out option.
+3. Administrator opens `/admin/users` and sees a "Pending (N)" badge on the sidebar.
+4. Administrator clicks the badge and reviews the pending list.
+5. Administrator clicks "Approve" (or "Reject") on a pending user.
+6. System transitions `PENDING_APPROVAL → ENABLED` (or → `DISABLED`); `updatedAt`/`updatedBy` audit fields record the change.
+7. Next time the user reloads, `accountStatus` on `/me` reflects the new state; banner updates accordingly.
+**Postconditions**: User account state transitioned; audit trail recorded.
+
+### UC-13: Operate on Background Jobs (Restart/Audit)
+
+**Actor**: Administrator
+**Related Stories**: US-17.4
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md)
+**Preconditions**: Administrator is logged in; one or more `JobExecutionAudit` records exist.
+**Main Flow**:
+1. Administrator navigates to `/admin/jobs`.
+2. System displays paginated job list with start time, type, duration, status.
+3. Administrator filters by type and/or status (e.g., `RUNNING`, `FAILED`).
+4. Administrator clicks "Restart" on a `FAILED` job. System spawns a new job with the original parameters.
+5. Administrator opens the audit trail for a job; sees a chronological log of state transitions and the acting admin per change.
+**Postconditions**: New job spawned; audit row written with acting admin user ID. *(Cancel is deferred to v0.18.0 — requires stop-signal mechanism in `OrchestrationManager`.)*
+
+### UC-14: Resilient Transcript Fetching with Provider Fallback
+**Actor**: System (orchestrator)
+**Related Stories**: US-17.5
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0009](../adr/0009-multi-provider-transcript-strategy.md)
+**Preconditions**: A `ContentItem` requires transcript fetching; `TranscriptOrchestrator` is configured with an ordered provider chain.
+**Main Flow**:
+1. Orchestrator invokes the first provider in the chain (default: `youtube-legacy`).
+2. If `youtube-legacy` returns `ProviderUnavailable`, `QuotaExhausted`, or times out, orchestrator falls through to the next provider (e.g., `supadata`).
+3. Each attempt is recorded in `transcript_provider_quota_usage` for monitoring.
+4. On success, transcript is persisted to the `ContentItem` and orchestration continues.
+5. If all providers fail, `ContentItem` is marked `FAILED` with `failure_reason=ALL_PROVIDERS_EXHAUSTED`.
+**Postconditions**: Transcript fetched (or item correctly marked failed); Micrometer counters incremented per provider.
+
+### UC-15: External Links Open in New Tab
+**Actor**: User
+**Related Stories**: US-17.6
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md)
+**Preconditions**: User is viewing a briefing or summary with embedded external links.
+**Main Flow**:
+1. User scrolls a briefing and sees an external link (e.g., to a source article).
+2. User clicks the link.
+3. Browser opens the link in a new tab; current briefing context is preserved.
+4. User finishes reading the linked content and closes the new tab.
+5. User returns to the original briefing without navigation interruption.
+**Postconditions**: User retains briefing context; external link safety attributes (`rel="noopener noreferrer"`) prevent reverse-tabnabbing.
+
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.4     | 2026-05-20 | Povzetkar AI | Added UC-11 (Admin User Mgmt), UC-12 (User Approval), UC-13 (Job Ops), UC-14 (Transcript Fallback), UC-15 (External Links) for v0.17.0. |
 | 1.3     | April 01, 2026 | Povzetkar AI | Added UC-8, UC-9, UC-10 for v0.16.0 (User Experience Focus). |
 | 1.2     | March 30, 2026 | Povzetkar AI | Mapped User Story IDs to all Use Cases for Traceability Matrix hardening (POV-166). |
 | 1.1     | 2026-03-28 | Povzetkar AI | Added UC-5, UC-6, UC-7 for v0.15.0 planning. |

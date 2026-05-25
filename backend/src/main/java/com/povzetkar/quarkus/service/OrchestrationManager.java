@@ -176,7 +176,7 @@ public class OrchestrationManager {
         LocalDate actualEndDate = (request.endDate() != null) ? request.endDate() : actualStartDate;
 
         return Uni.createFrom().completionStage(managedExecutor.supplyAsync(() -> QuarkusTransaction.requiringNew().call(() -> {
-            List<User> activeUsers = User.listAllActive();
+            List<User> activeUsers = User.listAllEnabled();
             if (activeUsers.isEmpty()) {
                 logger.info(
                     ACTION, ORCHESTRATION_PREVIEW,
@@ -315,7 +315,7 @@ public class OrchestrationManager {
 
     private Uni<Void> executeTopicProcessingForDate(LocalDate orchestrationDate, Long topicId) {
         return Uni.createFrom().deferred(() -> {
-            List<User> activeUsers = User.listAllActive();
+            List<User> activeUsers = User.listAllEnabled();
             if (activeUsers.isEmpty()) {
                 logger.info(
                     ACTION, TOPIC_PROCESSING,
@@ -448,7 +448,7 @@ public class OrchestrationManager {
             TOPIC_ID, topicId,
             MESSAGE, "Starting parallel briefing generation for topics."
         );
-        List<User> activeUsers = User.listAllActive();
+        List<User> activeUsers = User.listAllEnabled();
         List<Topic> allTopics = Topic.findEnabledByUsers(activeUsers);
         if (topicId != null) {
             allTopics = allTopics.stream().filter(t -> t.id.equals(topicId)).toList();

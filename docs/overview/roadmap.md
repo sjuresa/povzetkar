@@ -221,18 +221,36 @@ This document outlines the concrete steps for implementing the features describe
     *   **Semantic Migration**: Systematically replace all hardcoded Tailwind dark classes with semantic variables (POV-174/175).
     *   **Fluid Motion**: Implement smooth 300ms CSS transitions for all theme toggles (POV-176).
 
-## v0.17: Administrative Control & Hardening
+## v0.17: Administrative Control & User Onboarding
 
-**Goal:** Establish full operational control over the platform and integrate advanced security auditing into the release cycle.
+**Goal:** Establish operational governance via Admin User Management, an explicit account activation state machine, and live background job control. Harden the transcript ingestion pipeline against IP rate-limiting and polish two long-standing UX friction points (external links and session expiry).
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Administrative Command Center:**
-    *   Build the "Admin User Management" UI for managing roles, account statuses, and permissions.
-    *   Comprehensive "Background Job Dashboard" with full operational control (Cancel, Restart, Audit).
-2.  **Hardening & Operational Excellence:**
+    *   **Admin User Management UI** (POV-184): roles, account statuses, and permissions; last-admin server-side guard.
+    *   **User Approval Workflow** (POV-185): explicit `PENDING_APPROVAL` state machine ([ADR-0008](../adr/0008-account-activation-state-machine.md)) with admin-driven approval. No email integration (SMTP deferred to v0.18.0+).
+    *   **Background Job Dashboard** (POV-188): restart and audit trail for `FAILED` jobs; replaces the placeholder `AdminJobsPage`. Cancel deferred to v0.18.0.
+2.  **Resilience & Polish:**
+    *   **Transcript Multi-Provider Pilot** (POV-189): `TranscriptProvider` abstraction ([ADR-0009](../adr/0009-multi-provider-transcript-strategy.md)) + Supadata pilot integration + randomized jitter delay on legacy YouTube path.
+    *   **External Links Open in New Tab** (POV-186): `rehype-external-links` plugin in all ReactMarkdown call-sites.
+    *   **Session Expiry Handling** (POV-187): 401 interceptor redirects to landing page (`/`) with `notice=session_expired`; `returnTo` preserved in `sessionStorage`; ErrorPage reserved for true fatal errors.
+
+## v0.18: Hardening & Operational Excellence
+
+**Goal:** Integrate advanced security auditing into the release cycle and complete observability/operational maturity work deferred from v0.17.0.
+
+### Key Tasks & Implementation Steps:
+1.  **Security Hardening:**
     *   **DAST Integration**: Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
-    *   **Observability Upgrade**: Implement complex Grafana alerting thresholds for system health.
-    *   **Advanced Retention**: Implement specialized pg_trgm/Lucene full-text search as volume justifies.
+2.  **Observability:**
+    *   **Grafana Alerting**: Implement complex alerting thresholds for system health (transcript provider quota, job failure rates, latency SLOs).
+3.  **Search & Data:**
+    *   **Advanced Retention**: Implement specialized pg_trgm/Lucene full-text search as data volume justifies.
+4.  **Transcript Providers (Expansion):**
+    *   Add additional providers (ytscribe, transcriptapi) to the v0.17.0 abstraction.
+5.  **Email Infrastructure (Candidate):**
+    *   SMTP foundation (dev server like Mailpit, production provider, template engine) — unblocks user approval notifications and other transactional emails.
 
 
 ## v1.0: RAG & Conversational Interface
@@ -303,6 +321,8 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.7     | 2026-05-24         | Povzetkar AI | Marked v0.17.0 as ✅ Completed.                                                                                                                                                                                   |
+| 3.6     | 2026-05-20         | Povzetkar AI | Refined v0.17.0 scope to "Administrative Control & User Onboarding". Inserted v0.18.0 for "Hardening & Operational Excellence" (DAST, Grafana alerts, full-text search, additional transcript providers, SMTP). |
 | 3.5     | April 13, 2026     | Antigravity AI | Marked v0.16.0 as completed and finalized version documentation.                                                                          |
 | 3.4     | April 1, 2026      | Povzetkar AI | Strategically pivoted v0.16.0 to "User Experience Focus" and restored v0.17.0 for "Administrative Control & Hardening". |
 | 3.3     | March 30, 2026     | Povzetkar AI | Marked v0.15 as completed and finalized release notes.                                                                                    |

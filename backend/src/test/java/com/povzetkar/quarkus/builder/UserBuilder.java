@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.builder;
 
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.User;
 
 import java.util.UUID;
@@ -10,10 +11,9 @@ public class UserBuilder {
     private String username;
     private String email;
     private String name;
-    private boolean active = true;
+    private AccountStatus accountStatus = AccountStatus.ENABLED;
 
     private UserBuilder() {
-        // Defaults
         String uniqueId = UUID.randomUUID().toString().substring(0, 8);
         this.username = "user_" + uniqueId;
         this.email = "user_" + uniqueId + "@example.com";
@@ -44,8 +44,13 @@ public class UserBuilder {
         return this;
     }
 
-    public UserBuilder inactive() {
-        this.active = false;
+    public UserBuilder pending() {
+        this.accountStatus = AccountStatus.PENDING_APPROVAL;
+        return this;
+    }
+
+    public UserBuilder withStatus(AccountStatus status) {
+        this.accountStatus = status;
         return this;
     }
 
@@ -55,7 +60,7 @@ public class UserBuilder {
         user.username = this.username;
         user.email = this.email;
         user.name = this.name;
-        user.active = this.active;
+        user.accountStatus = this.accountStatus;
         return user;
     }
 }

@@ -5,7 +5,91 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (v0.17.0)
+## [Unreleased]
+
+## [0.17.0] - 2026-05-24
+
+### Summary
+Version 0.17.0 establishes **Administrative Control & User Onboarding** — the governance layer that makes Povzetkar production-ready for multi-user deployments. The centerpiece is a full Admin User Management surface backed by an explicit four-state Account Activation State Machine (`PENDING_APPROVAL → ENABLED / DISABLED / REJECTED`), with optimistic-locking guards and demo-content impersonation for new users. The Background Job Dashboard replaces a placeholder, providing restart capability and a full audit-trail modal for failed jobs. On the resilience side, transcript ingestion gains a multi-provider fallback chain (YouTube Legacy + Supadata pilot) with configurable jitter to defend against IP rate-limiting. Two long-standing UX friction points are resolved: external links now open in new tabs across all Markdown surfaces, and session expiry auto-redirects users back to their original page after re-authentication instead of landing them on an error screen.
+
+### Added (POV-185)
+
+- **Account activation state machine**: Four-state `AccountStatus` enum (`PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED`) replaces `users.active` boolean; Flyway migrations V30–V33.
+- **Admin action endpoints**: `POST /api/v1/users/{id}/approve|reject|disable|enable` — each enforces state-transition guards via `UserAccountService`; self-disable (409) and last-admin (409) protections.
+- **Optimistic locking on action endpoints**: `@OptimisticLocking` filter + `BaseApiResource.checkOptimisticLock()` (with weak ETag `W/` stripping) prevents lost updates when two admins act concurrently; `UserDTO.version` exposed so the frontend can forward the current entity version as `If-Match`.
+- **`BusinessRuleException` for version conflicts**: `OPTIMISTIC_LOCK_ERROR` (409) returned via `BusinessRuleExceptionMapper` — consistent structured error shape with all other business rule failures.
+- **`BusinessRuleException` + mapper**: Structured error codes (`INVALID_STATE_TRANSITION`, `CANNOT_SELF_DISABLE`, `LAST_ADMIN_REQUIRED`) returned in `ApiErrorDTO.errorCode`.
+- **Demo content impersonation**: `UserContextService.getContentViewingUser()` — pending users with the `demo` role transparently see `demo@povzetkar.local` content; no frontend changes required for read paths.
+- **`demo` role + permissions**: New `ROLE_DEMO` constant; `RolePermissionsMap` grants `TOPIC_VIEW`, `BRIEFING_VIEW`, `CONTENT_ITEM_VIEW`; new users created with `PENDING_APPROVAL` + `demo` role.
+- **Demo seed (V32)**: `demo@povzetkar.local` + `Science & Discovery` topic (enabled=false) + Kurzgesagt (`UCsXVk37bltHxD1rDPwtNM8Q`) and Veritasium (`UCHnyfMqiRRG1u-2MsSQLbXA`) YouTube channels.
+- **V33 migration**: Backfills `version = 0` for all users where the column is null, ensuring optimistic locking is safe for all pre-existing accounts.
+- **`GET /me` open to all authenticated users**: Changed from `@RolesAllowed(ROLE_USER)` to `@Authenticated`; pending/disabled/rejected users can always fetch their account status.
+- **`AccountStatusBanner` component**: Persistent sticky banner rendered in `AppShell` for non-ENABLED users; per-state i18n keys (`account.pending.*`, `account.rejected.*`, `account.disabled.*`).
+- **i18n**: Added `account.pending.*`, `account.rejected.*`, `account.disabled.*` keys; added `admin.users.error.*` keys (`action_failed`, `cannot_self_disable`, `last_admin_required`) and `admin.users.success.*` keys to `en.json` and `sl.json`.
+- **RUNBOOK section 15**: Documents approval requirement, admin action endpoints, initial admin seeding (Option A: SQL INSERT; Option B: approve after first sign-in), and demo content purpose.
+- **eslint-plugin-sonarjs**: Added to `frontend/eslint.config.js`; all pre-existing SonarJS violations across the frontend resolved.
+
+### Added (POV-184)
+
+- **User Management admin surface** (`/admin/users`): full page with email search, status filter, sortable columns (Email, Status, Last Login, Created), and context-appropriate action buttons per account state.
+- **`User.lastLoginAt` tracking**: nullable timestamp updated on every OIDC sign-in via `UserContextService.ensureUser()`, including PENDING users; Flyway migration V28.
+- **`AccountStatus` enum stub**: `PENDING_APPROVAL`, `ENABLED`, `DISABLED`, `REJECTED` — prepared for POV-185 state machine wiring.
+- **`GET /api/v1/users` filter + sort extensions**: `accountStatus` (enum, single-value) and `email` (case-insensitive substring) query params; sort by `email`, `accountStatus`, `lastLoginAt`, `createdAt`.
+- **`UserDTO` expansion**: `accountStatus` and `lastLoginAt` fields exposed; `createdAt` added for UI display.
+- **Sidebar nav entry**: "User Management" added to `AppShell.adminNavItems`; admin layout guard extended with `USER_MGMT_VIEW`.
+- **i18n**: full `en.json` + `sl.json` coverage for all new admin user strings.
+
+### Changed (POV-185)
+
+- **`users.active` column removed**: Replaced by `users.account_status VARCHAR(50) NOT NULL`; existing rows backfilled (`active=true` → `ENABLED`, `active=false` → `DISABLED`).
+- **`User.listAllEnabled()`**: Renamed from `listAllActive()`; filters on `accountStatus = ENABLED`; all `OrchestrationManager` call-sites updated.
+- **`UserDTO.active` removed**: Dropped `boolean active` field; `accountStatus` and `version` auto-map via MapStruct.
+- **`PATCH /{id}` and `PUT /{id}/roles` deleted**: Old user management endpoints removed; replaced by the four new action endpoints.
+- **Read call-sites migrated**: `TopicApiResource`, `BriefingApiResource`, `DashboardApiResource`, and `TopicResource` (SSR) read paths now use `getContentViewingUser()` for demo impersonation; write paths unchanged.
+- **`UserBuilder` refactored**: `boolean active` replaced by `AccountStatus accountStatus = ENABLED`; `.inactive()` removed; `.pending()` and `.withStatus(AccountStatus)` added.
+- **`UserAccountService` layer separation**: Service methods (`approve`, `reject`, `disable`, `enable`) now accept a pre-loaded `User` entity; ETag parsing and version checking moved to `UserApiResource` via `BaseApiResource.checkOptimisticLock()`, keeping the service free of HTTP protocol concerns.
+- **`UserContextService` demo user cache**: `getContentViewingUser()` caches the demo user ID in an `AtomicLong` with double-checked locking (`0` = uninitialised, `-1` = not found) — eliminates a DB query on every demo-role read request after the first.
+- **`AccountStatusBanner` status map typed**: `statusKeyMap` uses `Partial<Record<AccountStatus, string>>` for compile-time exhaustiveness.
+- **`UsersTable` sort state memoised**: `parseSortState(sort)` computed once per render into `sortState`; frontend error code extraction typed via generated `ApiErrorDTO`.
+
+### Added (POV-186)
+
+- **External links open in new tab**: All five in-scope `ReactMarkdown` call-sites in `BriefingDetailPage`, `PublicBriefingView`, and `PublicSummaryView` now use `[rehypeRaw, rehypeSanitize, rehypeExternalLinks]` — external links render with `target="_blank"` and `rel="noopener noreferrer"`.
+- **`rehype-external-links ^3.0.0`** added to frontend `dependencies`.
+
+### Fixed (POV-187)
+
+- **Session expiry no longer triggers `ErrorPage`**: The Axios 401 interceptor now calls `clearAuth()` and immediately redirects to `/auth/login?redirect=<currentPath>` instead of re-throwing the error to the error boundary.
+- **Seamless return after re-authentication**: `LoginResource.resolveSafeDestination()` validates and applies the `?redirect=` param after OAuth completes — the user lands directly on their original page with no manual interaction required.
+- **Vite proxy OIDC redirect rewrite**: The Vite dev proxy was forwarding Quarkus OIDC 302 redirects to `accounts.google.com` back to the browser; Axios followed them cross-origin causing CORS failures. A `proxyRes` handler in `vite.config.ts` rewrites 302→Google responses to 401 for XHR requests (`X-Requested-With: XMLHttpRequest`), so the 401 interceptor fires cleanly.
+- **ADR-0010 updated**: Decision revised from `sessionStorage` + landing page banner to direct auto-login via `?redirect=` param; `sessionStorage` not used.
+
+### Added (POV-188)
+
+- **Background Job Dashboard** (`/admin/jobs`): functional `AdminJobsPage` replacing the placeholder div; filters by `jobType` and `status` (apply-on-change dropdowns); table columns Started (sortable), Type, Duration, Status, Actions; 30s auto-refetch when RUNNING jobs are present on the current page.
+- **Restart failed jobs**: `POST /api/v1/admin/jobs/{id}/restart` endpoint (gated by `ADMIN_JOB_UPDATE`); supports 5 restartable job types (system-wide + topic-scoped); item-level jobs return 400; audit entry with admin user ID written to `job_execution_audit` on the original job.
+- **`jobType` filter on `GET /api/v1/admin/jobs`**: new `jobType` query param; `BackgroundJobService.getJobList()` refactored from `if/else` branching to `FilterBuilder` to handle all filter combinations cleanly.
+- **Audit trail modal**: `[📋]` button per row opens a modal showing `JobExecutionAudit` entries for that job, reusing the existing `GET /api/v1/admin/jobs/{id}/audit` endpoint.
+- **i18n**: `admin.jobs.*` keys added to `en.json` and `sl.json`; cancel-related keys omitted (feature deferred to v0.18.0).
+- **`V_ADMIN_JOB_UPDATE` permission**: previously defined but unused — now wired to the restart endpoint.
+
+### Added (POV-189)
+
+- **Multi-provider transcript pipeline**: `TranscriptProvider` interface + `TranscriptOrchestrator` replace the single-provider `YouTubeTranscriptService`; ordered fallback chain driven by `transcript.providers.order` config; per-provider `enabled` flag; Micrometer metrics (`transcript.fetch.attempts|successes|failures|duration`) tagged by provider.
+- **`YouTubeLegacyTranscriptProvider`**: wraps existing `thoroldvix` library; configurable random jitter (`jitter.min-ms` / `jitter.max-ms`) before each fetch to defend against OCI IP rate-limiting by YouTube.
+- **`SupadataTranscriptProvider`**: pilot second provider via MicroProfile REST Client (`SupadataClient`); handles 200 (sync) and 202 (async poll, 10 s timeout); converts millisecond chunk offsets to seconds; requires `SUPADATA_API_KEY` env var.
+- **`TranscriptSegment` record**: shared exchange type decoupling both providers from the `thoroldvix` library types.
+- **`transcript_provider_quota_usage` table** (V34 migration): tracks per-provider monthly fetch counts via `ON CONFLICT DO UPDATE` upsert; populated by `TranscriptProviderQuotaService` on every successful fetch.
+- **RUNBOOK §14.1a**: documents transcript provider config flags, enabling Supadata as primary provider, and emitted metrics.
+
+### Changed (POV-189)
+
+- **`quarkus-rest-client-jackson`** dependency scope promoted from `test` to compile (required for `SupadataClient` serialization at runtime).
+- **ADR-0009** status updated to `Accepted`; Supadata API spike findings (requires full YouTube URL, not `videoId`) documented.
+
+### Removed (POV-189)
+
+- **`YouTubeTranscriptService`**: deleted; replaced by `YouTubeLegacyTranscriptProvider` + `TranscriptOrchestrator`.
 
 ## [0.16.0] - 2026-04-13
 

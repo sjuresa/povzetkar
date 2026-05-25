@@ -5,6 +5,8 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
+import type { AccountStatus } from './accountStatus';
+import type { Instant } from './instant';
 import type { RoleDTO } from './roleDTO';
 
 /**
@@ -12,10 +14,13 @@ import type { RoleDTO } from './roleDTO';
  */
 export interface UserDTO {
   id?: number;
+  version?: number;
   name?: string;
   email?: string;
   authProvider?: string;
-  active?: boolean;
+  accountStatus?: AccountStatus;
+  lastLoginAt?: Instant;
+  createdAt?: Instant;
   roles?: RoleDTO[];
   permissions?: string[];
 }

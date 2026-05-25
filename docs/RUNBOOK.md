@@ -709,6 +709,35 @@ The application requires several sensitive configuration values (API keys, datab
 | `GOOGLE_API_KEYS` | `google.api.keys` | Google GenAI API keys (comma-separated for pool rotation) | ✅ |
 | `GOOGLE_OIDC_CLIENT_ID` | `quarkus.oidc.client-id` | Google OIDC OAuth 2.0 Client ID | ✅ |
 | `GOOGLE_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` | Google OIDC OAuth 2.0 Client Secret | ✅ |
+| `SUPADATA_API_KEY` | `quarkus.rest-client.supadata.headers.x-api-key` | Supadata transcript API key | ⬜ (required if supadata provider enabled) |
+
+### 14.1a Transcript Provider Configuration
+
+The transcript fetching pipeline supports multiple providers with runtime-configurable ordering and fallback.
+
+| Config Property | Default | Description |
+|:---|:---|:---|
+| `transcript.providers.order` | `youtube-legacy,supadata` | Comma-separated list of providers tried in order. |
+| `transcript.providers.youtube-legacy.enabled` | `true` | Enable/disable the YouTube legacy (direct scraping) provider. |
+| `transcript.providers.youtube-legacy.jitter.min-ms` | `500` | Minimum random delay before each YouTube fetch (IP rate-limit protection). |
+| `transcript.providers.youtube-legacy.jitter.max-ms` | `2500` | Maximum random delay before each YouTube fetch. |
+| `transcript.providers.supadata.enabled` | `false` | Enable/disable the Supadata provider. Set to `true` and provide `SUPADATA_API_KEY` to activate. |
+| `transcript.providers.supadata.lang` | `en` | ISO 639-1 language code for Supadata transcript requests. Falls back to first available language if the video has no transcript in the requested language. |
+
+**Enabling Supadata as primary provider** (if OCI IPs are blocked by YouTube):
+
+```properties
+transcript.providers.order=supadata,youtube-legacy
+transcript.providers.supadata.enabled=true
+# SUPADATA_API_KEY env var must be set
+```
+
+**Metrics emitted** (all tagged with `provider` label):
+
+- `transcript.fetch.attempts` — counter per provider
+- `transcript.fetch.successes` — counter per provider
+- `transcript.fetch.failures` — counter tagged with `provider` and `reason`
+- `transcript.fetch.duration` — timer per provider
 
 ### 14.2 How Secrets Are Provided
 
@@ -743,4 +772,66 @@ Two Quarkus mechanisms prevent accidental secret exposure in logs:
 2.  **Rotate API keys periodically.** Google API keys and OIDC secrets should be rotated at least annually.
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
+
+## 15. Account Activation & User Onboarding
+
+### 15.1 Account Approval Model
+
+Admin approval is **always required** for new user accounts. There is no configuration flag to bypass this. New OIDC sign-ins produce an account in `PENDING_APPROVAL` state with the `demo` role. The user can browse demo content but cannot create topics or trigger briefings until an administrator approves them.
+
+Account lifecycle states: `PENDING_APPROVAL` → `ENABLED` | `REJECTED`; `ENABLED` → `DISABLED`; `DISABLED` | `REJECTED` → `ENABLED`.
+
+### 15.2 Admin Action Endpoints
+
+| Endpoint | Transition |
+|:---|:---|
+| `POST /api/v1/users/{id}/approve` | `PENDING_APPROVAL` → `ENABLED` |
+| `POST /api/v1/users/{id}/reject` | `PENDING_APPROVAL` → `REJECTED` |
+| `POST /api/v1/users/{id}/disable` | `ENABLED` → `DISABLED` |
+| `POST /api/v1/users/{id}/enable` | `DISABLED` or `REJECTED` → `ENABLED` |
+
+All four endpoints require the `USER_MGMT_UPDATE` permission.
+
+### 15.3 Seeding the First Admin User
+
+On a fresh deployment there are no users in the database. An initial admin must be seeded directly before the first OIDC sign-in (otherwise the first user arrives as `PENDING_APPROVAL` with no one to approve them).
+
+**Option A — SQL INSERT (recommended for production):**
+
+```sql
+-- Run after Flyway migrations have applied (V30+ schema)
+INSERT INTO users (username, email, name, account_status, created_at, updated_at, version)
+VALUES ('admin@yourdomain.com', 'admin@yourdomain.com', 'Initial Admin', 'ENABLED', NOW(), NOW(), 0)
+ON CONFLICT (email) DO NOTHING;
+
+-- Assign the admin role (role ID 1 = 'admin' from V11 seed, verify with: SELECT id FROM roles WHERE name = 'admin')
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u, roles r
+WHERE u.email = 'admin@yourdomain.com' AND r.name = 'admin'
+ON CONFLICT DO NOTHING;
+```
+
+After inserting, the admin logs in via OIDC. The `OidcSecurityIdentityAugmentor` will find the existing user by email, link the OIDC identity, and return roles from the database — the admin will have full access immediately.
+
+**Option B — Approve via direct SQL after first sign-in:**
+
+If the intended admin has already signed in (and is now `PENDING_APPROVAL`), run:
+
+```sql
+UPDATE users SET account_status = 'ENABLED' WHERE email = 'admin@yourdomain.com';
+
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u, roles r
+WHERE u.email = 'admin@yourdomain.com' AND r.name IN ('admin', 'user')
+ON CONFLICT DO NOTHING;
+
+-- Remove the demo role
+DELETE FROM user_roles
+WHERE user_id = (SELECT id FROM users WHERE email = 'admin@yourdomain.com')
+  AND role_id = (SELECT id FROM roles WHERE name = 'demo');
+```
+
+### 15.4 Demo Content
+
+The `demo@povzetkar.local` user and `Science & Discovery` topic (with Kurzgesagt and Veritasium channels) are seeded by migration V32. This account is `ENABLED` with no roles — it exists solely as a data source for the impersonation pattern. Do not delete or modify this user.
 5.  **Audit key usage.** Monitor API key usage in the Google Cloud Console to detect unauthorized access or quota anomalies.

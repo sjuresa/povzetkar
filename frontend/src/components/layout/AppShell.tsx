@@ -13,6 +13,7 @@ import { useThemeStore } from '../../store/themeStore';
 import { SystemMetadata } from '../system/SystemMetadata';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 import { useAudioFeedback } from '../../hooks/useAudioFeedback';
+import { AccountStatusBanner } from '../account/AccountStatusBanner';
 
 interface AppShellProps {
   readonly children: ReactNode;
@@ -28,10 +29,11 @@ export function AppShell({ children }: AppShellProps) {
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
+  const { user, logout, checkAuth, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
       user: state.user,
       logout: state.logout,
+      checkAuth: state.checkAuth,
       sidebarCollapsed: state.sidebarCollapsed,
       toggleSidebar: state.toggleSidebar,
     }))
@@ -58,6 +60,7 @@ export function AppShell({ children }: AppShellProps) {
   ];
 
   const adminNavItems = [
+    { name: t('navigation.users'), path: '/admin/users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
     { name: t('navigation.auditLogs'), path: '/admin/audit-log', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { name: t('navigation.contentManagement'), path: '/admin/content', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
     { name: t('navigation.systemJobs'), path: '/admin/jobs', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
@@ -265,6 +268,15 @@ export function AppShell({ children }: AppShellProps) {
             </button>
           </div>
         </header>
+
+        {/* Account Status Banner — shown for non-ENABLED users */}
+        {user && user.accountStatus && user.accountStatus !== 'ENABLED' && (
+          <AccountStatusBanner
+            status={user.accountStatus}
+            onRefresh={checkAuth}
+            onSignOut={logout}
+          />
+        )}
 
         {/* Scrollable Page Area */}
         <main className="flex-1 overflow-y-auto p-8 relative">

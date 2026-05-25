@@ -82,7 +82,7 @@ class OidcSecurityIdentityAugmentorTest {
         // Setup user context mock
         User mockUser = new User();
         mockUser.addRole(new Role("user")); // Should resolve to user permissions
-        when(userContextService.ensureUser(anyString(), anyString(), anyString(), anyString())).thenReturn(mockUser);
+        when(userContextService.ensureUser(anyString(), anyString(), anyString(), anyString(), any(java.time.Instant.class))).thenReturn(mockUser);
 
         // Mock auth context running blocking
         when(authContext.runBlocking(any())).thenAnswer(invocation -> {
@@ -101,6 +101,6 @@ class OidcSecurityIdentityAugmentorTest {
         assertThat(augmentedIdentity.hasRole(Permission.TOPIC_VIEW.name())).isTrue();
         assertThat(augmentedIdentity.hasRole(Permission.ADMIN_DASHBOARD_VIEW.name())).isFalse(); // Sanity check
 
-        verify(userContextService).ensureUser("google", "ext123", "test@test.com", "Test User");
+        verify(userContextService).ensureUser(eq("google"), eq("ext123"), eq("test@test.com"), eq("Test User"), any(java.time.Instant.class));
     }
 }

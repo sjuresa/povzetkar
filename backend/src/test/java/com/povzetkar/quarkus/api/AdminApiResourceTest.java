@@ -1,8 +1,10 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.model.AccountStatus;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.JobStatus;
 import com.povzetkar.quarkus.model.JobType;
+import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.OrchestrationManager;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
@@ -14,6 +16,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -34,11 +37,27 @@ class AdminApiResourceTest {
     @Inject
     EntityManager em;
 
+    @BeforeEach
+    @Transactional
+    void setup() {
+        // Restart endpoint calls getAuthenticatedUser() which looks up User by principal name.
+        // @TestSecurity(user = "admin") sets principal name to "admin", so we need a matching DB row.
+        if (User.find("username", "admin").<User>firstResultOptional().isEmpty()) {
+            User admin = new User();
+            admin.username = "admin";
+            admin.email = "admin@test.local";
+            admin.name = "Admin";
+            admin.accountStatus = AccountStatus.ENABLED;
+            admin.persist();
+        }
+    }
+
     @AfterEach
     @Transactional
     void teardown() {
         em.createNativeQuery("DELETE FROM audit_log").executeUpdate();
         em.createNativeQuery("DELETE FROM background_jobs").executeUpdate();
+        em.createNativeQuery("DELETE FROM users WHERE username = 'admin'").executeUpdate();
     }
 
     // ------------------------------------------------------------------
@@ -226,10 +245,11 @@ class AdminApiResourceTest {
         UUID jobId = UUID.randomUUID();
         String corrId = "corr-" + UUID.randomUUID();
         QuarkusTransaction.requiringNew().run(() -> {
-            com.povzetkar.quarkus.model.User user = new com.povzetkar.quarkus.model.User();
+            com.povzetkar.quarkus.model.User user = new User();
             user.username = "trail-user";
             user.email = "trail@example.com";
             user.name = "Trail User";
+            user.accountStatus = AccountStatus.ENABLED;
             user.persist();
             
             BackgroundJob job = new BackgroundJob(JobType.SYNC_YOUTUBE_FEEDS);
@@ -265,6 +285,121 @@ class AdminApiResourceTest {
     }
 
     // ------------------------------------------------------------------
+    // POV-188: jobType filter tests
+    // ------------------------------------------------------------------
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_DASHBOARD_VIEW"})
+    void testGetJobsFilteredByJobType() {
+        createJob(JobType.GENERATE_BRIEFINGS, JobStatus.COMPLETED);
+        createJob(JobType.SYNC_YOUTUBE_FEEDS, JobStatus.COMPLETED);
+
+        given()
+                .queryParam("jobType", "GENERATE_BRIEFINGS")
+                .when().get("/api/v1/admin/jobs")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].jobType", equalTo("GENERATE_BRIEFINGS"));
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_DASHBOARD_VIEW"})
+    void testGetJobsFilteredByStatusAndJobType() {
+        createJob(JobType.GENERATE_BRIEFINGS, JobStatus.COMPLETED);
+        createJob(JobType.GENERATE_BRIEFINGS, JobStatus.FAILED);
+        createJob(JobType.SYNC_YOUTUBE_FEEDS, JobStatus.FAILED);
+
+        given()
+                .queryParam("jobType", "GENERATE_BRIEFINGS")
+                .queryParam("status", "FAILED")
+                .when().get("/api/v1/admin/jobs")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(1))
+                .body("data[0].jobType", equalTo("GENERATE_BRIEFINGS"))
+                .body("data[0].status", equalTo("FAILED"));
+    }
+
+    // ------------------------------------------------------------------
+    // POV-188: restart endpoint tests
+    // ------------------------------------------------------------------
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_JOB_UPDATE"})
+    void testRestartFailedJob() {
+        Mockito.when(orchestrationManager.runOrchestrationManually(Mockito.any()))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        UUID jobId = createFailedJob(JobType.SYNC_YOUTUBE_FEEDS);
+
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/admin/jobs/" + jobId + "/restart")
+                .then()
+                .statusCode(202)
+                .body("data.jobType", equalTo("SYNC_YOUTUBE_FEEDS"))
+                .body("data.status", equalTo("QUEUED"));
+
+        // Verify audit entry written on original job
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                QuarkusTransaction.requiringNew().call(() -> {
+                    Number count = (Number) em
+                            .createNativeQuery("SELECT COUNT(*) FROM job_execution_audit WHERE job_id = ?1 AND message LIKE '%restarted by admin%'")
+                            .setParameter(1, jobId)
+                            .getSingleResult();
+                    return count.longValue() >= 1L;
+                })
+        );
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_JOB_UPDATE"})
+    void testRestartNonFailedJobReturns400() {
+        UUID jobId = createJobWithId(JobType.SYNC_YOUTUBE_FEEDS, JobStatus.COMPLETED);
+
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/admin/jobs/" + jobId + "/restart")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_JOB_UPDATE"})
+    void testRestartItemLevelJobReturns400() {
+        UUID jobId = createJobWithId(JobType.GENERATE_ITEM_SUMMARY, JobStatus.FAILED);
+
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/admin/jobs/" + jobId + "/restart")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = {"admin", "ADMIN_JOB_UPDATE"})
+    void testRestartNotFoundJobReturns404() {
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/admin/jobs/" + UUID.randomUUID() + "/restart")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "user", roles = {"user"})
+    void testRestartForbiddenForUser() {
+        UUID jobId = createJobWithId(JobType.SYNC_YOUTUBE_FEEDS, JobStatus.FAILED);
+
+        given()
+                .contentType(ContentType.JSON)
+                .when().post("/api/v1/admin/jobs/" + jobId + "/restart")
+                .then()
+                .statusCode(403);
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 
@@ -274,5 +409,23 @@ class AdminApiResourceTest {
         job.status = status;
         job.persist();
         em.flush();
+    }
+
+    @Transactional
+    UUID createJobWithId(JobType type, JobStatus status) {
+        BackgroundJob job = new BackgroundJob(type);
+        job.status = status;
+        job.persist();
+        em.flush();
+        return job.id;
+    }
+
+    @Transactional
+    UUID createFailedJob(JobType type) {
+        BackgroundJob job = new BackgroundJob(type);
+        job.status = JobStatus.FAILED;
+        job.persist();
+        em.flush();
+        return job.id;
     }
 }

@@ -14,6 +14,7 @@
 | **TC-GRX-003** | **P0** | - | [v0.13] | Theme Switching | **Playwright** | Light/Dark theme persists across page reloads and browser sessions. |
 | **TC-GRX-004** | **P0** | - | [v0.12] | OIDC Handshake & Persistence | **Playwright** | Login redirect flow works and session remains active after refresh. |
 | **TC-GRX-005** | **P1** | UC-10 | [v0.16] | Toast Actionability | Manual/PW | Toast contains a clickable button and plays sound on trigger. |
+| **TC-GRX-006** | **P1** | - | [v0.17] | Session Expiry Redirect | **Playwright** | 401 response redirects user to landing page (`/`) with `notice=session_expired` toast; `returnTo` path preserved in `sessionStorage`; no ErrorPage shown. |
 
 ## 1. Domain: Briefing & Intelligence (LIB)
 
@@ -43,6 +44,7 @@
 | **TC-EXP-002** | **P1** | UC-6 | [v0.15] | HTML Export | Manual | Downloaded file is a valid stand-alone HTML document. |
 | **TC-EXP-003** | **P1** | UC-6 | [v0.15] | Shareable Link | Manual | Direct URL correctly resolves to the briefing view. |
 | **TC-EXP-004** | **P1** | UC-8 | [v0.16] | Individual Summary Read | Manual | Public access to summary UUID is successful without login. |
+| **TC-LIB-006** | **P2** | UC-15 | [v0.17] | External Links Open in New Tab | Manual/Unit | Markdown external links contain `target="_blank"` and `rel="noopener noreferrer"`. |
 
 ## 4. Domain: Observability & Monitoring (MON)
 
@@ -60,6 +62,8 @@
 | **TC-SEC-001** | **P0** | - | [v0.13] | Profile Visibility | Manual/PW | `/me` data matches the currently authenticated user. |
 | **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | **Playwright** | Admin sections (Sources) are blocked for generic users. |
 | **TC-SEC-003** | **P0** | - | [v0.12] | Auth Guard Redirect | **Playwright** | Unauthenticated users visiting `/dashboard` are redirected to `/`. |
+| **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees generic status banner. |
+| **TC-SEC-005** | **P0** | UC-12 | [v0.17] | Approval State Transition | Integration | Admin can transition `PENDING_APPROVAL → ENABLED`/`DISABLED`; audit row written. Last-admin guard prevents self-demotion. |
 
 ## 6. Domain: General UX & Brand (UI)
 
@@ -76,6 +80,8 @@
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-ADM-001** | **P2** | - | [v0.12] | Audit Log Search & Filter | Manual | Paging and Keyword search works for tech audit logs. |
 | **TC-ADM-002** | **P2** | UC-3 | [v0.14] | Status Override (Admin Only) | Manual | Admin can force retry of FAILED items via status dropdown. |
+| **TC-ADM-003** | **P0** | UC-11 | [v0.17] | Admin User Management | **Playwright** | Admin can edit roles and disable/enable accounts; UI filter by status works. |
+| **TC-ADM-004** | **P1** | UC-13 | [v0.17] | Background Job Restart | **Playwright** | Restart spawns new job for `FAILED` job; audit trail records acting admin. Cancel is deferred to v0.18.0. |
 
 ## 8. Domain: Core Ingestion (ING)
 
@@ -83,6 +89,7 @@
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-ING-001** | **P0** | UC-3 | [v0.6.2] | Autonomous Self-Healing | Integration | Items in `TRANSIENT_ERROR` are reset to `PENDING` automatically by the orchestrator. |
 | **TC-ING-002** | **P0** | UC-3 | [v0.6.0] | Resilient Intelligence Fallback | Integration | System falls back to URL summarization if transcript fetch fails (prevents "black-hole" content). |
+| **TC-ING-003** | **P0** | UC-14 | [v0.17] | Transcript Provider Fallback Chain | Integration | When primary transcript provider fails (timeout/quota/unavailable), orchestrator falls through to the next provider in the chain; metrics emitted per provider. |
 
 ---
 
@@ -101,6 +108,10 @@
 | **PW-009** | Briefing Content View | TC-LIB-001 | **Planned (v0.17.0)** |
 | **PW-010** | Summary Persistence Smoke | TC-EXP-004 | **Planned (v0.17.0)** |
 | **PW-011** | Toast Interaction | TC-GRX-005 | **Planned (v0.17.0)** |
+| **PW-012** | Admin User Management | TC-ADM-003 | **Planned (v0.17.0)** |
+| **PW-013** | Pending Approval Gating | TC-SEC-004 | **Planned (v0.17.0)** |
+| **PW-014** | Job Cancel/Restart | TC-ADM-004 | **Planned (v0.17.0)** |
+| **PW-015** | Session Expiry Redirect | TC-GRX-006 | **Planned (v0.17.0)** |
 
 ---
 
@@ -113,6 +124,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.7     | 2026-05-20 | Povzetkar AI | Added v0.17.0 test cases: TC-GRX-006, TC-LIB-006, TC-SEC-004/005, TC-ADM-003/004, TC-ING-003. Added PW-012…PW-015 to automation backlog. |
 | 2.6     | April 20, 2026 | Antigravity AI | Integrated PW-010 and PW-011 for comprehensive backlog traceability. |
 | 2.5     | April 20, 2026 | Antigravity AI | Synchronized Automation Status with backlog. Added PW-008 and PW-009. Corrected P0 coverage gaps. |
 | 2.4     | April 13, 2026 | Antigravity AI | Concluded v0.16.0 Audit. Verified implementation of PW-005/PW-006. Deferred remaining v0.16.0 scenarios to v0.17.0. |

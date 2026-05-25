@@ -9,7 +9,6 @@ import { sl, enUS } from 'date-fns/locale';
 import {
   ArrowLeft,
   AlertCircle,
-  Youtube,
   Globe,
   ArrowDown,
   ExternalLink,
@@ -17,11 +16,11 @@ import {
   Clock,
   Timer,
 } from 'lucide-react';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import { ExportMenu } from '../components/briefing/ExportMenu';
 import type { BriefingDetailDTO, BriefingItemDTO } from '../api/generated/model';
 import { useOnboardingStore } from '../store/onboardingStore';
+import { YoutubeIcon } from '../components/ui/YoutubeIcon';
+import { REHYPE_PLUGINS } from '../utils/markdown';
 
 /**
  * BriefingDetailPage renders the full content of a single briefing.
@@ -152,7 +151,7 @@ export function BriefingDetailPage() {
         return (
           <div className="glass border-l-8 border-[var(--color-action-primary)]/50 rounded-xl md:rounded-[28px] p-12 md:p-20 bg-[var(--color-action-primary)]/[0.04] shadow-2xl shadow-[var(--color-action-primary)]/10 transition-all animate-in slide-in-from-left-4 duration-1000">
             <div className={`prose prose-zinc prose-2xl max-w-none text-[var(--color-text-primary)] leading-[1.6] italic font-serif font-medium opacity-100 selection:bg-[var(--color-action-primary)]/30 ${hasAlphaStart ? 'first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-[var(--color-action-primary)]' : ''}`}>
-              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+              <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                 {cleanedMeta}
               </ReactMarkdown>
             </div>
@@ -182,7 +181,7 @@ export function BriefingDetailPage() {
                   ) : (
                     <div className="w-full aspect-video rounded-xl bg-[var(--color-surface-deep)] flex items-center justify-center text-[var(--color-text-secondary)]">
                       {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? (
-                        <Youtube className="w-8 h-8 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
+                        <YoutubeIcon className="w-8 h-8 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
                       ) : (
                         <Globe className="w-8 h-8 text-[var(--color-action-primary)]"  strokeWidth={1.5}/>
                       )}
@@ -247,7 +246,7 @@ export function BriefingDetailPage() {
                 <div className="flex items-start gap-4 mb-8 group/source">
                   <div className="w-12 h-12 rounded-xl md:rounded-[28px] bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] flex-shrink-0 group-hover/source:bg-[var(--color-action-primary)]/20 transition-colors">
                     {item.contentItem?.contentSource?.platform === 'YOUTUBE' ? (
-                      <Youtube className="w-6 h-6 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
+                      <YoutubeIcon className="w-6 h-6 text-[var(--color-status-error)]"  strokeWidth={1.5}/>
                     ) : (
                       <Globe className="w-6 h-6"  strokeWidth={1.5}/>
                     )}
@@ -316,7 +315,7 @@ export function BriefingDetailPage() {
                 </div>
 
                 <article className="prose prose-zinc max-w-none prose-headings:text-bold prose-headings:text-[var(--color-text-primary)] prose-p:leading-relaxed prose-p:text-[var(--color-text-secondary)]">
-                   <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                   <ReactMarkdown rehypePlugins={REHYPE_PLUGINS}>
                      {item.summaryText || ''}
                    </ReactMarkdown>
                 </article>

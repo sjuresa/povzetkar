@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.13.0
  */
 
+export * from './accountStatus';
 export * from './adminMetricsDTO';
 export * from './apiEnvelopeDTO';
 export * from './apiErrorDTO';
@@ -75,6 +76,7 @@ export * from './postApiV1TestIdempotencyErrorBody';
 export * from './postApiV1TestIdempotencySlowBody';
 export * from './predicateString';
 export * from './processingStatus';
+export * from './publicInsightType';
 export * from './publicShare';
 export * from './publicShareType';
 export * from './publicSummary';

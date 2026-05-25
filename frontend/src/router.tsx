@@ -1,23 +1,19 @@
-import {
-  createRootRouteWithContext,
-  createRoute,
-  createRouter,
-  Outlet,
-  redirect,
-} from '@tanstack/react-router';
-import { LandingPage } from './routes/LandingPage';
-import { DashboardPage } from './routes/DashboardPage';
-import { BriefingDetailPage } from './routes/BriefingDetailPage';
-import { BriefingLibraryPage } from './routes/BriefingLibraryPage';
-import { AuditLogPage } from './routes/AuditLogPage';
-import { ErrorPage } from './routes/ErrorPage';
-import { ProfilePage } from './routes/ProfilePage';
-import { AppShell } from './components/layout/AppShell';
-import { ContentManagementPage } from './routes/ContentManagementPage';
-import { TopicsPage } from './pages/topics/TopicsPage';
-import { SourcesLibraryPage } from './routes/SourcesLibraryPage';
-import { SourceDetailPage } from './routes/SourceDetailPage';
-import { PublicResolverPage } from './routes/PublicResolverPage';
+import {createRootRouteWithContext, createRoute, createRouter, Outlet, redirect,} from '@tanstack/react-router';
+import {LandingPage} from './routes/LandingPage';
+import {DashboardPage} from './routes/DashboardPage';
+import {BriefingDetailPage} from './routes/BriefingDetailPage';
+import {BriefingLibraryPage} from './routes/BriefingLibraryPage';
+import {AuditLogPage} from './routes/AuditLogPage';
+import {ErrorPage} from './routes/ErrorPage';
+import {ProfilePage} from './routes/ProfilePage';
+import {AppShell} from './components/layout/AppShell';
+import {ContentManagementPage} from './routes/ContentManagementPage';
+import {TopicsPage} from './pages/topics/TopicsPage';
+import {SourcesLibraryPage} from './routes/SourcesLibraryPage';
+import {SourceDetailPage} from './routes/SourceDetailPage';
+import {PublicResolverPage} from './routes/PublicResolverPage';
+import {UsersPage} from './routes/UsersPage';
+import {AdminJobsPage} from './routes/AdminJobsPage';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -65,8 +61,7 @@ const protectedLayoutRoute = createRoute({
     
     // We must read the fresh state from zustand, not the React snapshot,
     // because checkAuth() just updated the store asynchronously.
-    const useAuthStore = (await import('./store/authStore')).useAuthStore;
-    const isActuallyAuthenticated = useAuthStore.getState().isAuthenticated;
+    const isActuallyAuthenticated = (await import('./store/authStore')).useAuthStore.getState().isAuthenticated;
     
     // Final check - if still not authenticated, redirect to landing
     if (!isActuallyAuthenticated) {
@@ -133,11 +128,10 @@ const adminLayoutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/admin',
   beforeLoad: async () => {
-    const useAuthStore = (await import('./store/authStore')).useAuthStore;
-    const user = useAuthStore.getState().user;
+    const user = (await import('./store/authStore')).useAuthStore.getState().user;
     
-    const hasAdminPerm = user?.permissions?.some(p => 
-      ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW'].includes(p)
+    const hasAdminPerm = user?.permissions?.some(p =>
+      ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW', 'USER_MGMT_VIEW'].includes(p)
     );
     
     if (!hasAdminPerm) {
@@ -163,7 +157,13 @@ const contentManagementRoute = createRoute({
 const adminJobsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'jobs',
-  component: () => <div className="p-8 text-[var(--color-text-secondary)] italic">Background Jobs Admin coming soon...</div>,
+  component: AdminJobsPage,
+});
+
+const usersRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: 'users',
+  component: UsersPage,
 });
 
 // 7. Public Sharing Route
@@ -188,7 +188,8 @@ const routeTree = rootRoute.addChildren([
     adminLayoutRoute.addChildren([
       auditLogRoute,
       contentManagementRoute,
-      adminJobsRoute
+      adminJobsRoute,
+      usersRoute,
     ]),
   ]),
 ]);
