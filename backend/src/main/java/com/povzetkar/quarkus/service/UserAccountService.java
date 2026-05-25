@@ -51,6 +51,7 @@ public class UserAccountService {
         assertCurrentStateIs(user, AccountStatus.ENABLED);
         assertNotSelf(user);
         assertNotLastAdmin(user);
+        removeRoleByName(user, Permission.ROLE_USER);
         user.accountStatus = AccountStatus.DISABLED;
         user.persist();
         return user;
@@ -64,9 +65,7 @@ public class UserAccountService {
                     "INVALID_STATE_TRANSITION",
                     "Cannot enable user in state: " + user.accountStatus);
         }
-        if (user.accountStatus == AccountStatus.REJECTED) {
-            addRoleByName(user, Permission.ROLE_USER);
-        }
+        addRoleByName(user, Permission.ROLE_USER);
         user.accountStatus = AccountStatus.ENABLED;
         user.persist();
         return user;
