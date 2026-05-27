@@ -47,6 +47,12 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 **Step 8: Execute Plan and Log Progress**
 *   I will now execute the approved plan step-by-step.
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
+*   **Timestamp Mandate:** Every log entry in the execution file MUST be prefixed with a timestamp in the format `[YYYY-MM-DD HH:MM UTC]`. No entry is valid without a timestamp.
+*   **Phase Milestones:** The following phase boundaries MUST be explicitly logged with timestamps:
+    *   `[YYYY-MM-DD HH:MM UTC] Implementation started`
+    *   `[YYYY-MM-DD HH:MM UTC] Implementation completed`
+    *   `[YYYY-MM-DD HH:MM UTC] Code review started`
+    *   `[YYYY-MM-DD HH:MM UTC] Code review completed`
 
 **Step 9: Update `CHANGELOG.md`, Update Retrospective, Extract Knowledge, Propose Commit Message and Await Final Confirmation**
 *   After all planned code modifications have been completed and have passed the **Final Behavioral Verification (The Test Mandate)** defined in `docs/protocols/verification.md` — which requires running the full test suite, not just task-related tests — my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.

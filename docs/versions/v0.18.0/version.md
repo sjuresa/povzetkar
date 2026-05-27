@@ -1,0 +1,13 @@
+# v0.18.0 Version Hub
+
+**Status:** In Progress
+**YouTrack Milestone:** [v0.18.0](https://youtrack.example.com/youtrack/agiles) *(update with actual milestone link)*
+**Scope Statement:** *(to be added retroactively when the version is declared complete)*
+
+---
+
+## Completed Tasks
+
+| Task | Walkthrough | Retrospective |
+| --- | --- | --- |
+| POV-191 — Development Process Evolution: Task-First Planning | [walkthrough](POV-191-walkthrough.md) | [retrospective](POV-191-retrospective.md) |
