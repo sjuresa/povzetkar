@@ -37,7 +37,7 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 **Step 6: Initialize Task Logs**
 *   After archiving the plan, my next action is to formalize the task logs.
 *   I will confirm the task ID and title from the `agent_logs/task.md` file or from you directly.
-*   I will create a permanent record of the task by copying the content of `agent_logs/task.md` to a new file named `agent_logs/<task id> <task title>.md`.
+*   I will create a permanent record of the task by copying the content of `agent_logs/task.md` to a new file named `agent_logs/<task id> <task title> task.md`.
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Handle Unplanned Discoveries**

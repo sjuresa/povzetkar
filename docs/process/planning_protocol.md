@@ -75,7 +75,7 @@ Every User Story in `agent_logs/task.md` MUST be mapped to:
 3.  A specific **Task ID** (`POV-XXX`).
 
 ### 2.2 Expert Triad Review
-Mandatory evaluation section in `agent_logs/task.md` (under the plan) covering:
+Mandatory evaluation section in the archived plan (`agent_logs/<task id> <task title> plan.md`) covering:
 - **Security Audit**: Port exposures, data masking, and access guards.
 - **i18n Readiness**: Impact on localization files and string management.
 - **Ops Readiness**: Rollback/panic-switch procedures in `RUNBOOK.md`.
