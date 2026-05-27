@@ -60,7 +60,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
     4. **Feed-forward** — what the next task should know.
 - [ ] **2.12. Version Hub Check:** If `docs/versions/vX.Y.Z/version.md` does not exist, create the directory and file now (this is the first task of the version) with the following initial content:
   - Link to the YouTrack milestone for this version.
-  - Empty task list section with this exact table structure: `| Task | Walkthrough | Retrospective |`
+  - Empty task list section with this exact table structure: `| Task | Walkthrough | Retrospective |` followed by a separator row `| --- | --- | --- |`
 - [ ] **2.13. Update Version Hub:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
 - [ ] **2.14. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
   - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
