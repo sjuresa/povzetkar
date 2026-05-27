@@ -48,19 +48,18 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - [ ] If any systemic bug fixes, architectural choices, or technical hurdles were overcome, append them to `docs/process/lessons-learned.md` as mandated by `workflow-mandatory.md` Step 9.
 - [ ] **2.8. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
 - [ ] **2.9. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
-- [ ] **2.10. Walkthrough:** Write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` with the following sections:
+- [ ] **2.10. Version Hub Check:** If `docs/versions/vX.Y.Z/version.md` does not exist, create the directory and file now (this is the first task of the version) with the following initial content:
+  - Empty task list section with this exact table structure: `| Task | Walkthrough | Retrospective |` followed by a separator row `| --- | --- | --- |`
+- [ ] **2.11. Walkthrough:** Write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` with the following sections:
     1. **What was done** — the primary deliverable; what changed and what was built.
     2. **Planned vs. actual scope** — any additions or removals relative to the original task definition.
     3. **Time delta** — estimated vs. actual time (from Time Log in the task's execution log).
     4. **Deviations** — any decisions made mid-execution that deviated from the plan.
-- [ ] **2.11. Task Retrospective:** Write `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` with the following sections:
+- [ ] **2.12. Task Retrospective:** Write `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` with the following sections:
     1. **Planned vs. actual** — what was scoped vs. what was delivered.
     2. **Deviations & why** — decisions made mid-execution and their rationale.
     3. **Technical findings** — patterns, gotchas, and constraints discovered; the durable record for future tasks.
     4. **Feed-forward** — what the next task should know.
-- [ ] **2.12. Version Hub Check:** If `docs/versions/vX.Y.Z/version.md` does not exist, create the directory and file now (this is the first task of the version) with the following initial content:
-  - Link to the YouTrack milestone for this version.
-  - Empty task list section with this exact table structure: `| Task | Walkthrough | Retrospective |` followed by a separator row `| --- | --- | --- |`
 - [ ] **2.13. Update Version Hub:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
 - [ ] **2.14. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
   - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
