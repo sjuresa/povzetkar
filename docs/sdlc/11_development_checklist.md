@@ -10,7 +10,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 *This phase is executed once at the beginning of a new version cycle. Its only purpose is to open the branch and register the version — planning happens at the task level.*
 
-- [ ] **1.1. Prepare Development Branch**: Create the new version branch (e.g., `v0.18.0`) from `main` and update version numbers using `node scripts/update-version.cjs <version>-SNAPSHOT`.
+- [ ] **1.1. Prepare Development Branch**: Create the new version branch (e.g., `vX.Y.0`) from `main` and update version numbers using `node scripts/update-version.cjs <version>-SNAPSHOT`.
 - [ ] **1.2. Create Milestone**: Register the version as a milestone label in YouTrack.
 - [ ] **1.3. Roadmap Entry**: Add the version to `docs/overview/roadmap.md` as in-progress.
 
@@ -36,12 +36,12 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 - [ ] **2.3a. Pre-Execution Gate:** Confirm that an explicit approval for the plan has been received. **Execution is forbidden without this approval.**
 - [ ] **2.4. Agent Executes Plan:** The agent executes the plan step-by-step, including all necessary code changes and documentation updates.
 - [ ] **2.5. User Verifies Tests:** After code modifications, the user runs the test suite and confirms that all tests are passing.
-    - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
-    - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
-    - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
-    - [ ] **QA Check:** Ensure explicit dependency versions in pom.xml do not conflict with the framework's BOM (Bill of Materials). *Note: Investigate maven-enforcer-plugin (e.g., dependencyConvergence, requireUpperBoundDeps) during Task POV-89 to automate this.*
-    - [ ] **QA Check (Local Security):** Run `mvn spotbugs:check` (or ensure it ran successfully during `mvn verify`) to validate that no static security flaws or basic bugs exist.
-    - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
+  - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
+  - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
+  - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
+  - [ ] **QA Check:** Ensure explicit dependency versions in pom.xml do not conflict with the framework's BOM (Bill of Materials). *Note: Investigate maven-enforcer-plugin (e.g., dependencyConvergence, requireUpperBoundDeps) during Task POV-89 to automate this.*
+  - [ ] **QA Check (Local Security):** Run `mvn spotbugs:check` (or ensure it ran successfully during `mvn verify`) to validate that no static security flaws or basic bugs exist.
+  - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
 - [ ] **2.7. Update Backlog & Lessons Learned:**
   - [ ] Log any non-critical improvements discovered to `docs/backlog/improvements.md`.
@@ -61,42 +61,42 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 - [ ] **2.12. Version Hub Check:** If `docs/versions/vX.Y.Z/version.md` does not exist, create the directory and file now (this is the first task of the version) with the following initial content:
   - Link to the YouTrack milestone for this version.
   - Empty task list section.
-- [ ] **2.13. Update `version.md`:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
+- [ ] **2.13. Update Version Hub:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
 - [ ] **2.14. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
-    - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
-    - **If both YES:** Pause, discuss, and agree to address it within the current task or as an immediate follow-up task.
-    - **If either NO:** Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
+  - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
+  - **If both YES:** Pause, discuss, and agree to address it within the current task or as an immediate follow-up task.
+  - **If either NO:** Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
 - [ ] **2.15. Master Specification Sync**: Verify that the task's final outcome (feature or logic fix) is accurately reflected in `docs/analysis/test_specification.md`. Ensure all new P0 Test Cases are marked for automation within one version.
-    - [ ] **Planning Audit**: Run `python scripts/qa/validate-planning.py --current-version vX.Y.Z` to verify the traceability chain (Task -> UC -> TC) remains intact. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for mandatory sync requirements.
+  - [ ] **Planning Audit**: Run `python scripts/qa/validate-planning.py --current-version vX.Y.Z` to verify the traceability chain (Task -> UC -> TC) remains intact. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for mandatory sync requirements.
 
 ## Phase 3: Version Finalisation
 
 *This phase is triggered by an explicit PO decision that the version is complete — there is no longer an objective task list to signal completion.*
 
 - [ ] **3.1. Finalise Documentation Content:**
-    - [ ] Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`. This is not a collection of task findings; it is a pattern-level synthesis across them.
-    - [ ] Add a scope statement to `docs/versions/vX.Y.Z/version.md` summarising what the version delivered.
-    - [ ] Update `docs/overview/roadmap.md`: Mark version as `✅ Completed` and add a revision entry.
-    - [ ] Review and clean `docs/backlog/improvements.md` based on completed work and new findings.
+  - [ ] Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`. This is not a collection of task findings; it is a pattern-level synthesis across them.
+  - [ ] Add a scope statement to `docs/versions/vX.Y.Z/version.md` summarising what the version delivered.
+  - [ ] Update `docs/overview/roadmap.md`: Mark version as `✅ Completed` and add a revision entry.
+  - [ ] Review and clean `docs/backlog/improvements.md` based on completed work and new findings.
 - [ ] **3.2. Project-Wide Documentation Review**: Execute the following prompts to ensure project-wide documentation is up-to-date with any process changes or learnings from the completed version:
-    - [ ] **Planning Audit**: Perform a final whole-project audit using `python scripts/qa/validate-planning.py --current-version vX.Y.Z --fail-on all`. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for release blocking criteria.
-    - [ ] **General Refresh**: "We are finalizing version vX.Y.Z. Please check if the project documentation in `docs/` needs to be refreshed based on the completed tasks (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`, `docs/strategy`). Today is [Current Date]."
-    - [ ] **Agent Protocol Check**: "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
-    - [ ] **Methodology Update**: "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
+  - [ ] **Planning Audit**: Perform a final whole-project audit using `python scripts/qa/validate-planning.py --current-version vX.Y.Z --fail-on all`. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for release blocking criteria.
+  - [ ] **General Refresh**: "We are finalizing version vX.Y.Z. Please check if the project documentation in `docs/` needs to be refreshed based on the completed tasks and retrospectives in `docs/versions/vX.Y.Z/` (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`, `docs/strategy`). Today is [Current Date]."
+  - [ ] **Agent Protocol Check**: "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
+  - [ ] **Methodology Update**: "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
 - [ ] **3.3. Finalise Project Versions**: Remove the `-SNAPSHOT` suffix using `node scripts/update-version.cjs <version>`.
 - [ ] **3.4. Finalise `CHANGELOG.md`:**
-    - [ ] **Editorial Cleanup:** Remove internal refactoring noise and consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during development.
-    - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[0.18.0] - YYYY-MM-DD`).
-    - [ ] Add a new, empty `[Unreleased]` section at the top.
+  - [ ] **Editorial Cleanup:** Remove internal refactoring noise and consolidate duplicates. Ensure "Fixed" items refer to issues present in previous versions, not just temporary bugs encountered during development.
+  - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[X.Y.Z] - YYYY-MM-DD`).
+  - [ ] Add a new, empty `[Unreleased]` section at the top.
 - [ ] **3.5. Sync Landing Page Metadata:** Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes.
 
 ## Phase 4: Release
 
 *This phase is executed after the version is finalised.*
 
-- [ ] **4.1. Create Release PR:** Create a Pull Request from the version branch (e.g., `v0.18.0`) to `main`.
+- [ ] **4.1. Create Release PR:** Create a Pull Request from the version branch (e.g., `vX.Y.0`) to `main`.
 - [ ] **4.2. Merge to `main`:** After approval, merge the release PR. Ensure that the CI pipeline explicitly passes the Trivy vulnerability scan and SAST routines.
-- [ ] **4.3. Create Git Tag:** On the `main` branch, create and push an annotated Git tag (e.g., `git tag -a v0.18.0 -m "Release version 0.18.0"`).
+- [ ] **4.3. Create Git Tag:** On the `main` branch, create and push an annotated Git tag (e.g., `git tag -a vX.Y.0 -m "Release version X.Y.0"`).
 
 ## Revision History
 
