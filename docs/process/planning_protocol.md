@@ -108,7 +108,7 @@ The planning suite MUST pass the automated validator check:
 
 ## 3. Communication Standards
 - **Phased Approach:** 1. Strategic Selection -> 2. Technical Design -> 3. Testing Philosophy.
-- **Discussion Points:** Document "Why we chose B over A" in `agent_logs/task.md`.
+- **Discussion Points:** Document "Why we chose B over A" in the archived plan (`agent_logs/<task id> <task title> plan.md`).
 - **Expert Triad Review:** Mandatory section for Security and i18n audits.
 
 ---
