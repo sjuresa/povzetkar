@@ -46,13 +46,13 @@
         <resources.plugin.version>3.3.1</resources.plugin.version>
         <project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>
 
-        <!-- Fixed Versions for CVE-2026-33871 -->
-        <netty.version>4.1.132.Final</netty.version>
+        <!-- Netty version overrides for security vulnerability patching -->
+        <netty.version>4.1.133.Final</netty.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Force Netty 4.1.132.Final to resolve CVE-2026-33871 (POV-156) -->
+            <!-- Force patched Netty version to resolve CVE-2026-33871, CVE-2026-42583, CVE-2026-42579, CVE-2026-42584, CVE-2026-42587 -->
             <!-- MUST BE FIRST for Maven precedence -->
             <dependency>
                 <groupId>io.netty</groupId>
