@@ -51,7 +51,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 - [ ] **2.10. Walkthrough:** Write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` with the following sections:
     1. **What was done** — the primary deliverable; what changed and what was built.
     2. **Planned vs. actual scope** — any additions or removals relative to the original task definition.
-    3. **Time delta** — estimated vs. actual time (from Time Log in `execution.md`).
+    3. **Time delta** — estimated vs. actual time (from Time Log in the task's execution log).
     4. **Deviations** — any decisions made mid-execution that deviated from the plan.
 - [ ] **2.11. Task Retrospective:** Write `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` with the following sections:
     1. **Planned vs. actual** — what was scoped vs. what was delivered.
