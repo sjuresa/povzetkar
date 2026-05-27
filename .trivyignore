@@ -1,5 +1,2 @@
 # Pending Debian fixes for libexpat in Distroless (Debian 13)
 # These will be removed once Google releases updated images.
-
-# libexpat: Information disclosure and data integrity issues due to integer overflow
-CVE-2026-25210
