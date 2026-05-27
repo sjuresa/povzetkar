@@ -28,12 +28,14 @@ export default defineConfig(({ mode }) => {
             target: 'http://localhost:8080',
             changeOrigin: true,
             xfwd: true,
-            configure: (proxy: import('http-proxy').Server) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            configure: (proxy: any) => {
               // Quarkus OIDC returns 302 → Google OAuth for unauthenticated XHR requests.
               // The browser follows this cross-origin redirect causing a CORS failure before
               // our 401 interceptor can fire. Rewrite OIDC redirects to 401 at the proxy level
               // so client.ts handles them cleanly.
-              proxy.on('proxyRes', (proxyRes, req, res) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              proxy.on('proxyRes', (proxyRes: any, req: any) => {
                 const location = proxyRes.headers['location'] ?? '';
                 const isXhr = (req.headers['x-requested-with'] ?? '') === 'XMLHttpRequest';
                 const isOidcRedirect = typeof location === 'string' && location.includes('accounts.google.com');

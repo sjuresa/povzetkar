@@ -92,7 +92,7 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
               </div>
            </div>
               <div className="flex items-center gap-2">
-                {summary && (
+                {!!summary && (
                   <ExportMenu 
                     type="summary"
                     data={{
@@ -128,7 +128,7 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
               <Skeleton className="h-48 w-full rounded-xl md:rounded-[28px]" />
             </div>
           )}
-          {!isSummaryLoading && summaryError && (
+          {!isSummaryLoading && !!summaryError && (
             <div className="flex flex-col items-center justify-center h-full py-20 text-center space-y-6">
                <div className="w-20 h-20 rounded-full bg-[var(--color-status-error)]/10 flex items-center justify-center text-[var(--color-status-error)] ring-8 ring-[var(--color-status-error)]/5">
                   <AlertCircle size={40}  strokeWidth={1.5}/>
@@ -142,7 +142,7 @@ export function SummaryModal({ itemId, onClose }: SummaryModalProps) {
                <button onClick={onClose} className="px-8 py-3 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)] text-white font-bold">{t('common.cancel')}</button>
             </div>
           )}
-          {!isSummaryLoading && !summaryError && summary && (
+          {!isSummaryLoading && !summaryError && !!summary && (
             <article className="w-full">
               {summary.executiveSummary && (
                 <div className="mb-12 p-10 md:p-14 rounded-xl md:rounded-[28px] bg-[var(--color-action-primary)]/[0.03] border-l-8 border-[var(--color-action-primary)]/50 shadow-2xl shadow-[var(--color-action-primary)]/5 animate-in fade-in slide-in-from-left-4 duration-1000">
