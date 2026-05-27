@@ -54,9 +54,11 @@ For every request that requires modifying code, I **MUST** follow this exact seq
     *   `[YYYY-MM-DD HH:MM UTC] Code review started`
     *   `[YYYY-MM-DD HH:MM UTC] Code review completed`
 
-**Step 9: Update `CHANGELOG.md`, Update Retrospective, Extract Knowledge, Propose Commit Message and Await Final Confirmation**
+**Step 9: Update `CHANGELOG.md`, Write Walkthrough and Retrospective, Update Version Hub, Extract Knowledge, Propose Commit Message and Await Final Confirmation**
 *   After all planned code modifications have been completed and have passed the **Final Behavioral Verification (The Test Mandate)** defined in `docs/protocols/verification.md` — which requires running the full test suite, not just task-related tests — my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.
+*   **Write Walkthrough:** I will write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` covering: what was done, planned vs. actual scope, time delta, and deviations. If `docs/versions/vX.Y.Z/` does not yet exist, I will create it with an initial `version.md` containing the task list table structure.
 *   **Write Task Retrospective:** I will write the per-task retrospective file `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` covering: planned vs. actual scope, deviations and their rationale, technical findings, and feed-forward notes for the next task. This is a new file created for each task, not an append to a shared file.
+*   **Update Version Hub:** I will add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
 *   **Extract Knowledge:** I will explicitly identify any systemic bug fixes, architectural choices, testing constraints, or technical hurdles overcome during this task. If any exist, I MUST append them to `docs/process/lessons-learned.md` to ensure they are available for future tasks.
 *   **Capture Improvements:** I will verify if any non-critical improvements or refactoring opportunities were identified during execution and ensure they are logged in `docs/backlog/improvements.md`.
 *   After updating `CHANGELOG.md`, I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.

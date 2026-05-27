@@ -18,11 +18,11 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 *This phase is repeated for every task in the version. It is the primary phase of the lifecycle.*
 
-- [ ] **2.0. Brainstorm:** Conduct a scope-alignment interview with the PO **before** writing or finalising `task.md`. Use the following prompt:
+- [ ] **2.0. Brainstorm:** Conduct a scope-alignment interview with the PO **before** writing or finalising `agent_logs/task.md`. Use the following prompt:
 
     > *"Interview me relentlessly about every aspect of this task's scope until we reach a shared understanding. Walk down each branch of the requirements tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer. Ask the questions one at a time. If a question can be answered by exploring the codebase, explore the codebase instead."*
 
-    Focus: **WHAT** will be done — scope boundaries, risks, whether the task is correctly defined. Record Brainstorm start and end timestamps in `task.md` under `## Brainstorm`.
+    Focus: **WHAT** will be done — scope boundaries, risks, whether the task is correctly defined. Record Brainstorm start and end timestamps in `agent_logs/task.md` under `## Brainstorm`.
 
 - [ ] **2.1. Define Task:** Finalise the task definition in `agent_logs/task.md`, including the `## Documentation` section specifying context and required updates.
 
@@ -74,7 +74,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 - [ ] **3.1. Finalise Documentation Content:**
   - [ ] Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`. This is not a collection of task findings; it is a pattern-level synthesis across them.
-  - [ ] Add a scope statement to `docs/versions/vX.Y.Z/version.md` summarising what the version delivered.
+  - [ ] Update the status to `Completed` and add a scope statement to `docs/versions/vX.Y.Z/version.md` summarising what the version delivered.
   - [ ] Update `docs/overview/roadmap.md`: Mark version as `✅ Completed` and add a revision entry.
   - [ ] Review and clean `docs/backlog/improvements.md` based on completed work and new findings.
 - [ ] **3.2. Project-Wide Documentation Review**: Execute the following prompts to ensure project-wide documentation is up-to-date with any process changes or learnings from the completed version:
