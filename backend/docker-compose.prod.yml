@@ -31,6 +31,8 @@ services:
     image: pgvector/pgvector:pg17
     container_name: povzetkar-db-prod
     restart: always
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_USER=${DB_USER:?DB_USER must be set}
       - POSTGRES_PASSWORD=${DB_PASS:?DB_PASS must be set}
