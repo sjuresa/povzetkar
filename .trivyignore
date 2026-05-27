@@ -1,2 +1,4 @@
 # Pending Debian fixes for libexpat in Distroless (Debian 13)
 # These will be removed once Google releases updated images.
+CVE-2026-25210
+CVE-2026-45186
