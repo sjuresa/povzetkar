@@ -69,13 +69,13 @@ All version-specific artifacts MUST be isolated in a dedicated directory:
 - **Optional Files:** `ui-ux-manifesto.md`, `i18n-audit.md` (as per Protocol Elasticity).
 
 ### 2.1 Traceability Matrix
-Every User Story in the planning document MUST be mapped to:
+Every User Story in `agent_logs/task.md` MUST be mapped to:
 1.  A **Use Case** (`use_cases.md`).
 2.  A **Test Case** (`test_specification.md`).
 3.  A specific **Task ID** (`POV-XXX`).
 
 ### 2.2 Expert Triad Review
-Mandatory evaluation section in the planning process document covering:
+Mandatory evaluation section in `agent_logs/task.md` (under the plan) covering:
 - **Security Audit**: Port exposures, data masking, and access guards.
 - **i18n Readiness**: Impact on localization files and string management.
 - **Ops Readiness**: Rollback/panic-switch procedures in `RUNBOOK.md`.
@@ -108,7 +108,7 @@ The planning suite MUST pass the automated validator check:
 
 ## 3. Communication Standards
 - **Phased Approach:** 1. Strategic Selection -> 2. Technical Design -> 3. Testing Philosophy.
-- **Discussion Points:** Document "Why we chose B over A" in the planning process doc.
+- **Discussion Points:** Document "Why we chose B over A" in `agent_logs/task.md`.
 - **Expert Triad Review:** Mandatory section for Security and i18n audits.
 
 ---
