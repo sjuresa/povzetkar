@@ -20,7 +20,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 - [ ] **2.0. Brainstorm:** Conduct a scope-alignment interview with the PO **before** writing or finalising `task.md`. Use the following prompt:
 
-    > *"Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer. Ask the questions one at a time. If a question can be answered by exploring the codebase, explore the codebase instead."*
+    > *"Interview me relentlessly about every aspect of this task's scope until we reach a shared understanding. Walk down each branch of the requirements tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer. Ask the questions one at a time. If a question can be answered by exploring the codebase, explore the codebase instead."*
 
     Focus: **WHAT** will be done — scope boundaries, risks, whether the task is correctly defined. Record Brainstorm start and end timestamps in `task.md` under `## Brainstorm`.
 
