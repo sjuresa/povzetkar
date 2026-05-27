@@ -1,6 +1,6 @@
 {
   "docs": {
-    "tasks_glob": "docs/versions/*/*.md",
+    "tasks_glob": "agent_logs/POV-*.md",
     "use_cases": "docs/analysis/use_cases.md",
     "test_spec": "docs/analysis/test_specification.md"
   },
