@@ -78,6 +78,8 @@
     "glob": "^11.0.1",
     "vite-react-ssg": {
       "react-router-dom": "$react-router-dom"
-    }
+    },
+    "https-proxy-agent": "^7.0.6",
+    "agent-base": "^7.1.4"
   }
 }
