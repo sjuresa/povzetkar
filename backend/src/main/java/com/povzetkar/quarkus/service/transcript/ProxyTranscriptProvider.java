@@ -110,6 +110,9 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
         }
         int range = Math.max(1, jitterMaxMs - jitterMinMs);
         int delay = jitterMinMs + ThreadLocalRandom.current().nextInt(range);
+        if (delay <= 0) {
+            return;
+        }
         try {
             Thread.sleep(delay);
         } catch (InterruptedException _) {
