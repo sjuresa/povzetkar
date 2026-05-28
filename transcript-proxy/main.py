@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -25,7 +26,7 @@ _ytt = YouTubeTranscriptApi()
 
 
 def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
-    if x_api_key != API_KEY:
+    if not x_api_key or not secrets.compare_digest(x_api_key, API_KEY):
         raise HTTPException(status_code=401, detail="Invalid or missing API key.")
 
 
