@@ -16,6 +16,12 @@ Scoped: one `TranscriptProvider` adapter + REST client + response records + conf
 - **Provider abstraction held up.** Adding a primary provider required zero changes to the interface or orchestrator — ADR-0009's "future provider becomes primary without code changes" claim is now empirically validated.
 - **Non-200 body reading.** Reading the error body as a raw `String` (decision H1) captures the proxy's `{detail:{reason:...}}` discriminator in logs without typed error records — sufficient because the reason drives no runtime branching this task.
 
+## Skip-first jitter throttle (2.14 in-scope addition)
+
+The original plan moved the 15–45s jitter onto the proxy caller but applied it to *every* call. During execution the PO noted this penalises the manual admin "Fetch Transcript" button, which shares the orchestrator path with batch ingestion. The fix reframes jitter as a *throttle between sequential calls*: `applyJitter()` sleeps only if the prior call was less than `jitterMaxMs` (45s) ago, so the first/isolated call (the manual UI case) is never delayed. This is the semantically correct model — jitter exists to space out *consecutive* requests, and the first request in a sequence has nothing to space against.
+
+Implementation notes for future providers: this lives entirely in `ProxyTranscriptProvider` (one `volatile long` field + a window comparison), with no interface or orchestrator change. If a third provider ever needs the same behaviour, fold it into the shared `JitterDelay` helper already logged in improvements.md. The window deliberately reuses `jitterMaxMs` rather than introducing a new config key.
+
 ## Feed-forward
 
 - **Retry-later is the natural next task.** The `not_available_yet` vs `video_unavailable` distinction is currently *logged only*. A future task should add a "stop chain" signal (for `video_unavailable`) and retry-later orchestration (for `not_available_yet`) — this likely warrants its own ADR, as it changes the `TranscriptProvider`/orchestrator contract.

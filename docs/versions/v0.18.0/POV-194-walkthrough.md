@@ -20,7 +20,9 @@ Wired the POV-193 transcript proxy into the Quarkus backend as a new `Transcript
 
 ## Planned vs. actual scope
 
-Delivered exactly as scoped. Explicitly deferred (unchanged): a "stop chain" interface signal and retry-later orchestration acting on `not_available_yet` — both remain future-task work; the distinction is logged only.
+Delivered as scoped, plus one in-scope addition (checklist 2.14 unplanned discovery): a **skip-first jitter throttle**. The PO observed that the legacy admin "Fetch Transcript" button (`/ui/admin?tab=history`) routes through the same `TranscriptOrchestrator` and so incurred the full 15–45s jitter on a single manual click. Since jitter only has value *between sequential* calls, `applyJitter()` now sleeps only when the previous invocation was less than `jitterMaxMs` (45s) ago; the first or an isolated call skips the delay. This keeps batch orchestration protected while making the manual UI button responsive — with no interface or orchestrator change, no new config (the window reuses `jitterMaxMs`), and no UI-side flag.
+
+Explicitly deferred (unchanged): a "stop chain" interface signal and retry-later orchestration acting on `not_available_yet` — both remain future-task work; the distinction is logged only.
 
 ## Time delta
 
@@ -29,4 +31,5 @@ Delivered exactly as scoped. Explicitly deferred (unchanged): a "stop chain" int
 
 ## Deviations
 
-- None of substance. The only design refinement during execution was confirming via grep that the project uses Jackson defaults (no global `SNAKE_CASE` strategy), validating the planned `@JsonProperty("video_id")` choice rather than changing it.
+- **Skip-first jitter throttle added (2.14).** See "Planned vs. actual scope" above. Implemented as a single `volatile long lastInvocationMs` field + a window check in `applyJitter()`. Concurrent batch + manual click (where a manual click could fall inside the window and incur jitter) was assessed by the PO as a non-issue.
+- The only other refinement was confirming via grep that the project uses Jackson defaults (no global `SNAKE_CASE` strategy), validating the planned `@JsonProperty("video_id")` choice rather than changing it.

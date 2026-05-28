@@ -24,6 +24,10 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
     private final int jitterMinMs;
     private final int jitterMaxMs;
 
+    // Tracks the last fetch time so jitter is applied only between sequential calls (batch),
+    // not for the first or an isolated call (e.g. the manual admin "Fetch Transcript" button).
+    private volatile long lastInvocationMs = 0L;
+
     @Inject
     public ProxyTranscriptProvider(
             @RestClient TranscriptProxyClient proxyClient,
@@ -96,6 +100,12 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
 
     private void applyJitter() {
         if (jitterMinMs <= 0 && jitterMaxMs <= 0) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        boolean inSequence = (lastInvocationMs != 0L) && (now - lastInvocationMs < jitterMaxMs);
+        lastInvocationMs = now;
+        if (!inSequence) {
             return;
         }
         int range = Math.max(1, jitterMaxMs - jitterMinMs);
