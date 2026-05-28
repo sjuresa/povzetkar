@@ -44,7 +44,7 @@ export const TopicsPage: React.FC = () => {
               setEditingTopic(undefined);
               setIsFormOpen(true);
             }}
-            className="inline-flex items-center px-8 py-4 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] rounded-xl md:rounded-[28px] font-bold shadow-xl shadow-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-hover)] hover:scale-[1.03] active:scale-95 transition-all text-lg"
+            className="inline-flex items-center px-8 py-4 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] rounded-xl md:rounded-[28px] text-interactive shadow-xl shadow-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-hover)] hover:scale-[1.03] active:scale-95 transition-all text-lg"
           >
             <Plus className="w-6 h-6 mr-3"  strokeWidth={1.5}/>
             {t('topics.add_topic')}
