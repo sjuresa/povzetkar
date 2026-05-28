@@ -33,7 +33,7 @@ class ProxyTranscriptProviderTest {
 
     @BeforeEach
     void setUp() {
-        provider = new ProxyTranscriptProvider(proxyClient, true, 0, 0, new TimeTextFormatter());
+        provider = new ProxyTranscriptProvider(proxyClient, true, "test-key", 0, 0, new TimeTextFormatter());
     }
 
     @Test
@@ -42,14 +42,14 @@ class ProxyTranscriptProviderTest {
         ProxyTranscriptResponse body = new ProxyTranscriptResponse(
                 "videoId", List.of(new ProxySegment(0.0, "Hello world.")));
 
-        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(proxyClient.getTranscript(anyString(), anyString())).thenReturn(response);
         when(response.getStatus()).thenReturn(200);
         when(response.readEntity(ProxyTranscriptResponse.class)).thenReturn(body);
 
         String result = provider.fetch("videoId");
 
         assertThat(result).contains("Hello world.");
-        verify(proxyClient).getTranscript("videoId");
+        verify(proxyClient).getTranscript("videoId", "test-key");
     }
 
     @Test
@@ -58,7 +58,7 @@ class ProxyTranscriptProviderTest {
         ProxyTranscriptResponse body = new ProxyTranscriptResponse(
                 "videoId", List.of(new ProxySegment(60.0, "Text at one minute.")));
 
-        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(proxyClient.getTranscript(anyString(), anyString())).thenReturn(response);
         when(response.getStatus()).thenReturn(200);
         when(response.readEntity(ProxyTranscriptResponse.class)).thenReturn(body);
 
@@ -72,7 +72,7 @@ class ProxyTranscriptProviderTest {
     void shouldReturnEmptyOnEmptySegments() throws Exception {
         ProxyTranscriptResponse body = new ProxyTranscriptResponse("videoId", List.of());
 
-        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(proxyClient.getTranscript(anyString(), anyString())).thenReturn(response);
         when(response.getStatus()).thenReturn(200);
         when(response.readEntity(ProxyTranscriptResponse.class)).thenReturn(body);
 
@@ -86,7 +86,7 @@ class ProxyTranscriptProviderTest {
     void shouldThrowProviderUnavailableOnNullSegments() {
         ProxyTranscriptResponse body = new ProxyTranscriptResponse("videoId", null);
 
-        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(proxyClient.getTranscript(anyString(), anyString())).thenReturn(response);
         when(response.getStatus()).thenReturn(200);
         when(response.readEntity(ProxyTranscriptResponse.class)).thenReturn(body);
 
@@ -105,7 +105,7 @@ class ProxyTranscriptProviderTest {
     })
     @DisplayName("should throw ProviderUnavailableException on non-200 responses")
     void shouldThrowProviderUnavailableOnNon200(int status, String body) {
-        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(proxyClient.getTranscript(anyString(), anyString())).thenReturn(response);
         when(response.getStatus()).thenReturn(status);
         lenient().when(response.readEntity(String.class)).thenReturn(body);
 
@@ -117,7 +117,7 @@ class ProxyTranscriptProviderTest {
     @Test
     @DisplayName("should throw ProviderUnavailableException on transport failure")
     void shouldThrowProviderUnavailableOnTransportFailure() {
-        when(proxyClient.getTranscript(anyString())).thenThrow(new WebApplicationException(500));
+        when(proxyClient.getTranscript(anyString(), anyString())).thenThrow(new WebApplicationException(500));
 
         assertThatThrownBy(() -> provider.fetch("videoId"))
                 .isInstanceOf(ProviderUnavailableException.class)
@@ -136,9 +136,9 @@ class ProxyTranscriptProviderTest {
     void shouldNotApplyJitterOnFirstCall() throws Exception {
         // Large jitter window; if jitter were applied the call would block for >= jitterMin.
         ProxyTranscriptProvider jitteredProvider =
-                new ProxyTranscriptProvider(proxyClient, true, 30_000, 60_000, new TimeTextFormatter());
+                new ProxyTranscriptProvider(proxyClient, true, "test-key", 30_000, 60_000, new TimeTextFormatter());
         ProxyTranscriptResponse body = new ProxyTranscriptResponse("v", List.of(new ProxySegment(0.0, "Hi.")));
-        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(proxyClient.getTranscript(anyString(), anyString())).thenReturn(response);
         when(response.getStatus()).thenReturn(200);
         when(response.readEntity(ProxyTranscriptResponse.class)).thenReturn(body);
 

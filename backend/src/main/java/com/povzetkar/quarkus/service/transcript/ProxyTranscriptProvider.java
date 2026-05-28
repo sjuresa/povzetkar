@@ -22,6 +22,7 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
     private final TranscriptProxyClient proxyClient;
     private final TimeTextFormatter formatter;
     private final boolean enabled;
+    private final String apiKey;
     private final int jitterMinMs;
     private final int jitterMaxMs;
 
@@ -33,15 +34,17 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
     public ProxyTranscriptProvider(
             @RestClient TranscriptProxyClient proxyClient,
             @ConfigProperty(name = "transcript.providers.proxy.enabled", defaultValue = "true") boolean enabled,
+            @ConfigProperty(name = "transcript.providers.proxy.api-key", defaultValue = "") String apiKey,
             @ConfigProperty(name = "transcript.providers.proxy.jitter.min-ms", defaultValue = "15000") int jitterMinMs,
             @ConfigProperty(name = "transcript.providers.proxy.jitter.max-ms", defaultValue = "45000") int jitterMaxMs) {
-        this(proxyClient, enabled, jitterMinMs, jitterMaxMs, new TimeTextFormatter());
+        this(proxyClient, enabled, apiKey, jitterMinMs, jitterMaxMs, new TimeTextFormatter());
     }
 
-    ProxyTranscriptProvider(TranscriptProxyClient proxyClient, boolean enabled, int jitterMinMs, int jitterMaxMs, TimeTextFormatter formatter) {
+    ProxyTranscriptProvider(TranscriptProxyClient proxyClient, boolean enabled, String apiKey, int jitterMinMs, int jitterMaxMs, TimeTextFormatter formatter) {
         this.proxyClient = proxyClient;
         this.formatter = formatter;
         this.enabled = enabled;
+        this.apiKey = apiKey;
         this.jitterMinMs = jitterMinMs;
         this.jitterMaxMs = jitterMaxMs;
     }
@@ -60,7 +63,7 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
     public String fetch(String videoId) throws ProviderUnavailableException {
         applyJitter();
 
-        try (Response response = proxyClient.getTranscript(videoId)) {
+        try (Response response = proxyClient.getTranscript(videoId, apiKey)) {
             int status = response.getStatus();
             if (status == Response.Status.OK.getStatusCode()) {
                 ProxyTranscriptResponse body = response.readEntity(ProxyTranscriptResponse.class);
