@@ -43,6 +43,34 @@ class RolePermissionsMapTest {
     }
 
     @Test
+    void testDemoRoleHasScopedPermissions() {
+        Set<Permission> demoPermissions = RolePermissionsMap.getPermissionsForRole("demo");
+
+        assertThat(demoPermissions)
+                .isNotNull()
+                .contains(
+                        Permission.TOPIC_VIEW,
+                        Permission.BRIEFING_VIEW,
+                        Permission.CONTENT_ITEM_VIEW,
+                        Permission.SOURCE_VIEW)
+                .doesNotContain(
+                        Permission.TOPIC_CREATE,
+                        Permission.TOPIC_UPDATE,
+                        Permission.TOPIC_DELETE,
+                        Permission.TOPIC_TRIGGER_RUN,
+                        Permission.SOURCE_CREATE,
+                        Permission.SOURCE_UPDATE,
+                        Permission.SOURCE_DELETE,
+                        Permission.BRIEFING_GENERATE,
+                        Permission.ADMIN_DASHBOARD_VIEW,
+                        Permission.ADMIN_SYSTEM_TRIGGER,
+                        Permission.ADMIN_JOB_UPDATE,
+                        Permission.ADMIN_AUDIT_LOG_VIEW,
+                        Permission.USER_MGMT_VIEW,
+                        Permission.USER_MGMT_UPDATE);
+    }
+
+    @Test
     void testCaseInsensitivity() {
         Set<Permission> adminUpper = RolePermissionsMap.getPermissionsForRole("ADMIN");
         Set<Permission> userMixed = RolePermissionsMap.getPermissionsForRole("uSeR");

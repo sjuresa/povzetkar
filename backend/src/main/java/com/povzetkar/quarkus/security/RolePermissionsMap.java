@@ -33,7 +33,8 @@ public class RolePermissionsMap {
     private static final Set<Permission> DEMO_PERMISSIONS = EnumSet.of(
             Permission.TOPIC_VIEW,
             Permission.BRIEFING_VIEW,
-            Permission.CONTENT_ITEM_VIEW);
+            Permission.CONTENT_ITEM_VIEW,
+            Permission.SOURCE_VIEW);
 
     private static final Map<String, Set<Permission>> ROLE_PERMISSIONS = Map.of(
             Permission.ROLE_ADMIN, ADMIN_PERMISSIONS,

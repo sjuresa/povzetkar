@@ -11,3 +11,4 @@
 | Task | Walkthrough | Retrospective |
 | --- | --- | --- |
 | POV-191 — Development Process Evolution: Task-First Planning | [walkthrough](POV-191-walkthrough.md) | [retrospective](POV-191-retrospective.md) |
+| POV-192 — Fix Demo User Access | [walkthrough](POV-192-walkthrough.md) | [retrospective](POV-192-retrospective.md) |

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- (POV-192) Demo users (pending approval) no longer crash on Briefing Hub or Sources pages — added `SOURCE_VIEW` to `DEMO_PERMISSIONS` so the source filter API call succeeds.
+- (POV-192) Topics page hides Edit, Delete, Run Now, and Add Topic controls for demo users to prevent confusing 403 failures on mutation actions.
+- (POV-192) Demo topic "Science & Discovery" was incorrectly seeded as inactive — migration V35 corrects it to enabled.
+
 ## [0.17.0] - 2026-05-24
 
 ### Summary
