@@ -24,6 +24,11 @@ dist/
 dist-ssr/
 *.local
 
+# Python (transcript-proxy)
+.venv/
+__pycache__/
+*.pyc
+
 # Logs
 logs/
 *.log
