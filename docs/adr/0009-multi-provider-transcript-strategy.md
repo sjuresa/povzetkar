@@ -90,6 +90,8 @@ All transcript classes live in `com.povzetkar.quarkus.service.transcript`:
 
 Adding ytscribe or transcriptapi reduces to: implement a `TranscriptProvider` adapter, append to `transcript.providers.order`. No abstraction change required. The provider order is runtime-configurable — Supadata or a future provider can become the primary without code changes.
 
+> **Update (v0.18.0 / POV-194):** A third provider, `ProxyTranscriptProvider` (`name()="proxy"`), was added against the POV-193 transcript proxy and made the **primary** source (`transcript.providers.order=proxy,youtube-legacy,supadata`) — validating the above with zero interface or orchestrator changes. It applies its own caller-side 15–45s jitter (the proxy scrapes YouTube from a single shared IP). Note: it has no quota concept, so it never throws `QuotaExhaustedException`.
+
 ## Consequences
 
 **Positive:**
