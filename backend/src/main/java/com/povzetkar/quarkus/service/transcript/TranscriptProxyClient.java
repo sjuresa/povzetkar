@@ -8,7 +8,7 @@ import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 @RegisterRestClient(configKey = "transcript-proxy")
-@ClientHeaderParam(name = "X-API-Key", value = "${TRANSCRIPT_PROXY_API_KEY:}")
+@ClientHeaderParam(name = "X-API-Key", value = "${transcript.providers.proxy.api-key}")
 @Path("/transcripts")
 public interface TranscriptProxyClient {
 
