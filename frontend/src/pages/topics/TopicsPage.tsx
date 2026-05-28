@@ -4,9 +4,12 @@ import { TopicForm } from './TopicForm';
 import type { Topic } from '../../api/generated/model';
 import { Plus, X, Search, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../../store/authStore';
 
 export const TopicsPage: React.FC = () => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const readonly = !(user?.permissions?.includes('TOPIC_CREATE') ?? false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState<Topic | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,16 +38,18 @@ export const TopicsPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingTopic(undefined);
-            setIsFormOpen(true);
-          }}
-          className="inline-flex items-center px-8 py-4 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] rounded-xl md:rounded-[28px] font-bold shadow-xl shadow-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-hover)] hover:scale-[1.03] active:scale-95 transition-all text-lg"
-        >
-          <Plus className="w-6 h-6 mr-3"  strokeWidth={1.5}/>
-          {t('topics.add_topic')}
-        </button>
+        {!readonly && (
+          <button
+            onClick={() => {
+              setEditingTopic(undefined);
+              setIsFormOpen(true);
+            }}
+            className="inline-flex items-center px-8 py-4 bg-[var(--color-action-primary)] text-[var(--color-action-primary-text)] rounded-xl md:rounded-[28px] font-bold shadow-xl shadow-[var(--color-action-primary)]/20 hover:bg-[var(--color-action-hover)] hover:scale-[1.03] active:scale-95 transition-all text-lg"
+          >
+            <Plus className="w-6 h-6 mr-3"  strokeWidth={1.5}/>
+            {t('topics.add_topic')}
+          </button>
+        )}
       </div>
 
       {/* Modern Filter bar */}
@@ -76,10 +81,11 @@ export const TopicsPage: React.FC = () => {
 
       <div className="relative">
         <div className="absolute -inset-8 bg-gradient-to-r from-[var(--color-action-primary)]/5 to-transparent blur-3xl rounded-[40px] pointer-events-none -z-10" />
-        <TopicList 
-          onEdit={handleEdit} 
-          searchQuery={searchQuery} 
+        <TopicList
+          onEdit={handleEdit}
+          searchQuery={searchQuery}
           showActiveOnly={showActiveOnly}
+          readonly={readonly}
         />
       </div>
 

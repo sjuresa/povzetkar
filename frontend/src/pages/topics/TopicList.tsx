@@ -20,12 +20,14 @@ interface TopicListProps {
   onEdit?: (topic: Topic) => void;
   searchQuery?: string;
   showActiveOnly?: boolean;
+  readonly?: boolean;
 }
 
-export const TopicList: React.FC<TopicListProps> = ({ 
-  onEdit, 
-  searchQuery = '', 
-  showActiveOnly = false 
+export const TopicList: React.FC<TopicListProps> = ({
+  onEdit,
+  searchQuery = '',
+  showActiveOnly = false,
+  readonly = false,
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -124,30 +126,32 @@ export const TopicList: React.FC<TopicListProps> = ({
             <div className={`p-4 rounded-xl transition-colors duration-300 border border-[var(--color-border-primary)] ${topic.enabled ? 'bg-[var(--color-bg-primary)] text-[var(--color-action-primary)]' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]'}`}>
               <Settings className="w-6 h-6"  strokeWidth={1.5}/>
             </div>
-            <div className="flex items-center space-x-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-all duration-300 justify-end shrink-0">
-              <button 
-                onClick={() => { handleRun(topic); }}
-                className="p-2.5 hover:bg-[var(--color-action-primary)] hover:text-[var(--color-action-primary-text)] text-[var(--color-action-primary)] rounded-xl transition-all active:scale-95"
-                title={t('topics.list.run_now')}
-              >
-                <Play className="w-5 h-5 fill-current"  strokeWidth={1.5}/>
-              </button>
-              <button 
-                onClick={() => { onEdit?.(topic); }}
-                className="p-2.5 hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] rounded-xl transition-all active:scale-95"
-                title={t('common.edit')}
-              >
-                <Edit2 className="w-5 h-5"  strokeWidth={1.5}/>
-              </button>
-              <button 
-                data-testid="delete-topic-button"
-                onClick={() => { void handleDelete(topic); }}
-                className="p-2.5 hover:bg-[var(--color-status-error)] hover:text-[var(--color-action-primary-text)] text-[var(--color-status-error)] rounded-xl transition-all active:scale-95"
-                title={t('common.delete')}
-              >
-                <Trash2 className="w-5 h-5"  strokeWidth={1.5}/>
-              </button>
-            </div>
+            {!readonly && (
+              <div className="flex items-center space-x-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-all duration-300 justify-end shrink-0">
+                <button
+                  onClick={() => { handleRun(topic); }}
+                  className="p-2.5 hover:bg-[var(--color-action-primary)] hover:text-[var(--color-action-primary-text)] text-[var(--color-action-primary)] rounded-xl transition-all active:scale-95"
+                  title={t('topics.list.run_now')}
+                >
+                  <Play className="w-5 h-5 fill-current"  strokeWidth={1.5}/>
+                </button>
+                <button
+                  onClick={() => { onEdit?.(topic); }}
+                  className="p-2.5 hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] rounded-xl transition-all active:scale-95"
+                  title={t('common.edit')}
+                >
+                  <Edit2 className="w-5 h-5"  strokeWidth={1.5}/>
+                </button>
+                <button
+                  data-testid="delete-topic-button"
+                  onClick={() => { void handleDelete(topic); }}
+                  className="p-2.5 hover:bg-[var(--color-status-error)] hover:text-[var(--color-action-primary-text)] text-[var(--color-status-error)] rounded-xl transition-all active:scale-95"
+                  title={t('common.delete')}
+                >
+                  <Trash2 className="w-5 h-5"  strokeWidth={1.5}/>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mb-8">
