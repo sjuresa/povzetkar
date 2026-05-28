@@ -64,8 +64,8 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
             int status = response.getStatus();
             if (status == Response.Status.OK.getStatusCode()) {
                 ProxyTranscriptResponse body = response.readEntity(ProxyTranscriptResponse.class);
-                if (body == null) {
-                    throw new ProviderUnavailableException(PROVIDER_NAME, "Empty response body on 200 OK");
+                if (body == null || body.segments() == null) {
+                    throw new ProviderUnavailableException(PROVIDER_NAME, "Malformed 200 OK response: missing body or segments");
                 }
                 return formatSegments(body.segments());
             }

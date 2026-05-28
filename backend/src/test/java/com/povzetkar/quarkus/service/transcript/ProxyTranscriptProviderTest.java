@@ -81,6 +81,20 @@ class ProxyTranscriptProviderTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    @DisplayName("should throw ProviderUnavailableException when 200 response has null segments")
+    void shouldThrowProviderUnavailableOnNullSegments() {
+        ProxyTranscriptResponse body = new ProxyTranscriptResponse("videoId", null);
+
+        when(proxyClient.getTranscript(anyString())).thenReturn(response);
+        when(response.getStatus()).thenReturn(200);
+        when(response.readEntity(ProxyTranscriptResponse.class)).thenReturn(body);
+
+        assertThatThrownBy(() -> provider.fetch("videoId"))
+                .isInstanceOf(ProviderUnavailableException.class)
+                .hasMessageContaining("proxy");
+    }
+
     @ParameterizedTest(name = "HTTP {0} body {1}")
     @CsvSource({
             "404, '{\"detail\":{\"reason\":\"video_unavailable\"}}'",
