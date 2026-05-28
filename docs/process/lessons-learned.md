@@ -6,6 +6,16 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.18.0)
+
+> [!WARNING]
+> **Verify third-party library API surface before pinning versions in a plan (POV-193)**:
+> The approved plan pinned `youtube-transcript-api==0.6.3` (nonexistent — last 0.6.x is 0.6.2) with static method signatures that the maintained 1.x line had since replaced with instance methods. Caught only at install time. For external libraries, install + introspect during the planning interview — the "Know The API" principle applies to PyPI/npm deps, not just internal code. Also: this library requires Python `<3.14`; the machine's default 3.14 failed, needing a 3.13 venv.
+
+> [!TIP]
+> **Don't use HTTP 425 Too Early for domain "not ready yet" states (POV-193)**:
+> 425 carries TLS 1.3 early-data/replay semantics — some clients/proxies auto-retry it *immediately*, the opposite of a "retry much later" intent. Prefer a transport-level code (404) plus a domain `reason` field in the body (`not_available_yet` vs `video_unavailable`). Keeps HTTP codes transport-level and domain state in the payload.
+
 ## 🚀 Recent Highlights (v0.17.0)
 
 > [!WARNING]

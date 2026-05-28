@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- (POV-193) **Transcript proxy service** (`transcript-proxy/`): a standalone, stateless FastAPI service that fetches a single YouTube transcript per request, deployable on a host whose IP is not blocked by YouTube (the OCI production range is). `GET /transcripts/{video_id}` with `X-API-Key` auth returns timestamped segments; 404 distinguishes `not_available_yet` (retry) from `video_unavailable` (permanent), 502 signals the proxy cannot reach YouTube. Quarkus integration is deferred to a follow-up task.
+
 ### Fixed
 
 - (POV-192) Demo users (pending approval) no longer crash on Briefing Hub or Sources pages — added `SOURCE_VIEW` to `DEMO_PERMISSIONS` so the source filter API call succeeds.
