@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 @ApplicationScoped
 public class ProxyTranscriptProvider implements TranscriptProvider {
@@ -26,7 +27,7 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
 
     // Tracks the last fetch time so jitter is applied only between sequential calls (batch),
     // not for the first or an isolated call (e.g. the manual admin "Fetch Transcript" button).
-    private volatile long lastInvocationMs = 0L;
+    private final AtomicLong lastInvocationMs = new AtomicLong(0L);
 
     @Inject
     public ProxyTranscriptProvider(
@@ -103,8 +104,8 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
             return;
         }
         long now = System.currentTimeMillis();
-        boolean inSequence = (lastInvocationMs != 0L) && (now - lastInvocationMs < jitterMaxMs);
-        lastInvocationMs = now;
+        long last = lastInvocationMs.getAndSet(now);
+        boolean inSequence = (last != 0L) && (now - last < jitterMaxMs);
         if (!inSequence) {
             return;
         }
