@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (POV-195) **GenAI daily usage count now reflects real RPD consumption**: the admin "Daily Usage Count" counts *every* request sent to Gemini (success and all failures), matching how Google's daily request limit (RPD) is metered — previously only successful calls were counted, understating actual usage. All API failures (`429`, `503`, other) are now recorded in a new "Errors" column on the admin GenAI usage table.
 - (POV-195) **Removed the redundant `countTokens` call**: each summary previously issued a separate `countTokens` request whose result was only logged; dropping it halves the per-summary RPD cost with no functional change.
+- (POV-195) **Disabled the Google GenAI SDK's built-in retry** (`HttpRetryOptions.attempts(1)` in `GenAiPool`). The SDK's `RetryInterceptor` defaults to 5 attempts on `408/429/500/502/503/504`, so a single logical `generateContent` call was hitting Google up to 5× and inflating real RPD ~4–5× beyond what we counted (post-merge production observation: api1 5 vs Google 21; api2 4 vs 19). Each logical call now equals exactly one HTTP request, matching the admin "Daily Usage Count". The project's own circuit breaker on consecutive 503s remains the single retry/backoff authority — the SDK and our breaker were previously competing.
 
 ### Fixed
 

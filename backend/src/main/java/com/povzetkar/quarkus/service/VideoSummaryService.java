@@ -137,6 +137,8 @@ public class VideoSummaryService {
                     "client", client.getName()
                 );
             }
+            // SDK-side retry is disabled in GenAiPool (attempts(1)); this breaker is the
+            // single retry/backoff authority for transient 503s.
             if (e.code() == 503) {
                 int failures = client.incrementAndGetFailures();
                 if (failures >= circuitBreakerThreshold) {
