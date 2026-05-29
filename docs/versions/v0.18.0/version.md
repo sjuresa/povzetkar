@@ -14,3 +14,4 @@
 | POV-192 — Fix Demo User Access | [walkthrough](POV-192-walkthrough.md) | [retrospective](POV-192-retrospective.md) |
 | POV-193 — Transcript Proxy Service | [walkthrough](POV-193-walkthrough.md) | [retrospective](POV-193-retrospective.md) |
 | POV-194 — ProxyTranscriptProvider (Quarkus integration) | [walkthrough](POV-194-walkthrough.md) | [retrospective](POV-194-retrospective.md) |
+| POV-195 — RPD-accurate GenAI counting & remove countTokens | [walkthrough](POV-195-walkthrough.md) | [retrospective](POV-195-retrospective.md) |

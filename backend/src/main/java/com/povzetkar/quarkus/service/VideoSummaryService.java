@@ -14,8 +14,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Collections;
-
 @ApplicationScoped
 public class VideoSummaryService {
     private static final StructuredLogger logger = StructuredLogger.getLogger(VideoSummaryService.class);
@@ -108,19 +106,13 @@ public class VideoSummaryService {
         );
 
         try {
-            long tokenCount = client.getModels().countTokens(flashModelName, Collections.singletonList(content), null).totalTokens().orElse(0);
-            logger.info(
-                LogKeys.ACTION, LogKeys.COUNT_TOKENS,
-                LogKeys.COUNT, tokenCount,
-                LogKeys.DESCRIPTION, description,
-                LogKeys.VIDEO_ID, videoId,
-                LogKeys.VIDEO_TITLE, videoTitle
-            );
-            
-            GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
-            
-            // Success: increment usage and reset failures
+            // Count every request against the daily limit (RPD) before it is sent, since
+            // Google counts every request regardless of outcome.
             apiKeyUsageService.incrementUsage(client.getName());
+
+            GenerateContentResponse response = client.getModels().generateContent(flashModelName, content, null);
+
+            // Success: reset the consecutive-failure counter feeding the circuit breaker.
             client.resetFailures();
 
             logApiCallDuration(startTime, description, videoTitle, videoId);
@@ -134,8 +126,18 @@ public class VideoSummaryService {
 
             return cleanAiResponse(rawText);
         } catch (ApiException e) {
-            if (e.code() == 503) {
+            // Record every API failure (429, 503, other) as a diagnostic error count.
+            // Best-effort: a DB failure here must not mask the original ApiException, which
+            // the circuit breaker and callers rely on to drive fallback/retry.
+            try {
                 apiKeyUsageService.incrementErrorCount(client.getName());
+            } catch (Exception ex) {
+                logger.error(ex,
+                    LogKeys.ACTION, "increment_error_count_failed",
+                    "client", client.getName()
+                );
+            }
+            if (e.code() == 503) {
                 int failures = client.incrementAndGetFailures();
                 if (failures >= circuitBreakerThreshold) {
                     logger.error(e,

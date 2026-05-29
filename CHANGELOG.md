@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (POV-193) **Transcript proxy service** (`transcript-proxy/`): a standalone, stateless FastAPI service that fetches a single YouTube transcript per request, deployable on a host whose IP is not blocked by YouTube (the OCI production range is). `GET /transcripts/{video_id}` with `X-API-Key` auth returns timestamped segments; 404 distinguishes `not_available_yet` (retry) from `video_unavailable` (permanent), 502 signals the proxy cannot reach YouTube. Quarkus integration is deferred to a follow-up task.
 - (POV-194) **`ProxyTranscriptProvider`**: Quarkus integration of the POV-193 transcript proxy as a new `TranscriptProvider`, now the **primary** transcript source ahead of `youtube-legacy` and `supadata`. Calls the proxy via a MicroProfile REST client (`X-API-Key`), maps `200` segments (`start` in seconds) through `TimeTextFormatter`, and falls through the provider chain on `404`/`502`/`401` (the `not_available_yet` vs `video_unavailable` distinction is logged for future retry-later handling). Applies a caller-side 15–45s jitter, throttled to *sequential* calls only — the first/isolated call (e.g. the manual admin "Fetch Transcript" button) is not delayed, while batch orchestration still gets jitter between videos. Config: `transcript.providers.proxy.*` flags + `TRANSCRIPT_PROXY_URL` / `TRANSCRIPT_PROXY_API_KEY` env vars.
 
+### Changed
+
+- (POV-195) **GenAI daily usage count now reflects real RPD consumption**: the admin "Daily Usage Count" counts *every* request sent to Gemini (success and all failures), matching how Google's daily request limit (RPD) is metered — previously only successful calls were counted, understating actual usage. All API failures (`429`, `503`, other) are now recorded in a new "Errors" column on the admin GenAI usage table.
+- (POV-195) **Removed the redundant `countTokens` call**: each summary previously issued a separate `countTokens` request whose result was only logged; dropping it halves the per-summary RPD cost with no functional change.
+
 ### Fixed
 
 - (POV-192) Demo users (pending approval) no longer crash on Briefing Hub or Sources pages — added `SOURCE_VIEW` to `DEMO_PERMISSIONS` so the source filter API call succeeds.

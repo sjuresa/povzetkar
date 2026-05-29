@@ -3,7 +3,6 @@ package com.povzetkar.quarkus.service;
 import com.google.genai.Models;
 import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
-import com.google.genai.types.CountTokensResponse;
 import com.google.genai.types.GenerateContentResponse;
 import com.povzetkar.quarkus.ai.GenAiClient;
 import com.povzetkar.quarkus.ai.GenAiPool;
@@ -19,12 +18,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.anyList;
 
 @QuarkusTest
 class VideoSummaryServiceTest {
@@ -41,20 +37,16 @@ class VideoSummaryServiceTest {
     GenAiClient mockGenAiClient;
     Models mockModels;
     GenerateContentResponse mockResponse;
-    CountTokensResponse mockCountTokensResponse;
 
     @BeforeEach
     void setUp() {
         mockGenAiClient = Mockito.mock(GenAiClient.class);
         mockModels = Mockito.mock(Models.class);
         mockResponse = Mockito.mock(GenerateContentResponse.class);
-        mockCountTokensResponse = Mockito.mock(CountTokensResponse.class);
 
         when(mockGenAiPool.getGenAiClient()).thenReturn(mockGenAiClient);
         when(mockGenAiClient.getModels()).thenReturn(mockModels);
         when(mockGenAiClient.getName()).thenReturn("test-key");
-        when(mockModels.countTokens(anyString(), anyList(), eq(null))).thenReturn(mockCountTokensResponse);
-        when(mockCountTokensResponse.totalTokens()).thenReturn(Optional.of(100));
     }
 
     @Test
@@ -95,7 +87,7 @@ class VideoSummaryServiceTest {
         videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName, customTemplate);
 
         // Map the Content parts to text
-        String capturedPrompt = contentCaptor.getValue().parts().get().get(0).text().get();
+        String capturedPrompt = contentCaptor.getValue().parts().get().getFirst().text().get();
         assertTrue(capturedPrompt.contains("CUSTOM PROMPT: AI on 2025-07-17 for Summary 1"));
     }
 
@@ -114,7 +106,7 @@ class VideoSummaryServiceTest {
 
         videoSummaryService.createBriefingFromSummaries(mockGenAiClient, rawSummaries, date, topicName, variableTemplate);
 
-        String capturedPrompt = contentCaptor.getValue().parts().get().get(0).text().get();
+        String capturedPrompt = contentCaptor.getValue().parts().get().getFirst().text().get();
         assertEquals("Briefing for AI on 2025-07-17. Content: Summary 1\n---\nSummary 2", capturedPrompt);
     }
 
@@ -152,8 +144,10 @@ class VideoSummaryServiceTest {
         assertEquals(rateLimitException, thrown);
         // Verify it was only called once
         verify(mockModels, times(1)).generateContent(anyString(), any(Content.class), eq(null));
-        verify(mockApiKeyUsageService, never()).incrementUsage(anyString());
-        verify(mockApiKeyUsageService, never()).incrementErrorCount(anyString());
+        // RPD-accurate counting: every request counts against the daily limit, and every
+        // ApiException failure (including 429) is also recorded as an error.
+        verify(mockApiKeyUsageService).incrementUsage("test-key");
+        verify(mockApiKeyUsageService).incrementErrorCount("test-key");
     }
 
     @Test
@@ -168,6 +162,7 @@ class VideoSummaryServiceTest {
         assertThrows(CircuitBreakerOpenException.class, () ->
                 videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null));
 
+        verify(mockApiKeyUsageService).incrementUsage("test-key");
         verify(mockApiKeyUsageService).incrementErrorCount("test-key");
         verify(mockGenAiClient).incrementAndGetFailures();
     }
@@ -186,6 +181,7 @@ class VideoSummaryServiceTest {
                 videoSummaryService.generateContent(mockGenAiClient, mock(Content.class), "test call", null, null));
 
         assertEquals(serviceUnavailableException, thrown);
+        verify(mockApiKeyUsageService).incrementUsage("test-key");
         verify(mockApiKeyUsageService).incrementErrorCount("test-key");
         verify(mockGenAiClient).incrementAndGetFailures();
     }
