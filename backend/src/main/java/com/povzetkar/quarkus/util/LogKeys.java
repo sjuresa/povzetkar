@@ -23,8 +23,7 @@ public final class LogKeys {
     public static final String DURATION = "duration";
     public static final String URL = "url";
     public static final String SOURCE = "source";
-    public static final String COUNT = "count";
-    
+
     // --- Orchestration Keys ---
     public static final String TRIGGER = "trigger";
     public static final String DATE = "date";
@@ -44,7 +43,6 @@ public final class LogKeys {
     public static final String GENERATE_CONTENT = "generateContent";
     public static final String GENERATE_SUMMARY = "generateSummary";
     public static final String PERSIST_SUMMARY = "persistSummary";
-    public static final String COUNT_TOKENS = "countTokens";
     public static final String CREATE_CONTENT = "createContent";
     public static final String GET_TRANSCRIPT = "getTranscript";
     public static final String ORCHESTRATION_SCHEDULED = "orchestrationScheduled";
