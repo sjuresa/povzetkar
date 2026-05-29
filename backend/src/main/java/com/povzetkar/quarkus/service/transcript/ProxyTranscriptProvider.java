@@ -2,6 +2,7 @@ package com.povzetkar.quarkus.service.transcript;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -18,6 +19,7 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyTranscriptProvider.class);
     private static final String PROVIDER_NAME = "proxy";
+    private static final int MAX_LOGGED_BODY_CHARS = 1000;
 
     private final TranscriptProxyClient proxyClient;
     private final TimeTextFormatter formatter;
@@ -77,6 +79,17 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
             throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
         } catch (ProviderUnavailableException e) {
             throw e;
+        } catch (WebApplicationException e) {
+            // Quarkus REST Client throws WebApplicationException for non-2xx by default,
+            // so read the status + body (detail.reason) here for observability.
+            int status;
+            String detail;
+            try (Response r = e.getResponse()) {
+                status = (r != null) ? r.getStatus() : 500;
+                detail = (r != null) ? readBodySafely(r) : "<no response>";
+            }
+            log.warn("Proxy returned HTTP {} for video ID '{}': {}", status, videoId, detail);
+            throw new ProviderUnavailableException(PROVIDER_NAME, "HTTP " + status);
         } catch (Exception e) {
             log.warn("Proxy call failed for video ID '{}'.", videoId, e);
             throw new ProviderUnavailableException(PROVIDER_NAME, e);
@@ -96,7 +109,13 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
     private String readBodySafely(Response response) {
         try {
             String body = response.readEntity(String.class);
-            return (body != null) ? body : "<no body>";
+            if (body == null) {
+                return "<no body>";
+            }
+            // Non-2xx responses from reverse proxies can carry large HTML error pages; cap to avoid log flooding.
+            return (body.length() > MAX_LOGGED_BODY_CHARS)
+                    ? body.substring(0, MAX_LOGGED_BODY_CHARS) + "... (truncated)"
+                    : body;
         } catch (Exception _) {
             return "<unreadable body>";
         }
