@@ -125,6 +125,23 @@ class ProxyTranscriptProviderTest {
     }
 
     @Test
+    @DisplayName("should throw ProviderUnavailableException when client throws WebApplicationException with a 502 response")
+    void shouldThrowProviderUnavailableOnWebApplicationExceptionWithResponse() {
+        // Quarkus REST Client throws WebApplicationException for non-2xx by default.
+        // Use a real Response (not a mock) so the exception constructor and the adapter's
+        // getResponse()/readEntity() both behave like the runtime.
+        Response realResponse = Response.status(502)
+                .entity("{\"detail\":{\"reason\":\"proxy_blocked\"}}")
+                .build();
+        when(proxyClient.getTranscript(anyString(), anyString()))
+                .thenThrow(new WebApplicationException(realResponse));
+
+        assertThatThrownBy(() -> provider.fetch("videoId"))
+                .isInstanceOf(ProviderUnavailableException.class)
+                .hasMessageContaining("proxy");
+    }
+
+    @Test
     @DisplayName("should report correct name and enabled state")
     void shouldReportNameAndEnabled() {
         assertThat(provider.name()).isEqualTo("proxy");
