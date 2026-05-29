@@ -66,7 +66,10 @@ public class ApiKeyUsageService {
         }
     }
 
-    @Transactional
+    // REQUIRES_NEW so usage/error counts commit in their own transaction, independent of
+    // any caller transaction — a GenAI API failure rolling back the caller must not also
+    // roll back the RPD count of the request that was already sent.
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     void updateOrCreateUsageTransactional(String apiKeyName, CounterType counterType) {
         LocalDate today = LocalDate.now(clock);
         String columnToIncrement = (counterType == CounterType.USAGE) ? "usageCount" : "errorCount";
