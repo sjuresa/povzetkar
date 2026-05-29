@@ -127,7 +127,16 @@ public class VideoSummaryService {
             return cleanAiResponse(rawText);
         } catch (ApiException e) {
             // Record every API failure (429, 503, other) as a diagnostic error count.
-            apiKeyUsageService.incrementErrorCount(client.getName());
+            // Best-effort: a DB failure here must not mask the original ApiException, which
+            // the circuit breaker and callers rely on to drive fallback/retry.
+            try {
+                apiKeyUsageService.incrementErrorCount(client.getName());
+            } catch (Exception ex) {
+                logger.error(ex,
+                    LogKeys.ACTION, "increment_error_count_failed",
+                    "client", client.getName()
+                );
+            }
             if (e.code() == 503) {
                 int failures = client.incrementAndGetFailures();
                 if (failures >= circuitBreakerThreshold) {

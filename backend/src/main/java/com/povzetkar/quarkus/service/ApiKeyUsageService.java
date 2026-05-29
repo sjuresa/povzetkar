@@ -1,11 +1,11 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ApiKeyUsage;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
-import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -66,28 +66,32 @@ public class ApiKeyUsageService {
         }
     }
 
-    // REQUIRES_NEW so usage/error counts commit in their own transaction, independent of
-    // any caller transaction — a GenAI API failure rolling back the caller must not also
-    // roll back the RPD count of the request that was already sent.
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    // Programmatic REQUIRES_NEW (not the @Transactional annotation) because this method is
+    // reached only via same-class self-invocation from updateOrCreateUsage, which bypasses
+    // the CDI interceptor — an annotation would be silently ignored. Committing in its own
+    // transaction keeps the usage/error count independent of any caller transaction: a GenAI
+    // API failure rolling back the caller must not roll back the RPD count of the request
+    // that was already sent. Mirrors the AuditLogFilter best-effort-audit pattern.
     void updateOrCreateUsageTransactional(String apiKeyName, CounterType counterType) {
-        LocalDate today = LocalDate.now(clock);
-        String columnToIncrement = (counterType == CounterType.USAGE) ? "usageCount" : "errorCount";
-        String updateQuery = "UPDATE ApiKeyUsage SET " + columnToIncrement + " = " + columnToIncrement + " + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate";
+        QuarkusTransaction.requiringNew().run(() -> {
+            LocalDate today = LocalDate.now(clock);
+            String columnToIncrement = (counterType == CounterType.USAGE) ? "usageCount" : "errorCount";
+            String updateQuery = "UPDATE ApiKeyUsage SET " + columnToIncrement + " = " + columnToIncrement + " + 1 WHERE apiKeyName = :apiKeyName AND usageDate = :usageDate";
 
-        long initialUsage = (counterType == CounterType.USAGE) ? 1 : 0;
-        long initialError = (counterType == CounterType.ERROR) ? 1 : 0;
+            long initialUsage = (counterType == CounterType.USAGE) ? 1 : 0;
+            long initialError = (counterType == CounterType.ERROR) ? 1 : 0;
 
-        int updatedCount = entityManager.createQuery(updateQuery)
-                .setParameter("apiKeyName", apiKeyName)
-                .setParameter("usageDate", today)
-                .executeUpdate();
+            int updatedCount = entityManager.createQuery(updateQuery)
+                    .setParameter("apiKeyName", apiKeyName)
+                    .setParameter("usageDate", today)
+                    .executeUpdate();
 
-        if (updatedCount == 0) {
-            ApiKeyUsage newUsage = new ApiKeyUsage(apiKeyName, today, initialUsage, initialError);
-            entityManager.persist(newUsage);
-        }
-        entityManager.flush();
+            if (updatedCount == 0) {
+                ApiKeyUsage newUsage = new ApiKeyUsage(apiKeyName, today, initialUsage, initialError);
+                entityManager.persist(newUsage);
+            }
+            entityManager.flush();
+        });
     }
 
     public List<ApiKeyUsage> getUsageForToday() {
