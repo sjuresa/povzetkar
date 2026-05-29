@@ -138,7 +138,8 @@ class ProxyTranscriptProviderTest {
 
         assertThatThrownBy(() -> provider.fetch("videoId"))
                 .isInstanceOf(ProviderUnavailableException.class)
-                .hasMessageContaining("proxy");
+                .hasMessageContaining("proxy")
+                .hasMessageContaining("HTTP 502");
     }
 
     @Test

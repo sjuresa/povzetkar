@@ -84,7 +84,7 @@ public class ProxyTranscriptProvider implements TranscriptProvider {
             int status;
             String detail;
             try (Response r = e.getResponse()) {
-                status = (r != null) ? r.getStatus() : -1;
+                status = (r != null) ? r.getStatus() : 500;
                 detail = (r != null) ? readBodySafely(r) : "<no response>";
             }
             log.warn("Proxy returned HTTP {} for video ID '{}': {}", status, videoId, detail);
