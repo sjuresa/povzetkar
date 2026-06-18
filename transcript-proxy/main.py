@@ -76,6 +76,16 @@ def get_transcript(video_id: str) -> dict:
             video_id, type(exc).__name__,
         )
         raise HTTPException(status_code=502, detail={"reason": "upstream_error"}) from exc
+    except Exception as exc:
+        # Anything not raised by youtube-transcript-api (e.g. a raw requests timeout,
+        # connection error, or a parse error from an unexpected YouTube response) would
+        # otherwise surface as a 500. The contract promises 502 upstream_error for any
+        # other failure reaching YouTube, so map it here and log the exact class.
+        logger.exception(
+            "video_id=%s unexpected failure: %s -> 502 upstream_error",
+            video_id, type(exc).__name__,
+        )
+        raise HTTPException(status_code=502, detail={"reason": "upstream_error"}) from exc
 
     logger.info("video_id=%s transcript fetched: %d segments -> 200", video_id, len(fetched))
     segments = [{"start": snippet.start, "text": snippet.text} for snippet in fetched]
