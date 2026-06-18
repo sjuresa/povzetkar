@@ -801,6 +801,11 @@ the active proxy is down — flip-back is for restoring the *primary* path.
   `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`. The proxy is started once
   at boot; there is **no crash-restart supervision yet** (backlog) — if uvicorn dies mid-run it
   stays down until reboot, so monitor and flip to Railway if needed.
+- **Updating the code on the box:** copy the repo file over with
+  `scp -O transcript-proxy/main.py minimax@<host>:/volume1/transcript-proxy/main.py`, then
+  restart (stop the running uvicorn and re-run `run-proxy.sh`, or run the boot task). The `-O`
+  flag is required — DSM's SSH has no SFTP subsystem, so a plain `scp` fails with
+  `subsystem request failed on channel 0`.
 
 **Health check & per-request diagnostics:** `GET /health` (no auth) returns `{"status":"ok"}`.
 Every transcript request logs its outcome to `proxy.log` with the exact cause, e.g.
