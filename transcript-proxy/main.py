@@ -23,11 +23,14 @@ if not API_KEY:
 
 LANGUAGES = ["en"]
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-)
+# Configure the named logger directly rather than logging.basicConfig(), which would mutate
+# the root logger and can interfere with / duplicate Uvicorn's own logging.
 logger = logging.getLogger("transcript_proxy")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s"))
+    logger.addHandler(_handler)
 
 app = FastAPI(title="Transcript Proxy", version="1.0.0")
 _ytt = YouTubeTranscriptApi()
