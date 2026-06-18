@@ -15,3 +15,4 @@
 | POV-193 — Transcript Proxy Service | [walkthrough](POV-193-walkthrough.md) | [retrospective](POV-193-retrospective.md) |
 | POV-194 — ProxyTranscriptProvider (Quarkus integration) | [walkthrough](POV-194-walkthrough.md) | [retrospective](POV-194-retrospective.md) |
 | POV-195 — RPD-accurate GenAI counting & remove countTokens | [walkthrough](POV-195-walkthrough.md) | [retrospective](POV-195-retrospective.md) |
+| POV-196 — Relocate transcript proxy from Railway to Synology DS220j | [walkthrough](POV-196-walkthrough.md) | [retrospective](POV-196-retrospective.md) |
