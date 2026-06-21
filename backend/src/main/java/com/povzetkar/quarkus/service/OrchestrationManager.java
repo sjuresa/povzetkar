@@ -87,8 +87,15 @@ public class OrchestrationManager {
             executeSummarizationStepForDate(today, true, true, null).await().indefinitely();
             generateBriefingsForDate(yesterday, null).await().indefinitely();
         } catch (Exception ex) {
-            registry.counter("povzetkar_orchestration_failed_total",
-                    Tags.of("trigger", "scheduled")).increment();
+            try {
+                registry.counter("povzetkar_orchestration_failed_total",
+                        Tags.of("trigger", "scheduled")).increment();
+            } catch (Exception metricEx) {
+                logger.error(metricEx,
+                    ACTION, ORCHESTRATION_SCHEDULED,
+                    MESSAGE, "Failed to increment orchestration failure counter"
+                );
+            }
             logger.error(ex,
                 ACTION, ORCHESTRATION_SCHEDULED,
                 STATUS, FAILED,
