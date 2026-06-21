@@ -82,20 +82,21 @@ public class OrchestrationManager {
             MESSAGE, "Scheduled orchestration triggered."
         );
         activeOrchestrations.incrementAndGet();
-        executeSummarizationStepForDate(yesterday, true, true, null)
-                .chain(() -> executeSummarizationStepForDate(today, true, true, null))
-                .chain(() -> generateBriefingsForDate(yesterday, null))
-                .onFailure().invoke(ex -> {
-                    registry.counter("povzetkar_orchestration_failed_total",
-                            Tags.of("trigger", "scheduled")).increment();
-                    logger.error(ex,
-                        ACTION, ORCHESTRATION_SCHEDULED,
-                        STATUS, FAILED,
-                        MESSAGE, "Scheduled orchestration failed unexpectedly"
-                    );
-                })
-                .onTermination().invoke(activeOrchestrations::decrementAndGet)
-                .await().indefinitely();
+        try {
+            executeSummarizationStepForDate(yesterday, true, true, null).await().indefinitely();
+            executeSummarizationStepForDate(today, true, true, null).await().indefinitely();
+            generateBriefingsForDate(yesterday, null).await().indefinitely();
+        } catch (Exception ex) {
+            registry.counter("povzetkar_orchestration_failed_total",
+                    Tags.of("trigger", "scheduled")).increment();
+            logger.error(ex,
+                ACTION, ORCHESTRATION_SCHEDULED,
+                STATUS, FAILED,
+                MESSAGE, "Scheduled orchestration failed unexpectedly"
+            );
+        } finally {
+            activeOrchestrations.decrementAndGet();
+        }
     }
 
     public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {

@@ -15,7 +15,7 @@ Cron default: `0 0 * * * ?` (every hour on the hour), configurable via `povzetka
 
 ## Planned vs. Actual Scope
 
-Scope matched the plan exactly. No unplanned discoveries during execution.
+Core scope matched the plan. Three unplanned discoveries emerged during execution (see Deviations below): `@Blocking` being ignored for `Uni<Void>` return types, `SKIPPED_TOO_SHORT` videos reaching the summarization scheduler, and the Vert.x worker thread timeout warning. All three were fixed and included in POV-197 scope.
 
 ## Time Delta
 
