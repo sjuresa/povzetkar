@@ -43,6 +43,7 @@ public final class LogKeys {
     public static final String GENERATE_CONTENT = "generateContent";
     public static final String GENERATE_SUMMARY = "generateSummary";
     public static final String PERSIST_SUMMARY = "persistSummary";
+    public static final String PERSIST_TRANSCRIPT = "persistTranscript";
     public static final String CREATE_CONTENT = "createContent";
     public static final String GET_TRANSCRIPT = "getTranscript";
     public static final String ORCHESTRATION_SCHEDULED = "orchestrationScheduled";
