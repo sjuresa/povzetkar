@@ -82,38 +82,45 @@ public class OrchestrationManager {
             MESSAGE, "Scheduled orchestration triggered."
         );
         activeOrchestrations.incrementAndGet();
-        boolean failed = false;
         try {
-            executeSummarizationStepForDate(yesterday, true, true, null).await().indefinitely();
-        } catch (Exception ex) {
-            failed = true;
-            logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
-                    MESSAGE, "Yesterday's summarization step failed");
-        }
-        try {
-            executeSummarizationStepForDate(today, true, true, null).await().indefinitely();
-        } catch (Exception ex) {
-            failed = true;
-            logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
-                    MESSAGE, "Today's summarization step failed");
-        }
-        try {
-            generateBriefingsForDate(yesterday, null).await().indefinitely();
-        } catch (Exception ex) {
-            failed = true;
-            logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
-                    MESSAGE, "Yesterday's briefing generation failed");
-        }
-        if (failed) {
+            boolean failed = false;
             try {
-                registry.counter("povzetkar_orchestration_failed_total",
-                        Tags.of("trigger", "scheduled", TAG_TOPIC_ID, "all")).increment();
-            } catch (Exception metricEx) {
-                logger.error(metricEx, ACTION, ORCHESTRATION_SCHEDULED,
-                        MESSAGE, "Failed to increment orchestration failure counter");
+                executeSummarizationStepForDate(yesterday, true, true, null).await().indefinitely();
+            } catch (Exception ex) {
+                failed = true;
+                logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
+                        MESSAGE, "Yesterday's summarization step failed");
             }
+            try {
+                executeSummarizationStepForDate(today, true, true, null).await().indefinitely();
+            } catch (Exception ex) {
+                failed = true;
+                logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
+                        MESSAGE, "Today's summarization step failed");
+            }
+            try {
+                generateBriefingsForDate(yesterday, null).await().indefinitely();
+            } catch (Exception ex) {
+                failed = true;
+                logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
+                        MESSAGE, "Yesterday's briefing generation failed");
+            }
+            if (failed) {
+                incrementOrchestrationFailedCounter("scheduled", "all");
+            }
+        } finally {
+            activeOrchestrations.decrementAndGet();
         }
-        activeOrchestrations.decrementAndGet();
+    }
+
+    private void incrementOrchestrationFailedCounter(String trigger, String topicId) {
+        try {
+            registry.counter("povzetkar_orchestration_failed_total",
+                    Tags.of("trigger", trigger, TAG_TOPIC_ID, topicId)).increment();
+        } catch (Exception metricEx) {
+            logger.error(metricEx, ACTION, ORCHESTRATION_SCHEDULED,
+                    MESSAGE, "Failed to increment orchestration failure counter");
+        }
     }
 
     public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {
@@ -191,7 +198,7 @@ public class OrchestrationManager {
         })
         .onItem().invoke(() -> eventBroadcaster.broadcast(SseEventDTO.of("ORCHESTRATION_COMPLETED", "Manual orchestration finished successfully.")))
         .onFailure().invoke(ex -> {
-            registry.counter("povzetkar_orchestration_failed_total", Tags.of("trigger", "manual", TAG_TOPIC_ID, request.topicId() != null ? String.valueOf(request.topicId()) : "all")).increment();
+            incrementOrchestrationFailedCounter("manual", request.topicId() != null ? String.valueOf(request.topicId()) : "all");
             logger.error(ex,
                 ACTION, ORCHESTRATION_MANUAL,
                 STATUS, FAILED,
