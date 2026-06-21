@@ -15,6 +15,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -71,16 +72,55 @@ public class OrchestrationManager {
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
-    public Uni<Void> runOrchestrationScheduled() {
+    @Blocking
+    public void runScheduledOrchestration() {
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
         logger.info(
             ACTION, ORCHESTRATION_SCHEDULED,
             TRIGGER, "scheduled",
-            MESSAGE, "Scheduled content orchestration triggered."
+            MESSAGE, "Scheduled orchestration triggered."
         );
-        // Scheduled runs should always process pending items and new content.
         activeOrchestrations.incrementAndGet();
-        return executeSummarizationStepForDate(LocalDate.now(), true, true, null)
-                .onTermination().invoke(activeOrchestrations::decrementAndGet);
+        try {
+            boolean failed = false;
+            try {
+                executeSummarizationStepForDate(yesterday, true, true, null).await().indefinitely();
+            } catch (Exception ex) {
+                failed = true;
+                logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
+                        MESSAGE, "Yesterday's summarization step failed");
+            }
+            try {
+                executeSummarizationStepForDate(today, true, true, null).await().indefinitely();
+            } catch (Exception ex) {
+                failed = true;
+                logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
+                        MESSAGE, "Today's summarization step failed");
+            }
+            try {
+                generateBriefingsForDate(yesterday, null).await().indefinitely();
+            } catch (Exception ex) {
+                failed = true;
+                logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
+                        MESSAGE, "Yesterday's briefing generation failed");
+            }
+            if (failed) {
+                incrementOrchestrationFailedCounter("scheduled", "all");
+            }
+        } finally {
+            activeOrchestrations.decrementAndGet();
+        }
+    }
+
+    private void incrementOrchestrationFailedCounter(String trigger, String topicId) {
+        try {
+            registry.counter("povzetkar_orchestration_failed_total",
+                    Tags.of("trigger", trigger, TAG_TOPIC_ID, topicId)).increment();
+        } catch (Exception metricEx) {
+            logger.error(metricEx, ACTION, ORCHESTRATION_SCHEDULED,
+                    MESSAGE, "Failed to increment orchestration failure counter");
+        }
     }
 
     public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {
@@ -158,7 +198,7 @@ public class OrchestrationManager {
         })
         .onItem().invoke(() -> eventBroadcaster.broadcast(SseEventDTO.of("ORCHESTRATION_COMPLETED", "Manual orchestration finished successfully.")))
         .onFailure().invoke(ex -> {
-            registry.counter("povzetkar_orchestration_failed_total", Tags.of(TAG_TOPIC_ID, request.topicId() != null ? String.valueOf(request.topicId()) : "all")).increment();
+            incrementOrchestrationFailedCounter("manual", request.topicId() != null ? String.valueOf(request.topicId()) : "all");
             logger.error(ex,
                 ACTION, ORCHESTRATION_MANUAL,
                 STATUS, FAILED,
@@ -426,18 +466,6 @@ public class OrchestrationManager {
             return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate)
                     .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, topicId, pageIndex + 1));
         });
-    }
-
-    @Scheduled(cron = "{povzetkar.briefing.cron}")
-    public Uni<Void> runBriefingGenerationScheduled() {
-        LocalDate today = LocalDate.now();
-        logger.info(
-            ACTION, BRIEFING_SCHEDULED,
-            TRIGGER, "scheduled",
-            DATE, today,
-            MESSAGE, "Scheduled briefing generation triggered."
-        );
-        return generateBriefingsForDate(today, null);
     }
 
     private Uni<Void> generateBriefingsForDate(LocalDate briefingDate, Long topicId) {
