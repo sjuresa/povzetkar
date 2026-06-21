@@ -15,6 +15,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -71,16 +72,30 @@ public class OrchestrationManager {
     }
 
     @Scheduled(cron = "{povzetkar.orchestrator.cron}")
-    public Uni<Void> runOrchestrationScheduled() {
+    @Blocking
+    public void runScheduledOrchestration() {
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
         logger.info(
             ACTION, ORCHESTRATION_SCHEDULED,
             TRIGGER, "scheduled",
-            MESSAGE, "Scheduled content orchestration triggered."
+            MESSAGE, "Scheduled orchestration triggered."
         );
-        // Scheduled runs should always process pending items and new content.
         activeOrchestrations.incrementAndGet();
-        return executeSummarizationStepForDate(LocalDate.now(), true, true, null)
-                .onTermination().invoke(activeOrchestrations::decrementAndGet);
+        executeSummarizationStepForDate(yesterday, true, true, null)
+                .chain(() -> executeSummarizationStepForDate(today, true, true, null))
+                .chain(() -> generateBriefingsForDate(yesterday, null))
+                .onFailure().invoke(ex -> {
+                    registry.counter("povzetkar_orchestration_failed_total",
+                            Tags.of("trigger", "scheduled")).increment();
+                    logger.error(ex,
+                        ACTION, ORCHESTRATION_SCHEDULED,
+                        STATUS, FAILED,
+                        MESSAGE, "Scheduled orchestration failed unexpectedly"
+                    );
+                })
+                .onTermination().invoke(activeOrchestrations::decrementAndGet)
+                .await().indefinitely();
     }
 
     public Uni<Void> runOrchestrationManually(OrchestrationRequest request) {
@@ -426,18 +441,6 @@ public class OrchestrationManager {
             return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate)
                     .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, topicId, pageIndex + 1));
         });
-    }
-
-    @Scheduled(cron = "{povzetkar.briefing.cron}")
-    public Uni<Void> runBriefingGenerationScheduled() {
-        LocalDate today = LocalDate.now();
-        logger.info(
-            ACTION, BRIEFING_SCHEDULED,
-            TRIGGER, "scheduled",
-            DATE, today,
-            MESSAGE, "Scheduled briefing generation triggered."
-        );
-        return generateBriefingsForDate(today, null);
     }
 
     private Uni<Void> generateBriefingsForDate(LocalDate briefingDate, Long topicId) {

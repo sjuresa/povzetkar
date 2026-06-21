@@ -6,6 +6,7 @@ import com.povzetkar.quarkus.builder.UserBuilder;
 
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import io.quarkus.test.InjectMock;
@@ -97,7 +98,8 @@ class TopicProcessorTest {
 
         testUser.topics.add(testTopic);
 
-        testContentItem = new ContentItem(); // Simplified ContentItem
+        testContentItem = new ContentItem();
+        testContentItem.processingStatus = ProcessingStatus.PENDING;
     }
 
     @AfterEach
@@ -127,6 +129,25 @@ class TopicProcessorTest {
 
         // Then
         verify(contentItemFetcher, times(1)).fetchItems(testContentSource, expectedDate, null, null);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate);
+    }
+
+    @Test
+    void testProcessTopicUni_skippedTooShortNotSummarized() {
+        // Given
+        LocalDate expectedDate = LocalDate.now();
+        ContentItem skippedItem = new ContentItem();
+        skippedItem.processingStatus = ProcessingStatus.SKIPPED_TOO_SHORT;
+
+        when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(expectedDate), eq(null), eq(null)))
+                .thenReturn(List.of(skippedItem, testContentItem));
+        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(expectedDate)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        // When
+        topicProcessor.processTopicUni(testTopic, expectedDate).await().indefinitely();
+
+        // Then — only PENDING item scheduled, SKIPPED_TOO_SHORT filtered out
         verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate);
     }
 

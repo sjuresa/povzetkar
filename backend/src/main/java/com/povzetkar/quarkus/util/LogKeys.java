@@ -50,7 +50,6 @@ public final class LogKeys {
     public static final String SUMMARIZATION_STEP = "summarizationStep";
     public static final String TOPIC_PROCESSING = "topicProcessing";
     public static final String PENDING_ITEMS = "pendingItems";
-    public static final String BRIEFING_SCHEDULED = "briefingScheduled";
     public static final String BRIEFING_GENERATION = "briefingGeneration";
     public static final String META_SUMMARY_GENERATION = "metaSummaryGeneration";
     public static final String RELEASE_LOCK = "releaseLock";
