@@ -9,6 +9,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 ## 🚀 Recent Highlights (v0.18.0)
 
 > [!WARNING]
+> **Persist expensive fetches before fallible external calls — best-effort, idempotent (POV-198)**:
+> `ContentCreationService.createContentForVideo()` sets `video.transcript` on a detached JPA object. This value only exists in heap until explicitly written to DB. Any exception between fetch and `persistSummary()` (e.g. Gemini 503) silently loses the transcript — no error surfaces, but the next retry pays full fetch cost again. Pattern: add a `persistX()` method called immediately after a successful fetch, before the external call. It must be (1) idempotent — check `attachedEntity.field == null` before writing to avoid double-writes on retry; (2) best-effort — catch, log warn, continue so it does not introduce a new failure mode. The outer null-check (`detached.field == null`) avoids an unnecessary DB roundtrip when nothing was fetched. Apply this pattern whenever an expensive fetch precedes a fallible AI/external call.
+
+> [!WARNING]
 > **`@Scheduled` methods with blocking DB calls must return `void`, not `Uni<Void>` (POV-197)**:
 > Quarkus Scheduler 3.36 invokes `Uni<Void>`-returning `@Scheduled` methods on the **IO thread** and ignores `@Blocking` when the return type is `Uni<Void>`. Any synchronous blocking call before the `Uni` pipeline starts throws `BlockingOperationNotAllowedException`. The correct pattern: return `void`, add `@Blocking`, and end the pipeline with `.await().indefinitely()`. With `void` return type, `@Blocking` is honoured and the method runs on a worker thread where blocking is safe. This is not caught by unit tests that mock the blocking dependency — it only surfaces with a live DB.
 

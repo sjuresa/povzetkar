@@ -19,6 +19,7 @@ import jakarta.persistence.PersistenceException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -200,7 +201,7 @@ class YouTubeSummarizationStrategyTest {
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
             when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
 
-            // Simulate PersistenceException with ConstraintViolationException as cause
+            // persistTranscript skips (video.transcript is null); 1st run() = persistSummary (throws constraint violation)
             doThrow(new PersistenceException("Constraint violation", new ConstraintViolationException("Constraint violation", new SQLException("23505"), "constraint_name")))
                     .when(runner).run(any(Runnable.class));
 
@@ -210,6 +211,93 @@ class YouTubeSummarizationStrategyTest {
             // Assert
             assertTrue(result, "Should return true on persistence exception due to race condition");
             audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), any(), anyString()), never());
+        }
+    }
+
+    @Test
+    void testSummarize_transcriptPersistedBeforeGeminiCall() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class);
+             MockedConstruction<Summary> cons = mockConstruction(Summary.class, (mock, ctx) -> doNothing().when(mock).persist())) {
+
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(YouTubeVideo.class);
+
+            mockVideo.transcript = "some transcript";
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
+            Content content = mock(Content.class);
+            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
+
+            mockTransactions(tx);
+
+            strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+
+            InOrder inOrder = inOrder(videoSummaryService);
+            PanacheMock.verify(YouTubeVideo.class, atLeastOnce()).findById(1L);
+            inOrder.verify(videoSummaryService).generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString());
+        }
+    }
+
+    @Test
+    void testSummarize_transcriptPersistedOnGemini503() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(YouTubeVideo.class);
+            PanacheMock.mock(ContentItem.class);
+
+            mockVideo.transcript = "some transcript";
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
+            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
+            Content content = mock(Content.class);
+            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+
+            ApiException apiException = new ApiException(503, "Service Unavailable", null);
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString()))
+                    .thenThrow(apiException);
+
+            mockTransactions(tx);
+
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+
+            assertFalse(result);
+            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+            PanacheMock.verify(YouTubeVideo.class, atLeastOnce()).findById(1L);
+        }
+    }
+
+    @Test
+    void testSummarize_transcriptPersistFailureIsLogged_summarizationContinues() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class);
+             MockedConstruction<Summary> cons = mockConstruction(Summary.class, (mock, ctx) -> doNothing().when(mock).persist())) {
+
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(YouTubeVideo.class);
+
+            mockVideo.transcript = "some transcript";
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
+            Content content = mock(Content.class);
+            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
+
+            TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
+            tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
+            when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
+            // 1st run() = persistTranscript (throws), 2nd run() = persistSummary (succeeds)
+            doThrow(new PersistenceException("DB error"))
+                    .doAnswer(i -> { ((Runnable) i.getArgument(0)).run(); return null; })
+                    .when(runner).run(any(Runnable.class));
+
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+
+            assertTrue(result);
+            verify(videoSummaryService).generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString());
         }
     }
 
@@ -235,12 +323,9 @@ class YouTubeSummarizationStrategyTest {
             tx.when(QuarkusTransaction::requiringNew).thenReturn(runner);
             when(runner.call(any(Callable.class))).thenAnswer(i -> ((Callable<?>) i.getArgument(0)).call());
 
-            // Simulate a generic PersistenceException without ConstraintViolationException as cause
+            // persistTranscript skips (video.transcript is null); 1st run() = persistSummary (throws), 2nd run() = updateStatusInNewTransaction (succeeds)
             doThrow(new PersistenceException("Generic persistence error"))
-                    .doAnswer(i -> {
-                        ((Runnable) i.getArgument(0)).run();
-                        return null;
-                    })
+                    .doAnswer(i -> { ((Runnable) i.getArgument(0)).run(); return null; })
                     .when(runner).run(any(Runnable.class));
 
             // Act
