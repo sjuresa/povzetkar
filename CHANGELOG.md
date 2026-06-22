@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (POV-199) **Netty bumped to 4.1.135.Final** to resolve 7 HIGH-severity CVEs: CVE-2026-44893, CVE-2026-48059 (`netty-codec-haproxy`), CVE-2026-44249, CVE-2026-45416, CVE-2026-50010 (`netty-handler`), CVE-2026-45674, CVE-2026-47691 (`netty-resolver-dns`). Version is controlled via `<netty.version>` in the root `pom.xml`.
 - (POV-199) **`form-data` bumped to 4.0.6** (transitive via `axios`) to resolve CVE-2026-12143 (HIGH).
+- (POV-199) **Go healthcheck builder bumped to `golang:1.26.4-alpine`** to resolve CVE-2026-42504 (HIGH, Go stdlib MIME header parsing).
+- (POV-199) **`CVE-2025-59375` added to `.trivyignore`** (libexpat, HIGH): unfixed in Debian 13 Trixie (`expat 2.7.1-2`); fixed only in `forky/sid`.
 
 ### Changed
 

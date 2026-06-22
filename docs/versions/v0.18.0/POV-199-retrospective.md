@@ -3,20 +3,24 @@
 ## Planned vs. actual
 
 Scoped: bump Netty to `4.1.135.Final`, bump `form-data` to `4.0.6`, leave `.trivyignore` unchanged.
-Delivered: exactly that.
+Delivered: the above, plus Go builder bump to `1.26.4-alpine` (CVE-2026-42504) and a new `.trivyignore` entry for CVE-2025-59375 — both discovered from a second Trivy run after the initial fixes landed.
 
 ## Deviations & why
 
-None.
+Two unplanned findings handled inline per step 2.14:
+- **CVE-2025-59375** (libexpat, HIGH, `affected` status in Trivy): same pattern as the two existing `.trivyignore` entries — unfixed in Debian 13 Trixie, no Debian fix date. Suppressed with a comment.
+- **CVE-2026-42504** (Go stdlib, HIGH, `fixed` in `1.25.11`/`1.26.4`): real fix available; bumped the builder to `golang:1.26.4-alpine` (user preference for latest stable minor over `1.25.11`).
 
 ## Technical findings
 
-- **Netty version control pattern is robust.** The `netty-bom`-first-import in the root `pom.xml` `<dependencyManagement>` block reliably overrides the BOM version pulled in by Quarkus. This is now the proven mechanism for two successive Netty CVE rounds (the prior fix patched 5 CVEs; this one patches 7 more).
-- **`.trivyignore` libexpat entries are still valid as of 2026-06-22.** Debian 13 Trixie ships `expat 2.7.1-2`; both CVE-2026-25210 and CVE-2026-45186 are fixed only in `forky/sid`. These must remain in `.trivyignore` until Google releases an updated Distroless `java25-debian13` image based on a trixie snapshot that includes the fix. Check the Debian security tracker before removing them.
-- **`npm update <package>` is the correct tool for transitive dep patches.** No `overrides` entry in `package.json` is needed when the patch is available and `npm update` resolves it correctly. The pre-existing peer dependency warnings (`react-helmet-async` via `vite-react-ssg`) are unrelated to this task.
+- **Netty version control pattern is robust.** The `netty-bom`-first-import in the root `pom.xml` reliably overrides the BOM version pulled in by Quarkus. Now covers 12 CVEs across two fix rounds.
+- **`.trivyignore` libexpat entries are a recurring theme.** As of 2026-06-22, three libexpat CVEs (CVE-2026-25210, CVE-2026-45186, CVE-2025-59375) are suppressed because Debian 13 Trixie has not backported the fixes. Monitor the Debian security tracker; remove entries as they are fixed upstream.
+- **Trivy scans the built image layer separately from source deps.** The Go stdlib CVE appeared only in the `gobinary` scan of `usr/local/bin/healthcheck` — not in any pom.xml or package-lock.json scan. Always check the full Trivy report, not just the source dep tables.
+- **`npm update form-data` is the correct tool for transitive dep patches.** No `overrides` entry in `package.json` is needed when the patch is available and resolves correctly.
 
 ## Feed-forward
 
-- The next Netty CVE round (if any) should bump `<netty.version>` in the same place (`pom.xml:50`) — no other files need touching.
-- Monitor the Debian security tracker for CVE-2026-25210 and CVE-2026-45186 in trixie. When fixed, remove the corresponding entries from `.trivyignore` promptly so the ignore list stays honest.
-- The 5 remaining npm audit findings (2 moderate, 1 high, 2 critical) are pre-existing and unrelated to `form-data` — they should be investigated in a dedicated security task.
+- The next Netty CVE round: bump `<netty.version>` at `pom.xml:50` — no other files needed.
+- Monitor Debian security tracker for CVE-2026-25210, CVE-2026-45186, CVE-2025-59375 in trixie. When fixed, remove from `.trivyignore` promptly.
+- The 5 remaining npm audit findings (2 moderate, 1 high, 2 critical) are pre-existing and unrelated to `form-data` — investigate in a dedicated security task.
+- Go builder version is now `1.26.4-alpine`; next CVE round should check the `golang` image line directly.

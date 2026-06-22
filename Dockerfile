@@ -24,7 +24,7 @@ COPY --from=build-frontend /app/frontend/dist ./backend/src/main/resources/META-
 RUN mvn package -DskipTests -pl backend -am
 
 # Stage 3: Build custom static healthcheck tool for Distroless compatibility
-FROM golang:1.25.10-alpine AS build-healthcheck
+FROM golang:1.26.4-alpine AS build-healthcheck
 WORKDIR /app
 COPY build/healthcheck/main.go healthcheck.go
 RUN go build -ldflags="-s -w" -o /go/bin/healthcheck healthcheck.go
