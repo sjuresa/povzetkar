@@ -4,3 +4,5 @@
 CVE-2026-25210
 # libexpat: Security fix pending upstream image update
 CVE-2026-45186
+# libexpat: Large dynamic memory allocation via small crafted document
+CVE-2025-59375
