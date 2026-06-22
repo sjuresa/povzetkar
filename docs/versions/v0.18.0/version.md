@@ -18,3 +18,4 @@
 | POV-196 — Relocate transcript proxy from Railway to Synology DS220j | [walkthrough](POV-196-walkthrough.md) | [retrospective](POV-196-retrospective.md) |
 | POV-197 — Scheduled Orchestration Fix & Periodic Content Fetch | [walkthrough](POV-197-walkthrough.md) | [retrospective](POV-197-retrospective.md) |
 | POV-198 — Persist Transcript Before Gemini Call | [walkthrough](POV-198-walkthrough.md) | [retrospective](POV-198-retrospective.md) |
+| POV-199 — Fix Trivy Security Vulnerabilities | [walkthrough](POV-199-walkthrough.md) | [retrospective](POV-199-retrospective.md) |
