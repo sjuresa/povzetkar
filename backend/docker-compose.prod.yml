@@ -84,6 +84,16 @@ services:
     networks:
       - povzetkar-net
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: povzetkar-cloudflared
+    restart: always
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
+    networks:
+      - povzetkar-net
+    depends_on:
+      - app
+
   grafana:
     image: grafana/grafana-oss:12.4.0
     container_name: povzetkar-grafana
