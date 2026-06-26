@@ -396,6 +396,13 @@
     },
     "changelog_entries": [
       {
+        "version": "0.18.0",
+        "title": "Posodobitev 0.18.0",
+        "date": "2026-06-26",
+        "desc": "Version 0.18.0 is the **Transcript Ingestion Resilience & Scheduler Correctness** release — hardening the pipeline that feeds content into summarization. Its centerpiece is a new IP-block-resistant transcript path: a standalone stateless FastAPI **transcript proxy** (POV-193), wired into Quarkus as the now-primary `ProxyTranscriptProvider` (POV-194), and ultimately relocated from Railway to a self-hosted Synology DS220j over Tailscale (POV-196) after Railway's shared egress IP proved soft-throttled by YouTube. Two long-standing scheduler defects were fixed: orchestration that had *never* successfully run on a schedule (`BlockingOperationNotAllowedException` on every invocation) is now corrected and consolidated into a single hourly periodic cron (POV-197), and transcripts are now persisted before the Gemini call so 503 retries no longer re-fetch from scratch (POV-198). On the cost side, GenAI daily usage now reflects true RPD consumption — including disabling the Google SDK's hidden 5× retry that was silently inflating real request counts (POV-195). The release also resolves a demo-user access regression (POV-192), clears all blocking Trivy CVEs (POV-199), and evolves the development methodology to task-first planning (POV-191).",
+        "badge": "new"
+      },
+      {
         "version": "0.17.0",
         "title": "Posodobitev 0.17.0",
         "date": "2026-05-24",
@@ -475,8 +482,8 @@
     ],
     "roadmap_phases": [
       {
-        "title": "v0.18: Hardening & Operational Excellence",
-        "desc": "Integracija naprednega varnostnega nadzora v cikel izdaj ter dokončanje dela na področju opazljivosti in operativne zrelosti, preloženega iz v0.17.0."
+        "title": "v0.19: Hardening & Operational Excellence",
+        "desc": "Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Forecast, not a commitment — under the task-first model the actual scope and version label are confirmed retrospectively when the work is done.)*"
       },
       {
         "title": "v1.0: RAG & Conversational Interface",

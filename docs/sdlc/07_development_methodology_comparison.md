@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date              | Author       | Changes                                                                                                                                         |
 |---------|-------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.9     | June 26 2026      | Povzetkar AI | Refreshed for the task-first model (POV-191, v0.18.0): updated Scrum "Sprint Backlog"/time-box and "Asynchronous Ceremonies" (two-level retrospective) and Lean "Amplify Learning"/"See the Whole" to reflect task-first delivery and the new `docs/versions/vX.Y.Z/` artifact structure. Section 7 remains empty. |
 | 1.8     | March 18, 2026    | Povzetkar AI | Removed "Automated Dependency Vulnerability Scanning" from proposed practices as it was adopted in v0.12.0. |
 | 1.7     | February 20, 2026 | Povzetkar AI | Removed "Architectural Decision Records (ADRs)" from proposed practices as it was adopted in v0.10.0.           |
 | 1.6     | January 20, 2026  | Povzetkar AI | Removed "Codified Testing Patterns" from proposed practices as it was adopted in v0.8.0.                                                        |
@@ -32,7 +33,7 @@ Scrum is a framework for developing complex products, emphasizing iterative prog
 ### Similarities to Scrum
 
 *   **Product Backlog:** Our `roadmap.md` serves the exact purpose of a Product Backlog. It is a prioritized list of high-level features and architectural goals for the entire project.
-*   **Sprint Backlog:** For each version (e.g., v0.5, v0.6), the corresponding `docs/versions/vX.Y-tasks.md` file acts as a Sprint Backlog. It is a detailed plan of work selected from the roadmap that we commit to completing in the current development cycle.
+*   **Sprint Backlog:** Historically (through v0.17.0), a per-version `docs/versions/vX.Y-tasks.md` file acted as a Sprint Backlog. As of the **task-first model** (POV-191, v0.18.0), the task — defined in `agent_logs/task.md` and closed out in the version hub `docs/versions/vX.Y.Z/version.md` — is the primary planning and delivery unit; the version is a retrospective label, not a pre-committed batch.
 *   **Increment:** Each successfully completed version is a valuable, potentially shippable increment of the product.
 *   **Roles:**
     *   You act as the **Product Owner**: You define the vision (`roadmap.md`), prioritize features, and provide feedback and approval.
@@ -41,8 +42,8 @@ Scrum is a framework for developing complex products, emphasizing iterative prog
 *   **Definition of Done (DoD):** As of v0.6.1, we have formally adopted a DoD. This is an explicit checklist that a task must meet to be considered complete, ensuring quality and consistency.
 ### Differences from Scrum
 
-*   **No Fixed Time-Boxes (Sprints):** We do not operate in fixed-length Sprints. A version is complete when the tasks defined in its `*-tasks.md` file are done. This provides flexibility.
-*   **Asynchronous Ceremonies:** We do not have formal, synchronous meetings like Daily Scrums or Sprint Reviews. However, we have adopted an asynchronous version of the **Sprint Retrospective**. After each version is complete, we create a `docs/retrospectives/vX.Y-retrospective.md` file to reflect on the process and define actionable improvements.
+*   **No Fixed Time-Boxes (Sprints):** We do not operate in fixed-length Sprints. Under the task-first model (POV-191), a version is declared complete by an explicit PO decision — not by exhausting a pre-defined task list. This provides flexibility.
+*   **Asynchronous Ceremonies:** We do not have formal, synchronous meetings like Daily Scrums or Sprint Reviews. However, we have adopted an asynchronous, **two-level retrospective** practice: a per-task retrospective (`docs/versions/vX.Y.Z/POV-XXX-retrospective.md`) written as each task closes, and a cross-task version retrospective (`docs/versions/vX.Y.Z/retrospective.md`) synthesising trends and process health when the version is finalised. (Prior to v0.18.0 these lived as a single `docs/retrospectives/vX.Y-retrospective.md` file.)
 
 ---
 
@@ -90,11 +91,11 @@ Lean is less of a methodology and more of a guiding philosophy. Our process alig
 
 *   **Eliminate Waste:** Our decision to simplify the v0.5 migration script to a direct database write instead of building a throwaway API is a perfect example of eliminating waste (in this case, unnecessary, temporary code).
 *   **Amplify Learning:** We have institutionalized this through two mechanisms:
-    1.  **Planning Documents:** Creating `docs/versions/*-planning-process.md` to capture rationale.
+    1.  **Per-Task Brainstorm & Walkthrough/Retrospective:** Each task captures scope rationale in `agent_logs/task.md` (Brainstorm) and closes with a walkthrough and retrospective in `docs/versions/vX.Y.Z/`. (Prior to the task-first model, rationale lived in per-version `docs/versions/*-planning-process.md` files.)
     2.  **Project-Wide Documentation Review:** A mandatory phase at the end of every version (Phase 3.2 in the checklist) where we systematically review and refresh core documentation (`docs/sdlc`, `docs/analysis`, etc.) to prevent knowledge rot.
 *   **Decide as Late as Possible:** We have a high-level `roadmap.md` but make detailed, binding decisions only for the immediate version we are working on. This allows us to adapt as we learn more.
 *   **Build Integrity In:** Our strict adherence to TDD and automated verification steps ensures that quality is built into the process from the beginning, not added as an afterthought.
-*   **See the Whole:** During the planning phase for each new version (in `docs/versions/*-planning-process.md`), we explicitly consider how the planned tasks contribute to the overall project goals defined in `roadmap.md`. This ensures we maintain a long-term architectural vision and avoid local optimizations that harm the overall system.
+*   **See the Whole:** During the per-task Brainstorm and PPP planning interviews, we explicitly consider how the task contributes to the overall project goals defined in `roadmap.md`. This ensures we maintain a long-term architectural vision and avoid local optimizations that harm the overall system.
 
 ---
 
