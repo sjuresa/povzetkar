@@ -10,14 +10,15 @@
 - [7. Running Tests](#7-running-tests)
 - [8. Security & Code Quality](#8-security--code-quality)
 - [9. Building the Full Stack](#9-building-the-full-stack)
-- [10. Containerized Execution (Docker/Podman)](#10-containerized-execution-dockerpodman)
-- [11. Application Usage](#11-application-usage)
-- [12. Compliance & Monitoring](#12-compliance--monitoring)
-- [13. Real-Time Event Stream (SSE)](#13-real-time-event-stream-sse)
-- [14. Monitoring & Observability](#14-monitoring--observability)
-- [15. API Response Structure (Envelopes)](#15-api-response-structure-envelopes)
-- [16. Secrets Management](#16-secrets-management)
-- [17. Account Activation & User Onboarding](#17-account-activation--user-onboarding)
+- [10. Production Stack (Local)](#10-production-stack-local)
+- [11. Containerized Execution (Docker/Podman)](#11-containerized-execution-dockerpodman)
+- [12. Application Usage](#12-application-usage)
+- [13. Compliance & Monitoring](#13-compliance--monitoring)
+- [14. Real-Time Event Stream (SSE)](#14-real-time-event-stream-sse)
+- [15. Monitoring & Observability](#15-monitoring--observability)
+- [16. API Response Structure (Envelopes)](#16-api-response-structure-envelopes)
+- [17. Secrets Management](#17-secrets-management)
+- [18. Account Activation & User Onboarding](#18-account-activation--user-onboarding)
 
 ## 1. Introduction
 
@@ -238,7 +239,46 @@ This will:
 1.  Build the React frontend and place artifacts in `frontend/dist`.
 2.  Build the Quarkus backend and run standard JAR packaging.
 
-## 10. Containerized Execution (Docker/Podman)
+## 10. Production Stack (Local)
+
+The production stack uses `docker-compose.prod.yml` with `.env.docker` and includes the app, PostgreSQL, Caddy, Prometheus, Grafana, and Cloudflare Tunnel.
+
+### 10.1 Build
+
+Run from the `backend/` directory:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker build
+```
+
+The `APP_VERSION` variable in `.env.docker` is used as the image tag (e.g. `povzetkar-app:0.18`).
+
+### 10.2 Run
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
+```
+
+### 10.3 Update (rebuild + restart app only)
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker build app
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d app
+```
+
+### 10.4 Stop
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker down
+```
+
+### 10.5 Notes
+
+- `.env.docker` is in the project root (not `backend/`), hence `--env-file ../env.docker`.
+- The app is exposed via **Cloudflare Tunnel** at `https://povzetkar.juresa.si` — no ports need to be open on the host.
+- Grafana is accessible locally at `http://localhost:3000` (port mapped in prod compose).
+
+## 11. Containerized Execution (Docker/Podman)
 
 The application uses a multi-stage `Dockerfile` at the root of the project to build both the React frontend and the Quarkus backend into a unified production-ready image.
 
@@ -333,7 +373,7 @@ docker run -it --rm \
   si.jumis/povzetkar:latest
 ```
 
-## 11. Application Usage
+## 12. Application Usage
 
 ### 10.1 Content Source Management
 
@@ -504,7 +544,7 @@ The circuit breaker for GenAI API calls prevents repeated attempts to a failing 
 
 If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.
 
-## 12. Compliance & Monitoring
+## 13. Compliance & Monitoring
 
 ### 11.1 Correlation IDs & Request Tracing
 
@@ -590,7 +630,7 @@ The project has standardized on **SLF4J** for logging and uses a `StructuredLogg
         logger.info("event", "job_started", "job_id", jobId);
         ```
 
-## 13. Real-Time Event Stream (SSE)
+## 14. Real-Time Event Stream (SSE)
 
 The application provides a centralized **Server-Sent Events (SSE)** endpoint for real-time system monitoring. This is the preferred method for frontends to track background job completion.
 
@@ -603,7 +643,7 @@ The application provides a centralized **Server-Sent Events (SSE)** endpoint for
     curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events/stream
     ```
 
-## 14. Monitoring & Observability
+## 15. Monitoring & Observability
 
 Povzetkar v0.15.0+ includes a built-in monitoring stack based on **Micrometer**, **Prometheus**, and **Grafana**.
 
@@ -655,7 +695,7 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
 
-## 15. API Response Structure (Envelopes)
+## 16. API Response Structure (Envelopes)
 
 All REST API responses (except for special streams like SSE) are wrapped in a standard **JSON Envelope** to ensure consistency across the platform.
 
@@ -698,7 +738,7 @@ Errors follow the **RFC 7807** (Problem Details) structure:
 }
 ```
 
-## 16. Secrets Management
+## 17. Secrets Management
 
 The application requires several sensitive configuration values (API keys, database credentials, OIDC secrets) to function. This section documents how secrets are managed across environments.
 
@@ -847,7 +887,7 @@ Two Quarkus mechanisms prevent accidental secret exposure in logs:
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
 
-## 17. Account Activation & User Onboarding
+## 18. Account Activation & User Onboarding
 
 ### 15.1 Account Approval Model
 
