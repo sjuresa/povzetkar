@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (POV-199) **`form-data` bumped to 4.0.6** (transitive via `axios`) to resolve CVE-2026-12143 (HIGH).
 - (POV-199) **Go healthcheck builder bumped to `golang:1.26.4-alpine`** to resolve CVE-2026-42504 (HIGH, Go stdlib MIME header parsing).
 - (POV-199) **`CVE-2025-59375` added to `.trivyignore`** (libexpat, HIGH): unfixed in Debian 13 Trixie (`expat 2.7.1-2`); fixed only in `forky/sid`.
+- (POV-199) **OpenTelemetry API bumped to 1.62.0** to resolve CVE-2026-45292. Version controlled via `<opentelemetry.version>` in root `pom.xml`; `opentelemetry-bom` imported before `quarkus-bom` for Maven precedence.
 
 ### Changed
 

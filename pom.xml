@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <!-- Shared Dependency Versions -->
-        <quarkus.platform.version>3.36.0</quarkus.platform.version>
+        <quarkus.platform.version>3.36.3</quarkus.platform.version>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
 
@@ -48,16 +48,28 @@
 
         <!-- Netty version overrides for security vulnerability patching -->
         <netty.version>4.1.135.Final</netty.version>
+
+        <!-- OpenTelemetry version override for security vulnerability patching -->
+        <opentelemetry.version>1.62.0</opentelemetry.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <!-- Force patched Netty version to resolve CVE-2026-33871, CVE-2026-42583, CVE-2026-42579, CVE-2026-42584, CVE-2026-42587, CVE-2026-44893, CVE-2026-48059, CVE-2026-44249, CVE-2026-45416, CVE-2026-50010, CVE-2026-45674, CVE-2026-47691 -->
-            <!-- MUST BE FIRST for Maven precedence -->
+            <!-- MUST BE BEFORE quarkus-bom for Maven precedence -->
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
                 <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Force patched OpenTelemetry version to resolve CVE-2026-45292 -->
+            <!-- MUST BE BEFORE quarkus-bom for Maven precedence -->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
