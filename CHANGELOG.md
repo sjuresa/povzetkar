@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-06-26
+
+### Summary
+Version 0.18.0 is the **Transcript Ingestion Resilience & Scheduler Correctness** release — hardening the pipeline that feeds content into summarization. Its centerpiece is a new IP-block-resistant transcript path: a standalone stateless FastAPI **transcript proxy** (POV-193), wired into Quarkus as the now-primary `ProxyTranscriptProvider` (POV-194), and ultimately relocated from Railway to a self-hosted Synology DS220j over Tailscale (POV-196) after Railway's shared egress IP proved soft-throttled by YouTube. Two long-standing scheduler defects were fixed: orchestration that had *never* successfully run on a schedule (`BlockingOperationNotAllowedException` on every invocation) is now corrected and consolidated into a single hourly periodic cron (POV-197), and transcripts are now persisted before the Gemini call so 503 retries no longer re-fetch from scratch (POV-198). On the cost side, GenAI daily usage now reflects true RPD consumption — including disabling the Google SDK's hidden 5× retry that was silently inflating real request counts (POV-195). The release also resolves a demo-user access regression (POV-192), clears all blocking Trivy CVEs (POV-199), and evolves the development methodology to task-first planning (POV-191).
+
 ### Added
 
 - (POV-193) **Transcript proxy service** (`transcript-proxy/`): a standalone, stateless FastAPI service that fetches a single YouTube transcript per request, deployable on a host whose IP is not blocked by YouTube (the OCI production range is). `GET /transcripts/{video_id}` with `X-API-Key` auth returns timestamped segments; 404 distinguishes `not_available_yet` (retry) from `video_unavailable` (permanent), 502 signals the proxy cannot reach YouTube. Quarkus integration is deferred to a follow-up task.

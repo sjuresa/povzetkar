@@ -1,8 +1,8 @@
 # v0.18.0 Version Hub
 
-**Status:** In Progress
+**Status:** Completed
 **YouTrack Milestone:** [v0.18.0](https://youtrack.example.com/youtrack/agiles) *(update with actual milestone link)*
-**Scope Statement:** *(to be added retroactively when the version is declared complete)*
+**Scope Statement:** v0.18.0 — **Transcript Ingestion Resilience & Scheduler Correctness.** Delivered an IP-block-resistant transcript path (standalone FastAPI proxy → primary `ProxyTranscriptProvider` → self-hosted on Synology DS220j over Tailscale), fixed two long-standing scheduler defects (orchestration that had never run on a schedule; transcript lost on Gemini-retry re-fetch), made GenAI daily usage reflect true RPD consumption (including disabling the Google SDK's hidden 5× retry), resolved a demo-user access regression, cleared all blocking Trivy CVEs, and evolved the development methodology to task-first planning. See [retrospective.md](retrospective.md) for the cross-task synthesis.
 
 ---
 
@@ -19,3 +19,4 @@
 | POV-197 — Scheduled Orchestration Fix & Periodic Content Fetch | [walkthrough](POV-197-walkthrough.md) | [retrospective](POV-197-retrospective.md) |
 | POV-198 — Persist Transcript Before Gemini Call | [walkthrough](POV-198-walkthrough.md) | [retrospective](POV-198-retrospective.md) |
 | POV-199 — Fix Trivy Security Vulnerabilities | [walkthrough](POV-199-walkthrough.md) | [retrospective](POV-199-retrospective.md) |
+| POV-200 — Finalize Documentation for Release v0.18.0 | [walkthrough](POV-200-walkthrough.md) | [retrospective](POV-200-retrospective.md) |
