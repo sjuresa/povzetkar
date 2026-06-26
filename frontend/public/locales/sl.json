@@ -399,7 +399,7 @@
         "version": "0.18.0",
         "title": "Posodobitev 0.18.0",
         "date": "2026-06-26",
-        "desc": "Version 0.18.0 is the **Transcript Ingestion Resilience & Scheduler Correctness** release — hardening the pipeline that feeds content into summarization. Its centerpiece is a new IP-block-resistant transcript path: a standalone stateless FastAPI **transcript proxy** (POV-193), wired into Quarkus as the now-primary `ProxyTranscriptProvider` (POV-194), and ultimately relocated from Railway to a self-hosted Synology DS220j over Tailscale (POV-196) after Railway's shared egress IP proved soft-throttled by YouTube. Two long-standing scheduler defects were fixed: orchestration that had *never* successfully run on a schedule (`BlockingOperationNotAllowedException` on every invocation) is now corrected and consolidated into a single hourly periodic cron (POV-197), and transcripts are now persisted before the Gemini call so 503 retries no longer re-fetch from scratch (POV-198). On the cost side, GenAI daily usage now reflects true RPD consumption — including disabling the Google SDK's hidden 5× retry that was silently inflating real request counts (POV-195). The release also resolves a demo-user access regression (POV-192), clears all blocking Trivy CVEs (POV-199), and evolves the development methodology to task-first planning (POV-191).",
+        "desc": "Različica 0.18.0 je izdaja za **odpornost zajema prepisov in pravilnost razporejevalnika**, ki utrjuje cevovod za dovajanje vsebine v povzemanje. Njen osrednji del je nova pot za prepise, odporna proti blokiranju IP-jev: samostojni brezstanjski FastAPI **posrednik za prepise** (POV-193), povezan v Quarkus kot zdaj primarni `ProxyTranscriptProvider` (POV-194) in na koncu prestavljen z Railwaya na lastno gostovano napravo Synology DS220j prek Tailscale (POV-196), potem ko se je izkazalo, da YouTube omejuje skupni izhodni IP Railwaya. Odpravljeni sta bili dve dolgotrajni napaki razporejevalnika: orkestracija, ki se *nikoli* ni uspešno izvedla po urniku (`BlockingOperationNotAllowedException` ob vsakem klicu), je zdaj odpravljena in združena v en sam urni periodični cron (POV-197), prepisi pa se zdaj shranijo pred klicem Gemini, tako da ponovni poskusi ob napaki 503 ne prenašajo več podatkov od začetka (POV-198). Na strani stroškov dnevna poraba GenAI zdaj odraža dejansko porabo RPD — vključno z onemogočanjem skritega 5-kratnega ponovnega poskusa Googlovega SDK-ja, ki je tiho povečeval dejansko število zahtevkov (POV-195). Izdaja odpravlja tudi regresijo dostopa demo uporabnikov (POV-192), odpravlja vse blokirajoče ranljivosti Trivy CVE (POV-199) in razvija razvojno metodologijo v načrtovanje najprej po nalogah (POV-191).",
         "badge": "new"
       },
       {
@@ -483,7 +483,7 @@
     "roadmap_phases": [
       {
         "title": "v0.19: Hardening & Operational Excellence",
-        "desc": "Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Forecast, not a commitment — under the task-first model the actual scope and version label are confirmed retrospectively when the work is done.)*"
+        "desc": "Integracija naprednega varnostnega nadzora v cikel izdaj ter dokončanje dela na področju opazljivosti in operativne zrelosti. *(Načrtovano — obseg in oznaka različice se lahko spremenita; potrdita se za nazaj, ko je delo opravljeno.)*"
       },
       {
         "title": "v1.0: RAG & Conversational Interface",
