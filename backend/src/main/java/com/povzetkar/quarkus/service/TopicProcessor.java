@@ -46,15 +46,18 @@ public class TopicProcessor {
 
         return initialTask.chain(() -> fetchAndPersistContentUni(topic, orchestrationDate)
                 .onItem().transformToUni(newContentItems -> {
-                    if (newContentItems.isEmpty()) {
+                    List<ContentItem> itemsToSummarize = newContentItems.stream()
+                            .filter(item -> item.processingStatus == ProcessingStatus.PENDING)
+                            .toList();
+                    if (itemsToSummarize.isEmpty()) {
                         logger.info("No new content found for topic '{}' on {}. Skipping summarization.", topic.name, orchestrationDate);
                         return Uni.createFrom().voidItem();
                     }
 
-                    logger.info("Found {} new content items for topic '{}'. Starting summarization.", newContentItems.size(), topic.name);
+                    logger.info("Found {} new content items for topic '{}'. Starting summarization.", itemsToSummarize.size(), topic.name);
 
                     // 2. Summarize using the just-in-time scheduler
-                    return justInTimeSummarizationScheduler.schedule(newContentItems, orchestrationDate);
+                    return justInTimeSummarizationScheduler.schedule(itemsToSummarize, orchestrationDate);
                 })
                 .onItem().invoke(() -> logger.info("Finished content processing for topic '{}' on {}.", topic.name, orchestrationDate))
                 .onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration for date {}.", topic.name, orchestrationDate, ex))

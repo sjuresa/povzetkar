@@ -2,6 +2,8 @@ package com.povzetkar.quarkus.ai;
 
 import com.google.api.client.util.Sleeper;
 import com.google.genai.Client;
+import com.google.genai.types.HttpOptions;
+import com.google.genai.types.HttpRetryOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -45,10 +47,19 @@ public class GenAiPool implements AutoCloseable {
         this.sleeper = sleeper;
         clientPool = new ArrayList<>();
 
+        // Disable the SDK's built-in retry (RetryInterceptor, default 5 attempts on
+        // 408/429/500/502/503/504). Each logical generateContent call must equal exactly
+        // one HTTP request against Google's RPD, otherwise our usageCount underreports by
+        // ~5×. The project's own circuit breaker in VideoSummaryService is the single
+        // authority for retry/backoff on transient failures.
+        HttpOptions httpOptions = HttpOptions.builder()
+                .retryOptions(HttpRetryOptions.builder().attempts(1).build())
+                .build();
+
         for (int i = 0; i < apiKeys.size(); i++) {
             String apiKey = apiKeys.get(i).trim();
             if (!apiKey.isEmpty()) {
-                Client client = Client.builder().apiKey(apiKey).build();
+                Client client = Client.builder().apiKey(apiKey).httpOptions(httpOptions).build();
                 clientPool.add(new GenAiClient(client, "API key " + (i + 1), timeProvider));
             }
         }

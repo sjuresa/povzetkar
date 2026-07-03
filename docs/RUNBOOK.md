@@ -8,14 +8,17 @@
 - [5. Verifying Database State](#5-verifying-database-state)
 - [6. Running the Application](#6-running-the-application)
 - [7. Running Tests](#7-running-tests)
-- [8. Security & Code Quality](#8-security-code-quality)
-- [9. Containerized Execution (Docker/Podman)](#9-containerized-execution-dockerpodman)
-- [10. Application Usage](#10-application-usage)
-- [11. Compliance & Monitoring](#11-compliance-monitoring)
-- [12. Real-Time Event Stream (SSE)](#12-real-time-event-stream-sse)
-- [13. Monitoring & Observability](#13-monitoring-observability)
-- [14. API Response Structure (Envelopes)](#14-api-response-structure-envelopes)
-- [15. Secrets Management](#15-secrets-management)
+- [8. Security & Code Quality](#8-security--code-quality)
+- [9. Building the Full Stack](#9-building-the-full-stack)
+- [10. Production Stack (Local)](#10-production-stack-local)
+- [11. Containerized Execution (Docker/Podman)](#11-containerized-execution-dockerpodman)
+- [12. Application Usage](#12-application-usage)
+- [13. Compliance & Monitoring](#13-compliance--monitoring)
+- [14. Real-Time Event Stream (SSE)](#14-real-time-event-stream-sse)
+- [15. Monitoring & Observability](#15-monitoring--observability)
+- [16. API Response Structure (Envelopes)](#16-api-response-structure-envelopes)
+- [17. Secrets Management](#17-secrets-management)
+- [18. Account Activation & User Onboarding](#18-account-activation--user-onboarding)
 
 ## 1. Introduction
 
@@ -224,7 +227,7 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ### 8.2 Dependency Scanning (Trivy)
 Third-party dependencies are scanned for known vulnerabilities (CVEs). While this is primarily integrated into the GitHub Actions CI pipeline, you can run a local container scan if needed (requires [Trivy](https://trivy.dev/) installed).
 
-## 8. Building the Full Stack
+## 9. Building the Full Stack
 
 To build both the frontend and backend in one command:
 
@@ -236,7 +239,46 @@ This will:
 1.  Build the React frontend and place artifacts in `frontend/dist`.
 2.  Build the Quarkus backend and run standard JAR packaging.
 
-## 9. Containerized Execution (Docker/Podman)
+## 10. Production Stack (Local)
+
+The production stack uses `docker-compose.prod.yml` with `.env.docker` and includes the app, PostgreSQL, Caddy, Prometheus, Grafana, and Cloudflare Tunnel.
+
+### 10.1 Build
+
+Run from the `backend/` directory:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker build
+```
+
+The `APP_VERSION` variable in `.env.docker` is used as the image tag (e.g. `povzetkar-app:0.18`).
+
+### 10.2 Run
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
+```
+
+### 10.3 Update (rebuild + restart app only)
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker build app
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d app
+```
+
+### 10.4 Stop
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker down
+```
+
+### 10.5 Notes
+
+- `.env.docker` is in the project root (not `backend/`), hence `--env-file ../env.docker`.
+- The app is exposed via **Cloudflare Tunnel** at `https://povzetkar.juresa.si` — no ports need to be open on the host.
+- Grafana is accessible locally at `http://localhost:3000` (port mapped in prod compose).
+
+## 11. Containerized Execution (Docker/Podman)
 
 The application uses a multi-stage `Dockerfile` at the root of the project to build both the React frontend and the Quarkus backend into a unified production-ready image.
 
@@ -331,7 +373,7 @@ docker run -it --rm \
   si.jumis/povzetkar:latest
 ```
 
-## 10. Application Usage
+## 12. Application Usage
 
 ### 10.1 Content Source Management
 
@@ -502,7 +544,7 @@ The circuit breaker for GenAI API calls prevents repeated attempts to a failing 
 
 If a specific API key encounters this many consecutive 503 errors, the orchestration process will stop for that key, preventing further calls until the issue is resolved. The error count for a key is reset upon a successful API call using that key.
 
-## 11. Compliance & Monitoring
+## 13. Compliance & Monitoring
 
 ### 11.1 Correlation IDs & Request Tracing
 
@@ -588,7 +630,7 @@ The project has standardized on **SLF4J** for logging and uses a `StructuredLogg
         logger.info("event", "job_started", "job_id", jobId);
         ```
 
-## 12. Real-Time Event Stream (SSE)
+## 14. Real-Time Event Stream (SSE)
 
 The application provides a centralized **Server-Sent Events (SSE)** endpoint for real-time system monitoring. This is the preferred method for frontends to track background job completion.
 
@@ -601,7 +643,7 @@ The application provides a centralized **Server-Sent Events (SSE)** endpoint for
     curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events/stream
     ```
 
-## 13. Monitoring & Observability
+## 15. Monitoring & Observability
 
 Povzetkar v0.15.0+ includes a built-in monitoring stack based on **Micrometer**, **Prometheus**, and **Grafana**.
 
@@ -653,7 +695,7 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
 
-## 14. API Response Structure (Envelopes)
+## 16. API Response Structure (Envelopes)
 
 All REST API responses (except for special streams like SSE) are wrapped in a standard **JSON Envelope** to ensure consistency across the platform.
 
@@ -696,7 +738,7 @@ Errors follow the **RFC 7807** (Problem Details) structure:
 }
 ```
 
-## 14. Secrets Management
+## 17. Secrets Management
 
 The application requires several sensitive configuration values (API keys, database credentials, OIDC secrets) to function. This section documents how secrets are managed across environments.
 
@@ -739,6 +781,78 @@ transcript.providers.supadata.enabled=true
 - `transcript.fetch.failures` — counter tagged with `provider` and `reason`
 - `transcript.fetch.duration` — timer per provider
 
+### 16.1b Transcript Proxy Host (Synology DS220j + Tailscale)
+
+The `proxy` provider (primary in production) calls a standalone FastAPI service in
+`transcript-proxy/` that fetches a single YouTube transcript per request from a host whose IP
+YouTube does not block. **As of POV-196 this proxy runs self-hosted on a Synology DS220j**,
+reached by the backend over a **Tailscale** overlay. Railway is retained as a **passive,
+manual fallback** (see flip-back below).
+
+> [!NOTE]
+> **Why self-hosted:** Railway's shared datacenter egress IP was soft-throttled by YouTube
+> (intermittent `502 proxy_blocked` interleaved with `200`s). The DS220j serves from a
+> residential egress IP, which YouTube throttles far less. See ADR-0009 and the POV-196
+> retrospective.
+
+**Connectivity model:** Both the OCI backend host and the Synology join the same tailnet. The
+backend reaches the proxy at the Synology's **raw tailnet IP** (`http://100.x.y.z:8000`) — *not*
+a MagicDNS name, because the backend runs in a Docker bridge network that does not resolve
+MagicDNS. The MagicDNS name (e.g. `ds220j.<tailnet>.ts.net`) is a human-readable alias only.
+Traffic is plain HTTP; Tailscale (WireGuard) already encrypts the path, so no TLS termination is
+needed on the Synology.
+
+**Backend configuration** (`TRANSCRIPT_PROXY_URL`, `TRANSCRIPT_PROXY_API_KEY`):
+
+| Variable | Active (Synology) | Fallback (Railway) |
+|:---|:---|:---|
+| `TRANSCRIPT_PROXY_URL` | `http://<synology-tailnet-ip>:8000` | `https://povzetkar-production.up.railway.app` (the default if unset) |
+| `TRANSCRIPT_PROXY_API_KEY` | the shared key | the **same** shared key |
+
+> [!IMPORTANT]
+> **Both hosts must accept the same `X-API-Key`.** The backend sends one
+> `TRANSCRIPT_PROXY_API_KEY`; whichever host is active must be configured with that exact value,
+> or a fallback flip will return `401`. On the tailnet the key is defense-in-depth (the tailnet
+> is the primary boundary); on Railway it is the sole boundary and is mandatory.
+
+**Flip-back to Railway (manual fallback):** Only one host is active at a time. If the Synology
+proxy is unreachable or misbehaving, on the OCI host:
+
+```bash
+# In the OCI deployment .env, set TRANSCRIPT_PROXY_URL back to Railway
+# (or remove the override entirely — the compose default is the Railway URL):
+#   TRANSCRIPT_PROXY_URL=https://povzetkar-production.up.railway.app
+docker compose -f backend/docker-compose.prod.yml up -d app   # recreate to pick up the env
+```
+
+The provider fallback chain (`proxy → youtube-legacy → supadata`) also degrades automatically if
+the active proxy is down — flip-back is for restoring the *primary* path.
+
+**Synology deployment notes (DS220j gotchas):**
+
+- **Runtime is the box's built-in Python 3.8** (`/bin/python3`) — SynoCommunity `python312` is
+  not required. `youtube-transcript-api 1.2.4` supports 3.8; `requirements.txt` is pinned to the
+  3.8-compatible set (`fastapi==0.124.4`, `uvicorn[standard]==0.33.0`).
+- **`/tmp` is mounted `noexec`.** A venv or pip cache under `/tmp` will fail to load compiled
+  extensions (`pydantic_core ... failed to map segment from shared object`). The proxy MUST be
+  installed on an exec-capable `/volume1` path (e.g. `/volume1/transcript-proxy`).
+- **Process supervision:** a DSM Task Scheduler **Boot-up** task (user `root`) runs
+  `run-proxy.sh`, which sources `.env` (the API key, `chmod 600`, gitignored) and launches
+  `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`. The proxy is started once
+  at boot; there is **no crash-restart supervision yet** (backlog) — if uvicorn dies mid-run it
+  stays down until reboot, so monitor and flip to Railway if needed.
+- **Updating the code on the box:** copy the repo file over with
+  `scp -O transcript-proxy/main.py minimax@<host>:/volume1/transcript-proxy/main.py`, then
+  restart (stop the running uvicorn and re-run `run-proxy.sh`, or run the boot task). The `-O`
+  flag is required — DSM's SSH has no SFTP subsystem, so a plain `scp` fails with
+  `subsystem request failed on channel 0`.
+
+**Health check & per-request diagnostics:** `GET /health` (no auth) returns `{"status":"ok"}`.
+Every transcript request logs its outcome to `proxy.log` with the exact cause, e.g.
+`video_id=... blocked by YouTube: RequestBlocked -> 502 proxy_blocked` — distinguishing
+`IpBlocked` from `RequestBlocked` (both `502 proxy_blocked`) and `upstream_error` without
+guessing.
+
 ### 14.2 How Secrets Are Provided
 
 Secrets are injected via **environment variables** and resolved by Quarkus Config at startup. The approach varies by environment:
@@ -773,7 +887,7 @@ Two Quarkus mechanisms prevent accidental secret exposure in logs:
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
 
-## 15. Account Activation & User Onboarding
+## 18. Account Activation & User Onboarding
 
 ### 15.1 Account Approval Model
 

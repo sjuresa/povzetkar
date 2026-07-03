@@ -1,6 +1,6 @@
 # The Povzetkar Methodology
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-05-27
 **Status:** Active
 
 ## 1. Core Philosophy
@@ -9,8 +9,8 @@ Our development process is a **Pragmatic Hybrid Agile** approach, tailored speci
 
 1.  **Structure over Chaos:** We use strict checklists (`11_development_checklist.md`) and protocols (`AGENT.md`) to maintain discipline in an asynchronous environment.
 2.  **Flow over Batches:** We strictly limit Work In Progress (WIP) to **1**. We finish one task completely before starting the next.
-3.  **Documentation as Code:** Documentation is not an afterthought; it is a first-class deliverable. Plans (`PPP`), retrospectives, and architectural decisions (`ADRs`) are committed alongside the code to ensure a permanent and searchable source of truth.
-4.  **Continuous Learning:** Every version concludes with a retrospective that directly feeds action items into the next version's process.
+3.  **Documentation as Code:** Documentation is not an afterthought; it is a first-class deliverable. Retrospectives and architectural decisions (`ADRs`) are committed alongside the code to ensure a permanent and searchable source of truth.
+4.  **Continuous Learning:** Every task concludes with a retrospective. Every version concludes with a cross-task synthesis retrospective that identifies systemic patterns and process health.
 5.  **Asynchronous Pair Programming:** You act as the "navigator" (strategic direction), and I act as the "driver" (tactical implementation).
 
 ---
@@ -23,7 +23,7 @@ Our development process is a **Pragmatic Hybrid Agile** approach, tailored speci
     *   Defines the vision and roadmap (`roadmap.md`).
     *   Prioritizes tasks for each version.
     *   Reviews and **explicitly approves** every plan proposed by the Agent.
-    *   Executes the tests and verifies the final behavior (since the Agent cannot run code).
+    *   Reviews test results and verifies the final behavior. The Agent runs the test suite itself; the User is the quality gate that confirms the outcome and approves the result.
     *   Provides the "Definition of Done" confirmation.
 
 ### 2.2. The Developer (Agent)
@@ -39,34 +39,54 @@ Our development process is a **Pragmatic Hybrid Agile** approach, tailored speci
 
 ## 3. The Development Lifecycle
 
-Our lifecycle is divided into four distinct phases.
+Our lifecycle is divided into four distinct phases. The **Task** is the primary planning and delivery unit. A **Version** is a retrospective label applied after the work — not a plan made before it.
 
-### Phase 1: Version Planning
-*Goal: Define WHAT to build and HOW to test it.*
-1.  **Retrospective Review:** We start by reviewing the previous version's learnings.
-2.  **Goal Definition:** We select high-level goals from the `roadmap.md`.
-3.  **Testing Strategy:** We explicitly decide the testing approach for new features (e.g., "Unit tests for logic, Integration tests for API, Manual plan for UI"). *Learned in v0.6.1.*
-4.  **Spike Identification:** High-risk or uncertain tasks are isolated as "Spikes" (research tasks) to be tackled first. *Learned in v0.6.2.*
-5.  **Output:** A `vX.Y-planning-process.md` (rationale) and `vX.Y-tasks.md` (execution list) following the mandatory **[Project Planning Protocol (PPP)](planning_protocol.md)**. This ensures that every task has a technical and visual "blueprint" (ADR, UI Manifesto) before coding begins.
+```text
+[Version Initialisation] ──→ [Task Execution Loop] ──→ [version.md updated]
+                                      ↑                        ↓
+                                      └────────────────────────┘
+                               (PO decision: version complete)
+                                              ↓
+                                [Version Finalisation] ──→ [Release]
+```
+
+### Phase 1: Version Initialisation
+
+*Goal: Open the branch and register the version — nothing more.*
+
+1.  **Create Branch:** Create the new version branch (e.g., `v0.18.0`) from `main` and update version numbers.
+2.  **Create Milestone:** Register the version as a milestone label in YouTrack.
+3.  **Roadmap Entry:** Add the version to `docs/overview/roadmap.md` as in-progress.
 
 ### Phase 2: Task Execution (The Core Loop)
-*Goal: Implement one task at a time with high quality.*
-1.  **Define:** The task is isolated in `agent_logs/task.md`.
-2.  **Pre-Flight Check:** The Agent performs a mandatory context check (Usage Analysis, TDD strategy) before planning. *Learned in v0.8.0.*
-3.  **Plan:** The Agent proposes a detailed plan. **Execution is forbidden without User approval.**
+
+*Goal: Implement one task at a time with high quality. This is the primary phase — it repeats for every task in the version.*
+
+1.  **Brainstorm:** Conduct a scope-alignment interview (WHAT will be done). The task is not final until this is complete.
+2.  **Define:** The task is finalised in `agent_logs/task.md`.
+3.  **Plan:** The Agent conducts a PPP interview (HOW it will be done) and proposes a detailed plan grounded in codebase evidence. **Execution is forbidden without User approval.**
 4.  **Execute (TDD):**
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
-5.  **Verify & Code Review:** The User runs the tests and performs a code review (checking for blocking code, JPA identity, etc.).
-6.  **Log:** The `CHANGELOG.md` and current retrospective are updated *immediately* after the task. Ensure `docs/process/lessons-learned.md` is updated simultaneously with any novel technical hurdles or architectural patterns discovered during execution.
+5.  **Verify & Code Review:** The Agent runs the full test suite; the User reviews the results and performs a code review.
+6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
+7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered.
+8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.
+9.  **Version Hub:** `docs/versions/vX.Y.Z/version.md` is created (on first task) or updated with links to the new walkthrough and retrospective.
 
-### Phase 3: Version Finalization
-*Goal: Clean up and prepare for release.*
-1.  **Documentation Review:** We review project-wide docs (`docs/sdlc`, `docs/analysis`) to ensure they match the new reality. This includes a mandatory **Planning Audit** to verify traceability (see [Documentation Validation Protocol](validation-protocol.md)).
-2.  **Cleanup:** We finalize the `pom.xml` (remove snapshots) and `CHANGELOG.md`.
+### Phase 3: Version Finalisation
+
+*Goal: Declare the version complete and prepare for release. Triggered by an explicit PO decision — there is no task list to signal completion.*
+
+1.  **Version Retrospective:** Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`.
+2.  **Scope Statement:** Add a scope statement to `docs/versions/vX.Y.Z/version.md`.
+3.  **Documentation Review:** Review project-wide docs to ensure they match the new reality.
+4.  **Cleanup:** Finalise `pom.xml` (remove snapshots) and `CHANGELOG.md`.
 
 ### Phase 4: Release
+
 *Goal: Ship it.*
+
 1.  Merge to `main`.
 2.  Tag the release.
 
@@ -112,9 +132,20 @@ We actively practice "Strategic Deferral". If a feature is found to be too compl
 ## 5. Continuous Improvement
 
 ### 5.1. Retrospectives
-At the end of every version, we write a `vX.Y-retrospective.md`.
-*   **What Went Well:** To repeat success.
-*   **What Didn't Go Well:** To identify systemic issues.
+
+We operate a two-level retrospective model:
+
+**Task Retrospective** (`docs/versions/vX.Y.Z/POV-XXX-retrospective.md`) — written at the end of every task.
+
+*   **Planned vs. Actual:** What was scoped vs. what was delivered.
+*   **Deviations & Why:** Decisions made mid-execution and their rationale.
+*   **Technical Findings:** Patterns, gotchas, and constraints discovered — the durable record for future tasks.
+*   **Feed-forward:** What the next task should know.
+
+**Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — written at the end of every version as a cross-task synthesis.
+
+*   **Trends:** Patterns that appeared across multiple tasks.
+*   **Systemic Issues:** Process or architectural issues that transcend individual tasks.
 *   **Action Items:** Concrete changes to `AGENT.md` or `11_development_checklist.md` for the next version.
 
 ### 5.2. The Backlog

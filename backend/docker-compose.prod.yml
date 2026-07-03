@@ -21,6 +21,8 @@ services:
       - GOOGLE_OIDC_CLIENT_SECRET=${GOOGLE_OIDC_CLIENT_SECRET:?GOOGLE_OIDC_CLIENT_SECRET must be set}
       - FRONTEND_URL=${FRONTEND_URL:?FRONTEND_URL must be set}
       - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN:?METRICS_SCRAPE_TOKEN must be set}
+      - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:?TRANSCRIPT_PROXY_API_KEY must be set}
+      - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://povzetkar-production.up.railway.app}
     depends_on:
       postgres-prod:
         condition: service_healthy
@@ -81,6 +83,16 @@ services:
       - app
     networks:
       - povzetkar-net
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: povzetkar-cloudflared
+    restart: always
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
+    networks:
+      - povzetkar-net
+    depends_on:
+      - app
 
   grafana:
     image: grafana/grafana-oss:12.4.0

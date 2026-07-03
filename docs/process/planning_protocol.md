@@ -1,14 +1,14 @@
 # Project Planning Protocol (PPP): Standard Tier
 
 **Status:** Active
-**Revision:** 1.0
-**Description:** This protocol defines the mandatory artifacts and quality standards for the Version Planning phase of the Povzetkar project. It serves as the "Standard" implementation of the planning phase defined in the **[Development Methodology](./methodology.md)** and is enforced by **[Phase 1 of the Development Checklist](../sdlc/11_development_checklist.md)**. Any new version (vX.Y.Z) MUST adhere to these rules before implementation begins.
+**Revision:** 1.1
+**Description:** This protocol defines the mandatory artifacts and quality standards for task planning in the Povzetkar project. It serves as the "Standard" implementation of the planning interview defined in the **[Development Methodology](./methodology.md)** and is enforced by **[Phase 2 (step 2.2) of the Development Checklist](../sdlc/11_development_checklist.md)**. Every task MUST adhere to these rules before implementation begins, applying artifacts where warranted (see §5 Protocol Elasticity).
 
 ---
 
 ## 1. Mandatory Planning Artifacts
 
-To achieve "Perfection Tier" planning, every version must produce or update the following documents:
+To achieve "Perfection Tier" planning, every task must produce or update the following documents where applicable (see §5 Protocol Elasticity for conditions):
 
 ### 1.1 Architecture Decision Records (ADRs)
 - **Goal:** Document the context and rationale for major technical pivots.
@@ -28,26 +28,27 @@ To achieve "Perfection Tier" planning, every version must produce or update the 
 - **Requirements:** List of all new translation keys for both `en.json` and `sl.json`.
 - **Location:** `docs/versions/vX.Y.Z/i18n-audit.md`
 
-### 1.4 Detailed Task Breakdown (POV-ID)
-- **Goal:** Actionable, high-context task list.
-- **Requirements:** 
-    - **Time Estimation Summary**: Individual estimates for each task ID with a Total and Contingency (20%).
-    - **Global Definition of Done (DoD)**: Mandatory section covering Code Quality, i18n, Testing, and **Documentation Refresh** (updating Runbooks, Specifications, and Architecture docs).
-    - **Task Metadata**: Each task must include:
-        - Git-style titles (feat/fix/style/test).
+### 1.4 Task Definition (POV-ID)
+
+- **Goal:** Actionable, high-context task definition in YouTrack and `agent_logs/task.md`.
+- **Requirements:**
+    - **Time Estimation**: Estimate for this task with a contingency note.
+    - **Definition of Done (DoD)**: Covering Code Quality, i18n, Testing, and **Documentation Refresh** (updating Runbooks, Specifications, and Architecture docs).
+    - **Task Metadata**:
+        - Git-style title (feat/fix/style/test).
         - **ASCII Wireframes** (for UI tasks).
         - **Resilience & Error States**: System behavior for failure scenarios.
         - **Context / Documentation**: Links to related ADRs, Specifications, or Use Cases.
         - **Required Skills**: Tagging with specific agent skills (e.g., `@[skills/clean-code]`).
-- **Location:** `docs/versions/vX.Y.Z/tasks.md`
+- **Location:** `agent_logs/task.md` (active) and YouTrack ticket.
 
-### 1.5 Version Master Hub (SSoT)
-- **Goal:** Unified entry point for the release.
-- **Requirements:** 
-    - **Version At A Glance**: Table with SSoT Decisions (link to ADRs) and Baseline Audit statuses.
-    - **Strategic Discussions**: Documentation of technical debates, strategic pivots (Pivot/Critique/Decision), and rationale.
-    - **Risk Registry**: Table documenting potential technical or project risks and their mitigations.
-- **Location:** `docs/versions/vX.Y.Z/planning-process.md`
+### 1.5 Version Hub Entry
+
+- **Goal:** Keep `docs/versions/vX.Y.Z/version.md` current as a navigational SSoT for the version.
+- **Requirements:**
+    - Link to this task's walkthrough (`POV-XXX-walkthrough.md`).
+    - Link to this task's retrospective (`POV-XXX-retrospective.md`).
+- **Location:** `docs/versions/vX.Y.Z/version.md`
 
 ### 1.6 Operational Constraints (NFR Alignment)
 - **Goal:** Define *how well* the feature must perform to meet project standards.
@@ -60,19 +61,21 @@ To achieve "Perfection Tier" planning, every version must produce or update the 
 
 ## 2. Infrastructure Standards (Directory Pattern)
 
-All version-specific planning artifacts MUST be isolated in a dedicated directory:
+All version-specific artifacts MUST be isolated in a dedicated directory:
+
 - **Path Pattern:** `docs/versions/vX.Y.Z/`
-- **Mandatory Files:** `planning-process.md`, `tasks.md`.
+- **Mandatory File:** `version.md` — the version hub, created at the end of the first task of the version.
+- **Per-Task Files:** `POV-XXX-walkthrough.md`, `POV-XXX-retrospective.md` — one pair per task.
 - **Optional Files:** `ui-ux-manifesto.md`, `i18n-audit.md` (as per Protocol Elasticity).
 
 ### 2.1 Traceability Matrix
-Every User Story in the planning document MUST be mapped to:
+Every User Story in `agent_logs/task.md` MUST be mapped to:
 1.  A **Use Case** (`use_cases.md`).
 2.  A **Test Case** (`test_specification.md`).
 3.  A specific **Task ID** (`POV-XXX`).
 
 ### 2.2 Expert Triad Review
-Mandatory evaluation section in the planning process document covering:
+Mandatory evaluation section in the archived plan (`agent_logs/<task id> <task title> plan.md`) covering:
 - **Security Audit**: Port exposures, data masking, and access guards.
 - **i18n Readiness**: Impact on localization files and string management.
 - **Ops Readiness**: Rollback/panic-switch procedures in `RUNBOOK.md`.
@@ -105,7 +108,7 @@ The planning suite MUST pass the automated validator check:
 
 ## 3. Communication Standards
 - **Phased Approach:** 1. Strategic Selection -> 2. Technical Design -> 3. Testing Philosophy.
-- **Discussion Points:** Document "Why we chose B over A" in the planning process doc.
+- **Discussion Points:** Document "Why we chose B over A" in the archived plan (`agent_logs/<task id> <task title> plan.md`).
 - **Expert Triad Review:** Mandatory section for Security and i18n audits.
 
 ---
@@ -121,17 +124,19 @@ The planning suite MUST pass the automated validator check:
 
 ## 5. Protocol Elasticity
 
-To ensure pragmatism and speed, the protocol is **Elastic**. Not every version requires every artifact:
+To ensure pragmatism and speed, the protocol is **Elastic**. Not every task requires every artifact:
 
-- **UI/UX Manifesto:** Mandatory only for versions with user-facing interface changes.
+- **UI/UX Manifesto:** Mandatory only for tasks with user-facing interface changes.
 - **ADRs:** Mandatory only for architectural pivots or security-critical flows.
 - **i18n Audit:** Mandatory only if new strings are introduced.
 
-**Requirement:** If an artifact is skipped, a brief justification MUST be included in the `vX.Y.Z-planning-process.md` under the "Scope" or "Justification" section.
+**Requirement:** If an artifact is skipped, a brief justification MUST be included in `agent_logs/task.md` under the "Scope" or "Justification" section.
 
 ---
 
 ## Revision History
-| Version | Date       | Author       | Changes                                                                 |
-|:--------|:-----------|:-------------|:------------------------------------------------------------------------|
-| 1.0     | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol.    |
+
+| Version | Date | Author | Changes |
+| --- | --- | --- | --- |
+| 1.1 | 2026-05-27 | Povzetkar AI | Task-First Planning (POV-191): scoped §1 artifacts from version to task level; updated §2 mandatory files to `version.md` + per-task walkthrough/retrospective; updated §5 elasticity justification location. §2.5 unchanged. |
+| 1.0 | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol. |

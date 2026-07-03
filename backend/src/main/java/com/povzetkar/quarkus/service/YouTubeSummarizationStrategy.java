@@ -54,6 +54,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             return false;
         }
 
+        persistTranscript(video);
+
         try {
             String summaryText = generateSummary(client, video, content);
             persistSummary(video, summaryText, orchestrationDate);
@@ -170,6 +172,28 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         
         updateStatusInNewTransaction(video.id, video.title, status, error, e.getMessage());
         return false;
+    }
+
+    private void persistTranscript(YouTubeVideo video) {
+        if (video.transcript == null || video.transcript.isBlank()) {
+            return;
+        }
+        try {
+            QuarkusTransaction.requiringNew().run(() -> {
+                YouTubeVideo attachedVideo = YouTubeVideo.findById(video.id);
+                if (attachedVideo != null
+                        && (attachedVideo.transcript == null || attachedVideo.transcript.isBlank())) {
+                    attachedVideo.transcript = video.transcript;
+                }
+            });
+        } catch (Exception e) {
+            logger.warn(
+                LogKeys.ACTION, LogKeys.PERSIST_TRANSCRIPT,
+                LogKeys.STATUS, LogKeys.FAILED,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.ERROR_MESSAGE, e.getMessage()
+            );
+        }
     }
 
     private void updateStatusInNewTransaction(Long videoId, String title, ProcessingStatus status, ContentProcessingError errorCode, String errorMessage) {

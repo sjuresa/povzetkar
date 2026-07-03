@@ -236,9 +236,30 @@ This document outlines the concrete steps for implementing the features describe
     *   **External Links Open in New Tab** (POV-186): `rehype-external-links` plugin in all ReactMarkdown call-sites.
     *   **Session Expiry Handling** (POV-187): 401 interceptor redirects to landing page (`/`) with `notice=session_expired`; `returnTo` preserved in `sessionStorage`; ErrorPage reserved for true fatal errors.
 
-## v0.18: Hardening & Operational Excellence
+## v0.18: Transcript Ingestion Resilience & Scheduler Correctness
 
-**Goal:** Integrate advanced security auditing into the release cycle and complete observability/operational maturity work deferred from v0.17.0.
+**Goal:** Harden the pipeline that feeds content into summarization — make transcript ingestion survive a hostile, rate-limiting upstream, and make the scheduler that drives it actually run reliably. This version was scoped task-first — the theme emerged from following the transcript-pipeline work rather than from up-front planning.
+**Status:** ✅ Completed
+
+### Key Tasks & Implementation Steps:
+1.  **Transcript Ingestion Resilience:**
+    *   **Transcript Proxy Service** (POV-193): standalone, stateless FastAPI proxy fetching a single YouTube transcript per request, deployable on a non-blocked host.
+    *   **`ProxyTranscriptProvider`** (POV-194): Quarkus integration as the now-primary `TranscriptProvider`, with caller-side skip-first jitter throttle.
+    *   **Proxy Relocation to Synology DS220j** (POV-196): moved from Railway (soft-throttled shared egress IP) to a self-hosted box reached over Tailscale; Railway kept as passive fallback.
+    *   **Persist Transcript Before Gemini Call** (POV-198): best-effort pre-write so 503/429 retries no longer re-fetch from scratch.
+2.  **Scheduler Correctness:**
+    *   **Scheduled Orchestration Fix & Periodic Cron** (POV-197): fixed orchestration that had never run on a schedule (`BlockingOperationNotAllowedException`); consolidated into a single hourly periodic cron.
+3.  **Cost & Accounting:**
+    *   **RPD-Accurate GenAI Counting** (POV-195): daily usage now reflects true RPD consumption; disabled the Google SDK's hidden 5× retry; surfaced an "Errors" column.
+4.  **Security & Access:**
+    *   **Fix Trivy Security Vulnerabilities** (POV-199): cleared all blocking CVEs (Netty, form-data, Go builder, OpenTelemetry).
+    *   **Fix Demo User Access** (POV-192): `SOURCE_VIEW` added to `DEMO_PERMISSIONS`; demo write controls hidden; demo topic seed corrected (V35).
+5.  **Process:**
+    *   **Task-First Planning** (POV-191): evolved the development methodology from version-gated to task-first delivery.
+
+## v0.19: Hardening & Operational Excellence
+
+**Goal:** Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Planned — scope and version label may change; confirmed retrospectively when the work is done.)*
 
 ### Key Tasks & Implementation Steps:
 1.  **Security Hardening:**
@@ -321,6 +342,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.8     | 2026-06-26         | Povzetkar AI | Marked v0.18.0 as ✅ Completed and rewrote its scope to reflect actual task-first delivery (Transcript Ingestion Resilience & Scheduler Correctness, POV-191…200). The originally-planned hardening scope (DAST, Grafana alerting, full-text search, additional providers, SMTP) was carried forward to `v0.19: Hardening & Operational Excellence` as a forecast — under the task-first model the actual scope and version label are confirmed retrospectively. |
 | 3.7     | 2026-05-24         | Povzetkar AI | Marked v0.17.0 as ✅ Completed.                                                                                                                                                                                   |
 | 3.6     | 2026-05-20         | Povzetkar AI | Refined v0.17.0 scope to "Administrative Control & User Onboarding". Inserted v0.18.0 for "Hardening & Operational Excellence" (DAST, Grafana alerts, full-text search, additional transcript providers, SMTP). |
 | 3.5     | April 13, 2026     | Antigravity AI | Marked v0.16.0 as completed and finalized version documentation.                                                                          |

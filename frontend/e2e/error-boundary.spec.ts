@@ -18,7 +18,7 @@ test.describe('Global Error Handling', () => {
             id: 1, 
             name: 'Test Administrator', 
             email: 'admin@povzetkar.ai', 
-            permissions: ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW'] 
+            permissions: ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW', 'TOPIC_CREATE', 'TOPIC_DELETE']
           },
           error: null,
           meta: { timestamp: new Date().toISOString() }

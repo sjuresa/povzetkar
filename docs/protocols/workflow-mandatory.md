@@ -37,20 +37,28 @@ For every request that requires modifying code, I **MUST** follow this exact seq
 **Step 6: Initialize Task Logs**
 *   After archiving the plan, my next action is to formalize the task logs.
 *   I will confirm the task ID and title from the `agent_logs/task.md` file or from you directly.
-*   I will create a permanent record of the task by copying the content of `agent_logs/task.md` to a new file named `agent_logs/<task id> <task title>.md`.
+*   I will create a permanent record of the task by copying the content of `agent_logs/task.md` to a new file named `agent_logs/<task id> <task title> task.md`.
 *   I will create a new, empty file named `agent_logs/<task id> <task title> execution.md`. This file will serve as the complete log for all subsequent actions.
 
 **Step 7: Handle Unplanned Discoveries**
-*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `docs/sdlc/11_development_checklist.md` (step `2.10. Handle Unplanned Discoveries`).
+*   During execution, if I encounter an issue not covered by the current task, I will follow the protocol in `docs/sdlc/11_development_checklist.md` (step `2.14. Handle Unplanned Discoveries`).
 *   I will assess its criticality and alignment with the current version's goals and either propose an immediate plan update or log it in `docs/backlog/improvements.md` for future planning.
 
 **Step 8: Execute Plan and Log Progress**
 *   I will now execute the approved plan step-by-step.
 *   Every action will be logged in the `agent_logs/<task id> <task title> execution.md` file, following the **Literal Execution Protocol**.
+*   **Timestamp Mandate:** Every log entry in the execution file MUST be prefixed with a timestamp in the format `[YYYY-MM-DD HH:MM UTC]`. No entry is valid without a timestamp.
+*   **Phase Milestones:** The following phase boundaries MUST be explicitly logged with timestamps:
+    *   `[YYYY-MM-DD HH:MM UTC] Implementation started`
+    *   `[YYYY-MM-DD HH:MM UTC] Implementation completed`
+    *   `[YYYY-MM-DD HH:MM UTC] Code review started`
+    *   `[YYYY-MM-DD HH:MM UTC] Code review completed`
 
-**Step 9: Update `CHANGELOG.md`, Update Retrospective, Extract Knowledge, Propose Commit Message and Await Final Confirmation**
+**Step 9: Update `CHANGELOG.md`, Write Walkthrough and Retrospective, Update Version Hub, Extract Knowledge, Propose Commit Message and Await Final Confirmation**
 *   After all planned code modifications have been completed and have passed the **Final Behavioral Verification (The Test Mandate)** defined in `docs/protocols/verification.md` — which requires running the full test suite, not just task-related tests — my immediate action will be to announce and execute **Step 2.6: Update `CHANGELOG.md`**.
-*   **Update Retrospective:** I will then update the current version's retrospective file (e.g., `docs/retrospectives/vX.Y-retrospective.md`). I will append any relevant observations, friction points, or learnings from this task to the "What Went Well", "What Didn't Go Well", or "What Have We Learned" sections. I will **not** create a new file.
+*   **Write Walkthrough:** I will write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` covering: what was done, planned vs. actual scope, time delta, and deviations. If `docs/versions/vX.Y.Z/` does not yet exist, I will create it with an initial `version.md` containing the task list table structure.
+*   **Write Task Retrospective:** I will write the per-task retrospective file `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` covering: planned vs. actual scope, deviations and their rationale, technical findings, and feed-forward notes for the next task. This is a new file created for each task, not an append to a shared file.
+*   **Update Version Hub:** I will add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
 *   **Extract Knowledge:** I will explicitly identify any systemic bug fixes, architectural choices, testing constraints, or technical hurdles overcome during this task. If any exist, I MUST append them to `docs/process/lessons-learned.md` to ensure they are available for future tasks.
 *   **Capture Improvements:** I will verify if any non-critical improvements or refactoring opportunities were identified during execution and ensure they are logged in `docs/backlog/improvements.md`.
 *   After updating `CHANGELOG.md`, I will generate and propose a commit message. In accordance with the **Execution Logging Mandate**, the generation and proposal of the commit message will be logged in the execution log.

@@ -90,6 +90,10 @@ All transcript classes live in `com.povzetkar.quarkus.service.transcript`:
 
 Adding ytscribe or transcriptapi reduces to: implement a `TranscriptProvider` adapter, append to `transcript.providers.order`. No abstraction change required. The provider order is runtime-configurable — Supadata or a future provider can become the primary without code changes.
 
+> **Update (v0.18.0 / POV-194):** A third provider, `ProxyTranscriptProvider` (`name()="proxy"`), was added against the POV-193 transcript proxy and made the **primary** source (`transcript.providers.order=proxy,youtube-legacy,supadata`) — validating the above with zero interface or orchestrator changes. It applies its own caller-side 15–45s jitter, **throttled to sequential calls** — the jitter is skipped for the first/isolated call (e.g. the manual admin "Fetch Transcript" button) and applied only when the previous call was within `jitterMaxMs`, so batch ingestion stays protected while the manual UI path is responsive. Note: it has no quota concept, so it never throws `QuotaExhaustedException`.
+>
+> **Update (v0.18.0 / POV-196):** The transcript proxy **host moved from Railway to a self-hosted Synology DS220j**, reached over a Tailscale overlay. Railway's shared datacenter egress IP was being soft-throttled by YouTube (intermittent `502 proxy_blocked` interleaved with `200`s on the same video — evidence of volume-based throttling, not a hard ban or cold-start). A residential, always-on egress IP is throttled far less. **No application code changed** beyond the env-pointed `TRANSCRIPT_PROXY_URL`; the only proxy code change was per-branch failure logging (so `IpBlocked` vs `RequestBlocked` vs `upstream_error` are unambiguous). Railway is kept as a **passive, manual fallback** — one host active at a time, switched via `TRANSCRIPT_PROXY_URL`, both accepting the same `X-API-Key`. Operational detail in RUNBOOK §16.1b.
+
 ## Consequences
 
 **Positive:**
@@ -102,7 +106,7 @@ Adding ytscribe or transcriptapi reduces to: implement a `TranscriptProvider` ad
 **Negative:**
 
 - **Latency in Failure Cases:** Fallback chain means a fully-failed primary provider adds its timeout (10s) before the secondary attempt. Acceptable trade-off; orchestration is already a background process.
-- **Configuration Surface:** New env vars + flags increase the operational checklist. Documented in [RUNBOOK.md](../../../RUNBOOK.md).
+- **Configuration Surface:** New env vars + flags increase the operational checklist. Documented in [RUNBOOK.md](../RUNBOOK.md).
 - **Test Doubles Required:** Unit tests of the orchestrator use provider mocks; `SupadataClient` is mocked via `@InjectMock` in tests.
 
 ## Alternatives Considered
@@ -110,6 +114,6 @@ Adding ytscribe or transcriptapi reduces to: implement a `TranscriptProvider` ad
 1. **All three providers integrated in v0.17.0 (Rejected):** Triples integration cost without proportional value. Abstraction lets us add providers as commodity work.
 2. **Only jitter delay, no abstraction (Rejected):** Treats symptoms, not the root architectural fragility. Doesn't help if YouTube scrape path is broken by a DOM change or OCI IP block.
 3. **Quota-aware routing (Deferred):** Smart routing based on `remainingQuota()` would prefer the cheapest available provider per-fetch. Deferred until quota tracking has produced enough data to inform a routing policy. v0.17.0 uses simple ordered-fallback.
-4. **Caching layer in front of providers (Out of Scope):** A `transcript_cache` table keyed on video URL would eliminate redundant fetches. Recognized as valuable, but orthogonal to the multi-provider concern. Logged in [improvements.md](../../backlog/improvements.md).
+4. **Caching layer in front of providers (Out of Scope):** A `transcript_cache` table keyed on video URL would eliminate redundant fetches. Recognized as valuable, but orthogonal to the multi-provider concern. Logged in [improvements.md](../backlog/improvements.md).
 5. **`fetch(String videoUrl)` interface contract (Rejected):** Interface was drafted with full URL. Spike revealed callers already hold `videoId`; constructing URLs at the call site would be noisy. Each provider constructs its own URL format internally — cleaner separation.
 6. **`TranscriptResult` sealed interface instead of exceptions (Rejected):** More verbose for a simple two-outcome case. Checked exceptions map naturally to the orchestrator's try/catch fallback loop.

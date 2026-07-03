@@ -6,6 +6,44 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.18.0)
+
+> [!WARNING]
+> **Persist expensive fetches before fallible external calls — best-effort, idempotent (POV-198)**:
+> `ContentCreationService.createContentForVideo()` sets `video.transcript` on a detached JPA object. This value only exists in heap until explicitly written to DB. Any exception between fetch and `persistSummary()` (e.g. Gemini 503) silently loses the transcript — no error surfaces, but the next retry pays full fetch cost again. Pattern: add a `persistX()` method called immediately after a successful fetch, before the external call. It must be (1) idempotent — check `attachedEntity.field == null` before writing to avoid double-writes on retry; (2) best-effort — catch, log warn, continue so it does not introduce a new failure mode. The outer null-check (`detached.field == null`) avoids an unnecessary DB roundtrip when nothing was fetched. Apply this pattern whenever an expensive fetch precedes a fallible AI/external call.
+
+> [!WARNING]
+> **`@Scheduled` methods with blocking DB calls must return `void`, not `Uni<Void>` (POV-197)**:
+> Quarkus Scheduler 3.36 invokes `Uni<Void>`-returning `@Scheduled` methods on the **IO thread** and ignores `@Blocking` when the return type is `Uni<Void>`. Any synchronous blocking call before the `Uni` pipeline starts throws `BlockingOperationNotAllowedException`. The correct pattern: return `void`, add `@Blocking`, and end the pipeline with `.await().indefinitely()`. With `void` return type, `@Blocking` is honoured and the method runs on a worker thread where blocking is safe. This is not caught by unit tests that mock the blocking dependency — it only surfaces with a live DB.
+
+> [!WARNING]
+> **`YouTubeFetchingStrategy` returns all fetched items including `SKIPPED_TOO_SHORT` — callers must filter (POV-197)**:
+> `YouTubeFetchingStrategy.fetch()` persists short videos with `SKIPPED_TOO_SHORT` status and still returns them in the result list. Any caller that passes this list to a summarization scheduler must filter to `processingStatus == PENDING` first — otherwise short videos get summarized despite being marked as skipped. Pattern: `items.stream().filter(i -> i.processingStatus == ProcessingStatus.PENDING).toList()` before scheduling.
+
+> [!TIP]
+> **Set `quarkus.vertx.max-worker-execute-time` for long-running `@Blocking @Scheduled` methods (POV-197)**:
+> Vert.x default worker thread timeout is 60 s. Orchestration runs (transcript fetch + Gemini summarization) easily exceed this, producing misleading `Thread blocked` WARN entries. Set to a value that covers the worst-case run — `600S` (10 min) for hourly orchestration.
+
+> [!WARNING]
+> **New env vars must be explicitly listed in `docker-compose.prod.yml` (POV-194)**:
+> The `app` service injects only the env vars it explicitly enumerates under `environment:`. `--env-file .env` makes a variable available for `${...}` substitution *inside* the compose file, but does NOT pass it into the container unless it is listed. A missing `TRANSCRIPT_PROXY_API_KEY` meant the container used the placeholder default, the proxy returned 401, and every fetch fell through to the IP-blocked YouTube-legacy provider on OCI. It worked locally only because Quarkus reads `.env` directly in dev. **When adding any new env-backed config, add it to the prod compose `environment:` list (mirror the existing required-var pattern `${VAR:?VAR must be set}`).**
+
+> [!WARNING]
+> **Resolve REST-client header secrets via `@ConfigProperty`, not a `@ClientHeaderParam` expression (POV-194)**:
+> `@ClientHeaderParam(value = "${...}")` did not resolve reliably at runtime — both the env-name-with-empty-default form (`${VAR:}`) and a config-property path sent the literal string and failed with "Failed to convert value for property". The proven pattern (used by the YouTube/Google keys) is to inject the value with `@ConfigProperty` into the bean and pass it to the client as an explicit `@HeaderParam` argument. `@ConfigProperty` resolution works across dev/test/prod; the annotation-level expression does not.
+
+> [!TIP]
+> **Jitter is a throttle between *sequential* calls, not a per-call delay (POV-194)**:
+> A fixed pre-call sleep penalises the first/isolated call (e.g. a manual admin "Fetch Transcript" click sharing the orchestrator path) for no benefit — the first request in a sequence has nothing to space against. Apply jitter only when the previous invocation was within the max-jitter window. Use `AtomicLong.getAndSet()` for the timestamp since an `@ApplicationScoped` bean is hit concurrently. Over-applying jitter is the safe direction (just a delay); under-applying it loses the rate-limit protection.
+
+> [!WARNING]
+> **Verify third-party library API surface before pinning versions in a plan (POV-193)**:
+> The approved plan pinned `youtube-transcript-api==0.6.3` (nonexistent — last 0.6.x is 0.6.2) with static method signatures that the maintained 1.x line had since replaced with instance methods. Caught only at install time. For external libraries, install + introspect during the planning interview — the "Know The API" principle applies to PyPI/npm deps, not just internal code. Also: this library requires Python `<3.14`; the machine's default 3.14 failed, needing a 3.13 venv.
+
+> [!TIP]
+> **Don't use HTTP 425 Too Early for domain "not ready yet" states (POV-193)**:
+> 425 carries TLS 1.3 early-data/replay semantics — some clients/proxies auto-retry it *immediately*, the opposite of a "retry much later" intent. Prefer a transport-level code (404) plus a domain `reason` field in the body (`not_available_yet` vs `video_unavailable`). Keeps HTTP codes transport-level and domain state in the payload.
+
 ## 🚀 Recent Highlights (v0.17.0)
 
 > [!WARNING]
