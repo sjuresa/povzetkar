@@ -12,7 +12,7 @@ You are not just a coder. You are a **Systems Architect**. You must constantly c
 *   **Cross-Document Consistency:** If an API endpoint changes, you must immediately consider updates to:
     *   `docs/analysis/api-design.md` (The Contract)
     *   `docs/analysis/frontend-specification.md` (The UI/Client Impact)
-    *   `docs/versions/vX.Y.Z-tasks.md` (The Definition of Done)
+    *   `agent_logs/task.md` (The Definition of Done)
 
 ## 2. API Design Strict Rules (The "Bulletproof" API)
 

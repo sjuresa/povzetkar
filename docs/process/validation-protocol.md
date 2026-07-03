@@ -8,15 +8,15 @@ The Planning Validator ensures that our "Code is Truth" principle is upheld acro
 
 ## 2. Phase-Specific Response Protocol
 
-### Phase 1: Version Planning (The Logic Gate)
-*   **Trigger**: Manual execution during the "Final Expert Review" (Checklist 1.11).
-*   **Target**: `docs/versions/vX.Y.Z-tasks.md`.
+### Phase 1: Task Planning (The Logic Gate)
+*   **Trigger**: Manual execution during task planning (Checklist 2.2), before plan approval.
+*   **Target**: `agent_logs/task.md` and archived task definitions (`agent_logs/POV-* task.md`).
 *   **Violation Type**: Broken link or missing UC-TC mapping.
 *   **Action**: **Plan Rejected**.
 *   **Recovery**: The plan cannot be approved if the validator fails. You must re-align the task context links with the existing IDs in `use_cases.md` or add the missing test cases to the Master Spec before starting implementation.
 
 ### Phase 2: Task Execution (The Traceability Gate)
-*   **Trigger**: Manual execution as part of the "Master Specification Sync" (Checklist 2.11).
+*   **Trigger**: Manual execution as part of the "Master Specification Sync" (Checklist 2.14).
 *   **Target**: Modified `docs/analysis/` and current task logs.
 *   **Violation Type**: New implemented logic missing from the Master Spec or broken ID mapping.
 *   **Action**: **Task Incomplete**.
