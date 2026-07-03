@@ -23,7 +23,7 @@ Our development process is a **Pragmatic Hybrid Agile** approach, tailored speci
     *   Defines the vision and roadmap (`roadmap.md`).
     *   Prioritizes tasks for each version.
     *   Reviews and **explicitly approves** every plan proposed by the Agent.
-    *   Executes the tests and verifies the final behavior (since the Agent cannot run code).
+    *   Reviews test results and verifies the final behavior. The Agent runs the test suite itself; the User is the quality gate that confirms the outcome and approves the result.
     *   Provides the "Definition of Done" confirmation.
 
 ### 2.2. The Developer (Agent)
@@ -68,7 +68,7 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 4.  **Execute (TDD):**
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
-5.  **Verify & Code Review:** The User runs the tests and performs a code review.
+5.  **Verify & Code Review:** The Agent runs the full test suite; the User reviews the results and performs a code review.
 6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
 7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered.
 8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.
