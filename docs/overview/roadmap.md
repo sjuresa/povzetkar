@@ -259,7 +259,8 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.19: Hardening & Operational Excellence
 
-**Goal:** Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Planned — scope and version label may change; confirmed retrospectively when the work is done.)*
+**Goal:** Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Scope is a forecast — under the task-first model the actual scope and version label are confirmed retrospectively when the work is done.)*
+**Status:** 🚧 In Progress
 
 ### Key Tasks & Implementation Steps:
 1.  **Security Hardening:**
@@ -342,6 +343,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 3.9     | 2026-07-03         | Povzetkar AI | Marked v0.19 as In Progress at version initialisation (POV-201).                                                                                                         |
 | 3.8     | 2026-06-26         | Povzetkar AI | Marked v0.18.0 as ✅ Completed and rewrote its scope to reflect actual task-first delivery (Transcript Ingestion Resilience & Scheduler Correctness, POV-191…200). The originally-planned hardening scope (DAST, Grafana alerting, full-text search, additional providers, SMTP) was carried forward to `v0.19: Hardening & Operational Excellence` as a forecast — under the task-first model the actual scope and version label are confirmed retrospectively. |
 | 3.7     | 2026-05-24         | Povzetkar AI | Marked v0.17.0 as ✅ Completed.                                                                                                                                                                                   |
 | 3.6     | 2026-05-20         | Povzetkar AI | Refined v0.17.0 scope to "Administrative Control & User Onboarding". Inserted v0.18.0 for "Hardening & Operational Excellence" (DAST, Grafana alerts, full-text search, additional transcript providers, SMTP). |
