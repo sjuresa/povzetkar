@@ -8,15 +8,15 @@ The Planning Validator ensures that our "Code is Truth" principle is upheld acro
 
 ## 2. Phase-Specific Response Protocol
 
-### Phase 1: Version Planning (The Logic Gate)
-*   **Trigger**: Manual execution during the "Final Expert Review" (Checklist 1.11).
-*   **Target**: `docs/versions/vX.Y.Z-tasks.md`.
+### Phase 1: Task Planning (The Logic Gate)
+*   **Trigger**: Manual execution during task planning (Checklist 2.2), before plan approval.
+*   **Target**: Archived task definitions (`agent_logs/POV-* task.md` — the validator's `tasks_glob`). The active `agent_logs/task.md` enters the validated set once archived per `workflow-mandatory.md` Step 6; until then its context links are checked manually during the planning interview.
 *   **Violation Type**: Broken link or missing UC-TC mapping.
 *   **Action**: **Plan Rejected**.
 *   **Recovery**: The plan cannot be approved if the validator fails. You must re-align the task context links with the existing IDs in `use_cases.md` or add the missing test cases to the Master Spec before starting implementation.
 
 ### Phase 2: Task Execution (The Traceability Gate)
-*   **Trigger**: Manual execution as part of the "Master Specification Sync" (Checklist 2.11).
+*   **Trigger**: Manual execution as part of the "Master Specification Sync" (Checklist 2.14).
 *   **Target**: Modified `docs/analysis/` and current task logs.
 *   **Violation Type**: New implemented logic missing from the Master Spec or broken ID mapping.
 *   **Action**: **Task Incomplete**.
@@ -49,5 +49,6 @@ If a violation is intentional or a known edge case, it can be bypassed inline:
 ## 5. Revision History
 | Version | Date | Author | Changes |
 | :--- | :--- | :--- | :--- |
+| 1.2 | 2026-07-03 | Povzetkar AI | Task-first alignment (POV-201): Phase 1 gate retitled to Task Planning with target corrected to the validator's actual scope (`agent_logs/POV-* task.md`); Phase 2 trigger renumbered to Checklist 2.14. |
 | 1.1 | March 30, 2026 | Povzetkar AI | Added support for Version-Aware Skips (`until vX.Y.Z`). |
 | 1.0 | March 30, 2026 | Povzetkar AI | Initialized protocol for automated planning validation (POV-167). |

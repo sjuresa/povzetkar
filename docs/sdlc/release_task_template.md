@@ -15,6 +15,7 @@ Finalize all documentation for the vX.Y.Z release. This involves cleaning up the
     *   Add a new, empty `[Unreleased]` section at the top.
 2.  **Cross-Task Version Retrospective (`docs/versions/vX.Y.Z/retrospective.md`):**
     *   Write the version-level retrospective as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`. This is not a collection of task findings; it is a pattern-level synthesis across them.
+    *   The retrospective **must** end with a **Carry-Forward Themes** section — version-level threads for the next version. This section is the mandatory input for the next version's initialisation review (checklist step 1.5), where each theme is dispositioned into the new version hub's Carry-Forward Review table.
 3.  **Version Hub (`docs/versions/vX.Y.Z/version.md`):**
     *   Update the status to `Completed`.
     *   Add a scope statement summarising what the version delivered.
@@ -38,5 +39,6 @@ Finalize all documentation for the vX.Y.Z release. This involves cleaning up the
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| 2.1 | 2026-07-03 | Povzetkar AI | Retrospective Review Process (POV-201): the version retrospective must end with a Carry-Forward Themes section — the input consumed by the next version's initialisation review (checklist step 1.5). |
 | 2.0 | 2026-06-26 | Povzetkar AI | Synced with task-first methodology (POV-191): added cross-task version retrospective (`docs/versions/vX.Y.Z/retrospective.md`) and version-hub status/scope update; replaced legacy `docs/retrospectives/`, `vX.Y.Z-tasks.md`, and `vX.Y.Z-planning-process.md` paths with the version-hub structure; expanded General Refresh and methodology review scope to match Phase 3 of `11_development_checklist.md`. |
 | 1.0 | — | Povzetkar AI | Initial template (version-gated planning model). |

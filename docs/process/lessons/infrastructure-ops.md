@@ -75,3 +75,15 @@ Automated UX scripts can produce high volumes of false positives if their regex 
     2. **Domain Directory**: Links to the specialized sub-guides.
     3. **Archive Link**: Navigation to legacy historical logs.
   This ensures that the most critical "Standard of Truth" information is immediately visible without wading through historical debt.
+
+---
+
+## Windows Tooling for UTF-8 Documentation (POV-201)
+
+### PowerShell 5.1 Get-/Set-Content Corrupts UTF-8 Files
+- **The Trap:** Round-tripping a UTF-8 (no BOM) markdown file through PS 5.1 `Get-Content` + `Set-Content` silently double-encodes multi-byte characters (emoji, en-dashes become mojibake like `âœ…`) — `Get-Content` defaults to ANSI on BOM-less files. The damage touches every non-ASCII character in the file, not just the edited line.
+- **The Standard:** Never bulk-rewrite documentation files via PS 5.1 cmdlets. Use the harness Edit tool for content changes; for mechanical transforms (padding, renumbering) use a `node -e` one-liner with `fs.readFileSync(p,'utf8')`/`writeFileSync(...,'utf8')`, and preserve CRLF explicitly when splitting on `\n`. Recover from corruption with `git checkout -- <file>`, then re-apply edits.
+
+### update-version.cjs Requires Repo Root on PATH in Sandboxed Shells
+- **The Trap:** `scripts/update-version.cjs` invokes `mvnw.cmd` without a `.\` prefix; in restricted shells the child `cmd.exe` does not resolve it from the working directory and the version bump fails.
+- **The Standard:** Prepend the repo root to `PATH` for the invocation (`$env:Path = "<repo>;$env:Path"`) or harden the script to call `path.join(rootDir, mvnw)` (tracked in `improvements.md`).

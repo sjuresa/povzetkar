@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- (POV-201) **Retrospective review process**: closed the consumption gap left by the task-first methodology (POV-191) — retrospectives were written but never formally read. Version initialisation (Phase 1) now creates the version hub up front and reviews the previous version's Carry-Forward Themes with an explicit per-theme disposition (backlog / task candidate / conscious drop) recorded in the new hub's Carry-Forward Review table; every task Brainstorm now starts by reading the Feed-forward sections of the current version's task retrospectives. First application executed for v0.19.0 (all four v0.18.0 themes dispositioned). Stale pre-POV-191 references swept from live process documents.
+
 ## [0.18.0] - 2026-06-26
 
 ### Summary

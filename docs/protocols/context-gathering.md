@@ -8,9 +8,11 @@ To ensure my proposals are well-informed and aligned with the project's current 
     -   `docs/sdlc/11_development_checklist.md`: For the step-by-step process of any given phase.
     -   `docs/sdlc/07_development_methodology_comparison.md`: To understand our agreed-upon agile hybrid methodology.
     -   `docs/guides/testing.md`: For testing patterns and best practices.
--   **Version-Specific Documents:**
-    -   `docs/versions/vX.Y-planning-process.md`: For the rationale and strategic decisions of the current version.
-    -   `docs/versions/vX.Y-tasks.md`: For the specific, agreed-upon tasks for the current version.
+-   **Task & Version-Specific Documents:**
+    -   `agent_logs/task.md`: The current task's definition — scope, requirements, brainstorm decisions, and Documentation section.
+    -   `docs/versions/vX.Y.Z/version.md`: The version hub — completed tasks and the Carry-Forward Review inherited from the previous version.
+    -   `docs/versions/vX.Y.Z/POV-XXX-retrospective.md`: Task retrospectives of the current version — the Feed-forward sections are mandatory Brainstorm input; Technical Findings are the durable record of patterns and gotchas.
+    -   `docs/versions/vX.Y.Z/retrospective.md` (previous version): The cross-task synthesis reviewed at version initialisation.
 -   **Backlog & Technical Guides:**
     -   `docs/backlog/`: To be aware of non-critical issues and ideas for the future.
     -   `docs/RUNBOOK.md`: For technical setup and operational procedures.
