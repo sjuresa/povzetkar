@@ -63,7 +63,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
     2. **Deviations & why** — decisions made mid-execution and their rationale.
     3. **Technical findings** — patterns, gotchas, and constraints discovered; the durable record for future tasks.
     4. **Feed-forward** — what the next task should know.
-- [ ] **2.12. Update Version Hub:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`.
+- [ ] **2.12. Update Version Hub:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`. (Safety net: if the hub does not exist — e.g. the version was started without a full Phase 1 — create it first per step 1.4 and flag the gap to the PO.)
 - [ ] **2.13. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
   - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
   - **If both YES:** Pause, discuss, and agree to address it within the current task or as an immediate follow-up task.

@@ -80,7 +80,7 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 
 *Goal: Declare the version complete and prepare for release. Triggered by an explicit PO decision — there is no task list to signal completion.*
 
-1.  **Version Retrospective:** Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`.
+1.  **Version Retrospective:** Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health — ending with the Carry-Forward Themes consumed at the next version's initialisation. Input: all task retrospectives in `docs/versions/vX.Y.Z/`.
 2.  **Scope Statement:** Add a scope statement to `docs/versions/vX.Y.Z/version.md`.
 3.  **Documentation Review:** Review project-wide docs to ensure they match the new reality.
 4.  **Cleanup:** Finalise `pom.xml` (remove snapshots) and `CHANGELOG.md`.
