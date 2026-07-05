@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -10,8 +10,15 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
-import { SystemMetadata } from '../system/SystemMetadata';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
+
+// Lazy-loaded (POV-202): the changelog/roadmap modal pulls in the markdown pipeline
+// (react-markdown). It is default-closed, so we defer its code out of the authenticated
+// shell chunk and only fetch it when the user opens the modal. AppShell was the second
+// eager importer keeping SystemMetadata (+ markdown) in the initial-load graph.
+const SystemMetadata = lazy(() =>
+  import('../system/SystemMetadata').then((m) => ({ default: m.SystemMetadata }))
+);
 import { useAudioFeedback } from '../../hooks/useAudioFeedback';
 import { AccountStatusBanner } from '../account/AccountStatusBanner';
 
@@ -289,7 +296,11 @@ export function AppShell({ children }: AppShellProps) {
         </main>
       </div>
 
-      <SystemMetadata isOpen={isMetadataOpen} onClose={() => setIsMetadataOpen(false)} />
+      {isMetadataOpen && (
+        <Suspense fallback={null}>
+          <SystemMetadata isOpen={isMetadataOpen} onClose={() => setIsMetadataOpen(false)} />
+        </Suspense>
+      )}
       <Toaster 
         position="top-right" 
         expand={true} 

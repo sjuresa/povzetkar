@@ -13,6 +13,7 @@ This document defines the quality attributes and constraints of the Povzetkar sy
 *   **P-2 (Ingestion Throughput):** The system must be capable of ingesting and processing at least **1,000** new content items per hour.
 *   **P-3 (Report Generation):** Generation of a daily briefing report must complete within **5 minutes** of the scheduled time.
 *   **P-4 (Startup Time):** In a containerized environment, the backend service should be ready to accept requests within **5 seconds** of container start (leveraging Quarkus native compilation).
+*   **P-5 (Frontend Initial Load):** The landing-page **initial-load JavaScript payload** should stay at or below **~250 KB gzip** (aspirational ceiling), and the landing-page Lighthouse **performance score** should stay at or above **90** (measured on a local production build via `vite preview`). *Baseline (POV-202, 2026-07-05):* initial-load JS **167 KB gzip**, Lighthouse performance **93** (FCP 1.8 s, LCP 2.8 s) — measured after route-level code-splitting reduced the bundle from a 370 KB / score-85 pre-optimization state. This NFR is **aspirational / not yet CI-enforced**; it is the explicit anchor for a future bundle-size budget and Lighthouse-CI gate (see `docs/backlog/improvements.md`).
 
 ## 3. Scalability
 

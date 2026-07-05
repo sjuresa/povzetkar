@@ -6,6 +6,20 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.19.0)
+
+> [!WARNING]
+> **A `React.lazy`/`route.lazy` boundary only helps if it severs *every* eager path to the module (POV-202)**:
+> Lazy-loading a component in one consumer does nothing while another eager-graph module still statically imports it. Vite states this exactly in a build warning: `"X is dynamically imported by A but also statically imported by B, dynamic import will not move module into another chunk."` In POV-202, `SystemMetadata` was lazied in `LandingPage` but `AppShell` (eager, via the eager protected-layout route) kept a static import — the initial chunk did not shrink until *both* were lazied. **Before assuming a lazy boundary works, grep all importers** (`grep -rn "import.*ComponentName" src`) and check the Vite "also statically imported by" warnings after building. The eager-graph anchors are `router.tsx`, `App.tsx`, `AppShell.tsx`, `api/client.ts`, and any store imported by those.
+
+> [!TIP]
+> **gzip size, raw size, and executed-code size are three different performance budgets (POV-202)**:
+> When reasoning about first paint: **gzip** predicts *transfer time* only; **raw (uncompressed) bytes** drive *decompression + parse* cost (this dominates FCP/LCP); **executed-code size** drives *bootup* (parse+compile+execute). POV-202's FCP improved ~1 s though gzip shrank only ~200 KB — because the *raw* delta was ~745 KB. Meanwhile bootup barely moved despite ~40 chunks leaving the eager graph, because that code loaded but never *executed* on the landing page. Corollary: code-splitting wins big on transfer/parse of code that *isn't run* on the current route; it does little for code that executes regardless. Also: a dependency's `node_modules` install size ≠ its bundle contribution — the "~370 KB markdown pipeline" was 3.8 KB gzip in the built chunk. Always measure the built chunk.
+
+> [!TIP]
+> **TanStack Router code-based lazy routing keeps critical options eager (POV-202)**:
+> Pattern: `createLazyRoute('<full-route-id>')({ component })` in a `*.lazy.tsx` file, consumed by `createRoute({...}).lazy(() => import('./X.lazy').then(d => d.Route))`. **Critical options** (`beforeLoad`, `loader`, `validateSearch`, `path`) must stay in the eager `createRoute`; only `component`/`pendingComponent`/`errorComponent` go in the `.lazy` file. This is why keeping auth-guard *layout* routes eager neutralizes the lazy-behind-guard ordering hazard — the guard is a critical option that never defers, so it always runs before a child chunk is fetched. Note: when a layout route sets an explicit `id` (e.g. `id: 'authenticated'`), child route IDs are prefixed by it (`/authenticated/dashboard`), not the URL path — `tsc -b` catches mismatches.
+
 ## 🚀 Recent Highlights (v0.18.0)
 
 > [!WARNING]
