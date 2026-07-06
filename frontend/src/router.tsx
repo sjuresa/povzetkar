@@ -1,19 +1,8 @@
 import {createRootRouteWithContext, createRoute, createRouter, Outlet, redirect,} from '@tanstack/react-router';
 import {LandingPage} from './routes/LandingPage';
-import {DashboardPage} from './routes/DashboardPage';
-import {BriefingDetailPage} from './routes/BriefingDetailPage';
-import {BriefingLibraryPage} from './routes/BriefingLibraryPage';
-import {AuditLogPage} from './routes/AuditLogPage';
 import {ErrorPage} from './routes/ErrorPage';
-import {ProfilePage} from './routes/ProfilePage';
 import {AppShell} from './components/layout/AppShell';
-import {ContentManagementPage} from './routes/ContentManagementPage';
-import {TopicsPage} from './pages/topics/TopicsPage';
-import {SourcesLibraryPage} from './routes/SourcesLibraryPage';
-import {SourceDetailPage} from './routes/SourceDetailPage';
-import {PublicResolverPage} from './routes/PublicResolverPage';
-import {UsersPage} from './routes/UsersPage';
-import {AdminJobsPage} from './routes/AdminJobsPage';
+import {RoutePending} from './components/layout/RoutePending';
 
 // Define context for the router to enable type-safe auth guards
 interface MyRouterContext {
@@ -31,6 +20,7 @@ const rootRoute = createRootRouteWithContext<MyRouterContext>()({
 });
 
 // 2. Public Index Route (Landing Page)
+// Kept EAGER: this is the first-paint path for unauthenticated visitors (POV-202).
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
@@ -49,7 +39,9 @@ const indexRoute = createRoute({
 });
 
 // 3. Protected Layout Route
-// This route wraps all authenticated pages in the AppShell
+// This route wraps all authenticated pages in the AppShell.
+// Kept EAGER so its async auth `beforeLoad` guard runs BEFORE any lazy child chunk
+// is requested (POV-202: prevents the lazy-behind-guard ordering hazard).
 const protectedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'authenticated',
@@ -58,11 +50,11 @@ const protectedLayoutRoute = createRoute({
     if (!context.auth.isLoaded) {
       await context.auth.checkAuth();
     }
-    
+
     // We must read the fresh state from zustand, not the React snapshot,
     // because checkAuth() just updated the store asynchronously.
     const isActuallyAuthenticated = (await import('./store/authStore')).useAuthStore.getState().isAuthenticated;
-    
+
     // Final check - if still not authenticated, redirect to landing
     if (!isActuallyAuthenticated) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
@@ -77,63 +69,60 @@ const protectedLayoutRoute = createRoute({
 });
 
 // 4. Dashboard Route (Children of protected layout)
+// Lazy-loaded (POV-202). `beforeLoad`/critical options stay here; only `component`
+// is deferred into the `.lazy.tsx` wrapper.
 const dashboardRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/dashboard',
-  component: DashboardPage,
-});
+}).lazy(() => import('./routes/DashboardPage.lazy').then((d) => d.Route));
 
 const profileRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/me',
-  component: ProfilePage,
-});
+}).lazy(() => import('./routes/ProfilePage.lazy').then((d) => d.Route));
 
 // Topics Route
 const topicsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/topics',
-  component: TopicsPage,
-});
+}).lazy(() => import('./pages/topics/TopicsPage.lazy').then((d) => d.Route));
 
 // Briefing Library Route
 const briefingsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/briefings',
-  component: BriefingLibraryPage,
-});
+}).lazy(() => import('./routes/BriefingLibraryPage.lazy').then((d) => d.Route));
 
 // Sources Routes
 const sourcesRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/sources',
-  component: SourcesLibraryPage,
-});
+}).lazy(() => import('./routes/SourcesLibraryPage.lazy').then((d) => d.Route));
 
 const sourceDetailRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/sources/$sourceId',
-  component: SourceDetailPage,
-});
+}).lazy(() => import('./routes/SourceDetailPage.lazy').then((d) => d.Route));
 
 // 5. Briefing Detail Route
 const briefingDetailRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/briefings/$briefingId',
-  component: BriefingDetailPage,
-});
+}).lazy(() => import('./routes/BriefingDetailPage.lazy').then((d) => d.Route));
 
 // 6. Admin Routes
+// Layout kept EAGER (trivial `<Outlet/>` + permission `beforeLoad` guard); leaf
+// components are lazy-loaded (POV-202).
 const adminLayoutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/admin',
   beforeLoad: async () => {
     const user = (await import('./store/authStore')).useAuthStore.getState().user;
-    
+
     const hasAdminPerm = user?.permissions?.some(p =>
       ['ADMIN_AUDIT_LOG_VIEW', 'ADMIN_DASHBOARD_VIEW', 'USER_MGMT_VIEW'].includes(p)
     );
-    
+
     if (!hasAdminPerm) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: '/dashboard' });
@@ -145,33 +134,30 @@ const adminLayoutRoute = createRoute({
 const auditLogRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'audit-log',
-  component: AuditLogPage,
-});
+}).lazy(() => import('./routes/AuditLogPage.lazy').then((d) => d.Route));
 
 const contentManagementRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'content',
-  component: ContentManagementPage,
-});
+}).lazy(() => import('./routes/ContentManagementPage.lazy').then((d) => d.Route));
 
 const adminJobsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'jobs',
-  component: AdminJobsPage,
-});
+}).lazy(() => import('./routes/AdminJobsPage.lazy').then((d) => d.Route));
 
 const usersRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: 'users',
-  component: UsersPage,
-});
+}).lazy(() => import('./routes/UsersPage.lazy').then((d) => d.Route));
 
 // 7. Public Sharing Route
+// Lazy-loaded (POV-202): carries the markdown-heavy public briefing/summary views
+// off the initial chunk. Reached only via a share link, never on first paint.
 const publicShareRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/s/$uuid',
-  component: PublicResolverPage,
-});
+}).lazy(() => import('./routes/PublicResolverPage.lazy').then((d) => d.Route));
 
 // 5. Create Route Tree
 const routeTree = rootRoute.addChildren([
@@ -198,6 +184,7 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultErrorComponent: ErrorPage,
+  defaultPendingComponent: RoutePending,
   context: {
     auth: undefined!, // Injected at runtime via RouterProvider
   },
