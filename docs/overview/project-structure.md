@@ -6,7 +6,7 @@ This document outlines the high-level structure of the Povzetkar project and the
 
 *   **`src/`**: Contains the source code and tests for the application.
 *   **`docs/`**: Contains all project documentation, including architectural decisions, guides, and version planning.
-*   **`agent_logs/`**: A dedicated workspace for the AI agent to track tasks, plans, and execution logs.
+*   **`agent_logs/`**: A dedicated workspace for the AI agent's task records — task definitions (with their Time Log and Deviations sections) and approved plans.
 *   **`docker-compose.yml`**: Defines the local development environment (PostgreSQL, etc.).
 *   **`pom.xml`**: The Maven project configuration file.
 
