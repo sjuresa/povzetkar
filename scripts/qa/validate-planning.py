@@ -181,9 +181,9 @@ class PlanningValidator:
                                  "Add a '## Traceability' section listing US/UC/TC IDs or 'N/A — <reason>'.")
                 continue
 
-            uc_ids = re.findall(r'\bUC-\d+\b', section)
-            tc_ids = re.findall(r'\bTC-[A-Z]+-\d+\b', section)
-            us_ids = US_ID_RE.findall(section)
+            uc_ids = set(re.findall(r'\bUC-\d+\b', section))
+            tc_ids = set(re.findall(r'\bTC-[A-Z]+-\d+\b', section))
+            us_ids = set(US_ID_RE.findall(section))
             has_na = re.search(r'\bN/A\b', section, re.IGNORECASE) is not None
 
             if not (uc_ids or tc_ids or us_ids or has_na):
