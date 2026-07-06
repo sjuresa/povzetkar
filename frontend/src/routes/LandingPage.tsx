@@ -3,13 +3,6 @@ import { useAuthStore } from '../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import { useSystemMetadata } from '../hooks/useSystemMetadata';
-
-// Lazy-loaded (POV-202): the changelog/roadmap modal pulls in the markdown pipeline
-// (react-markdown). It is default-closed, so we defer its code off the landing page's
-// initial chunk and only fetch it when the user opens the modal.
-const SystemMetadata = lazy(() =>
-  import('../components/system/SystemMetadata').then((m) => ({ default: m.SystemMetadata }))
-);
 import { useThemeStore } from '../store/themeStore';
 
 // Landing Sub-components
@@ -19,6 +12,13 @@ import { VisionSection } from '../components/landing/VisionSection';
 import { LandingFooter } from '../components/landing/LandingFooter';
 import { useSearch } from '@tanstack/react-router';
 import { AlertCircle, X } from 'lucide-react';
+
+// Lazy-loaded (POV-202): the changelog/roadmap modal pulls in the markdown pipeline
+// (react-markdown). It is default-closed, so we defer its code off the landing page's
+// initial chunk and only fetch it when the user opens the modal.
+const SystemMetadata = lazy(() =>
+  import('../components/system/SystemMetadata').then((m) => ({ default: m.SystemMetadata }))
+);
 
 export function LandingPage() {
   const { i18n } = useTranslation();

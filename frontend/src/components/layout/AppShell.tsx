@@ -11,6 +11,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
+import { useAudioFeedback } from '../../hooks/useAudioFeedback';
+import { AccountStatusBanner } from '../account/AccountStatusBanner';
 
 // Lazy-loaded (POV-202): the changelog/roadmap modal pulls in the markdown pipeline
 // (react-markdown). It is default-closed, so we defer its code out of the authenticated
@@ -19,8 +21,6 @@ import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 const SystemMetadata = lazy(() =>
   import('../system/SystemMetadata').then((m) => ({ default: m.SystemMetadata }))
 );
-import { useAudioFeedback } from '../../hooks/useAudioFeedback';
-import { AccountStatusBanner } from '../account/AccountStatusBanner';
 
 interface AppShellProps {
   readonly children: ReactNode;
