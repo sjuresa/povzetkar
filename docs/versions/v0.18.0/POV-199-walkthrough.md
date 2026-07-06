@@ -30,3 +30,7 @@ Original plan covered 8 CVEs (Netty + form-data). Two additional findings emerge
 ## Deviations
 
 Two unplanned discoveries handled inline (step 2.14): libexpat CVE-2025-59375 (suppress) and Go stdlib CVE-2026-42504 (Dockerfile bump to `golang:1.26.4-alpine`). Both were clearly within task scope and low-risk.
+
+## Traceability
+
+N/A — dependency/security maintenance (Trivy findings); no functional behavior change.

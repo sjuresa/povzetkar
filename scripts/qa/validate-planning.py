@@ -8,6 +8,11 @@ from typing import List, Dict, Set, Optional
 # --- Constants & Defaults ---
 DEFAULT_CONFIG = "scripts/qa/planning-validator-config.json"
 
+# User Story IDs: area-based scheme (US-ING-004) and legacy version scheme (US-17.5)
+US_ID_RE = re.compile(r'\bUS-(?:[A-Z]+-\d+|\d+\.\d+)\b')
+# Mandatory walkthrough section; tolerates numbered headings (e.g. "## 5. Traceability")
+TRACE_HEADING_RE = re.compile(r'^##\s*(?:\d+\.\s*)?Traceability\b', re.MULTILINE)
+
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -34,6 +39,7 @@ class PlanningValidator:
         self.use_cases = {} # ID -> Title
         self.test_cases = {} # ID -> {uc, version, priority, automation, name, raw}
         self.task_links = [] # {file, id, target_file}
+        self.user_stories = set() # US IDs from the functional requirements catalogue
 
     def _load_config(self, path: str) -> dict:
         p = self.root / path
@@ -66,6 +72,16 @@ class PlanningValidator:
             if uc_id not in self.use_cases:
                 # We extract the ID even if we can't find a title nearby
                 self.use_cases[uc_id] = ""
+
+    def parse_functional_requirements(self):
+        path = self.root / self.config['docs']['functional_requirements']
+        if not path.exists():
+            self.log_violation("CRITICAL", str(path), "N/A", "Functional requirements file missing", f"Ensure {self.config['docs']['functional_requirements']} exists.")
+            return
+
+        content = path.read_text(encoding='utf-8')
+        for match in US_ID_RE.finditer(content):
+            self.user_stories.add(match.group(0))
 
     def parse_test_spec(self):
         path = self.root / self.config['docs']['test_spec']
@@ -143,6 +159,50 @@ class PlanningValidator:
                     self.log_violation("CRITICAL", link['src_file'], ref_id, 
                                      f"Broken reference to Test Case: {ref_id}", 
                                      f"Ensure {ref_id} exists in {self.test_spec_fn}")
+
+    def _extract_traceability_section(self, content: str) -> Optional[str]:
+        """Returns the Traceability section body, or None if the heading is absent."""
+        heading = TRACE_HEADING_RE.search(content)
+        if not heading:
+            return None
+        section = content[heading.end():]
+        next_heading = re.search(r'^##\s', section, re.MULTILINE)
+        return section[:next_heading.start()] if next_heading else section
+
+    def validate_walkthroughs(self):
+        glob_pattern = self.config['docs']['walkthroughs_glob']
+        for wt_file in self.root.glob(glob_pattern):
+            content = wt_file.read_text(encoding='utf-8')
+            section = self._extract_traceability_section(content)
+
+            if section is None:
+                self.log_violation("WARNING", wt_file.name, "Traceability",
+                                 "Walkthrough is missing the mandatory Traceability section",
+                                 "Add a '## Traceability' section listing US/UC/TC IDs or 'N/A — <reason>'.")
+                continue
+
+            uc_ids = set(re.findall(r'\bUC-\d+\b', section))
+            tc_ids = set(re.findall(r'\bTC-[A-Z]+-\d+\b', section))
+            us_ids = set(US_ID_RE.findall(section))
+            has_na = re.search(r'\bN/A\b', section, re.IGNORECASE) is not None
+
+            if not (uc_ids or tc_ids or us_ids or has_na):
+                self.log_violation("WARNING", wt_file.name, "Traceability",
+                                 "Traceability section declares neither US/UC/TC IDs nor N/A",
+                                 "List the task's US/UC/TC IDs or state 'N/A — <reason>'.")
+                continue
+
+            frd_fn = Path(self.config['docs']['functional_requirements']).name
+            self._check_section_refs(wt_file.name, uc_ids, self.use_cases, "Use Case", self.use_cases_fn)
+            self._check_section_refs(wt_file.name, tc_ids, self.test_cases, "Test Case", self.test_spec_fn)
+            self._check_section_refs(wt_file.name, us_ids, self.user_stories, "User Story", frd_fn)
+
+    def _check_section_refs(self, src_file: str, ref_ids, known_ids, kind: str, target_fn: str):
+        for ref_id in ref_ids:
+            if ref_id not in known_ids:
+                self.log_violation("CRITICAL", src_file, ref_id,
+                                 f"Broken reference to {kind}: {ref_id}",
+                                 f"Ensure {ref_id} exists in {target_fn}")
 
     def validate_traceability(self):
         # Every UC must have at least one TC
@@ -227,9 +287,11 @@ class PlanningValidator:
     def run_all(self):
         self.parse_use_cases()
         self.parse_test_spec()
+        self.parse_functional_requirements()
         self.parse_tasks()
-        
+
         self.validate_links()
+        self.validate_walkthroughs()
         self.validate_traceability()
         self.validate_automation_guardrail()
 
@@ -257,6 +319,11 @@ class PlanningValidator:
         return 1 if critical_count > 0 else 0
 
 def main():
+    # cp1252 console hardening (POV-201 finding): the ✅ success banner must not
+    # turn a passing run into exit 1 on non-UTF-8 Windows consoles.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Povzetkar Planning Validator")
     parser.add_argument("--config", default=DEFAULT_CONFIG, help="Path to config file")
     parser.add_argument("--current-version", required=True, help="Current version string (e.g., v0.15.0)")

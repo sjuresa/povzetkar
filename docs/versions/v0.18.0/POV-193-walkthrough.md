@@ -27,3 +27,8 @@ Delivered as scoped. Quarkus integration (a `ProxyTranscriptProvider` adapter fo
 - **Dependency versions.** The plan named `youtube-transcript-api==0.6.3`, which does not exist (last 0.6.x is 0.6.2; the maintained line is 1.2.x). Pinned `1.2.4`. The 1.x API is a rewrite: `fetch`/`list` are instance methods, and manual-vs-generated selection uses `TranscriptList.find_manually_created_transcript` / `find_generated_transcript`. `main.py` was written against the verified 1.2.4 surface, not the plan's assumed 0.6.x.
 - **Python version.** The machine's default Python (3.14) is unsupported by the library (`requires-python <3.14`). Used Python 3.13.5 for the venv. Documented in the README as a local-run requirement.
 - **Exception bucket widened.** The plan mapped only `VideoUnavailable` to `video_unavailable`. Implementation also routes `InvalidVideoId`, `AgeRestricted`, and `VideoUnplayable` there — all permanent per-video failures with the same caller semantics.
+
+## Traceability
+
+- **UC:** UC-14 (proxy is the primary transcript chain member)
+- **TC:** TC-ING-004, TC-ING-005

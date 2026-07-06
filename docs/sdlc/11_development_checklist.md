@@ -29,7 +29,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
     Focus: **WHAT** will be done — scope boundaries, risks, whether the task is correctly defined. Record Brainstorm start and end timestamps in `agent_logs/task.md` under `## Brainstorm`.
 
-- [ ] **2.1. Define Task:** Finalise the task definition in `agent_logs/task.md`, including the `## Documentation` section specifying context and required updates.
+- [ ] **2.1. Define Task:** Finalise the task definition in `agent_logs/task.md`, including the `## Documentation` section specifying context and required updates. If the task delivers a **user-facing functional change**, mint a new User Story in the catalogue (`docs/sdlc/01_functional_requirements.md` §3) as `(Planned)`, using the area-based ID scheme — see [Planning Protocol §2.1](../process/planning_protocol.md). Fix/infra/perf/security/process tasks mint no US.
 
 - [ ] **2.2. Agent Proposes Plan:** The AI agent conducts a PPP planning interview (HOW it will be done) following `AGENT.md` and `docs/protocols/workflow-mandatory.md`. Use the following prompt:
 
@@ -58,6 +58,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
     2. **Planned vs. actual scope** — any additions or removals relative to the original task definition.
     3. **Time delta** — estimated vs. actual time (from Time Log in the task's execution log).
     4. **Deviations** — any decisions made mid-execution that deviated from the plan.
+    5. **Traceability** — the task's US/UC/TC IDs, or an explicit `N/A — <reason>`. Convention: labelled bullet lines (`**US:**` / `**UC:**` / `**TC:**`), or a single `N/A — <reason>` line. This section is mandatory and machine-validated: `validate-planning.py` flags a walkthrough with no Traceability section (or one declaring neither IDs nor N/A) as a WARNING, which blocks CI (`--fail-on all`); broken IDs are CRITICAL.
 - [ ] **2.11. Task Retrospective:** Write `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` with the following sections:
     1. **Planned vs. actual** — what was scoped vs. what was delivered.
     2. **Deviations & why** — decisions made mid-execution and their rationale.
@@ -68,8 +69,10 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
   - **If both YES:** Pause, discuss, and agree to address it within the current task or as an immediate follow-up task.
   - **If either NO:** Do not let it derail the current task. Log the issue in `docs/backlog/improvements.md` for future planning.
-- [ ] **2.14. Master Specification Sync**: Verify that the task's final outcome (feature or logic fix) is accurately reflected in `docs/analysis/test_specification.md`. Ensure all new P0 Test Cases are marked for automation within one version.
-  - [ ] **Planning Audit**: Run `python scripts/qa/validate-planning.py --current-version vX.Y.Z` to verify the traceability chain (Task -> UC -> TC) remains intact. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for mandatory sync requirements.
+- [ ] **2.14. Master Specification Sync**: Close the task's traceability loop:
+  - [ ] If the task minted a `(Planned)` US at step 2.1, flip it to `(Implemented)` in `docs/sdlc/01_functional_requirements.md` §3.
+  - [ ] Update `docs/analysis/use_cases.md` and `docs/analysis/test_specification.md` so they accurately reflect the task's final outcome (new/changed UC flows, TC rows with honest automation status) — or record a justified `N/A` in the walkthrough's Traceability section (step 2.10). Ensure all new P0 Test Cases are marked for automation within one version.
+  - [ ] **Planning Audit**: Run `python scripts/qa/validate-planning.py --current-version vX.Y.Z` to verify the traceability chain (Task → US/UC/TC, walkthrough Traceability sections) remains intact. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for mandatory sync requirements.
 
 ## Phase 3: Version Finalisation
 
@@ -104,6 +107,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| 3.2 | 2026-07-06 | Povzetkar AI | Traceability restoration (POV-203): step 2.1 gains the US-minting rule (user-facing functional change → `(Planned)` US in the FRD §3 catalogue); step 2.10 gains the mandatory Traceability walkthrough section (5th section, machine-validated); step 2.14 reworded — flip US to `(Implemented)`, sync `use_cases.md`/`test_specification.md` or record justified N/A. |
 | 3.1 | 2026-07-03 | Povzetkar AI | Retrospective Review Process (POV-201): Phase 1 gains 1.4 Create Version Hub and 1.5 Review Previous Version Retrospective (carry-forward disposition into version.md); step 2.0 mandates reading Feed-forward sections of the current version's task retrospectives; conditional step 2.10 Version Hub Check removed, 2.11–2.15 renumbered to 2.10–2.14; Phase 3.1 mandates the Carry-Forward Themes section. |
 | 3.0 | 2026-05-27 | Povzetkar AI | Task-First Planning (POV-191): Phase 1 shrunk to branch+milestone+roadmap; Phase 2 gains Brainstorm (2.0), PPP interview prompts, Walkthrough (2.10), Task Retrospective (2.11), Version Hub (2.12–2.13); Phase 3 trigger is explicit PO decision; version retrospective is cross-task synthesis. |
 | 2.7 | 2026-04-01 | Povzetkar AI | Integrated [Project Planning Protocol (PPP)](../process/planning_protocol.md) as a mandatory standard for Phase 1. |

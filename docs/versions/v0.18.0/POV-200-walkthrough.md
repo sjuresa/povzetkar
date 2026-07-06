@@ -48,3 +48,7 @@ No scope was cut. The CHANGELOG/roadmap got slightly more rework than a mechanic
 - **Lockfile synced surgically.** `npm install --package-lock-only` updated the version but also re-added unrelated optional bundled transitive entries (+68 lines). Reverted and edited only the two version fields to keep the release diff clean.
 - **POV-191/POV-200 deliberately omitted from the CHANGELOG.** Both are process/docs-only; the changelog stays scoped to product/behavior changes (the summary already credits POV-191's methodology shift).
 - **Roadmap v0.18 section rewritten, not just status-flipped.** The pre-written plan (DAST, Grafana alerting, full-text search, SMTP) never shipped; under the task-first model the version label is retrospective, so the section now describes actual delivery. The original hardening plan was carried forward to `v0.19: Hardening & Operational Excellence`, marked explicitly as a forecast (not a commitment) — a discussion with the PO during finalization concluded that all future roadmap phases are forecasts under the task-first model, and the next sequential version number (`v0.19`) is the honest label, corrected retrospectively when the work is actually done (exactly as v0.18 was here).
+
+## 5. Traceability
+
+N/A — retrospective/process documentation task; no system behavior change.

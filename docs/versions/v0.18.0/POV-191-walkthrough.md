@@ -52,3 +52,7 @@ Formalised the shift from version-gated planning to continuous task-first delive
 - **`workflow-mandatory.md` added to scope:** Originally out-of-scope per task.md. Included as a minimal, directly-related change (timestamp mandate for execution logs). Size and risk justified inclusion in POV-191 rather than a separate task.
 
 - **Version hub created immediately:** Per the agreed model, `version.md` is created at the end of the first task of a version. POV-191 is the first task of v0.18.0, so the hub is created here.
+
+## 5. Traceability
+
+N/A — process transition task (task-first planning model); no system behavior change.

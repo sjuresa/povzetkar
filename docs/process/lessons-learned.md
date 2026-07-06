@@ -8,6 +8,14 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ## 🚀 Recent Highlights (v0.19.0)
 
+> [!TIP]
+> **A validator gate that can't exit non-zero is theater — check `continue-on-error` before trusting `--fail-on` (POV-203)**:
+> The planning-audit CI step ran `--fail-on all` but also carried `continue-on-error: true`, so a failing validator never blocked a build. The severity split (WARNING blocks in CI via `--fail-on all`, not locally via the default `--fail-on critical`) is real *only* once the step is allowed to fail the job. When restoring an enforcement gate, verify the whole path: the tool's exit code **and** the CI step's error handling. Also: the validator's `tasks_glob` scans whole gitignored task files, so a task that forward-references an ID it will mint (e.g. a new UC) produces bootstrap CRITICALs until the spec backfill lands — expected, self-clearing. The **walkthrough** rule is deliberately section-only to avoid that stale-prose trap.
+
+> [!TIP]
+> **cp1252 console hardening is about the exit code, not the glyph (POV-203)**:
+> `sys.stdout.reconfigure(encoding='utf-8', errors='replace')` in `main()` stops the `UnicodeEncodeError` that turned a *passing* validator run into exit 1 on a legacy Windows console (the `✅` banner). With `errors='replace'` the glyph still renders as mojibake on cp1252 — that is acceptable; the misleading non-zero exit is the bug that mattered. Separately, `core.autocrlf=true` (no `.gitattributes` in this repo) makes LF-vs-CRLF working-tree mixing harmless: a script appending LF lines to CRLF files yields a visually mixed working tree but a clean, LF-normalized committed blob and an insertions-only staged diff.
+
 > [!WARNING]
 > **A `React.lazy`/`route.lazy` boundary only helps if it severs *every* eager path to the module (POV-202)**:
 > Lazy-loading a component in one consumer does nothing while another eager-graph module still statically imports it. Vite states this exactly in a build warning: `"X is dynamically imported by A but also statically imported by B, dynamic import will not move module into another chunk."` In POV-202, `SystemMetadata` was lazied in `LandingPage` but `AppShell` (eager, via the eager protected-layout route) kept a static import — the initial chunk did not shrink until *both* were lazied. **Before assuming a lazy boundary works, grep all importers** (`grep -rn "import.*ComponentName" src`) and check the Vite "also statically imported by" warnings after building. The eager-graph anchors are `router.tsx`, `App.tsx`, `AppShell.tsx`, `api/client.ts`, and any store imported by those.

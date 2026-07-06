@@ -1,8 +1,10 @@
 {
   "docs": {
     "tasks_glob": "agent_logs/POV-* task.md",
+    "walkthroughs_glob": "docs/versions/*/POV-*-walkthrough.md",
     "use_cases": "docs/analysis/use_cases.md",
-    "test_spec": "docs/analysis/test_specification.md"
+    "test_spec": "docs/analysis/test_specification.md",
+    "functional_requirements": "docs/sdlc/01_functional_requirements.md"
   },
   "automation": {
     "safe_keywords": [

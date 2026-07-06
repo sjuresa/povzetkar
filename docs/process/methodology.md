@@ -72,7 +72,7 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
     *   **Refactoring:** Green -> Refactor -> Green.
 5.  **Verify & Code Review:** The Agent runs the full test suite; the User reviews the results and performs a code review.
 6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
-7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered.
+7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered, including its mandatory Traceability section (the task's US/UC/TC IDs, or `N/A — <reason>`; machine-validated).
 8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.
 9.  **Version Hub:** `docs/versions/vX.Y.Z/version.md` is updated with links to the new walkthrough and retrospective (the hub itself is created at version initialisation).
 

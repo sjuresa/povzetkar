@@ -74,3 +74,8 @@ Railway passive fallback) is exactly as defined.
 - **Incidental positive evidence** — a manual fetch on the DS220j returned a real 61-segment
   transcript directly from the residential IP, confirming YouTube does not block it (supporting
   the relocation hypothesis) before the cutover.
+
+## Traceability
+
+- **UC:** UC-14 (proxy relocated; chain semantics unchanged)
+- **TC:** TC-ING-004, TC-ING-005
