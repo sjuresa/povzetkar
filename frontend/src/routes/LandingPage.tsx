@@ -12,6 +12,7 @@ import { VisionSection } from '../components/landing/VisionSection';
 import { LandingFooter } from '../components/landing/LandingFooter';
 import { useSearch } from '@tanstack/react-router';
 import { AlertCircle, X } from 'lucide-react';
+import { SystemMetadataFallback } from '../components/system/SystemMetadataFallback';
 
 // Lazy-loaded (POV-202): the changelog/roadmap modal pulls in the markdown pipeline
 // (react-markdown). It is default-closed, so we defer its code off the landing page's
@@ -98,7 +99,7 @@ export function LandingPage() {
       </div>
 
       {isMetadataOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<SystemMetadataFallback />}>
           <SystemMetadata
             isOpen={isMetadataOpen}
             onClose={() => setIsMetadataOpen(false)}
