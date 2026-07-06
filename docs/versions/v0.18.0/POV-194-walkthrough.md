@@ -33,3 +33,9 @@ Explicitly deferred (unchanged): a "stop chain" interface signal and retry-later
 
 - **Skip-first jitter throttle added (2.14).** See "Planned vs. actual scope" above. Implemented as a single `volatile long lastInvocationMs` field + a window check in `applyJitter()`. Concurrent batch + manual click (where a manual click could fall inside the window and incur jitter) was assessed by the PO as a non-issue.
 - The only other refinement was confirming via grep that the project uses Jackson defaults (no global `SNAKE_CASE` strategy), validating the planned `@JsonProperty("video_id")` choice rather than changing it.
+
+## Traceability
+
+- **US:** US-17.5
+- **UC:** UC-14 (proxy is the primary transcript chain member)
+- **TC:** TC-ING-004, TC-ING-005

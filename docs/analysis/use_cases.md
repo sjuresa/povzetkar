@@ -179,20 +179,20 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 3. Administrator filters by type and/or status (e.g., `RUNNING`, `FAILED`).
 4. Administrator clicks "Restart" on a `FAILED` job. System spawns a new job with the original parameters.
 5. Administrator opens the audit trail for a job; sees a chronological log of state transitions and the acting admin per change.
-**Postconditions**: New job spawned; audit row written with acting admin user ID. *(Cancel is deferred to v0.18.0 — requires stop-signal mechanism in `OrchestrationManager`.)*
+**Postconditions**: New job spawned; audit row written with acting admin user ID. *(Cancel is a backlog item — see "Admin Jobs Cancel Action" in [improvements.md](../backlog/improvements.md); requires a stop-signal mechanism in `OrchestrationManager`.)*
 
 ### UC-14: Resilient Transcript Fetching with Provider Fallback
 **Actor**: System (orchestrator)
-**Related Stories**: US-17.5
-**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0009](../adr/0009-multi-provider-transcript-strategy.md)
-**Preconditions**: A `ContentItem` requires transcript fetching; `TranscriptOrchestrator` is configured with an ordered provider chain.
+**Related Stories**: US-17.5, US-ING-004
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0009](../adr/0009-multi-provider-transcript-strategy.md), [POV-194 walkthrough](../versions/v0.18.0/POV-194-walkthrough.md)
+**Preconditions**: A `ContentItem` requires transcript fetching; `TranscriptOrchestrator` is configured with an ordered provider chain (default: `proxy,youtube-legacy,supadata` via `transcript.providers.order`).
 **Main Flow**:
-1. Orchestrator invokes the first provider in the chain (default: `youtube-legacy`).
-2. If `youtube-legacy` returns `ProviderUnavailable`, `QuotaExhausted`, or times out, orchestrator falls through to the next provider (e.g., `supadata`).
-3. Each attempt is recorded in `transcript_provider_quota_usage` for monitoring.
-4. On success, transcript is persisted to the `ContentItem` and orchestration continues.
+1. Orchestrator invokes the first provider in the chain: `ProxyTranscriptProvider`, which calls the self-hosted transcript proxy (`GET /transcripts/{videoId}`, API-key authenticated; hosted on Synology since POV-196).
+2. On a non-200 proxy response or transport failure, the provider raises `ProviderUnavailableException` and the orchestrator falls through to the next provider (`youtube-legacy`, then `supadata`).
+3. `QuotaExhausted` and timeouts likewise trigger fall-through; each attempt is recorded in `transcript_provider_quota_usage` for monitoring.
+4. On success, the transcript is persisted to the `ContentItem` **before** summarization is invoked, and orchestration continues.
 5. If all providers fail, `ContentItem` is marked `FAILED` with `failure_reason=ALL_PROVIDERS_EXHAUSTED`.
-**Postconditions**: Transcript fetched (or item correctly marked failed); Micrometer counters incremented per provider.
+**Postconditions**: Transcript fetched and persisted (or item correctly marked failed); Micrometer counters incremented per provider.
 
 ### UC-15: External Links Open in New Tab
 **Actor**: User
@@ -207,9 +207,23 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 5. User returns to the original briefing without navigation interruption.
 **Postconditions**: User retains briefing context; external link safety attributes (`rel="noopener noreferrer"`) prevent reverse-tabnabbing.
 
+### UC-16: Scheduled Orchestration & Periodic Content Fetch
+**Actor**: System (Quarkus Scheduler)
+**Related Stories**: US-ING-004
+**Context**: [POV-197 walkthrough](../versions/v0.18.0/POV-197-walkthrough.md)
+**Preconditions**: At least one enabled user with enabled topics and active sources exists; scheduler cron configured (`povzetkar.orchestrator.cron`, default hourly).
+**Main Flow**:
+1. The scheduler triggers `runScheduledOrchestration` on a worker thread (`@Blocking`, `void` return — `Uni<Void>` would be invoked on the IO thread and crash).
+2. The orchestration lock is acquired; a concurrent run is skipped.
+3. The run fetches and summarizes new content for yesterday, then for today (`executeSummarizationStepForDate`).
+4. The run generates briefings for yesterday (idempotent — existing briefings are not duplicated).
+5. Items marked `SKIPPED_TOO_SHORT` are excluded from summarization.
+**Postconditions**: New content is ingested, summarized, and rolled into briefings without any manual trigger; the lock is released.
+
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.5     | 2026-07-06 | Povzetkar AI | POV-203: UC-14 updated (proxy-primary chain, US-ING-004); added UC-16 (Scheduled Orchestration); UC-13 cancel note → backlog. |
 | 1.4     | 2026-05-20 | Povzetkar AI | Added UC-11 (Admin User Mgmt), UC-12 (User Approval), UC-13 (Job Ops), UC-14 (Transcript Fallback), UC-15 (External Links) for v0.17.0. |
 | 1.3     | April 01, 2026 | Povzetkar AI | Added UC-8, UC-9, UC-10 for v0.16.0 (User Experience Focus). |
 | 1.2     | March 30, 2026 | Povzetkar AI | Mapped User Story IDs to all Use Cases for Traceability Matrix hardening (POV-166). |

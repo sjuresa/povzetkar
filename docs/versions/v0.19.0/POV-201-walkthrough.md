@@ -29,3 +29,7 @@ No time estimate was recorded during Brainstorm (process task; estimation was no
 - **No AI signature in commit messages:** first Phase A commit attempt was rejected for carrying a `Co-Authored-By` footer; re-committed without it and the preference was persisted.
 - **Roadmap edit incident:** a PowerShell `Set-Content` used for markdown-table alignment corrupted the file's UTF-8 encoding; recovered via `git checkout --`, re-applied with the Edit tool, aligned with a CRLF-preserving node one-liner. No corruption reached any commit.
 - **`mvn clean verify` waived** with PO approval (docs-only task); substitute verification: `validate-planning.py` for v0.19.0 (passed, exit 0 — note: needs `PYTHONIOENCODING=utf-8` on Windows or its ✅ success banner crashes cp1252 consoles) and a repo-wide grep sweep for stale step references (clean).
+
+## 5. Traceability
+
+N/A — process task (retrospective review process); no system behavior change.

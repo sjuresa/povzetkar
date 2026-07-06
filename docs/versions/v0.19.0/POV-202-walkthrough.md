@@ -41,3 +41,7 @@ Net additions: the `AppShell` lazy fix, the `RoutePending` extraction, and one e
 3. **`RoutePending` extracted to its own file.** Defining it inside `router.tsx` (which exports the non-component `router`) tripped `react-refresh/only-export-components` — the one lint problem POV-202 briefly introduced. Extraction restored a lint-neutral diff.
 4. **BriefingDetailPage Lighthouse measured by chunk-delta, not authed Lighthouse.** The repo's bare Lighthouse harness cannot inject a session; the auth-guarded route redirects to `/` unauthenticated. PO-approved substitute: verify via the route chunk leaving every initial load (it does) rather than a misleading redirect-profiled score. Landing-page Lighthouse recorded normally.
 5. **`manualChunks` skipped.** Post-split analysis showed the entry chunk is the irreducible eager core (react-dom, router, query, i18next, axios, zustand) with no leaked app/route code; a `vendor-react` split would only shift bytes between eager files for a second-order caching benefit, not reduce first-load bytes.
+
+## 5. Traceability
+
+N/A — structural perf refactor; anchor is the P-5 NFR (initial-load bundle budget).

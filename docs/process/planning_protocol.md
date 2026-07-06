@@ -68,11 +68,14 @@ All version-specific artifacts MUST be isolated in a dedicated directory:
 - **Per-Task Files:** `POV-XXX-walkthrough.md`, `POV-XXX-retrospective.md` — one pair per task.
 - **Optional Files:** `ui-ux-manifesto.md`, `i18n-audit.md` (as per Protocol Elasticity).
 
-### 2.1 Traceability Matrix
-Every User Story in `agent_logs/task.md` MUST be mapped to:
-1.  A **Use Case** (`use_cases.md`).
-2.  A **Test Case** (`test_specification.md`).
-3.  A specific **Task ID** (`POV-XXX`).
+### 2.1 Traceability Declaration (Task-First)
+
+Traceability is declared **per task**, in the task walkthrough's mandatory `Traceability` section (checklist step 2.10) — either the task's US/UC/TC IDs or an explicit `N/A — <reason>`. This is the normative User Story and traceability policy:
+
+1.  **US minting:** A new User Story is minted **only for user-facing functional changes**, added to the single catalogue (`docs/sdlc/01_functional_requirements.md` §3) at task definition (step 2.1) as `(Planned)`, and flipped to `(Implemented)` at Master Specification Sync (step 2.14). Fix, infra, perf, security, and process tasks mint no US — their walkthroughs declare `N/A — <reason>`.
+2.  **ID scheme:** The area-based scheme (`US-ING-xxx`, `US-UI-xxx`, …) continues for new stories. The legacy version-based scheme (`US-NN.x`) is retired; existing legacy IDs (US-16.x, US-17.x) remain valid referents.
+3.  **UC/TC mapping:** Behavior delivered by the task must be reflected in `use_cases.md` (new or updated UC) and `test_specification.md` (TC rows with honest automation status) at step 2.14, and referenced from the walkthrough's Traceability section.
+4.  **Enforcement:** `validate-planning.py` validates walkthrough Traceability sections (missing/empty section → WARNING, blocking in CI via `--fail-on all`; broken US/UC/TC reference → CRITICAL). See the [Documentation Validation Protocol](./validation-protocol.md).
 
 ### 2.2 Expert Triad Review
 Mandatory evaluation section in the archived plan (`agent_logs/<task id> <task title> plan.md`) covering:
@@ -87,6 +90,8 @@ Mandatory evaluation section in the archived plan (`agent_logs/<task id> <task t
 ### 2.4 Automated Audit
 The planning suite MUST pass the automated validator check:
 `python scripts/qa/validate-planning.py --current-version vX.Y.Z`
+
+The validator scans two config-driven surfaces: archived task definitions (`tasks_glob`, planning-time link check, gitignored) and the git-tracked task walkthroughs (`walkthroughs_glob: docs/versions/*/POV-*-walkthrough.md`, mandatory-Traceability rule + link check — the surface CI enforces).
 
 ### 2.5 Pre-Interview Codebase Audit
 **Before finalizing any task definition that touches existing code**, the relevant source files MUST be read. Task descriptions written from memory or assumed codebase state produce plausible-sounding but factually wrong acceptance criteria, wrong API surface descriptions, and missed architectural constraints.
@@ -138,5 +143,6 @@ To ensure pragmatism and speed, the protocol is **Elastic**. Not every task requ
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| 1.2 | 2026-07-06 | Povzetkar AI | Traceability restoration (POV-203): §2.1 rewritten from the version-era Traceability Matrix to the task-first Traceability Declaration (per-task walkthrough section; US lifecycle `(Planned)` → `(Implemented)`; N/A path; area-based ID scheme continues, `US-NN.x` retired); §2.4 documents the two validator surfaces (`tasks_glob` + `walkthroughs_glob`). |
 | 1.1 | 2026-05-27 | Povzetkar AI | Task-First Planning (POV-191): scoped §1 artifacts from version to task level; updated §2 mandatory files to `version.md` + per-task walkthrough/retrospective; updated §5 elasticity justification location. §2.5 unchanged. |
 | 1.0 | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol. |

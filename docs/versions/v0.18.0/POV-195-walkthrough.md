@@ -25,3 +25,7 @@ Estimated ~90 min total (~60 min code + docs). Actual code+verify was substantia
 
 - **One discovery, actioned after PO approval:** removing the `countTokens` log block also orphaned the generic `LogKeys.COUNT` constant (it was that block's only consumer). Since `COUNT` is a general-purpose key, not task-specific like `COUNT_TOKENS`, it was first flagged to the PO rather than removed silently. The PO approved deleting it, so it was removed (zero references confirmed) and the docs updated.
 - **Non-`ApiException` edge (as planned):** a request that throws *after* the pre-increment but is not an `ApiException` (e.g. a client-side serialization error) counts in `usageCount` but not `errorCount`. Rare and conservative (errs toward over-counting RPD); accepted in the plan.
+
+## Traceability
+
+- **TC:** TC-MON-005 (GenAI RPD counting accuracy)

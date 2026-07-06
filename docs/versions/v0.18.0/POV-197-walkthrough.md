@@ -35,3 +35,9 @@ Core scope matched the plan. Three unplanned discoveries emerged during executio
 - **`quarkus.vertx.max-worker-execute-time=600S` (unplanned discovery)**: First live run produced `Thread blocked` WARN after 60 s (Vert.x default). Added 10-minute timeout. Included in POV-197 scope.
 - **`BRIEFING_SCHEDULED` log key removed**: Unused constant in `LogKeys.java` cleaned up as part of removing `runBriefingGenerationScheduled`.
 - **Live bug reproduction during brainstorm**: Cron temporarily set to `0 30 22 * * ?`, restored to `0 0 * * * ?` in Phase 3.
+
+## Traceability
+
+- **US:** US-ING-004
+- **UC:** UC-16 (scheduled orchestration & periodic content fetch)
+- **TC:** TC-ING-006

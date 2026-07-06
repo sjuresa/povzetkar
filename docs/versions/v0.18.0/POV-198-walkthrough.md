@@ -24,3 +24,7 @@ Delivered exactly as scoped. No additions or removals.
 ## Deviations
 
 - **Existing test mock chain adjustment was simpler than planned**: both `testSummarize_handlesPersistenceExceptionOnRaceCondition` and `testSummarize_handlesOtherPersistenceExceptionAsFailure` use `mockVideo.transcript = null` (from `setUp()`), so `persistTranscript` exits via the outer guard without calling `runner.run()`. The planned `doAnswer().doThrow()` chain was therefore one call too many — reverted to the original single/double `doThrow().doAnswer()` chain, matching the pre-fix call count.
+
+## Traceability
+
+- **TC:** TC-ING-007 (transcript persisted before summarization)

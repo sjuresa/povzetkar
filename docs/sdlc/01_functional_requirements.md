@@ -4,6 +4,7 @@
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
+| 1.5     | July 6, 2026     | Povzetkar AI | POV-203: single US catalogue + lifecycle note in §3; migrated US-17.1–17.7 into new §3.6.       |
 | 1.4     | March 30, 2026   | Povzetkar AI | Assigned unique IDs to all User Stories for Traceability Matrix hardening (POV-166). |
 | 1.3     | January 17, 2026 | Povzetkar AI | Added requirements for topic management, granular orchestration, and error visibility (v0.7.0). |
 | 1.2     | January 6, 2026  | Povzetkar AI | Marked self-healing requirement as implemented (v0.6.2).                                        |
@@ -21,7 +22,7 @@ This document outlines the functional requirements for Project Povzetkar. It des
 
 ## 3. User Stories
 
-This section breaks down the system's functionality into user-centric stories.
+This section breaks down the system's functionality into user-centric stories. It is the **single User Story catalogue** for the project: new stories are minted only for user-facing functional changes, added here at task definition as `(Planned)`, and flipped to `(Implemented)` when the delivering task closes (checklist steps 2.1 / 2.14). The area-based ID scheme (`US-ING-xxx`, `US-UI-xxx`, …) continues for new stories; the legacy version-based scheme (`US-NN.x`) is retired but existing IDs remain valid referents. The full lifecycle policy is defined in the [Planning Protocol §2.1](../process/planning_protocol.md).
 
 ### 3.1. Data Ingestion & Processing
 
@@ -62,3 +63,15 @@ This section breaks down the system's functionality into user-centric stories.
 *   **US-UI-004** (Implemented) **As an Administrator, I want to** use a simple web interface to trigger system-level actions like content enrichment and orchestration.
 *   **US-UI-005** (Implemented) **As an Administrator, I want to** granularly trigger specific phases of the orchestration process (e.g., only processing pending items or only generating briefings).
 *   **US-UI-006** (Implemented) **As an Administrator, I want to** view specific error details for failed content items and manually trigger a retry for transcript fetching.
+
+### 3.6. Administration & Hardening (migrated from v0.17 planning)
+
+*Origin note: US-17.1–17.7 were minted during v0.17.0 planning and previously lived only in the archived [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md). They were migrated here by POV-203 with their original IDs preserved, because UC-11…UC-15 reference them. The `US-NN.x` ID scheme is retired for new stories.*
+
+*   **US-17.1** (Implemented) **As an Administrator, I want to** manage user accounts — edit roles and enable or disable accounts — so that system access remains controlled. *(Admin User Management — Roles & Statuses)*
+*   **US-17.2** (Implemented) **As an Administrator, I want to** approve or reject newly registered user accounts so that only vetted users gain access. *(User Approval Workflow)*
+*   **US-17.3** (Implemented) **As a** new **User, I want to** see a clear pending-approval status so that I understand why my access is limited. *(Pending Approval User Feedback)*
+*   **US-17.4** (Implemented) **As an Administrator, I want to** view and restart background jobs with a full audit trail so that failed runs can be recovered accountably. *(Background Job Dashboard — Restart/Audit)*
+*   **US-17.5** (Implemented) **As a System, I want to** fetch transcripts through an ordered multi-provider chain with automatic fallback so that a single provider failure does not lose content. *(Transcript Multi-Provider Resilience)*
+*   **US-17.6** (Implemented) **As a User, I want to** have external links open in a new tab so that I keep my briefing context while reading sources. *(External Links Open in New Tab)*
+*   **US-17.7** (Implemented) **As a User, I want to** be redirected to the landing page when my session expires so that I can re-authenticate without a broken page. *(Session Expiry → Login Redirect)*

@@ -31,8 +31,10 @@ jobs:
         python-version: '3.12'
 
     - name: Planning & Traceability Audit
-      run: python scripts/qa/validate-planning.py --current-version v0.15.0 --fail-on all
-      continue-on-error: true
+      run: |
+        VERSION="v$(jq -r .version package.json | sed 's/-SNAPSHOT$//')"
+        echo "Planning audit against $VERSION"
+        python scripts/qa/validate-planning.py --current-version "$VERSION" --fail-on all
 
     - name: Set up JDK 25
       uses: actions/setup-java@v4
