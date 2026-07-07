@@ -12,6 +12,7 @@
 | POV-201 — Retrospective Review Process & v0.19.0 Version Initialisation | [walkthrough](POV-201-walkthrough.md) | [retrospective](POV-201-retrospective.md) |
 | POV-202 — Optimize frontend (initial-load bundle) | [walkthrough](POV-202-walkthrough.md) | [retrospective](POV-202-retrospective.md) |
 | POV-203 — Restore US/UC/TC Traceability Under the Task-First Process | [walkthrough](POV-203-walkthrough.md) | [retrospective](POV-203-retrospective.md) |
+| POV-204 — Modernize AGENT.md and Agent Protocols | [walkthrough](POV-204-walkthrough.md) | [retrospective](POV-204-retrospective.md) |
 
 ## Carry-Forward Review
 
