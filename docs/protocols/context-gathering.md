@@ -18,7 +18,7 @@ Load what the work actually needs; do not front-load the whole documentation tre
 - `docs/backlog/improvements.md` — when triaging discoveries or planning scope.
 - `docs/RUNBOOK.md` — technical setup and operational procedures.
 - `docs/sdlc/07_development_methodology_comparison.md` — the agreed methodology and its rationale.
-- `docs/versions/<previous>/retrospective.md` — the previous version's cross-task synthesis, formally reviewed at version initialisation (checklist 1.5).
+- `docs/versions/<previous version>/retrospective.md` — the previous version's cross-task synthesis, formally reviewed at version initialisation (checklist 1.5).
 - Context7 MCP (`resolve-library-id` → `query-docs`) — external library documentation.
 
 The source code and its tests remain the ultimate truth for implementation details.
