@@ -60,11 +60,11 @@ For every request that modifies code, follow this exact sequence. The plan → a
 **Step 8: PR Review Loop (mandatory when a PR exists)**
 
 - After the commit is pushed and a PR is open, fetch all unresolved review threads via `gh pr view --json reviewThreads` (the REST comments endpoint has no `isResolved` field; `reviewThreads` does). Discover the PR number first via `gh pr view --json number -q .number` if not already known.
-- **TRAP — two-endpoint problem:** `gh pr view --json reviewThreads` and `/pulls/{n}/comments` only return threads from reviews that existed at the time of the last push. A bot (e.g. Gemini) may post a new review *after* the last push, whose inline threads will not appear in either of those calls until the next fetch cycle. To reliably catch all new threads each iteration:
-    1. Fetch `/pulls/{n}/reviews` and identify any reviews with `submitted_at` newer than the previous fetch.
-    2. For each new review, fetch `/pulls/{n}/reviews/{review_id}/comments` to retrieve its inline threads.
+- **TRAP — two-endpoint problem:** `gh pr view --json reviewThreads` and `repos/{owner}/{repo}/pulls/{pull_number}/comments` only return threads from reviews that existed at the time of the last push. A bot (e.g. Gemini) may post a new review *after* the last push, whose inline threads will not appear in either of those calls until the next fetch cycle. To reliably catch all new threads each iteration:
+    1. Fetch `repos/{owner}/{repo}/pulls/{pull_number}/reviews` and identify any reviews with `submitted_at` newer than the previous fetch.
+    2. For each new review, fetch `repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/comments` to retrieve its inline threads.
     3. Then also run `gh pr view --json reviewThreads` to catch any unresolved threads from older reviews.
-    Relying solely on the flat `/pulls/{n}/comments` endpoint or `gh pr view` **will silently miss threads attached to reviews posted after the last push**.
+    Relying solely on the flat `repos/{owner}/{repo}/pulls/{pull_number}/comments` endpoint or `gh pr view` **will silently miss threads attached to reviews posted after the last push**.
 - For each unresolved thread, assess relevance: fix it if it identifies a genuine defect or in-scope improvement; explicitly explain and skip it if it is stale or out of scope. In all cases post a reply to the thread (`gh api repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies -f body="..."`) — without a reply the thread remains visibly unresolved and reappears on every fetch.
 - After applying fixes, re-run the full test suite (`docs/protocols/verification.md`) before proposing a follow-up commit.
 - Repeat — fetch → assess → fix/reply → test → commit — until no unresolved threads remain. Only then is the task eligible to be declared fully complete.
