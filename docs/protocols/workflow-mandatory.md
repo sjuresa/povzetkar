@@ -35,7 +35,7 @@ For every request that modifies code, follow this exact sequence. The plan → a
 **Step 5: Archive the Approved Plan and Task**
 
 - Write the approved plan verbatim to `agent_logs/<task id> <task title> plan.md`.
-- Copy the final task definition to `agent_logs/<task id> <task title> task.md`.
+- Copy the approved task definition to `agent_logs/<task id> <task title> task.md`.
 - These two files are the task's permanent record; there is no separate execution log.
 
 **Step 6: Execute the Plan**
