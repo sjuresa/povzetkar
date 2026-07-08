@@ -171,6 +171,34 @@ class ApiKeyAuthenticationTest {
     }
 
     @Test
+    void validKeyIsRejectedWhenMappedUserIsDisabled() {
+        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() ->
+                User.update("accountStatus = ?1 where email = ?2",
+                        com.povzetkar.quarkus.model.AccountStatus.DISABLED, MAPPED_EMAIL));
+
+        given()
+                .redirects().follow(false)
+                .header(API_KEY_HEADER, VALID_KEY)
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void validKeyIsRejectedWhenMappedUserIsMissing() {
+        // No user carries the configured email (rename avoids FK cleanup of this user's topic/briefing)
+        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() ->
+                User.update("email = ?1 where email = ?2", "renamed@test.local", MAPPED_EMAIL));
+
+        given()
+                .redirects().follow(false)
+                .header(API_KEY_HEADER, VALID_KEY)
+                .when().get("/api/v1/briefings")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
     void validKeyIsForbiddenOnAdminPaths() {
         given()
                 .header(API_KEY_HEADER, VALID_KEY)

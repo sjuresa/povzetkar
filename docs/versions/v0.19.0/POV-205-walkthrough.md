@@ -34,6 +34,7 @@ Estimated ~5 h; actual **~1 h 10 min** (Brainstorm 20 min → Plan approved 11:1
 
 * Red→green: `wrongKeyIsRejectedWith401` failed (`Expected 401 but was 302`) before the priority fix, green after.
 * Full suite: `mvn clean verify -pl backend` — **339 tests, 0 failures, 3 skipped (pre-existing), SpotBugs 0 findings** (2026-07-08 11:30 CET).
+* PR #276 review loop (Gemini, 2 findings, both accepted): (1) HIGH — the key authenticated without confirming the mapped user still exists and is `ENABLED`, bypassing the role-strip model that gates OIDC users; now verified in-mechanism (`QuarkusTransaction.requiringNew()` inside `context.runBlocking`). (2) MEDIUM — `MessageDigest.isEqual` leaked key length via early length-mismatch return; both keys are now SHA-256 hashed before comparison. Added 2 tests (disabled/missing mapped user → 401). Re-verified: **341 tests, 0 failures, SpotBugs 0** (2026-07-08 12:15 CET).
 
 ## Traceability
 
