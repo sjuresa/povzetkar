@@ -23,6 +23,8 @@ services:
       - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN:?METRICS_SCRAPE_TOKEN must be set}
       - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:?TRANSCRIPT_PROXY_API_KEY must be set}
       - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://povzetkar-production.up.railway.app}
+      - POVZETKAR_API_KEY=${POVZETKAR_API_KEY}
+      - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL}
     depends_on:
       postgres-prod:
         condition: service_healthy

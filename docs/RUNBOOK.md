@@ -896,7 +896,7 @@ An optional read-only API key lets automation agents (e.g., Claude Code) read br
 **Setup (local or prod):**
 
 1.  Generate a key: `openssl rand -hex 32`
-2.  Add to the environment (`backend/.env` locally, the prod env file on the server):
+2.  Add **both** to the environment (`backend/.env` / `.env.docker` locally, the prod env file on the server) — the key is a secret, the email just maps it to an existing `ENABLED` user:
 
     ```env
     POVZETKAR_API_KEY=<generated secret>
