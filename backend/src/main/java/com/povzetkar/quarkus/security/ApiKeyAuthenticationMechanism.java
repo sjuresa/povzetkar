@@ -9,13 +9,16 @@ import io.quarkus.vertx.http.runtime.security.HttpCredentialTransport;
 import io.smallrye.mutiny.Uni;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * Authenticates requests carrying an X-API-Key header as the configured user with a
- * read-only identity (POV-205). Requests without the header are delegated untouched to
- * the OIDC/session mechanism, so the browser login flow is unaffected.
+ * read-only identity (POV-205). Requests without the header — and all requests when the
+ * feature is unconfigured — are delegated untouched to the OIDC/session mechanism, so
+ * the browser login flow is unaffected.
  */
 @ApplicationScoped
 public class ApiKeyAuthenticationMechanism implements HttpAuthenticationMechanism {
@@ -24,24 +27,41 @@ public class ApiKeyAuthenticationMechanism implements HttpAuthenticationMechanis
     public static final String AUTH_METHOD_ATTRIBUTE = "auth-method";
     public static final String AUTH_METHOD_API_KEY = "api-key";
 
+    private final boolean enabled;
+
+    public ApiKeyAuthenticationMechanism(
+            @ConfigProperty(name = "povzetkar.api.key") Optional<String> configuredKey,
+            @ConfigProperty(name = "povzetkar.api.key-user-email") Optional<String> configuredUserEmail) {
+        this.enabled = configuredKey.filter(k -> !k.isBlank()).isPresent()
+                && configuredUserEmail.filter(e -> !e.isBlank()).isPresent();
+    }
+
     @Override
     public Uni<SecurityIdentity> authenticate(RoutingContext context, IdentityProviderManager identityProviderManager) {
-        String presentedKey = context.request().getHeader(X_API_KEY_HEADER);
-        if (presentedKey == null || presentedKey.isBlank()) {
+        if (!shouldHandle(context)) {
             return Uni.createFrom().nullItem();
         }
-        return identityProviderManager.authenticate(new ApiKeyAuthenticationRequest(presentedKey));
+        return identityProviderManager.authenticate(
+                new ApiKeyAuthenticationRequest(context.request().getHeader(X_API_KEY_HEADER)));
     }
 
     @Override
     public Uni<ChallengeData> getChallenge(RoutingContext context) {
-        // Challenge only requests that attempted API-key auth; anything else falls
-        // through to the OIDC mechanism's challenge (login redirect for browsers).
-        String presentedKey = context.request().getHeader(X_API_KEY_HEADER);
-        if (presentedKey == null || presentedKey.isBlank()) {
+        // Challenge only requests that attempted API-key auth against an enabled feature;
+        // anything else (no header, or feature off) falls through to the OIDC mechanism's
+        // challenge (login redirect for browsers).
+        if (!shouldHandle(context)) {
             return Uni.createFrom().nullItem();
         }
         return Uni.createFrom().item(new ChallengeData(401, null, null));
+    }
+
+    private boolean shouldHandle(RoutingContext context) {
+        if (!enabled) {
+            return false;
+        }
+        String presentedKey = context.request().getHeader(X_API_KEY_HEADER);
+        return presentedKey != null && !presentedKey.isBlank();
     }
 
     @Override
