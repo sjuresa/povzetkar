@@ -27,14 +27,17 @@ import java.util.Optional;
 @ApplicationScoped
 public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthenticationRequest> {
 
-    private final Optional<String> configuredKey;
     private final Optional<String> configuredUserEmail;
+    /** SHA-256 of the configured key, precomputed once; null when the feature is unconfigured. */
+    private final byte[] expectedKeyHash;
 
     public ApiKeyIdentityProvider(
             @ConfigProperty(name = "povzetkar.api.key") Optional<String> configuredKey,
             @ConfigProperty(name = "povzetkar.api.key-user-email") Optional<String> configuredUserEmail) {
-        this.configuredKey = configuredKey;
-        this.configuredUserEmail = configuredUserEmail;
+        this.configuredUserEmail = configuredUserEmail.filter(email -> !email.isBlank());
+        this.expectedKeyHash = configuredKey.filter(key -> !key.isBlank())
+                .map(ApiKeyIdentityProvider::sha256)
+                .orElse(null);
     }
 
     @Override
@@ -44,9 +47,10 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthentica
 
     @Override
     public Uni<SecurityIdentity> authenticate(ApiKeyAuthenticationRequest request, AuthenticationRequestContext context) {
-        if (configuredKey.isEmpty() || configuredKey.get().isBlank()
-                || configuredUserEmail.isEmpty() || configuredUserEmail.get().isBlank()
-                || !constantTimeEquals(configuredKey.get(), request.getPresentedKey())) {
+        // Guards against the provider being reached while unconfigured; the mechanism's
+        // enabled gate normally prevents this, but the provider must fail closed regardless.
+        if (expectedKeyHash == null || configuredUserEmail.isEmpty()
+                || !constantTimeEquals(request.getPresentedKey())) {
             // Never include the presented key in the exception message or any log output.
             return Uni.createFrom().failure(new AuthenticationFailedException("Invalid API key"));
         }
@@ -67,29 +71,29 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthentica
                     .setPrincipal(new QuarkusPrincipal(configuredUserEmail.get()))
                     .setAnonymous(false)
                     .addAttribute(ApiKeyAuthenticationMechanism.AUTH_METHOD_ATTRIBUTE,
-                            ApiKeyAuthenticationMechanism.AUTH_METHOD_API_KEY)
-                    .addRole(Permission.ROLE_API_READONLY);
-            RolePermissionsMap.getPermissionsForRole(Permission.ROLE_API_READONLY)
-                    .forEach(permission -> builder.addRole(permission.name()));
+                            ApiKeyAuthenticationMechanism.AUTH_METHOD_API_KEY);
+            RolePermissionsMap.grantRole(Permission.ROLE_API_READONLY, builder::addRole);
 
             return builder.build();
         });
     }
 
     /**
-     * Constant-time key comparison. Both keys are SHA-256 hashed first so the compared
-     * arrays are always 32 bytes — {@link MessageDigest#isEqual} returns early on a length
-     * mismatch, which would otherwise leak the configured key's length via timing.
+     * Constant-time comparison of the presented key against the precomputed hash. Both
+     * sides are SHA-256 hashed so the compared arrays are always 32 bytes —
+     * {@link MessageDigest#isEqual} returns early on a length mismatch, which would
+     * otherwise leak the configured key's length via timing.
      */
-    private static boolean constantTimeEquals(String expected, String presented) {
+    private boolean constantTimeEquals(String presented) {
         if (presented == null) {
             return false;
         }
+        return MessageDigest.isEqual(expectedKeyHash, sha256(presented));
+    }
+
+    private static byte[] sha256(String value) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] expectedHash = digest.digest(expected.getBytes(StandardCharsets.UTF_8));
-            byte[] presentedHash = digest.digest(presented.getBytes(StandardCharsets.UTF_8));
-            return MessageDigest.isEqual(expectedHash, presentedHash);
+            return MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
