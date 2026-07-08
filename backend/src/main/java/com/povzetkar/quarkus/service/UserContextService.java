@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.UserIdentity;
+import com.povzetkar.quarkus.security.ApiKeyAuthenticationMechanism;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.security.UserSecurityDetails;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -48,6 +49,11 @@ public class UserContextService {
             }
         }
 
+        if (isApiKeyIdentity()) {
+            // API-key principals carry the configured user's email, not a username
+            return User.find("email", securityIdentity.getPrincipal().getName()).firstResultOptional();
+        }
+
         String username = securityIdentity.getPrincipal().getName();
         return User.find("username", username).firstResultOptional();
     }
@@ -68,7 +74,17 @@ public class UserContextService {
             return User.find("select u from User u left join fetch u.roles join u.identities i where i.provider = ?1 and i.externalId = ?2", PROVIDER_GOOGLE, externalId).firstResultOptional();
         }
 
+        if (isApiKeyIdentity()) {
+            return User.find("from User u left join fetch u.roles where u.email = ?1",
+                    securityIdentity.getPrincipal().getName()).firstResultOptional();
+        }
+
         return User.find("from User u left join fetch u.roles where u.username = ?1", username).firstResultOptional();
+    }
+
+    private boolean isApiKeyIdentity() {
+        return ApiKeyAuthenticationMechanism.AUTH_METHOD_API_KEY
+                .equals(securityIdentity.getAttribute(ApiKeyAuthenticationMechanism.AUTH_METHOD_ATTRIBUTE));
     }
 
     /**

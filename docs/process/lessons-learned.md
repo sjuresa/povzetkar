@@ -8,6 +8,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ## 🚀 Recent Highlights (v0.19.0)
 
+> [!WARNING]
+> **Quarkus picks the auth *challenge* by mechanism priority, not by who saw the credential (POV-205)**:
+> A custom `HttpAuthenticationMechanism` that fails a presented credential (e.g. a wrong `X-API-Key` → `AuthenticationFailedException`) does **not** automatically get to answer the challenge — Quarkus asks mechanisms in `getPriority()` order, and OIDC (priority 2000) answers with its 302 login redirect. The result: an API client with a *wrong* key gets redirected to Google instead of receiving 401. Fix: the custom mechanism outranks OIDC (e.g. 3000) but returns `nullItem()` from both `authenticate()` and `getChallenge()` when its header is absent, so the browser flow falls through unchanged. Related codebase traps for synthetic identities: VIEW permissions guard four *mutating* endpoints (share/unshare), so "read-only" needs a method-level `HttpSecurityPolicy`; and `ROLE_DEMO` redirects content to the demo account, so its permission set must not be reused for other identities.
+
 > [!TIP]
 > **A validator gate that can't exit non-zero is theater — check `continue-on-error` before trusting `--fail-on` (POV-203)**:
 > The planning-audit CI step ran `--fail-on all` but also carried `continue-on-error: true`, so a failing validator never blocked a build. The severity split (WARNING blocks in CI via `--fail-on all`, not locally via the default `--fail-on critical`) is real *only* once the step is allowed to fail the job. When restoring an enforcement gate, verify the whole path: the tool's exit code **and** the CI step's error handling. Also: the validator's `tasks_glob` scans whole gitignored task files, so a task that forward-references an ID it will mint (e.g. a new UC) produces bootstrap CRITICALs until the spec backfill lands — expected, self-clearing. The **walkthrough** rule is deliberately section-only to avoid that stale-prose trap.

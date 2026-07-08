@@ -887,6 +887,31 @@ Two Quarkus mechanisms prevent accidental secret exposure in logs:
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
 
+### 14.6 Programmatic API-Key Access (POV-205)
+
+An optional read-only API key lets automation agents (e.g., Claude Code) read briefings, summaries, content items (including transcripts via `GET /api/v1/content-items/{id}/transcript`), topics, sources and the dashboard without a browser OIDC session.
+
+**Behavior:** requests carrying `X-API-Key: <secret>` authenticate as the mapped user with the synthetic `api-readonly` role (the four VIEW permissions). Non-GET requests and admin paths return 403. A wrong key returns 401. Without the header, authentication is unchanged. The feature is **disabled unless both properties are set**.
+
+**Setup (local or prod):**
+
+1.  Generate a key: `openssl rand -hex 32`
+2.  Add to the environment (`backend/.env` locally, the prod env file on the server):
+
+    ```env
+    POVZETKAR_API_KEY=<generated secret>
+    POVZETKAR_API_KEY_USER_EMAIL=<email of the existing user the key acts as>
+    ```
+
+3.  Restart the application, then verify:
+
+    ```bash
+    curl -H "X-API-Key: <generated secret>" http://localhost:8080/api/v1/briefings          # 200
+    curl -X POST -H "X-API-Key: <generated secret>" http://localhost:8080/api/v1/briefings/1/share  # 403 (read-only)
+    ```
+
+The key is registered in `quarkus.config.secret-keys` (masked in diagnostics) and must never appear in logs. Rotation = replace the env value and restart.
+
 ## 18. Account Activation & User Onboarding
 
 ### 15.1 Account Approval Model

@@ -91,6 +91,42 @@ class ContentItemApiResourceTest {
 
     @Test
     @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetTranscriptReturnsTranscriptText() {
+        Long videoId = io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().call(() -> {
+            com.povzetkar.quarkus.model.YouTubeVideo video = com.povzetkar.quarkus.builder.YouTubeVideoBuilder
+                    .aYouTubeVideo()
+                    .withTitle("Video With Transcript")
+                    .withContentSource(testSource)
+                    .build();
+            video.transcript = "Spoken words of the video.";
+            video.persistAndFlush();
+            return video.id;
+        });
+
+        given()
+                .when().get("/api/v1/content-items/" + videoId + "/transcript")
+                .then()
+                .statusCode(200)
+                .body("data.contentItemId", equalTo(videoId.intValue()))
+                .body("data.transcript", equalTo("Spoken words of the video."));
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetTranscriptReturns404WhenAbsent() {
+        given()
+                .when().get("/api/v1/content-items/" + pendingItem.id + "/transcript")
+                .then()
+                .statusCode(404);
+
+        given()
+                .when().get("/api/v1/content-items/999999/transcript")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
     void testGetAllContentItems() {
         given()
                 .when().get("/api/v1/content-items")

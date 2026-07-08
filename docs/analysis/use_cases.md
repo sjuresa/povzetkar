@@ -6,6 +6,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ## 2. Actor Definitions
 - **User/Consumer**: Views generated briefings and manages personal preferences.
 - **Administrator**: Manages topics, content sources, users, and triggers orchestration.
+- **Automation Agent**: An external program (e.g. a Claude Code agent) acting on behalf of a user via a personal read-only API key.
 
 ## 3. Use Case List
 
@@ -220,9 +221,26 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 5. Items marked `SKIPPED_TOO_SHORT` are excluded from summarization.
 **Postconditions**: New content is ingested, summarized, and rolled into briefings without any manual trigger; the lock is released.
 
+### UC-17: Programmatic Read-Only API Access
+**Actor**: Automation Agent
+**Related Stories**: US-API-001
+**Context**: [POV-205 walkthrough](../versions/v0.19.0/POV-205-walkthrough.md)
+**Preconditions**: `POVZETKAR_API_KEY` and `POVZETKAR_API_KEY_USER_EMAIL` are configured; the mapped user exists.
+**Main Flow**:
+1. The agent sends a GET request with the `X-API-Key` header.
+2. `ApiKeyAuthenticationMechanism` validates the key (constant-time) and establishes an identity for the mapped user with the synthetic `api-readonly` role (four VIEW permissions).
+3. The resource returns the same user-scoped data the mapped user would see in the browser (briefings, summaries, content items incl. `GET /api/v1/content-items/{id}/transcript`, topics, sources, dashboard).
+**Alternate Flows**:
+- Wrong or unconfigured key → 401 (no login redirect for API-key attempts).
+- Any non-GET request with a valid key → 403 (`ApiKeyReadOnlyPolicy`).
+- Admin/orchestrator paths → 403 (no admin role).
+- No `X-API-Key` header → the OIDC/session flow behaves exactly as before.
+**Postconditions**: No state change is possible via the key; the browser login flow is unaffected.
+
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.6     | 2026-07-08 | Povzetkar AI | POV-205: added Automation Agent actor and UC-17 (Programmatic Read-Only API Access, US-API-001). |
 | 1.5     | 2026-07-06 | Povzetkar AI | POV-203: UC-14 updated (proxy-primary chain, US-ING-004); added UC-16 (Scheduled Orchestration); UC-13 cancel note → backlog. |
 | 1.4     | 2026-05-20 | Povzetkar AI | Added UC-11 (Admin User Mgmt), UC-12 (User Approval), UC-13 (Job Ops), UC-14 (Transcript Fallback), UC-15 (External Links) for v0.17.0. |
 | 1.3     | April 01, 2026 | Povzetkar AI | Added UC-8, UC-9, UC-10 for v0.16.0 (User Experience Focus). |

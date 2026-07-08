@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- (POV-205) **Read-only API-key authentication for programmatic access**: automation agents can now read briefings, summaries, content items, topics, sources and the dashboard via `X-API-Key: <secret>` instead of a browser OIDC session. The key maps to a configured existing user (`POVZETKAR_API_KEY` + `POVZETKAR_API_KEY_USER_EMAIL`, disabled unless both are set) and establishes an identity with the new synthetic `api-readonly` role carrying only the four VIEW permissions; a global HTTP security policy additionally rejects **all non-GET requests** with 403 (share/unshare POSTs are guarded by VIEW roles alone), and admin/orchestrator paths stay 403. Wrong keys get 401 (constant-time comparison; the key is in `quarkus.config.secret-keys` and never logged); requests without the header follow the existing OIDC flow unchanged. Also new: `GET /api/v1/content-items/{id}/transcript` exposes the raw transcript (previously only a `hasTranscript` flag), and the OpenAPI schema documents the `apiKey` security scheme. Setup: RUNBOOK §14.6.
+
 ### Changed
 
 - (POV-202) **Frontend initial-load optimization**: route-level code-splitting cut the initial-load JS bundle from **370 KB → 167 KB gzip (−55%)** and lifted the landing-page Lighthouse performance score **85 → 93** (FCP −1.0 s, LCP −0.5 s). `router.tsx` now lazy-loads all authenticated, admin, and public-share routes via TanStack Router's `createLazyRoute` + `route.lazy()` (each behind a `.lazy.tsx` wrapper), keeping the landing page and auth-guard layouts eager; a minimal `defaultPendingComponent` covers slow chunk loads. The `SystemMetadata` changelog/roadmap modal — previously pulling the markdown pipeline into every initial load via both `LandingPage` and `AppShell` — is now `React.lazy`-deferred behind its open trigger. Dead server-side-rendering scaffolding removed (`react-router-dom`, `vite-react-ssg`, the `ssgOptions` block, and the nested override; −23 packages), never wired to a mount since project init.
