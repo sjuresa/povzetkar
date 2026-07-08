@@ -13,6 +13,7 @@
 | POV-202 — Optimize frontend (initial-load bundle) | [walkthrough](POV-202-walkthrough.md) | [retrospective](POV-202-retrospective.md) |
 | POV-203 — Restore US/UC/TC Traceability Under the Task-First Process | [walkthrough](POV-203-walkthrough.md) | [retrospective](POV-203-retrospective.md) |
 | POV-204 — Modernize AGENT.md and Agent Protocols | [walkthrough](POV-204-walkthrough.md) | [retrospective](POV-204-retrospective.md) |
+| POV-205 — Read-only API-key authentication for programmatic access | [walkthrough](POV-205-walkthrough.md) | [retrospective](POV-205-retrospective.md) |
 
 ## Carry-Forward Review
 

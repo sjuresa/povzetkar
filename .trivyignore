@@ -1,5 +1,11 @@
 # Pending Debian fixes for libexpat in Distroless (Debian 13)
 # These will be removed once Google releases updated images.
+# libexpat: handler call depth tracking and integer overflow issues
+CVE-2026-56131
+CVE-2026-56407
+CVE-2026-56408
+# libuuid1: integer overflow or wraparound in libblkid
+CVE-2026-53615
 # libexpat: Information disclosure and data integrity issues due to integer overflow
 CVE-2026-25210
 # libexpat: Security fix pending upstream image update

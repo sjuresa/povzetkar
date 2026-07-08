@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.StatusUpdateDTO;
 import com.povzetkar.quarkus.api.dto.SummaryDTO;
+import com.povzetkar.quarkus.api.dto.TranscriptDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
@@ -18,6 +19,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.model.YouTubeVideo;
 import jakarta.transaction.Transactional;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
@@ -182,6 +184,25 @@ public class ContentItemApiResource extends BaseApiResource {
         Summary entity = Summary.findByContentIdWithAssociations(id)
                 .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + id + NOT_FOUND));
         return summaryMapper.toDTO(entity);
+    }
+
+    @GET
+    @Path("/{id}/transcript")
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Get content item transcript", description = "Retrieves the raw transcript for a specific content item.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Transcript retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TranscriptDTO.class))
+    )
+    @APIResponse(responseCode = "404", description = "Content item or transcript not found")
+    public TranscriptDTO getTranscriptByItemId(@PathParam("id") Long id) {
+        ContentItem item = ContentItem.findByIdWithAssociations(id)
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+        if (item instanceof YouTubeVideo video && video.transcript != null && !video.transcript.isBlank()) {
+            return new TranscriptDTO(id, video.transcript);
+        }
+        throw new NotFoundException("Transcript for ContentItem " + id + NOT_FOUND);
     }
 
     @POST

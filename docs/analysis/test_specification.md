@@ -66,6 +66,7 @@
 | **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees generic status banner. |
 | **TC-SEC-005** | **P0** | UC-12 | [v0.17] | Approval State Transition | Integration | Admin can transition `PENDING_APPROVAL → ENABLED`/`DISABLED`; audit row written. Last-admin guard prevents self-demotion. |
 | **TC-SEC-006** | **P1** | - | [v0.18] | Demo Role Access Regression | Unit (`RolePermissionsMapTest`) | `demo` role includes `SOURCE_VIEW` (no 403 on Briefing Hub source filter / Sources page); Topics page mutation controls hidden in readonly mode (UI part Manual) (POV-192). |
+| **TC-SEC-007** | **P0** | UC-17 | [v0.19] | Read-Only API-Key Access | Integration (`ApiKeyAuthenticationTest`) | Valid `X-API-Key` reads the mapped user's data (briefings, content items, summary, transcript, topics, sources, dashboard); wrong key → 401; any non-GET and admin paths → 403; header-less requests follow the unchanged OIDC flow (POV-205). |
 
 ## 6. Domain: General UX & Brand (UI)
 
@@ -130,6 +131,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.9     | 2026-07-08 | Povzetkar AI | POV-205: added TC-SEC-007 (Read-Only API-Key Access, P0, automated via `ApiKeyAuthenticationTest`). |
 | 2.8     | 2026-07-06 | Povzetkar AI | POV-203 v0.18 drift backfill: added TC-ING-004/005/006/007, TC-MON-005, TC-SEC-006 (TC-ING-006 is P0 Manual without skip — enforces the scheduler-test carry-forward at v0.20). Honesty fixes: TC-ADM-004 automation → Manual/PW, stale cancel note → backlog reference; PW-014 restated. |
 | 2.7     | 2026-05-20 | Povzetkar AI | Added v0.17.0 test cases: TC-GRX-006, TC-LIB-006, TC-SEC-004/005, TC-ADM-003/004, TC-ING-003. Added PW-012…PW-015 to automation backlog. |
 | 2.6     | April 20, 2026 | Antigravity AI | Integrated PW-010 and PW-011 for comprehensive backlog traceability. |

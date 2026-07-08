@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Maps database role names to their corresponding granular Permissions.
@@ -36,10 +37,17 @@ public class RolePermissionsMap {
             Permission.CONTENT_ITEM_VIEW,
             Permission.SOURCE_VIEW);
 
+    private static final Set<Permission> API_READONLY_PERMISSIONS = EnumSet.of(
+            Permission.TOPIC_VIEW,
+            Permission.BRIEFING_VIEW,
+            Permission.CONTENT_ITEM_VIEW,
+            Permission.SOURCE_VIEW);
+
     private static final Map<String, Set<Permission>> ROLE_PERMISSIONS = Map.of(
             Permission.ROLE_ADMIN, ADMIN_PERMISSIONS,
             Permission.ROLE_USER, USER_PERMISSIONS,
-            Permission.ROLE_DEMO, DEMO_PERMISSIONS);
+            Permission.ROLE_DEMO, DEMO_PERMISSIONS,
+            Permission.ROLE_API_READONLY, API_READONLY_PERMISSIONS);
 
     /**
      * Resolves the granular permissions for a given system role.
@@ -52,5 +60,18 @@ public class RolePermissionsMap {
             return Collections.emptySet();
         }
         return ROLE_PERMISSIONS.getOrDefault(roleName.toLowerCase(), Collections.emptySet());
+    }
+
+    /**
+     * Grants a role and its granular permissions to an identity, by passing the role name
+     * and each permission name to {@code addRole}. Shared by the OIDC augmentor and the
+     * API-key identity provider so the role→permission expansion lives in one place.
+     *
+     * @param roleName the role to grant
+     * @param addRole  sink for role/permission names (e.g. {@code builder::addRole})
+     */
+    public static void grantRole(String roleName, Consumer<String> addRole) {
+        addRole.accept(roleName);
+        getPermissionsForRole(roleName).forEach(permission -> addRole.accept(permission.name()));
     }
 }

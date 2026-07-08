@@ -4,6 +4,7 @@
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
+| 1.6     | July 8, 2026     | Povzetkar AI | POV-205: minted US-API-001 in new §3.6 API & Integrations; §3.6 Administration & Hardening renumbered to §3.7. |
 | 1.5     | July 6, 2026     | Povzetkar AI | POV-203: single US catalogue + lifecycle note in §3; migrated US-17.1–17.7 into new §3.6.       |
 | 1.4     | March 30, 2026   | Povzetkar AI | Assigned unique IDs to all User Stories for Traceability Matrix hardening (POV-166). |
 | 1.3     | January 17, 2026 | Povzetkar AI | Added requirements for topic management, granular orchestration, and error visibility (v0.7.0). |
@@ -64,7 +65,11 @@ This section breaks down the system's functionality into user-centric stories. I
 *   **US-UI-005** (Implemented) **As an Administrator, I want to** granularly trigger specific phases of the orchestration process (e.g., only processing pending items or only generating briefings).
 *   **US-UI-006** (Implemented) **As an Administrator, I want to** view specific error details for failed content items and manually trigger a retry for transcript fetching.
 
-### 3.6. Administration & Hardening (migrated from v0.17 planning)
+### 3.6. API & Integrations
+
+*   **US-API-001** (Implemented) **As an** account owner, **I want to** have a personal read-only API key so that my automation agents can access my briefings, summaries and transcripts programmatically. *(Read-only API-Key Authentication — POV-205)*
+
+### 3.7. Administration & Hardening (migrated from v0.17 planning)
 
 *Origin note: US-17.1–17.7 were minted during v0.17.0 planning and previously lived only in the archived [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md). They were migrated here by POV-203 with their original IDs preserved, because UC-11…UC-15 reference them. The `US-NN.x` ID scheme is retired for new stories.*
 
