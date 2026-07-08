@@ -199,6 +199,16 @@ class ApiKeyAuthenticationTest {
     }
 
     @Test
+    void validKeyAllowsHeadAsReadOnly() {
+        // HEAD is a safe read method (RFC 7231); ApiKeyReadOnlyPolicy must not 403 it
+        given()
+                .header(API_KEY_HEADER, VALID_KEY)
+                .when().head("/api/v1/briefings")
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
     void validKeyIsForbiddenOnAdminPaths() {
         given()
                 .header(API_KEY_HEADER, VALID_KEY)
