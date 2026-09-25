@@ -29,7 +29,8 @@ Estimated ~3 h; actual **~1 h** (Brainstorm 14:19 → Plan approved 14:42 → im
 4. **`up -d app prometheus` recreated `postgres-prod`** (dependency; compose saw a config difference). Verified harmless — clean shutdown, same named volume, 7 users / 5 topics / 772 briefings / 9106 content items, Flyway history intact (38 entries, last 2026-05-28). RUNBOOK §10.3 now uses `--no-deps`.
 5. **The new image also ships the final POV-205 commits** (`dfd23b8a`, `ac2044ce`): the running image dated from 2026-07-08 before them. Already reviewed and covered by the full suite — accepted.
 6. **Review round after close-out** (PO `/code-review`: no findings; external review: 8 items, each verified). Fixed: a **dev-only regression this task introduced** — with the management interface on in dev, Swagger UI moved to 9000 and "Try it out" could not reach `/api` (404 on 9000, CORS on 8080) → `%dev.quarkus.management.enabled=false` (verified in dev mode: all `/q/*` on 8080, 9000 closed); misleading `EXPOSE`/`expose` comments reworded (they restrict nothing — the boundary is no publishing/routing); a wrong backlog proposal corrected (dev/test Quarkus binds `localhost`). Compose `${…:-}` defaults for the optional API-key vars (pre-existing) moved to POV-208. A second external review caught a false claim of mine — that API-key clients could use a "committed" `backend/target/openapi.json` (`target/` is gitignored): RUNBOOK §14.6 now documents a verified way to fetch the schema from the management port, and the CHANGELOG entry notes it; the negative guard was extended to `/q/health/live` and `/q/health/started`. Full suite re-run green (352).
-7. **Pre-existing findings logged, not fixed:** `OpenApiGeneratorTest` writes YAML (incl. 6 test-only paths) into `target/openapi.json`; dev Prometheus targets a non-existent `app` service; RUNBOOK still describes an OCI production host; 12 unrecognized config keys → POV-208.
+7. **CI-driven CVE patching (PO-approved scope extension).** PR #277 CI failed on Trivy — not because of this task, but because CVEs were published after the last green CI (July): Netty 4.1.135 (incl. CRITICAL CVE-2026-75595), PostgreSQL JDBC 42.7.11, axios 1.16.1 (FS scan); healthcheck Go stdlib 1.26.4 and 8 unfixed Debian 13 CVEs (image scan). Patched to the Quarkus 3.39.5 BOM versions (Netty 4.1.138, pgjdbc 42.7.13 — no conflict with POV-206), axios 1.20.0, `golang:1.26.8-alpine`; unfixed Debian CVEs suppressed with `exp:2026-12-31`. **I had run no local Trivy in this task** — and deployed at 15:09 without an image scan; that image was also built on a stale cached base. Corrected: RUNBOOK §10.3 (`build --pull`, scan before `up`), lesson in `infrastructure-ops.md`, production rebuilt with `--pull`, scanned and redeployed (18:24). A third CI run failed on a Maven Central `429` during Trivy POM resolution (infrastructure); re-run green.
+8. **Pre-existing findings logged, not fixed:** `OpenApiGeneratorTest` writes YAML (incl. 6 test-only paths) into `target/openapi.json`; dev Prometheus targets a non-existent `app` service; RUNBOOK still describes an OCI production host; 12 unrecognized config keys → POV-208.
 
 ## 5. Verification evidence
 
@@ -51,7 +52,9 @@ Estimated ~3 h; actual **~1 h** (Brainstorm 14:19 → Plan approved 14:42 → im
 | Prometheus target | `app:8080` up (token ignored) | `app:9000` up, no `Unknown option` WARN |
 | Startup log | — | `Management interface listening on http://0.0.0.0:9000` |
 
-Rollback image: `povzetkar-app:0.19-SNAPSHOT-pre-POV-207` (`5c1b4a9f7d09`).
+Rollback images: `povzetkar-app:0.19-SNAPSHOT-pre-POV-207` (`5c1b4a9f7d09`, before the first deploy) and `…-pre-POV-207-cve` (`3463c1e9c872`, before the CVE redeploy).
+
+* **CVE patch round:** full `mvnw verify` 352 green (after a first run crashed on native OOM — Trivy had been started in parallel), frontend 15/15 test files + build green, local Trivy FS and image (CI flags, fresh `--pull` base) exit 0, **PR #277 CI SUCCESS** on `7935f8f0`. Production redeployed with `--no-deps app` at 18:24 CET: healthy, `/q/*` still 404, SPA/API 200, Prometheus target up.
 
 ## Traceability
 

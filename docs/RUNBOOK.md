@@ -262,13 +262,19 @@ docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
 ### 10.3 Update (rebuild + restart app only)
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker build app
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker build --pull app
 docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps app
 ```
 
-`--no-deps` keeps compose from also recreating dependencies (e.g. `postgres-prod`) when it detects a
-config difference in them (observed during POV-207). Before rebuilding, tag the running image for
-rollback: `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
+- `--pull` fetches the current base images (distroless, temurin, node, golang). Without it Docker
+  reuses cached bases — during POV-207 the local base was months behind the one CI scans, so the
+  deployed image carried Debian CVEs CI never saw.
+- `--no-deps` keeps compose from also recreating dependencies (e.g. `postgres-prod`) when it detects
+  a config difference in them (observed during POV-207).
+- Before rebuilding, tag the running image for rollback:
+  `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
+- Before `up`, scan the new image with the CI flags (see `docs/process/lessons/infrastructure-ops.md`,
+  "Scan Before Every Production Build").
 
 ### 10.4 Stop
 
