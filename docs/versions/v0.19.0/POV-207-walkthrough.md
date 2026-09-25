@@ -19,7 +19,7 @@ Delivered the approved plan. Additions: dev `backend/docker-compose.yml` carried
 
 ## 3. Time delta
 
-Estimated ~3 h; actual **~1 h** (Brainstorm 14:19 → Plan approved 14:42 → implementation + verify + security review 14:42–15:05 → deploy + external verification 15:06–15:11 → close-out docs 15:12–15:20).
+Estimated ~3 h; actual **~3 h 05 min** of active work — close to the estimate, but not for the planned reasons. The planned scope took ~1 h (Brainstorm 14:19 → Plan approved 14:42 → implementation + verify + security review 14:42–15:05 → deploy + external verification 15:06–15:11 → close-out docs 15:12–15:20). Unplanned: two external review rounds + PR (16:20–17:00, ~40 min) and the CI-driven CVE patch round incl. redeploy (17:10–18:24, ~75 min), plus final docs (~10 min).
 
 ## 4. Deviations
 

@@ -2,7 +2,7 @@
 
 ## 1. Planned vs. actual
 
-Scoped: move metrics/health/OpenAPI to the Quarkus management interface, re-point healthcheck and Prometheus, remove the phantom scrape token, regression test, `/security-review`, production deploy with external verification. Delivered exactly that plus the dev-compose cleanup. Estimate ~3 h, actual ~1 h. The task did not exist at the start of the session — it was found during POV-206 planning and preempted it by PO decision.
+Scoped: move metrics/health/OpenAPI to the Quarkus management interface, re-point healthcheck and Prometheus, remove the phantom scrape token, regression test, `/security-review`, production deploy with external verification. Delivered exactly that plus the dev-compose cleanup. Estimate ~3 h, actual ~3 h 05 min — the planned scope took ~1 h; review rounds (~40 min) and the CI-driven CVE patch round (~75 min) took the rest. The task did not exist at the start of the session — it was found during POV-206 planning and preempted it by PO decision.
 
 ## 2. Deviations & why
 
