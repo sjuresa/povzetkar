@@ -24,7 +24,7 @@ COPY --from=build-frontend /app/frontend/dist ./backend/src/main/resources/META-
 RUN mvn package -DskipTests -pl backend -am
 
 # Stage 3: Build custom static healthcheck tool for Distroless compatibility
-FROM golang:1.26.4-alpine AS build-healthcheck
+FROM golang:1.26.8-alpine AS build-healthcheck
 WORKDIR /app
 COPY build/healthcheck/main.go healthcheck.go
 RUN go build -ldflags="-s -w" -o /go/bin/healthcheck healthcheck.go
@@ -41,7 +41,10 @@ COPY --from=build-healthcheck /go/bin/healthcheck /usr/local/bin/healthcheck
 # Copy application artifacts with correct ownership (nonroot user)
 COPY --from=build-backend --chown=nonroot:nonroot /app/backend/target/quarkus-app/ ./
 
-# Expose the application port
+# Expose the application port. The management port (9000: /q/health, /q/metrics, /q/openapi) is
+# not listed here; EXPOSE is metadata only and restricts nothing. What keeps 9000 private is that
+# it is never published (`ports:`) nor routed by Caddy/the tunnel — any container on the same
+# Docker network can still reach it.
 EXPOSE 8080/tcp
 
 # Standard Quarkus environment variables
@@ -54,7 +57,7 @@ USER nonroot
 
 # Operational healthcheck using the custom static binary
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD ["/usr/local/bin/healthcheck", "http://localhost:8080/q/health/ready"]
+  CMD ["/usr/local/bin/healthcheck", "http://localhost:9000/q/health/ready"]
 
 # Definitive entrypoint targeting the official Distroless java binary
 ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]

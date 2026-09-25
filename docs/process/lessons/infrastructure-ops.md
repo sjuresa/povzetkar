@@ -87,3 +87,19 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### update-version.cjs Requires Repo Root on PATH in Sandboxed Shells
 - **The Trap:** `scripts/update-version.cjs` invokes `mvnw.cmd` without a `.\` prefix; in restricted shells the child `cmd.exe` does not resolve it from the working directory and the version bump fails.
 - **The Standard:** Prepend the repo root to `PATH` for the invocation (`$env:Path = "<repo>;$env:Path"`) or harden the script to call `path.join(rootDir, mvnw)` (tracked in `improvements.md`).
+
+---
+
+## Production Redeploys on the Local Docker Stack (POV-207)
+
+### `docker compose up -d <svc>` Also Recreates Dependencies
+- **The Trap:** `up -d app prometheus` recreated `postgres-prod` as well — `app` `depends_on` it, and compose recreates a dependency whenever it detects a config difference from the running container. Data survived (named volume, clean shutdown), but a database restart was never part of the plan.
+- **The Standard:** For targeted redeploys use `up -d --no-deps <svc>` (RUNBOOK §10.3). Before rebuilding, tag the running image for rollback (`docker tag povzetkar-app:<v> povzetkar-app:<v>-pre-<task>`) — the build reuses the same tag and would otherwise overwrite the only rollback target.
+
+### "Local smoke test" = Production Deploy
+- **The Trap:** Production runs on the developer machine's Docker stack (RUNBOOK §10) with a Cloudflare tunnel. A second "test" stack cannot run alongside it: host ports clash (80/443/5432/3000), and a second `cloudflared` with the same tunnel token registers as an extra connector and receives **real** traffic.
+- **The Standard:** Treat any image/compose change verified "on the local prod stack" as a production deploy: rollback tag, (for DB-touching changes) `pg_dump`, external verification via the public URL.
+
+### Unchanged Dependencies Still Acquire CVEs — Scan Before Every Production Build
+- **The Trap:** POV-207 changed no dependency, so no local Trivy was planned; the image was built and deployed without a scan. CI then failed on 9 HIGH/CRITICAL CVEs (Netty, PostgreSQL JDBC, axios) published *after* the last green CI two months earlier. `/security-review` does not catch these — it excludes outdated-library findings by design.
+- **The Standard:** Before deploying any locally built production image, run Trivy FS **and** image scans with the CI flags (`--severity CRITICAL,HIGH --ignorefile .trivyignore --exit-code 1`), regardless of whether dependencies changed. Locally: `docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy fs … --timeout 30m /src` (Maven POM resolution exceeds the 5-minute default). Never run it in parallel with the test suite — the combined native memory crashed the forked surefire JVM (`insufficient memory … malloc failed`).
