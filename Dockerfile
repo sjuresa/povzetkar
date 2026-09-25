@@ -41,8 +41,10 @@ COPY --from=build-healthcheck /go/bin/healthcheck /usr/local/bin/healthcheck
 # Copy application artifacts with correct ownership (nonroot user)
 COPY --from=build-backend --chown=nonroot:nonroot /app/backend/target/quarkus-app/ ./
 
-# Expose the application port. The management port (9000: /q/health, /q/metrics, /q/openapi)
-# is deliberately not exposed — it stays internal to the Docker network.
+# Expose the application port. The management port (9000: /q/health, /q/metrics, /q/openapi) is
+# not listed here; EXPOSE is metadata only and restricts nothing. What keeps 9000 private is that
+# it is never published (`ports:`) nor routed by Caddy/the tunnel — any container on the same
+# Docker network can still reach it.
 EXPOSE 8080/tcp
 
 # Standard Quarkus environment variables

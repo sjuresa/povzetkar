@@ -28,7 +28,8 @@ class ManagementInterfaceTest {
     URL managementOpenApi;
 
     @ParameterizedTest
-    @ValueSource(strings = {"/q/metrics", "/q/health", "/q/health/ready", "/q/openapi"})
+    @ValueSource(strings = {
+            "/q/metrics", "/q/health", "/q/health/live", "/q/health/ready", "/q/health/started", "/q/openapi"})
     void technicalEndpointsAreNotServedOnMainPort(String path) {
         given()
             .when().get(path)

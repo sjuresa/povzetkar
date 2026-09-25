@@ -7,8 +7,10 @@ services:
     container_name: povzetkar-app
     restart: always
     # Port 8080 is no longer exposed directly, only accessible via proxy.
-    # 9000 = Quarkus management interface (/q/metrics, /q/health, /q/openapi): Docker network only,
-    # never publish it via `ports:` or route it through Caddy / the tunnel.
+    # 9000 = Quarkus management interface (/q/metrics, /q/health, /q/openapi). `expose` is
+    # documentation only — every container on povzetkar-net (prometheus, grafana, caddy,
+    # cloudflared) can reach app:9000. The boundary is: never publish it via `ports:` and never
+    # route it through Caddy or a Cloudflare tunnel hostname.
     expose:
       - "8080"
       - "9000"
