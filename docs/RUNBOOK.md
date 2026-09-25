@@ -58,10 +58,6 @@ The local database environment is managed by Docker Compose and is located in th
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
     FRONTEND_URL=http://localhost:5173
-    
-    # Monitoring (Metrics Scraping Token - generate a random secret for this!)
-    # USE A STRONG UNIQUE SECRET IN PRODUCTION. DO NOT USE THIS PLACEHOLDER.
-    METRICS_SCRAPE_TOKEN=your-strong-random-secret-here
     ```
 
     **Frontend (`frontend/.env`):**
@@ -155,6 +151,10 @@ npm run dev
 In development mode, the application generates an OpenAPI specification and provides a Swagger UI:
 *   **Swagger UI:** `http://localhost:8080/q/swagger-ui`
 *   **OpenAPI Specification:** `http://localhost:8080/q/openapi`
+
+In **dev mode** the management interface is disabled (`%dev.quarkus.management.enabled=false`), so
+these stay on 8080 and Swagger UI "Try it out" works same-origin. In **tests and production** they
+live only on the management interface (port 9000; 9001 in tests) — see §13.2.
 
 **Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
 
@@ -263,8 +263,12 @@ docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file ../.env.docker build app
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d app
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps app
 ```
+
+`--no-deps` keeps compose from also recreating dependencies (e.g. `postgres-prod`) when it detects a
+config difference in them (observed during POV-207). Before rebuilding, tag the running image for
+rollback: `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
 
 ### 10.4 Stop
 
@@ -316,7 +320,6 @@ The application requires several environment variables to function correctly. Th
 | `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 | `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
 | `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
-| `METRICS_SCRAPE_TOKEN`      | Prometheus scrape security token        | `<your-random-secret>` (Required for secure metric scraping in prod)                                           |
 
 **Docker Run Example:**
 
@@ -653,24 +656,43 @@ The monitoring infrastructure is defined in `backend/docker-compose.yml`:
 - **Prometheus**: Scrapes metrics from the Quarkus application.
 - **Grafana**: Visualizes metrics via pre-provisioned dashboards.
 
-### 13.2 Metrics Scrape Security
+### 13.2 Technical Endpoints & the Management Interface (POV-207)
 
-To prevent unauthorized access to internal metrics, the `/q/metrics` endpoint is protected by a fixed Bearer Token in production.
+The Quarkus technical endpoints — `/q/metrics`, `/q/health` (incl. `/live`, `/ready`) and
+`/q/openapi` — are served **only on the management interface, port 9000**
+(`quarkus.management.enabled=true`, build-time; port 9001 in tests). On the application
+port 8080 they return 404. Exception: **dev mode** disables the management interface
+(`%dev.quarkus.management.enabled=false`) so Swagger UI can call the API same-origin.
 
-- **Variable:** `METRICS_SCRAPE_TOKEN`
-- **Default (Dev):** Unprotected
-- **Default (Docker):** `your-random-secret` (Must be configured via .env)
+**Protection boundary = the network, not a token.** Caddy and the Cloudflare tunnel forward
+only `app:8080`. Port 9000 is listed under `expose` in `docker-compose.prod.yml`, but that is
+documentation only — `expose` restricts nothing, and every container on the Docker network can
+reach `app:9000`. It must **never** be published via `ports:`, routed through Caddy, or configured
+as a Cloudflare tunnel public hostname. Consumers inside the network:
+
+- **Prometheus** scrapes `http://app:9000/q/metrics` (no auth).
+- **Docker `HEALTHCHECK`** probes `http://localhost:9000/q/health/ready` from inside the container.
 
 > [!IMPORTANT]
-> **Use a strong, unique secret.** Do not use weak or shared secrets for `METRICS_SCRAPE_TOKEN`. This token provides access to internal system metrics.
+> Anything in the Docker network with a public UI is a bridge to port 9000 — notably **Grafana**
+> (`grafana.<domain>`): a Grafana admin can add a datasource targeting `app:9000`. Keep
+> `GF_ADMIN_PASSWORD` strong. When checking the Cloudflare dashboard, confirm no tunnel route
+> targets `app:9000`.
 
-**Verifying metrics access:**
+**Note:** `METRICS_SCRAPE_TOKEN` is no longer used (the former `…prometheus.bearer-token`
+properties were never real Quarkus config and were silently ignored). It can be removed from
+`.env.docker`.
+
+**Verifying (production, local stack):**
 ```bash
-# This should return 401 Unauthorized in production settings
-curl -I http://localhost:8080/q/metrics
+# Public: must NOT be 200
+curl -s -o /dev/null -w "%{http_code}\n" https://povzetkar.juresa.si/q/metrics   # 404
 
-# This should return 200 OK with Prometheus formatted metrics
-curl -H "Authorization: Bearer <your_token>" http://localhost:8080/q/metrics
+# Inside the Docker network: metrics served on the management port
+docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics | head -3
+
+# Prometheus target health
+docker exec povzetkar-prometheus wget -qO- http://localhost:9090/api/v1/targets | grep -o '"health":"[a-z]*"'
 ```
 
 ### 13.3 Dashboards-as-Code
@@ -911,6 +933,14 @@ An optional read-only API key lets automation agents (e.g., Claude Code) read br
     ```
 
 The key is registered in `quarkus.config.secret-keys` (masked in diagnostics) and must never appear in logs. Rotation = replace the env value and restart.
+
+**Getting the API schema (since POV-207):** `/q/openapi` is no longer served publicly — it lives on the internal management port (§13.2). An agent running on the production host fetches the live contract (including the `apiKey` security scheme) through a container on the Docker network:
+
+```bash
+docker exec povzetkar-prometheus wget -qO- "http://app:9000/q/openapi?format=json" > openapi.json
+```
+
+Alternatively build it from the repo: `./mvnw package -pl backend -DskipTests` writes `backend/target/openapi.json` (build output, not committed — `target/` is gitignored).
 
 ## 18. Account Activation & User Onboarding
 

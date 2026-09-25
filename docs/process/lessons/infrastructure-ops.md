@@ -87,3 +87,15 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### update-version.cjs Requires Repo Root on PATH in Sandboxed Shells
 - **The Trap:** `scripts/update-version.cjs` invokes `mvnw.cmd` without a `.\` prefix; in restricted shells the child `cmd.exe` does not resolve it from the working directory and the version bump fails.
 - **The Standard:** Prepend the repo root to `PATH` for the invocation (`$env:Path = "<repo>;$env:Path"`) or harden the script to call `path.join(rootDir, mvnw)` (tracked in `improvements.md`).
+
+---
+
+## Production Redeploys on the Local Docker Stack (POV-207)
+
+### `docker compose up -d <svc>` Also Recreates Dependencies
+- **The Trap:** `up -d app prometheus` recreated `postgres-prod` as well — `app` `depends_on` it, and compose recreates a dependency whenever it detects a config difference from the running container. Data survived (named volume, clean shutdown), but a database restart was never part of the plan.
+- **The Standard:** For targeted redeploys use `up -d --no-deps <svc>` (RUNBOOK §10.3). Before rebuilding, tag the running image for rollback (`docker tag povzetkar-app:<v> povzetkar-app:<v>-pre-<task>`) — the build reuses the same tag and would otherwise overwrite the only rollback target.
+
+### "Local smoke test" = Production Deploy
+- **The Trap:** Production runs on the developer machine's Docker stack (RUNBOOK §10) with a Cloudflare tunnel. A second "test" stack cannot run alongside it: host ports clash (80/443/5432/3000), and a second `cloudflared` with the same tunnel token registers as an extra connector and receives **real** traffic.
+- **The Standard:** Treat any image/compose change verified "on the local prod stack" as a production deploy: rollback tag, (for DB-touching changes) `pg_dump`, external verification via the public URL.

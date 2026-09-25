@@ -50,7 +50,7 @@
 
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
-| **TC-MON-001** | **P2** | - | [v0.15] | Prometheus Basic Metrics | Manual | `/q/metrics` reachable and shows JVM/Micrometer stats. |
+| **TC-MON-001** | **P2** | - | [v0.15] | Prometheus Basic Metrics | Manual | `/q/metrics` reachable on the management port (9000, Docker network) and shows JVM/Micrometer stats; returns 404 on the public port 8080 (automated guard: `ManagementInterfaceTest`, POV-207). |
 | **TC-MON-002** | **P2** | - | [v0.15] | Business Metrics Pulse | Manual | Custom counters (Briefings generated) increment on Grafana. |
 | **TC-MON-003** | **P2** | - | [v0.15] | Retention Purge Verification | Script | Simulation script proves that 90-day old logs are purged. |
 | **TC-MON-004** | **P1** | - | [v0.12] | SSE Real-time Toast Sync | **Playwright** | Background job completion triggers a UI toast notification. |
