@@ -51,20 +51,6 @@ class SecretConfigValidatorTest {
     }
 
     @Test
-    void secretKeysShouldBeMasked() {
-        var secretKeys = config.getOptionalValue("quarkus.config.secret-keys", String.class);
-        assertThat(secretKeys).isPresent();
-        String keys = secretKeys.get();
-        assertThat(keys).contains(
-                "youtube.api.key",
-                "google.api.keys",
-                "quarkus.datasource.password",
-                "quarkus.oidc.credentials.secret",
-                "quarkus.oidc.client-id"
-        );
-    }
-
-    @Test
     void allRequiredSecretsShouldBeConfiguredInTestProfile() {
         for (String key : SecretConfigValidator.REQUIRED_SECRETS) {
             var value = config.getOptionalValue(key, String.class);

@@ -125,6 +125,14 @@ class OrchestrationIntegrationTest {
 }
 ```
 
+### 2.4. Configuration Key Guard (`QuarkusConfigKeysTest`)
+
+A plain JUnit test (no Quarkus boot) that fails when `application.properties` (main or test, any profile) contains a `quarkus.*` key no extension declares, or one only a passthrough map (e.g. `quarkus.micrometer.export.prometheus.*`) would swallow. Quarkus itself ignores such keys silently — see `docs/process/lessons/infrastructure-ops.md`, "Quarkus Configuration Keys".
+
+-   **How it knows the valid keys:** the Maven profile `config-guard` (active unless `skipTests` is true) runs `quarkus:dependency-tree` once per launch mode into `target/quarkus-dependency-tree-{prod,dev,test}.txt`; the test reads `META-INF/quarkus-config-doc/quarkus-config-model.json` from every listed jar in the local Maven repository. `%prod`/`%dev`/`%test` keys are checked against their own mode, unprofiled keys against the mode their file takes effect in (`src/main`: prod, `src/test`: test). Surefire passes the paths as system properties from the same profile, so run it through Maven (`./mvnw test -pl backend -Dtest=QuarkusConfigKeysTest`); an IDE run or Quarkus continuous testing (no such properties) skips the test instead of failing. Multi-profile keys (`%dev,test.`) must be declared in each listed mode.
+-   **What it rejects:** unknown keys; keys only a passthrough map would swallow; named-map keys that are really a fixed segment in the wrong place (`quarkus.datasource.jdbc.db-kind` read as datasource "jdbc"); unprofiled keys not declared for the mode their file takes effect in. It cannot catch a typo in a genuine instance name (e.g. a rest-client config key).
+-   **When it fails:** fix the key against the extension's config reference, or move a custom setting to `povzetkar.*`. Only if the key is genuinely valid (e.g. a passthrough entry you verified the library reads) add it to the test's `ALLOWLIST` with a reason.
+
 ## 3. Testing Reactive Code
 
 When testing methods that return a `Uni` or `Multi`, you must block execution to await the result.

@@ -403,7 +403,7 @@ To manually trigger the enrichment process for all content sources that are miss
 
 The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
 
-*   **Configuration Property:** `quarkus.scheduler.enrich-content-sources.cron`
+*   **Configuration Property:** `povzetkar.enrichment.cron` (was `quarkus.scheduler.enrich-content-sources.cron` before POV-208)
 *   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
 
@@ -901,12 +901,17 @@ The `SecretConfigValidator` bean automatically runs at application startup and v
 
 This prevents partial system failures where the app starts successfully but crashes at runtime when a service first tries to use an unconfigured API key.
 
-### 14.4 Secret Masking & Log Suppression
+### 14.4 Secret Handling & Log Suppression
 
-Two Quarkus mechanisms prevent accidental secret exposure in logs:
+Secrets stay out of logs through three rules:
 
-1.  **`quarkus.config.log.values=false`**: Suppresses the config value dump that normally appears in startup logs.
-2.  **`quarkus.config.secret-keys`**: Marks specific properties as secrets. If Quarkus ever needs to display their values in diagnostics (e.g., Dev UI, error messages), they are shown as `****` instead of the real value.
+1.  **Environment only.** Secrets are supplied as environment variables (`backend/.env`, `.env.docker`); `application.properties` holds only `${ENV_VAR}` references.
+2.  **`quarkus.config.log.values=false`**: Suppresses the config value dump that normally appears in startup logs.
+3.  **Never log a secret value.** Code logs at most *which* property is missing (e.g. `SecretConfigValidator`, the half-configured API-key warning in §14.6).
+
+> There is **no** `quarkus.config.secret-keys` property (removed in POV-208 — Quarkus ignored it). SmallRye's secret-keys feature is a programmatic access *lock* that makes plain `@ConfigProperty` reads throw; it was never in effect here.
+
+**Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via Caddy's `X-Forwarded-Proto`). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
 
 ### 14.5 Security Best Practices
 
@@ -938,7 +943,9 @@ An optional read-only API key lets automation agents (e.g., Claude Code) read br
     curl -X POST -H "X-API-Key: <generated secret>" http://localhost:8080/api/v1/briefings/1/share  # 403 (read-only)
     ```
 
-The key is registered in `quarkus.config.secret-keys` (masked in diagnostics) and must never appear in logs. Rotation = replace the env value and restart.
+The key must never appear in logs (§14.4). Rotation = replace the env value and restart.
+
+**Half-configured?** If only one of the two values is set, the feature stays disabled and startup logs a `WARN` naming the missing property (e.g. `povzetkar.api.key-user-email is not set - API-key access stays disabled …`); `X-API-Key` requests then get the normal OIDC login redirect. The key itself is never logged.
 
 **Getting the API schema (since POV-207):** `/q/openapi` is no longer served publicly — it lives on the internal management port (§13.2). An agent running on the production host fetches the live contract (including the `apiKey` security scheme) through a container on the Docker network:
 
