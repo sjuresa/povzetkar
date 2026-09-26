@@ -9,9 +9,7 @@ import io.quarkus.vertx.http.runtime.security.HttpCredentialTransport;
 import io.smallrye.mutiny.Uni;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -29,11 +27,8 @@ public class ApiKeyAuthenticationMechanism implements HttpAuthenticationMechanis
 
     private final boolean enabled;
 
-    public ApiKeyAuthenticationMechanism(
-            @ConfigProperty(name = "povzetkar.api.key") Optional<String> configuredKey,
-            @ConfigProperty(name = "povzetkar.api.key-user-email") Optional<String> configuredUserEmail) {
-        this.enabled = configuredKey.filter(k -> !k.isBlank()).isPresent()
-                && configuredUserEmail.filter(e -> !e.isBlank()).isPresent();
+    public ApiKeyAuthenticationMechanism(ApiKeyConfig config) {
+        this.enabled = config.enabled();
     }
 
     @Override

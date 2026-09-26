@@ -19,7 +19,6 @@ services:
       - DB_KIND=${DB_KIND:-postgresql}
       - QUARKUS_DATASOURCE_USERNAME=${DB_USER:?DB_USER must be set}
       - QUARKUS_DATASOURCE_PASSWORD=${DB_PASS:?DB_PASS must be set}
-      - QUARKUS_SWAGGER_UI_ALWAYS_INCLUDE=false
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:?YOUTUBE_API_KEY must be set}
       - GOOGLE_API_KEYS=${GOOGLE_API_KEYS:?GOOGLE_API_KEYS must be set}
       - GOOGLE_OIDC_CLIENT_ID=${GOOGLE_OIDC_CLIENT_ID:?GOOGLE_OIDC_CLIENT_ID must be set}
@@ -27,8 +26,8 @@ services:
       - FRONTEND_URL=${FRONTEND_URL:?FRONTEND_URL must be set}
       - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:?TRANSCRIPT_PROXY_API_KEY must be set}
       - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://povzetkar-production.up.railway.app}
-      - POVZETKAR_API_KEY=${POVZETKAR_API_KEY}
-      - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL}
+      - POVZETKAR_API_KEY=${POVZETKAR_API_KEY:-}
+      - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL:-}
     depends_on:
       postgres-prod:
         condition: service_healthy

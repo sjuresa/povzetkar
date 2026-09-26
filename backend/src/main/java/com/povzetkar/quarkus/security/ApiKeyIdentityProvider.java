@@ -10,12 +10,10 @@ import io.quarkus.security.runtime.QuarkusPrincipal;
 import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
 
 /**
  * Validates a presented API key against the configured secret and, on success,
@@ -27,17 +25,18 @@ import java.util.Optional;
 @ApplicationScoped
 public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthenticationRequest> {
 
-    private final Optional<String> configuredUserEmail;
-    /** SHA-256 of the configured key, precomputed once; null when the feature is unconfigured. */
+    /** The mapped user's email; meaningful only while {@link #expectedKeyHash} is non-null. */
+    private final String configuredUserEmail;
+    /**
+     * SHA-256 of the configured key, precomputed once; null unless {@link ApiKeyConfig#enabled()}
+     * — the single rule for "configured".
+     */
     private final byte[] expectedKeyHash;
 
-    public ApiKeyIdentityProvider(
-            @ConfigProperty(name = "povzetkar.api.key") Optional<String> configuredKey,
-            @ConfigProperty(name = "povzetkar.api.key-user-email") Optional<String> configuredUserEmail) {
-        this.configuredUserEmail = configuredUserEmail.filter(email -> !email.isBlank());
-        this.expectedKeyHash = configuredKey.filter(key -> !key.isBlank())
-                .map(ApiKeyIdentityProvider::sha256)
-                .orElse(null);
+    public ApiKeyIdentityProvider(ApiKeyConfig config) {
+        boolean enabled = config.enabled();
+        this.configuredUserEmail = enabled ? config.configuredUserEmail().orElseThrow() : null;
+        this.expectedKeyHash = enabled ? sha256(config.configuredKey().orElseThrow()) : null;
     }
 
     @Override
@@ -49,8 +48,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthentica
     public Uni<SecurityIdentity> authenticate(ApiKeyAuthenticationRequest request, AuthenticationRequestContext context) {
         // Guards against the provider being reached while unconfigured; the mechanism's
         // enabled gate normally prevents this, but the provider must fail closed regardless.
-        if (expectedKeyHash == null || configuredUserEmail.isEmpty()
-                || !constantTimeEquals(request.getPresentedKey())) {
+        if (expectedKeyHash == null || !constantTimeEquals(request.getPresentedKey())) {
             // Never include the presented key in the exception message or any log output.
             return Uni.createFrom().failure(new AuthenticationFailedException("Invalid API key"));
         }
@@ -60,7 +58,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthentica
         // (disable()/reject() strip roles), which the API-key path would otherwise bypass.
         return context.runBlocking(() -> {
             boolean active = io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().call(() ->
-                    User.find("email", configuredUserEmail.get()).<User>firstResultOptional()
+                    User.find("email", configuredUserEmail).<User>firstResultOptional()
                             .map(user -> user.accountStatus == AccountStatus.ENABLED)
                             .orElse(false));
             if (!active) {
@@ -68,7 +66,7 @@ public class ApiKeyIdentityProvider implements IdentityProvider<ApiKeyAuthentica
             }
 
             QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder()
-                    .setPrincipal(new QuarkusPrincipal(configuredUserEmail.get()))
+                    .setPrincipal(new QuarkusPrincipal(configuredUserEmail))
                     .setAnonymous(false)
                     .addAttribute(ApiKeyAuthenticationMechanism.AUTH_METHOD_ATTRIBUTE,
                             ApiKeyAuthenticationMechanism.AUTH_METHOD_API_KEY);

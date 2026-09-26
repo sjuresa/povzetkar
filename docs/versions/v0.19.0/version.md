@@ -15,6 +15,7 @@
 | POV-204 — Modernize AGENT.md and Agent Protocols | [walkthrough](POV-204-walkthrough.md) | [retrospective](POV-204-retrospective.md) |
 | POV-205 — Read-only API-key authentication for programmatic access | [walkthrough](POV-205-walkthrough.md) | [retrospective](POV-205-retrospective.md) |
 | POV-207 — Close public exposure of `/q/*` technical endpoints | [walkthrough](POV-207-walkthrough.md) | [retrospective](POV-207-retrospective.md) |
+| POV-208 — Silently ignored Quarkus config keys + unknown-key guard | [walkthrough](POV-208-walkthrough.md) | [retrospective](POV-208-retrospective.md) |
 
 ## Carry-Forward Review
 
