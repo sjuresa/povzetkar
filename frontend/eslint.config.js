@@ -11,8 +11,7 @@ export default tseslint.config(
       'dist', 
       'node_modules', 
       'src/api/generated', 
-      'coverage', 
-      '.vite-react-ssg-temp', 
+      'coverage',
       '**/*.log'
     ]
   },
