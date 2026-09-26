@@ -52,9 +52,9 @@ class AdminResourceTest {
     }
 
     /**
-     * The history tab pages content items and summaries whose sources belong to several topics, the
-     * shape (polymorphic ContentItem + collection fetch + paging) that Hibernate 7.4 renders as invalid SQL
-     * when paged directly. Page size is 10 ({@code povzetkar.ui.admin.page-size}).
+     * The history tab pages content items and summaries whose sources belong to several topics. The
+     * content-item lists have the shape (ContentItem root + collection fetch + paging) that Hibernate 7.4
+     * renders as invalid SQL when paged directly. Page size is 10 ({@code povzetkar.ui.admin.page-size}).
      */
     @Test
     void testHistoryTabPagesContentItemsWithAllTopics() {

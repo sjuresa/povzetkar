@@ -77,9 +77,10 @@ public class Summary extends BaseAuditableEntity {
     }
 
     /**
-     * Loads a page of summaries (ids already paged) with item, source and topics. Page over ids first —
-     * paging this collection fetch directly produces invalid SQL on Hibernate 7.4 (see
-     * {@link ContentItem#listByIdsWithAssociations}). The summary alias is {@code s}.
+     * Loads a page of summaries (ids already paged) with item, source and topics. Pages over ids first like
+     * {@link ContentItem#listByIdsWithAssociations}, for consistency: with {@code Summary} as the root, paging
+     * this collection fetch directly would work on Hibernate 7.4 (only a {@code ContentItem} root is affected).
+     * The summary alias is {@code s}.
      */
     public static List<Summary> listByIdsWithAssociations(List<Long> ids, Sort sort) {
         return list("SELECT s FROM Summary s JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE s.id IN ?1",

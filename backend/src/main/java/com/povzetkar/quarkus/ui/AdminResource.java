@@ -122,8 +122,8 @@ public class AdminResource {
 
     /**
      * Pages over ids, then loads that page's entities with their fetches. Paging a collection-fetch
-     * query directly fails on Hibernate 7.4 when the paged rows involve the polymorphic
-     * {@link ContentItem}: the derived table it generates omits subclass columns.
+     * query directly fails on Hibernate 7.4 when its root is the polymorphic {@link ContentItem}: the
+     * derived table it generates omits subclass columns. The other lists use the same helper for consistency.
      */
     private <T> void addPagedDataToTemplate(Map<String, Object> data, String listKey, String totalPagesKey, String currentPageKey, int page,
                                             PanacheQuery<Long> idQuery, Function<List<Long>, List<T>> loader) {
