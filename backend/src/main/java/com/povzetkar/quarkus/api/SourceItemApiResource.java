@@ -83,7 +83,7 @@ public class SourceItemApiResource extends BaseApiResource {
         }
 
         // Fetch items by ID list (using JOIN FETCH to be safe/consistent)
-        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", sort, itemIds);
+        List<ContentItem> items = ContentItem.listByIdsWithAssociations(itemIds, sort);
 
         // Fetch all summary existence flags in one go
         final Set<Long> itemIdsWithSummaries = new HashSet<>(

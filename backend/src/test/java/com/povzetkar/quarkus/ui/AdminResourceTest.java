@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AdminResourceTest {
 
     private static final String HISTORY_OWNER = "history_owner";
+    private static final String HISTORY_SOURCE = "history_test_source";
 
     @Test
     void testGetAdminPageDefaultsToActionsTab() {
@@ -60,7 +61,7 @@ class AdminResourceTest {
         QuarkusTransaction.requiringNew().run(() -> {
             User owner = UserBuilder.aUser().withUsername(HISTORY_OWNER).withEmail("history@example.com").build();
             owner.persist();
-            ContentSource source = ContentSourceBuilder.aContentSource().build();
+            ContentSource source = ContentSourceBuilder.aContentSource().withSourceIdentifier(HISTORY_SOURCE).build();
             source.persist();
             for (String name : List.of("Alpha Topic", "Beta Topic")) {
                 Topic topic = TopicBuilder.aTopic().withName(name).withUser(owner).build();
@@ -94,13 +95,15 @@ class AdminResourceTest {
         assertEquals(1L, distinctPendingTitles(secondPage));
     }
 
+    /** Removes only the rows created by the history test, never seeded or other suites' data. */
     @AfterEach
     void cleanUpHistoryData() {
         QuarkusTransaction.requiringNew().run(() -> {
-            Summary.deleteAll();
-            ContentItem.deleteAll();
-            Topic.deleteAll();
-            ContentSource.deleteAll();
+            String itemsOfSource = "(select ci.id from ContentItem ci where ci.contentSource.sourceIdentifier = ?1)";
+            Summary.delete("contentItem.id in " + itemsOfSource, HISTORY_SOURCE);
+            ContentItem.delete("id in " + itemsOfSource, HISTORY_SOURCE);
+            Topic.delete("user.id in (select u.id from User u where u.username = ?1)", HISTORY_OWNER);
+            ContentSource.delete("sourceIdentifier", HISTORY_SOURCE);
             User.delete("username", HISTORY_OWNER);
         });
     }

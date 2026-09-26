@@ -68,6 +68,37 @@ class UserContextServiceTest {
         assertThat(result.id).isEqualTo(user.id);
     }
 
+    /**
+     * The Google-login lookup of {@code getCurrentUserWithRoles}: a limited query with a collection fetch
+     * (roles) plus a filtering join (identities), which Hibernate 7.4 pages in a derived table. Two roles
+     * and two identities multiply the joined rows; the lookup must still return the one user, fully fetched.
+     */
+    @Test
+    void findByIdentityWithRoles_ReturnsUserWithAllRoles() {
+        Long userId = io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().call(() -> {
+            User user = UserBuilder.aUser().withUsername("jwtuser").withEmail("jwt@example.com").build();
+            user.roles.add(Role.find("name", "user").firstResult());
+            user.roles.add(Role.find("name", "admin").firstResult());
+            user.persist();
+            for (String[] ids : new String[][] { { "google", "sub-1" }, { "github", "gh-1" } }) {
+                UserIdentity identity = new UserIdentity();
+                identity.provider = ids[0];
+                identity.externalId = ids[1];
+                identity.email = "jwt@example.com";
+                user.addIdentity(identity);
+                identity.persist();
+            }
+            return user.id;
+        });
+
+        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+            User found = User.findByIdentityWithRoles("google", "sub-1").orElseThrow();
+            assertThat(found.id).isEqualTo(userId);
+            assertThat(found.roles).extracting(r -> r.name).containsExactlyInAnyOrder("user", "admin");
+            assertThat(User.findByIdentityWithRoles("google", "unknown")).isEmpty();
+        });
+    }
+
     @Test
     @Transactional
     void ensureUser_ExistingUserByEmail_LinksIdentityAndReturnsUser() {

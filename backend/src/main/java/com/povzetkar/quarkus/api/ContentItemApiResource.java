@@ -139,7 +139,7 @@ public class ContentItemApiResource extends BaseApiResource {
             return new PaginatedResponse<>(List.of(), count, pageIndex, clampedPageSize);
         }
 
-        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", panacheSort, itemIds);
+        List<ContentItem> items = ContentItem.listByIdsWithAssociations(itemIds, panacheSort);
 
         // Fetch all summary existence flags in one go to solve N+1 Problem
         final java.util.Set<Long> itemIdsWithSummaries = new java.util.HashSet<>(

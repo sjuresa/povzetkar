@@ -12,7 +12,7 @@ export default defineConfig({
       schemas: 'src/api/generated/model',
       client: 'react-query',
       baseUrl: '',
-      prettier: true,
+      prettier: false, // no prettier dependency: output must not depend on a global install (CI drift check)
       override: {
         mutator: {
           path: './src/api/client.ts',

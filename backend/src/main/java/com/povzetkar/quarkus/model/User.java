@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -75,6 +76,11 @@ public class User extends BaseAuditableEntity {
 
     public static List<User> findAllWithTopics() {
         return find("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.topics").list();
+    }
+
+    public static Optional<User> findByIdentityWithRoles(String provider, String externalId) {
+        return find("select u from User u left join fetch u.roles join u.identities i where i.provider = ?1 and i.externalId = ?2",
+                provider, externalId).firstResultOptional();
     }
 
     @Override
