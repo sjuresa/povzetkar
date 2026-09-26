@@ -14,7 +14,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     services:
       postgres_test_db:
-        image: pgvector/pgvector:pg16
+        image: pgvector/pgvector:pg17
         env:
           POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
           POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
@@ -43,10 +43,10 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Set up Node.js 25.8
+    - name: Set up Node.js 24
       uses: actions/setup-node@v4
       with:
-        node-version: '25.8'
+        node-version: '24'
         cache: 'npm'
 
     - name: Install dependencies (root + frontend)
@@ -122,6 +122,9 @@ jobs:
         exit-code: '1'
         severity: 'CRITICAL,HIGH'
         trivyignores: '.trivyignore'
+
+    - name: Validate infra configs (Caddyfile, Prometheus, compose)
+      run: bash scripts/qa/validate-infra-configs.sh
 
     - name: Build Docker Image
       run: docker build -t povzetkar:${{ github.sha }} .

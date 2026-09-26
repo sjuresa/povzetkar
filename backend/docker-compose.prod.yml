@@ -55,7 +55,7 @@ services:
       - povzetkar-net
 
   prometheus:
-    image: prom/prometheus:v3.1.0
+    image: prom/prometheus:v3.15.0
     container_name: povzetkar-prometheus
     restart: always
     volumes:
@@ -68,7 +68,7 @@ services:
       - povzetkar-net
 
   caddy:
-    image: caddy:2.9.1-alpine
+    image: caddy:2.11.4-alpine
     container_name: povzetkar-proxy
     restart: always
     ports:
@@ -87,7 +87,7 @@ services:
       - povzetkar-net
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.9.3
     container_name: povzetkar-cloudflared
     restart: always
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
@@ -97,7 +97,7 @@ services:
       - app
 
   grafana:
-    image: grafana/grafana-oss:12.4.0
+    image: grafana/grafana-oss:12.4.3
     container_name: povzetkar-grafana
     restart: always
     # Port 3000 is no longer exposed directly
