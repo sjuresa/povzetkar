@@ -149,3 +149,11 @@ List<User> page = User.<User>find("FROM User u " + whereClause, panacheSort, par
 ```
 
 - **Corollary — avoid dual code paths:** Do not split into a "no-filter" path using `User.findAll()` and a "filtered" path using explicit-alias HQL. A `Sort.by("u.email")` passed to `findAll()` will also fail because `findAll()` uses no alias. Always use the explicit-alias form for both branches.
+
+## Hibernate 7.4: Paging a Collection Fetch over a SINGLE_TABLE Hierarchy (POV-206)
+- **The Trap:** Hibernate 7.4 stopped paging collection-fetch queries in memory (`HHH90003004`) and pages them in SQL through a derived table. For a SINGLE_TABLE root (`ContentItem` → `YouTubeVideo`), also when joined to-one from another root (`Summary`), that derived table carries only the root's columns while the outer select still reads the subclass columns → `column ci1_0.channel_id does not exist`, HTTP 500. `firstResult()`/`firstResultOptional()` counts as paging (limit 1). No setting turns it off (`hibernate.query.fail_on_pagination_over_collection_fetch` only makes the old path fail). A characterization test on a *non-polymorphic* query (Topic) stayed green — the existing API tests caught it.
+- **The Standard:**
+  1. Page over ids, then load the page with its fetches: `SELECT c.id … ORDER BY …` + `.page()`, then `… WHERE c.id IN ?1` with the same sort (`ContentItem.listByIdsWithAssociations`, `AdminResource`).
+  2. Single-row lookups by a unique key use `singleResultOptional()` — no limit, no derived table; fetch-joined roots are de-duplicated.
+  3. Give paged sorts a unique tiebreaker (`createdAt DESC, id DESC`) and **qualify every sort field with the alias** — with fetch joins an unqualified `id`/`createdAt` is ambiguous (`Ambiguous unqualified attribute reference`); `QueryParser.parseSort(..., alias)` does it for client-chosen sorts.
+  4. After a Hibernate minor upgrade, grep for `.page(` / `firstResult` on queries with `join fetch` of a collection and make sure a test executes each.
