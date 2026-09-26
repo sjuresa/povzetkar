@@ -94,6 +94,20 @@ class ContentItemApiResourceTest {
     }
 
     /**
+     * The client-chosen sort field is applied to the id page and to the fetch-join load
+     * ({@code ContentItem.listByIdsWithAssociations}); {@code id} exists on the joined source and topics too.
+     */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetAllContentItemsSortedById() {
+        given()
+                .when().get("/api/v1/content-items?sort=id,desc")
+                .then()
+                .statusCode(200)
+                .body("data.id", contains(failedItem.id.intValue(), pendingItem.id.intValue(), completedItem.id.intValue()));
+    }
+
+    /**
      * A source in several topics makes the collection fetch of {@code findByIdWithAssociations} return
      * several rows for one item; the lookup must still resolve to that single item.
      */
