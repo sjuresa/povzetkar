@@ -17,6 +17,7 @@
 | POV-206 — Upgrade build & runtime environment | [walkthrough](POV-206-walkthrough.md) | [retrospective](POV-206-retrospective.md) |
 | POV-207 — Close public exposure of `/q/*` technical endpoints | [walkthrough](POV-207-walkthrough.md) | [retrospective](POV-207-retrospective.md) |
 | POV-208 — Silently ignored Quarkus config keys + unknown-key guard | [walkthrough](POV-208-walkthrough.md) | [retrospective](POV-208-retrospective.md) |
+| POV-209 — Process: reviewer-agnostic PR loop, pre-commit review, pre-deploy Trivy, YouTrack record, task pause, release finalisation | [walkthrough](POV-209-walkthrough.md) | [retrospective](POV-209-retrospective.md) |
 
 ## Carry-Forward Review
 
