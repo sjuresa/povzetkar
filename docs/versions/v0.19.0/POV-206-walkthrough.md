@@ -31,7 +31,7 @@ Additions beyond the plan: the Hibernate 7.4 workaround and its tests; `ajv` rem
 
 ## 3. Time delta
 
-Estimated ~4 h. Actual so far: brainstorm + planning 2026-09-25 13:42 → 14:19 and 2026-09-26 08:39 → 09:21 (~1 h 20 min); execution 09:25 → 11:45 (~2 h 20 min, incl. first review and scope extension); close-out docs 11:45 → 11:55; second review round ~12:55 → 13:15 (~20 min); PR + CI 14:10 → 14:25, deploy 14:27 → 14:42 (~30 min incl. a retried build). Total ≈ 4 h 55 min vs ~4 h estimated — the Hibernate regression, two review rounds and the scope extension account for the difference.
+Estimated ~4 h. Actual: brainstorm + planning 2026-09-25 13:42 → 14:19 and 2026-09-26 08:39 → 09:21 (~1 h 20 min); execution 09:25 → 11:45 (~2 h 20 min, incl. first review and scope extension); close-out docs 11:45 → 11:55; second review round ~12:55 → 13:15 (~20 min); PR + CI 14:10 → 14:25, deploy 14:27 → 14:42 (~30 min incl. a retried build). Total ≈ 4 h 55 min vs ~4 h estimated — the Hibernate regression, two review rounds and the scope extension account for the difference.
 
 ## 4. Deviations
 
