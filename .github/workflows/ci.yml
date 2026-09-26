@@ -56,6 +56,18 @@ jobs:
     - name: Make mvnw executable
       run: chmod +x mvnw
 
+    # Runs before the tests: the spec must come from a build without test classes (test-only endpoints).
+    - name: API client drift check
+      run: |
+        ./mvnw -q package -DskipTests -pl backend -am
+        npm run gen:api --prefix frontend
+        DRIFT="$(git status --porcelain -- frontend/src/api/generated)"
+        if [ -n "$DRIFT" ]; then
+          echo "$DRIFT"
+          echo "::error::frontend/src/api/generated is out of date. Run './mvnw package -DskipTests -pl backend -am' and 'npm run gen:api', then commit the result."
+          exit 1
+        fi
+
     - name: Install PostgreSQL client
       run: sudo apt-get update && sudo apt-get -y install postgresql-client
 

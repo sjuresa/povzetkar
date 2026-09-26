@@ -36,7 +36,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Real-time event stream
  */
 export type getApiV1EventsStreamResponse200 = {
-  data: OutboundSseEvent[]
+  data: OutboundSseEvent
   status: 200
 }
 
