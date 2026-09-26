@@ -48,13 +48,13 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - [ ] **QA Check (Local Security):** Run `mvn spotbugs:check` (or ensure it ran successfully during `mvn verify`) to validate that no static security flaws or basic bugs exist.
   - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete.
 - [ ] **2.5a. Pre-commit Review:** After the suite is green and before the first commit — `/code-review high` for code tasks, plus `/security-review` when auth/authz/secrets/crypto/attack surface is touched; a cross-reference consistency check for docs/process-only tasks. Runs in a subagent by default (PO separate session as fallback); findings and dispositions in `## Deviations`, summary in the walkthrough — see `workflow-mandatory.md` Step 7, *Pre-commit Review*.
-- [ ] **2.5b. Pre-deploy Verification** *(only for tasks that build or deploy a production image)*: green CI on the exact commit (re-triggered if older than 7 days), `build --pull`, rollback tag, deploy on the PO's explicit "deploy"; a HIGH/CRITICAL finding stops the deploy — see `docs/protocols/verification.md`, *Pre-deploy Verification*.
+- [ ] **2.5b. Pre-deploy Verification** *(only for tasks that build or deploy a production image; runs after the push, once CI on the commit is green — not before the commit)*: green CI run whose `headSha` is the deployed commit (re-run if older than 7 days), `build --pull`, rollback tag, deploy on the PO's explicit "deploy"; a HIGH/CRITICAL finding stops the deploy — see `docs/protocols/verification.md`, *Pre-deploy Verification*.
 - [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
 - [ ] **2.7. Update Backlog & Lessons Learned:**
   - [ ] Log any non-critical improvements discovered to `docs/backlog/improvements.md`.
   - [ ] If any systemic bug fixes, architectural choices, or technical hurdles were overcome, append them to `docs/process/lessons-learned.md` as mandated by `workflow-mandatory.md` Step 7.
 - [ ] **2.8. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
-- [ ] **2.9. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed. Upon confirmation, the agent writes the YouTrack task record (`workflow-mandatory.md` Step 7): three verbatim comments (task definition, approved plan, walkthrough) read back against their files; State `Fixed`, Fix version, Estimation; per-phase work items derived from the `## Time Log` in `agent_logs/task.md` (Brainstorm/planning and close-out docs → **Documentation**, implementation and PR fixes → **Development**, `[wait: …]` intervals → **Testing**; `[paused: …]` intervals excluded and listed to the PO).
+- [ ] **2.9. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed. Upon confirmation — and only after the PR review loop has exited (`workflow-mandatory.md` Step 8) and the walkthrough (2.10) is final — the agent writes the YouTrack task record (`workflow-mandatory.md` Step 7): three verbatim comments (task definition, approved plan, walkthrough) read back against their files; State `Fixed`, Fix version, Estimation; per-phase work items derived from the `## Time Log` in `agent_logs/task.md` (Brainstorm/planning and close-out docs → **Documentation**, implementation and PR fixes → **Development**, `[wait: …]` intervals → **Testing**; `[paused: …]` intervals excluded and listed to the PO).
 - [ ] **2.10. Walkthrough:** Write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` with the following sections:
     1. **What was done** — the primary deliverable; what changed and what was built.
     2. **Planned vs. actual scope** — any additions or removals relative to the original task definition.
@@ -87,7 +87,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - [ ] Review and clean `docs/backlog/improvements.md` based on completed work and new findings.
 - [ ] **3.1a. Supply-chain Audit:**
   - [ ] `.trivyignore`: run Trivy image + FS locally **without** the ignore file (RUNBOOK §8.2; once per version). Remove entries that are no longer reported; every remaining entry keeps a rationale and an `exp:` date.
-  - [ ] Check for newer releases of the pinned `aquasecurity/trivy-action` (commit SHA in `.github/workflows/ci.yml`) and the Trivy binary (`version:` there and the `aquasec/trivy` tag in RUNBOOK §8.2); bump deliberately — immutable releases only, SHA dereferenced from the tag.
+  - [ ] Check for newer releases of the pinned `aquasecurity/trivy-action` (commit SHA in `.github/workflows/ci.yml`) and the Trivy binary (`version:` there and the `aquasec/trivy:<version>@sha256:<digest>` reference in RUNBOOK §8.2); bump deliberately — immutable releases only, action SHA dereferenced from the tag, image digest taken from the registry.
 - [ ] **3.1b. YouTrack Fix-version Check:** every issue with Fix version X.Y.Z is `Fixed`; unfinished ones are re-targeted or lose the Fix version (PO confirms).
 - [ ] **3.2. Project-Wide Documentation Review**: Execute the following prompts to ensure project-wide documentation is up-to-date with any process changes or learnings from the completed version:
   - [ ] **Planning Audit**: Perform a final whole-project audit using `python scripts/qa/validate-planning.py --current-version vX.Y.Z --fail-on all`. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for release blocking criteria.
@@ -107,7 +107,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 - [ ] **4.1. Create Release PR:** Create a Pull Request from the version branch (e.g., `vX.Y.0`) to `main`.
 - [ ] **4.2. Merge to `main`:** Merge criteria: green CI (including the Trivy scans and SAST), the PR review loop completed (`workflow-mandatory.md` Step 8). The PO merges.
-- [ ] **4.3. Create Git Tag:** On the `main` branch, create and push an annotated Git tag (e.g., `git tag -a vX.Y.0 -m "Release version X.Y.0"`).
+- [ ] **4.3. Create Git Tag:** After the merge, update the local `main` (`git checkout main && git pull`), then create and push an annotated Git tag (e.g., `git tag -a vX.Y.0 -m "Release version X.Y.0"`).
 - [ ] **4.4. Deploy the Release:** Deploy the tagged `main` commit to production per `docs/protocols/verification.md`, *Pre-deploy Verification*, on the PO's explicit "deploy". The image carries the release version (no `-SNAPSHOT`), so production shows which release runs.
 - [ ] **4.5. Release in YouTrack** *(PO step)*: mark version X.Y.Z as released.
 

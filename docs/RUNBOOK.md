@@ -225,13 +225,13 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ```
 
 ### 8.2 Dependency Scanning (Trivy)
-Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). CI is the pre-deploy scan: a production deploy needs a green CI run on the exact deployed commit (see `docs/protocols/verification.md`, *Pre-deploy Verification*). CI pins `aquasecurity/trivy-action` by commit SHA and the Trivy binary by version (`.github/workflows/ci.yml`). Run the scans locally only by exception — a commit without a CI run, or the per-version `.trivyignore` audit (checklist 3.1a, then without `--ignorefile`) — without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite), using the same pinned Trivy version as CI:
+Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). CI is the pre-deploy scan: a production deploy needs a green CI run on the exact deployed commit (see `docs/protocols/verification.md`, *Pre-deploy Verification*). CI pins `aquasecurity/trivy-action` by commit SHA and the Trivy binary by version (`.github/workflows/ci.yml`). Run the scans locally only by exception — a commit without a CI run, or the per-version `.trivyignore` audit (checklist 3.1a, then without `--ignorefile`) — without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite), using the same pinned Trivy version as CI (image referenced by digest — a tag can be repointed):
 
 ```bash
-docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy:0.74.0 fs \
+docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 fs \
   --severity CRITICAL,HIGH --ignorefile /src/.trivyignore --exit-code 1 --timeout 30m /src
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache \
-  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy:0.74.0 image \
+  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 image \
   --severity CRITICAL,HIGH --ignorefile /cfg/.trivyignore --exit-code 1 --timeout 30m <image>
 ```
 
