@@ -2,7 +2,7 @@
 
 ## 1. Planned vs. actual
 
-Scoped: Quarkus 3.36.3 → 3.39.5 with override cleanup, frontend minor/patch updates, image and CI alignment, `.trivyignore` audit, infra-config validation in CI, frontend client kept in sync with the API (clean regeneration + CI drift check, exact orval pin, `npm ci`), and a guarded production deploy. Delivered everything except the deploy: the PO stopped the push, so there is no PR CI, which the plan requires before deploying; every CI step was run locally on HEAD instead. Scope grew by a Hibernate 7.4 workaround, Maven plugin upgrades and dependency pruning (PO-approved), and one pre-existing API bug. Estimate ~4 h; execution itself ~2 h 20 min, plus ~1 h 20 min brainstorm/planning spread over two days around POV-207/208.
+Scoped: Quarkus 3.36.3 → 3.39.5 with override cleanup, frontend minor/patch updates, image and CI alignment, `.trivyignore` audit, infra-config validation in CI, frontend client kept in sync with the API (clean regeneration + CI drift check, exact orval pin, `npm ci`), and a guarded production deploy. Delivered everything, including the production deploy (after PR #279 CI was green). Scope grew by a Hibernate 7.4 workaround, Maven plugin upgrades and dependency pruning (PO-approved), and one pre-existing API bug. Estimate ~4 h; execution itself ~2 h 20 min, plus ~1 h 20 min brainstorm/planning spread over two days around POV-207/208.
 
 ## 2. Deviations & why
 
@@ -10,7 +10,7 @@ Scoped: Quarkus 3.36.3 → 3.39.5 with override cleanup, frontend minor/patch up
 * **Maven plugins were not in the brainstorm.** Decision #1 listed Quarkus, npm, images and CI; the Maven plugins (dependency-plugin could not even read Java 25 classes) surfaced only when an analysis tool failed. "Environment upgrade" needs an inventory checklist of every version source (BOM, overrides, plugins, npm, images, CI toolchain), not a list from memory.
 * **Safety classifier blocked a planned test deletion.** Deleting `OpenApiGeneratorTest` was approved in the plan (P5) but refused as "security test removal"; the PO deleted it. Planned deletions of tests are worth naming explicitly to the PO at the start of execution.
 * **Review found real issues again:** machine-dependent generator output (`prettier: true` with no prettier dependency — the drift check would have failed for anyone with a global prettier), an unstable paging order, an untested login query under the new Hibernate. The suspicion list it produced also led to a pre-existing 500 (`?sort=id`).
-* **No push / no deploy** — PO decision during close-out.
+* **Push held for ~3 h** (PO decision during close-out) — every CI step ran locally first; after the push, PR CI was green on the first run and the deploy went as planned (one build retry on a transient npm `ECONNRESET`).
 
 ## 3. Technical findings
 
@@ -24,7 +24,7 @@ Scoped: Quarkus 3.36.3 → 3.39.5 with override cleanup, frontend minor/patch up
 
 ## 4. Feed-forward
 
-* **Deploy POV-206** once the PO decides (push → PR CI → Phase 8 of the plan: rollback tag + `pg_dump`, `build --pull`, Trivy, per-service `up -d --no-deps`, checks). Until then production runs Quarkus 3.36.3 and the old images.
+* **Grafana subdomain:** `grafana.juresa.si` has no DNS record (NXDOMAIN) since the move off OCI, so Caddy fails its ACME challenge on every start and the subdomain is unreachable — decide: add the record/tunnel route or drop the Caddy site block (backlog).
 * **orval ≥8.22 is the most urgent follow-up** (CRITICAL advisories; backlog, priority High).
 * **Frontend majors** are grouped in the backlog; do the lint-debt cleanup before ESLint 10/react-hooks 7.
 * **Future upgrades:** start from an inventory of all version sources; for ORM/framework minors, grep for the affected query shapes and make sure a test executes each.
