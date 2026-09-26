@@ -50,7 +50,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies (root + frontend)
-      run: npm install && cd frontend && npm install
+      run: npm ci && cd frontend && npm ci
 
 
     - name: Make mvnw executable
