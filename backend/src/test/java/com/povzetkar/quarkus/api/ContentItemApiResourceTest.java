@@ -3,12 +3,15 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.builder.ContentItemBuilder;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.SummaryBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
@@ -18,9 +21,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 class ContentItemApiResourceTest {
@@ -85,8 +91,80 @@ class ContentItemApiResourceTest {
     void teardown() {
         Summary.deleteAll();
         ContentItem.deleteAll();
+        Topic.deleteAll();
         ContentSource.deleteAll();
         User.deleteAll();
+    }
+
+    /**
+     * The client-chosen sort field is applied to the id page and to the fetch-join load
+     * ({@code ContentItem.listByIdsWithAssociations}); {@code id} exists on the joined source and topics too.
+     */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetAllContentItemsSortedById() {
+        given()
+                .when().get("/api/v1/content-items?sort=id,desc")
+                .then()
+                .statusCode(200)
+                .body("data.id", contains(failedItem.id.intValue(), pendingItem.id.intValue(), completedItem.id.intValue()));
+    }
+
+    /** durationSeconds exists only on the YouTubeVideo subclass, not on the paged ContentItem root. */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testSortByDurationSecondsIsRejected() {
+        given()
+                .when().get("/api/v1/content-items?sort=durationSeconds,desc")
+                .then()
+                .statusCode(400);
+    }
+
+    /**
+     * Items sharing the sort value (publishedAt) must neither repeat nor vanish across pages:
+     * the id tiebreaker makes the order total (id descending among equals).
+     */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testPagingWithEqualPublishedAtIsStable() {
+        Instant same = Instant.parse("2026-01-01T00:00:00Z");
+        QuarkusTransaction.requiringNew().run(() -> ContentItem.update("publishedAt = ?1", same));
+
+        List<Integer> seen = new ArrayList<>();
+        for (int page = 0; page < 3; page++) {
+            seen.addAll(given()
+                    .when().get("/api/v1/content-items?size=1&page=" + page)
+                    .then()
+                    .statusCode(200)
+                    .extract().jsonPath().getList("data.id", Integer.class));
+        }
+        assertThat(seen).containsExactly(failedItem.id.intValue(), pendingItem.id.intValue(), completedItem.id.intValue());
+    }
+
+    /**
+     * A source in several topics makes the collection fetch of {@code findByIdWithAssociations} return
+     * several rows for one item; the lookup must still resolve to that single item.
+     */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetContentItemByIdWhenSourceIsInSeveralTopics() {
+        QuarkusTransaction.requiringNew().run(() -> {
+            User owner = User.findById(testUser.id);
+            ContentSource source = ContentSource.findById(testSource.id);
+            Topic first = TopicBuilder.aTopic().withName("Alpha Topic").withUser(owner).build();
+            first.contentSources.add(source);
+            first.persist();
+            Topic second = TopicBuilder.aTopic().withName("Beta Topic").withUser(owner).build();
+            second.contentSources.add(source);
+            second.persist();
+        });
+
+        given()
+                .when().get("/api/v1/content-items/" + completedItem.id)
+                .then()
+                .statusCode(200)
+                .body("data.id", equalTo(completedItem.id.intValue()))
+                .body("data.topicName", equalTo("Alpha Topic")); // lowest topic id wins
     }
 
     @Test

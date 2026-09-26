@@ -1,0 +1,3 @@
+# orval writes LF; keep the generated client LF on every OS so the CI drift check
+# (`git status --porcelain -- src/api/generated`) also works on Windows checkouts.
+src/api/generated/** text eol=lf

@@ -1,10 +1,12 @@
 package com.povzetkar.quarkus.model;
 
+import io.quarkus.panache.common.Sort;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -52,8 +54,19 @@ public class ContentItem extends BaseAuditableEntity {
     }
 
     public static Optional<ContentItem> findByIdWithAssociations(Long id) {
+        // singleResult, not firstResult: a limit on this collection fetch makes Hibernate 7.4 page in a
+        // derived table that omits the subclass columns of this SINGLE_TABLE hierarchy (invalid SQL).
         return find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id)
-                .firstResultOptional();
+                .singleResultOptional();
+    }
+
+    /**
+     * Loads a page of items (ids already paged) with source and topics. Page over ids first and load
+     * here — paging this collection fetch directly produces invalid SQL on Hibernate 7.4 (see above).
+     * The item alias is {@code c}; qualify sort fields that also exist on source or topic (e.g. {@code c.createdAt}).
+     */
+    public static List<ContentItem> listByIdsWithAssociations(List<Long> ids, Sort sort) {
+        return list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", sort, ids);
     }
 
     @Override

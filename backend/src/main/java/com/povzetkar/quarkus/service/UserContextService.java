@@ -71,7 +71,7 @@ public class UserContextService {
         String username = securityIdentity.getPrincipal().getName();
         if (securityIdentity.getPrincipal() instanceof org.eclipse.microprofile.jwt.JsonWebToken jwt) {
             String externalId = jwt.getSubject();
-            return User.find("select u from User u left join fetch u.roles join u.identities i where i.provider = ?1 and i.externalId = ?2", PROVIDER_GOOGLE, externalId).firstResultOptional();
+            return User.findByIdentityWithRoles(PROVIDER_GOOGLE, externalId);
         }
 
         if (isApiKeyIdentity()) {

@@ -2,7 +2,7 @@
 FROM node:24-alpine AS build-frontend
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN apk update && apk upgrade --no-cache && npm install
+RUN apk update && apk upgrade --no-cache && npm ci
 
 COPY frontend/src ./src
 COPY frontend/public ./public

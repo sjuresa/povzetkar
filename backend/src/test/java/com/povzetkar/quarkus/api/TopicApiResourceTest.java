@@ -2,10 +2,13 @@ package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicPatchDTO;
+import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
+import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
@@ -15,6 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.given;
@@ -47,6 +52,7 @@ class TopicApiResourceTest {
     @Transactional
     void teardown() {
         Topic.deleteAll();
+        ContentSource.deleteAll();
         User.deleteAll();
     }
 
@@ -62,6 +68,56 @@ class TopicApiResourceTest {
                 .body("data", hasSize(1))
                 .body("data[0].name", equalTo("Initial Setup Topic"))
                 .body("data[0].enabled", equalTo(true));
+    }
+
+    /**
+     * Characterizes paging of the collection-fetch query in {@code getTopics}: every page must hold
+     * whole topics (limit applied per topic, not per joined row) with all their sources.
+     * Guards the Hibernate 7.4 change that moves the limit of collection-fetch paging into SQL.
+     */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "TOPIC_VIEW" })
+    void testGetTopicsPagesWholeTopicsWithAllSources() {
+        QuarkusTransaction.requiringNew().run(() -> {
+            Topic first = Topic.findById(testTopic.id);
+            first.contentSources.addAll(persistedSources(2));
+            Topic second = TopicBuilder.aTopic().withName("Second Topic").withUser(User.findById(testUser.id)).build();
+            second.contentSources.addAll(persistedSources(3));
+            second.persist();
+            Topic third = TopicBuilder.aTopic().withName("Third Topic").withUser(User.findById(testUser.id)).build();
+            third.contentSources.addAll(persistedSources(2));
+            third.persist();
+        });
+
+        given()
+                .when().get("/api/v1/topics?page=0&size=2")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(3))
+                .body("data", hasSize(2))
+                .body("data[0].name", equalTo("Initial Setup Topic"))
+                .body("data[0].contentSources", hasSize(2))
+                .body("data[1].name", equalTo("Second Topic"))
+                .body("data[1].contentSources", hasSize(3));
+
+        given()
+                .when().get("/api/v1/topics?page=1&size=2")
+                .then()
+                .statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(3))
+                .body("data", hasSize(1))
+                .body("data[0].name", equalTo("Third Topic"))
+                .body("data[0].contentSources", hasSize(2));
+    }
+
+    private static List<ContentSource> persistedSources(int count) {
+        List<ContentSource> sources = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            ContentSource source = ContentSourceBuilder.aContentSource().build();
+            source.persist();
+            sources.add(source);
+        }
+        return sources;
     }
 
     @Test

@@ -14,6 +14,7 @@
 | POV-203 — Restore US/UC/TC Traceability Under the Task-First Process | [walkthrough](POV-203-walkthrough.md) | [retrospective](POV-203-retrospective.md) |
 | POV-204 — Modernize AGENT.md and Agent Protocols | [walkthrough](POV-204-walkthrough.md) | [retrospective](POV-204-retrospective.md) |
 | POV-205 — Read-only API-key authentication for programmatic access | [walkthrough](POV-205-walkthrough.md) | [retrospective](POV-205-retrospective.md) |
+| POV-206 — Upgrade build & runtime environment | [walkthrough](POV-206-walkthrough.md) | [retrospective](POV-206-retrospective.md) |
 | POV-207 — Close public exposure of `/q/*` technical endpoints | [walkthrough](POV-207-walkthrough.md) | [retrospective](POV-207-retrospective.md) |
 | POV-208 — Silently ignored Quarkus config keys + unknown-key guard | [walkthrough](POV-208-walkthrough.md) | [retrospective](POV-208-retrospective.md) |
 

@@ -26,8 +26,8 @@ This document provides all the necessary instructions for setting up the local d
 It is the primary technical guide for developers working on the project.
 ## 2. Prerequisites
 - **Java:** JDK 25 or later.
-- **Node.js:** v25.8.0 or later.
-- **NPM:** v10.x or later.
+- **Node.js:** v24 (LTS) — the version of the Docker build image (`node:24-alpine`) and CI.
+- **NPM:** v11.x (ships with Node 24). Install dependencies with `npm ci` (root and `frontend/`), as the Dockerfile and CI do; `npm ci` fails when `package-lock.json` does not match `package.json`.
 - **Maven:** Version 3.8.x or later.
 - **Docker & Docker Compose:** For running the local development environment.
 - **IDE:** IntelliJ IDEA or VS Code are recommended.
@@ -225,7 +225,32 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ```
 
 ### 8.2 Dependency Scanning (Trivy)
-Third-party dependencies are scanned for known vulnerabilities (CVEs). While this is primarily integrated into the GitHub Actions CI pipeline, you can run a local container scan if needed (requires [Trivy](https://trivy.dev/) installed).
+Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). Run both locally before every production build, without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite):
+
+```bash
+docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy fs \
+  --severity CRITICAL,HIGH --ignorefile /src/.trivyignore --exit-code 1 --timeout 30m /src
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache \
+  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy image \
+  --severity CRITICAL,HIGH --ignorefile /cfg/.trivyignore --exit-code 1 --timeout 30m <image>
+```
+
+Every `.trivyignore` entry carries an `exp:YYYY-MM-DD` date and a rationale; after expiry CI fails again and forces a re-check (remove the entry if the fix has shipped, otherwise extend it with a fresh rationale). The FS scan skips npm devDependencies — `npm audit` in `frontend/` covers those.
+
+### 8.3 Frontend API Client (orval)
+The typed client in `frontend/src/api/generated` is generated from the backend OpenAPI spec and committed. After any API change, regenerate and commit it:
+
+```bash
+./mvnw package -DskipTests -pl backend -am   # writes backend/target/openapi.json (no test classes)
+npm run gen:api                                # orval, output.clean: true removes stale files
+```
+
+- Generate from a `package -DskipTests` build: a spec written while test classes are on the classpath contains test-only endpoints.
+- orval is pinned exactly (`8.5.3`, no `^`) and raised only deliberately, together with a regeneration; `prettier: false` keeps the output independent of a globally installed prettier.
+- CI step **"API client drift check"** runs the two commands above before the tests and fails if `git status --porcelain -- frontend/src/api/generated` is not empty.
+
+### 8.4 Infra Config Validation
+`bash scripts/qa/validate-infra-configs.sh` validates `docker-compose.prod.yml` (`docker compose config`), `infra/caddy/Caddyfile` (`caddy validate`) and `backend/infra/monitoring/prometheus/prometheus.yml` (`promtool check config`) with the exact images pinned in the prod compose file, under its own compose project name (it never touches the running `backend` stack). CI runs it before the image build, so a broken config or an incompatible image bump fails there instead of crash-looping production (`restart: always`).
 
 ## 9. Building the Full Stack
 

@@ -71,7 +71,8 @@ public class SourceItemApiResource extends BaseApiResource {
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort sort = Sort.by("publishedAt").descending();
+        // Item alias "c" (see ContentItem.listByIdsWithAssociations); c.id breaks ties across pages
+        Sort sort = Sort.by("c.publishedAt", Sort.Direction.Descending).and("c.id", Sort.Direction.Descending);
 
         // Pattern inspired by ContentItemApiResource to solve ResultSet issues and N+1
         PanacheQuery<Long> idQuery = ContentItem.find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1", sort, source).project(Long.class);
@@ -83,7 +84,7 @@ public class SourceItemApiResource extends BaseApiResource {
         }
 
         // Fetch items by ID list (using JOIN FETCH to be safe/consistent)
-        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", sort, itemIds);
+        List<ContentItem> items = ContentItem.listByIdsWithAssociations(itemIds, sort);
 
         // Fetch all summary existence flags in one go
         final Set<Long> itemIdsWithSummaries = new HashSet<>(
