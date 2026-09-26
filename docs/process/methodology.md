@@ -70,7 +70,7 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 4.  **Execute (TDD):**
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
-5.  **Verify & Review:** The Agent runs the full test suite, then a proportional pre-commit review (`/code-review`, plus `/security-review` for security-relevant changes; docs-only tasks get a cross-reference consistency check instead). After the push, every PR reviewer's findings — human or bot — are handled in the PR review loop; the User merges.
+5.  **Verify & Review:** The Agent runs the full test suite, then a pre-commit review of every task, documentation included (`/code-review`, plus `/security-review` for security-relevant changes). After the push, every PR reviewer's findings — human or bot — are handled in the PR review loop; the User merges.
 6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
 7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered, including its mandatory Traceability section (the task's US/UC/TC IDs, or `N/A — <reason>`; machine-validated).
 8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.

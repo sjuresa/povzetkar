@@ -66,10 +66,10 @@ For every request that modifies code, follow this exact sequence. The plan → a
 - Verify the task's Definition of Done, then propose a commit message per `docs/protocols/commit-conventions.md` and end with: **"I have proposed the commit message. Is there anything else to be done on this task, or is it fully complete?"** Then wait.
 - After the user confirms completion (checklist 2.9) **and** the PR review loop has exited (Step 8), with the walkthrough in its final form, write the **YouTrack task record** (below) — last, so the comments are final and the work items include the PR loop.
 
-*Pre-commit Review* (checklist 2.5a) — proportional to what the task touches:
+*Pre-commit Review* (checklist 2.5a) — every task, documentation included:
 
-- **Code tasks:** `/code-review high` on the diff against the base branch, always. Additionally `/security-review` when the task touches authentication, authorization, secrets, cryptography or the attack surface (exposed endpoints, security-relevant configuration, proxy headers).
-- **Docs/process-only tasks:** only when no executable file changes — a change to a CI workflow, Dockerfile, compose file, script or build file makes it a code task. No `/code-review`; instead a consistency check — grep every cross-reference to the changed steps, numbers, file names and terms so no dangling or contradicting reference remains.
+- `/code-review high` on the diff against the base branch, always. When the diff changes normative documents (protocols, checklist, RUNBOOK), the review also checks them for contradictions, step ordering and rules an agent cannot execute as written.
+- Additionally `/security-review` when the task touches authentication, authorization, secrets, cryptography or the attack surface (exposed endpoints, security-relevant configuration, proxy headers).
 - **Where it runs:** by default in a subagent (Agent tool), which reviews the diff in its own context and returns only verified findings (`file:line`, severity, proposed fix) — the review is context-heavy. PO approval of this protocol pre-authorises that subagent. Fallback: if the subagent cannot run the review or the session is near full, stop before the commit and ask the PO to run the review in a separate session and paste the findings.
 - **Record:** every finding with its disposition (fixed / rejected with a reason) goes into `## Deviations`, a summary into the walkthrough. After fixes, re-run the full suite of the touched layers.
 
