@@ -55,7 +55,7 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 *Goal: Open the branch, register the version, create the version hub, and consume the previous version's retrospective.*
 
 1.  **Create Branch:** Create the new version branch (e.g., `v0.18.0`) from `main` and update version numbers.
-2.  **Create Milestone:** Register the version as a milestone label in YouTrack.
+2.  **Create Milestone:** The User registers the version as a Fix-version value in YouTrack.
 3.  **Roadmap Entry:** Add the version to `docs/overview/roadmap.md` as in-progress.
 4.  **Create Version Hub:** Create `docs/versions/vX.Y.Z/version.md` (status, task list table, empty Carry-Forward Review section).
 5.  **Review Previous Retrospective:** The Agent reads the previous version's retrospective (Carry-Forward Themes) and proposes a disposition per theme — backlog entry, task candidate, or conscious drop with a reason; the User approves each. Dispositions are recorded in the new hub's Carry-Forward Review table.
@@ -70,7 +70,7 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 4.  **Execute (TDD):**
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
-5.  **Verify & Code Review:** The Agent runs the full test suite; the User reviews the results and performs a code review.
+5.  **Verify & Review:** The Agent runs the full test suite, then a proportional pre-commit review (`/code-review`, plus `/security-review` for security-relevant changes). After the push, every PR reviewer's findings — human or bot — are handled in the PR review loop; the User merges.
 6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
 7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered, including its mandatory Traceability section (the task's US/UC/TC IDs, or `N/A — <reason>`; machine-validated).
 8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.
@@ -80,17 +80,13 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 
 *Goal: Declare the version complete and prepare for release. Triggered by an explicit PO decision — there is no task list to signal completion.*
 
-1.  **Version Retrospective:** Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health — ending with the Carry-Forward Themes consumed at the next version's initialisation. Input: all task retrospectives in `docs/versions/vX.Y.Z/`.
-2.  **Scope Statement:** Add a scope statement to `docs/versions/vX.Y.Z/version.md`.
-3.  **Documentation Review:** Review project-wide docs to ensure they match the new reality.
-4.  **Cleanup:** Finalise `pom.xml` (remove snapshots) and `CHANGELOG.md`.
+Its core is the **Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — a cross-task synthesis of trends, systemic patterns and process health, ending with the Carry-Forward Themes consumed at the next version's initialisation — followed by a documentation review, a supply-chain audit, and the release cleanup (`-SNAPSHOT` removed, `CHANGELOG.md` finalised).
 
 ### Phase 4: Release
 
-*Goal: Ship it.*
+*Goal: Ship it* — release PR to `main`, merge, annotated tag, production deploy, YouTrack release.
 
-1.  Merge to `main`.
-2.  Tag the release.
+The step-by-step procedure for Phases 3 and 4 lives only in [`11_development_checklist.md`](../sdlc/11_development_checklist.md) — it is deliberately not repeated here, so the two cannot drift apart.
 
 ---
 

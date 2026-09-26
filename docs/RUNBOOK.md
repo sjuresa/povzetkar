@@ -225,13 +225,13 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ```
 
 ### 8.2 Dependency Scanning (Trivy)
-Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). Run both locally before every production build, without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite):
+Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). CI is the pre-deploy scan: a production deploy needs a green CI run on the exact deployed commit (see `docs/protocols/verification.md`, *Pre-deploy Verification*). CI pins `aquasecurity/trivy-action` by commit SHA and the Trivy binary by version (`.github/workflows/ci.yml`). Run the scans locally only by exception — a commit without a CI run, or the per-version `.trivyignore` audit (checklist 3.1a, then without `--ignorefile`) — without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite), using the same pinned Trivy version as CI:
 
 ```bash
-docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy fs \
+docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy:0.74.0 fs \
   --severity CRITICAL,HIGH --ignorefile /src/.trivyignore --exit-code 1 --timeout 30m /src
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache \
-  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy image \
+  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy:0.74.0 image \
   --severity CRITICAL,HIGH --ignorefile /cfg/.trivyignore --exit-code 1 --timeout 30m <image>
 ```
 
@@ -298,8 +298,8 @@ docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-d
   a config difference in them (observed during POV-207).
 - Before rebuilding, tag the running image for rollback:
   `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
-- Before `up`, scan the new image with the CI flags (see `docs/process/lessons/infrastructure-ops.md`,
-  "Scan Before Every Production Build").
+- Before `up`: the deployed commit needs a green CI run (Trivy FS + image) not older than 7 days — see
+  `docs/protocols/verification.md`, *Pre-deploy Verification*. Local Trivy (§8.2) only for a commit without a CI run.
 
 ### 10.4 Stop
 

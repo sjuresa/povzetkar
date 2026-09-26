@@ -17,8 +17,8 @@ Operate exclusively by the rules in this file and the protocols in `docs/protoco
 
 | Protocol | File | Scope |
 |:---|:---|:---|
-| Mandatory Workflow | `docs/protocols/workflow-mandatory.md` | The step sequence for every code change, including failure handling and the PR review loop. |
-| Verification | `docs/protocols/verification.md` | The Test Mandate — full-suite behavioral verification. |
+| Mandatory Workflow | `docs/protocols/workflow-mandatory.md` | The step sequence for every code change: task pause/resume, failure handling, pre-commit review, YouTrack task record, and the reviewer-agnostic PR review loop. |
+| Verification | `docs/protocols/verification.md` | The Test Mandate — full-suite behavioral verification — and Pre-deploy Verification. |
 | Quality Mandates | `docs/protocols/quality-mandates.md` | TDD, change-impact analysis, client-side analysis, QA rules. |
 | Commit Conventions | `docs/protocols/commit-conventions.md` | Commit message rules. |
 | Context Gathering | `docs/protocols/context-gathering.md` | Which documents to load, and when. |

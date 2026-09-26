@@ -83,26 +83,6 @@ This section describes the process for creating and publishing a new version of 
 The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). All versions prior to `1.0.0` are considered initial development and may introduce breaking changes.
 
 ### 4.2 Release Process
-Creating a new release is a manual process performed when all tasks for a given version in the [`roadmap.md`](../overview/roadmap.md) are complete and merged into its corresponding version branch.
+A release is declared by an explicit PO decision that the version is complete (a version is a retrospective label, not a pre-planned task list). It consists of **Version Finalisation** (retrospective, documentation review, supply-chain audit, removing `-SNAPSHOT`, finalising `CHANGELOG.md`) and the **Release** itself (release PR to `main`, merge, annotated tag, production deploy, YouTrack release). The next cycle starts with Version Initialisation (new version branch, `-SNAPSHOT` version).
 
-The steps are as follows:
-
-1.  **Finalize the Version Branch (e.g., `v0.5`):**
-    *   Ensure all task branches for the version are merged.
-    *   Update `CHANGELOG.md`](../../changelog.md): Change the `[Unreleased]` section to the new version number and date (e.g., `[0.5.0] - 2025-08-17`) and add a new `[Unreleased]` section at the top.
-    *   Update Project Version: In `pom.xml`, remove the `-SNAPSHOT` suffix from the `<version>` tag (e.g., change `<version>0.5.0-SNAPSHOT</version>` to `<version>0.5.0</version>`).
-    *   Commit these final changes to the version branch with a message like `chore(release): prepare for release v0.5.0`.
-
-2.  **Merge to `main` via Pull Request:**
-    *   Create a Pull Request from the version branch (e.g., `v0.5`) to `main`. The PR should be named "Release v0.5.0".
-    *   This PR serves as the final release candidate. After approval and passing all checks, merge it into `main`.
-
-3.  **Create and Push Git Tag:**
-    *   On your local `main` branch, pull the latest changes.
-    *   Create an annotated Git tag: `git tag -a v0.5.0 -m "Release version 0.5.0"`
-    *   Push the tag to the remote repository: `git push origin v0.5.0`
-
-4.  **Prepare for Next Development Cycle:**
-    *   Create a new version branch (e.g., `v0.6`) from the `main` branch.
-    *   On the new `v0.6` branch, update the `pom.xml` version to the next development snapshot (e.g., `<version>0.6.0-SNAPSHOT</version>`).
-    *   Commit and push this change to the new version branch to officially start the next development cycle.
+The authoritative step-by-step procedure is [`11_development_checklist.md`](11_development_checklist.md), Phases 1, 3 and 4 — this section deliberately does not repeat the steps, so the two cannot drift apart.
