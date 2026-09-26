@@ -32,7 +32,7 @@
         <byte-buddy.version>1.17.6</byte-buddy.version>
         <assertj.version>3.27.7</assertj.version>
         <youtube-transcript-api.version>0.4.0</youtube-transcript-api.version>
-        <flexmark-all.version>0.64.8</flexmark-all.version>
+        <flexmark.version>0.64.8</flexmark.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- Shared Plugin Versions -->
@@ -103,8 +103,13 @@
             </dependency>
             <dependency>
                 <groupId>com.vladsch.flexmark</groupId>
-                <artifactId>flexmark-all</artifactId>
-                <version>${flexmark-all.version}</version>
+                <artifactId>flexmark</artifactId>
+                <version>${flexmark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vladsch.flexmark</groupId>
+                <artifactId>flexmark-ext-tables</artifactId>
+                <version>${flexmark.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.mapstruct</groupId>
