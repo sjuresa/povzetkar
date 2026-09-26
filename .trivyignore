@@ -1,21 +1,9 @@
-# Pending Debian fixes for libexpat in Distroless (Debian 13)
-# These will be removed once Google releases updated images.
-# libexpat: handler call depth tracking and integer overflow issues
-CVE-2026-56131
-CVE-2026-56407
-CVE-2026-56408
-# libuuid1: integer overflow or wraparound in libblkid
-CVE-2026-53615
-# libexpat: Information disclosure and data integrity issues due to integer overflow
-CVE-2026-25210
-# libexpat: Security fix pending upstream image update
-CVE-2026-45186
-# libexpat: Large dynamic memory allocation via small crafted document
-CVE-2025-59375
+# Every entry carries an exp: date so CI fails again after expiry and forces a re-check
+# (remove the entry if Debian has shipped a fix; otherwise extend it with a fresh rationale).
+# Audited 2026-09-26 (POV-206): the seven older libexpat/libuuid entries without exp: were no
+# longer reported for the image (fresh --pull base, Debian 13.7) and have been removed.
 
 # --- Added 2026-09-25 (POV-207). Status "affected" in Debian 13, no fixed package yet. ---
-# Entries carry exp: dates so CI fails again after expiry and forces a re-check
-# (remove the entry if Debian has shipped a fix; otherwise extend with a fresh rationale).
 # libexpat1 2.8.3-1~deb13u1 — the JVM parses XML with its own implementation, not libexpat.
 CVE-2026-66046 exp:2026-12-31
 CVE-2026-76956 exp:2026-12-31
