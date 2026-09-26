@@ -19,6 +19,7 @@ The build and runtime environment was brought up to date **within existing major
 | `075cf641` `chore(deps):` | Maven plugins: compiler 3.16.0, surefire 3.6.0, dependency 3.11.0, javadoc 3.12.0, SpotBugs 4.10.4.1, JaCoCo 0.8.15. |
 | `b5577129` `chore(deps):` | `flexmark-all` → `flexmark` + `flexmark-ext-tables`; redundant explicit `quarkus-vertx` removed. Runtime `lib/main` **320 → 274 jars** (unused openhtmltopdf/pdfbox/icu4j/jsoup stack gone); image 501 MB → 459 MB. |
 | `3e873ea5` `fix(api):` | `GET /api/v1/content-items?sort=id` returned **500** (`Ambiguous unqualified attribute reference 'id'` — the load query joins source and topics). Found by the unused-dependency/review follow-up; **pre-existing** (reproduced on 3.36.3). Sort fields now qualified with the item alias `c`; new test. |
+| `4c564610` `fix:` | Second review round (PO-run): `sort=durationSeconds` → 400 instead of 500 (field exists only on `YouTubeVideo`; the frontend never sorts by it); `c.id` tiebreaker in `ContentItemApiResource`/`SourceItemApiResource` paging; admin history queries (12 per request) run only on the history tab; `User.findByIdentityWithRoles` → `singleResultOptional()`; `Summary.listByIdsWithAssociations`. |
 
 Docs: RUNBOOK §2 (Node 24, `npm ci`), §8.2 (local Trivy, `exp:` policy), new §8.3 (API client regeneration + drift check) and §8.4 (infra config validation); CHANGELOG; backlog (deferred majors, orval upgrade — High, Grafana 13, PostgreSQL 18, Node 26, security-header test, review leftovers, upstream Hibernate report).
 
@@ -42,13 +43,14 @@ Estimated ~4 h. Actual so far: brainstorm + planning 2026-09-25 13:42 → 14:19 
 6. **Pre-existing API bug fixed in passing:** `?sort=id` on content items → 500; reproduced on the 3.36.3 POMs (same failure), so not an upgrade regression — the same run showed the Hibernate workaround also passes on 3.36.3. One-line fix (`QueryParser.parseSort(..., "c")`) plus test.
 7. **Scope extension (PO):** `.vite-react-ssg-temp` removal, Maven plugins, flexmark narrowing, `quarkus-vertx`.
 8. **No push, no deploy** (PO decision) — see §2.
-9. **Interim process rules** (POV-207 close-out, valid until POV-209) applied: pre-commit review, no PR reviewer, local Trivy FS + image with CI flags on a `--pull` build, YouTrack record per the POV-202 pattern at close-out.
+9. **Second review round (PO-run, 7 findings):** 5 fixed (`4c564610`, above; both new tests red without the fix); #3 (test teardown `deleteAll` also removes the V32 demo seed — pre-existing pattern in 19 test classes) skipped by PO decision; #6 (Briefing list needs no id-first paging — only a to-one fetch) kept deliberately: one paging path, one extra query, now only on the history tab.
+10. **Interim process rules** (POV-207 close-out, valid until POV-209) applied: pre-commit review, no PR reviewer, local Trivy FS + image with CI flags on a `--pull` build, YouTrack record per the POV-202 pattern at close-out.
 
 ## 5. Verification evidence
 
 * **Characterization test** green on 3.36.3 (357 tests) and on 3.39.5.
 * **Hibernate workaround red/green:** production fix stashed, new tests kept → 5 failures (`ContentItemApiResourceTest` ×3, `AdminResourceTest` ×2); fix restored → green.
-* **Backend final:** clean `./mvnw verify -pl backend -am` — **360 tests, 0 failures, 3 skipped** (pre-existing `@Disabled`), **SpotBugs 4.10 0 bugs**, 0 `Unrecognized configuration key`, `QuarkusConfigKeysTest` green on 3.39.5 (no renamed keys).
+* **Backend final:** clean `./mvnw verify -pl backend -am` — **362 tests, 0 failures, 3 skipped** (pre-existing `@Disabled`), **SpotBugs 4.10 0 bugs**, 0 `Unrecognized configuration key`, `QuarkusConfigKeysTest` green on 3.39.5 (no renamed keys).
 * **Frontend final:** vitest 68/68, `npm run build` OK, Playwright E2E 11/11, `tsc -b` clean; lint identical to the baseline (32 errors / 2 warnings, message-level diff: none new, none gone).
 * **Drift check red/green:** changed an `@Operation` description without regenerating → FAIL (`topics.ts` modified); committed client → PASS.
 * **Infra validation red/green:** unknown Caddy directive → `caddy validate` fails; invalid Prometheus duration → `promtool` fails; real configs → pass. Production stack untouched (own compose project).
