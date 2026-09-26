@@ -52,8 +52,10 @@ public class ContentItem extends BaseAuditableEntity {
     }
 
     public static Optional<ContentItem> findByIdWithAssociations(Long id) {
+        // singleResult, not firstResult: a limit on this collection fetch makes Hibernate 7.4 page in a
+        // derived table that omits the subclass columns of this SINGLE_TABLE hierarchy (invalid SQL).
         return find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = ?1", id)
-                .firstResultOptional();
+                .singleResultOptional();
     }
 
     @Override

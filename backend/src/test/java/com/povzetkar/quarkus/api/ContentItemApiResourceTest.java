@@ -3,12 +3,15 @@ package com.povzetkar.quarkus.api;
 import com.povzetkar.quarkus.builder.ContentItemBuilder;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.SummaryBuilder;
+import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
+import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
@@ -85,8 +88,35 @@ class ContentItemApiResourceTest {
     void teardown() {
         Summary.deleteAll();
         ContentItem.deleteAll();
+        Topic.deleteAll();
         ContentSource.deleteAll();
         User.deleteAll();
+    }
+
+    /**
+     * A source in several topics makes the collection fetch of {@code findByIdWithAssociations} return
+     * several rows for one item; the lookup must still resolve to that single item.
+     */
+    @Test
+    @TestSecurity(user = "testuser", roles = { "user", "CONTENT_ITEM_VIEW" })
+    void testGetContentItemByIdWhenSourceIsInSeveralTopics() {
+        QuarkusTransaction.requiringNew().run(() -> {
+            User owner = User.findById(testUser.id);
+            ContentSource source = ContentSource.findById(testSource.id);
+            Topic first = TopicBuilder.aTopic().withName("Alpha Topic").withUser(owner).build();
+            first.contentSources.add(source);
+            first.persist();
+            Topic second = TopicBuilder.aTopic().withName("Beta Topic").withUser(owner).build();
+            second.contentSources.add(source);
+            second.persist();
+        });
+
+        given()
+                .when().get("/api/v1/content-items/" + completedItem.id)
+                .then()
+                .statusCode(200)
+                .body("data.id", equalTo(completedItem.id.intValue()))
+                .body("data.topicName", equalTo("Alpha Topic")); // lowest topic id wins
     }
 
     @Test

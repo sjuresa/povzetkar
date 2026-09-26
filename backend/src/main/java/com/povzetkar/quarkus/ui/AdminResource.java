@@ -26,6 +26,7 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 @ApplicationScoped
 public class AdminResource {
@@ -82,28 +83,33 @@ public class AdminResource {
         int failedPage = WebUtils.getIntegerQueryParam(context, "failedPage", 1);
 
         // Pending Content Items
-        var pendingQuery = ContentItem.find(
-                "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.processingStatus = ?1 ORDER BY ci.createdAt DESC",
+        var pendingIdQuery = ContentItem.find(
+                "SELECT ci.id FROM ContentItem ci WHERE ci.processingStatus = ?1 ORDER BY ci.createdAt DESC",
                 ProcessingStatus.PENDING
-        );
-        addPagedDataToTemplate(data, "pendingContentItems", "pendingTotalPages", "pendingCurrentPage", pendingPage, pendingQuery);
+        ).project(Long.class);
+        addPagedDataToTemplate(data, "pendingContentItems", "pendingTotalPages", "pendingCurrentPage", pendingPage,
+                pendingIdQuery, AdminResource::loadContentItemsWithTopics);
 
         // Recent Summaries
-        var summaryQuery = Summary.find(
-                "SELECT s FROM Summary s JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics ORDER BY s.createdAt DESC"
-        );
-        addPagedDataToTemplate(data, "recentSummaries", "summariesTotalPages", "summariesCurrentPage", summariesPage, summaryQuery);
+        var summaryIdQuery = Summary.find(
+                "SELECT s.id FROM Summary s JOIN s.contentItem ORDER BY s.createdAt DESC"
+        ).project(Long.class);
+        addPagedDataToTemplate(data, "recentSummaries", "summariesTotalPages", "summariesCurrentPage", summariesPage,
+                summaryIdQuery, ids -> Summary.list(
+                        "SELECT s FROM Summary s JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE s.id IN ?1 ORDER BY s.createdAt DESC",
+                        ids));
 
         // Recent Briefings
         var briefingQuery = Briefing.find("FROM Briefing b JOIN FETCH b.topic ORDER BY b.createdAt DESC");
         addPagedDataToTemplate(data, "recentBriefings", "briefingsTotalPages", "briefingsCurrentPage", briefingsPage, briefingQuery);
 
         // Failed Content Items
-        var failedQuery = ContentItem.find(
-                "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.processingStatus IN (?1, ?2, ?3) ORDER BY ci.createdAt DESC",
+        var failedIdQuery = ContentItem.find(
+                "SELECT ci.id FROM ContentItem ci WHERE ci.processingStatus IN (?1, ?2, ?3) ORDER BY ci.createdAt DESC",
                 ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER, ProcessingStatus.IGNORED
-        );
-        addPagedDataToTemplate(data, "failedContentItems", "failedTotalPages", "failedCurrentPage", failedPage, failedQuery);
+        ).project(Long.class);
+        addPagedDataToTemplate(data, "failedContentItems", "failedTotalPages", "failedCurrentPage", failedPage,
+                failedIdQuery, AdminResource::loadContentItemsWithTopics);
 
         // Other data
         data.put("genAiClientUsage", apiKeyUsageService.getUsageForToday());
@@ -121,6 +127,28 @@ public class AdminResource {
         data.put(listKey, query.page(page - 1, pageSize).list());
         data.put(totalPagesKey, query.pageCount());
         data.put(currentPageKey, page);
+    }
+
+    /**
+     * Pages over ids, then loads that page's entities with their collection fetches. Paging a
+     * collection-fetch query directly fails on Hibernate 7.4 when the paged rows involve the
+     * polymorphic {@link ContentItem}: the derived table it generates omits subclass columns.
+     */
+    private <T> void addPagedDataToTemplate(Map<String, Object> data, String listKey, String totalPagesKey, String currentPageKey, int page,
+                                            PanacheQuery<Long> idQuery, Function<List<Long>, List<T>> loader) {
+        if (page < 1) {
+            page = 1;
+        }
+        List<Long> ids = idQuery.page(page - 1, pageSize).list();
+        data.put(listKey, ids.isEmpty() ? List.of() : loader.apply(ids));
+        data.put(totalPagesKey, idQuery.pageCount());
+        data.put(currentPageKey, page);
+    }
+
+    private static List<ContentItem> loadContentItemsWithTopics(List<Long> ids) {
+        return ContentItem.list(
+                "SELECT ci FROM ContentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE ci.id IN ?1 ORDER BY ci.createdAt DESC",
+                ids);
     }
 
     @Route(path = "/api/v1/admin/content-items/:id/fetch-transcript", methods = Route.HttpMethod.POST)
