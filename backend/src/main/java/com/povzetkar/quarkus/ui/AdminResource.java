@@ -77,7 +77,21 @@ public class AdminResource {
         String activeTab = context.request().getParam(TAB_PARAM);
         data.put("activeTab", HISTORY_TAB.equals(activeTab) ? HISTORY_TAB : "actions");
 
-        // Pagination
+        // History lists are rendered only on the history tab — skip their queries on the actions tab
+        if (HISTORY_TAB.equals(activeTab)) {
+            addHistoryData(context, data);
+        }
+
+        // Other data
+        data.put("genAiClientUsage", apiKeyUsageService.getUsageForToday());
+        data.put("apiUsageTimezone", apiKeyUsageService.getTimezoneId());
+
+        context.response()
+                .putHeader("Content-Type", "text/html; charset=utf-8")
+                .end(admin.instance().data(data).render());
+    }
+
+    private void addHistoryData(RoutingContext context, Map<String, Object> data) {
         int pendingPage = WebUtils.getIntegerQueryParam(context, "pendingPage", 1);
         int summariesPage = WebUtils.getIntegerQueryParam(context, "summariesPage", 1);
         int briefingsPage = WebUtils.getIntegerQueryParam(context, "briefingsPage", 1);
@@ -92,9 +106,7 @@ public class AdminResource {
         // Recent Summaries
         var summaryIds = Summary.find("SELECT s.id FROM Summary s", newestFirst("s")).project(Long.class);
         addPagedDataToTemplate(data, "recentSummaries", "summariesTotalPages", "summariesCurrentPage", summariesPage,
-                summaryIds, ids -> Summary.list(
-                        "SELECT s FROM Summary s JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE s.id IN ?1",
-                        newestFirst("s"), ids));
+                summaryIds, ids -> Summary.listByIdsWithAssociations(ids, newestFirst("s")));
 
         // Recent Briefings
         var briefingIds = Briefing.find("SELECT b.id FROM Briefing b", newestFirst("b")).project(Long.class);
@@ -106,14 +118,6 @@ public class AdminResource {
                 newestFirst("ci"), ProcessingStatus.FAILED, ProcessingStatus.RETRY_LATER, ProcessingStatus.IGNORED).project(Long.class);
         addPagedDataToTemplate(data, "failedContentItems", "failedTotalPages", "failedCurrentPage", failedPage,
                 failedIds, ids -> ContentItem.listByIdsWithAssociations(ids, newestFirst("c")));
-
-        // Other data
-        data.put("genAiClientUsage", apiKeyUsageService.getUsageForToday());
-        data.put("apiUsageTimezone", apiKeyUsageService.getTimezoneId());
-
-        context.response()
-                .putHeader("Content-Type", "text/html; charset=utf-8")
-                .end(admin.instance().data(data).render());
     }
 
     /**

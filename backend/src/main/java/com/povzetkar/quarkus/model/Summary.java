@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.model;
 
 import com.povzetkar.quarkus.ui.util.TextUtils;
+import io.quarkus.panache.common.Sort;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -73,6 +74,16 @@ public class Summary extends BaseAuditableEntity {
 
     public static Optional<Summary> findByContentIdWithAssociations(Long contentId) {
         return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResultOptional();
+    }
+
+    /**
+     * Loads a page of summaries (ids already paged) with item, source and topics. Page over ids first —
+     * paging this collection fetch directly produces invalid SQL on Hibernate 7.4 (see
+     * {@link ContentItem#listByIdsWithAssociations}). The summary alias is {@code s}.
+     */
+    public static List<Summary> listByIdsWithAssociations(List<Long> ids, Sort sort) {
+        return list("SELECT s FROM Summary s JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource cs LEFT JOIN FETCH cs.topics WHERE s.id IN ?1",
+                sort, ids);
     }
 
     public static List<Summary> findByTopicAndDateRange(Long topicId, LocalDate date) {

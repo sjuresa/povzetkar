@@ -71,7 +71,8 @@ public class SourceItemApiResource extends BaseApiResource {
         }
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort sort = Sort.by("publishedAt").descending();
+        // Item alias "c" (see ContentItem.listByIdsWithAssociations); c.id breaks ties across pages
+        Sort sort = Sort.by("c.publishedAt", Sort.Direction.Descending).and("c.id", Sort.Direction.Descending);
 
         // Pattern inspired by ContentItemApiResource to solve ResultSet issues and N+1
         PanacheQuery<Long> idQuery = ContentItem.find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1", sort, source).project(Long.class);

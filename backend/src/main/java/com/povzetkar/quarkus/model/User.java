@@ -78,9 +78,13 @@ public class User extends BaseAuditableEntity {
         return find("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.topics").list();
     }
 
+    /**
+     * Google-login lookup. (provider, externalId) is unique, so no limit is needed: singleResult avoids the
+     * Hibernate 7.4 derived-table paging of collection fetches (see ContentItem.findByIdWithAssociations).
+     */
     public static Optional<User> findByIdentityWithRoles(String provider, String externalId) {
         return find("select u from User u left join fetch u.roles join u.identities i where i.provider = ?1 and i.externalId = ?2",
-                provider, externalId).firstResultOptional();
+                provider, externalId).singleResultOptional();
     }
 
     @Override

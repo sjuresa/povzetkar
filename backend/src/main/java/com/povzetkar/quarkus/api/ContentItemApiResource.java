@@ -108,8 +108,10 @@ public class ContentItemApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        // Qualified with the item alias "c": the load query joins source and topics, which also have "id"
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("c.publishedAt").descending(), Set.of("id", "title", "publishedAt", "processingStatus", "durationSeconds"), "c");
+        // Qualified with the item alias "c": the load query joins source and topics, which also have "id".
+        // c.id last breaks ties, so rows with equal sort values neither repeat nor vanish across pages.
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("c.publishedAt").descending(), Set.of("id", "title", "publishedAt", "processingStatus"), "c")
+                .and("c.id", Sort.Direction.Descending);
 
         FilterBuilder filters = new FilterBuilder("");
         if (sourceId != null) {
