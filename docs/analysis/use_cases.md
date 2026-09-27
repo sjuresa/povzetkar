@@ -117,15 +117,15 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-9: Complete Onboarding Checklist
 **Actor**: New User
 **Related Stories**: US-16.4
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
-**Preconditions**: User has just registered or has no topics/briefings.
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md), [ADR-0011](../adr/0011-onboarding-state-per-user.md) (POV-216)
+**Preconditions**: User's account is approved (`ENABLED`) and the guide has not been dismissed. Accounts awaiting approval see no guide — the pending-approval banner points them to the demo content instead.
 **Main Flow**:
 1. User logs in and lands on the Dashboard.
-2. System displays a 5-step checklist (Topics, Sources, Trigger, Read, Share).
+2. System loads the user's guide state and displays a 5-step checklist (Topics, Sources, Trigger, Read, Share).
 3. User performs the required action (e.g., creates a topic).
-4. System automatically checks off the corresponding item in the list.
+4. System automatically checks off the corresponding item in the list and stores the progress for this user.
 5. User completes all steps and reaches 100% progress.
-**Postconditions**: User is successfully onboarded and understands the system flow.
+**Postconditions**: User is successfully onboarded and understands the system flow; the progress follows the user across browsers and devices and is never shared with other accounts.
 
 ### UC-10: React to Job Completion Toasts
 **Actor**: User

@@ -63,7 +63,7 @@
 | **TC-SEC-001** | **P0** | - | [v0.13] | Profile Visibility | Manual/PW | `/me` data matches the currently authenticated user. |
 | **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | **Playwright** | Admin sections (Sources) are blocked for generic users. |
 | **TC-SEC-003** | **P0** | - | [v0.12] | Auth Guard Redirect | **Playwright** | Unauthenticated users visiting `/dashboard` are redirected to `/`. |
-| **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees generic status banner. |
+| **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees an informational status banner (no buttons) with a demo-exploration hint; the app re-checks the status automatically and reloads once on approval. |
 | **TC-SEC-005** | **P0** | UC-12 | [v0.17] | Approval State Transition | Integration | Admin can transition `PENDING_APPROVAL → ENABLED`/`DISABLED`; audit row written. Last-admin guard prevents self-demotion. |
 | **TC-SEC-006** | **P1** | - | [v0.18] | Demo Role Access Regression | Unit (`RolePermissionsMapTest`) | `demo` role includes `SOURCE_VIEW` (no 403 on Briefing Hub source filter / Sources page); Topics page mutation controls hidden in readonly mode (UI part Manual) (POV-192). |
 | **TC-SEC-007** | **P0** | UC-17 | [v0.19] | Read-Only API-Key Access | Integration (`ApiKeyAuthenticationTest`) | Valid `X-API-Key` reads the mapped user's data (briefings, content items, summary, transcript, topics, sources, dashboard); wrong key → 401; any non-GET and admin paths → 403; header-less requests follow the unchanged OIDC flow (POV-205). |
@@ -75,7 +75,7 @@
 | **TC-UI-001** | **P2** | - | [v0.14] | Brand Visibility | **Playwright** | Logo/Brand name "Povzetkar" prominently visible on landing. |
 | **TC-UI-002** | **P2** | - | [v0.14] | Site Title | **Playwright** | Browser tab title contains the word "Povzetkar". |
 | **TC-UI-003** | **P1** | - | [v0.12] | Responsive SideNav | Manual | Sidebar correctly collapses on smaller screens without breaking layout. |
-| **TC-UI-004** | **P1** | UC-9 | [v0.16] | Dashboard Onboarding | **Playwright** | New users see the 5-step checklist; Progress updates on action. |
+| **TC-UI-004** | **P1** | UC-9 | [v0.16] | Dashboard Onboarding | **Playwright** | Approved users see the 5-step checklist; progress updates on action and is stored per user (not shared between accounts in one browser); pending users see no checklist. |
 
 ## 7. Domain: Admin & System (ADM)
 

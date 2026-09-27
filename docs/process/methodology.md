@@ -99,7 +99,7 @@ TDD is mandatory for all logic changes. We adhere to two specific workflows:
 
 **Key Mandates:**
 *   **Strict TDD:** For complex logic, we write the test first.
-*   **Integration Testing:** We prefer `@QuarkusTest` with real databases (Testcontainers). We avoid mocking internal services unless absolutely necessary. *Learned in v0.6.2.*
+*   **Test scope:** defined by QA rule 3 in `docs/protocols/quality-mandates.md`.
 *   **UI Testing:** We avoid fragile inheritance patterns (`BaseUITest`) and prefer explicit transaction management in tests. *Learned in v0.6.2/v0.9.0.*
 
 ### 4.2. Spikes

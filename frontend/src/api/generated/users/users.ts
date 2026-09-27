@@ -26,6 +26,8 @@ import type {
 
 import type {
   GetApiV1UsersParams,
+  OnboardingDTO,
+  OnboardingPatch,
   PaginatedResponse,
   UserDTO
 } from '../model';
@@ -281,6 +283,229 @@ export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1Use
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetApiV1UsersMeQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * Marks steps complete and sets the dismissed/collapsed flags; steps cannot be reset.
+ * @summary Update the onboarding guide state
+ */
+export type patchApiV1UsersMeOnboardingResponse200 = {
+  data: OnboardingDTO
+  status: 200
+}
+
+export type patchApiV1UsersMeOnboardingResponse400 = {
+  data: void
+  status: 400
+}
+
+export type patchApiV1UsersMeOnboardingResponse401 = {
+  data: void
+  status: 401
+}
+
+export type patchApiV1UsersMeOnboardingResponse403 = {
+  data: void
+  status: 403
+}
+
+export type patchApiV1UsersMeOnboardingResponseSuccess = (patchApiV1UsersMeOnboardingResponse200) & {
+  headers: Headers;
+};
+export type patchApiV1UsersMeOnboardingResponseError = (patchApiV1UsersMeOnboardingResponse400 | patchApiV1UsersMeOnboardingResponse401 | patchApiV1UsersMeOnboardingResponse403) & {
+  headers: Headers;
+};
+
+export type patchApiV1UsersMeOnboardingResponse = (patchApiV1UsersMeOnboardingResponseSuccess | patchApiV1UsersMeOnboardingResponseError)
+
+export const getPatchApiV1UsersMeOnboardingUrl = () => {
+
+
+  
+
+  return `/api/v1/users/me/onboarding`
+}
+
+export const patchApiV1UsersMeOnboarding = async (onboardingPatch: OnboardingPatch, options?: RequestInit): Promise<patchApiV1UsersMeOnboardingResponse> => {
+  
+  return customInstance<patchApiV1UsersMeOnboardingResponse>(getPatchApiV1UsersMeOnboardingUrl(),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      onboardingPatch,)
+  }
+);}
+  
+
+
+
+export const getPatchApiV1UsersMeOnboardingMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersMeOnboarding>>, TError,{data: OnboardingPatch}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersMeOnboarding>>, TError,{data: OnboardingPatch}, TContext> => {
+
+const mutationKey = ['patchApiV1UsersMeOnboarding'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchApiV1UsersMeOnboarding>>, {data: OnboardingPatch}> = (props) => {
+          const {data} = props ?? {};
+
+          return  patchApiV1UsersMeOnboarding(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatchApiV1UsersMeOnboardingMutationResult = NonNullable<Awaited<ReturnType<typeof patchApiV1UsersMeOnboarding>>>
+    export type PatchApiV1UsersMeOnboardingMutationBody = OnboardingPatch
+    export type PatchApiV1UsersMeOnboardingMutationError = void
+
+    /**
+ * @summary Update the onboarding guide state
+ */
+export const usePatchApiV1UsersMeOnboarding = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchApiV1UsersMeOnboarding>>, TError,{data: OnboardingPatch}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patchApiV1UsersMeOnboarding>>,
+        TError,
+        {data: OnboardingPatch},
+        TContext
+      > => {
+      return useMutation(getPatchApiV1UsersMeOnboardingMutationOptions(options), queryClient);
+    }
+    /**
+ * Returns the current user's onboarding guide state; available only for enabled accounts.
+ * @summary Get the onboarding guide state
+ */
+export type getApiV1UsersMeOnboardingResponse200 = {
+  data: OnboardingDTO
+  status: 200
+}
+
+export type getApiV1UsersMeOnboardingResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getApiV1UsersMeOnboardingResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getApiV1UsersMeOnboardingResponseSuccess = (getApiV1UsersMeOnboardingResponse200) & {
+  headers: Headers;
+};
+export type getApiV1UsersMeOnboardingResponseError = (getApiV1UsersMeOnboardingResponse401 | getApiV1UsersMeOnboardingResponse403) & {
+  headers: Headers;
+};
+
+export type getApiV1UsersMeOnboardingResponse = (getApiV1UsersMeOnboardingResponseSuccess | getApiV1UsersMeOnboardingResponseError)
+
+export const getGetApiV1UsersMeOnboardingUrl = () => {
+
+
+  
+
+  return `/api/v1/users/me/onboarding`
+}
+
+export const getApiV1UsersMeOnboarding = async ( options?: RequestInit): Promise<getApiV1UsersMeOnboardingResponse> => {
+  
+  return customInstance<getApiV1UsersMeOnboardingResponse>(getGetApiV1UsersMeOnboardingUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetApiV1UsersMeOnboardingQueryKey = () => {
+    return [
+    `/api/v1/users/me/onboarding`
+    ] as const;
+    }
+
+    
+export const getGetApiV1UsersMeOnboardingQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiV1UsersMeOnboardingQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>> = ({ signal }) => getApiV1UsersMeOnboarding({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiV1UsersMeOnboardingQueryResult = NonNullable<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>>
+export type GetApiV1UsersMeOnboardingQueryError = void
+
+
+export function useGetApiV1UsersMeOnboarding<TData = Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1UsersMeOnboarding<TData = Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1UsersMeOnboarding<TData = Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the onboarding guide state
+ */
+
+export function useGetApiV1UsersMeOnboarding<TData = Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMeOnboarding>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiV1UsersMeOnboardingQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

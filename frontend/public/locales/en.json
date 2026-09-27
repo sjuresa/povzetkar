@@ -616,18 +616,25 @@
     "pending": {
       "title": "Your account is awaiting approval",
       "message": "An administrator will review your sign-up shortly. You'll be able to use Povzetkar once approval is complete.",
-      "refresh": "Check status",
-      "signout": "Sign out"
+      "demo": {
+        "title": "While you wait, take a look around the demo:",
+        "topicsLink": "Topics",
+        "topics": "see how the demo topic groups its YouTube and RSS sources.",
+        "briefingsLink": "Briefing Hub",
+        "briefings": "open a briefing. It starts with an executive summary across all sources, lists the analysed source content, and gives a detailed summary of each item — use \"See summary\" to jump to it.",
+        "outro": "Once you're approved, you'll create your own topics and a guide will walk you through the first steps."
+      }
     },
     "rejected": {
       "title": "Account access not granted",
-      "message": "Your account sign-up was not approved. Please contact your administrator if you believe this is in error.",
-      "signout": "Sign out"
+      "message": "Your account sign-up was not approved. Please contact your administrator if you believe this is in error."
     },
     "disabled": {
       "title": "Account disabled",
-      "message": "Your account has been disabled by an administrator. Please contact your administrator for assistance.",
-      "signout": "Sign out"
+      "message": "Your account has been disabled by an administrator. Please contact your administrator for assistance."
+    },
+    "approved": {
+      "toast": "Your account has been approved — welcome to Povzetkar!"
     }
   }
 }

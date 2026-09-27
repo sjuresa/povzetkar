@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { useEventStore } from './eventStore';
+import { getApiV1UsersMeOnboarding, patchApiV1UsersMeOnboarding } from '../api/generated/users/users';
+import type { OnboardingDTO, OnboardingPatch } from '../api/generated/model';
+import logger from '../util/logger';
 
 export type OnboardingStep = 'topic' | 'source' | 'trigger' | 'read' | 'share';
 
@@ -31,85 +33,112 @@ const DEFAULT_STEPS: OnboardingSteps = {
 };
 
 interface OnboardingState {
+  /** True once the current user's state has been loaded from the server (enabled accounts only). */
+  loaded: boolean;
   steps: OnboardingSteps;
   dismissed: boolean;
   collapsed: boolean;
+  /** Steps marked before the state was loaded (e.g. a briefing opened in a fresh tab); applied by `load`. */
+  earlySteps: OnboardingStep[];
+  load: () => Promise<void>;
   markStepComplete: (stepOrSteps: OnboardingStep | OnboardingStep[], silent?: boolean) => void;
   syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => void;
   toggleCollapsed: () => void;
   setDismissed: (dismissed: boolean) => void;
-  reset: () => void;
 }
 
-const initialState = {
+/** The load in flight, shared by overlapping callers (e.g. React StrictMode's double effect). */
+let loadPromise: Promise<void> | null = null;
+
+/** Sends a partial update; the store is already updated. On failure the error is logged and `onFailure` runs. */
+function persist(patch: OnboardingPatch, onFailure?: () => void) {
+  patchApiV1UsersMeOnboarding(patch).catch((error: unknown) => {
+    logger.warn('[Onboarding] Failed to save the guide state', { error: error as Error });
+    onFailure?.();
+  });
+}
+
+/**
+ * The dashboard onboarding guide, held per user on the server (POV-216). The store is an in-memory
+ * cache, loaded for enabled accounts. Until then, marked steps are only remembered (and applied
+ * silently once loaded — accounts without a guide never load, so nothing is sent for them); the other
+ * actions are no-ops.
+ */
+export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
+  loaded: false,
   steps: { ...DEFAULT_STEPS },
   dismissed: false,
   collapsed: false,
-};
+  earlySteps: [],
 
-export const useOnboardingStore = create<OnboardingState>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
-
-      markStepComplete: (stepOrSteps: OnboardingStep | OnboardingStep[], silent = false) => {
-        const stepsToMark = Array.isArray(stepOrSteps) ? stepOrSteps : [stepOrSteps];
-        const currentSteps = get().steps;
-        const newSteps = { ...currentSteps };
-        let changed = false;
-
-        stepsToMark.forEach((s) => {
-          if (!newSteps[s]) {
-            newSteps[s] = true;
-            changed = true;
-          }
+  load: () => {
+    loadPromise ??= (async () => {
+      try {
+        const response = await getApiV1UsersMeOnboarding();
+        const state = response.data as OnboardingDTO;
+        set({
+          loaded: true,
+          steps: { ...DEFAULT_STEPS, ...state.steps },
+          dismissed: state.dismissed ?? false,
+          collapsed: state.collapsed ?? false,
         });
+        const early = get().earlySteps;
+        set({ earlySteps: [] });
+        get().markStepComplete(early, true);
+      } catch (error: unknown) {
+        logger.warn('[Onboarding] Failed to load the guide state', { error: error as Error });
+      } finally {
+        loadPromise = null;
+      }
+    })();
+    return loadPromise;
+  },
 
-        if (changed) {
-          set({ steps: newSteps });
-          if (!silent) {
-            useEventStore.getState().triggerNotificationSound('success');
-          }
-        }
-      },
-
-      syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => {
-        const stepsToMark: OnboardingStep[] = [];
-
-        // If they have briefings, they must have completed topic, source, and trigger steps
-        if (hasBriefings) {
-          stepsToMark.push('topic', 'source', 'trigger');
-        } else if (activeTopics && activeTopics > 0) {
-          stepsToMark.push('topic');
-        }
-
-        if (stepsToMark.length > 0) {
-          get().markStepComplete(stepsToMark, true);
-        }
-      },
-
-      toggleCollapsed: () => set((state) => ({ collapsed: !state.collapsed })),
-
-      setDismissed: (dismissed: boolean) => set({ dismissed }),
-
-      reset: () => {
-        set(initialState);
-        // Clean out LocalStorage to prevent re-corruption
-        useOnboardingStore.persist.clearStorage();
-      },
-    }),
-    {
-      name: 'povzetkar_onboarding',
-      storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: (_state) => (rehydratedState, error) => {
-        if (error || (rehydratedState && !rehydratedState.steps)) {
-          // Corruption fallback: reset and report
-          console.error('[Onboarding] Critical error during state rehydration. Resetting to defaults.', { error });
-          
-          // Reset synchronously to ensure consistency before the first render
-          useOnboardingStore.getState().reset();
-        }
-      },
+  markStepComplete: (stepOrSteps: OnboardingStep | OnboardingStep[], silent = false) => {
+    const stepsToMark = Array.isArray(stepOrSteps) ? stepOrSteps : [stepOrSteps];
+    if (!get().loaded) {
+      set({ earlySteps: [...new Set([...get().earlySteps, ...stepsToMark])] });
+      return;
     }
-  )
-);
+    const newlyCompleted = stepsToMark.filter((s) => !get().steps[s]);
+    if (newlyCompleted.length === 0) return;
+
+    const patchSteps = Object.fromEntries(newlyCompleted.map((s) => [s, true]));
+    set({ steps: { ...get().steps, ...patchSteps } });
+    // A lost step would stay ticked here but never reach the server — roll it back so a later mark resends it
+    persist({ steps: patchSteps }, () =>
+      set({ steps: { ...get().steps, ...Object.fromEntries(newlyCompleted.map((s) => [s, false])) } })
+    );
+    if (!silent) {
+      useEventStore.getState().triggerNotificationSound('success');
+    }
+  },
+
+  syncFromDashboard: (activeTopics?: number, hasBriefings?: boolean) => {
+    const stepsToMark: OnboardingStep[] = [];
+
+    // If they have briefings, they must have completed topic, source, and trigger steps
+    if (hasBriefings) {
+      stepsToMark.push('topic', 'source', 'trigger');
+    } else if (activeTopics && activeTopics > 0) {
+      stepsToMark.push('topic');
+    }
+
+    if (stepsToMark.length > 0) {
+      get().markStepComplete(stepsToMark, true);
+    }
+  },
+
+  toggleCollapsed: () => {
+    if (!get().loaded) return;
+    const collapsed = !get().collapsed;
+    set({ collapsed });
+    persist({ collapsed });
+  },
+
+  setDismissed: (dismissed: boolean) => {
+    if (!get().loaded) return;
+    set({ dismissed });
+    persist({ dismissed });
+  },
+}));

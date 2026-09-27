@@ -4,6 +4,7 @@
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
+| 1.7     | September 27, 2026 | Povzetkar AI | POV-216: migrated the orphaned US-16.2, US-16.3, US-16.4, US-16.8 (referenced by UC-8/9/10) into new §3.8; US-16.4 notes the per-user guide state. |
 | 1.6     | July 8, 2026     | Povzetkar AI | POV-205: minted US-API-001 in new §3.6 API & Integrations; §3.6 Administration & Hardening renumbered to §3.7. |
 | 1.5     | July 6, 2026     | Povzetkar AI | POV-203: single US catalogue + lifecycle note in §3; migrated US-17.1–17.7 into new §3.6.       |
 | 1.4     | March 30, 2026   | Povzetkar AI | Assigned unique IDs to all User Stories for Traceability Matrix hardening (POV-166). |
@@ -80,3 +81,12 @@ This section breaks down the system's functionality into user-centric stories. I
 *   **US-17.5** (Implemented) **As a System, I want to** fetch transcripts through an ordered multi-provider chain with automatic fallback so that a single provider failure does not lose content. *(Transcript Multi-Provider Resilience)*
 *   **US-17.6** (Implemented) **As a User, I want to** have external links open in a new tab so that I keep my briefing context while reading sources. *(External Links Open in New Tab)*
 *   **US-17.7** (Implemented) **As a User, I want to** be redirected to the landing page when my session expires so that I can re-authenticate without a broken page. *(Session Expiry → Login Redirect)*
+
+### 3.8. User Experience (migrated from v0.16 planning)
+
+*Origin note: US-16.2, US-16.3, US-16.4 and US-16.8 were minted during v0.16.0 planning and previously lived only as rows of the traceability table in the archived [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md), without story text. They were migrated here by POV-216 with their original IDs preserved, because UC-8…UC-10 reference them; the story text is reconstructed from that table, the v0.16 planning discussions and the use cases. The other US-16.x rows are not referenced by any use case and were not migrated.*
+
+*   **US-16.2** (Implemented) **As a User, I want to** hear distinct sounds for success, error and information notifications so that I notice background results without watching the screen. *(Auditory Feedback — POV-171)*
+*   **US-16.3** (Implemented) **As a User, I want to** share an individual summary through a public link so that others can read it without an account. *(Summary Sharing — POV-173)*
+*   **US-16.4** (Implemented) **As a** new **User, I want** a dashboard guide that walks me through the first steps (topic, source, trigger, read, share) and remembers my progress so that I learn the system flow. *(Onboarding Checklist — POV-177; progress held per user on the server since POV-216)*
+*   **US-16.8** (Deferred) **As a User, I want** job-completion toasts to carry an action button (e.g. *View Briefing*) so that I can jump straight to the result. *(Actionable Toasts — POV-182, deferred)*

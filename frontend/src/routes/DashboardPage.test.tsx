@@ -39,8 +39,9 @@ const renderDashboard = () => {
   return render(<DashboardPage />);
 };
 
-function setupOnboardingStore(dismissed = false) {
+function setupOnboardingStore(dismissed = false, loaded = true) {
   vi.mocked(useOnboardingStore).mockReturnValue({
+    loaded,
     dismissed,
     syncFromDashboard: mockSyncFromDashboard,
     steps: { topic: false, source: false, trigger: false, read: false, share: false },
@@ -122,6 +123,37 @@ describe('DashboardPage', () => {
 
     renderDashboard();
     expect(screen.getByTestId('onboarding-checklist')).toBeInTheDocument();
+  });
+
+  it('does not render OnboardingChecklist before the guide state is loaded (e.g. pending account)', () => {
+    vi.mocked(useGetApiV1Dashboard).mockReturnValue({
+      isLoading: false, isError: false, isRefetching: false,
+      data: { data: { stats: { activeTopics: 0, briefingsGeneratedLast7Days: 0 }, recentBriefings: [] } },
+      refetch: vi.fn(),
+    } as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
+    setupOnboardingStore(false, false);
+
+    renderDashboard();
+    expect(screen.queryByTestId('onboarding-checklist')).not.toBeInTheDocument();
+  });
+
+  it('syncs the guide from dashboard data only once the guide state is loaded', () => {
+    vi.mocked(useGetApiV1Dashboard).mockReturnValue({
+      isLoading: false, isError: false, isRefetching: false,
+      data: { data: { stats: { activeTopics: 2, briefingsGeneratedLast7Days: 0 }, recentBriefings: [] } },
+      refetch: vi.fn(),
+    } as any);
+    vi.mocked(useEventStore).mockReturnValue([] as any);
+    mockSyncFromDashboard.mockClear();
+    setupOnboardingStore(false, false);
+
+    const { rerender } = renderDashboard();
+    expect(mockSyncFromDashboard).not.toHaveBeenCalled();
+
+    setupOnboardingStore(false, true);
+    rerender(<DashboardPage />);
+    expect(mockSyncFromDashboard).toHaveBeenCalledWith(2, false);
   });
 
   it('does not render OnboardingChecklist when dismissed is true', () => {

@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- (POV-216) **The onboarding guide belongs to the user, not the browser**: "Your Assistant's Guide" kept its progress in `localStorage` under one fixed key, so every account signing in from the same browser inherited the previous account's progress and dismissal, and progress was lost on another device. The guide state now lives per user on the server (new table `user_onboarding`, Flyway V36; `GET`/`PATCH /api/v1/users/me/onboarding`), created on first use for an enabled account; completed steps can no longer be reset. Existing users start with a fresh guide (the old browser state is ignored). Accounts awaiting approval no longer see the guide — its steps were being ticked from the demo account's content. Also fixed: the dashboard could miss auto-completing the first steps when the guide state arrived after the page. [ADR-0011](docs/adr/0011-onboarding-state-per-user.md) supersedes ADR-0007.
+- (POV-216) **Pending-approval banner without dead buttons**: *Check status* gave no feedback (the status was fetched only once per page load) and *Sign out* duplicated the header's *Logout*. Both buttons are gone from the pending, rejected and disabled banners. While an account awaits approval the app now re-checks the status by itself every minute (visible tab only) and when the tab regains focus; on approval the page reloads once and confirms with a toast. The pending banner now suggests exploring the demo topic and its briefings meanwhile.
+
 ### Documentation
+
+- (POV-216) **Test-scope rule (QA rule 3) rewritten**: persistence (entity mapping, custom queries) and transactional behaviour are tested once against the real database; business logic is tested with Panache mocked as the Quarkus guide prescribes (`PanacheMock`, `@InjectMock Session`); pure domain logic as plain unit tests. The rule lives only in `quality-mandates.md` — the test plan, checklist, methodology and testing guide point to it; `testing.md` §2.5 shows the pattern. The orphaned US-16.2/.3/.4/.8 are migrated into the User Story catalogue (§3.8).
 
 - (POV-212) **Version 0.20.0 started**: version hub with the carry-forward review of the four v0.19.0 themes — three task candidates (scheduler integration test, Caddy on the production traffic path, orval ≥ 8.22) created in YouTrack at once, the rest backlog or consciously dropped. The release checklist now tags `X.Y.Z` without a `v`, matching the existing tags. TC-ING-006 carries a time-bound `validate:skip until v0.21.0` until its scheduler integration test lands.
 

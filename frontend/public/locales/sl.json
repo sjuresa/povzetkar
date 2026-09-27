@@ -622,18 +622,25 @@
     "pending": {
       "title": "Vaš račun čaka na odobritev",
       "message": "Administrator bo kmalu pregledal vašo prijavo. Ko bo odobritev zaključena, boste lahko uporabljali Povzetkar.",
-      "refresh": "Preveri status",
-      "signout": "Odjava"
+      "demo": {
+        "title": "Medtem ko čakate, si oglejte demo:",
+        "topicsLink": "Teme",
+        "topics": "poglejte, kako demo tema združuje vire YouTube in RSS.",
+        "briefingsLink": "Središče poročil",
+        "briefings": "odprite poročilo. Začne se s povzetkom za vodstvo iz vseh virov, sledi seznam analiziranih vsebin, na koncu pa podroben povzetek vsake vsebine — s \"Poglej povzetek\" skočite nanj.",
+        "outro": "Po odobritvi boste ustvarili svoje teme, skozi prve korake pa vas bo vodil vodič."
+      }
     },
     "rejected": {
       "title": "Dostop do računa ni odobren",
-      "message": "Vaša prijava ni bila odobrena. Če menite, da gre za napako, se obrnite na administratorja.",
-      "signout": "Odjava"
+      "message": "Vaša prijava ni bila odobrena. Če menite, da gre za napako, se obrnite na administratorja."
     },
     "disabled": {
       "title": "Račun onemogočen",
-      "message": "Vaš račun je bil onemogočen s strani administratorja. Za pomoč se obrnite na administratorja.",
-      "signout": "Odjava"
+      "message": "Vaš račun je bil onemogočen s strani administratorja. Za pomoč se obrnite na administratorja."
+    },
+    "approved": {
+      "toast": "Vaš račun je odobren — dobrodošli v Povzetkarju!"
     }
   }
 }
