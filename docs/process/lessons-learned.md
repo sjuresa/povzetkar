@@ -8,6 +8,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ## 🚀 Recent Highlights (v0.19.0)
 
+> [!WARNING]
+> **A request log is only evidence if the path, the reroute and the field order are right (POV-210)**:
+> After a bot wave probing for `/.git`, `/.ssh`, `/actuator` and `/proc/self/environ`, no request history existed: the Cloudflare tunnel bypasses Caddy (its empty log was first misread as broken logging), the app had no access log, and Docker's `json-file` log dies with every container recreate. The Quarkus access log now runs in production on a persistent volume. Three traps on the way: the SPA fallback's in-place `reroute` would have logged every probe twice as `GET /index.html` (`consolidate-rerouted-requests` + `%<r`); `%h` is the client's own unvalidated `X-Forwarded-For` and, placed first, let a client forge a whole line prefix (dropped — trusted fields first, `xff=` after the status); a parse recipe anchored loosely accepted `access-log]` text from another logger. Details: [infrastructure-ops.md — Request Logging Behind a Tunnel](lessons/infrastructure-ops.md#request-logging-behind-a-tunnel-pov-210).
+
 > [!CAUTION]
 > **The security scanner is supply chain too — pin CI actions by commit SHA, never by tag or branch (POV-209)**:
 > In March 2026 the `aquasecurity/trivy-action` tags were force-pushed to credential-stealing code (GHSA-69fq-xp46-6x23). Our CI referenced a tag (`@0.24.0`) during the ~12 h exposure window and ran 5 times inside it — 3 green runs reached the Trivy steps, so the malicious action most likely ran — then moved to `@master`, executing whatever upstream held on every run. Exposure stayed small only because the job carried just test-DB secrets (used nowhere else) and a read-only token. `ci.yml` now pins the action to an immutable release commit and the Trivy binary to a version; local scans use the `aquasec/trivy` image pinned by digest; bumps are a deliberate step of each version finalisation (checklist 3.1a). Details: [infrastructure-ops.md — Pin Third-Party CI Actions](lessons/infrastructure-ops.md#pin-third-party-ci-actions-and-tool-images-by-digest-not-tag-or-branch-pov-209).

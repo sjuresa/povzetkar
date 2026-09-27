@@ -129,3 +129,19 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 - **The Trap:** the committed orval client drifted from the API for months (missing transcript client, six test-only clients and 28 leaked Qute model types) because regeneration relied on memory and on a spec that a *test* overwrote with the test profile's document. orval never deletes stale files, and with `prettier: true` but no prettier dependency its output depended on whether the developer had prettier installed globally. Likewise the Caddyfile and `prometheus.yml` were first parsed by production (`restart: always` crash loop on a typo or an incompatible image bump).
 - **The Standard:** generate from the build output (`package -DskipTests` → `target/openapi.json`), `output.clean: true`, `prettier: false`, orval pinned exactly; CI regenerates and fails on `git status --porcelain` drift (keep the generated dir LF via `.gitattributes`, or Windows checkouts report EOL-only drift). Infra configs are validated in CI with the exact images from the prod compose file (`scripts/qa/validate-infra-configs.sh`, own compose project name so a local run never touches production). Demonstrate every such gate red (stale client, broken directive) before trusting it green.
 - **Side note:** the VS Code Java language server builds into `backend/target/classes`; switching POMs under it can make a concurrent `./mvnw verify` fail with nonsense (`No template found` for every Qute template, corrupt MapStruct sources). Re-run before debugging.
+
+---
+
+## Request Logging Behind a Tunnel (POV-210)
+
+### Read the Ingress Before Diagnosing a Proxy
+- **The Trap:** After a bot wave, Caddy's access log was empty and the first diagnosis was "Caddy's stdout logging is broken". Caddy logged fine — it received nothing: the Cloudflare tunnel routes `povzetkar.<domain>` straight to `app:8080`. The same mistake hid that production had sent no security headers since the move off OCI.
+- **The Standard:** Establish the real traffic path first. `docker logs povzetkar-cloudflared` prints the tunnel ingress on every start. RUNBOOK §13.5 describes the current path.
+
+### Quarkus Access Log With a SPA Fallback
+- **The Trap:** `SpaRoutingHandler` calls `RoutingContext.reroute("/index.html")`, which rewrites the request **in place** and runs the handler chain again. With the default access log, every probe (`/.git/config`, `/.env`, …) is logged **twice as `GET /index.html`** — the evidence is gone. `%D` prints `-` unless the start time is recorded.
+- **The Standard:** `quarkus.http.access-log.consolidate-rerouted-requests=true` + `%<r` (original request line) logs one entry under the real path; `quarkus.http.record-request-start-time=true` for `%D`. `AccessLogTest` pins it.
+
+### Every Placeholder Is Client-Controlled Until Proven Otherwise
+- **The Trap:** `%h` with `proxy-address-forwarding` and no `trusted-proxies` is the client's **own** first `X-Forwarded-For` value — unvalidated, spaces and quotes included (Cloudflare keeps it and appends the real address). Placed first in the pattern, it let a client forge a whole line prefix (`1.1.1.1 [x] cf-ip=… "GET /harmless …" 204`), so `grep`/`awk` reported a harmless request instead of `/.ssh/id_rsa`. Plan review had called `%h` spoofable and still kept it first. Separately, a `sed` anchored only on `[^"]*access-log]` accepted `access-log] …` text inside another logger's message (a topic name).
+- **The Standard:** In a text log, only trusted fields (timestamp, Cloudflare-set `CF-Connecting-IP`/`CF-IPCountry`) precede the client-controlled ones (request line, headers); log `X-Forwarded-For` as a quoted field after the status, never `%h`. Parse recipes anchor on the **fixed log-format prefix** (date, level, logger category) and print only lines that parse. Test the recipes with forged input, not only real lines. Newlines in logged values remain a gap (messages are not escaped).
