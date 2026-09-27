@@ -22,6 +22,7 @@ COPY backend/src ./backend/src
 # Embed frontend artifacts into Quarkus static resources
 COPY --from=build-frontend /app/frontend/dist ./backend/src/main/resources/META-INF/resources
 RUN mvn package -DskipTests -pl backend -am
+RUN mkdir -p /logroot/app
 
 # Stage 3: Build custom static healthcheck tool for Distroless compatibility
 FROM golang:1.26.8-alpine AS build-healthcheck
@@ -40,6 +41,11 @@ COPY --from=build-healthcheck /go/bin/healthcheck /usr/local/bin/healthcheck
 
 # Copy application artifacts with correct ownership (nonroot user)
 COPY --from=build-backend --chown=nonroot:nonroot /app/backend/target/quarkus-app/ ./
+
+# Log directory for the prod file log (compose mounts the app_logs volume here): a new volume
+# inherits this nonroot ownership. Copied as the content of /logroot so --chown covers the
+# directory itself (distroless has no shell for mkdir/chown).
+COPY --from=build-backend --chown=nonroot:nonroot /logroot/ /var/log/
 
 # Expose the application port. The management port (9000: /q/health, /q/metrics, /q/openapi) is
 # not listed here; EXPOSE is metadata only and restricts nothing. What keeps 9000 private is that

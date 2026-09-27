@@ -1,3 +1,11 @@
+# Docker json-file logs belong to the container ID (gone on recreate) and are unbounded by
+# default; every service gets the same size cap.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
 services:
   app:
     build:
@@ -28,6 +36,13 @@ services:
       - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://povzetkar-production.up.railway.app}
       - POVZETKAR_API_KEY=${POVZETKAR_API_KEY:-}
       - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL:-}
+      # File log on the app_logs volume survives container recreation; enabled only here, where
+      # the volume exists (rotation settings: application.properties).
+      - QUARKUS_LOG_FILE_ENABLED=true
+      - QUARKUS_LOG_FILE_PATH=/var/log/app/quarkus.log
+    volumes:
+      - app_logs:/var/log/app
+    logging: *default-logging
     depends_on:
       postgres-prod:
         condition: service_healthy
@@ -51,6 +66,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging: *default-logging
     networks:
       - povzetkar-net
 
@@ -64,6 +80,7 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
+    logging: *default-logging
     networks:
       - povzetkar-net
 
@@ -81,6 +98,7 @@ services:
       - ../infra/caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+    logging: *default-logging
     depends_on:
       - app
     networks:
@@ -91,6 +109,7 @@ services:
     container_name: povzetkar-cloudflared
     restart: always
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
+    logging: *default-logging
     networks:
       - povzetkar-net
     depends_on:
@@ -109,6 +128,7 @@ services:
     volumes:
       - grafana_storage:/var/lib/grafana
       - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    logging: *default-logging
     depends_on:
       - prometheus
     networks:
@@ -120,6 +140,7 @@ volumes:
   grafana_storage:
   caddy_data:
   caddy_config:
+  app_logs:
 
 networks:
   povzetkar-net:

@@ -266,6 +266,9 @@ This will:
 
 ## 10. Production Stack (Local)
 
+> [!WARNING]
+> **Out of date (POV-210):** Caddy runs but is not on the traffic path — the Cloudflare tunnel routes straight to `app:8080` (§13.5); Caddy still publishes host ports 80/443. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 The production stack uses `docker-compose.prod.yml` with `.env.docker` and includes the app, PostgreSQL, Caddy, Prometheus, Grafana, and Cloudflare Tunnel.
 
 ### 10.1 Build
@@ -312,6 +315,9 @@ docker compose -f docker-compose.prod.yml --env-file ../.env.docker down
 - `.env.docker` is in the project root (not `backend/`), hence `--env-file ../env.docker`.
 - The app is exposed via **Cloudflare Tunnel** at `https://povzetkar.juresa.si` — no ports need to be open on the host.
 - Grafana is accessible locally at `http://localhost:3000` (port mapped in prod compose).
+
+> [!WARNING]
+> **Out of date (POV-210):** Grafana has no host port in the prod compose (`expose: 3000` only), so `http://localhost:3000` does not work for production. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 ## 11. Containerized Execution (Docker/Podman)
 
@@ -710,6 +716,9 @@ as a Cloudflare tunnel public hostname. Consumers inside the network:
 > `GF_ADMIN_PASSWORD` strong. When checking the Cloudflare dashboard, confirm no tunnel route
 > targets `app:9000`.
 
+> [!WARNING]
+> **Out of date (POV-210):** `grafana.<domain>` has no DNS record (NXDOMAIN) and no tunnel route, so Grafana has no public UI today; the bridge risk applies once one is added. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 **Note:** `METRICS_SCRAPE_TOKEN` is no longer used (the former `…prometheus.bearer-token`
 properties were never real Quarkus config and were silently ignored). It can be removed from
 `.env.docker`.
@@ -733,6 +742,9 @@ Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard, which tra
 - **System Load**: Active orchestration threads.
 - **Ingestion Success**: Content source creation and YouTube API errors.
 
+> [!WARNING]
+> **Out of date (POV-210):** Grafana has no host port in the prod compose (`expose: 3000` only), so `http://localhost:3000` below does not work for production; it is reachable only inside the Docker network. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 **Accessing Grafana:**
 - **URL**: `http://localhost:3000`
 - **Default Credentials**: `admin` / `admin` (change on first login).
@@ -747,6 +759,122 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_transcript_retrieval_duration_seconds`: Timer for transcript fetching.
 - `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
+
+### 13.5 Production Logs & Request History (POV-210)
+
+**Traffic path:** the Cloudflare tunnel routes `povzetkar.<domain>` straight to
+`http://povzetkar-app:8080` (tunnel config in the Cloudflare dashboard; `docker logs
+povzetkar-cloudflared` shows it as `Updated to new configuration … "service":"http://povzetkar-app:8080"`).
+**Caddy is not on this path** and its log shows no production requests. The app is the only
+component that sees every request.
+
+**Where the logs live:**
+
+| Log | Location | After a container recreate | Size bound |
+| --- | --- | --- | --- |
+| App log (incl. the access log) | `docker logs povzetkar-app` (Docker `json-file`) | **lost** — tied to the container ID | 5 × 20 MB (`x-logging` in `docker-compose.prod.yml`, all six services) |
+| Same, as a file | `/var/log/app/quarkus.log`, `quarkus.log.1…10` on volume `backend_app_logs` | kept | 11 × 10 MB, size rotation only, no rotation on start |
+
+The file log is switched on only in the prod container (`QUARKUS_LOG_FILE_ENABLED`,
+`QUARKUS_LOG_FILE_PATH` in `docker-compose.prod.yml`); rotation settings are in
+`application.properties`. There is no age-based deletion: at today's volume (~25 KB/day) the
+files hold years of history.
+
+**Access log** (`%prod`, logger category `io.quarkus.http.access-log`, INFO). One line per
+request, pattern:
+
+```text
+%t cf-ip=<CF-Connecting-IP> country=<CF-IPCountry> "%<r" %s %b %D xff="<X-Forwarded-For>" "<User-Agent>"
+```
+
+- `cf-ip=` is the **client IP** for traffic through the tunnel (set by Cloudflare). It is not
+  trustworthy for requests that reach Caddy's host ports 80/443 directly, which can send any
+  `CF-Connecting-IP`.
+- `"%<r"` is the **original** request line incl. the query string (attack payloads live there;
+  `SpaRoutingHandler`'s reroute to `/index.html` is consolidated into one entry). It includes the
+  OIDC callback `code`/`state`: single-use, redeemed at once, useless without the client secret.
+- `%s` final status, `%b` bytes (`-` = none), `%D` duration in ms.
+- `xff=` is the whole `X-Forwarded-For` chain — **client-controllable**: Cloudflare keeps a value
+  the client sent and appends the real address. Through the tunnel, a first hop that differs from
+  `cf-ip` means the client sent its own `X-Forwarded-For`.
+- Field order: only the timestamp precedes `cf-ip`/`country`, and the client-controlled fields
+  (request line, `xff`, User-Agent) come after them, so a forged `cf-ip=` or log prefix in a URL or
+  header cannot shift them. (`%h` — the client's own first `X-Forwarded-For` value, unvalidated —
+  is deliberately not logged.)
+- The `X-API-Key` header is never logged. The logs therefore hold **client IPs, countries, query
+  strings and public share UUIDs** (`/api/v1/public/resolve/{uuid}` and the SPA share routes carry
+  the share's capability token in the path — a leaked log grants access to a share until it is
+  unshared; privacy notice: backlog).
+- Not logged: the management port 9000 (health checks, Prometheus scrapes).
+- Separate, older record: `AuditLogFilter` stores every **matched** `/api/v1` request (method,
+  path, status, duration, User-Agent, user) in the `audit_log` table; unmatched probes are not in it.
+
+**Reading the file log** — the distroless app image has no shell, so read the volume from a
+throw-away container that borrows the app container's volumes (`--volumes-from`, read-only; works
+while `povzetkar-app` exists, even stopped, and needs no volume name). In Git Bash prefix
+`MSYS_NO_PATHCONV=1`, otherwise the container paths are rewritten. The `sed` is anchored on the
+fixed line prefix (date, optional host/process of the file format, `INFO`, the logger category)
+and prints only parsed lines, so a crafted URL or header — or `access-log] …` text inside another
+logger's message, e.g. a topic name — cannot replace the fields or pose as an entry. Not covered: a
+logged user value containing a **newline** could still start a forged line (log messages are not
+escaped).
+
+```bash
+# All access-log entries, oldest file first, as: cf-ip country status method path time xff-first-hop
+MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
+  sh -c 'cd /var/log/app && for i in 10 9 8 7 6 5 4 3 2 1; do [ -f quarkus.log.$i ] && cat quarkus.log.$i; done; cat quarkus.log' \
+  | grep 'access-log\]' \
+  | sed -nE 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:,]+ (\S+ \S+ )?INFO +\[[^] ]*access-log\] \([^)]*\) \[([^]]+)\] cf-ip=(\S*) country=(\S*) "(\S+) (\S+) [^"]*" ([0-9]{3}) \S+ \S+ xff="([^", ]*).*/\3 \4 \7 \5 \6 \2 \8/p' \
+  > access.txt
+```
+
+The same `grep | sed` works on `docker logs povzetkar-app 2>&1` (current container only).
+
+### 13.6 Checking for Suspicious Traffic
+
+1. **Cloudflare dashboard** — Security → Analytics / Events: request volume, blocked requests
+   (the non-domestic traffic rule), top paths and countries. First line, since every request
+   passes Cloudflare, including blocked ones.
+2. **Access log** (§13.5, `access.txt` — fields: cf-ip, country, status, method, path, time (two
+   fields), first `X-Forwarded-For` hop):
+
+   ```bash
+   awk '$3 ~ /^[45]/ {print $3, $4, $5}' access.txt | sort | uniq -c | sort -rn | head -50   # 4xx/5xx by path
+   awk '{print $1, $2}' access.txt | sort | uniq -c | sort -rn | head -20                      # top client IPs
+   awk '{split($5, p, "?")} p[1] ~ /\/\./ {print $1, $3, $5}' access.txt | sort | uniq -c | sort -rn   # dot-segment probes (/.git, /.env, ...), query ignored
+   awk '$1 != $8 {print $1, $8, $5}' access.txt                                                # cf-ip ≠ first X-Forwarded-For hop
+   ```
+
+   The last recipe lists requests where the client sent its own `X-Forwarded-For` through the
+   tunnel, and may list requests that bypassed the tunnel via Caddy's ports 80/443 (Caddy sets
+   the real peer address as `X-Forwarded-For`; `cf-ip` is then `-` or forged — trust the `xff`
+   value there). It is not a complete record of the bypass path: such a client controls
+   `CF-Connecting-IP`/`CF-IPCountry` (it can make them match, or add a space so the `sed` drops
+   the line). Caddy's own log is the record for that path.
+
+   Probes the SPA fallback reroutes (no extension in the last segment, outside `/api`, `/q`,
+   `/static`, `/assets`, … — see `SpaRoutingHandler`) get `200` with the SPA shell; others end in
+   `404`/`400` (e.g. `/.env`, `*.php`, `/wp-json/batch/v1`) — see the backlog entry "SPA fallback
+   answers 200 to probe paths".
+3. **`audit_log` table** — matched `/api/v1` requests only (not unmatched probes), with the user:
+
+   ```bash
+   docker exec povzetkar-db-prod sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "
+     SELECT response_status, http_method, request_path, count(*) FROM audit_log
+     WHERE created_at > now() - interval '"'"'14 days'"'"' AND response_status >= 400
+     GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 50"'
+   ```
+
+4. **Prometheus** — per-path counts even without the access log, from inside the Docker network:
+
+   ```bash
+   docker exec povzetkar-prometheus wget -qO- \
+     'http://localhost:9090/api/v1/query?query=max_over_time(http_server_requests_seconds_count%5B14d%5D)'
+   ```
+
+   Limits: counters reset on every app restart (lower bounds only), Micrometer stops creating
+   `uri` tags after 100 distinct paths per run, default 15-day retention, no IPs and no query
+   strings.
 
 ## 16. API Response Structure (Envelopes)
 
@@ -819,6 +947,9 @@ The transcript fetching pipeline supports multiple providers with runtime-config
 | `transcript.providers.supadata.enabled` | `false` | Enable/disable the Supadata provider. Set to `true` and provide `SUPADATA_API_KEY` to activate. |
 | `transcript.providers.supadata.lang` | `en` | ISO 639-1 language code for Supadata transcript requests. Falls back to first available language if the video has no transcript in the requested language. |
 
+> [!WARNING]
+> **Out of date (POV-210):** production runs on the local Docker stack (§10), not on OCI; the OCI IP-blocking rationale is historical. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 **Enabling Supadata as primary provider** (if OCI IPs are blocked by YouTube):
 
 ```properties
@@ -848,6 +979,9 @@ manual fallback** (see flip-back below).
 > residential egress IP, which YouTube throttles far less. See ADR-0009 and the POV-196
 > retrospective.
 
+> [!WARNING]
+> **Out of date (POV-210):** the backend host is the local Docker stack (§10), not an OCI host. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 **Connectivity model:** Both the OCI backend host and the Synology join the same tailnet. The
 backend reaches the proxy at the Synology's **raw tailnet IP** (`http://100.x.y.z:8000`) — *not*
 a MagicDNS name, because the backend runs in a Docker bridge network that does not resolve
@@ -867,6 +1001,9 @@ needed on the Synology.
 > `TRANSCRIPT_PROXY_API_KEY`; whichever host is active must be configured with that exact value,
 > or a fallback flip will return `401`. On the tailnet the key is defense-in-depth (the tailnet
 > is the primary boundary); on Railway it is the sole boundary and is mandatory.
+
+> [!WARNING]
+> **Out of date (POV-210):** production no longer runs on an OCI host but on the local Docker stack (§10, `.env.docker`, Cloudflare tunnel); this procedure and its command still describe the OCI deployment. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 **Flip-back to Railway (manual fallback):** Only one host is active at a time. If the Synology
 proxy is unreachable or misbehaving, on the OCI host:
@@ -935,6 +1072,9 @@ Secrets stay out of logs through three rules:
 3.  **Never log a secret value.** Code logs at most *which* property is missing (e.g. `SecretConfigValidator`, the half-configured API-key warning in §14.6).
 
 > There is **no** `quarkus.config.secret-keys` property (removed in POV-208 — Quarkus ignored it). SmallRye's secret-keys feature is a programmatic access *lock* that makes plain `@ConfigProperty` reads throw; it was never in effect here.
+
+> [!WARNING]
+> **Out of date (POV-210):** Caddy is not on the production traffic path (the Cloudflare tunnel routes straight to `app:8080`, §13.5), so the `Secure` flag does not come from Caddy's `X-Forwarded-Proto`; whether the session cookie is `Secure` in production is unverified. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 **Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via Caddy's `X-Forwarded-Proto`). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
 
