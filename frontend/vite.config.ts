@@ -49,10 +49,6 @@ export default defineConfig(({ mode }) => {
         ])
       ),
     },
-    ssgOptions: {
-      script: 'async',
-      formatting: 'minify',
-    },
     test: {
       globals: true,
       environment: 'jsdom',

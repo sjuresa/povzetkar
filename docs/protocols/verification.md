@@ -1,37 +1,27 @@
-# The Unbreakable Vow: Verification & Adherence
+# Verification — The Test Mandate
 
-My past failures were not just technical errors; they were failures of process and diligence. This protocol contains the most important rules I must follow to earn my title as an expert developer assistant through flawless execution.
+Final Behavioral Verification runs after all code modifications in the approved plan are complete, and the agent performs it itself.
 
-## The Verification Mandate
+1. **Run the full test suite for every layer the task touched** — not only tests related to the change. Targeted-only runs are forbidden.
+   - Frontend changes: `npx vitest run` (entire suite).
+   - Backend changes: `mvn verify` (entire suite, including integration tests).
+   - Both layers touched: run both.
+2. **Triage every failure** — determine whether it is pre-existing:
+   - Changes uncommitted: `git stash -u`, run the suite on the base state, `git stash pop`.
+   - Changes committed (e.g., during the PR review loop): check out the base branch, run, return to the task branch.
+   - Task-introduced failures must be fixed before proceeding. Pre-existing failures must be fixed or explicitly escalated to the user.
+3. **Gate:** proposing a commit message before the full suite passes is forbidden. After any PR-review-loop fix, the full suite runs again before a follow-up commit.
 
-Verification is a two-stage process: immediate checks after each file modification and a final check after all modifications are complete.
+## Pre-deploy Verification
 
-### 1. Immediate File-Level Verification
+Applies to every task that builds or deploys a production image (checklist 2.5b) and to the release deploy (checklist 4.4). It runs **after the push** — a CI run needs a pushed commit — once a qualifying `push`/`workflow_dispatch` run of the commit is green (item 1). Deploy only on the PO's explicit "deploy" — before or after the merge. The commands live in `docs/RUNBOOK.md` §10.3 (update) and §8.2 (local scan).
 
-After every single `write_file` or `replace_text` operation that modifies code, my immediate next actions **must** be to perform a two-phase health check on that specific file.
+1. **CI is the vulnerability scan.** Deploy exactly a commit that a green CI run **built** — it scans the filesystem and the image built from the same Dockerfile with fresh bases (Trivy, `CRITICAL,HIGH`, `.trivyignore`). Check with `gh run list --commit <sha> --json databaseId,event,headSha,conclusion,startedAt,attempt`: a `push` or `workflow_dispatch` run whose `headSha` is the commit. A `pull_request` run does not qualify on its own — it builds the PR merge ref (commit + base branch), not the commit. Before the merge (task branches have no push-triggered run): `gh workflow run ci.yml --ref <task-branch>`; after the merge: the version-branch push run of the merge commit.
+2. **Stale run:** if that run *started* (`startedAt`) more than **7 days** ago, scan again instead of scanning locally — the CVE database changes daily: `gh run rerun <run-id>` (same commit; possible within 30 days of the original run), or `gh workflow run ci.yml --ref <branch>` when the branch head is still the commit to deploy.
+3. **Local Trivy only by exception** — for a commit without a CI run (e.g. an urgent hotfix): FS + image with the CI flags, `--timeout 30m`, never in parallel with the test suite (RUNBOOK §8.2). The image scanned locally is the one deployed. Order in this exception: clean checkout of the commit (as in step 4) → rollback tag → `build --pull` → FS + image scan → `up -d --no-deps <service>` only if both scans are clean — no rebuild after the scan.
+4. **Build and roll out** (normal case): check out exactly the commit the CI run built and confirm `git rev-parse HEAD` equals the run's `headSha` and `git status --porcelain` is empty (the build packs the working tree, not the commit) → rollback tag → `build --pull` → `up -d --no-deps <service>` → smoke check (RUNBOOK §10.3). The Dockerfile's base images float (`node:24-alpine`, `eclipse-temurin:25-jdk-alpine`, `distroless/java25-debian13`), so a local build can pick up a newer base than CI scanned; the 7-day limit bounds that drift — for a security-sensitive deploy, re-run CI on the deploy day.
+5. **HIGH/CRITICAL finding → the deploy stops.** Fix it (upgrade), or add a `.trivyignore` entry with a rationale and an `exp:YYYY-MM-DD` date — only with the PO's explicit approval.
 
-*   **Phase 1: Literal Verification**
-    *   **Action:** Read the file back.
-    *   **Goal:** Confirm the content was written exactly as intended, without any corruption or truncation.
+## During Execution
 
-*   **Phase 2: Syntactic Verification**
-    *   **Action:** Run `analyze_current_file` on the modified file.
-    *   **Goal:** Confirm that the change has not introduced any compilation errors, syntax errors, or other static analysis issues.
-
-If any phase fails, I will report the failure and the diagnostic information to you and await further instructions. I am forbidden from proceeding with the plan until these two phases pass.
-
-### 2. Final Behavioral Verification (The Test Mandate)
-
-This verification occurs only after **all** code modification steps in the approved plan have been successfully completed and have passed the Immediate File-Level Verification.
-
-*   **Behavioral Verification Steps:**
-    *   I must run the **full test suite** for every layer touched by the task — not just tests related to the changed code. Running only targeted tests is forbidden.
-        *   Frontend changes: `npx vitest run` (entire suite).
-        *   Backend changes: `mvn verify` (entire suite including integration tests).
-        *   Both layers touched: run both.
-    *   If any test fails I must determine whether it is pre-existing. If changes are uncommitted, verify by running the suite on the base branch via `git stash -u` then restore via `git stash pop`. If changes are already committed (e.g. during the PR review loop), check out the base branch to run the suite then return to the task branch. Pre-existing failures must be fixed or explicitly escalated to the user; task-introduced failures must always be fixed before proceeding.
-    *   **Goal:** Confirm that the changes have not introduced any regressions or broken existing functionality. I am **forbidden** from proposing a commit message until the full suite passes.
-
-## The Adherence Vow
-
-All the rules and processes outlined in this document are useless without 100% adherence. Any deviation from this workflow invalidates the entire process. There is no "trying harder," there is only "following the process." This is the only path to becoming an expert developer assistant. I will earn my title through flawless execution, not through apologies.
+During execution, a fast syntactic gate (`tsc`, `mvn compile` at the end of a phase) is recommended but optional — see workflow Step 6. The Edit/Write tools fail loudly on error, so re-reading files they wrote is not required. **Scripted or shell edits** (`sed`, `node -e`, heredocs, redirects) do not: a broken escape, a line-ending mismatch or a wrong anchor can truncate or duplicate content silently — after every such edit, inspect the result (`git diff` of the file, or a read of the changed region) before moving on.

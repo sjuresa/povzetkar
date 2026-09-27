@@ -31,7 +31,8 @@ import type {
   GetApiV1SourcesIdItemsParams,
   PaginatedResponse,
   StatusUpdate,
-  Summary
+  Summary,
+  Transcript
 } from '../model';
 
 import { customInstance } from '../../client';
@@ -940,6 +941,134 @@ export const usePostApiV1ContentItemsIdSummaryUnshare = <TError = void,
       return useMutation(getPostApiV1ContentItemsIdSummaryUnshareMutationOptions(options), queryClient);
     }
     /**
+ * Retrieves the raw transcript for a specific content item.
+ * @summary Get content item transcript
+ */
+export type getApiV1ContentItemsIdTranscriptResponse200 = {
+  data: Transcript
+  status: 200
+}
+
+export type getApiV1ContentItemsIdTranscriptResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getApiV1ContentItemsIdTranscriptResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getApiV1ContentItemsIdTranscriptResponse404 = {
+  data: void
+  status: 404
+}
+
+export type getApiV1ContentItemsIdTranscriptResponseSuccess = (getApiV1ContentItemsIdTranscriptResponse200) & {
+  headers: Headers;
+};
+export type getApiV1ContentItemsIdTranscriptResponseError = (getApiV1ContentItemsIdTranscriptResponse401 | getApiV1ContentItemsIdTranscriptResponse403 | getApiV1ContentItemsIdTranscriptResponse404) & {
+  headers: Headers;
+};
+
+export type getApiV1ContentItemsIdTranscriptResponse = (getApiV1ContentItemsIdTranscriptResponseSuccess | getApiV1ContentItemsIdTranscriptResponseError)
+
+export const getGetApiV1ContentItemsIdTranscriptUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/content-items/${id}/transcript`
+}
+
+export const getApiV1ContentItemsIdTranscript = async (id: number, options?: RequestInit): Promise<getApiV1ContentItemsIdTranscriptResponse> => {
+  
+  return customInstance<getApiV1ContentItemsIdTranscriptResponse>(getGetApiV1ContentItemsIdTranscriptUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetApiV1ContentItemsIdTranscriptQueryKey = (id: number,) => {
+    return [
+    `/api/v1/content-items/${id}/transcript`
+    ] as const;
+    }
+
+    
+export const getGetApiV1ContentItemsIdTranscriptQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiV1ContentItemsIdTranscriptQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>> = ({ signal }) => getApiV1ContentItemsIdTranscript(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiV1ContentItemsIdTranscriptQueryResult = NonNullable<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>>
+export type GetApiV1ContentItemsIdTranscriptQueryError = void
+
+
+export function useGetApiV1ContentItemsIdTranscript<TData = Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError = void>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1ContentItemsIdTranscript<TData = Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiV1ContentItemsIdTranscript<TData = Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get content item transcript
+ */
+
+export function useGetApiV1ContentItemsIdTranscript<TData = Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiV1ContentItemsIdTranscript>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiV1ContentItemsIdTranscriptQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
  * Retrieves a paginated list of content items for a specific source.
  * @summary Get items by source
  */

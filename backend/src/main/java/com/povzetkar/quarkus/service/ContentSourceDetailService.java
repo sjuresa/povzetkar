@@ -65,9 +65,9 @@ public class ContentSourceDetailService {
 
     /**
      * Scheduled method to periodically refresh the details of existing content sources.
-     * The interval is configured via 'quarkus.scheduler.enrich-content-sources.cron'.
+     * The interval is configured via 'povzetkar.enrichment.cron'.
      */
-    @Scheduled(cron = "${quarkus.scheduler.enrich-content-sources.cron}")
+    @Scheduled(cron = "${povzetkar.enrichment.cron}")
     void scheduledRefreshAllContentSources() {
         logger.info("Running scheduled content source refresh.");
         refreshAllContentSources();

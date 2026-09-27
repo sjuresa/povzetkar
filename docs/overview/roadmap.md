@@ -257,21 +257,37 @@ This document outlines the concrete steps for implementing the features describe
 5.  **Process:**
     *   **Task-First Planning** (POV-191): evolved the development methodology from version-gated to task-first delivery.
 
-## v0.19: Hardening & Operational Excellence
+## v0.19: Security Hardening, Process Maturity & Operations
 
-**Goal:** Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Planned — scope and version label may change; confirmed retrospectively when the work is done.)*
+**Goal:** Close what production exposed, make the development process verify itself, and keep the build and runtime current. This version was scoped task-first — the September tasks were each found by the previous one (upgrade → exposed metrics → ignored config keys → bot wave). The earlier forecast (DAST, Grafana alerting, full-text search, transcript providers, SMTP) did not ship and now lives in the backlog (`docs/backlog/improvements.md`).
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
-1.  **Security Hardening:**
-    *   **DAST Integration**: Integrate Automated Dynamic Security Testing (DAST) with OWASP ZAP into the release cycle.
-2.  **Observability:**
-    *   **Grafana Alerting**: Implement complex alerting thresholds for system health (transcript provider quota, job failure rates, latency SLOs).
-3.  **Search & Data:**
-    *   **Advanced Retention**: Implement specialized pg_trgm/Lucene full-text search as data volume justifies.
-4.  **Transcript Providers (Expansion):**
-    *   Add additional providers (ytscribe, transcriptapi) to the v0.17.0 abstraction.
-5.  **Email Infrastructure (Candidate):**
-    *   SMTP foundation (dev server like Mailpit, production provider, template engine) — unblocks user approval notifications and other transactional emails.
+1.  **Security:**
+    *   **Technical Endpoints Off the Public Port** (POV-207): `/q/metrics`, `/q/health` and `/q/openapi` moved to the Quarkus management interface (port 9000, Docker network only); dependency and base-image CVE patches.
+    *   **Unknown Config Keys Fail the Build** (POV-208): 13 silently ignored `quarkus.*` keys resolved; `QuarkusConfigKeysTest` rejects unknown keys in every profile.
+    *   **Read-only API Keys** (POV-205): programmatic read access via `X-API-Key`, strictly read-only.
+    *   **Pinned Vulnerability Scanner** (POV-209): the CI Trivy action pinned by commit SHA to an immutable release.
+2.  **Operations:**
+    *   **Persistent Production Logs** (POV-210): an HTTP access log and the application log on a volume that survives redeploys.
+    *   **Build & Runtime Upgrade** (POV-206): Quarkus 3.39.5 (Hibernate 7.4 workaround), frontend minor/patch updates, images, CI aligned; generated API client checked for drift in CI.
+3.  **Performance:**
+    *   **Initial-load Optimization** (POV-202): route-level code-splitting — initial JS 370 → 167 KB gzip, Lighthouse 85 → 93.
+4.  **Process:**
+    *   **Retrospectives Consumed** (POV-201), **Traceability Restored** (POV-203), **Agent Protocols Modernized** (POV-204), **Review, Deploy & Release Gates** (POV-209), **Release Template Retired** (POV-211).
+
+## v0.20: Production Edge & Test Debt
+
+**Goal:** Put the security controls on the real traffic path and pay the debt that is already due. *(Forecast — under the task-first model the actual scope is set per task and confirmed when the version is finalised.)*
+**Status:** 🗓️ Forecast
+
+### Key Tasks & Implementation Steps:
+1.  **Production Edge:**
+    *   **Caddy on the Traffic Path**: route the Cloudflare tunnel through Caddy so security headers are actually delivered.
+2.  **Dependency Debt:**
+    *   **orval ≥ 8.22**: the build-time API-client generator carries CRITICAL advisories.
+3.  **Test Debt:**
+    *   **Scheduler Integration Test**: real lock service and test DB for the `@Scheduled` path — TC-ING-006 turns CRITICAL in the planning audit at v0.20.
 
 
 ## v1.0: RAG & Conversational Interface
@@ -342,6 +358,8 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.0     | 2026-09-27         | Povzetkar AI | Marked v0.19.0 as ✅ Completed and rewrote its scope to actual delivery (Security Hardening, Process Maturity & Operations, POV-211); the unshipped forecast (DAST, Grafana alerting, full-text search, transcript providers, SMTP) moved to the backlog; added a minimal v0.20 forecast (Caddy on the traffic path, orval ≥ 8.22, scheduler integration test). |
+| 3.9     | 2026-07-03         | Povzetkar AI | Marked v0.19 as In Progress at version initialisation (POV-201).                                                                                                         |
 | 3.8     | 2026-06-26         | Povzetkar AI | Marked v0.18.0 as ✅ Completed and rewrote its scope to reflect actual task-first delivery (Transcript Ingestion Resilience & Scheduler Correctness, POV-191…200). The originally-planned hardening scope (DAST, Grafana alerting, full-text search, additional providers, SMTP) was carried forward to `v0.19: Hardening & Operational Excellence` as a forecast — under the task-first model the actual scope and version label are confirmed retrospectively. |
 | 3.7     | 2026-05-24         | Povzetkar AI | Marked v0.17.0 as ✅ Completed.                                                                                                                                                                                   |
 | 3.6     | 2026-05-20         | Povzetkar AI | Refined v0.17.0 scope to "Administrative Control & User Onboarding". Inserted v0.18.0 for "Hardening & Operational Excellence" (DAST, Grafana alerts, full-text search, additional transcript providers, SMTP). |

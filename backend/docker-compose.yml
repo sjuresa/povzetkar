@@ -26,23 +26,20 @@ services:
       - ./init:/docker-entrypoint-initdb.d
 
   prometheus:
-    image: prom/prometheus:v3.1.0
+    image: prom/prometheus:v3.15.0
     container_name: povzetkar-prometheus
     volumes:
       - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-    environment:
-      - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN}
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--enable-feature=expand-external-variables"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
   grafana:
-    image: grafana/grafana-oss:12.4.0
+    image: grafana/grafana-oss:12.4.3
     container_name: povzetkar-grafana
     ports:
       - "3000:3000"

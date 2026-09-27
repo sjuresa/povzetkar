@@ -26,8 +26,8 @@ This document provides all the necessary instructions for setting up the local d
 It is the primary technical guide for developers working on the project.
 ## 2. Prerequisites
 - **Java:** JDK 25 or later.
-- **Node.js:** v25.8.0 or later.
-- **NPM:** v10.x or later.
+- **Node.js:** v24 (LTS) — the version of the Docker build image (`node:24-alpine`) and CI.
+- **NPM:** v11.x (ships with Node 24). Install dependencies with `npm ci` (root and `frontend/`), as the Dockerfile and CI do; `npm ci` fails when `package-lock.json` does not match `package.json`.
 - **Maven:** Version 3.8.x or later.
 - **Docker & Docker Compose:** For running the local development environment.
 - **IDE:** IntelliJ IDEA or VS Code are recommended.
@@ -58,10 +58,6 @@ The local database environment is managed by Docker Compose and is located in th
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
     FRONTEND_URL=http://localhost:5173
-    
-    # Monitoring (Metrics Scraping Token - generate a random secret for this!)
-    # USE A STRONG UNIQUE SECRET IN PRODUCTION. DO NOT USE THIS PLACEHOLDER.
-    METRICS_SCRAPE_TOKEN=your-strong-random-secret-here
     ```
 
     **Frontend (`frontend/.env`):**
@@ -156,6 +152,10 @@ In development mode, the application generates an OpenAPI specification and prov
 *   **Swagger UI:** `http://localhost:8080/q/swagger-ui`
 *   **OpenAPI Specification:** `http://localhost:8080/q/openapi`
 
+In **dev mode** the management interface is disabled (`%dev.quarkus.management.enabled=false`), so
+these stay on 8080 and Swagger UI "Try it out" works same-origin. In **tests and production** they
+live only on the management interface (port 9000; 9001 in tests) — see §13.2.
+
 **Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
 
 ## 7. Running Tests
@@ -225,7 +225,34 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 ```
 
 ### 8.2 Dependency Scanning (Trivy)
-Third-party dependencies are scanned for known vulnerabilities (CVEs). While this is primarily integrated into the GitHub Actions CI pipeline, you can run a local container scan if needed (requires [Trivy](https://trivy.dev/) installed).
+Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). CI is the pre-deploy scan: a production deploy needs a green CI run on the exact deployed commit (see `docs/protocols/verification.md`, *Pre-deploy Verification*). CI pins `aquasecurity/trivy-action` by commit SHA and the Trivy binary by version (`.github/workflows/ci.yml`). Run the scans locally only by exception — a commit without a CI run, or the per-version `.trivyignore` audit (checklist 3.1a, then without `--ignorefile`) — without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite), using the same pinned Trivy version as CI (image referenced by digest — a tag can be repointed):
+
+```bash
+docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 fs \
+  --severity CRITICAL,HIGH --ignorefile /src/.trivyignore --exit-code 1 --timeout 30m /src
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache \
+  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 image \
+  --severity CRITICAL,HIGH --ignorefile /cfg/.trivyignore --exit-code 1 --timeout 30m <image>
+```
+
+The FS scan resolves Maven parent POMs from Maven Central and can be blocked there (`429 Too Many Requests`, `Retry-After: 1800` — the whole IP for 30 min). Locally, add `-v "<home>/.m2:/root/.m2:ro"` and `--offline-scan` to the FS command so the POMs come from the local Maven cache. The cache must hold the exact parent POMs and BOMs of the commit being scanned — run a local build of that commit first (e.g. `mvnw verify`); in offline mode a missing POM only produces a warning and its managed dependencies are skipped, so check the scan output for unresolved-POM warnings before accepting a clean result. This is how the v0.19.0 audit completed (POV-211).
+
+Every `.trivyignore` entry carries an `exp:YYYY-MM-DD` date and a rationale; after expiry CI fails again and forces a re-check (remove the entry if the fix has shipped, otherwise extend it with a fresh rationale). The FS scan skips npm devDependencies — `npm audit` in `frontend/` covers those.
+
+### 8.3 Frontend API Client (orval)
+The typed client in `frontend/src/api/generated` is generated from the backend OpenAPI spec and committed. After any API change, regenerate and commit it:
+
+```bash
+./mvnw package -DskipTests -pl backend -am   # writes backend/target/openapi.json (no test classes)
+npm run gen:api                                # orval, output.clean: true removes stale files
+```
+
+- Generate from a `package -DskipTests` build: a spec written while test classes are on the classpath contains test-only endpoints.
+- orval is pinned exactly (`8.5.3`, no `^`) and raised only deliberately, together with a regeneration; `prettier: false` keeps the output independent of a globally installed prettier.
+- CI step **"API client drift check"** runs the two commands above before the tests and fails if `git status --porcelain -- frontend/src/api/generated` is not empty.
+
+### 8.4 Infra Config Validation
+`bash scripts/qa/validate-infra-configs.sh` validates `docker-compose.prod.yml` (`docker compose config`), `infra/caddy/Caddyfile` (`caddy validate`) and `backend/infra/monitoring/prometheus/prometheus.yml` (`promtool check config`) with the exact images pinned in the prod compose file, under its own compose project name (it never touches the running `backend` stack). CI runs it before the image build, so a broken config or an incompatible image bump fails there instead of crash-looping production (`restart: always`).
 
 ## 9. Building the Full Stack
 
@@ -240,6 +267,9 @@ This will:
 2.  Build the Quarkus backend and run standard JAR packaging.
 
 ## 10. Production Stack (Local)
+
+> [!WARNING]
+> **Out of date (POV-210):** Caddy runs but is not on the traffic path — the Cloudflare tunnel routes straight to `app:8080` (§13.5); Caddy still publishes host ports 80/443. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 The production stack uses `docker-compose.prod.yml` with `.env.docker` and includes the app, PostgreSQL, Caddy, Prometheus, Grafana, and Cloudflare Tunnel.
 
@@ -262,9 +292,19 @@ docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
 ### 10.3 Update (rebuild + restart app only)
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker build app
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d app
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker build --pull app
+docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps app
 ```
+
+- `--pull` fetches the current base images (distroless, temurin, node, golang). Without it Docker
+  reuses cached bases — during POV-207 the local base was months behind the one CI scans, so the
+  deployed image carried Debian CVEs CI never saw.
+- `--no-deps` keeps compose from also recreating dependencies (e.g. `postgres-prod`) when it detects
+  a config difference in them (observed during POV-207).
+- Before rebuilding, tag the running image for rollback:
+  `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
+- Before `up`: the deployed commit needs a green CI run (Trivy FS + image) not older than 7 days — see
+  `docs/protocols/verification.md`, *Pre-deploy Verification*. Local Trivy (§8.2) only for a commit without a CI run.
 
 ### 10.4 Stop
 
@@ -277,6 +317,9 @@ docker compose -f docker-compose.prod.yml --env-file ../.env.docker down
 - `.env.docker` is in the project root (not `backend/`), hence `--env-file ../env.docker`.
 - The app is exposed via **Cloudflare Tunnel** at `https://povzetkar.juresa.si` — no ports need to be open on the host.
 - Grafana is accessible locally at `http://localhost:3000` (port mapped in prod compose).
+
+> [!WARNING]
+> **Out of date (POV-210):** Grafana has no host port in the prod compose (`expose: 3000` only), so `http://localhost:3000` does not work for production. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 ## 11. Containerized Execution (Docker/Podman)
 
@@ -316,7 +359,6 @@ The application requires several environment variables to function correctly. Th
 | `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 | `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
 | `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
-| `METRICS_SCRAPE_TOKEN`      | Prometheus scrape security token        | `<your-random-secret>` (Required for secure metric scraping in prod)                                           |
 
 **Docker Run Example:**
 
@@ -394,7 +436,7 @@ To manually trigger the enrichment process for all content sources that are miss
 
 The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
 
-*   **Configuration Property:** `quarkus.scheduler.enrich-content-sources.cron`
+*   **Configuration Property:** `povzetkar.enrichment.cron` (was `quarkus.scheduler.enrich-content-sources.cron` before POV-208)
 *   **Location:** `backend/src/main/resources/application.properties`
 *   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
 
@@ -653,24 +695,46 @@ The monitoring infrastructure is defined in `backend/docker-compose.yml`:
 - **Prometheus**: Scrapes metrics from the Quarkus application.
 - **Grafana**: Visualizes metrics via pre-provisioned dashboards.
 
-### 13.2 Metrics Scrape Security
+### 13.2 Technical Endpoints & the Management Interface (POV-207)
 
-To prevent unauthorized access to internal metrics, the `/q/metrics` endpoint is protected by a fixed Bearer Token in production.
+The Quarkus technical endpoints — `/q/metrics`, `/q/health` (incl. `/live`, `/ready`) and
+`/q/openapi` — are served **only on the management interface, port 9000**
+(`quarkus.management.enabled=true`, build-time; port 9001 in tests). On the application
+port 8080 they return 404. Exception: **dev mode** disables the management interface
+(`%dev.quarkus.management.enabled=false`) so Swagger UI can call the API same-origin.
 
-- **Variable:** `METRICS_SCRAPE_TOKEN`
-- **Default (Dev):** Unprotected
-- **Default (Docker):** `your-random-secret` (Must be configured via .env)
+**Protection boundary = the network, not a token.** Caddy and the Cloudflare tunnel forward
+only `app:8080`. Port 9000 is listed under `expose` in `docker-compose.prod.yml`, but that is
+documentation only — `expose` restricts nothing, and every container on the Docker network can
+reach `app:9000`. It must **never** be published via `ports:`, routed through Caddy, or configured
+as a Cloudflare tunnel public hostname. Consumers inside the network:
+
+- **Prometheus** scrapes `http://app:9000/q/metrics` (no auth).
+- **Docker `HEALTHCHECK`** probes `http://localhost:9000/q/health/ready` from inside the container.
 
 > [!IMPORTANT]
-> **Use a strong, unique secret.** Do not use weak or shared secrets for `METRICS_SCRAPE_TOKEN`. This token provides access to internal system metrics.
+> Anything in the Docker network with a public UI is a bridge to port 9000 — notably **Grafana**
+> (`grafana.<domain>`): a Grafana admin can add a datasource targeting `app:9000`. Keep
+> `GF_ADMIN_PASSWORD` strong. When checking the Cloudflare dashboard, confirm no tunnel route
+> targets `app:9000`.
 
-**Verifying metrics access:**
+> [!WARNING]
+> **Out of date (POV-210):** `grafana.<domain>` has no DNS record (NXDOMAIN) and no tunnel route, so Grafana has no public UI today; the bridge risk applies once one is added. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
+**Note:** `METRICS_SCRAPE_TOKEN` is no longer used (the former `…prometheus.bearer-token`
+properties were never real Quarkus config and were silently ignored). It can be removed from
+`.env.docker`.
+
+**Verifying (production, local stack):**
 ```bash
-# This should return 401 Unauthorized in production settings
-curl -I http://localhost:8080/q/metrics
+# Public: must NOT be 200
+curl -s -o /dev/null -w "%{http_code}\n" https://povzetkar.juresa.si/q/metrics   # 404
 
-# This should return 200 OK with Prometheus formatted metrics
-curl -H "Authorization: Bearer <your_token>" http://localhost:8080/q/metrics
+# Inside the Docker network: metrics served on the management port
+docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics | head -3
+
+# Prometheus target health
+docker exec povzetkar-prometheus wget -qO- http://localhost:9090/api/v1/targets | grep -o '"health":"[a-z]*"'
 ```
 
 ### 13.3 Dashboards-as-Code
@@ -679,6 +743,9 @@ Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard, which tra
 - **Briefing Health**: Success vs. Failure rates.
 - **System Load**: Active orchestration threads.
 - **Ingestion Success**: Content source creation and YouTube API errors.
+
+> [!WARNING]
+> **Out of date (POV-210):** Grafana has no host port in the prod compose (`expose: 3000` only), so `http://localhost:3000` below does not work for production; it is reachable only inside the Docker network. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 **Accessing Grafana:**
 - **URL**: `http://localhost:3000`
@@ -694,6 +761,122 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_transcript_retrieval_duration_seconds`: Timer for transcript fetching.
 - `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
+
+### 13.5 Production Logs & Request History (POV-210)
+
+**Traffic path:** the Cloudflare tunnel routes `povzetkar.<domain>` straight to
+`http://povzetkar-app:8080` (tunnel config in the Cloudflare dashboard; `docker logs
+povzetkar-cloudflared` shows it as `Updated to new configuration … "service":"http://povzetkar-app:8080"`).
+**Caddy is not on this path** and its log shows no production requests. The app is the only
+component that sees every request.
+
+**Where the logs live:**
+
+| Log | Location | After a container recreate | Size bound |
+| --- | --- | --- | --- |
+| App log (incl. the access log) | `docker logs povzetkar-app` (Docker `json-file`) | **lost** — tied to the container ID | 5 × 20 MB (`x-logging` in `docker-compose.prod.yml`, all six services) |
+| Same, as a file | `/var/log/app/quarkus.log`, `quarkus.log.1…10` on volume `backend_app_logs` | kept | 11 × 10 MB, size rotation only, no rotation on start |
+
+The file log is switched on only in the prod container (`QUARKUS_LOG_FILE_ENABLED`,
+`QUARKUS_LOG_FILE_PATH` in `docker-compose.prod.yml`); rotation settings are in
+`application.properties`. There is no age-based deletion: at today's volume (~25 KB/day) the
+files hold years of history.
+
+**Access log** (`%prod`, logger category `io.quarkus.http.access-log`, INFO). One line per
+request, pattern:
+
+```text
+%t cf-ip=<CF-Connecting-IP> country=<CF-IPCountry> "%<r" %s %b %D xff="<X-Forwarded-For>" "<User-Agent>"
+```
+
+- `cf-ip=` is the **client IP** for traffic through the tunnel (set by Cloudflare). It is not
+  trustworthy for requests that reach Caddy's host ports 80/443 directly, which can send any
+  `CF-Connecting-IP`.
+- `"%<r"` is the **original** request line incl. the query string (attack payloads live there;
+  `SpaRoutingHandler`'s reroute to `/index.html` is consolidated into one entry). It includes the
+  OIDC callback `code`/`state`: single-use, redeemed at once, useless without the client secret.
+- `%s` final status, `%b` bytes (`-` = none), `%D` duration in ms.
+- `xff=` is the whole `X-Forwarded-For` chain — **client-controllable**: Cloudflare keeps a value
+  the client sent and appends the real address. Through the tunnel, a first hop that differs from
+  `cf-ip` means the client sent its own `X-Forwarded-For`.
+- Field order: only the timestamp precedes `cf-ip`/`country`, and the client-controlled fields
+  (request line, `xff`, User-Agent) come after them, so a forged `cf-ip=` or log prefix in a URL or
+  header cannot shift them. (`%h` — the client's own first `X-Forwarded-For` value, unvalidated —
+  is deliberately not logged.)
+- The `X-API-Key` header is never logged. The logs therefore hold **client IPs, countries, query
+  strings and public share UUIDs** (`/api/v1/public/resolve/{uuid}` and the SPA share routes carry
+  the share's capability token in the path — a leaked log grants access to a share until it is
+  unshared; privacy notice: backlog).
+- Not logged: the management port 9000 (health checks, Prometheus scrapes).
+- Separate, older record: `AuditLogFilter` stores every **matched** `/api/v1` request (method,
+  path, status, duration, User-Agent, user) in the `audit_log` table; unmatched probes are not in it.
+
+**Reading the file log** — the distroless app image has no shell, so read the volume from a
+throw-away container that borrows the app container's volumes (`--volumes-from`, read-only; works
+while `povzetkar-app` exists, even stopped, and needs no volume name). In Git Bash prefix
+`MSYS_NO_PATHCONV=1`, otherwise the container paths are rewritten. The `sed` is anchored on the
+fixed line prefix (date, optional host/process of the file format, `INFO`, the logger category)
+and prints only parsed lines, so a crafted URL or header — or `access-log] …` text inside another
+logger's message, e.g. a topic name — cannot replace the fields or pose as an entry. Not covered: a
+logged user value containing a **newline** could still start a forged line (log messages are not
+escaped).
+
+```bash
+# All access-log entries, oldest file first, as: cf-ip country status method path time xff-first-hop
+MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
+  sh -c 'cd /var/log/app && for i in 10 9 8 7 6 5 4 3 2 1; do [ -f quarkus.log.$i ] && cat quarkus.log.$i; done; cat quarkus.log' \
+  | grep 'access-log\]' \
+  | sed -nE 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:,]+ (\S+ \S+ )?INFO +\[[^] ]*access-log\] \([^)]*\) \[([^]]+)\] cf-ip=(\S*) country=(\S*) "(\S+) (\S+) [^"]*" ([0-9]{3}) \S+ \S+ xff="([^", ]*).*/\3 \4 \7 \5 \6 \2 \8/p' \
+  > access.txt
+```
+
+The same `grep | sed` works on `docker logs povzetkar-app 2>&1` (current container only).
+
+### 13.6 Checking for Suspicious Traffic
+
+1. **Cloudflare dashboard** — Security → Analytics / Events: request volume, blocked requests
+   (the non-domestic traffic rule), top paths and countries. First line, since every request
+   passes Cloudflare, including blocked ones.
+2. **Access log** (§13.5, `access.txt` — fields: cf-ip, country, status, method, path, time (two
+   fields), first `X-Forwarded-For` hop):
+
+   ```bash
+   awk '$3 ~ /^[45]/ {print $3, $4, $5}' access.txt | sort | uniq -c | sort -rn | head -50   # 4xx/5xx by path
+   awk '{print $1, $2}' access.txt | sort | uniq -c | sort -rn | head -20                      # top client IPs
+   awk '{split($5, p, "?")} p[1] ~ /\/\./ {print $1, $3, $5}' access.txt | sort | uniq -c | sort -rn   # dot-segment probes (/.git, /.env, ...), query ignored
+   awk '$1 != $8 {print $1, $8, $5}' access.txt                                                # cf-ip ≠ first X-Forwarded-For hop
+   ```
+
+   The last recipe lists requests where the client sent its own `X-Forwarded-For` through the
+   tunnel, and may list requests that bypassed the tunnel via Caddy's ports 80/443 (Caddy sets
+   the real peer address as `X-Forwarded-For`; `cf-ip` is then `-` or forged — trust the `xff`
+   value there). It is not a complete record of the bypass path: such a client controls
+   `CF-Connecting-IP`/`CF-IPCountry` (it can make them match, or add a space so the `sed` drops
+   the line). Caddy's own log is the record for that path.
+
+   Probes the SPA fallback reroutes (no extension in the last segment, outside `/api`, `/q`,
+   `/static`, `/assets`, … — see `SpaRoutingHandler`) get `200` with the SPA shell; others end in
+   `404`/`400` (e.g. `/.env`, `*.php`, `/wp-json/batch/v1`) — see the backlog entry "SPA fallback
+   answers 200 to probe paths".
+3. **`audit_log` table** — matched `/api/v1` requests only (not unmatched probes), with the user:
+
+   ```bash
+   docker exec povzetkar-db-prod sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "
+     SELECT response_status, http_method, request_path, count(*) FROM audit_log
+     WHERE created_at > now() - interval '"'"'14 days'"'"' AND response_status >= 400
+     GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 50"'
+   ```
+
+4. **Prometheus** — per-path counts even without the access log, from inside the Docker network:
+
+   ```bash
+   docker exec povzetkar-prometheus wget -qO- \
+     'http://localhost:9090/api/v1/query?query=max_over_time(http_server_requests_seconds_count%5B14d%5D)'
+   ```
+
+   Limits: counters reset on every app restart (lower bounds only), Micrometer stops creating
+   `uri` tags after 100 distinct paths per run, default 15-day retention, no IPs and no query
+   strings.
 
 ## 16. API Response Structure (Envelopes)
 
@@ -766,6 +949,9 @@ The transcript fetching pipeline supports multiple providers with runtime-config
 | `transcript.providers.supadata.enabled` | `false` | Enable/disable the Supadata provider. Set to `true` and provide `SUPADATA_API_KEY` to activate. |
 | `transcript.providers.supadata.lang` | `en` | ISO 639-1 language code for Supadata transcript requests. Falls back to first available language if the video has no transcript in the requested language. |
 
+> [!WARNING]
+> **Out of date (POV-210):** production runs on the local Docker stack (§10), not on OCI; the OCI IP-blocking rationale is historical. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 **Enabling Supadata as primary provider** (if OCI IPs are blocked by YouTube):
 
 ```properties
@@ -795,6 +981,9 @@ manual fallback** (see flip-back below).
 > residential egress IP, which YouTube throttles far less. See ADR-0009 and the POV-196
 > retrospective.
 
+> [!WARNING]
+> **Out of date (POV-210):** the backend host is the local Docker stack (§10), not an OCI host. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
 **Connectivity model:** Both the OCI backend host and the Synology join the same tailnet. The
 backend reaches the proxy at the Synology's **raw tailnet IP** (`http://100.x.y.z:8000`) — *not*
 a MagicDNS name, because the backend runs in a Docker bridge network that does not resolve
@@ -814,6 +1003,9 @@ needed on the Synology.
 > `TRANSCRIPT_PROXY_API_KEY`; whichever host is active must be configured with that exact value,
 > or a fallback flip will return `401`. On the tailnet the key is defense-in-depth (the tailnet
 > is the primary boundary); on Railway it is the sole boundary and is mandatory.
+
+> [!WARNING]
+> **Out of date (POV-210):** production no longer runs on an OCI host but on the local Docker stack (§10, `.env.docker`, Cloudflare tunnel); this procedure and its command still describe the OCI deployment. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
 
 **Flip-back to Railway (manual fallback):** Only one host is active at a time. If the Synology
 proxy is unreachable or misbehaving, on the OCI host:
@@ -873,12 +1065,20 @@ The `SecretConfigValidator` bean automatically runs at application startup and v
 
 This prevents partial system failures where the app starts successfully but crashes at runtime when a service first tries to use an unconfigured API key.
 
-### 14.4 Secret Masking & Log Suppression
+### 14.4 Secret Handling & Log Suppression
 
-Two Quarkus mechanisms prevent accidental secret exposure in logs:
+Secrets stay out of logs through three rules:
 
-1.  **`quarkus.config.log.values=false`**: Suppresses the config value dump that normally appears in startup logs.
-2.  **`quarkus.config.secret-keys`**: Marks specific properties as secrets. If Quarkus ever needs to display their values in diagnostics (e.g., Dev UI, error messages), they are shown as `****` instead of the real value.
+1.  **Environment only.** Secrets are supplied as environment variables (`backend/.env`, `.env.docker`); `application.properties` holds only `${ENV_VAR}` references.
+2.  **`quarkus.config.log.values=false`**: Suppresses the config value dump that normally appears in startup logs.
+3.  **Never log a secret value.** Code logs at most *which* property is missing (e.g. `SecretConfigValidator`, the half-configured API-key warning in §14.6).
+
+> There is **no** `quarkus.config.secret-keys` property (removed in POV-208 — Quarkus ignored it). SmallRye's secret-keys feature is a programmatic access *lock* that makes plain `@ConfigProperty` reads throw; it was never in effect here.
+
+> [!WARNING]
+> **Out of date (POV-210):** Caddy is not on the production traffic path (the Cloudflare tunnel routes straight to `app:8080`, §13.5), so the `Secure` flag does not come from Caddy's `X-Forwarded-Proto`; whether the session cookie is `Secure` in production is unverified. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+
+**Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via Caddy's `X-Forwarded-Proto`). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
 
 ### 14.5 Security Best Practices
 
@@ -886,6 +1086,41 @@ Two Quarkus mechanisms prevent accidental secret exposure in logs:
 2.  **Rotate API keys periodically.** Google API keys and OIDC secrets should be rotated at least annually.
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
+
+### 14.6 Programmatic API-Key Access (POV-205)
+
+An optional read-only API key lets automation agents (e.g., Claude Code) read briefings, summaries, content items (including transcripts via `GET /api/v1/content-items/{id}/transcript`), topics, sources and the dashboard without a browser OIDC session.
+
+**Behavior:** requests carrying `X-API-Key: <secret>` authenticate as the mapped user with the synthetic `api-readonly` role (the four VIEW permissions). Non-GET requests and admin paths return 403. A wrong key returns 401. Without the header, authentication is unchanged. The feature is **disabled unless both properties are set**.
+
+**Setup (local or prod):**
+
+1.  Generate a key: `openssl rand -hex 32`
+2.  Add **both** to the environment (`backend/.env` / `.env.docker` locally, the prod env file on the server) — the key is a secret, the email just maps it to an existing `ENABLED` user:
+
+    ```env
+    POVZETKAR_API_KEY=<generated secret>
+    POVZETKAR_API_KEY_USER_EMAIL=<email of the existing user the key acts as>
+    ```
+
+3.  Restart the application, then verify:
+
+    ```bash
+    curl -H "X-API-Key: <generated secret>" http://localhost:8080/api/v1/briefings          # 200
+    curl -X POST -H "X-API-Key: <generated secret>" http://localhost:8080/api/v1/briefings/1/share  # 403 (read-only)
+    ```
+
+The key must never appear in logs (§14.4). Rotation = replace the env value and restart.
+
+**Half-configured?** If only one of the two values is set, the feature stays disabled and startup logs a `WARN` naming the missing property (e.g. `povzetkar.api.key-user-email is not set - API-key access stays disabled …`); `X-API-Key` requests then get the normal OIDC login redirect. The key itself is never logged.
+
+**Getting the API schema (since POV-207):** `/q/openapi` is no longer served publicly — it lives on the internal management port (§13.2). An agent running on the production host fetches the live contract (including the `apiKey` security scheme) through a container on the Docker network:
+
+```bash
+docker exec povzetkar-prometheus wget -qO- "http://app:9000/q/openapi?format=json" > openapi.json
+```
+
+Alternatively build it from the repo: `./mvnw package -pl backend -DskipTests` writes `backend/target/openapi.json` (build output, not committed — `target/` is gitignored).
 
 ## 18. Account Activation & User Onboarding
 

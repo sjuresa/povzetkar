@@ -1,3 +1,11 @@
+# Docker json-file logs belong to the container ID (gone on recreate) and are unbounded by
+# default; every service gets the same size cap.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
 services:
   app:
     build:
@@ -6,23 +14,35 @@ services:
     image: povzetkar-app:${APP_VERSION:?APP_VERSION must be set}
     container_name: povzetkar-app
     restart: always
-    # Port 8080 is no longer exposed directly, only accessible via proxy
+    # Port 8080 is no longer exposed directly, only accessible via proxy.
+    # 9000 = Quarkus management interface (/q/metrics, /q/health, /q/openapi). `expose` is
+    # documentation only — every container on povzetkar-net (prometheus, grafana, caddy,
+    # cloudflared) can reach app:9000. The boundary is: never publish it via `ports:` and never
+    # route it through Caddy or a Cloudflare tunnel hostname.
     expose:
       - "8080"
+      - "9000"
     environment:
       - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres-prod:5432/${DB_NAME:?DB_NAME must be set}
       - DB_KIND=${DB_KIND:-postgresql}
       - QUARKUS_DATASOURCE_USERNAME=${DB_USER:?DB_USER must be set}
       - QUARKUS_DATASOURCE_PASSWORD=${DB_PASS:?DB_PASS must be set}
-      - QUARKUS_SWAGGER_UI_ALWAYS_INCLUDE=false
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:?YOUTUBE_API_KEY must be set}
       - GOOGLE_API_KEYS=${GOOGLE_API_KEYS:?GOOGLE_API_KEYS must be set}
       - GOOGLE_OIDC_CLIENT_ID=${GOOGLE_OIDC_CLIENT_ID:?GOOGLE_OIDC_CLIENT_ID must be set}
       - GOOGLE_OIDC_CLIENT_SECRET=${GOOGLE_OIDC_CLIENT_SECRET:?GOOGLE_OIDC_CLIENT_SECRET must be set}
       - FRONTEND_URL=${FRONTEND_URL:?FRONTEND_URL must be set}
-      - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN:?METRICS_SCRAPE_TOKEN must be set}
       - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:?TRANSCRIPT_PROXY_API_KEY must be set}
       - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://povzetkar-production.up.railway.app}
+      - POVZETKAR_API_KEY=${POVZETKAR_API_KEY:-}
+      - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL:-}
+      # File log on the app_logs volume survives container recreation; enabled only here, where
+      # the volume exists (rotation settings: application.properties).
+      - QUARKUS_LOG_FILE_ENABLED=true
+      - QUARKUS_LOG_FILE_PATH=/var/log/app/quarkus.log
+    volumes:
+      - app_logs:/var/log/app
+    logging: *default-logging
     depends_on:
       postgres-prod:
         condition: service_healthy
@@ -46,27 +66,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging: *default-logging
     networks:
       - povzetkar-net
 
   prometheus:
-    image: prom/prometheus:v3.1.0
+    image: prom/prometheus:v3.15.0
     container_name: povzetkar-prometheus
     restart: always
     volumes:
       - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
-    environment:
-      - METRICS_SCRAPE_TOKEN=${METRICS_SCRAPE_TOKEN:?METRICS_SCRAPE_TOKEN must be set}
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--enable-feature=expand-external-variables"
+    logging: *default-logging
     networks:
       - povzetkar-net
 
   caddy:
-    image: caddy:2.9.1-alpine
+    image: caddy:2.11.4-alpine
     container_name: povzetkar-proxy
     restart: always
     ports:
@@ -79,23 +98,25 @@ services:
       - ../infra/caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+    logging: *default-logging
     depends_on:
       - app
     networks:
       - povzetkar-net
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.9.3
     container_name: povzetkar-cloudflared
     restart: always
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN must be set}
+    logging: *default-logging
     networks:
       - povzetkar-net
     depends_on:
       - app
 
   grafana:
-    image: grafana/grafana-oss:12.4.0
+    image: grafana/grafana-oss:12.4.3
     container_name: povzetkar-grafana
     restart: always
     # Port 3000 is no longer exposed directly
@@ -107,6 +128,7 @@ services:
     volumes:
       - grafana_storage:/var/lib/grafana
       - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    logging: *default-logging
     depends_on:
       - prometheus
     networks:
@@ -118,6 +140,7 @@ volumes:
   grafana_storage:
   caddy_data:
   caddy_config:
+  app_logs:
 
 networks:
   povzetkar-net:

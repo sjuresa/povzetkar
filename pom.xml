@@ -6,7 +6,7 @@
 
     <groupId>si.jumis</groupId>
     <artifactId>povzetkar-root</artifactId>
-    <version>0.18.0</version>
+    <version>0.19.0</version>
     <packaging>pom</packaging>
 
     <name>Povzetkar Root</name>
@@ -22,57 +22,33 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <!-- Shared Dependency Versions -->
-        <quarkus.platform.version>3.36.3</quarkus.platform.version>
+        <quarkus.platform.version>3.39.5</quarkus.platform.version>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
 
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <google.genai.version>1.34.0</google.genai.version>
         <google.youtube.version>v3-rev20250714-2.0.0</google.youtube.version>
         <byte-buddy.version>1.17.6</byte-buddy.version>
         <assertj.version>3.27.7</assertj.version>
         <youtube-transcript-api.version>0.4.0</youtube-transcript-api.version>
-        <flexmark-all.version>0.64.8</flexmark-all.version>
+        <flexmark.version>0.64.8</flexmark.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- Shared Plugin Versions -->
-        <dependency.plugin.version>3.6.1</dependency.plugin.version>
-        <surefire.plugin.version>3.3.0</surefire.plugin.version>
-        <spotbugs.plugin.version>4.9.8.0</spotbugs.plugin.version>
+        <dependency.plugin.version>3.11.0</dependency.plugin.version>
+        <surefire.plugin.version>3.6.0</surefire.plugin.version>
+        <spotbugs.plugin.version>4.10.4.1</spotbugs.plugin.version>
 
         <quarkus-mapstruct.version>1.1.0</quarkus-mapstruct.version>
-        <javadoc.plugin.version>3.6.3</javadoc.plugin.version>
-        <compiler.plugin.version>3.13.0</compiler.plugin.version>
+        <javadoc.plugin.version>3.12.0</javadoc.plugin.version>
+        <compiler.plugin.version>3.16.0</compiler.plugin.version>
         <resources.plugin.version>3.3.1</resources.plugin.version>
         <project.root.basedir>${maven.multiModuleProjectDirectory}</project.root.basedir>
-
-        <!-- Netty version overrides for security vulnerability patching -->
-        <netty.version>4.1.135.Final</netty.version>
-
-        <!-- OpenTelemetry version override for security vulnerability patching -->
-        <opentelemetry.version>1.62.0</opentelemetry.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Force patched Netty version to resolve CVE-2026-33871, CVE-2026-42583, CVE-2026-42579, CVE-2026-42584, CVE-2026-42587, CVE-2026-44893, CVE-2026-48059, CVE-2026-44249, CVE-2026-45416, CVE-2026-50010, CVE-2026-45674, CVE-2026-47691 -->
-            <!-- MUST BE BEFORE quarkus-bom for Maven precedence -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- Force patched OpenTelemetry version to resolve CVE-2026-45292 -->
-            <!-- MUST BE BEFORE quarkus-bom for Maven precedence -->
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-bom</artifactId>
-                <version>${opentelemetry.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>
@@ -127,8 +103,13 @@
             </dependency>
             <dependency>
                 <groupId>com.vladsch.flexmark</groupId>
-                <artifactId>flexmark-all</artifactId>
-                <version>${flexmark-all.version}</version>
+                <artifactId>flexmark</artifactId>
+                <version>${flexmark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vladsch.flexmark</groupId>
+                <artifactId>flexmark-ext-tables</artifactId>
+                <version>${flexmark.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.mapstruct</groupId>

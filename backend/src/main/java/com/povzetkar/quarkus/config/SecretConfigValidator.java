@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.config;
 
+import com.povzetkar.quarkus.security.ApiKeyConfig;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,6 +16,9 @@ import java.util.List;
  * Validates that all required secret configuration properties are present at startup.
  * Fails fast with a clear error message if any are missing, preventing partial system failures
  * at runtime when a service first attempts to use an unconfigured secret.
+ * <p>
+ * Also the startup check for the optional API-key secret: a half-configured key does not fail
+ * startup (the feature is optional) but is logged as a warning (POV-208, rule in {@link ApiKeyConfig}).
  */
 @ApplicationScoped
 public class SecretConfigValidator {
@@ -33,8 +37,16 @@ public class SecretConfigValidator {
             "quarkus.oidc.credentials.secret"
     );
 
+    private final ApiKeyConfig apiKeyConfig;
+
+    public SecretConfigValidator(ApiKeyConfig apiKeyConfig) {
+        this.apiKeyConfig = apiKeyConfig;
+    }
+
     void onStart(@Observes StartupEvent ev) {
         validate(ConfigProvider.getConfig());
+        // Optional feature: a half-configured API key must not fail startup, but it must be visible.
+        apiKeyConfig.halfConfigurationWarning().ifPresent(logger::warn);
     }
 
     void validate(Config config) {

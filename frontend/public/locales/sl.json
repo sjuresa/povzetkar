@@ -396,6 +396,13 @@
     },
     "changelog_entries": [
       {
+        "version": "0.19.0",
+        "title": "Posodobitev 0.19.0",
+        "date": "2026-09-27",
+        "desc": "Verzija 0.19.0 je izdaja **Varnostna utrditev, zrel razvojni proces in operativa**. Izkazalo se je, da produkcija razkriva več, kot je bilo mišljeno: tehnične končne točke Quarkusa (`/q/metrics`, `/q/health`, `/q/openapi`) so bile javne in so zdaj dosegljive le prek internega upravljalnega vmesnika (POV-207), 13 tiho prezrtih konfiguracijskih ključev je odpravljenih, gradnja pa zdaj zavrne neznane ključe (POV-208); po valu botovskih pregledovanj produkcijski dnevniki zahtevkov in aplikacije zdaj preživijo ponovne namestitve (POV-210). Avtomatizirani agenti dobijo bralni dostop z API-ključem (POV-205); JavaScript ob prvem nalaganju se je zmanjšal za 55 %, ocena Lighthouse pa se je dvignila z 85 na 93 (POV-202); okolje za gradnjo in izvajanje je posodobljeno na Quarkus 3.39.5 z aktualnimi slikami, preverjanjem odmika generiranega odjemalca in varnostnim skenerjem v CI, pripetim na nespremenljivo izdajo (POV-206, POV-209). Razvojni proces zdaj uporablja lastne retrospektive, sledljivost preverja v CI, vsako nalogo pred commitom pregleda in jo vodi skozi pregledni cikel PR ne glede na pregledovalca ter preveri vsako produkcijsko namestitev (POV-201, POV-203, POV-204, POV-209, POV-211).",
+        "badge": "new"
+      },
+      {
         "version": "0.18.0",
         "title": "Posodobitev 0.18.0",
         "date": "2026-06-26",
@@ -450,40 +457,12 @@
         "date": "2026-03-12",
         "desc": "Verzija 0.11.0 prinaša bistvene izboljšave za nadzor in varnost v realnem času. Izdaja vključuje nov tok dogodkov (SSE) za žive posodobitve opravil, celovito revizijo zahtevkov na API ter centraliziran sistem nadzora dostopa na podlagi dovoljenj. Operativne izboljšave zajemajo optimizacijo JPQL, konsolidirane metrike zdravja sistema in standardizirano obravnavo napak v celotnem API-ju.",
         "badge": "new"
-      },
-      {
-        "version": "v0.10.0",
-        "title": "Posodobitev v0.10.0",
-        "date": "2026-02-20",
-        "desc": "Verzija 0.10.0 transformira aplikacijo v varno, več-uporabniško platformo. Ta večja izdaja integrira Google OIDC za brezhibno avtentikacijo in zagotavlja strogo podatkovno izolacijo, tako da uporabniki vidijo izključno svoje teme ter vire. Poleg tega prinaša strukturirano OpenAPI dokumentacijo in strukturne izboljšave, kot so filtri za minimalno trajanje videoposnetkov ter stabilnejše revidiranje.",
-        "badge": "new"
-      },
-      {
-        "version": "v0.9.0",
-        "title": "Posodobitev v0.9.0",
-        "date": "2026-02-05",
-        "desc": "Verzija 0.9.0 se osredotoča na **Operativne izboljšave in Skrbniška orodja**. Izdaja stabilizira osrednjo logiko aplikacije z uvedbo vzorca Circuit Breaker, ki pomaga preprečiti posledice ob zunanjih izpadih API-ja (npr. GenAI 503 napake). Hkrati bogati nabor orodij za skrbnike in prinaša zmožnosti kot so predogled orkestracije, sledenje porabi GenAI kvot in paginacijo zgodovine.",
-        "badge": "new"
-      },
-      {
-        "version": "0.8.0",
-        "title": "Posodobitev 0.8.0",
-        "date": "2026-01-20",
-        "desc": "Verzija 0.8.0 omogoča **Samostojno namestitev aplikacije**. Oskrbuje platformo z nujno konfiguracijo za prevajanje in delovanje Quarkus aplikacije kot nevsiljive slike zabojnika OCI (via Jib). Izdaja tudi znatno nadgradi nadzor preklapljanja sistema in spremljanje poteka z implementacijo standardiziranega Logfmt zapisovanja dnevnikov.",
-        "badge": "new"
-      },
-      {
-        "version": "0.7.0",
-        "title": "Posodobitev 0.7.0",
-        "date": "2026-01-13",
-        "desc": "Verzija 0.7.0 se osredotoča na **Operativno odličnost**, z začetkom obsežne nadgradnje ogrodja na preverjeno različico Quarkus 3.27.1 LTS. Izdaja prinaša bistvene izboljšave na nivoju skrbniškega nadzora in omogoča neposreden vizualni nadzor procesov.",
-        "badge": "new"
       }
     ],
     "roadmap_phases": [
       {
-        "title": "v0.19: Hardening & Operational Excellence",
-        "desc": "Integracija naprednega varnostnega nadzora v cikel izdaj ter dokončanje dela na področju opazljivosti in operativne zrelosti. *(Načrtovano — obseg in oznaka različice se lahko spremenita; potrdita se za nazaj, ko je delo opravljeno.)*"
+        "title": "v0.20: Production Edge & Test Debt",
+        "desc": "Varnostne kontrole postaviti na dejansko pot prometa in odplačati dolg, ki je že zapadel. *(Napoved — v modelu, ki izhaja iz nalog, se dejanski obseg določa po nalogah in potrdi ob zaključku verzije.)*"
       },
       {
         "title": "v1.0: RAG & Conversational Interface",

@@ -8,26 +8,30 @@ The Planning Validator ensures that our "Code is Truth" principle is upheld acro
 
 ## 2. Phase-Specific Response Protocol
 
-### Phase 1: Version Planning (The Logic Gate)
-*   **Trigger**: Manual execution during the "Final Expert Review" (Checklist 1.11).
-*   **Target**: `docs/versions/vX.Y.Z-tasks.md`.
+### Phase 1: Task Planning (The Logic Gate)
+*   **Trigger**: Manual execution during task planning (Checklist 2.2), before plan approval.
+*   **Target**: Archived task definitions (`agent_logs/POV-* task.md` — the validator's `tasks_glob`). The active `agent_logs/task.md` enters the validated set once archived per `workflow-mandatory.md` Step 6; until then its context links are checked manually during the planning interview.
 *   **Violation Type**: Broken link or missing UC-TC mapping.
 *   **Action**: **Plan Rejected**.
 *   **Recovery**: The plan cannot be approved if the validator fails. You must re-align the task context links with the existing IDs in `use_cases.md` or add the missing test cases to the Master Spec before starting implementation.
 
 ### Phase 2: Task Execution (The Traceability Gate)
-*   **Trigger**: Manual execution as part of the "Master Specification Sync" (Checklist 2.11).
-*   **Target**: Modified `docs/analysis/` and current task logs.
-*   **Violation Type**: New implemented logic missing from the Master Spec or broken ID mapping.
+*   **Trigger**: Manual execution as part of the "Master Specification Sync" (Checklist 2.14).
+*   **Target**: Modified `docs/analysis/`, current task logs, and the task's walkthrough (`walkthroughs_glob: docs/versions/*/POV-*-walkthrough.md`) — its mandatory `Traceability` section must declare US/UC/TC IDs or `N/A — <reason>`.
+*   **Violation Type**: New implemented logic missing from the Master Spec, broken ID mapping, or a walkthrough with a missing/empty Traceability section.
 *   **Action**: **Task Incomplete**.
-*   **Recovery**: The developer must update `docs/analysis/test_specification.md` to reflect the new implementation. The task cannot be moved to `(Completed)` until the validator returns success for the relevant IDs.
+*   **Recovery**: The developer must update `docs/analysis/test_specification.md` and the walkthrough's Traceability section to reflect the new implementation. The task cannot be moved to `(Completed)` until the validator returns success for the relevant IDs.
 
 ### Phase 3: Version Finalization (The Release Gate)
-*   **Trigger**: Automated CI execution and manual execution in "Project-Wide Documentation Review" (Checklist 3.2).
-*   **Target**: Entire `docs/` repository.
-*   **Violation Type**: Any violation (P0 automation gaps, broken links, drift).
+*   **Trigger**: Automated CI execution (`--fail-on all`, blocking — the version is derived from `package.json`) and manual execution in "Project-Wide Documentation Review" (Checklist 3.2).
+*   **Target**: Entire `docs/` repository, including all git-tracked task walkthroughs (`walkthroughs_glob`).
+*   **Violation Type**: Any violation (P0 automation gaps, broken links, missing/empty walkthrough Traceability sections, drift).
 *   **Action**: **Release Blocked**.
 *   **Recovery**: This is a hard-stop. All critical (P0) violations must be resolved by implementation or documentation hardening. P1/P2 warnings must be either fixed or explicitly bypassed using the `validate:skip` comment with a written justification.
+
+### Severity Semantics via `--fail-on`
+
+The same violation blocks differently per context: CI and Phase 3 run `--fail-on all` (any violation — including WARNINGs like a missing Traceability section — exits non-zero and blocks); local/Phase 1–2 runs default to `--fail-on critical` (only CRITICALs — broken US/UC/TC references, missing spec files — exit non-zero). There is no separate severity configuration: the split is entirely the `--fail-on` argument.
 
 ---
 
@@ -49,5 +53,7 @@ If a violation is intentional or a known edge case, it can be bypassed inline:
 ## 5. Revision History
 | Version | Date | Author | Changes |
 | :--- | :--- | :--- | :--- |
+| 1.3 | 2026-07-06 | Povzetkar AI | Traceability restoration (POV-203): Phase 2/3 targets extended with the git-tracked walkthrough surface (`walkthroughs_glob`) and the mandatory-Traceability rule; Phase 3 CI run documented as blocking with dynamic version derivation; added "Severity Semantics via `--fail-on`" section. |
+| 1.2 | 2026-07-03 | Povzetkar AI | Task-first alignment (POV-201): Phase 1 gate retitled to Task Planning with target corrected to the validator's actual scope (`agent_logs/POV-* task.md`); Phase 2 trigger renumbered to Checklist 2.14. |
 | 1.1 | March 30, 2026 | Povzetkar AI | Added support for Version-Aware Skips (`until vX.Y.Z`). |
 | 1.0 | March 30, 2026 | Povzetkar AI | Initialized protocol for automated planning validation (POV-167). |

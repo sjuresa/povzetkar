@@ -67,4 +67,6 @@ public enum Permission {
     public static final String ROLE_ADMIN = "admin";
     public static final String ROLE_USER = "user";
     public static final String ROLE_DEMO = "demo";
+    // Synthetic role for API-key authenticated agents; not stored in the DB (see ApiKeyAuthenticationMechanism)
+    public static final String ROLE_API_READONLY = "api-readonly";
 }

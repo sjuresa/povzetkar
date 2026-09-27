@@ -23,3 +23,7 @@ Delivered exactly as scoped. No additions or removals.
 ## Deviations
 
 None. The `TOPIC_CREATE` discriminator worked cleanly as the single permission check for the readonly gate, as predicted.
+
+## Traceability
+
+- **TC:** TC-SEC-006 (demo role access regression)

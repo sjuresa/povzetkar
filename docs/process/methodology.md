@@ -52,43 +52,41 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 
 ### Phase 1: Version Initialisation
 
-*Goal: Open the branch and register the version — nothing more.*
+*Goal: Open the branch, register the version, create the version hub, and consume the previous version's retrospective.*
 
 1.  **Create Branch:** Create the new version branch (e.g., `v0.18.0`) from `main` and update version numbers.
-2.  **Create Milestone:** Register the version as a milestone label in YouTrack.
+2.  **Create Milestone:** The User registers the version as a Fix-version value in YouTrack.
 3.  **Roadmap Entry:** Add the version to `docs/overview/roadmap.md` as in-progress.
+4.  **Create Version Hub:** Create `docs/versions/vX.Y.Z/version.md` (status, task list table, empty Carry-Forward Review section).
+5.  **Review Previous Retrospective:** The Agent reads the previous version's retrospective (Carry-Forward Themes) and proposes a disposition per theme — backlog entry, task candidate, or conscious drop with a reason; the User approves each. Dispositions are recorded in the new hub's Carry-Forward Review table.
 
 ### Phase 2: Task Execution (The Core Loop)
 
 *Goal: Implement one task at a time with high quality. This is the primary phase — it repeats for every task in the version.*
 
-1.  **Brainstorm:** Conduct a scope-alignment interview (WHAT will be done). The task is not final until this is complete.
+1.  **Brainstorm:** Read the Feed-forward sections of all task retrospectives in the current version (the version-level knowledge pool), then conduct a scope-alignment interview (WHAT will be done). The task is not final until this is complete.
 2.  **Define:** The task is finalised in `agent_logs/task.md`.
 3.  **Plan:** The Agent conducts a PPP interview (HOW it will be done) and proposes a detailed plan grounded in codebase evidence. **Execution is forbidden without User approval.**
 4.  **Execute (TDD):**
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
-5.  **Verify & Code Review:** The Agent runs the full test suite; the User reviews the results and performs a code review.
+5.  **Verify & Review:** The Agent runs the full test suite, then a pre-commit review of every task, documentation included (`/code-review`, plus `/security-review` for security-relevant changes). After the push, every PR reviewer's findings — human or bot — are handled in the PR review loop; the User merges.
 6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
-7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered.
+7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered, including its mandatory Traceability section (the task's US/UC/TC IDs, or `N/A — <reason>`; machine-validated).
 8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.
-9.  **Version Hub:** `docs/versions/vX.Y.Z/version.md` is created (on first task) or updated with links to the new walkthrough and retrospective.
+9.  **Version Hub:** `docs/versions/vX.Y.Z/version.md` is updated with links to the new walkthrough and retrospective (the hub itself is created at version initialisation).
 
 ### Phase 3: Version Finalisation
 
 *Goal: Declare the version complete and prepare for release. Triggered by an explicit PO decision — there is no task list to signal completion.*
 
-1.  **Version Retrospective:** Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`.
-2.  **Scope Statement:** Add a scope statement to `docs/versions/vX.Y.Z/version.md`.
-3.  **Documentation Review:** Review project-wide docs to ensure they match the new reality.
-4.  **Cleanup:** Finalise `pom.xml` (remove snapshots) and `CHANGELOG.md`.
+Its core is the **Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — a cross-task synthesis of trends, systemic patterns and process health, ending with the Carry-Forward Themes consumed at the next version's initialisation — followed by a documentation review, a supply-chain audit, and the release cleanup (`-SNAPSHOT` removed, `CHANGELOG.md` finalised).
 
 ### Phase 4: Release
 
-*Goal: Ship it.*
+*Goal: Ship it* — release PR to `main`, merge, annotated tag, production deploy, YouTrack release.
 
-1.  Merge to `main`.
-2.  Tag the release.
+The step-by-step procedure for Phases 3 and 4 lives only in [`11_development_checklist.md`](../sdlc/11_development_checklist.md) — it is deliberately not repeated here, so the two cannot drift apart.
 
 ---
 
@@ -140,13 +138,14 @@ We operate a two-level retrospective model:
 *   **Planned vs. Actual:** What was scoped vs. what was delivered.
 *   **Deviations & Why:** Decisions made mid-execution and their rationale.
 *   **Technical Findings:** Patterns, gotchas, and constraints discovered — the durable record for future tasks.
-*   **Feed-forward:** What the next task should know.
+*   **Feed-forward:** What the next task should know. (Consumed by the Brainstorm of every subsequent task in the version.)
 
 **Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — written at the end of every version as a cross-task synthesis.
 
 *   **Trends:** Patterns that appeared across multiple tasks.
 *   **Systemic Issues:** Process or architectural issues that transcend individual tasks.
 *   **Action Items:** Concrete changes to `AGENT.md` or `11_development_checklist.md` for the next version.
+*   **Carry-Forward Themes:** Version-level threads for the next version. (Consumed at the next version's initialisation: each theme is dispositioned — backlog, task candidate, or conscious drop — into the new version hub's Carry-Forward Review table.)
 
 ### 5.2. The Backlog
 *   **Roadmap:** Strategic goals.

@@ -1,17 +1,24 @@
-# Information Gathering & Context
+# Context Gathering
 
-To ensure my proposals are well-informed and aligned with the project's current state, I will always start by gathering context from the project's documentation. My primary sources of information are:
+Load what the work actually needs; do not front-load the whole documentation tree.
 
--   **Strategic & Process Documents:**
-    -   `docs/overview/roadmap.md`: For long-term vision and goals.
-    -   `docs/overview/project-structure.md`: For architectural layout and functional mapping.
-    -   `docs/sdlc/11_development_checklist.md`: For the step-by-step process of any given phase.
-    -   `docs/sdlc/07_development_methodology_comparison.md`: To understand our agreed-upon agile hybrid methodology.
-    -   `docs/guides/testing.md`: For testing patterns and best practices.
--   **Version-Specific Documents:**
-    -   `docs/versions/vX.Y-planning-process.md`: For the rationale and strategic decisions of the current version.
-    -   `docs/versions/vX.Y-tasks.md`: For the specific, agreed-upon tasks for the current version.
--   **Backlog & Technical Guides:**
-    -   `docs/backlog/`: To be aware of non-critical issues and ideas for the future.
-    -   `docs/RUNBOOK.md`: For technical setup and operational procedures.
--   **The Code Itself:** The relevant source code and existing tests are the ultimate source of truth for implementation details.
+## [per task] — load when a task is active
+
+- `agent_logs/task.md` — the task definition. **Caveat:** it describes the *last worked* task and may already be complete; check its Status header before treating it as current. A new task starts at checklist step 2.0.
+- `docs/versions/vX.Y.Z/version.md` — the version hub: completed tasks and the Carry-Forward Review.
+- The **Feed-forward** sections of the current version's task retrospectives (`docs/versions/vX.Y.Z/POV-XXX-retrospective.md`) — mandatory Brainstorm input; a version-level knowledge pool, not a chain between consecutive tasks.
+- `docs/sdlc/11_development_checklist.md` — the step-by-step process for the current phase.
+
+## [on demand] — load when the task touches the area
+
+- `docs/overview/roadmap.md` — long-term vision and goals.
+- `docs/overview/project-structure.md` — architectural layout and functional mapping.
+- `docs/guides/testing.md` — when writing or changing tests.
+- `docs/process/lessons-learned.md` and `docs/process/lessons/` — before working in an area with known gotchas.
+- `docs/backlog/improvements.md` — when triaging discoveries or planning scope.
+- `docs/RUNBOOK.md` — technical setup and operational procedures.
+- `docs/sdlc/07_development_methodology_comparison.md` — the agreed methodology and its rationale.
+- `docs/versions/<previous version>/retrospective.md` — the previous version's cross-task synthesis, formally reviewed at version initialisation (checklist 1.5).
+- Context7 MCP (`resolve-library-id` → `query-docs`) — external library documentation.
+
+The source code and its tests remain the ultimate truth for implementation details.

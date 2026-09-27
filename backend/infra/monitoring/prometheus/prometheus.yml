@@ -5,7 +5,7 @@ global:
 scrape_configs:
   - job_name: 'povzetkar-backend'
     metrics_path: '/q/metrics'
-    # Scrape target: backend application on internal Docker network
+    # Scrape target: Quarkus management interface on the internal Docker network.
+    # No auth: port 9000 is never published or proxied, so the network is the boundary (POV-207).
     static_configs:
-      - targets: ['app:8080']
-    bearer_token: '${METRICS_SCRAPE_TOKEN}'
+      - targets: ['app:9000']

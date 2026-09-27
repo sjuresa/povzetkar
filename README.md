@@ -81,7 +81,7 @@ This repository follows a mandatory modular documentation standard. Use the tabl
 
 | Domain | Description | Key Artifacts |
 |:---|:---|:---|
-| 🎯 **Strategy** | Vision, Roadmap & Concepts | [Overview](./docs/overview/), [Roadmap](./docs/overview/roadmap.md), [Concepts](./docs/overview/concepts.md), [Principles](./docs/protocols/core-principles.md) |
+| 🎯 **Strategy** | Vision, Roadmap & Concepts | [Overview](./docs/overview/), [Roadmap](./docs/overview/roadmap.md), [Concepts](./docs/overview/concepts.md), [Principles](./AGENT.md) |
 | 🏗️ **Engineering** | Technical Decisions & Blueprints | [ADRs](./docs/adr/), [API Design](./docs/analysis/api-design.md), [Planning Protocol](./docs/process/planning_protocol.md) |
 | 🔍 **Analysis** | Requirements & Traceability | [Use Cases](./docs/analysis/use_cases.md), [Test Specification](./docs/analysis/test_specification.md) |
 | 🛠️ **SDLC & Ops** | Maintenance & Framework | [SDLC Repository](./docs/sdlc/), [Checklist](./docs/sdlc/11_development_checklist.md), [NFRs](./docs/sdlc/02_non_functional_requirements.md), [Runbook](./docs/RUNBOOK.md) |

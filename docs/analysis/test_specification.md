@@ -50,10 +50,11 @@
 
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
-| **TC-MON-001** | **P2** | - | [v0.15] | Prometheus Basic Metrics | Manual | `/q/metrics` reachable and shows JVM/Micrometer stats. |
+| **TC-MON-001** | **P2** | - | [v0.15] | Prometheus Basic Metrics | Manual | `/q/metrics` reachable on the management port (9000, Docker network) and shows JVM/Micrometer stats; returns 404 on the public port 8080 (automated guard: `ManagementInterfaceTest`, POV-207). |
 | **TC-MON-002** | **P2** | - | [v0.15] | Business Metrics Pulse | Manual | Custom counters (Briefings generated) increment on Grafana. |
 | **TC-MON-003** | **P2** | - | [v0.15] | Retention Purge Verification | Script | Simulation script proves that 90-day old logs are purged. |
 | **TC-MON-004** | **P1** | - | [v0.12] | SSE Real-time Toast Sync | **Playwright** | Background job completion triggers a UI toast notification. |
+| **TC-MON-005** | **P1** | - | [v0.18] | GenAI RPD Counting Accuracy | Integration (`VideoSummaryServiceTest`) | Every GenAI request — including failed and retried ones — counts against the daily RPD limit; the counter never undercounts (POV-195). |
 
 ## 5. Domain: Security & Identity (SEC)
 
@@ -64,6 +65,8 @@
 | **TC-SEC-003** | **P0** | - | [v0.12] | Auth Guard Redirect | **Playwright** | Unauthenticated users visiting `/dashboard` are redirected to `/`. |
 | **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees generic status banner. |
 | **TC-SEC-005** | **P0** | UC-12 | [v0.17] | Approval State Transition | Integration | Admin can transition `PENDING_APPROVAL → ENABLED`/`DISABLED`; audit row written. Last-admin guard prevents self-demotion. |
+| **TC-SEC-006** | **P1** | - | [v0.18] | Demo Role Access Regression | Unit (`RolePermissionsMapTest`) | `demo` role includes `SOURCE_VIEW` (no 403 on Briefing Hub source filter / Sources page); Topics page mutation controls hidden in readonly mode (UI part Manual) (POV-192). |
+| **TC-SEC-007** | **P0** | UC-17 | [v0.19] | Read-Only API-Key Access | Integration (`ApiKeyAuthenticationTest`) | Valid `X-API-Key` reads the mapped user's data (briefings, content items, summary, transcript, topics, sources, dashboard); wrong key → 401; any non-GET and admin paths → 403; header-less requests follow the unchanged OIDC flow (POV-205). |
 
 ## 6. Domain: General UX & Brand (UI)
 
@@ -81,7 +84,7 @@
 | **TC-ADM-001** | **P2** | - | [v0.12] | Audit Log Search & Filter | Manual | Paging and Keyword search works for tech audit logs. |
 | **TC-ADM-002** | **P2** | UC-3 | [v0.14] | Status Override (Admin Only) | Manual | Admin can force retry of FAILED items via status dropdown. |
 | **TC-ADM-003** | **P0** | UC-11 | [v0.17] | Admin User Management | **Playwright** | Admin can edit roles and disable/enable accounts; UI filter by status works. |
-| **TC-ADM-004** | **P1** | UC-13 | [v0.17] | Background Job Restart | **Playwright** | Restart spawns new job for `FAILED` job; audit trail records acting admin. Cancel is deferred to v0.18.0. |
+| **TC-ADM-004** | **P1** | UC-13 | [v0.17] | Background Job Restart | Manual/PW | Restart spawns new job for `FAILED` job; audit trail records acting admin. Cancel is a backlog item — see "Admin Jobs Cancel Action" in `docs/backlog/improvements.md`. |
 
 ## 8. Domain: Core Ingestion (ING)
 
@@ -90,6 +93,10 @@
 | **TC-ING-001** | **P0** | UC-3 | [v0.6.2] | Autonomous Self-Healing | Integration | Items in `TRANSIENT_ERROR` are reset to `PENDING` automatically by the orchestrator. |
 | **TC-ING-002** | **P0** | UC-3 | [v0.6.0] | Resilient Intelligence Fallback | Integration | System falls back to URL summarization if transcript fetch fails (prevents "black-hole" content). |
 | **TC-ING-003** | **P0** | UC-14 | [v0.17] | Transcript Provider Fallback Chain | Integration | When primary transcript provider fails (timeout/quota/unavailable), orchestrator falls through to the next provider in the chain; metrics emitted per provider. |
+| **TC-ING-004** | **P1** | UC-14 | [v0.18] | Proxy Primary Transcript Path | Unit (`ProxyTranscriptProviderTest`) | `ProxyTranscriptProvider` is first in the chain; a 200 proxy response with segments is formatted via `TimeTextFormatter` and returned (POV-193/194). |
+| **TC-ING-005** | **P1** | UC-14 | [v0.18] | Proxy Failure Falls Back to Legacy Chain | Unit (`ProxyTranscriptProviderTest`) | Non-200 proxy responses (404/502/401) and transport failures raise `ProviderUnavailableException`, triggering orchestrator fall-through to `youtube-legacy`/`supadata` (POV-194/196). |
+| **TC-ING-006** | **P0** | UC-16 | [v0.18] | Scheduled Orchestration Trigger | Manual | Cron invocation runs on a worker thread without `BlockingOperationNotAllowedException`; fetches+summarizes yesterday and today, generates yesterday's briefings idempotently (POV-197). |
+| **TC-ING-007** | **P1** | UC-14, UC-16 | [v0.18] | Transcript Persisted Before Summarization | Integration (`TranscriptPersistenceTest`) | A fetched transcript is persisted to the `ContentItem` before the Gemini call, so a summarization failure cannot lose the transcript (POV-198). |
 
 ---
 
@@ -110,7 +117,7 @@
 | **PW-011** | Toast Interaction | TC-GRX-005 | **Planned (v0.17.0)** |
 | **PW-012** | Admin User Management | TC-ADM-003 | **Planned (v0.17.0)** |
 | **PW-013** | Pending Approval Gating | TC-SEC-004 | **Planned (v0.17.0)** |
-| **PW-014** | Job Cancel/Restart | TC-ADM-004 | **Planned (v0.17.0)** |
+| **PW-014** | Job Restart | TC-ADM-004 | **Planned** (carried forward; no E2E exists as of v0.19 — cancel scope moved to backlog) |
 | **PW-015** | Session Expiry Redirect | TC-GRX-006 | **Planned (v0.17.0)** |
 
 ---
@@ -124,6 +131,8 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.9     | 2026-07-08 | Povzetkar AI | POV-205: added TC-SEC-007 (Read-Only API-Key Access, P0, automated via `ApiKeyAuthenticationTest`). |
+| 2.8     | 2026-07-06 | Povzetkar AI | POV-203 v0.18 drift backfill: added TC-ING-004/005/006/007, TC-MON-005, TC-SEC-006 (TC-ING-006 is P0 Manual without skip — enforces the scheduler-test carry-forward at v0.20). Honesty fixes: TC-ADM-004 automation → Manual/PW, stale cancel note → backlog reference; PW-014 restated. |
 | 2.7     | 2026-05-20 | Povzetkar AI | Added v0.17.0 test cases: TC-GRX-006, TC-LIB-006, TC-SEC-004/005, TC-ADM-003/004, TC-ING-003. Added PW-012…PW-015 to automation backlog. |
 | 2.6     | April 20, 2026 | Antigravity AI | Integrated PW-010 and PW-011 for comprehensive backlog traceability. |
 | 2.5     | April 20, 2026 | Antigravity AI | Synchronized Automation Status with backlog. Added PW-008 and PW-009. Corrected P0 coverage gaps. |

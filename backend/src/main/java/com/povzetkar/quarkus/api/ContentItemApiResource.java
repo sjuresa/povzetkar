@@ -5,6 +5,7 @@ import com.povzetkar.quarkus.api.dto.ContentItemDTO;
 import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.dto.StatusUpdateDTO;
 import com.povzetkar.quarkus.api.dto.SummaryDTO;
+import com.povzetkar.quarkus.api.dto.TranscriptDTO;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.Idempotent;
 import com.povzetkar.quarkus.api.mapper.BackgroundJobMapper;
@@ -18,6 +19,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import com.povzetkar.quarkus.model.YouTubeVideo;
 import jakarta.transaction.Transactional;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
@@ -106,7 +108,10 @@ public class ContentItemApiResource extends BaseApiResource {
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
-        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("publishedAt").descending(), Set.of("id", "title", "publishedAt", "processingStatus", "durationSeconds"));
+        // Qualified with the item alias "c": the load query joins source and topics, which also have "id".
+        // c.id last breaks ties, so rows with equal sort values neither repeat nor vanish across pages.
+        Sort panacheSort = QueryParser.parseSort(sort, Sort.by("c.publishedAt").descending(), Set.of("id", "title", "publishedAt", "processingStatus"), "c")
+                .and("c.id", Sort.Direction.Descending);
 
         FilterBuilder filters = new FilterBuilder("");
         if (sourceId != null) {
@@ -137,7 +142,7 @@ public class ContentItemApiResource extends BaseApiResource {
             return new PaginatedResponse<>(List.of(), count, pageIndex, clampedPageSize);
         }
 
-        List<ContentItem> items = ContentItem.list("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id IN ?1", panacheSort, itemIds);
+        List<ContentItem> items = ContentItem.listByIdsWithAssociations(itemIds, panacheSort);
 
         // Fetch all summary existence flags in one go to solve N+1 Problem
         final java.util.Set<Long> itemIdsWithSummaries = new java.util.HashSet<>(
@@ -182,6 +187,25 @@ public class ContentItemApiResource extends BaseApiResource {
         Summary entity = Summary.findByContentIdWithAssociations(id)
                 .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + id + NOT_FOUND));
         return summaryMapper.toDTO(entity);
+    }
+
+    @GET
+    @Path("/{id}/transcript")
+    @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
+    @Operation(summary = "Get content item transcript", description = "Retrieves the raw transcript for a specific content item.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Transcript retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TranscriptDTO.class))
+    )
+    @APIResponse(responseCode = "404", description = "Content item or transcript not found")
+    public TranscriptDTO getTranscriptByItemId(@PathParam("id") Long id) {
+        ContentItem item = ContentItem.findByIdWithAssociations(id)
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+        if (item instanceof YouTubeVideo video && video.transcript != null && !video.transcript.isBlank()) {
+            return new TranscriptDTO(id, video.transcript);
+        }
+        throw new NotFoundException("Transcript for ContentItem " + id + NOT_FOUND);
     }
 
     @POST
