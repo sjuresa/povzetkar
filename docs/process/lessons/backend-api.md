@@ -147,6 +147,6 @@ When using a generic `PaginatedResponse<T>` record or class in Quarkus, `quarkus
 
 ## Related Documents
 - [ADR-0005: Summary Public Sharing](../../adr/0005-summary-public-sharing.md)
-- [ADR-0007: Onboarding Logic & Persistence](../../adr/0007-onboarding-logic-persistence.md)
+- [ADR-0007: Onboarding Logic & Persistence](../../adr/0007-onboarding-logic-persistence.md) — superseded by [ADR-0011: Server-side, Per-User Onboarding Guide State](../../adr/0011-onboarding-state-per-user.md)
 - [Use Cases: Summary Generation](../../analysis/use_cases.md)
 

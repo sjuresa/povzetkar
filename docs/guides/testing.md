@@ -86,8 +86,8 @@ public class ItemResourceIT {
 
 For tests that need to interact with the database but don't require full process isolation, use `@QuarkusTest` combined with `@TestTransaction`.
 
--   **`@TestTransaction`:** Automatically starts a transaction before each test and rolls it back afterward. This is the **preferred** method for database tests as it ensures a clean state without manual cleanup.
--   **Do Not Mock Entities:** Panache entities should be used directly. Mocking them is an antipattern.
+-   **`@TestTransaction`:** Automatically starts a transaction before each test and rolls it back afterward. This is the **preferred** method for database tests as it ensures a clean state without manual cleanup. Exception: a test that commits on purpose — e.g. interleaving transactions with `QuarkusTransaction.requiringNew()` — escapes the rollback and must clean up itself (`@AfterEach`); see §2.5.
+-   **Scope:** which tests run against the database is defined by QA rule 3 in `docs/protocols/quality-mandates.md`; see §2.5 for the pattern.
 
 > **Note:** `@TestTransaction` works best with blocking code. If testing complex reactive pipelines where context propagation might be lost, ensure you understand how the transaction context is handled.
 
@@ -132,6 +132,51 @@ A plain JUnit test (no Quarkus boot) that fails when `application.properties` (m
 -   **How it knows the valid keys:** the Maven profile `config-guard` (active unless `skipTests` is true) runs `quarkus:dependency-tree` once per launch mode into `target/quarkus-dependency-tree-{prod,dev,test}.txt`; the test reads `META-INF/quarkus-config-doc/quarkus-config-model.json` from every listed jar in the local Maven repository. `%prod`/`%dev`/`%test` keys are checked against their own mode, unprofiled keys against the mode their file takes effect in (`src/main`: prod, `src/test`: test). Surefire passes the paths as system properties from the same profile, so run it through Maven (`./mvnw test -pl backend -Dtest=QuarkusConfigKeysTest`); an IDE run or Quarkus continuous testing (no such properties) skips the test instead of failing. Multi-profile keys (`%dev,test.`) must be declared in each listed mode.
 -   **What it rejects:** unknown keys; keys only a passthrough map would swallow; named-map keys that are really a fixed segment in the wrong place (`quarkus.datasource.jdbc.db-kind` read as datasource "jdbc"); unprofiled keys not declared for the mode their file takes effect in. It cannot catch a typo in a genuine instance name (e.g. a rest-client config key).
 -   **When it fails:** fix the key against the extension's config reference, or move a custom setting to `povzetkar.*`. Only if the key is genuinely valid (e.g. a passthrough entry you verified the library reads) add it to the test's `ALLOWLIST` with a reason.
+
+### 2.5. Entity Once Against the DB, Logic With Panache Mocked
+
+How to apply QA rule 3 (`docs/protocols/quality-mandates.md`) to an entity and the service that uses it. Reference implementation: POV-216 (`UserOnboarding`, `OnboardingService`).
+
+-   **Persistence test (real DB, entity only):** persist every column, `flush()` + `clear()`, reload and compare; cover constraints (FK cascade), custom queries (`findOrCreate` with `INSERT … ON CONFLICT DO NOTHING`) and concurrency — two transactions interleaved deterministically with nested `QuarkusTransaction.requiringNew()` (the outer loads a snapshot, the inner commits a change, the outer then writes). No service, no endpoint (`UserOnboardingPersistenceTest`).
+-   **Domain logic:** rules on the entity (e.g. `apply(patch)`) get a plain JUnit test without Quarkus (`UserOnboardingTest`).
+-   **Service test:** `PanacheMock.mock(Entity.class)` stubs the entity's static methods — Panache's finders and your own (`findOrCreate`); `@InjectMock Session` when the service calls instance methods such as `persist()`; `@InjectMock` for other collaborators (`OnboardingServiceTest`):
+
+```java
+@QuarkusTest
+class OnboardingServiceTest {
+    private static final long USER_ID = 42L;
+
+    @Inject OnboardingService service;
+    @InjectMock UserContextService userContextService;
+
+    @BeforeEach
+    void setUp() {
+        PanacheMock.mock(UserOnboarding.class);       // every static method of the entity
+    }
+
+    @Test
+    void getReturnsTheUsersState() {
+        givenCurrentUser(AccountStatus.ENABLED);
+        UserOnboarding state = new UserOnboarding(USER_ID);
+        state.stepTopic = true;
+        when(UserOnboarding.findOrCreate(USER_ID)).thenReturn(state);
+
+        OnboardingDTO result = service.getForCurrentUser();
+
+        assertEquals(OnboardingDTO.from(state), result);
+        PanacheMock.verify(UserOnboarding.class).findOrCreate(USER_ID);
+    }
+
+    private void givenCurrentUser(AccountStatus status) {
+        User user = UserBuilder.aUser().withId(USER_ID).withStatus(status).build();
+        when(userContextService.getCurrentUser()).thenReturn(Optional.of(user));
+    }
+}
+```
+
+-   **Verify statics through `PanacheMock`:** `PanacheMock.verify(UserOnboarding.class, never()).findOrCreate(anyLong())` — `Mockito.verify` does not know the static mock.
+-   **Trap — `PanacheMock` mocks every static method of the entity, custom ones included.** Useful for a custom query like `findOrCreate`, but a static factory the service expects to run for real (e.g. an `emptyFor(id)`) silently returns `null`. Create new instances with a constructor (or stub the factory with `thenCallRealMethod()`).
+-   **Resource test:** `@InjectMock` the service and assert status codes, the JSON envelope and security with `@TestSecurity` (`OnboardingApiResourceTest`). An anonymous request to an OIDC `web-app` endpoint gets a `302` login redirect, not `401` — use `redirects().follow(false)`.
 
 ## 3. Testing Reactive Code
 

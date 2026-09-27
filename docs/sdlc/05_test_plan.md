@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date             | Author       | Changes                                                                       |
 |---------|------------------|--------------|-------------------------------------------------------------------------------|
+| 1.3     | September 27, 2026 | Povzetkar AI | §3.2 strategy points to QA rule 3 (test scope) instead of the retired no-mocking rule (POV-216). |
 | 1.2     | January 17, 2026 | Povzetkar AI | Added dependency management strategy for test libraries (BOM).                |
 | 1.1     | January 6, 2026  | Povzetkar AI | Refined integration testing strategy to discourage internal mocking.          |
 | 1.0     | August 15, 2025  | Povzetkar AI | Initial version.                                                              |
@@ -32,7 +33,7 @@ Testing will cover all major components of the system:
 ### 3.2. Integration Testing
 - **Objective:** To verify the interaction between different components of the system.
 - **Tools:** Quarkus Test Framework (`@QuarkusTest`), Testcontainers (for PostgreSQL and RabbitMQ).
-- **Strategy:** Do not mock internal services or Panache entities. Tests must verify the state of the database as the observable outcome and mock only true external boundaries (e.g., YouTube API, AI Service).
+- **Strategy:** What runs against the database and what is mocked is defined by QA rule 3 (test scope) in [`quality-mandates.md`](../protocols/quality-mandates.md).
 - **Scope:**
     - **API Tests:** Testing REST endpoints by making real HTTP requests to the running application and asserting the responses.
     - **Persistence Tests:** Verifying that data is correctly written to and read from a real (containerized) PostgreSQL database.

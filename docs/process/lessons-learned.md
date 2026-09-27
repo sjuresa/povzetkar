@@ -16,6 +16,14 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Examples in normative documents are executed literally (POV-211, POV-212)**:
 > Checklist 4.3's example `git tag -a vX.Y.0` produced a wrong release tag. Treat every command example in a checklist or protocol as a specification and keep it exact.
 
+> [!NOTE]
+> **Re-check an old rule's origin before planning around it (POV-216)**:
+> "Never mock Panache entities in `@QuarkusTest`" came from the v0.6.2 retrospective — brittle mocks amid a knowledge gap, not a framework limit. Traced back, it was replaced by a test-scope rule (QA rule 3): the entity once against the DB, business logic with `PanacheMock` + `@InjectMock Session` as the Quarkus guide prescribes (trap: `PanacheMock` also mocks the entity's own static factories — use a constructor). A normative rule is stated once; other documents point to it.
+
+> [!NOTE]
+> **Search the ADRs when a task reverses a design decision (POV-216)**:
+> The onboarding guide's `localStorage` persistence was ADR-0007; the plan missed it and it surfaced only while writing the specs. Before planning a change to persistence, auth or architecture, grep `docs/adr` for the area and plan the superseding ADR.
+
 ## 🚀 Recent Highlights (v0.19.0)
 
 > [!WARNING]

@@ -32,7 +32,14 @@ Every plan and code change must verify:
 
 1. **Reactive purity:** no blocking calls (`Thread.sleep`, JDBC without reactive drivers) inside reactive pipelines (`Uni`, `Multi`).
 2. **JPA identity:** entities implement `equals()` and `hashCode()` based on their primary key (or business key), never default object identity.
-3. **Integration-test integrity:** `@QuarkusTest` tests mock only external boundaries — never internal services or Panache entities — and verify real side effects (DB state).
+3. **Test scope — what runs against the database:**
+   - **Persistence — against the real DB, once:** every entity (mapping ↔ Flyway migration) and every custom query is verified by a dedicated `@QuarkusTest` against the database, independent of any use case — like a repository test. A new entity or query, or one whose mapping or migration changes, gets this test if it has none. Queries (HQL included) live in named entity or repository methods that this test calls — new or changed queries are not written inline in services.
+   - **Transactional behaviour — against the real DB:** flows whose correctness *is* the database interaction (transaction boundaries, `requiringNew`, locking, concurrency) stay DB-backed integration tests.
+   - **Business logic — without the DB:** services and resources are tested with persistence mocked as the Quarkus *Hibernate ORM with Panache* guide prescribes: `PanacheMock.mock(Entity.class)` for static methods (verify via `PanacheMock.verify`), `@InjectMock Session` for instance methods such as `persist()`; other collaborators via `@InjectMock`. An entity verified by its persistence test is not re-verified through DB state elsewhere.
+   - **Pure domain logic** (entity methods, mappers, utilities) — plain unit tests without Quarkus.
+   - **Security and HTTP contract** (401/403, roles, JSON envelope) — `@QuarkusTest` REST calls with the service mocked.
+   - **External boundaries** (YouTube, AI, OIDC, …) are always mocked.
+   - Existing DB-backed tests stay valid; the rule applies to new and changed tests.
 
 ## File Hygiene
 

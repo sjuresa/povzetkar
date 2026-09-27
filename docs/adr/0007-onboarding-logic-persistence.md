@@ -4,7 +4,7 @@ Date: 2026-04-01
 
 ## Status
 
-Accepted
+Superseded by [ADR-0011](0011-onboarding-state-per-user.md) (POV-216, 2026-09-27) — the fixed `localStorage` key had no user dimension, so accounts in the same browser shared the guide state.
 
 ## Context
 

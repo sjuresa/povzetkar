@@ -82,7 +82,7 @@ public class UserContextService {
         return User.find("from User u left join fetch u.roles where u.username = ?1", username).firstResultOptional();
     }
 
-    private boolean isApiKeyIdentity() {
+    public boolean isApiKeyIdentity() {
         return ApiKeyAuthenticationMechanism.AUTH_METHOD_API_KEY
                 .equals(securityIdentity.getAttribute(ApiKeyAuthenticationMechanism.AUTH_METHOD_ATTRIBUTE));
     }
