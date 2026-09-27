@@ -235,6 +235,8 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/roo
   --severity CRITICAL,HIGH --ignorefile /cfg/.trivyignore --exit-code 1 --timeout 30m <image>
 ```
 
+The FS scan resolves Maven parent POMs from Maven Central and can be blocked there (`429 Too Many Requests`, `Retry-After: 1800` — the whole IP for 30 min). Locally, add `-v "<home>/.m2:/root/.m2:ro"` and `--offline-scan` to the FS command so the POMs come from the local Maven cache. The cache must hold the exact parent POMs and BOMs of the commit being scanned — run a local build of that commit first (e.g. `mvnw verify`); in offline mode a missing POM only produces a warning and its managed dependencies are skipped, so check the scan output for unresolved-POM warnings before accepting a clean result. This is how the v0.19.0 audit completed (POV-211).
+
 Every `.trivyignore` entry carries an `exp:YYYY-MM-DD` date and a rationale; after expiry CI fails again and forces a re-check (remove the entry if the fix has shipped, otherwise extend it with a fresh rationale). The FS scan skips npm devDependencies — `npm audit` in `frontend/` covers those.
 
 ### 8.3 Frontend API Client (orval)

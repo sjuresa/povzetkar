@@ -390,6 +390,13 @@
     },
     "changelog_entries": [
       {
+        "version": "0.19.0",
+        "title": "Update 0.19.0",
+        "date": "2026-09-27",
+        "desc": "Version 0.19.0 is the **Security Hardening, Process Maturity & Operations** release. Production turned out to expose more than intended: the Quarkus technical endpoints (`/q/metrics`, `/q/health`, `/q/openapi`) were public and now live only on the internal management interface (POV-207), 13 silently ignored configuration keys were resolved and the build now rejects unknown keys (POV-208), and after a wave of bot scans the production request and application logs now survive redeploys (POV-210). Automation agents gain read-only API-key access (POV-205); the initial-load JavaScript shrank by 55 % with Lighthouse 85 → 93 (POV-202); the build and runtime environment moved to Quarkus 3.39.5 with current images, a generated-client drift check and a CI vulnerability scanner pinned to an immutable release (POV-206, POV-209). The development process now consumes its own retrospectives, validates traceability in CI, runs a pre-commit review and a reviewer-agnostic PR loop for every task, and verifies each production deploy (POV-201, POV-203, POV-204, POV-209, POV-211).",
+        "badge": "new"
+      },
+      {
         "version": "0.18.0",
         "title": "Update 0.18.0",
         "date": "2026-06-26",
@@ -444,40 +451,12 @@
         "date": "2026-03-12",
         "desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for live job updates, comprehensive API request auditing, and a centralized permission-based access control system. Operational improvements include JPQL projection optimizations, consolidated health metrics, and standardized error handling across the entire API layer. The integration of static analysis and vulnerability scanning further hardens the application's security posture.",
         "badge": "new"
-      },
-      {
-        "version": "v0.10.0",
-        "title": "Update v0.10.0",
-        "date": "2026-02-20",
-        "desc": "Version 0.10.0 transforms the application into a secure, multi-tenant platform. This major release integrates Google OIDC for seamless authentication, ensures strict data isolation so users only see their own topics and content sources, and provides a polished developer experience with OpenAPI documentation and standardized project structures. Additionally, structural enhancements like a minimum duration filter for videos and robust auditing capabilities have been introduced.",
-        "badge": "new"
-      },
-      {
-        "version": "v0.9.0",
-        "title": "Update v0.9.0",
-        "date": "2026-02-05",
-        "desc": "Version 0.9.0 focuses on **Operational Refinement & Admin Tools**. This release stabilizes the application's core logic by introducing a Circuit Breaker pattern to increase resilience against external API failures (like GenAI 503s) and enhances the administrator's toolkit with features like Orchestration Preview, GenAI usage tracking, and history pagination. A comprehensive Methodology guide has also been established.",
-        "badge": "new"
-      },
-      {
-        "version": "0.8.0",
-        "title": "Update 0.8.0",
-        "date": "2026-01-20",
-        "desc": "Version 0.8.0 introduces **Standalone Application Deployment**. It provides the necessary configuration to build and run the Quarkus application as an immutable, OCI-compliant container image (via Jib) without relying on development mode. This release also significantly improves observability by implementing a structured Logfmt logging pattern for key processing steps.",
-        "badge": "new"
-      },
-      {
-        "version": "0.7.0",
-        "title": "Update 0.7.0",
-        "date": "2026-01-13",
-        "desc": "Version 0.7.0 focuses on **Operational Excellence**, starting with a major framework upgrade to Quarkus 3.27.1 LTS. This ensures the platform is built on a secure, stable, and modern foundation. This release also introduces significant improvements to administrative control, allowing for granular orchestration and fine-grained topic management.",
-        "badge": "new"
       }
     ],
     "roadmap_phases": [
       {
-        "title": "v0.19: Hardening & Operational Excellence",
-        "desc": "Integrate advanced security auditing into the release cycle and complete observability/operational maturity work. *(Planned — scope and version label may change; confirmed retrospectively when the work is done.)*"
+        "title": "v0.20: Production Edge & Test Debt",
+        "desc": "Put the security controls on the real traffic path and pay the debt that is already due. *(Forecast — under the task-first model the actual scope is set per task and confirmed when the version is finalised.)*"
       },
       {
         "title": "v1.0: RAG & Conversational Interface",
