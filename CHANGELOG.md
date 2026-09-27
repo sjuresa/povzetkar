@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- (POV-212) **Version 0.20.0 started**: version hub with the carry-forward review of the four v0.19.0 themes — three task candidates (scheduler integration test, Caddy on the production traffic path, orval ≥ 8.22) created in YouTrack at once, the rest backlog or consciously dropped. The release checklist now tags `X.Y.Z` without a `v`, matching the existing tags. TC-ING-006 carries a time-bound `validate:skip until v0.21.0` until its scheduler integration test lands.
+
 ## [0.19.0] - 2026-09-27
 
 ### Summary
