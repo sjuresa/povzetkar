@@ -1,7 +1,8 @@
 # v0.19.0 Version Hub
 
-**Status:** In Progress
-**YouTrack Milestone:** [v0.19.0](https://youtrack.example.com/youtrack/agiles) *(update with actual milestone link)*
+**Status:** Completed
+**YouTrack Fix version:** [0.19.0](https://jumis.myjetbrains.com/youtrack/issues/POV?q=Fix%20versions:%200.19.0)
+**Scope Statement:** v0.19.0 — **Security Hardening, Process Maturity & Operations.** Closed the public exposure of the Quarkus technical endpoints (`/q/metrics`, `/q/health`, `/q/openapi` moved to the management interface), removed 13 silently ignored Quarkus config keys and made the build fail on unknown keys, added read-only API-key authentication for programmatic access, made production request and application logs survive redeploys, pinned the CI vulnerability scanner to an immutable release, cut the initial-load JS bundle by 55 % (Lighthouse 85 → 93), and upgraded the build and runtime environment (Quarkus 3.39.5 with a Hibernate 7.4 workaround, images, CI, a generated-client drift check). On the process side: retrospectives are now consumed (version-initialisation review, Brainstorm feed-forward), US/UC/TC traceability is machine-validated and blocking again, the agent protocols were consolidated, every task now passes a pre-commit review, a reviewer-agnostic PR loop and a YouTrack task record, and every production deploy passes pre-deploy verification; the release steps live only in the checklist. See [retrospective.md](retrospective.md) for the cross-task synthesis.
 
 ---
 
@@ -19,6 +20,7 @@
 | POV-208 — Silently ignored Quarkus config keys + unknown-key guard | [walkthrough](POV-208-walkthrough.md) | [retrospective](POV-208-retrospective.md) |
 | POV-209 — Process: reviewer-agnostic PR loop, pre-commit review, pre-deploy Trivy, YouTrack record, task pause, release finalisation | [walkthrough](POV-209-walkthrough.md) | [retrospective](POV-209-retrospective.md) |
 | POV-210 — Persistent production access and application logs | [walkthrough](POV-210-walkthrough.md) | [retrospective](POV-210-retrospective.md) |
+| POV-211 — v0.19.0 Version Finalisation & Release | [walkthrough](POV-211-walkthrough.md) | [retrospective](POV-211-retrospective.md) |
 
 ## Carry-Forward Review
 

@@ -3,6 +3,7 @@
 ## Revision History
 | Version | Date              | Author       | Changes                                                                                                                                         |
 |---------|-------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.0     | 2026-09-27        | Povzetkar AI | Section 7 refilled with three proposals from the v0.19.0 retrospective (POV-211): a negative test for every control, a stopping rule for review rounds, measuring the cost of the process gates. |
 | 1.9     | June 26 2026      | Povzetkar AI | Refreshed for the task-first model (POV-191, v0.18.0): updated Scrum "Sprint Backlog"/time-box and "Asynchronous Ceremonies" (two-level retrospective) and Lean "Amplify Learning"/"See the Whole" to reflect task-first delivery and the new `docs/versions/vX.Y.Z/` artifact structure. Section 7 remains empty. |
 | 1.8     | March 18, 2026    | Povzetkar AI | Removed "Automated Dependency Vulnerability Scanning" from proposed practices as it was adopted in v0.12.0. |
 | 1.7     | February 20, 2026 | Povzetkar AI | Removed "Architectural Decision Records (ADRs)" from proposed practices as it was adopted in v0.10.0.           |
@@ -114,4 +115,8 @@ It deliberately omits the formal, synchronous ceremonies of Scrum, as they are d
 
 ## 7. Proposed Practices for Continuous Improvement
 
-*(Section empty - all previous proposals have been adopted)*
+*Proposals from the v0.19.0 retrospective (POV-211) — candidates, not adopted practice:*
+
+*   **A negative test for every control.** v0.19's defects were controls that did not operate (unauthenticated `/q/metrics`, 13 ignored config keys, a non-blocking planning audit — POV-207, POV-208, POV-203). Proposal: every security control, config guard or CI gate ships with a test that shows the unwanted input being *rejected*, demonstrated red on the realistic historical failure rather than an invented typo (POV-208) — a candidate rule for `quality-mandates.md`.
+*   **A stopping rule for review rounds.** Later review rounds showed diminishing returns and, once, a reversal of the previous round (POV-208, POV-209, POV-210); the PO had to stop each cascade. Proposal: after a round with no high-severity finding, the agent proposes to stop, listing why the remaining findings are cosmetic or only move code; the PO still decides (`workflow-mandatory.md` Step 7).
+*   **Measure the cost of the process gates.** The Time Log already separates review rounds and waits (booked as Testing). Proposal: each task retrospective states the share of task time spent in review rounds and what those rounds found, so the v0.20 finalisation can judge with data whether the POV-209 gates pay for themselves on small tasks.
