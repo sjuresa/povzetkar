@@ -36,7 +36,8 @@ The guide state is held **per user on the server**:
   accounts, actions update it immediately and send a `PATCH`. Steps marked before the state is loaded
   are remembered and applied once it arrives (accounts without a guide never load, so nothing is sent
   for them); other actions are no-ops until then. Overlapping loads share one request, and a failed
-  load is retried with a growing delay (5 s, 15 s, then every minute). The old `localStorage` key is
+  load is retried with a growing delay (5 s, 15 s, then every minute). `PATCH`es are sent one after
+  another; a failed one unloads the store, so the saved state is reloaded and unsent steps resent. The old `localStorage` key is
   no longer read or written (and not cleared).
 - Pending accounts see no guide; the pending-approval banner points them to the demo content instead.
 

@@ -83,20 +83,19 @@ describe('usePendingApprovalPolling', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('updates the auth store and stops polling when the account is rejected', async () => {
-    serverReturns('REJECTED');
-    const { rerender } = renderHook(({ status }) => usePendingApprovalPolling(status), {
-      initialProps: { status: 'PENDING_APPROVAL' as AccountStatus },
-    });
+  it.each(['REJECTED', 'DISABLED'] as const)(
+    'reloads once without the approval flag when the account becomes %s',
+    async (status) => {
+      serverReturns(status);
+      renderHook(() => usePendingApprovalPolling('PENDING_APPROVAL'));
 
-    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
-    expect(useAuthStore.getState().user?.accountStatus).toBe('REJECTED');
-    rerender({ status: 'REJECTED' });
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3);
 
-    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3);
-    expect(getApiV1UsersMe).toHaveBeenCalledTimes(1);
-    expect(reload).not.toHaveBeenCalled();
-  });
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(sessionStorage.getItem(APPROVED_FLAG)).toBeNull();
+      expect(vi.getTimerCount()).toBe(0);
+    }
+  );
 
   it('ignores request errors without touching the auth store', async () => {
     vi.mocked(getApiV1UsersMe).mockRejectedValue(new Error('network'));

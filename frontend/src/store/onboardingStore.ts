@@ -50,13 +50,8 @@ interface OnboardingState {
 /** The load in flight, shared by overlapping callers (e.g. React StrictMode's double effect). */
 let loadPromise: Promise<void> | null = null;
 
-/** Sends a partial update; the store is already updated. On failure the error is logged and `onFailure` runs. */
-function persist(patch: OnboardingPatch, onFailure?: () => void) {
-  patchApiV1UsersMeOnboarding(patch).catch((error: unknown) => {
-    logger.warn('[Onboarding] Failed to save the guide state', { error: error as Error });
-    onFailure?.();
-  });
-}
+/** PATCHes are sent one after another, so the server applies them in the order the user made them. */
+let patchQueue: Promise<unknown> = Promise.resolve();
 
 /**
  * The dashboard onboarding guide, held per user on the server (POV-216). The store is an in-memory
@@ -64,7 +59,22 @@ function persist(patch: OnboardingPatch, onFailure?: () => void) {
  * silently once loaded — accounts without a guide never load, so nothing is sent for them); the other
  * actions are no-ops.
  */
-export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
+export const useOnboardingStore = create<OnboardingState>()((set, get) => {
+  /**
+   * Sends a partial update (the store is already updated). On failure the store unloads and keeps the
+   * unsent steps: the loader then reloads the saved state — so the display never drifts from it — and
+   * the steps are resent by `load`.
+   */
+  const persist = (patch: OnboardingPatch, steps: OnboardingStep[] = []) => {
+    patchQueue = patchQueue
+      .then(() => patchApiV1UsersMeOnboarding(patch))
+      .catch((error: unknown) => {
+        logger.warn('[Onboarding] Failed to save the guide state', { error: error as Error });
+        set({ loaded: false, earlySteps: [...new Set([...get().earlySteps, ...steps])] });
+      });
+  };
+
+  return {
   loaded: false,
   steps: { ...DEFAULT_STEPS },
   dismissed: false,
@@ -105,10 +115,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
 
     const patchSteps = Object.fromEntries(newlyCompleted.map((s) => [s, true]));
     set({ steps: { ...get().steps, ...patchSteps } });
-    // A lost step would stay ticked here but never reach the server — roll it back so a later mark resends it
-    persist({ steps: patchSteps }, () =>
-      set({ steps: { ...get().steps, ...Object.fromEntries(newlyCompleted.map((s) => [s, false])) } })
-    );
+    persist({ steps: patchSteps }, newlyCompleted);
     if (!silent) {
       useEventStore.getState().triggerNotificationSound('success');
     }
@@ -141,4 +148,5 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     set({ dismissed });
     persist({ dismissed });
   },
-}));
+  };
+});

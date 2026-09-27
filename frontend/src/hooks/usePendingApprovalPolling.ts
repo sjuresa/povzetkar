@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { getApiV1UsersMe } from '../api/generated/users/users';
-import { useAuthStore } from '../store/authStore';
 import type { AccountStatus, UserDTO } from '../api/generated/model';
 
 /** sessionStorage flag that survives the approval reload; read by {@link useApprovalNotice}. */
@@ -9,9 +8,10 @@ export const POLL_INTERVAL_MS = 60_000;
 
 /**
  * While the account awaits approval, re-checks its status every minute (visible tab only) and
- * immediately when the tab becomes visible again (POV-216). On approval the page reloads once, so the
- * query cache (demo content), the SSE stream and the onboarding guide all start fresh; a rejection or
- * disablement updates the banner in place. For every other status the hook does nothing.
+ * immediately when the tab becomes visible again (POV-216). Any status change reloads the page once, so
+ * the query cache (demo content the account may no longer see), the SSE stream and the onboarding guide
+ * all start fresh; only an approval sets the flag for the "approved" toast. For every other status the
+ * hook does nothing.
  *
  * Calls the generated client directly rather than `checkAuth`, which logs the UI out on any error;
  * failed checks are ignored (a 401 is handled by the API client's interceptor).
@@ -36,10 +36,8 @@ export function usePendingApprovalPolling(status: AccountStatus | undefined) {
           } catch {
             // storage unavailable — reload without the notice
           }
-          globalThis.location.reload();
-        } else {
-          useAuthStore.setState({ user });
         }
+        globalThis.location.reload();
       } catch {
         // transient failure — the next tick retries
       } finally {
