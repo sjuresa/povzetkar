@@ -278,16 +278,16 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v0.20: Production Edge & Test Debt
 
-**Goal:** Put the security controls on the real traffic path and pay the debt that is already due. *(Forecast — under the task-first model the actual scope is set per task and confirmed when the version is finalised.)*
-**Status:** 🗓️ Forecast
+**Goal:** Put the security controls on the real traffic path and pay the debt that is already due. *(Scope is set per task and confirmed when the version is finalised.)*
+**Status:** 🚧 In Progress
 
 ### Key Tasks & Implementation Steps:
 1.  **Production Edge:**
-    *   **Caddy on the Traffic Path**: route the Cloudflare tunnel through Caddy so security headers are actually delivered.
+    *   **Caddy on the Traffic Path** (POV-214): route the Cloudflare tunnel through Caddy so security headers are actually delivered.
 2.  **Dependency Debt:**
-    *   **orval ≥ 8.22**: the build-time API-client generator carries CRITICAL advisories.
+    *   **orval ≥ 8.22** (POV-215): the build-time API-client generator carries CRITICAL advisories.
 3.  **Test Debt:**
-    *   **Scheduler Integration Test**: real lock service and test DB for the `@Scheduled` path — TC-ING-006 turns CRITICAL in the planning audit at v0.20.
+    *   **Scheduler Integration Test** (POV-213): real lock service and test DB for the `@Scheduled` path — TC-ING-006 carries a `validate:skip until v0.21.0` until this task removes it.
 
 
 ## v1.0: RAG & Conversational Interface
@@ -358,6 +358,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.1     | 2026-09-27         | Povzetkar AI | Marked v0.20 as In Progress at version initialisation (POV-212); key tasks linked to POV-213, POV-214, POV-215. |
 | 4.0     | 2026-09-27         | Povzetkar AI | Marked v0.19.0 as ✅ Completed and rewrote its scope to actual delivery (Security Hardening, Process Maturity & Operations, POV-211); the unshipped forecast (DAST, Grafana alerting, full-text search, transcript providers, SMTP) moved to the backlog; added a minimal v0.20 forecast (Caddy on the traffic path, orval ≥ 8.22, scheduler integration test). |
 | 3.9     | 2026-07-03         | Povzetkar AI | Marked v0.19 as In Progress at version initialisation (POV-201).                                                                                                         |
 | 3.8     | 2026-06-26         | Povzetkar AI | Marked v0.18.0 as ✅ Completed and rewrote its scope to reflect actual task-first delivery (Transcript Ingestion Resilience & Scheduler Correctness, POV-191…200). The originally-planned hardening scope (DAST, Grafana alerting, full-text search, additional providers, SMTP) was carried forward to `v0.19: Hardening & Operational Excellence` as a forecast — under the task-first model the actual scope and version label are confirmed retrospectively. |

@@ -6,6 +6,16 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.20.0)
+
+> [!NOTE]
+> **The version bump moves the P0 automation deadline onto its own commit (POV-212)**:
+> CI audits against the version in `package.json`, so checklist 1.1 (`X.Y.0-SNAPSHOT`) makes every P0 test case due at X.Y CRITICAL on the bump commit — before any task of the version can automate it. TC-ING-006 needed a time-bound `validate:skip until v0.21.0`; enforcement then rests on the automating task's Fix version and checklist 3.1b. Check due P0 automations before the bump (backlog).
+
+> [!NOTE]
+> **Examples in normative documents are executed literally (POV-211, POV-212)**:
+> Checklist 4.3's example `git tag -a vX.Y.0` produced a wrong release tag. Treat every command example in a checklist or protocol as a specification and keep it exact.
+
 ## 🚀 Recent Highlights (v0.19.0)
 
 > [!WARNING]

@@ -95,7 +95,7 @@
 | **TC-ING-003** | **P0** | UC-14 | [v0.17] | Transcript Provider Fallback Chain | Integration | When primary transcript provider fails (timeout/quota/unavailable), orchestrator falls through to the next provider in the chain; metrics emitted per provider. |
 | **TC-ING-004** | **P1** | UC-14 | [v0.18] | Proxy Primary Transcript Path | Unit (`ProxyTranscriptProviderTest`) | `ProxyTranscriptProvider` is first in the chain; a 200 proxy response with segments is formatted via `TimeTextFormatter` and returned (POV-193/194). |
 | **TC-ING-005** | **P1** | UC-14 | [v0.18] | Proxy Failure Falls Back to Legacy Chain | Unit (`ProxyTranscriptProviderTest`) | Non-200 proxy responses (404/502/401) and transport failures raise `ProviderUnavailableException`, triggering orchestrator fall-through to `youtube-legacy`/`supadata` (POV-194/196). |
-| **TC-ING-006** | **P0** | UC-16 | [v0.18] | Scheduled Orchestration Trigger | Manual | Cron invocation runs on a worker thread without `BlockingOperationNotAllowedException`; fetches+summarizes yesterday and today, generates yesterday's briefings idempotently (POV-197). |
+| **TC-ING-006** | **P0** | UC-16 | [v0.18] | Scheduled Orchestration Trigger | Manual <!-- validate:skip until v0.21.0 — the scheduler test is POV-213, planned as the next v0.20 task; POV-213 removes this skip --> | Cron invocation runs on a worker thread without `BlockingOperationNotAllowedException`; fetches+summarizes yesterday and today, generates yesterday's briefings idempotently (POV-197). |
 | **TC-ING-007** | **P1** | UC-14, UC-16 | [v0.18] | Transcript Persisted Before Summarization | Integration (`TranscriptPersistenceTest`) | A fetched transcript is persisted to the `ContentItem` before the Gemini call, so a summarization failure cannot lose the transcript (POV-198). |
 
 ---
@@ -131,6 +131,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.10    | 2026-09-27 | Povzetkar AI | POV-212 (v0.20.0 initialisation): TC-ING-006 gets a time-bound `validate:skip until v0.21.0` — the P0 automation guardrail turns it CRITICAL at v0.20 and would block CI from the version bump on; the automation is POV-213, which removes the skip (PO decision). |
 | 2.9     | 2026-07-08 | Povzetkar AI | POV-205: added TC-SEC-007 (Read-Only API-Key Access, P0, automated via `ApiKeyAuthenticationTest`). |
 | 2.8     | 2026-07-06 | Povzetkar AI | POV-203 v0.18 drift backfill: added TC-ING-004/005/006/007, TC-MON-005, TC-SEC-006 (TC-ING-006 is P0 Manual without skip — enforces the scheduler-test carry-forward at v0.20). Honesty fixes: TC-ADM-004 automation → Manual/PW, stale cancel note → backlog reference; PW-014 restated. |
 | 2.7     | 2026-05-20 | Povzetkar AI | Added v0.17.0 test cases: TC-GRX-006, TC-LIB-006, TC-SEC-004/005, TC-ADM-003/004, TC-ING-003. Added PW-012…PW-015 to automation backlog. |
