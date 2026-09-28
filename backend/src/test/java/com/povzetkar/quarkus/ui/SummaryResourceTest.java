@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
-@TestSecurity(user = "summary_test_user", roles = "user")
+@TestSecurity(user = "summary_test_user", roles = { "user", "admin" })
 class SummaryResourceTest {
 
     private Summary testSummary;

@@ -31,9 +31,9 @@
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-TS-001** | **P1** | UC-1 | [v0.13] | Topic Creation | Manual/PW | Form validation works and topic is persisted properly. |
-| **TC-TS-002** | **P1** | UC-1 | [v0.13] | Source Attachment | Manual/PW | Sources are searchable and correctly linked to topics. |
+| **TC-TS-002** | **P1** | UC-1 | [v0.13] | Source Attachment | Integration (`TopicApiResourceTest`) + Unit (`TopicForm.test.tsx`) | Sources are searchable and correctly linked to topics; only sources visible to the user can be attached by ID (foreign ID → 404, topic unchanged), Quick Add entries are found or created on save, once per channel (POV-219). |
 | **TC-TS-003** | **P1** | UC-7 | [v0.15] | YouTube Real-time Validation | **Playwright** | Debounced input shows valid/invalid status before save. |
-| **TC-TS-004** | **P2** | UC-1 | [v0.14] | Search-Based Source Addition | Manual | Adding sources is done via search popover, not a bulk list. |
+| **TC-TS-004** | **P2** | UC-1 | [v0.14] | Search-Based Source Addition | Unit (`SourceSearchModal.test.tsx`) | Adding sources is done via search popover, not a bulk list; the popover opens at the search list after every close (X, selection, Quick Add) (POV-219). |
 | **TC-TS-005** | **P2** | UC-1 | [v0.14] | Advanced Prompt Settings | Manual | Prompt template selection is hidden under "Advanced" toggle. |
 
 ## 3. Domain: Export & Portability (EXP)
@@ -61,11 +61,12 @@
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-SEC-001** | **P0** | - | [v0.13] | Profile Visibility | Manual/PW | `/me` data matches the currently authenticated user. |
-| **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | **Playwright** | Admin sections (Sources) are blocked for generic users. |
+| **TC-SEC-002** | **P0** | - | [v0.11] | Role Protection | **Playwright** + Integration (`LegacyUiAccessTest`) | Admin sections are blocked for generic users: SPA `/admin/*` routes (PW-006) and, since POV-219, the legacy server-rendered UI `/ui/*`. The Sources page is not an admin section — it is user-scoped (TC-SEC-008). |
 | **TC-SEC-003** | **P0** | - | [v0.12] | Auth Guard Redirect | **Playwright** | Unauthenticated users visiting `/dashboard` are redirected to `/`. |
 | **TC-SEC-004** | **P0** | UC-12 | [v0.17] | Pending Approval Gating | **Playwright** | New user with `PENDING_APPROVAL` is blocked from protected endpoints; sees an informational status banner (no buttons) with a demo-exploration hint; the app re-checks the status automatically and reloads once on approval. |
 | **TC-SEC-005** | **P0** | UC-12 | [v0.17] | Approval State Transition | Integration | Admin can transition `PENDING_APPROVAL → ENABLED`/`DISABLED`; audit row written. Last-admin guard prevents self-demotion. |
 | **TC-SEC-006** | **P1** | - | [v0.18] | Demo Role Access Regression | Unit (`RolePermissionsMapTest`) | `demo` role includes `SOURCE_VIEW` (no 403 on Briefing Hub source filter / Sources page); Topics page mutation controls hidden in readonly mode (UI part Manual) (POV-192). |
+| **TC-SEC-008** | **P0** | UC-1, UC-7, UC-8, UC-17 | [v0.20] | Per-User Source and Content Scoping | Integration (`ContentVisibilityQueriesTest`, `ContentSourceResourceTest`, `SourceItemApiResourceTest`, `ContentItemApiResourceTest`, `TopicApiResourceTest`, `UserContextServiceContentScopeTest`) | A user sees only sources in their own topics (disabled included) and only items of those sources or with a summary in their briefings; admin sees all, an API key only the mapped user's. Foreign/unknown source or item → 404 on list filters, detail, items, summary, transcript, share, unshare and generate-summary, with no side effect; `POST /sources` is admin-only (POV-219). |
 | **TC-SEC-007** | **P0** | UC-17 | [v0.19] | Read-Only API-Key Access | Integration (`ApiKeyAuthenticationTest`) | Valid `X-API-Key` reads the mapped user's data (briefings, content items, summary, transcript, topics, sources, dashboard); wrong key → 401; any non-GET and admin paths → 403; header-less requests follow the unchanged OIDC flow (POV-205). |
 
 ## 6. Domain: General UX & Brand (UI)
@@ -131,6 +132,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.11    | 2026-09-28 | Povzetkar AI | POV-219: added TC-SEC-008 (Per-User Source and Content Scoping, P0, automated); TC-SEC-002 restated (admin sections incl. legacy `/ui/*`, Sources page is user-scoped) with `LegacyUiAccessTest`; TC-TS-002/004 automated and extended (visible sources only, Quick Add on save, popover reset). |
 | 2.10    | 2026-09-27 | Povzetkar AI | POV-212 (v0.20.0 initialisation): TC-ING-006 gets a time-bound `validate:skip until v0.21.0` — the P0 automation guardrail turns it CRITICAL at v0.20 and would block CI from the version bump on; the automation is POV-213, which removes the skip (PO decision). |
 | 2.9     | 2026-07-08 | Povzetkar AI | POV-205: added TC-SEC-007 (Read-Only API-Key Access, P0, automated via `ApiKeyAuthenticationTest`). |
 | 2.8     | 2026-07-06 | Povzetkar AI | POV-203 v0.18 drift backfill: added TC-ING-004/005/006/007, TC-MON-005, TC-SEC-006 (TC-ING-006 is P0 Manual without skip — enforces the scheduler-test carry-forward at v0.20). Honesty fixes: TC-ADM-004 automation → Manual/PW, stale cancel note → backlog reference; PW-014 restated. |

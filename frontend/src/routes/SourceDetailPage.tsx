@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from '@tanstack/react-router';
+import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 import { useGetApiV1SourcesId } from '../api/generated/content-sources/content-sources';
 import { 
   useGetApiV1SourcesIdItems, 
@@ -58,7 +60,18 @@ const getStatusSelectClasses = (status?: ProcessingStatus) => {
  * and a paginated list of its items.
  * Part of POV-148 implementation.
  */
+/**
+ * A source outside the user's topics answers 404 (POV-219) — an expected answer shown as "Source not found",
+ * not an error for the boundary and not worth a retry. Other errors keep the global behaviour.
+ */
+const isNotFound = (error: unknown) => isAxiosError(error) && error.response?.status === 404;
+const notFoundIsAnAnswer = {
+  throwOnError: (error: unknown) => !isNotFound(error),
+  retry: (failureCount: number, error: unknown) => !isNotFound(error) && failureCount < 1,
+};
+
 export function SourceDetailPage() {
+  const { t } = useTranslation();
   const { sourceId } = useParams({ strict: false });
   const id = typeof sourceId === 'string' ? parseInt(sourceId, 10) : 0;
   
@@ -66,8 +79,8 @@ export function SourceDetailPage() {
   const [size] = useState(20);
   const [summaryItemId, setSummaryItemId] = useState<number | null>(null);
 
-  const { data: sourceResponse, isLoading: isSourceLoading } = useGetApiV1SourcesId(id);
-  const { data: itemsResponse, isLoading: isItemsLoading } = useGetApiV1SourcesIdItems(id, { page, size });
+  const { data: sourceResponse, isLoading: isSourceLoading } = useGetApiV1SourcesId(id, { query: notFoundIsAnAnswer });
+  const { data: itemsResponse, isLoading: isItemsLoading } = useGetApiV1SourcesIdItems(id, { page, size }, { query: notFoundIsAnAnswer });
 
   const source = sourceResponse?.data;
   const items = (itemsResponse?.data?.items || []) as ContentItem[];
@@ -112,9 +125,9 @@ export function SourceDetailPage() {
         <div className="w-16 h-16 rounded-full bg-[var(--color-status-error)]/10 flex items-center justify-center text-[var(--color-status-error)]">
           <AlertCircle size={32}  strokeWidth={1.5}/>
         </div>
-        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Source not found</h2>
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{t('sources.detail.not_found')}</h2>
         <Link to="/sources" className="text-[var(--color-action-primary)] hover:underline flex items-center">
-          <ChevronLeft size={16} className="mr-1"  strokeWidth={1.5}/> Back to Library
+          <ChevronLeft size={16} className="mr-1"  strokeWidth={1.5}/> {t('sources.detail.back_to_library')}
         </Link>
       </div>
     );
@@ -129,7 +142,7 @@ export function SourceDetailPage() {
           className="group flex items-center text-xs font-bold uppercase tracking-widest text-[var(--color-text-secondary)] hover:text-[var(--color-action-primary)] transition-colors w-fit"
         >
           <ChevronLeft size={14} className="mr-1 group-hover:-translate-x-1 transition-transform"  strokeWidth={1.5}/>
-          Back to Library
+          {t('sources.detail.back_to_library')}
         </Link>
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

@@ -12,9 +12,13 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @Entity
@@ -74,6 +78,28 @@ public class Summary extends BaseAuditableEntity {
 
     public static Optional<Summary> findByContentIdWithAssociations(Long contentId) {
         return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = ?1", contentId).firstResultOptional();
+    }
+
+    /** Like {@link #findByContentIdWithAssociations}, but empty when the item is not visible in the scope (POV-219). */
+    public static Optional<Summary> findVisibleByContentIdWithAssociations(Long contentId, ContentScope scope) {
+        if (scope.isUnrestricted()) {
+            return findByContentIdWithAssociations(contentId);
+        }
+        return find("FROM Summary s LEFT JOIN FETCH s.contentItem ci LEFT JOIN FETCH ci.contentSource WHERE ci.id = :id and "
+                        + ContentItem.visibleToViewer("ci"),
+                Map.of("id", contentId, "viewer", scope.viewer()))
+                .firstResultOptional();
+    }
+
+    /** The ids among {@code contentItemIds} that have a summary. */
+    public static Set<Long> findContentItemIdsWithSummary(Collection<Long> contentItemIds) {
+        if (contentItemIds == null || contentItemIds.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(getEntityManager()
+                .createQuery("SELECT s.contentItem.id FROM Summary s WHERE s.contentItem.id IN :ids", Long.class)
+                .setParameter("ids", contentItemIds)
+                .getResultList());
     }
 
     /**

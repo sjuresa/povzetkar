@@ -43,8 +43,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Retrieves a paginated list of all content items, optionally filtered by sourceId, status, or topic.
- * @summary Get all content items
+ * Retrieves a paginated list of the content items visible to the caller (items of sources in the caller's topics or with a summary in the caller's briefings; all items for an admin), optionally filtered by sourceId, status, or topic. A sourceId or topicId outside the caller's scope is reported as not found.
+ * @summary Get content items
  */
 export type getApiV1ContentItemsResponse200 = {
   data: PaginatedResponse
@@ -154,7 +154,7 @@ export function useGetApiV1ContentItems<TData = Awaited<ReturnType<typeof getApi
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get all content items
+ * @summary Get content items
  */
 
 export function useGetApiV1ContentItems<TData = Awaited<ReturnType<typeof getApiV1ContentItems>>, TError = void>(
@@ -173,7 +173,7 @@ export function useGetApiV1ContentItems<TData = Awaited<ReturnType<typeof getApi
 
 
 /**
- * Retrieves a specific content item by its ID.
+ * Retrieves a specific content item by its ID. The item must be visible to the caller (its source is in one of the caller's topics, or its summary is in one of the caller's briefings; an admin sees all); otherwise not found.
  * @summary Get content item by ID
  */
 export type getApiV1ContentItemsIdResponse200 = {
@@ -301,7 +301,7 @@ export function useGetApiV1ContentItemsId<TData = Awaited<ReturnType<typeof getA
 
 
 /**
- * Force an individual content item to fetch transcript and generate a summary.
+ * Force an individual content item to fetch transcript and generate a summary. The item must be visible to the caller; otherwise not found.
  * @summary Generate summary for item
  */
 export type postApiV1ContentItemsIdCommandsGenerateSummaryResponse202 = {
@@ -615,7 +615,7 @@ export const usePostApiV1ContentItemsIdCommandsStatus = <TError = void,
       return useMutation(getPostApiV1ContentItemsIdCommandsStatusMutationOptions(options), queryClient);
     }
     /**
- * Retrieves the AI-generated summary for a specific content item.
+ * Retrieves the AI-generated summary for a specific content item. The item must be visible to the caller (its source is in one of the caller's topics, or its summary is in one of the caller's briefings; an admin sees all); otherwise not found.
  * @summary Get content item summary
  */
 export type getApiV1ContentItemsIdSummaryResponse200 = {
@@ -743,7 +743,7 @@ export function useGetApiV1ContentItemsIdSummary<TData = Awaited<ReturnType<type
 
 
 /**
- * Generates a public UUID for the summary of a specific content item.
+ * Generates a public UUID for the summary of a specific content item. The item must be visible to the caller; otherwise not found.
  * @summary Enable sharing for a summary
  */
 export type postApiV1ContentItemsIdSummaryShareResponse200 = {
@@ -842,7 +842,7 @@ export const usePostApiV1ContentItemsIdSummaryShare = <TError = void,
       return useMutation(getPostApiV1ContentItemsIdSummaryShareMutationOptions(options), queryClient);
     }
     /**
- * Removes the public UUID for the summary to disable unauthenticated access.
+ * Removes the public UUID for the summary to disable unauthenticated access. The item must be visible to the caller; otherwise not found.
  * @summary Disable sharing for a summary
  */
 export type postApiV1ContentItemsIdSummaryUnshareResponse204 = {
@@ -941,7 +941,7 @@ export const usePostApiV1ContentItemsIdSummaryUnshare = <TError = void,
       return useMutation(getPostApiV1ContentItemsIdSummaryUnshareMutationOptions(options), queryClient);
     }
     /**
- * Retrieves the raw transcript for a specific content item.
+ * Retrieves the raw transcript for a specific content item. The item must be visible to the caller (its source is in one of the caller's topics, or its summary is in one of the caller's briefings; an admin sees all); otherwise not found.
  * @summary Get content item transcript
  */
 export type getApiV1ContentItemsIdTranscriptResponse200 = {
@@ -1069,7 +1069,7 @@ export function useGetApiV1ContentItemsIdTranscript<TData = Awaited<ReturnType<t
 
 
 /**
- * Retrieves a paginated list of content items for a specific source.
+ * Retrieves a paginated list of the content items of a source visible to the caller; a source outside the caller's topics is reported as not found.
  * @summary Get items by source
  */
 export type getApiV1SourcesIdItemsResponse200 = {

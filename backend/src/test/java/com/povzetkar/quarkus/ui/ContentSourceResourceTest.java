@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
-@TestSecurity(user = "cs_resource_test_user", roles = "user")
+@TestSecurity(user = "cs_resource_test_user", roles = { "user", "admin" })
 class ContentSourceResourceTest {
 
     private Topic testTopic;
@@ -169,7 +169,7 @@ class ContentSourceResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "another_user")
+    @TestSecurity(user = "another_user", roles = "admin")
     void testAddContentSource_toAnotherUsersTopic_returns404() {
         QuarkusTransaction.requiringNew().run(() -> {
             // Create another user

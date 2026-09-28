@@ -33,7 +33,7 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     private static final Logger logger = LoggerFactory.getLogger(YouTubeDetailEnrichmentStrategy.class);
 
     private static final Pattern HANDLE_PATTERN = Pattern.compile("^@([a-zA-Z0-9._-]+)$");
-    private static final Pattern CHANNEL_ID_PATTERN = Pattern.compile("^UC[a-zA-Z0-9_-]{22}$");
+    public static final Pattern CHANNEL_ID_PATTERN = Pattern.compile("^UC[a-zA-Z0-9_-]{22}$");
     private static final Pattern URL_PATTERN = Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/(?:(@[a-zA-Z0-9._-]+)|(channel/|c/|user/)([a-zA-Z0-9._-]+))");
 
     private final YouTubeDataApiClient youtubeDataApiClient;
@@ -67,15 +67,6 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
                 "sourceTypeId = ?1 and (name is null or name = '' or description is null or description = '')", SourceTypeEnum.YOUTUBE.getId());
         logger.info("Found {} YouTube content sources to enrich.", sourcesToEnrich.size());
         enrichSources(sourcesToEnrich, "Successfully enriched content source: {} ({})", "Could not enrich content source with identifier: {}");
-    }
-
-    @Override
-    public void enrich(ContentSource source) {
-        fetchDetails(source.sourceIdentifier).ifPresent(details -> {
-            source.name = details.name();
-            source.description = details.description();
-            source.subscriberCount = details.subscriberCount();
-        });
     }
 
     @Override
@@ -129,7 +120,8 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         } catch (IOException e) {
             registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", MetricErrorType.IO_EXCEPTION)).increment();
             logger.error("Failed to fetch details for identifier: {}", resolved, e);
-            return Optional.empty();
+            // not Optional.empty(): the cache would keep answering "not found" for the whole expiry period
+            throw new SourceDetailsUnavailableException("YouTube channel check unavailable for: " + resolved, e);
         }
     }
 
@@ -221,6 +213,6 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
             subscriberCount = channel.getStatistics().getSubscriberCount().intValue();
         }
-        return new ContentSourceDetailService.ContentSourceDetails(name, description, subscriberCount);
+        return new ContentSourceDetailService.ContentSourceDetails(channel.getId(), name, description, subscriberCount);
     }
 }

@@ -11,19 +11,22 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ## 3. Use Case List
 
 ### UC-1: Manage Topic Sources
-**Actor**: Administrator
+**Actor**: User (Administrator)
 **Related Stories**: US-ING-001, US-UI-002
-**Context**: [topic-management.md](../features/topic-management.md)
-**Preconditions**: Administrator is logged in.
+**Context**: [topic-management.md](../features/topic-management.md), [POV-219 walkthrough](../versions/v0.20.0/POV-219-walkthrough.md)
+**Preconditions**: User is logged in.
 **Main Flow**:
-1. Administrator navigates to Topic Management and selects a Topic for Editing.
+1. User navigates to Topic Management and selects a Topic for Editing.
 2. System displays *only* the sources currently associated with this topic.
-3. Administrator removes a source from the topic.
-4. Administrator clicks "Add Source".
-5. System displays a search-enabled popover of the global Source Library.
-6. Administrator filters/searches and selects one or more new sources.
-7. Administrator saves the Topic.
-**Postconditions**: Topic is updated with the new source configuration.
+3. User removes a source from the topic.
+4. User clicks "Add Source".
+5. System displays a search-enabled popover of the sources in the user's own topics (all sources for an administrator).
+6. User filters/searches and selects one or more sources, or registers a new one via Quick Add (UC-7).
+7. User saves the Topic; sources entered in Quick Add are found or created at this point.
+**Alternate Flows**:
+- A source ID outside the user's topics (e.g. guessed through the API) → 404, the topic is left unchanged.
+- The "Add Source" popover opens at the search list every time, however it was closed.
+**Postconditions**: Topic is updated with the new source configuration. A source removed from every topic of the user is no longer visible to the user; items of it that are in the user's briefings stay accessible (POV-219).
 
 ### UC-2: Trigger Manual Orchestration (Configurable)
 **Actor**: Administrator
@@ -90,16 +93,20 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Postconditions**: User has a local copy of the briefing.
 
 ### UC-7: Real-time Source Validation
-**Actor**: Administrator
+**Actor**: User (Administrator)
 **Related Stories**: US-ING-001, US-UI-002
-**Context**: [frontend-specification.md](frontend-specification.md)
-**Preconditions**: Administrator is on the "Add Source" dialog.
+**Context**: [frontend-specification.md](frontend-specification.md), [POV-219 walkthrough](../versions/v0.20.0/POV-219-walkthrough.md)
+**Preconditions**: User is in Quick Add of the "Add Source" dialog.
 **Main Flow**:
-1. Administrator enters a YouTube URL/ID.
+1. User enters a YouTube @handle, channel URL or channel ID (Blog is shown but disabled — not supported yet).
 2. System (debounced) triggers a backend existence check.
 3. System displays a visual indicator (Green/Red check) and the channel name if found.
-4. Administrator saves the source.
-**Postconditions**: Source is added with high confidence in its validity.
+4. User adds the channel — possible only once it was found — and saves the topic (UC-1).
+5. System resolves the input to the channel ID and finds or creates the source under it.
+**Alternate Flows**:
+- Channel not found or the check unavailable → "Add" stays disabled.
+- An unknown channel or an unsupported platform reaching the API → 400, nothing is created.
+**Postconditions**: Source exists once per channel, stored under its channel ID, so ingestion can fetch it.
 
 ### UC-8: Share Individual Summary
 **Actor**: User/Administrator
@@ -112,6 +119,8 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 3. System generates a unique public UUID for the summary.
 4. User/Administrator copies the public link to the clipboard.
 5. External viewer accesses the link without authentication.
+**Alternate Flows**:
+- The summary's item is not visible to the user (its source is in none of the user's topics and the summary is in none of the user's briefings) → 404; the summary's sharing state is unchanged (POV-219).
 **Postconditions**: Individual summary is visible to the public until unshared.
 
 ### UC-9: Complete Onboarding Checklist
@@ -229,7 +238,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Main Flow**:
 1. The agent sends a GET request with the `X-API-Key` header.
 2. `ApiKeyAuthenticationMechanism` validates the key (constant-time) and establishes an identity for the mapped user with the synthetic `api-readonly` role (four VIEW permissions).
-3. The resource returns the same user-scoped data the mapped user would see in the browser (briefings, summaries, content items incl. `GET /api/v1/content-items/{id}/transcript`, topics, sources, dashboard).
+3. The resource returns the same user-scoped data the mapped user would see in the browser (briefings, summaries, content items incl. `GET /api/v1/content-items/{id}/transcript`, topics, sources, dashboard). Sources and content items are limited to the mapped user's topics and briefings — also when the mapped user is an administrator (POV-219).
 **Alternate Flows**:
 - Wrong or unconfigured key → 401 (no login redirect for API-key attempts).
 - Any non-GET request with a valid key → 403 (`ApiKeyReadOnlyPolicy`).
@@ -241,6 +250,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
 | 1.6     | 2026-07-08 | Povzetkar AI | POV-205: added Automation Agent actor and UC-17 (Programmatic Read-Only API Access, US-API-001). |
+| 1.7     | 2026-09-28 | Povzetkar AI | POV-219: sources and content items scoped to the user's topics — UC-1 (user actor, Quick Add on save, foreign source 404), UC-7 (handle/URL normalized to the channel ID, add only when found, Blog disabled), UC-8 (invisible item 404), UC-17 (API key scoped to the mapped user). |
 | 1.5     | 2026-07-06 | Povzetkar AI | POV-203: UC-14 updated (proxy-primary chain, US-ING-004); added UC-16 (Scheduled Orchestration); UC-13 cancel note → backlog. |
 | 1.4     | 2026-05-20 | Povzetkar AI | Added UC-11 (Admin User Mgmt), UC-12 (User Approval), UC-13 (Job Ops), UC-14 (Transcript Fallback), UC-15 (External Links) for v0.17.0. |
 | 1.3     | April 01, 2026 | Povzetkar AI | Added UC-8, UC-9, UC-10 for v0.16.0 (User Experience Focus). |
