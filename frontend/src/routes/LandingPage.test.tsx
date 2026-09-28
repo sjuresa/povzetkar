@@ -17,6 +17,11 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }));
 
+// Helmet needs a provider; render its children directly — React 19 hoists <title>/<meta> into document.head.
+vi.mock('react-helmet-async', () => ({
+  Helmet: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 const mockLogin = vi.fn();
 
 function renderAs(isAuthenticated: boolean) {
@@ -96,5 +101,28 @@ describe('LandingPage', () => {
     expect(screen.getByText('landing.footer.version_info')).toBeInTheDocument();
     expect(screen.queryByText('system.tabs.roadmap')).toBeNull();
     expect(screen.queryByText('system.tabs.changelog')).toBeNull();
+  });
+
+  it('localizes the document title and updates the static meta tags in place', () => {
+    // index.html ships English defaults; the page must update them, not add a second set.
+    const description = Object.assign(document.createElement('meta'), { name: 'description', content: 'EN description' });
+    const ogTitle = Object.assign(document.createElement('meta'), { content: 'EN title' });
+    ogTitle.setAttribute('property', 'og:title');
+    const ogDescription = Object.assign(document.createElement('meta'), { content: 'EN description' });
+    ogDescription.setAttribute('property', 'og:description');
+    document.head.append(description, ogTitle, ogDescription);
+
+    const { unmount } = renderAs(false);
+
+    expect(document.head.querySelector('title')).toHaveTextContent('landing.meta.title');
+    expect(document.head.querySelectorAll('meta[name="description"]')).toHaveLength(1);
+    expect(description.content).toBe('landing.meta.description');
+    expect(ogTitle.content).toBe('landing.meta.title');
+    expect(ogDescription.content).toBe('landing.meta.description');
+
+    unmount();
+    expect(description.content).toBe('EN description');
+    expect(ogTitle.content).toBe('EN title');
+    [description, ogTitle, ogDescription].forEach((tag) => tag.remove());
   });
 });

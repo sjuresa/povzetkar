@@ -35,6 +35,16 @@ are a copy of the project ones — should be more marketing")
   glitch in the matrix" after ~6 s, pre-existing) — `useSystemMetadata` accepts `throwOnError`, the landing passes
   `false`.
 
+**PR #287 review (Greptile, 4× P2) and review round 3**
+- Copy no longer promises one briefing across topics: *How it works* step 3 — "a briefing for each topic: the day's
+  essentials first, then a summary of every video"; benefit 2 — "daily briefings"; EN meta "short daily briefings".
+- Closing call to action invites to early access ("Join early access") instead of promising a waiting briefing.
+- FAQ "What data do we store?" also names the topics, sources and briefings a user creates.
+- SL visitors get a Slovenian `<title>` (`Helmet`, `landing.meta.title`); the description and `og:` tags from
+  `index.html` are updated in place (`useLocalizedHeadMeta`) and restored on unmount — emitting new tags would have
+  left the English ones first in `<head>` (found in review round 3).
+- PO: SL "povzetek za vodstvo" → **"bistvo dneva"** (sample briefing, briefing page, onboarding, pending banner, glossary).
+
 **Shared header and modal**
 - `components/layout/PublicHeader.tsx` — one header for the landing page and both public share views
   (`PublicBriefingView`, `PublicSummaryView`), reusing `LanguageSwitcher` / `ThemeToggle` instead of three inline

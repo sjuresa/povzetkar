@@ -351,6 +351,10 @@
     }
   },
   "landing": {
+    "meta": {
+      "title": "Povzetkar | Dnevni pregledi tvojih YouTube kanalov",
+      "description": "Povzetkar vsak dan strne nove videe s kanalov, ki jim slediš, v kratke preglede. Zgodnji dostop."
+    },
     "nav": {
       "sign_in": "Prijava"
     },
@@ -366,7 +370,7 @@
       "b1_title": "Ure videov, minute branja",
       "b1_desc": "Namesto celih videov prebereš, kar je v njih pomembno.",
       "b2_title": "Vsak dan pripravljeno",
-      "b2_desc": "Nove objave se samodejno zberejo v tvoj dnevni pregled.",
+      "b2_desc": "Nove objave se samodejno zberejo v tvoje dnevne preglede.",
       "b3_title": "Samo tvoji kanali",
       "b3_desc": "Noben algoritem ne izbira namesto tebe — spremljaš, kar izbereš sam."
     },
@@ -375,7 +379,7 @@
       "aria": "Primer dnevnega pregleda",
       "title": "Dnevni pregled: Tehnologija",
       "meta": "3 kanali · 3 videi · 3 min branja",
-      "exec_label": "Povzetek za vodstvo",
+      "exec_label": "Bistvo dneva",
       "exec_text": "Dva kanala sta danes testirala manjše jezikovne modele na domačem računalniku: pri vsakdanjih opravilih dohitevajo velike modele, pri daljših besedilih še zaostajajo. Tretji video pojasni, kako posodobiti domači usmerjevalnik.",
       "item1_channel": "Tihi procesor",
       "item1_title": "Lokalni AI modeli na starem prenosniku",
@@ -394,14 +398,14 @@
       "step2_title": "Povzetkar jih spremlja",
       "step2_desc": "Za vsak nov video pridobi prepis in ga strne v nekaj odstavkov.",
       "step3_title": "Beri bistvo",
-      "step3_desc": "Vsak dan dobiš en pregled s povzetkom za vodstvo na vrhu."
+      "step3_desc": "Vsak dan dobiš pregled za vsako temo: najprej bistvo dneva, nato povzetek vsakega videa."
     },
     "faq": {
       "title": "Pogosta vprašanja",
       "q1": "Kaj se zgodi, ko se prijavim?",
       "a1": "Prijaviš se z Google računom. Ker je Povzetkar v zgodnjem dostopu, tvoj račun nato počaka na ročno odobritev. Medtem si lahko ogledaš demo teme in preglede.",
       "q2": "Katere podatke shranimo?",
-      "a2": "Ime, kot je zapisano v tvojem Google računu, e-poštni naslov in identifikator računa ter čas zadnje prijave. Za varnost strežnik vodi tudi tehnične dnevnike dostopa z IP-naslovi.",
+      "a2": "Ime, kot je zapisano v tvojem Google računu, e-poštni naslov in identifikator računa ter čas zadnje prijave. Za varnost strežnik vodi tudi tehnične dnevnike dostopa z IP-naslovi. Shranimo tudi teme, vire in preglede, ki jih ustvariš v aplikaciji.",
       "q3": "Katere vire Povzetkar podpira?",
       "a3": "Javne YouTube kanale — kmalu še več."
     },
@@ -417,8 +421,8 @@
       "item3_desc": "Opazi, katere teme se krepijo, preden postanejo glavna novica."
     },
     "final": {
-      "title": "Tvoj prvi dnevni pregled te čaka.",
-      "subtitle": "Prijava traja nekaj sekund."
+      "title": "Pridruži se zgodnjemu dostopu.",
+      "subtitle": "Prijava traja nekaj sekund — demo vsebino vidiš takoj."
     },
     "footer": {
       "mission": "Bistvo tvojih YouTube kanalov, vsak dan.",
@@ -566,7 +570,7 @@
   "briefingDetail": {
     "backToLibrary": "Nazaj v knjižnico",
     "title": "Dnevni pregled za {{topic}}, {{date}}",
-    "executiveSummary": "Povzetek za vodstvo",
+    "executiveSummary": "Bistvo dneva",
     "fullBriefing": "Podrobni povzetki",
     "sourceItems": "Izvorni material",
     "sourcesCount": "{{count}} analiziranih virov",
@@ -650,7 +654,7 @@
         "how1": "Odpri \"Knjižnica pregledov\" v stranski vrstici.",
         "how2": "Poišči svoj zadnji dnevni pregled.",
         "how3": "Klikni pregled, da odpreš celotno vsebino.",
-        "how4": "Preberi povzetek za vodstvo in povzetke posameznih videov."
+        "how4": "Preberi bistvo dneva in povzetke posameznih videov."
       },
       "share": {
         "title": "Deli svoja spoznanja",
@@ -672,7 +676,7 @@
         "topicsLink": "Teme",
         "topics": "poglej, kako demo tema združuje YouTube kanale.",
         "briefingsLink": "Knjižnica pregledov",
-        "briefings": "odpri dnevni pregled. Začne se s povzetkom za vodstvo iz vseh virov, sledi seznam analiziranih vsebin, na koncu pa podroben povzetek vsake vsebine — s \"Poglej povzetek\" skočiš nanj.",
+        "briefings": "odpri dnevni pregled. Začne se z bistvom dneva iz vseh virov, sledi seznam analiziranih vsebin, na koncu pa podroben povzetek vsake vsebine — s \"Poglej povzetek\" skočiš nanj.",
         "outro": "Po odobritvi boš ustvaril svoje teme, skozi prve korake pa te bo vodil vodnik."
       }
     },

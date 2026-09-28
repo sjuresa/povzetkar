@@ -7,9 +7,9 @@ which unified the Slovenian UI. The SL glossary term for a briefing is guarded b
 
 | Concept | SL | EN | Notes |
 | :-- | :-- | :-- | :-- |
-| Daily aggregate of a topic's summaries | **dnevni pregled** (short: pregled) | **daily briefing** (short: briefing) | Always qualified in SL labels ("Knjižnica pregledov", "Dnevni pregled za …") — bare "pregled" also means *inspection*. Never "poročilo" or "briefing" in SL. |
+| Daily aggregate of a topic's summaries | **dnevni pregled** (short: pregled) | **daily briefing** (short: briefing) | One per topic and day — copy must not promise a single briefing across topics. Always qualified in SL labels ("Knjižnica pregledov", "Dnevni pregled za …") — bare "pregled" also means *inspection*. Never "poročilo" or "briefing" in SL. |
 | Summary of a single video | **povzetek** | **summary** | Never used for a briefing. |
-| Opening part of a briefing | **povzetek za vodstvo** | **executive summary** | |
+| Opening part of a briefing (summary across all its videos) | **bistvo dneva** | **executive summary** | "Povzetek za vodstvo" was replaced (PR #287 review, PO): it sounded unnatural and a briefing is more than that summary. |
 | Group of sources with a prompt | **tema** | **topic** | |
 | YouTube channel added to a topic | **vir** / YouTube kanal | **source** / YouTube channel | Only YouTube is accepted; do not promise RSS or blogs. |
 | Briefing archive page | **Knjižnica pregledov** | **Briefing Library** | Same label in the sidebar, page title and onboarding. |

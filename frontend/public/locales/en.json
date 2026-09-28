@@ -345,6 +345,10 @@
     }
   },
   "landing": {
+    "meta": {
+      "title": "Povzetkar | Daily briefings from your YouTube channels",
+      "description": "Povzetkar condenses new videos from the YouTube channels you follow into short daily briefings. Early access."
+    },
     "nav": {
       "sign_in": "Sign in"
     },
@@ -360,7 +364,7 @@
       "b1_title": "Hours of video, minutes of reading",
       "b1_desc": "Read what matters instead of watching every video.",
       "b2_title": "Ready every day",
-      "b2_desc": "New uploads land in your daily briefing automatically.",
+      "b2_desc": "New uploads land in your daily briefings automatically.",
       "b3_title": "Only your channels",
       "b3_desc": "No algorithm picks for you — you follow what you choose."
     },
@@ -388,14 +392,14 @@
       "step2_title": "Povzetkar keeps watch",
       "step2_desc": "For every new video it fetches the transcript and condenses it into a few paragraphs.",
       "step3_title": "Read the essentials",
-      "step3_desc": "Every day you get one briefing, with an executive summary on top."
+      "step3_desc": "Every day you get a briefing for each topic: the day's essentials first, then a summary of every video."
     },
     "faq": {
       "title": "Frequently asked questions",
       "q1": "What happens when I sign in?",
       "a1": "You sign in with your Google account. Because Povzetkar is in early access, your account then waits for manual approval. Meanwhile you can explore demo topics and briefings.",
       "q2": "What data do we store?",
-      "a2": "Your name as set in your Google account, your e-mail address and account ID, plus your last sign-in time. For security the server also keeps technical access logs with IP addresses.",
+      "a2": "Your name as set in your Google account, your e-mail address and account ID, plus your last sign-in time. For security the server also keeps technical access logs with IP addresses. We also store the topics, sources and briefings you create in the app.",
       "q3": "Which sources does Povzetkar support?",
       "a3": "Public YouTube channels — more coming soon."
     },
@@ -411,8 +415,8 @@
       "item3_desc": "Spot the themes gaining momentum before they make the headlines."
     },
     "final": {
-      "title": "Your first daily briefing is waiting.",
-      "subtitle": "Signing in takes a few seconds."
+      "title": "Join early access.",
+      "subtitle": "Signing in takes a few seconds — the demo content is there right away."
     },
     "footer": {
       "mission": "The essentials of your YouTube channels, every day.",
