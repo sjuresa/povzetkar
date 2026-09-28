@@ -5,6 +5,8 @@ import com.povzetkar.quarkus.api.exception.BusinessRuleException;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -40,6 +42,9 @@ class ContentSourceServiceTest {
     @InjectMock
     Session session;
 
+    @Inject
+    MeterRegistry meterRegistry;
+
     @BeforeEach
     void setUp() {
         PanacheMock.mock(ContentSource.class);
@@ -61,15 +66,50 @@ class ContentSourceServiceTest {
     }
 
     @Test
-    void aSourceStoredUnderTheEnteredIdentifierIsReturnedWithoutAskingThePlatform() {
-        ContentSource legacy = ContentSourceBuilder.aContentSource().withId(80L).withSourceIdentifier("@legacy").build();
-        when(ContentSource.findByIdentifier("@legacy", YOUTUBE)).thenReturn(Optional.of(legacy));
+    void aStoredChannelIdIsReturnedWithoutAskingThePlatform() {
+        ContentSource stored = ContentSourceBuilder.aContentSource().withId(74L).withSourceIdentifier(CHANNEL_ID).build();
+        when(ContentSource.findByIdentifier(CHANNEL_ID, YOUTUBE)).thenReturn(Optional.of(stored));
 
-        ContentSourceService.Result result = service.findOrCreate(new ContentSourceCreateDTO("YOUTUBE", " @legacy ", null));
+        ContentSourceService.Result result = service.findOrCreate(new ContentSourceCreateDTO("YOUTUBE", " " + CHANNEL_ID + " ", null));
+
+        assertSame(stored, result.source());
+        assertFalse(result.created());
+        verifyNoInteractions(contentSourceDetailService);
+    }
+
+    @Test
+    void aLegacyRowStoredAsTypedIsNormalizedToTheChannelIdInsteadOfDuplicated() {
+        givenChannel("@veritasium", "Veritasium");
+        ContentSource legacy = ContentSourceBuilder.aContentSource().withId(72L).withSourceIdentifier("@veritasium").build();
+        when(ContentSource.findByIdentifier("@veritasium", YOUTUBE)).thenReturn(Optional.of(legacy));
+
+        ContentSourceService.Result result = service.findOrCreate(new ContentSourceCreateDTO("YOUTUBE", "@veritasium", null));
 
         assertSame(legacy, result.source());
         assertFalse(result.created());
-        verifyNoInteractions(contentSourceDetailService);
+        assertEquals(CHANNEL_ID, legacy.sourceIdentifier, "ingestion reads the identifier as a channel ID");
+        verify(session, never()).persist(any());
+    }
+
+    @Test
+    void onlyCommittedCreationsAreCounted() {
+        givenChannel("@counted", "Counted");
+        double before = addedCount();
+
+        service.findOrCreate(new ContentSourceCreateDTO("YOUTUBE", "@counted", null));
+        assertEquals(before + 1, addedCount());
+
+        // a later Quick Add entry fails and the topic transaction rolls back: the creation did not happen
+        assertThrows(io.quarkus.narayana.jta.QuarkusTransactionException.class, () ->
+                QuarkusTransaction.requiringNew().run(() -> {
+                    service.findOrCreate(new ContentSourceCreateDTO("YOUTUBE", "@counted", null));
+                    QuarkusTransaction.setRollbackOnly();
+                }));
+        assertEquals(before + 1, addedCount());
+    }
+
+    private double addedCount() {
+        return meterRegistry.counter("povzetkar_source_added_total", "platform", "YOUTUBE").count();
     }
 
     @Test

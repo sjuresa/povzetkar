@@ -7,6 +7,9 @@ import com.povzetkar.quarkus.model.SourceTypeEnum;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
@@ -27,10 +30,13 @@ public class ContentSourceService {
 
     private final ContentSourceDetailService contentSourceDetailService;
     private final MeterRegistry registry;
+    private final TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 
-    public ContentSourceService(ContentSourceDetailService contentSourceDetailService, MeterRegistry registry) {
+    public ContentSourceService(ContentSourceDetailService contentSourceDetailService, MeterRegistry registry,
+                                TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
         this.contentSourceDetailService = contentSourceDetailService;
         this.registry = registry;
+        this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
     }
 
     /** The source and whether this call created it. */
@@ -40,10 +46,11 @@ public class ContentSourceService {
     /**
      * Finds the source for the given platform identifier or creates it.
      * <p>
-     * A source already stored under the entered identifier (a channel ID, or a legacy row stored as typed) is
-     * returned without asking the platform. Otherwise the identifier (handle, URL or channel ID) is resolved on
-     * the platform and the source is looked up and stored under the canonical channel ID — ingestion reads the
-     * identifier as a channel ID, and one channel must not exist under several identifiers. Runs in the
+     * An entered channel ID that is already stored is returned without asking the platform. Otherwise the
+     * identifier (handle, URL or channel ID) is resolved on the platform and the source is looked up and stored
+     * under the canonical channel ID — ingestion reads the identifier as a channel ID, and one channel must not
+     * exist under several identifiers. A legacy row stored under the entered text (handle/URL) is normalized to
+     * the channel ID instead of being duplicated (PR #286 review). The counter counts committed creations. Runs in the
      * caller's transaction; a concurrent insert of the same new channel is not recovered from (POV-219 plan
      * P2/P4a): the unique constraint rejects the second request with an error, and repeating it finds the row.
      *
@@ -55,18 +62,30 @@ public class ContentSourceService {
         SourceTypeEnum sourceType = supportedSourceType(dto.platform());
         String identifier = dto.sourceIdentifier().trim();
 
-        var stored = ContentSource.findByIdentifier(identifier, sourceType.getId());
-        if (stored.isPresent()) {
-            return new Result(stored.get(), false);
+        if (YouTubeDetailEnrichmentStrategy.CHANNEL_ID_PATTERN.matcher(identifier).matches()) {
+            Optional<ContentSource> stored = ContentSource.findByIdentifier(identifier, sourceType.getId());
+            if (stored.isPresent()) {
+                return new Result(stored.get(), false);
+            }
         }
 
         ContentSourceDetailService.ContentSourceDetails details = fetchDetails(sourceType, identifier)
                 .orElseThrow(() -> new BusinessRuleException(Response.Status.BAD_REQUEST, "SOURCE_NOT_FOUND",
                         "No " + sourceType + " channel found for: " + identifier));
 
-        return ContentSource.findByIdentifier(details.channelId(), sourceType.getId())
-                .map(existing -> new Result(existing, false))
-                .orElseGet(() -> new Result(create(sourceType, details, dto.name()), true));
+        Optional<ContentSource> existing = ContentSource.findByIdentifier(details.channelId(), sourceType.getId());
+        if (existing.isPresent()) {
+            return new Result(existing.get(), false);
+        }
+        Optional<ContentSource> legacy = identifier.equals(details.channelId())
+                ? Optional.empty() : ContentSource.findByIdentifier(identifier, sourceType.getId());
+        if (legacy.isPresent()) {
+            ContentSource source = legacy.get();
+            logger.info("Normalizing ContentSource {} identifier '{}' to channel ID {}", source.id, source.sourceIdentifier, details.channelId());
+            source.sourceIdentifier = details.channelId();
+            return new Result(source, false);
+        }
+        return new Result(create(sourceType, details, dto.name()), true);
     }
 
     private Optional<ContentSourceDetailService.ContentSourceDetails> fetchDetails(SourceTypeEnum sourceType, String identifier) {
@@ -90,9 +109,26 @@ public class ContentSourceService {
         source.subscriberCount = details.subscriberCount();
         source.persist();
 
-        registry.counter("povzetkar_source_added_total", Tags.of("platform", sourceType.name())).increment();
+        countWhenCommitted(sourceType);
         logger.info("Created new ContentSource: {} [{}] (id: {})", source.name, source.sourceIdentifier, source.id);
         return source;
+    }
+
+    /** A creation rolled back with its topic (e.g. a later Quick Add entry fails) must not be counted. */
+    private void countWhenCommitted(SourceTypeEnum sourceType) {
+        transactionSynchronizationRegistry.registerInterposedSynchronization(new Synchronization() {
+            @Override
+            public void beforeCompletion() {
+                // nothing to do before the commit
+            }
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status == Status.STATUS_COMMITTED) {
+                    registry.counter("povzetkar_source_added_total", Tags.of("platform", sourceType.name())).increment();
+                }
+            }
+        });
     }
 
     private static SourceTypeEnum supportedSourceType(String platform) {

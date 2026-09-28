@@ -23,10 +23,15 @@ vi.mock('../../store/onboardingStore', () => ({
   useOnboardingStore: { getState: () => ({ markStepComplete }) },
 }));
 
-const EXISTING: SelectedSource = { key: 'id:1', id: 1, name: 'Existing Channel', platform: 'YOUTUBE' };
+const EXISTING: SelectedSource = { key: 'id:1', id: 1, name: 'Existing Channel', platform: 'YOUTUBE', identifier: 'UC1' };
 const DRAFT: SelectedSource = {
-  key: 'new:YOUTUBE:@new', name: 'New Channel', platform: 'YOUTUBE',
-  draft: { platform: 'YOUTUBE', sourceIdentifier: '@new', name: 'New Channel' },
+  key: 'new:YOUTUBE:UC2', name: 'New Channel', platform: 'YOUTUBE', identifier: 'UC2',
+  draft: { platform: 'YOUTUBE', sourceIdentifier: 'UC2', name: 'New Channel' },
+};
+// the existing channel entered again through Quick Add (the check resolved it to the same channel ID)
+const SAME_AS_EXISTING: SelectedSource = {
+  key: 'new:YOUTUBE:UC1', name: 'Existing Channel', platform: 'YOUTUBE', identifier: 'UC1',
+  draft: { platform: 'YOUTUBE', sourceIdentifier: 'UC1', name: 'Existing Channel' },
 };
 
 // The modal is replaced by buttons that pick a source, as the real modal does through onSelect
@@ -36,6 +41,7 @@ vi.mock('../../components/topics/SourceSearchModal', () => ({
       <div>
         <button onClick={() => onSelect(EXISTING)}>pick-existing</button>
         <button onClick={() => onSelect(DRAFT)}>pick-draft</button>
+        <button onClick={() => onSelect(SAME_AS_EXISTING)}>pick-same-channel</button>
       </div>
     ) : null,
 }));
@@ -49,7 +55,7 @@ function givenMutations({ patchPending = false } = {}) {
   vi.mocked(useGetApiV1TopicsDefaultPromptTemplate).mockReturnValue({ data: undefined } as unknown as ReturnType<typeof useGetApiV1TopicsDefaultPromptTemplate>);
 }
 
-function pick(which: 'pick-existing' | 'pick-draft') {
+function pick(which: 'pick-existing' | 'pick-draft' | 'pick-same-channel') {
   fireEvent.click(screen.getByText('topics.form.add_source_button'));
   fireEvent.click(screen.getByText(which));
 }
@@ -99,6 +105,14 @@ describe('TopicForm', () => {
 
     fireEvent.click(screen.getByTitle('Remove source'));
     expect(screen.queryByText('New Channel')).not.toBeInTheDocument();
+  });
+
+  it('does not list a channel twice when it is entered again through Quick Add', () => {
+    render(<TopicForm onSuccess={vi.fn()} onCancel={vi.fn()} />);
+    pick('pick-existing');
+    pick('pick-same-channel');
+
+    expect(screen.getAllByText('Existing Channel')).toHaveLength(1);
   });
 
   it('keeps the entered sources when saving fails', async () => {

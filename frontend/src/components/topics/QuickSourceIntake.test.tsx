@@ -49,7 +49,8 @@ describe('QuickSourceIntake', () => {
     expect(addButton).toBeEnabled();
     fireEvent.click(addButton);
 
-    expect(onSuccess).toHaveBeenCalledWith({ platform: 'YOUTUBE', sourceIdentifier: '@veritasium', name: 'Veritasium' });
+    // the channel ID the check resolved, not the typed handle
+    expect(onSuccess).toHaveBeenCalledWith({ platform: 'YOUTUBE', sourceIdentifier: 'UC123', name: 'Veritasium' });
   });
 
   it.each<Validation>(['validating', 'notFound', 'unavailable'])('cannot add while the channel is %s', (state) => {
@@ -80,6 +81,16 @@ describe('QuickSourceIntake', () => {
     fireEvent.change(screen.getByLabelText('topics.form.quick_add.identifier_label'), { target: { value: '@ve' } });
 
     expect(addButton).toBeDisabled();
+  });
+
+  it('checks a channel URL as one encoded path segment', () => {
+    givenValidation('valid');
+    render(<QuickSourceIntake onSuccess={vi.fn()} onCancel={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('topics.form.quick_add.identifier_label'), { target: { value: ' https://www.youtube.com/@veritasium ' } });
+
+    expect(vi.mocked(useGetApiV1SourcesDetailsSourceTypeIdIdentifier)).toHaveBeenLastCalledWith(
+      1, 'https%3A%2F%2Fwww.youtube.com%2F%40veritasium', expect.anything());
   });
 
   it('offers Blog but keeps it disabled — it is not supported yet', () => {

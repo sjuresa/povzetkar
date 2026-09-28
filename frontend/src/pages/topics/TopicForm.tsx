@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { SourceSearchModal } from '../../components/topics/SourceSearchModal';
-import { fromExistingSource, toTopicSources, type SelectedSource } from '../../components/topics/selectedSource';
+import { fromExistingSource, isAlreadySelected, toTopicSources, type SelectedSource } from '../../components/topics/selectedSource';
 import { useOnboardingStore, type OnboardingStep } from '../../store/onboardingStore';
 
 const topicSchema = z.object({
@@ -146,7 +146,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
   };
 
   const handleAddSource = (source: SelectedSource) => {
-    if (!selectedSources.some(s => s.key === source.key)) {
+    if (!isAlreadySelected(selectedSources, source)) {
       updateSelection([...selectedSources, source]);
     }
     setIsSearchModalOpen(false);

@@ -43,7 +43,8 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
     error: validationApiError
   } = useGetApiV1SourcesDetailsSourceTypeIdIdentifier(
     platform === 'YOUTUBE' ? SOURCE_TYPE_YOUTUBE : SOURCE_TYPE_BLOG,
-    debouncedIdentifier,
+    // one path segment: a channel URL contains slashes (the generated client does not encode path params)
+    encodeURIComponent(debouncedIdentifier.trim()),
     {
       query: {
         enabled: platform === 'YOUTUBE' && debouncedIdentifier.trim().length > 3,
@@ -105,9 +106,10 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
       return;
     }
 
+    // Send the channel ID the check resolved: the form can spot a channel it already lists, and saving needs no lookup
     onSuccess({
       platform,
-      sourceIdentifier: identifier.trim(),
+      sourceIdentifier: detailsResponse?.data?.channelId ?? identifier.trim(),
       name: validatedName ?? undefined,
     });
   };

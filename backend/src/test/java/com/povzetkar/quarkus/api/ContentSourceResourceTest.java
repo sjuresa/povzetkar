@@ -235,6 +235,20 @@ class ContentSourceResourceTest {
                 .body("error.errorCode", equalTo("SOURCE_CHECK_UNAVAILABLE"));
     }
 
+    /** Quick Add sends a channel URL percent-encoded as one path segment (PR #286 review). */
+    @Test
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void theChannelCheckAcceptsAnEncodedUrl() {
+        String url = "https://www.youtube.com/@veritasium";
+        when(contentSourceDetailService.fetchContentSourceDetails(1, url)).thenReturn(Optional.of(
+                new ContentSourceDetailService.ContentSourceDetails("UC1", "Veritasium", "", 1)));
+
+        given().urlEncodingEnabled(false)
+                .when().get(PATH + "/details/1/" + java.net.URLEncoder.encode(url, java.nio.charset.StandardCharsets.UTF_8))
+                .then().statusCode(200)
+                .body("data.channelId", equalTo("UC1"));
+    }
+
     private static ContentSource source(Long id, String name) {
         return ContentSourceBuilder.aContentSource().withId(id).withName(name).build();
     }

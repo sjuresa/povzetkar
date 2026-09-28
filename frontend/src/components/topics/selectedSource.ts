@@ -8,6 +8,8 @@ export interface SelectedSource {
   key: string;
   name: string;
   platform: string;
+  /** The platform identifier — for Quick Add the channel ID from the check — to spot the same channel twice. */
+  identifier: string;
   id?: number;
   draft?: ContentSourceCreate;
 }
@@ -17,6 +19,7 @@ export function fromExistingSource(source: ContentSourceDTO): SelectedSource {
     key: `id:${source.id}`,
     name: source.name || source.sourceIdentifier || '',
     platform: source.platform ?? '',
+    identifier: source.sourceIdentifier ?? '',
     id: source.id,
   };
 }
@@ -28,8 +31,15 @@ export function fromDraft(draft: ContentSourceCreate): SelectedSource {
     key: `new:${draft.platform}:${identifier}`,
     name: draft.name || identifier,
     platform: draft.platform,
+    identifier,
     draft: normalized,
   };
+}
+
+/** Whether the selection already holds this source — by key, or the same channel entered again via Quick Add. */
+export function isAlreadySelected(selected: SelectedSource[], candidate: SelectedSource): boolean {
+  return selected.some((s) =>
+    s.key === candidate.key || (s.identifier !== '' && s.platform === candidate.platform && s.identifier === candidate.identifier));
 }
 
 /** Splits the selection into the payload fields of TopicCreate / TopicPatch. */
