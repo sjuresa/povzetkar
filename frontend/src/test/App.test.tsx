@@ -32,7 +32,7 @@ describe('App', () => {
     // Wait for the route to resolve and render the component
     // Note: Due to i18n mock in setup.ts returning the key, we check for the key pattern
     await waitFor(() => {
-      expect(screen.getByText(/landing\.hero\.cta_primary/i)).toBeInTheDocument();
+      expect(screen.getByTestId('hero-cta')).toBeInTheDocument();
     }, { timeout: 3000 });
   })
 })

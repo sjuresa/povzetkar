@@ -4,6 +4,7 @@
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
+| 1.8     | September 28, 2026 | Povzetkar AI | POV-220: minted US-UI-007 in §3.5 — landing page for prospective users; Implemented at task close-out. |
 | 1.7     | September 27, 2026 | Povzetkar AI | POV-216: migrated the orphaned US-16.2, US-16.3, US-16.4, US-16.8 (referenced by UC-8/9/10) into new §3.8; US-16.4 notes the per-user guide state. |
 | 1.6     | July 8, 2026     | Povzetkar AI | POV-205: minted US-API-001 in new §3.6 API & Integrations; §3.6 Administration & Hardening renumbered to §3.7. |
 | 1.5     | July 6, 2026     | Povzetkar AI | POV-203: single US catalogue + lifecycle note in §3; migrated US-17.1–17.7 into new §3.6.       |
@@ -65,6 +66,7 @@ This section breaks down the system's functionality into user-centric stories. I
 *   **US-UI-004** (Implemented) **As an Administrator, I want to** use a simple web interface to trigger system-level actions like content enrichment and orchestration.
 *   **US-UI-005** (Implemented) **As an Administrator, I want to** granularly trigger specific phases of the orchestration process (e.g., only processing pending items or only generating briefings).
 *   **US-UI-006** (Implemented) **As an Administrator, I want to** view specific error details for failed content items and manually trigger a retry for transcript fetching.
+*   **US-UI-007** (Implemented) **As a** prospective **User, I want to** understand what Povzetkar does and what happens when I sign in, so that I can decide to request early access. *(Landing Page — Early Access)*
 
 ### 3.6. API & Integrations
 

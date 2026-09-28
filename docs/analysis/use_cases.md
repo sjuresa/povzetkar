@@ -246,11 +246,28 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 - No `X-API-Key` header → the OIDC/session flow behaves exactly as before.
 **Postconditions**: No state change is possible via the key; the browser login flow is unaffected.
 
+### UC-18: Evaluate Povzetkar and Request Early Access
+**Actor**: Visitor (not signed in)
+**Related Stories**: US-UI-007
+**Context**: [POV-220 walkthrough](../versions/v0.20.0/POV-220-walkthrough.md)
+**Preconditions**: The visitor opens `/` without a session.
+**Main Flow**:
+1. The page opens in the visitor's browser language (SL or EN) and system theme, unless the visitor chose them before.
+2. Above the fold the visitor reads what Povzetkar does, sees the early-access note and a sample daily briefing labelled as an example.
+3. The visitor reads the benefits, *How it works*, the FAQ (what happens on sign-in, what is stored, supported sources) and the planned features (*Coming soon*, each labelled *planned*).
+4. The visitor signs in from the header, the hero or the closing call to action.
+5. The system creates the account in `PENDING_APPROVAL` with the `demo` role; the visitor sees demo content while the administrator decides (UC-12).
+**Alternate Flows**:
+- A signed-in user sees *Dashboard* links instead of sign-in.
+- The system metadata (version) cannot be loaded → the page stays usable; the footer omits the version.
+**Postconditions**: The visitor knows what the product does and what happens after sign-in; an account request exists if they signed in.
+
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
-| 1.6     | 2026-07-08 | Povzetkar AI | POV-205: added Automation Agent actor and UC-17 (Programmatic Read-Only API Access, US-API-001). |
+| 1.8     | 2026-09-28 | Povzetkar AI | POV-220: added UC-18 (Evaluate Povzetkar and Request Early Access, US-UI-007). |
 | 1.7     | 2026-09-28 | Povzetkar AI | POV-219: sources and content items scoped to the user's topics — UC-1 (user actor, Quick Add on save, foreign source 404), UC-7 (handle/URL normalized to the channel ID, add only when found, Blog disabled), UC-8 (invisible item 404), UC-17 (API key scoped to the mapped user). |
+| 1.6     | 2026-07-08 | Povzetkar AI | POV-205: added Automation Agent actor and UC-17 (Programmatic Read-Only API Access, US-API-001). |
 | 1.5     | 2026-07-06 | Povzetkar AI | POV-203: UC-14 updated (proxy-primary chain, US-ING-004); added UC-16 (Scheduled Orchestration); UC-13 cancel note → backlog. |
 | 1.4     | 2026-05-20 | Povzetkar AI | Added UC-11 (Admin User Mgmt), UC-12 (User Approval), UC-13 (Job Ops), UC-14 (Transcript Fallback), UC-15 (External Links) for v0.17.0. |
 | 1.3     | April 01, 2026 | Povzetkar AI | Added UC-8, UC-9, UC-10 for v0.16.0 (User Experience Focus). |

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
+import { storeLanguage } from '../../i18n/language';
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
@@ -11,6 +12,7 @@ export function LanguageSwitcher() {
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'en' ? 'sl' : 'en';
+    storeLanguage(nextLang);
     void i18n.changeLanguage(nextLang);
   };
 

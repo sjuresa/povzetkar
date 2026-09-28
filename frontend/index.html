@@ -4,26 +4,37 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Povzetkar - AI-powered content summarizer for YouTube videos, articles, and more. Get intelligent briefings in seconds." />
-    <meta name="keywords" content="AI, summarizer, briefing, content, YouTube, transcript" />
-    <meta property="og:title" content="Povzetkar | AI-Powered Content Summarizer" />
-    <meta property="og:description" content="Summarize YouTube videos and articles with AI in seconds." />
+    <meta name="description" content="Povzetkar summarizes new videos from the YouTube channels you follow into one short daily briefing. Early access." />
+    <meta name="keywords" content="AI, summarizer, daily briefing, YouTube, transcript" />
+    <meta property="og:title" content="Povzetkar | Daily briefings from your YouTube channels" />
+    <meta property="og:description" content="Povzetkar summarizes new videos from the YouTube channels you follow into one short daily briefing. Early access." />
     <meta property="og:type" content="website" />
-    <title>Povzetkar | AI-Powered Content Summarizer</title>
-    <style>
-      @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      body {
-        background: linear-gradient(-45deg, #0a0a0a, #1a1a1a, #0f172a, #020617);
-        background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
-      }
-    </style>
+    <title>Povzetkar | Daily briefings from your YouTube channels</title>
+    <script>
+      // Pre-paint: apply theme and language before React loads, so a light-theme visitor sees no dark flash.
+      // Same rules as resolveInitialTheme (src/store/themeStore.ts) and resolveInitialLanguage (src/i18n/language.ts).
+      // A future Content-Security-Policy must allow this script by its sha256 hash (see POV-214 in the backlog).
+      (function () {
+        var root = document.documentElement;
+        var prefersDark = true;
+        try {
+          prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch (e) { /* keep dark */ }
+        var theme = prefersDark ? 'dark' : 'light';
+        var lang = (navigator.language || '').toLowerCase().indexOf('sl') === 0 ? 'sl' : 'en';
+        try {
+          var storedLang = localStorage.getItem('povzetkar-language');
+          if (storedLang === 'sl' || storedLang === 'en') lang = storedLang;
+          var stored = JSON.parse(localStorage.getItem('theme-storage') || 'null');
+          var storedTheme = stored && stored.state && stored.state.theme;
+          if (storedTheme === 'light' || storedTheme === 'dark') theme = storedTheme;
+        } catch (e) { /* storage unavailable or corrupt — system preference / browser language */ }
+        root.classList.add(theme);
+        root.lang = lang;
+      })();
+    </script>
   </head>
-  <body class="bg-neutral-950">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

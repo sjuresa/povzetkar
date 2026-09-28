@@ -234,7 +234,7 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Resilience & Polish:**
     *   **Transcript Multi-Provider Pilot** (POV-189): `TranscriptProvider` abstraction ([ADR-0009](../adr/0009-multi-provider-transcript-strategy.md)) + Supadata pilot integration + randomized jitter delay on legacy YouTube path.
     *   **External Links Open in New Tab** (POV-186): `rehype-external-links` plugin in all ReactMarkdown call-sites.
-    *   **Session Expiry Handling** (POV-187): 401 interceptor redirects to landing page (`/`) with `notice=session_expired`; `returnTo` preserved in `sessionStorage`; ErrorPage reserved for true fatal errors.
+    *   **Session Expiry Handling** (POV-187): a 401 while signed in clears the session and redirects to `/auth/login?redirect=<current path>`, which returns the user there after re-authentication; ErrorPage reserved for true fatal errors. *(Corrected by POV-220 — no `session_expired` notice or `sessionStorage` return path was ever implemented.)*
 
 ## v0.18: Transcript Ingestion Resilience & Scheduler Correctness
 
@@ -358,6 +358,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.2     | 2026-09-28         | Povzetkar AI | v0.17 *Session Expiry Handling* (POV-187) corrected to the implemented `/auth/login?redirect=` flow (POV-220). |
 | 4.1     | 2026-09-27         | Povzetkar AI | Marked v0.20 as In Progress at version initialisation (POV-212); key tasks linked to POV-213, POV-214, POV-215. |
 | 4.0     | 2026-09-27         | Povzetkar AI | Marked v0.19.0 as ✅ Completed and rewrote its scope to actual delivery (Security Hardening, Process Maturity & Operations, POV-211); the unshipped forecast (DAST, Grafana alerting, full-text search, transcript providers, SMTP) moved to the backlog; added a minimal v0.20 forecast (Caddy on the traffic path, orval ≥ 8.22, scheduler integration test). |
 | 3.9     | 2026-07-03         | Povzetkar AI | Marked v0.19 as In Progress at version initialisation (POV-201).                                                                                                         |
