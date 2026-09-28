@@ -35,7 +35,8 @@
     "filter": "Filtriraj",
     "edit": "Uredi",
     "delete": "Izbriši",
-    "generated_by": "Ustvaril Povzetkar"
+    "generated_by": "Ustvaril Povzetkar",
+    "close": "Zapri"
   },
   "profile": {
     "title": "Vaš Profil",
@@ -74,6 +75,25 @@
       "action": "Dodajte prvo temo",
       "help": "Potrebujete pomoč?",
       "guide": "Vodnik za hiter začetek prihaja kmalu"
+    }
+  },
+  "sources": {
+    "library": {
+      "title": "Knjižnica virov",
+      "subtitle": "Viri vsebin iz vaših tem. Preglejte posamezne vsebine in stanje njihove obdelave.",
+      "counter_label": "Viri",
+      "counter_value": "skupaj {{count}}",
+      "search_placeholder": "Iščite vire po imenu, identifikatorju ali opisu ...",
+      "no_description": "Opis ni na voljo.",
+      "subscribers": "Naročnikov",
+      "empty_title": "Še nimate virov",
+      "empty_hint": "Vire dodate v temi — odprite Teme in uporabite Dodaj vir.",
+      "empty_link": "Na Teme",
+      "no_results": "Ni najdenih virov"
+    },
+    "detail": {
+      "not_found": "Vir ni najden",
+      "back_to_library": "Nazaj v knjižnico"
     }
   },
   "topics": {
@@ -143,14 +163,16 @@
         "title": "Hitro dodajanje vira",
         "platform_label": "Platforma",
         "identifier_label": "Identifikator",
-        "identifier_placeholder_youtube": "UC...",
+        "identifier_placeholder_youtube": "@handle, URL kanala ali ID kanala",
         "identifier_placeholder_blog": "https://...",
-        "youtube_guidance_title": "Navodila za YouTube Channel ID:",
-        "youtube_guidance_id": "Identifikator mora biti Channel ID (običajno se začne z UC).",
-        "youtube_guidance_find": "Najdete ga na strani kanala \"Vizitka\" (About) ali s pomočjo \"YouTube ID Finder\".",
+        "youtube_guidance_title": "YouTube kanal:",
+        "youtube_guidance_id": "Prilepite @handle (npr. @veritasium), URL kanala ali ID kanala (začne se z UC).",
+        "youtube_guidance_find": "Kanal lahko dodate, ko je najden; shrani se skupaj s temo.",
         "submit_button": "Dodaj vir",
         "cancel_button": "Prekliči",
-        "error_identifier_required": "Identifikator je obvezen"
+        "error_identifier_required": "Identifikator je obvezen",
+        "validation_error_not_found": "YouTube kanala ni mogoče najti. Preverite handle, URL ali ID.",
+        "validation_warning_api": "Preverjanje kanala trenutno ni na voljo. Poskusite znova pozneje."
       },
       "search_modal": {
         "title": "Dodaj vir vsebine",

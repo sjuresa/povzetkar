@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.api.dto.BriefingDetailDTO;
 import com.povzetkar.quarkus.api.dto.BriefingItemDTO;
 import com.povzetkar.quarkus.api.dto.BriefingSummaryDTO;
 import com.povzetkar.quarkus.model.Briefing;
+import com.povzetkar.quarkus.model.ContentScope;
 import jakarta.inject.Inject;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -36,10 +37,12 @@ public abstract class BriefingMapper {
         if (entity.summaries == null) {
             return List.of();
         }
+        // A briefing belongs to its topic's owner: item topic names come from that owner's topics only
+        ContentScope ownerScope = ContentScope.of(entity.topic.user);
         return entity.summaries.stream()
                 .sorted(Comparator.comparing(s -> s.id))
                 .map(s -> new BriefingItemDTO(
-                        contentItemMapper.toDTO(s.contentItem),
+                        contentItemMapper.toDTO(s.contentItem, ownerScope),
                         s.summaryText,
                         s.uuid
                 ))

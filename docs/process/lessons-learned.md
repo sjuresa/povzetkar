@@ -24,6 +24,18 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Search the ADRs when a task reverses a design decision (POV-216)**:
 > The onboarding guide's `localStorage` persistence was ADR-0007; the plan missed it and it surfaced only while writing the specs. Before planning a change to persistence, auth or architecture, grep `docs/adr` for the area and plan the superseding ADR.
 
+> [!NOTE]
+> **Remove transaction mechanics instead of testing them (POV-219)**:
+> The first test plan for per-user source scoping added three DB tests: a `requiringNew` + unique-violation recovery for a race between two users adding the same new channel, a PATCH rollback, and a commit check. The race was near-impossible, so the recovery code was dropped; validating every source before the topic is touched made the rollback trivially asserted with mocks. QA rule 3 now says "design first".
+
+> [!NOTE]
+> **Scoping an API means scoping every door to the data (POV-219)**:
+> Restricting `GET /sources` was not enough: sources could be attached to a topic by a guessed ID, items and summaries were readable (and shareable) by ID, and the legacy Qute UI (`/ui/*`, not linked from the SPA) listed every source. When adding ownership, enumerate every read *and write* path to the entity — including legacy routes — and derive visibility in one named query per entity (`ContentScope`), so no endpoint can forget it.
+
+> [!NOTE]
+> **Store the canonical platform identifier, not what the user typed (POV-219)**:
+> Quick Add validated `@handle` and URLs by resolving them, but stored the typed text; ingestion reads the identifier as a channel ID, so such sources never received content and one channel could exist twice. Resolve on input and store the canonical form (`ContentSourceDetails.channelId`).
+
 ## 🚀 Recent Highlights (v0.19.0)
 
 > [!WARNING]

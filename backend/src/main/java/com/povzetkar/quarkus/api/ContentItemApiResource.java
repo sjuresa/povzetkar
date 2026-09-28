@@ -13,6 +13,7 @@ import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.api.mapper.SummaryMapper;
 import com.povzetkar.quarkus.model.BackgroundJob;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentScope;
 import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.JobType;
 import com.povzetkar.quarkus.model.ProcessingStatus;
@@ -25,7 +26,6 @@ import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
 import com.povzetkar.quarkus.service.UserContextService;
 import com.povzetkar.quarkus.security.Permission;
-import com.povzetkar.quarkus.api.util.FilterBuilder;
 import com.povzetkar.quarkus.api.util.QueryParser;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -57,6 +57,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Path("/api/v1/content-items")
@@ -93,7 +94,7 @@ public class ContentItemApiResource extends BaseApiResource {
 
     @GET
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Get all content items", description = "Retrieves a paginated list of all content items, optionally filtered by sourceId, status, or topic.")
+    @Operation(summary = "Get content items", description = "Retrieves a paginated list of the content items visible to the caller (items of sources in the caller's topics or with a summary in the caller's briefings; all items for an admin), optionally filtered by sourceId, status, or topic. A sourceId or topicId outside the caller's scope is reported as not found.")
     @APIResponse(
             responseCode = "200",
             description = "List of content items retrieved successfully",
@@ -113,27 +114,15 @@ public class ContentItemApiResource extends BaseApiResource {
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("c.publishedAt").descending(), Set.of("id", "title", "publishedAt", "processingStatus"), "c")
                 .and("c.id", Sort.Direction.Descending);
 
-        FilterBuilder filters = new FilterBuilder("");
-        if (sourceId != null) {
-            if (ContentSource.findById(sourceId) == null) {
-                throw new NotFoundException("Source with id " + sourceId + " not found.");
-            }
-            filters.and("c.contentSource.id = :sourceId", "sourceId", sourceId);
+        ContentScope scope = getContentScope();
+        if (sourceId != null && ContentSource.findVisibleById(sourceId, scope).isEmpty()) {
+            throw new NotFoundException("Source with id " + sourceId + " not found.");
         }
-        if (statuses != null && !statuses.isEmpty()) {
-            filters.and("c.processingStatus IN :statuses", "statuses", statuses);
-        }
-        if (topicId != null) {
-            if (Topic.findById(topicId) == null) {
-                throw new NotFoundException("Topic with id " + topicId + " not found.");
-            }
-            filters.and("EXISTS (SELECT t FROM c.contentSource.topics t WHERE t.id = :topicId)", "topicId", topicId);
+        if (topicId != null && findTopicInScope(topicId, scope).isEmpty()) {
+            throw new NotFoundException("Topic with id " + topicId + " not found.");
         }
 
-        String query = filters.getQuery();
-        PanacheQuery<Long> idQuery = query.isEmpty()
-                ? ContentItem.find("SELECT c.id FROM ContentItem c", panacheSort).project(Long.class)
-                : ContentItem.find("SELECT c.id FROM ContentItem c WHERE " + query, panacheSort, filters.getParams()).project(Long.class);
+        PanacheQuery<Long> idQuery = ContentItem.findVisibleIds(scope, new ContentItem.Filter(sourceId, statuses, topicId), panacheSort);
 
         long count = idQuery.count();
         List<Long> itemIds = idQuery.page(pageIndex, clampedPageSize).list();
@@ -145,21 +134,16 @@ public class ContentItemApiResource extends BaseApiResource {
         List<ContentItem> items = ContentItem.listByIdsWithAssociations(itemIds, panacheSort);
 
         // Fetch all summary existence flags in one go to solve N+1 Problem
-        final java.util.Set<Long> itemIdsWithSummaries = new java.util.HashSet<>(
-            io.quarkus.hibernate.orm.panache.Panache.getEntityManager()
-                   .createQuery("SELECT s.contentItem.id FROM Summary s WHERE s.contentItem.id IN :ids", Long.class)
-                   .setParameter("ids", itemIds)
-                   .getResultList()
-        );
+        final Set<Long> itemIdsWithSummaries = Summary.findContentItemIdsWithSummary(itemIds);
 
-        List<ContentItemDTO> dtoList = items.stream().map(item -> contentItemMapper.toDTO(item, itemIdsWithSummaries)).toList();
+        List<ContentItemDTO> dtoList = items.stream().map(item -> contentItemMapper.toDTO(item, itemIdsWithSummaries, scope)).toList();
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);
     }
 
     @GET
     @Path("/{id}")
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Get content item by ID", description = "Retrieves a specific content item by its ID.")
+    @Operation(summary = "Get content item by ID", description = "Retrieves a specific content item by its ID. The item must be visible to the caller (its source is in one of the caller's topics, or its summary is in one of the caller's briefings; an admin sees all); otherwise not found.")
     @APIResponse(
             responseCode = "200",
             description = "Content item details retrieved successfully",
@@ -168,15 +152,13 @@ public class ContentItemApiResource extends BaseApiResource {
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to retrieve", schema = @Schema(type = SchemaType.INTEGER))
     public ContentItemDTO getContentItemById(@PathParam("id") Long id) {
-        ContentItem item = ContentItem.findByIdWithAssociations(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
-        return mapToDTO(item);
+        return mapToDTO(findVisibleItem(id));
     }
 
     @GET
     @Path("/{id}/summary")
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Get content item summary", description = "Retrieves the AI-generated summary for a specific content item.")
+    @Operation(summary = "Get content item summary", description = "Retrieves the AI-generated summary for a specific content item. The item must be visible to the caller (its source is in one of the caller's topics, or its summary is in one of the caller's briefings; an admin sees all); otherwise not found.")
     @APIResponse(
             responseCode = "200",
             description = "Summary retrieved successfully",
@@ -184,15 +166,13 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item or summary not found")
     public SummaryDTO getSummaryByItemId(@PathParam("id") Long id) {
-        Summary entity = Summary.findByContentIdWithAssociations(id)
-                .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + id + NOT_FOUND));
-        return summaryMapper.toDTO(entity);
+        return summaryMapper.toDTO(findVisibleSummary(id));
     }
 
     @GET
     @Path("/{id}/transcript")
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Get content item transcript", description = "Retrieves the raw transcript for a specific content item.")
+    @Operation(summary = "Get content item transcript", description = "Retrieves the raw transcript for a specific content item. The item must be visible to the caller (its source is in one of the caller's topics, or its summary is in one of the caller's briefings; an admin sees all); otherwise not found.")
     @APIResponse(
             responseCode = "200",
             description = "Transcript retrieved successfully",
@@ -200,8 +180,7 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item or transcript not found")
     public TranscriptDTO getTranscriptByItemId(@PathParam("id") Long id) {
-        ContentItem item = ContentItem.findByIdWithAssociations(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+        ContentItem item = findVisibleItem(id);
         if (item instanceof YouTubeVideo video && video.transcript != null && !video.transcript.isBlank()) {
             return new TranscriptDTO(id, video.transcript);
         }
@@ -212,7 +191,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}/commands/generate-summary")
     @RolesAllowed(Permission.V_SUMMARY_GENERATE)
     @Idempotent
-    @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary.")
+    @Operation(summary = "Generate summary for item", description = "Force an individual content item to fetch transcript and generate a summary. The item must be visible to the caller; otherwise not found.")
     @APIResponse(
             responseCode = "202",
             description = "Summary generation triggered",
@@ -223,7 +202,7 @@ public class ContentItemApiResource extends BaseApiResource {
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to generate summary for", schema = @Schema(type = SchemaType.INTEGER))
     public Response generateItemSummary(@PathParam("id") Long id, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
-        ContentItem item = findAndValidateContentItemForAction(id);
+        ContentItem item = requireActionable(findVisibleItem(id));
 
         BackgroundJob job = backgroundJobService.triggerItemJob(item, JobType.GENERATE_ITEM_SUMMARY, user.id);
 
@@ -292,11 +271,11 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}/summary/share")
     @Transactional
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Enable sharing for a summary", description = "Generates a public UUID for the summary of a specific content item.")
+    @Operation(summary = "Enable sharing for a summary", description = "Generates a public UUID for the summary of a specific content item. The item must be visible to the caller; otherwise not found.")
     @APIResponse(responseCode = "200", description = "Sharing enabled successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
     @APIResponse(responseCode = "404", description = "Summary not found")
     public String shareSummary(@PathParam("id") Long id) {
-        Summary summary = findSummaryByContentItemId(id);
+        Summary summary = findVisibleSummary(id);
         summary.share();
         return summary.uuid;
     }
@@ -305,23 +284,35 @@ public class ContentItemApiResource extends BaseApiResource {
     @Path("/{id}/summary/unshare")
     @Transactional
     @RolesAllowed(Permission.V_CONTENT_ITEM_VIEW)
-    @Operation(summary = "Disable sharing for a summary", description = "Removes the public UUID for the summary to disable unauthenticated access.")
+    @Operation(summary = "Disable sharing for a summary", description = "Removes the public UUID for the summary to disable unauthenticated access. The item must be visible to the caller; otherwise not found.")
     @APIResponse(responseCode = "204", description = "Sharing disabled successfully")
     @APIResponse(responseCode = "404", description = "Summary not found")
     public void unshareSummary(@PathParam("id") Long id) {
-        Summary summary = findSummaryByContentItemId(id);
+        Summary summary = findVisibleSummary(id);
         summary.unshare();
     }
 
-    private Summary findSummaryByContentItemId(Long contentItemId) {
-        return Summary.findByContentIdWithAssociations(contentItemId)
+    /** The item if visible to the caller; an invisible item is reported as not found (POV-219). */
+    private ContentItem findVisibleItem(Long id) {
+        return ContentItem.findVisibleByIdWithAssociations(id, getContentScope())
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+    }
+
+    private Summary findVisibleSummary(Long contentItemId) {
+        return Summary.findVisibleByContentIdWithAssociations(contentItemId, getContentScope())
                 .orElseThrow(() -> new NotFoundException("Summary for ContentItem " + contentItemId + NOT_FOUND));
     }
 
-    private ContentItem findAndValidateContentItemForAction(Long id) {
-        ContentItem item = ContentItem.<ContentItem>findByIdOptional(id)
-                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
+    private Optional<Topic> findTopicInScope(Long topicId, ContentScope scope) {
+        return scope.isUnrestricted() ? Topic.findByIdOptional(topicId) : userContextService.findOwnedTopic(topicId);
+    }
 
+    private ContentItem findAndValidateContentItemForAction(Long id) {
+        return requireActionable(ContentItem.<ContentItem>findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND)));
+    }
+
+    private static ContentItem requireActionable(ContentItem item) {
         if (item.processingStatus == ProcessingStatus.COMPLETED) {
             throw new WebApplicationException(
                     "Cannot perform this action on an item in status " + item.processingStatus,
@@ -333,6 +324,6 @@ public class ContentItemApiResource extends BaseApiResource {
     private ContentItemDTO mapToDTO(ContentItem item) {
         Set<Long> summaryExists = Summary.count("contentItem.id", item.id) > 0 
                 ? Set.of(item.id) : Set.of();
-        return contentItemMapper.toDTO(item, summaryExists);
+        return contentItemMapper.toDTO(item, summaryExists, getContentScope());
     }
 }

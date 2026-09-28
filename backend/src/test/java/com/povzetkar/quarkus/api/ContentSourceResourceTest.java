@@ -1,350 +1,250 @@
 package com.povzetkar.quarkus.api;
 
+import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
+import com.povzetkar.quarkus.api.exception.BusinessRuleException;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
-import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
+import com.povzetkar.quarkus.model.ContentScope;
 import com.povzetkar.quarkus.model.ContentSource;
-import com.povzetkar.quarkus.model.Topic;
-import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
+import com.povzetkar.quarkus.service.ContentSourceService;
+import com.povzetkar.quarkus.service.SourceDetailsUnavailableException;
+import com.povzetkar.quarkus.service.UserContextService;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.core.MediaType;
-import org.junit.jupiter.api.AfterEach;
+import io.restassured.http.ContentType;
+import jakarta.ws.rs.core.Response;
+import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.IntStream;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+/**
+ * HTTP contract and security of {@code /api/v1/sources}, with {@link ContentSource} and the services mocked
+ * (QA rule 3). The visibility queries themselves are tested against the database in
+ * {@code ContentVisibilityQueriesTest}; here the resource must pass the caller's {@link ContentScope} and turn an
+ * invisible source into 404 (POV-219).
+ */
 @QuarkusTest
-@TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE" })
 class ContentSourceResourceTest {
 
-        private static final String API_BASE_PATH = "/api/v1/sources";
-        private static final String TEST_TOPIC_NAME = "test-topic-" + UUID.randomUUID();
-        private static final String TEST_CONTENT_SOURCE_ID_PREFIX = "UC-test-id-";
-        private static final String TEST_CONTENT_SOURCE_NAME_PREFIX = "Test ContentSource ";
-        private static final int DEFAULT_SOURCE_TYPE_ID = 1;
+    private static final String PATH = "/api/v1/sources";
+    private static final ContentScope SCOPE = ContentScope.of(UserBuilder.aUser().withId(7L).build());
 
-        final EntityManager em;
+    @InjectMock
+    UserContextService userContextService;
 
-        private final Set<Long> createdContentSourceIds = new HashSet<>();
-        private final Set<Long> createdUserIds = new HashSet<>();
-        private final Set<Long> createdTopicIds = new HashSet<>();
+    @InjectMock
+    ContentSourceService contentSourceService;
 
-        @Inject
-        ContentSourceResourceTest(EntityManager em) {
-                this.em = em;
-        }
+    @InjectMock
+    Session session;
 
-        @InjectMock
-        ContentSourceDetailService contentSourceDetailService;
+    @InjectMock
+    ContentSourceDetailService contentSourceDetailService;
 
-        @BeforeEach
-        @Transactional
-        void setup() {
-                User user = createUser("Test User", "api_test_user");
-
-                Topic topic = createTopic(user);
-
-                // Create 15 content sources, 10 of which are linked to the topic
-                IntStream.range(0, 15).forEach(i -> {
-                        ContentSource contentSource = createContentSource(
-                                        TEST_CONTENT_SOURCE_ID_PREFIX + i,
-                                        TEST_CONTENT_SOURCE_NAME_PREFIX + i,
-                                        "Description " + i);
-                        if (i < 10) {
-                                topic.contentSources.add(contentSource);
-                                contentSource.topics.add(topic);
-                        }
-                });
-                em.merge(topic); // Merge topic to update its contentSources association
-        }
-
-        @AfterEach
-        @Transactional
-        void cleanup() {
-                if (!createdContentSourceIds.isEmpty()) {
-                        em.createQuery("DELETE FROM ContentSource cs WHERE cs.id IN :ids")
-                                        .setParameter("ids", createdContentSourceIds)
-                                        .executeUpdate();
-                        createdContentSourceIds.clear();
-                }
-                if (!createdTopicIds.isEmpty()) {
-                        em.createQuery("DELETE FROM Topic t WHERE t.id IN :ids")
-                                        .setParameter("ids", createdTopicIds)
-                                        .executeUpdate();
-                        createdTopicIds.clear();
-                }
-                if (!createdUserIds.isEmpty()) {
-                        em.createQuery("DELETE FROM User u WHERE u.id IN :ids")
-                                        .setParameter("ids", createdUserIds)
-                                        .executeUpdate();
-                        createdUserIds.clear();
-                }
-        }
-
-        private User createUser(String name, String username) {
-                User user = UserBuilder.aUser()
-                                .withName(name)
-                                .withUsername(username)
-                                .withEmail(username + "@example.com")
-                                .build();
-                em.persist(user);
-                createdUserIds.add(user.id);
-                return user;
-        }
-
-        private Topic createTopic(User user) {
-                Topic topic = TopicBuilder.aTopic()
-                                .withName(TEST_TOPIC_NAME)
-                                .withUser(user)
-                                .build();
-                em.persist(topic);
-                createdTopicIds.add(topic.id);
-                return topic;
-        }
-
-        private ContentSource createContentSource(String sourceIdentifier, String name, String description) {
-                ContentSource contentSource = ContentSourceBuilder.aContentSource()
-                                .withSourceIdentifier(sourceIdentifier)
-                                .withSourceTypeId(DEFAULT_SOURCE_TYPE_ID)
-                                .withName(name)
-                                .withDescription(description)
-                                .build();
-                em.persist(contentSource);
-                em.flush(); // Explicitly flush to ensure it's in the DB
-                createdContentSourceIds.add(contentSource.id);
-                return contentSource;
-        }
-
-        @Test
-        void testGetAllContentSources_Success() {
-                long expectedSize = em.createQuery("SELECT COUNT(cs) FROM ContentSource cs", Long.class)
-                                .getSingleResult();
-
-                given()
-                                .when().get(API_BASE_PATH)
-                                .then()
-                                .statusCode(200)
-                                .body("meta.pagination.totalElements", is((int) expectedSize))
-                                .body("data", hasSize(Math.toIntExact(expectedSize)));
-        }
-
-        @Test
-        void testGetAllContentSources_Search_Success() {
-                // Assuming "Test ContentSource 0" exists from setup
-                given()
-                                .queryParam("search", "ContentSource 0")
-                                .when().get(API_BASE_PATH)
-                                .then()
-                                .statusCode(200)
-                                .body("meta.pagination.totalElements", is(1))
-                                .body("data", hasSize(1))
-                                .body("data[0].name", is(TEST_CONTENT_SOURCE_NAME_PREFIX + 0));
-        }
-
-        @Test
-        void testGetAllContentSources_Search_NoMatch() {
-                given()
-                                .queryParam("search", "NONEXISTENT_SOURCE_NAME")
-                                .when().get(API_BASE_PATH)
-                                .then()
-                                .statusCode(200)
-                                .body("meta.pagination.totalElements", is(0))
-                                .body("data", hasSize(0));
-        }
-
-        @Test
-        void testGetContentSourceById_Success() {
-                ContentSource existingContentSource = em.find(ContentSource.class,
-                                createdContentSourceIds.iterator().next());
-
-                given()
-                                .pathParam("id", existingContentSource.id)
-                                .when().get(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(200)
-                                .body("data.name", is(existingContentSource.name));
-        }
-
-        @Test
-        void testGetContentSourceById_NotFound() {
-                given()
-                                .pathParam("id", 99999L)
-                                .when().get(API_BASE_PATH + "/{id}")
-                                .then()
-                                .statusCode(404);
-        }
-
-    @Test
-    @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW", "SOURCE_CREATE" })
-    void testCreateContentSource_Success() {
-        com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO newContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO(
-                        "YOUTUBE",
-                        "new-source-id-" + UUID.randomUUID(),
-                        "New Content Source");
-
-        io.restassured.response.Response response = given()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(newContentSource)
-                        .when().post(API_BASE_PATH)
-                        .then()
-                        .statusCode(201)
-                        .body("data.name", is("New Content Source"))
-                        .extract().response();
-
-        com.povzetkar.quarkus.api.dto.ContentSourceDTO created = response.jsonPath().getObject("data", com.povzetkar.quarkus.api.dto.ContentSourceDTO.class);
-        createdContentSourceIds.add(created.id());
-
-        given()
-                .pathParam("id", created.id())
-                .when().get(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(200)
-                .body("data.name", is("New Content Source"));
-    }
-
-        @Test
-        @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW" })
-        void testCreateContentSource_Forbidden() {
-                com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO newContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO(
-                                "YOUTUBE",
-                                "forbidden-source-id-" + java.util.UUID.randomUUID(),
-                                "Forbidden Content Source");
-
-                given()
-                                .contentType(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-                                .body(newContentSource)
-                                .when().post(API_BASE_PATH)
-                                .then()
-                                .statusCode(403);
-        }
-
-        @Test
-        void testCreateContentSource_InvalidInput() {
-                Map<String, Object> payload = new HashMap<>();
-                payload.put("sourceIdentifier", "invalid-id");
-                payload.put("platform", "NONEXISTENT_PLATFORM");
-                payload.put("name", "Valid Name");
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(payload)
-                                .when().post(API_BASE_PATH)
-                                .then()
-                                .statusCode(400);
-
-                payload.put("platform", "YOUTUBE");
-                payload.remove("sourceIdentifier");
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(payload)
-                                .when().post(API_BASE_PATH)
-                                .then()
-                                .statusCode(400);
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body("{}")
-                                .when().post(API_BASE_PATH)
-                                .then()
-                                .statusCode(400);
-        }
-
-        @Test
-        void testCreateContentSource_Conflict() {
-                com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO duplicateContentSource = new com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO(
-                                com.povzetkar.quarkus.model.SourceTypeEnum.fromId(DEFAULT_SOURCE_TYPE_ID).name(),
-                                TEST_CONTENT_SOURCE_ID_PREFIX + 0,
-                                "Duplicate Content Source");
-
-                given()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(duplicateContentSource)
-                                .when().post(API_BASE_PATH)
-                                .then()
-                                .statusCode(200);
-        }
-
-    @Test
-    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
-    void testDeleteContentSource_MissingIfMatchHeader_PreconditionRequired() {
-        given()
-                .pathParam("id", createdContentSourceIds.iterator().next())
-                .when().delete(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(428); // Precondition Required
+    @BeforeEach
+    void setUp() {
+        PanacheMock.mock(ContentSource.class);
+        when(userContextService.getContentScope()).thenReturn(Optional.of(SCOPE));
     }
 
     @Test
-    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
-    void testDeleteContentSource_Conflict_VersionMismatch() {
-        given()
-                .pathParam("id", createdContentSourceIds.iterator().next())
-                .header("If-Match", "\"999\"") // Version mismatch
-                .when().delete(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(409);
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void listReturnsTheVisibleSourcesForTheCallersScope() {
+        PanacheQuery<ContentSource> query = queryOf(source(1L, "Alpha"), source(2L, "Beta"));
+        when(ContentSource.findVisible(any(), any(), any())).thenReturn(query);
+
+        given().when().get(PATH)
+                .then().statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(2))
+                .body("data.name", contains("Alpha", "Beta"));
+
+        PanacheMock.verify(ContentSource.class).findVisible(SCOPE, "", null);
     }
 
     @Test
-    @TestSecurity(user = "api_test_user", roles = { "user", "SOURCE_VIEW" })
-    void testDeleteContentSource_Forbidden() {
-        given()
-                .pathParam("id", createdContentSourceIds.iterator().next())
-                .header("If-Match", "\"0\"")
-                .when().delete(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(403);
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void listPassesSearchAndExcludedIds() {
+        PanacheQuery<ContentSource> query = queryOf();
+        when(ContentSource.findVisible(any(), any(), any())).thenReturn(query);
+
+        given().queryParam("search", "ai").queryParam("excludeIds", "3, 4")
+                .when().get(PATH)
+                .then().statusCode(200)
+                .body("meta.pagination.totalElements", equalTo(0))
+                .body("data", hasSize(0));
+
+        PanacheMock.verify(ContentSource.class).findVisible(SCOPE, "ai", List.of(3L, 4L));
     }
 
     @Test
-    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE", "SOURCE_VIEW" })
-    void testDeleteContentSource_Success() {
-        ContentSource toDelete = em.find(ContentSource.class, createdContentSourceIds.iterator().next());
-        Long toDeleteId = toDelete.id;
-        
-        given()
-                .pathParam("id", toDeleteId)
-                .header("If-Match", "\"" + toDelete.version + "\"")
-                .when().delete(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(204);
-                
-        // Verify via API
-        given()
-                .pathParam("id", toDeleteId)
-                .when().get(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(404);
-                
-        createdContentSourceIds.remove(toDeleteId);
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void nonNumericExcludedIdsAreABadRequest() {
+        given().queryParam("excludeIds", "3,x").when().get(PATH).then().statusCode(400);
+
+        PanacheMock.verify(ContentSource.class, never()).findVisible(any(), any(), any());
     }
 
     @Test
-    @TestSecurity(user = "admin_user", roles = { "user", "SOURCE_DELETE" })
-    void testDeleteContentSource_NotFound() {
-        given()
-                .pathParam("id", 99999L)
-                .header("If-Match", "\"0\"")
-                .when().delete(API_BASE_PATH + "/{id}")
-                .then()
-                .statusCode(404);
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void callerWithoutContentScopeIsUnauthorized() {
+        when(userContextService.getContentScope()).thenReturn(Optional.empty());
+
+        given().when().get(PATH).then().statusCode(401);
+
+        PanacheMock.verify(ContentSource.class, never()).findVisible(any(), any(), any());
     }
 
+    @Test
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void visibleSourceIsReturned() {
+        when(ContentSource.findVisibleById(5L, SCOPE)).thenReturn(Optional.of(source(5L, "Mine")));
+
+        given().when().get(PATH + "/5").then().statusCode(200).body("data.name", equalTo("Mine"));
+    }
+
+    @Test
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void invisibleOrUnknownSourceIsNotFound() {
+        when(ContentSource.findVisibleById(anyLong(), any())).thenReturn(Optional.empty());
+
+        given().when().get(PATH + "/6").then().statusCode(404);
+
+        PanacheMock.verify(ContentSource.class).findVisibleById(6L, SCOPE);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_CREATE" })
+    void createReturns201ForANewSourceAnd200ForAnExistingOne() {
+        ContentSourceCreateDTO dto = new ContentSourceCreateDTO("YOUTUBE", "@channel", "Channel");
+        when(contentSourceService.findOrCreate(dto))
+                .thenReturn(new ContentSourceService.Result(source(9L, "Channel"), true))
+                .thenReturn(new ContentSourceService.Result(source(9L, "Channel"), false));
+
+        given().contentType(ContentType.JSON).body(dto).when().post(PATH)
+                .then().statusCode(201)
+                .header("Location", org.hamcrest.Matchers.endsWith(PATH + "/9"))
+                .body("data.name", equalTo("Channel"));
+        given().contentType(ContentType.JSON).body(dto).when().post(PATH)
+                .then().statusCode(200)
+                .header("Location", org.hamcrest.Matchers.endsWith(PATH + "/9"));
+    }
+
+    @Test
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void usersCannotCreateSourcesDirectly() {
+        given().contentType(ContentType.JSON).body(new ContentSourceCreateDTO("YOUTUBE", "@channel", null))
+                .when().post(PATH)
+                .then().statusCode(403);
+
+        verifyNoInteractions(contentSourceService);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_CREATE" })
+    void createRejectsWhatTheServiceRejects() {
+        when(contentSourceService.findOrCreate(any())).thenThrow(
+                new BusinessRuleException(Response.Status.BAD_REQUEST, "PLATFORM_NOT_SUPPORTED", "Platform BLOG is not supported yet"));
+
+        given().contentType(ContentType.JSON).body(new ContentSourceCreateDTO("BLOG", "https://blog.example", null))
+                .when().post(PATH)
+                .then().statusCode(400)
+                .body("error.errorCode", equalTo("PLATFORM_NOT_SUPPORTED"));
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_CREATE" })
+    void createValidatesTheBody() {
+        given().contentType(ContentType.JSON).body(Map.of("platform", "YOUTUBE", "name", "No identifier"))
+                .when().post(PATH).then().statusCode(400);
+        given().contentType(ContentType.JSON).body("{}")
+                .when().post(PATH).then().statusCode(400);
+
+        verifyNoInteractions(contentSourceService);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_DELETE" })
+    void deleteNeedsIfMatch() {
+        when(ContentSource.findByIdOptional(5L)).thenReturn(Optional.of(source(5L, "Doomed")));
+
+        given().when().delete(PATH + "/5").then().statusCode(428);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_DELETE" })
+    void deleteWithAStaleVersionIsAConflict() {
+        when(ContentSource.findByIdOptional(5L)).thenReturn(Optional.of(source(5L, "Doomed")));
+
+        given().header("If-Match", "\"999\"").when().delete(PATH + "/5").then().statusCode(409);
+
+        verify(session, never()).remove(any());
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_DELETE" })
+    void deleteRemovesTheSource() {
+        ContentSource doomed = source(5L, "Doomed");
+        when(ContentSource.findByIdOptional(5L)).thenReturn(Optional.of(doomed));
+        when(session.contains(doomed)).thenReturn(true);
+
+        given().header("If-Match", "\"" + doomed.version + "\"").when().delete(PATH + "/5").then().statusCode(204);
+
+        verify(session).remove(doomed);
+    }
+
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "SOURCE_DELETE" })
+    void deletingAnUnknownSourceIsNotFound() {
+        when(ContentSource.findByIdOptional(anyLong())).thenReturn(Optional.empty());
+
+        given().header("If-Match", "\"0\"").when().delete(PATH + "/99").then().statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void usersCannotDeleteSources() {
+        given().header("If-Match", "\"0\"").when().delete(PATH + "/5").then().statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "someone", roles = { "user", "SOURCE_VIEW" })
+    void theChannelCheckTellsNotFoundFromUnavailable() {
+        when(contentSourceDetailService.fetchContentSourceDetails(1, "@found")).thenReturn(Optional.of(
+                new ContentSourceDetailService.ContentSourceDetails("UC1", "Found", "", 1)));
+        when(contentSourceDetailService.fetchContentSourceDetails(1, "@nobody")).thenReturn(Optional.empty());
+        when(contentSourceDetailService.fetchContentSourceDetails(1, "@busy"))
+                .thenThrow(new SourceDetailsUnavailableException("quota", null));
+
+        given().when().get(PATH + "/details/1/@found").then().statusCode(200).body("data.channelId", equalTo("UC1"));
+        given().when().get(PATH + "/details/1/@nobody").then().statusCode(404);
+        given().when().get(PATH + "/details/1/@busy").then().statusCode(503)
+                .body("error.errorCode", equalTo("SOURCE_CHECK_UNAVAILABLE"));
+    }
+
+    private static ContentSource source(Long id, String name) {
+        return ContentSourceBuilder.aContentSource().withId(id).withName(name).build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static PanacheQuery<ContentSource> queryOf(ContentSource... sources) {
+        PanacheQuery<ContentSource> query = mock(PanacheQuery.class);
+        when(query.count()).thenReturn((long) sources.length);
+        when(query.page(anyInt(), anyInt())).thenReturn(query);
+        when(query.stream()).thenAnswer(invocation -> Stream.of(sources));
+        return query;
+    }
 }

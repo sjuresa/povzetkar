@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.api;
 
 import com.povzetkar.quarkus.api.dto.BackgroundJobDTO;
+import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicCreateDTO;
 import com.povzetkar.quarkus.api.dto.TopicDTO;
 import com.povzetkar.quarkus.api.dto.TopicPaginatedResponse;
@@ -17,6 +18,7 @@ import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.BackgroundJobService;
+import com.povzetkar.quarkus.service.ContentSourceService;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
@@ -54,9 +56,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,7 +70,6 @@ import java.util.stream.Collectors;
 @Tag(name = "Topics", description = "Endpoints for managing Topics")
 public class TopicApiResource extends BaseApiResource {
 
-    private static final String FIND_BY_USER_AND_NAME_QUERY = "user = ?1 and name = ?2";
     private static final String DUPLICATE_TOPIC_NAME = "A topic with this name already exists.";
     private static final String TOPIC_WITH_ID = "Topic with id ";
     private static final String NOT_FOUND_SUFFIX = " not found or does not belong to user.";
@@ -76,13 +77,16 @@ public class TopicApiResource extends BaseApiResource {
     private final TopicMapper topicMapper;
     private final BackgroundJobService backgroundJobService;
     private final BackgroundJobMapper backgroundJobMapper;
+    private final ContentSourceService contentSourceService;
 
     @Inject
-    public TopicApiResource(TopicMapper topicMapper, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper, UserContextService userContextService) {
+    public TopicApiResource(TopicMapper topicMapper, BackgroundJobService backgroundJobService, BackgroundJobMapper backgroundJobMapper,
+                            ContentSourceService contentSourceService, UserContextService userContextService) {
         super(userContextService);
         this.topicMapper = topicMapper;
         this.backgroundJobService = backgroundJobService;
         this.backgroundJobMapper = backgroundJobMapper;
+        this.contentSourceService = contentSourceService;
     }
 
     @GET
@@ -101,7 +105,7 @@ public class TopicApiResource extends BaseApiResource {
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         User user = getContentViewingUser();
         Sort panacheSort = QueryParser.parseSort(sort, Sort.by("t.id"), Set.of("id", "name", "createdAt", "updatedAt", "lastRunDate", "enabled"), "t");
-        PanacheQuery<Topic> query = Topic.find("select distinct t from Topic t left join fetch t.contentSources where t.user = ?1", panacheSort, user);
+        PanacheQuery<Topic> query = Topic.findByUserWithSources(user, panacheSort);
         long count = query.count();
         List<TopicDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .list()
@@ -140,18 +144,18 @@ public class TopicApiResource extends BaseApiResource {
     public Response createTopic(@Valid @NotNull TopicCreateDTO createDTO, @Context UriInfo uriInfo) {
         User user = getAuthenticatedUser();
 
+        // Validate everything before creating anything (QA rule 3, "Design first")
         checkForDuplicateTopicName(user, createDTO.name());
+        Set<ContentSource> sources = resolveSources(createDTO.sourceIds());
+        sources.addAll(findOrCreateNewSources(createDTO.newSources()));
 
         Topic topic = topicMapper.toEntity(createDTO);
         topic.user = user;
-        
+
         if (createDTO.enabled() != null) {
             topic.enabled = createDTO.enabled();
         }
-
-        if (createDTO.sourceIds() != null && !createDTO.sourceIds().isEmpty()) {
-            topic.contentSources = resolveSources(createDTO.sourceIds());
-        }
+        topic.contentSources = sources;
 
         topic.persist();
 
@@ -187,30 +191,48 @@ public class TopicApiResource extends BaseApiResource {
             checkForDuplicateTopicName(user, patchDTO.name());
         }
 
-        topicMapper.patchEntity(patchDTO, topic);
+        // Validate and resolve every source before the topic is touched (QA rule 3, "Design first")
+        Set<ContentSource> replacement = patchDTO.sourceIds() != null ? resolveSources(patchDTO.sourceIds()) : null;
+        Set<ContentSource> newSources = findOrCreateNewSources(patchDTO.newSources());
 
-        if (patchDTO.sourceIds() != null) {
+        topicMapper.patchEntity(patchDTO, topic);
+        if (replacement != null) {
             topic.contentSources.clear();
-            if (!patchDTO.sourceIds().isEmpty()) {
-                topic.contentSources.addAll(resolveSources(patchDTO.sourceIds()));
-            }
+            topic.contentSources.addAll(replacement);
         }
+        topic.contentSources.addAll(newSources);
 
         return topicMapper.toDTO(topic);
     }
 
+    /**
+     * The sources for the given ids; each must be visible to the caller (in one of the caller's topics, or
+     * any source for an admin), otherwise 404 — an id alone does not entitle anyone to a source (POV-219).
+     */
     private Set<ContentSource> resolveSources(Set<Long> sourceIds) {
         if (sourceIds == null || sourceIds.isEmpty()) {
             return new HashSet<>();
         }
-        List<ContentSource> sources = ContentSource.list("id in ?1", sourceIds);
+        List<ContentSource> sources = ContentSource.listVisibleByIds(sourceIds, getContentScope());
         if (sources.size() != sourceIds.size()) {
             Set<Long> foundIds = sources.stream().map(s -> s.id).collect(Collectors.toSet());
             Set<Long> missingIds = new HashSet<>(sourceIds);
             missingIds.removeAll(foundIds);
-            throw new jakarta.ws.rs.NotFoundException("ContentSource(s) not found: " + missingIds);
+            throw new NotFoundException("ContentSource(s) not found: " + missingIds);
         }
         return new HashSet<>(sources);
+    }
+
+    /** Finds or creates the sources entered in Quick Add, once per platform and identifier. */
+    private Set<ContentSource> findOrCreateNewSources(Set<ContentSourceCreateDTO> newSources) {
+        if (newSources == null || newSources.isEmpty()) {
+            return Set.of();
+        }
+        Map<String, ContentSourceCreateDTO> distinct = new LinkedHashMap<>();
+        newSources.forEach(dto -> distinct.putIfAbsent(dto.platform() + ":" + dto.sourceIdentifier().trim(), dto));
+        return distinct.values().stream()
+                .map(dto -> contentSourceService.findOrCreate(dto).source())
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     @DELETE
@@ -288,15 +310,13 @@ public class TopicApiResource extends BaseApiResource {
     }
 
     private void checkForDuplicateTopicName(User user, String name) {
-        Optional<Topic> existing = Topic.find(FIND_BY_USER_AND_NAME_QUERY, user, name).firstResultOptional();
-        if (existing.isPresent()) {
+        if (Topic.findByUserAndName(user, name).isPresent()) {
             throw new WebApplicationException(DUPLICATE_TOPIC_NAME, Response.Status.CONFLICT);
         }
     }
 
     private Topic findResolvedTopic(Long id, User user) {
-        return Topic.<Topic>find("from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", id, user)
-                .firstResultOptional()
+        return Topic.findByIdAndUserWithSources(id, user)
                 .orElseThrow(
                         () -> new NotFoundException(TOPIC_WITH_ID + id + NOT_FOUND_SUFFIX));
     }

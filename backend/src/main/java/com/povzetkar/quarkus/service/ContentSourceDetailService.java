@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.service;
 
-import com.povzetkar.quarkus.model.ContentSource;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,8 +21,11 @@ public class ContentSourceDetailService {
         this.strategyFactory = strategyFactory;
     }
 
-    // A record to hold the fetched content source details
-    public record ContentSourceDetails(String name, String description, int subscriberCount) {}
+    /**
+     * Fetched content source details. {@code channelId} is the canonical platform identifier the input
+     * (handle, URL or ID) resolved to — the form a source is stored under (POV-219).
+     */
+    public record ContentSourceDetails(String channelId, String name, String description, int subscriberCount) {}
 
     /**
      * Fetches details for a given channel ID from the appropriate source API.
@@ -31,6 +33,7 @@ public class ContentSourceDetailService {
      * @param sourceTypeId The ID of the source type (e.g., YouTube).
      * @param identifier The ID of the channel/source to fetch details for.
      * @return An Optional containing ContentSourceDetails if found, or empty if not.
+     * @throws SourceDetailsUnavailableException if the platform API could not answer (not cached)
      */
     public Optional<ContentSourceDetails> fetchContentSourceDetails(int sourceTypeId, String identifier) {
         ContentSourceDetailEnrichmentStrategy strategy = strategyFactory.getStrategy(sourceTypeId);
@@ -46,11 +49,6 @@ public class ContentSourceDetailService {
         for (ContentSourceDetailEnrichmentStrategy strategy : strategyFactory.getStrategies()) {
             strategy.enrich();
         }
-    }
-
-    @Transactional
-    public void enrichContentSource(ContentSource source) {
-        strategyFactory.getStrategy(source.sourceTypeId).enrich(source);
     }
 
     /**

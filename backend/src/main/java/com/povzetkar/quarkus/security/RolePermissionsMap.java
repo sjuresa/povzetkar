@@ -28,7 +28,6 @@ public class RolePermissionsMap {
             Permission.BRIEFING_GENERATE,
             Permission.SUMMARY_GENERATE,
             Permission.SOURCE_VIEW,
-            Permission.SOURCE_CREATE,
             Permission.CONTENT_ITEM_VIEW);
 
     private static final Set<Permission> DEMO_PERMISSIONS = EnumSet.of(

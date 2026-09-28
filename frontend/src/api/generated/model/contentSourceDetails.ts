@@ -7,6 +7,7 @@
  */
 
 export interface ContentSourceDetails {
+  channelId?: string;
   name?: string;
   description?: string;
   subscriberCount?: number;

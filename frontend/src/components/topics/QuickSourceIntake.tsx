@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
-import { usePostApiV1Sources, useGetApiV1SourcesDetailsSourceTypeIdIdentifier } from '../../api/generated/content-sources/content-sources';
-import type { ContentSourceDTO } from '../../api/generated/model';
+import { useGetApiV1SourcesDetailsSourceTypeIdIdentifier } from '../../api/generated/content-sources/content-sources';
+import type { ContentSourceCreate } from '../../api/generated/model';
 import { Info, Loader2, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../util/cn';
 import { useDebounce } from '../../hooks/useDebounce';
 
 interface QuickSourceIntakeProps {
-  onSuccess: (source: ContentSourceDTO) => void;
+  /** Receives the entry; the source is found or created when the topic is saved (POV-219). */
+  onSuccess: (draft: ContentSourceCreate) => void;
   onCancel: () => void;
 }
 
 interface ApiErrorResponse {
   response?: {
     status?: number;
-    data?: {
-      message?: string;
-    };
   };
 }
+
+/** Platforms offered in Quick Add; BLOG is shown but not supported yet (no ingestion). */
+const SUPPORTED_PLATFORMS = new Set(['YOUTUBE']);
 
 const SOURCE_TYPE_YOUTUBE = 1; // From SourceTypeEnum.YOUTUBE
 const SOURCE_TYPE_BLOG = 2;    // From SourceTypeEnum.BLOG
@@ -32,8 +33,6 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
   const [validatedName, setValidatedName] = useState<string | null>(null);
 
   const debouncedIdentifier = useDebounce(identifier, 500);
-
-  const { mutate: createSource, isPending } = usePostApiV1Sources();
 
   // Real-time validation query
   const { 
@@ -61,7 +60,8 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
       return;
     }
 
-    if (!debouncedIdentifier.trim()) {
+    // Too short to check (the query is disabled): never keep the result of an earlier identifier
+    if (debouncedIdentifier.trim().length <= 3) {
       setValidationStatus('idle');
       setValidatedName(null);
       return;
@@ -89,6 +89,10 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
     }
   }, [debouncedIdentifier, isValidating, detailsResponse, isSuccess, isError, validationApiError, platform]);
 
+  // Only a channel the platform confirmed can be added: the backend rejects unknown channels on save
+  // ...and only for the identifier that was checked: while typing, the status still belongs to the previous one
+  const canAdd = validationStatus === 'valid' && identifier.trim().length > 0 && debouncedIdentifier === identifier;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -97,25 +101,15 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
       setError(t('topics.form.quick_add.error_identifier_required'));
       return;
     }
+    if (!canAdd) {
+      return;
+    }
 
-    createSource(
-      {
-        data: {
-          platform,
-          sourceIdentifier: identifier.trim(),
-          name: validatedName || '', // Use validated name if available
-        },
-      },
-      {
-        onSuccess: (response) => {
-          onSuccess(response.data as ContentSourceDTO);
-        },
-        onError: (err: unknown) => {
-          const apiError = err as ApiErrorResponse;
-          setError(apiError?.response?.data?.message || t('topics.form.quick_add.error_failed', 'Failed to add source'));
-        },
-      }
-    );
+    onSuccess({
+      platform,
+      sourceIdentifier: identifier.trim(),
+      name: validatedName ?? undefined,
+    });
   };
 
   return (
@@ -141,11 +135,12 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
                 key={p}
                 type="button"
                 onClick={() => setPlatform(p)}
+                disabled={!SUPPORTED_PLATFORMS.has(p)}
                 className={cn(
-                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-md border transition-all duration-200",
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-md border transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed",
                   platform === p
                     ? "bg-[var(--color-action-primary)] border-[var(--color-action-primary)] text-[var(--color-action-primary-text)] shadow-sm"
-                    : "bg-[var(--color-surface-elevated)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]"
+                    : "bg-[var(--color-surface-elevated)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] disabled:hover:bg-[var(--color-surface-elevated)]"
                 )}
               >
                 {p}
@@ -192,13 +187,13 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
 
           {validationStatus === 'invalid' && (
              <p className="mt-1 text-[11px] text-[var(--color-status-error)] animate-in fade-in slide-in-from-top-1">
-               {t('topics.form.quick_add.validation_error_not_found', 'YouTube channel not found. Please check the ID or handle.')}
+               {t('topics.form.quick_add.validation_error_not_found')}
              </p>
           )}
 
           {validationStatus === 'warning' && (
              <p className="mt-1 text-[11px] text-[var(--color-status-warning)] flex items-center gap-1 animate-in fade-in slide-in-from-top-1 font-medium">
-               {t('topics.form.quick_add.validation_warning_api', 'Validation service busy. You can still try to add.')}
+               {t('topics.form.quick_add.validation_warning_api')}
              </p>
           )}
         </div>
@@ -225,22 +220,16 @@ export function QuickSourceIntake({ onSuccess, onCancel }: QuickSourceIntakeProp
 
         <button
           type="submit"
-          disabled={isPending || !identifier.trim() || validationStatus === 'validating'}
+          disabled={!canAdd}
           className={cn(
             "w-full flex items-center justify-center gap-2 px-4 py-2 text-[var(--color-action-primary-text)] text-sm font-medium rounded-md transition-all duration-200",
-            validationStatus === 'valid' ? "bg-[var(--color-status-success)]/80 hover:bg-[var(--color-status-success)] shadow-lg shadow-[var(--color-status-success)]/20" :
-            validationStatus === 'invalid' ? "bg-[var(--color-status-warning)]/80 hover:bg-[var(--color-status-warning)] shadow-lg shadow-[var(--color-status-warning)]/20" :
-            validationStatus === 'warning' ? "bg-[var(--color-status-warning)]/80 hover:bg-[var(--color-status-warning)] shadow-lg shadow-[var(--color-status-warning)]/20" :
-            "bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] disabled:bg-[var(--color-surface-hover)] disabled:text-[var(--color-text-secondary)]"
+            canAdd
+              ? "bg-[var(--color-status-success)]/80 hover:bg-[var(--color-status-success)] shadow-lg shadow-[var(--color-status-success)]/20"
+              : "bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] cursor-not-allowed"
           )}
         >
-          {isPending ? <Loader2 className="w-4 h-4 animate-spin"  strokeWidth={1.5}/> : 
-           validationStatus === 'valid' ? <Check className="w-4 h-4"  strokeWidth={1.5}/> :
-           <AlertTriangle className="w-4 h-4"  strokeWidth={1.5}/>}
-          
-          {validationStatus === 'invalid' || validationStatus === 'warning' 
-            ? t('topics.form.quick_add.force_submit_button', 'Force Add') 
-            : t('topics.form.quick_add.submit_button', 'Add Source')}
+          <Check className="w-4 h-4"  strokeWidth={1.5}/>
+          {t('topics.form.quick_add.submit_button', 'Add Source')}
         </button>
       </form>
     </div>

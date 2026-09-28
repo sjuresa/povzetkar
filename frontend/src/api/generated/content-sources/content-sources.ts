@@ -41,8 +41,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Retrieves a paginated list of all content sources.
- * @summary Get all content sources
+ * Retrieves a paginated list of the content sources visible to the caller: the sources in the caller's topics (all sources for an admin).
+ * @summary Get content sources
  */
 export type getApiV1SourcesResponse200 = {
   data: ContentSourcePaginatedResponse
@@ -152,7 +152,7 @@ export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sou
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get all content sources
+ * @summary Get content sources
  */
 
 export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sources>>, TError = void>(
@@ -171,7 +171,7 @@ export function useGetApiV1Sources<TData = Awaited<ReturnType<typeof getApiV1Sou
 
 
 /**
- * Creates a new content source.
+ * Admin only. Resolves the identifier (handle, URL or channel ID) to the channel ID and returns the existing source for it (200) or creates one (201). Users add sources through a topic's newSources.
  * @summary Create content source
  */
 export type postApiV1SourcesResponse201 = {
@@ -590,7 +590,7 @@ export const usePatchApiV1SourcesId = <TError = void,
       return useMutation(getPatchApiV1SourcesIdMutationOptions(options), queryClient);
     }
     /**
- * Retrieves details of a specific content source.
+ * Retrieves a content source visible to the caller; a source outside the caller's topics is reported as not found.
  * @summary Get content source by ID
  */
 export type getApiV1SourcesIdResponse200 = {

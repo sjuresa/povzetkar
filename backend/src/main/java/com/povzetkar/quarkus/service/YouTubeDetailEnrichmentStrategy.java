@@ -70,15 +70,6 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
     }
 
     @Override
-    public void enrich(ContentSource source) {
-        fetchDetails(source.sourceIdentifier).ifPresent(details -> {
-            source.name = details.name();
-            source.description = details.description();
-            source.subscriberCount = details.subscriberCount();
-        });
-    }
-
-    @Override
     public void refresh() {
         List<ContentSource> sourcesToRefresh = ContentSource.list("sourceTypeId = ?1", SourceTypeEnum.YOUTUBE.getId());
         logger.info("Found {} YouTube content sources to refresh.", sourcesToRefresh.size());
@@ -129,7 +120,8 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         } catch (IOException e) {
             registry.counter("povzetkar_youtube_validation_failed_total", Tags.of("error_type", MetricErrorType.IO_EXCEPTION)).increment();
             logger.error("Failed to fetch details for identifier: {}", resolved, e);
-            return Optional.empty();
+            // not Optional.empty(): the cache would keep answering "not found" for the whole expiry period
+            throw new SourceDetailsUnavailableException("YouTube channel check unavailable for: " + resolved, e);
         }
     }
 
@@ -221,6 +213,6 @@ public class YouTubeDetailEnrichmentStrategy implements ContentSourceDetailEnric
         if (channel.getStatistics() != null && channel.getStatistics().getSubscriberCount() != null) {
             subscriberCount = channel.getStatistics().getSubscriberCount().intValue();
         }
-        return new ContentSourceDetailService.ContentSourceDetails(name, description, subscriberCount);
+        return new ContentSourceDetailService.ContentSourceDetails(channel.getId(), name, description, subscriberCount);
     }
 }

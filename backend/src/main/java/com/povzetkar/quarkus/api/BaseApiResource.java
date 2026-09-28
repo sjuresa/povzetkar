@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.api;
  
 import com.povzetkar.quarkus.model.BaseAuditableEntity;
+import com.povzetkar.quarkus.model.ContentScope;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.service.UserContextService;
 import jakarta.persistence.OptimisticLockException;
@@ -9,6 +10,8 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 
 public abstract class BaseApiResource {
+
+    private static final String NOT_AUTHENTICATED = "User must be authenticated";
 
     protected final UserContextService userContextService;
 
@@ -22,12 +25,17 @@ public abstract class BaseApiResource {
 
     protected User getAuthenticatedUser() {
         return userContextService.getCurrentUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+                .orElseThrow(() -> new NotAuthorizedException(NOT_AUTHENTICATED));
     }
 
     protected User getContentViewingUser() {
         return userContextService.getContentViewingUser()
-                .orElseThrow(() -> new NotAuthorizedException("User must be authenticated"));
+                .orElseThrow(() -> new NotAuthorizedException(NOT_AUTHENTICATED));
+    }
+
+    protected ContentScope getContentScope() {
+        return userContextService.getContentScope()
+                .orElseThrow(() -> new NotAuthorizedException(NOT_AUTHENTICATED));
     }
 
     protected void checkOptimisticLock(BaseAuditableEntity entity, String ifMatchHeader) {

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
-@TestSecurity(user = "home_test_user", roles = "user")
+@TestSecurity(user = "home_test_user", roles = { "user", "admin" })
 class HomeResourceTest {
 
     @Test

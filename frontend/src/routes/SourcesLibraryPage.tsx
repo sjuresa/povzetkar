@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGetApiV1Sources } from '../api/generated/content-sources/content-sources';
 import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -9,6 +10,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import { cn } from '../util/cn';
 
 export function SourcesLibraryPage() {
+  const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [size] = useState(12);
   const [search, setSearch] = useState('');
@@ -45,13 +47,24 @@ export function SourcesLibraryPage() {
     }
 
     if (items.length === 0) {
+      // Sources are scoped to the user's topics (POV-219): without a search, an empty list means none yet
+      const hasNoSources = !search && !debouncedSearch;
       return (
         <div className="glass border border-dashed border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-[var(--color-surface-deep)] flex items-center justify-center mx-auto mb-4 text-[var(--color-text-secondary)]">
             <Search className="w-8 h-8" strokeWidth={1.5} />
           </div>
-          <h3 className="text-lg font-bold text-[var(--color-text-primary)]">No sources found</h3>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-1">Try adjusting your search terms.</p>
+          {hasNoSources ? (
+            <>
+              <h3 className="text-lg font-bold text-[var(--color-text-primary)]">{t('sources.library.empty_title')}</h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t('sources.library.empty_hint')}</p>
+              <Link to="/topics" className="inline-block mt-4 text-sm font-bold text-[var(--color-action-primary)] hover:underline">
+                {t('sources.library.empty_link')}
+              </Link>
+            </>
+          ) : (
+            <h3 className="text-lg font-bold text-[var(--color-text-primary)]">{t('sources.library.no_results')}</h3>
+          )}
         </div>
       );
     }
@@ -84,7 +97,7 @@ export function SourcesLibraryPage() {
               </p>
 
               <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 mb-4 h-10">
-                {source.description ?? 'No description provided.'}
+                {source.description ?? t('sources.library.no_description')}
               </p>
 
               <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border-subtle)]/50">
@@ -93,7 +106,7 @@ export function SourcesLibraryPage() {
                 </div>
                 <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]">
                   <span className="font-bold text-[var(--color-text-primary)]">{source.subscriberCount?.toLocaleString() ?? 0}</span>
-                  <span>Subscribers</span>
+                  <span>{t('sources.library.subscribers')}</span>
                 </div>
               </div>
             </Link>
@@ -114,16 +127,16 @@ export function SourcesLibraryPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] mb-2 text-glow">Source Library</h2>
+          <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] mb-2 text-glow">{t('sources.library.title')}</h2>
           <p className="text-[var(--color-text-secondary)] max-w-lg">
-            Manage and browse all content sources integrated with Povzetkar. Inspect specific items and their processing status.
+            {t('sources.library.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center space-x-2 glass border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] px-4 py-2">
           <div className="text-right">
-            <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">Active Sources</div>
-            <div className="text-sm font-mono text-[var(--color-action-primary)] font-bold">{totalCount.toLocaleString()} Integrated</div>
+            <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-widest">{t('sources.library.counter_label')}</div>
+            <div className="text-sm font-mono text-[var(--color-action-primary)] font-bold">{t('sources.library.counter_value', { count: totalCount })}</div>
           </div>
           <div className="w-8 h-8 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] flex items-center justify-center text-[var(--color-action-primary)] ml-2">
             <Globe className="w-4 h-4" strokeWidth={1.5} />
@@ -141,7 +154,7 @@ export function SourcesLibraryPage() {
               setSearch(e.target.value);
               setPage(0);
             }}
-            placeholder="Search sources by name, identifier or description..."
+            placeholder={t('sources.library.search_placeholder')}
             className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] rounded-xl md:rounded-[28px] pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-[var(--color-ring-focus)]/20 focus:border-[var(--color-action-primary)] transition-all outline-none text-[var(--color-text-primary)] shadow-inner"
           />
         </div>

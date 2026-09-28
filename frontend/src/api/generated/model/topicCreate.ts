@@ -5,11 +5,15 @@
  * REST API for Povzetkar - AI Powered Content Summarizer
  * OpenAPI spec version: 0.13.0
  */
+import type { ContentSourceCreate } from './contentSourceCreate';
 
 export interface TopicCreate {
   /** @pattern \S */
   name: string;
   enabled?: boolean;
   promptTemplate?: string;
+  /** IDs of existing sources to attach; each must be visible to the caller (in one of the caller's topics). */
   sourceIds?: number[];
+  /** Sources entered by platform identifier (handle, URL or channel ID); found or created when the topic is saved. */
+  newSources?: ContentSourceCreate[];
 }

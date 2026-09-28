@@ -39,7 +39,9 @@ class RolePermissionsMapTest {
                         Permission.USER_MGMT_VIEW,
                         Permission.USER_MGMT_UPDATE,
                         Permission.SOURCE_UPDATE,
-                        Permission.SOURCE_DELETE);
+                        Permission.SOURCE_DELETE,
+                        // POV-219: users add sources through a topic's newSources, not POST /sources
+                        Permission.SOURCE_CREATE);
     }
 
     @Test
