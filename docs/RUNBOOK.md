@@ -821,16 +821,17 @@ old format (below the POV-210 recipe).
 **Access log** (`%prod`, logger category `io.quarkus.http.access-log`). One line per request, pattern:
 
 ```text
-%t cf-ip=<CF-Connecting-IP> country=<CF-IPCountry> ray=<CF-Ray> user=%u "%<r" %s %b %D host="<Host>" ref="<Referer>" xff="<X-Forwarded-For>" "<User-Agent>"
+%t cf-ip=<CF-Connecting-IP> country=<CF-IPCountry> ray=<CF-Ray> user=<AccessLogPrincipalRoute> "%<r" %s %b %D host="<Host>" ref="<Referer>" xff="<X-Forwarded-For>" "<User-Agent>"
 ```
 
 - `cf-ip=` is the **client IP** (set by Cloudflare). Since POV-214 only the tunnel reaches the app, so it is
   trustworthy for every request.
 - `ray=` is Cloudflare's request ID: search it in the Cloudflare dashboard (Security → Events) to see what
   Cloudflare did with the request.
-- `user=` is the authenticated principal: the **Google subject** (`sub`, the numeric account ID) for browser
+- `user=` is the signed-in user: the **Google subject** (`sub`, the numeric account ID) for browser
   sessions — map it to a user via `user_identities` (provider `google`, external ID) — or the mapped **e-mail**
-  for API-key requests; `-` when anonymous.
+  for API-key requests; `-` when anonymous. Set by `AccessLogPrincipalRoute` (`%{d,povzetkar.log-user}`), limited to
+  `[A-Za-z0-9@._+-]`. Not `%u`: with Quarkus' Google provider that is the display name, which the user controls.
 - `"%<r"` is the **original** request line incl. the query string (attack payloads live there;
   `SpaRoutingHandler`'s reroute to `/index.html` is consolidated into one entry). It includes the
   OIDC callback `code`/`state`: single-use, redeemed at once, useless without the client secret.

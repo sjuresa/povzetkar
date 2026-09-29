@@ -35,8 +35,11 @@ delivered in the code and documents; the deploy (Phase 8) follows the push.
   unless one sets `name:` — with shared service names, `up` of one recreates the other's containers.
 - Quarkus `quarkus.http.filter.*` headers are set first (order `Integer.MIN_VALUE`) and merge across overlapping
   filters; Vert.x 4.5 `StaticHandler` only adds `Cache-Control`/`Last-Modified` if absent.
-- `%u` in the Quarkus access log is the security identity's principal: the Google `sub` for OIDC sessions, the
-  mapped e-mail for API keys.
+- `%u` in the Quarkus access log is the security identity's principal — and Quarkus' Google provider sets the
+  principal claim to `name` (`KnownOidcProviders`), so `%u` logged the **display name**: user-controlled, with spaces
+  and quotes, placed before the request line. The plan had inferred "Google `sub`" from `UserContextService`, which
+  calls `jwt.getSubject()` explicitly; the API-key test could not show it. Found in the deploy smoke test after the PO
+  signed in; fixed with `AccessLogPrincipalRoute` (sub / mapped e-mail, safe characters).
 - Quarkus resolves `trusted-proxies` hostnames per request; a fixed IP is the recommended form.
 - The browser under a real CSP is the only check that the build did not alter a hashed inline script and that no
   library needs `eval`.

@@ -167,3 +167,7 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### A Fixed Address Needs a Reserved Range
 - **The Trap:** giving `cloudflared` a fixed `ipv4_address` in a subnet is not enough — Docker hands out dynamic addresses from the whole subnet, so a container that starts first can take it. And a validation script that runs `compose run` on the prod file creates a network with the same fixed subnet, which collides with the running prod network.
 - **The Standard:** set `ip_range` to a part of the subnet that excludes the fixed addresses; validate configs with `docker run --network none` (config on stdin), not with `compose run`.
+
+### `%u` Is the Principal — and Google's Principal Is the Display Name
+- **The Trap:** the access-log pattern used `%u` expecting the Google subject, because `UserContextService` resolves users by `jwt.getSubject()`. But Quarkus' built-in Google provider sets `principalClaim("name")` (`KnownOidcProviders`), so `%u` logged the display name — text the user controls, with spaces and quotes — in front of the request line, where it could forge fields. The test covered only the API-key principal (an e-mail); the deploy smoke test after a real Google sign-in found it.
+- **The Standard:** never log a principal name directly: derive the value explicitly (JWT `sub`, API-key e-mail), restrict it to a safe character set, and test with a principal that contains spaces and quotes (`@TestSecurity(user = "Display \"Name\" 200")`). Check a provider's defaults in its source before assuming what "the principal" is.

@@ -6,6 +6,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.security.TestSecurity;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,11 +117,27 @@ class AccessLogTest {
 
             assertThat(logged).hasSize(1);
             // API-key identities carry the mapped user's e-mail; OIDC identities the Google subject
+            // (AccessLogPrincipalRouteTest) — never the display name, which Quarkus' Google provider uses as principal
             assertThat(logged.get(0)).contains(" user=" + API_KEY_USER_EMAIL + " ");
             assertThat(entries).noneMatch(e -> e.contains(API_KEY));
         } finally {
             QuarkusTransaction.requiringNew().run(() -> User.delete("email", API_KEY_USER_EMAIL));
         }
+    }
+
+    @Test
+    @TestSecurity(user = "Display \"Name\" 200", roles = "user")
+    void signedInUserCannotForgeFieldsThroughItsName() {
+        given()
+                .header("User-Agent", "pov214-name-test")
+                .when().get("/api/v1/system/metadata")
+                .then().statusCode(200);
+
+        List<String> logged = awaitEntries("pov214-name-test");
+
+        assertThat(logged).hasSize(1);
+        // Spaces and quotes would shift the fields that follow; they are replaced
+        assertThat(logged.get(0)).contains(" user=Display__Name__200 \"GET /api/v1/system/metadata HTTP/1.1\" 200 ");
     }
 
     @Test
