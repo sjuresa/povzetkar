@@ -29,7 +29,8 @@ public class AccessLogPrincipalRoute {
     public static final String DATA_KEY = "povzetkar.log-user";
 
     private static final Pattern UNSAFE = Pattern.compile("[^A-Za-z0-9@._+-]");
-    private static final int MAX_LENGTH = 128;
+    /** users.email and an OIDC subject are at most 255 characters: never cut a real identifier. */
+    private static final int MAX_LENGTH = 255;
 
     void register(@Observes Router router) {
         router.route().order(Integer.MIN_VALUE + 1).handler(rc -> {

@@ -128,6 +128,7 @@ class AccessLogTest {
     @Test
     @TestSecurity(user = "Display \"Name\" 200", roles = "user")
     void signedInUserCannotForgeFieldsThroughItsName() {
+        // A non-JWT principal name with spaces and quotes (the API-key path logs principal names)
         given()
                 .header("User-Agent", "pov214-name-test")
                 .when().get("/api/v1/system/metadata")
@@ -138,6 +139,20 @@ class AccessLogTest {
         assertThat(logged).hasSize(1);
         // Spaces and quotes would shift the fields that follow; they are replaced
         assertThat(logged.get(0)).contains(" user=Display__Name__200 \"GET /api/v1/system/metadata HTTP/1.1\" 200 ");
+    }
+
+    @Test
+    void oidcSessionIsLoggedByItsGoogleSubject() {
+        given()
+                .header("User-Agent", "pov214-oidc-test")
+                .when().get(OidcIdentityRoute.PATH)
+                .then().statusCode(200);
+
+        List<String> logged = awaitEntries("pov214-oidc-test");
+
+        assertThat(logged).hasSize(1);
+        // The regression: Quarkus' Google provider makes the display name the principal, and %u logged it
+        assertThat(logged.get(0)).contains(" user=" + OidcIdentityRoute.SUBJECT + " ").doesNotContain("Simon");
     }
 
     @Test

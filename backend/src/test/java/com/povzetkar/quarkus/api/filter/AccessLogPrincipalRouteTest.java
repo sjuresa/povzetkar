@@ -33,6 +33,15 @@ class AccessLogPrincipalRouteTest {
     }
 
     @Test
+    void longestValidEmailIsKeptWhole() {
+        // users.email allows 255 characters; the log must still identify the user
+        String email = "a".repeat(64) + "@" + "b".repeat(185) + ".test";
+        assertThat(email).hasSize(255);
+
+        assertThat(AccessLogPrincipalRoute.logUser(user(new QuarkusPrincipal(email)))).isEqualTo(email);
+    }
+
+    @Test
     void unsafeCharactersAreReplacedSoAValueCannotForgeFields() {
         assertThat(AccessLogPrincipalRoute.logUser(user(new QuarkusPrincipal("a b\"c\nd=e"))))
                 .isEqualTo("a_b_c_d_e");
