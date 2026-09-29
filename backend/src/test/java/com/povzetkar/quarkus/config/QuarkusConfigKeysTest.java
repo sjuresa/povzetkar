@@ -75,7 +75,12 @@ class QuarkusConfigKeysTest {
      * Keys accepted although no extension model declares them unambiguously (typically passthrough
      * map entries). Every entry needs a reason — prefer fixing the key over adding it here.
      */
-    private static final Map<String, String> ALLOWLIST = Map.of();
+    private static final Map<String, String> ALLOWLIST = Map.of(
+            // quarkus.http.filter."<name>".header is a Map<header-name, value>: the header name is the
+            // map key, so no model can declare it. Their effect is asserted per path (POV-214).
+            "quarkus.http.filter.csp-legacy.header.\"Content-Security-Policy\"", "SecurityHeadersTest",
+            "quarkus.http.filter.csp-strict.header.\"Content-Security-Policy\"", "SecurityHeadersTest",
+            "quarkus.http.filter.cache-revalidate.header.\"Cache-Control\"", "CachingHeadersTest");
 
     private static final Map<String, ModeModel> models = new LinkedHashMap<>();
     /** The three trees share most jars; each jar's model is parsed once. */

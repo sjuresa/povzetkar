@@ -283,7 +283,7 @@ This document outlines the concrete steps for implementing the features describe
 
 ### Key Tasks & Implementation Steps:
 1.  **Production Edge:**
-    *   **Caddy on the Traffic Path** (POV-214): route the Cloudflare tunnel through Caddy so security headers are actually delivered.
+    *   **Security Headers in the Application** (POV-214): Caddy removed — the Cloudflare tunnel is the only edge; the app sends security headers, an enforced CSP and caching headers and trusts forwarded headers only from `cloudflared` (ADR-0012).
 2.  **Dependency Debt:**
     *   **orval ≥ 8.22** (POV-215): the build-time API-client generator carries CRITICAL advisories.
 3.  **Test Debt:**
@@ -358,6 +358,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.3     | 2026-09-29         | Povzetkar AI | v0.20 *Production Edge*: POV-214 reshaped from "Caddy on the traffic path" to removing Caddy — headers, CSP, caching and proxy trust in the application (ADR-0012). |
 | 4.2     | 2026-09-28         | Povzetkar AI | v0.17 *Session Expiry Handling* (POV-187) corrected to the implemented `/auth/login?redirect=` flow (POV-220). |
 | 4.1     | 2026-09-27         | Povzetkar AI | Marked v0.20 as In Progress at version initialisation (POV-212); key tasks linked to POV-213, POV-214, POV-215. |
 | 4.0     | 2026-09-27         | Povzetkar AI | Marked v0.19.0 as ✅ Completed and rewrote its scope to actual delivery (Security Hardening, Process Maturity & Operations, POV-211); the unshipped forecast (DAST, Grafana alerting, full-text search, transcript providers, SMTP) moved to the backlog; added a minimal v0.20 forecast (Caddy on the traffic path, orval ≥ 8.22, scheduler integration test). |

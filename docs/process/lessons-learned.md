@@ -32,6 +32,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Scoping an API means scoping every door to the data (POV-219)**:
 > Restricting `GET /sources` was not enough: sources could be attached to a topic by a guessed ID, items and summaries were readable (and shareable) by ID, and the legacy Qute UI (`/ui/*`, not linked from the SPA) listed every source. When adding ownership, enumerate every read *and write* path to the entity — including legacy routes — and derive visibility in one named query per entity (`ContentScope`), so no endpoint can forget it.
 
+> [!WARNING]
+> **Two compose files in one directory are one compose project (POV-214)**:
+> Without `name:`, the dev and prod compose files in `backend/` formed project `backend`: a dev `up` replaced the prod Prometheus/Grafana (a day without production metrics), and `--remove-orphans` from either file would have removed the other stack. Give every compose file its own `name:` — rename the non-prod one, since volume names derive from the project name. Details and the CSP-hash/line-ending trap: [infrastructure-ops](lessons/infrastructure-ops.md#the-edge-is-the-app--compose-projects-hashes-and-proxy-trust-pov-214).
+
 > [!NOTE]
 > **Store the canonical platform identifier, not what the user typed (POV-219)**:
 > Quick Add validated `@handle` and URLs by resolving them, but stored the typed text; ingestion reads the identifier as a channel ID, so such sources never received content and one channel could exist twice. Resolve on input and store the canonical form (`ContentSourceDetails.channelId`).

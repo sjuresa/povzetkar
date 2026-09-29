@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/csp';
 
 test.describe('Dashboard MVP', () => {
   test('unauthenticated user is redirected to landing page', async ({ page }) => {

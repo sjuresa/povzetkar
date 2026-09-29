@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/csp';
 
 test.describe('Auth & Authorization', () => {
   test('login button redirects to /auth/login', async ({ page }) => {

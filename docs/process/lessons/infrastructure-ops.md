@@ -145,3 +145,25 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### Every Placeholder Is Client-Controlled Until Proven Otherwise
 - **The Trap:** `%h` with `proxy-address-forwarding` and no `trusted-proxies` is the client's **own** first `X-Forwarded-For` value — unvalidated, spaces and quotes included (Cloudflare keeps it and appends the real address). Placed first in the pattern, it let a client forge a whole line prefix (`1.1.1.1 [x] cf-ip=… "GET /harmless …" 204`), so `grep`/`awk` reported a harmless request instead of `/.ssh/id_rsa`. Plan review had called `%h` spoofable and still kept it first. Separately, a `sed` anchored only on `[^"]*access-log]` accepted `access-log] …` text inside another logger's message (a topic name).
 - **The Standard:** In a text log, only trusted fields (timestamp, Cloudflare-set `CF-Connecting-IP`/`CF-IPCountry`) precede the client-controlled ones (request line, headers); log `X-Forwarded-For` as a quoted field after the status, never `%h`. Parse recipes anchor on the **fixed log-format prefix** (date, level, logger category) and print only lines that parse. Test the recipes with forged input, not only real lines. Newlines in logged values remain a gap (messages are not escaped).
+
+## The Edge Is the App — Compose Projects, Hashes and Proxy Trust (POV-214)
+
+### Two Compose Files in One Directory Are One Project
+- **The Trap:** `docker-compose.yml` (dev) and `docker-compose.prod.yml` lived in `backend/` without `name:`, so Docker Compose treated both as project `backend`. A dev `docker compose up` recreated the prod `prometheus`/`grafana` (same service and container names) from the dev config in another network — production metrics stopped for a day unnoticed — and `--remove-orphans` from either file would have removed the other stack's containers, prod app and DB included. `docker compose down` with the dev file would have stopped the prod monitoring too.
+- **The Standard:** every compose file that can run on the same host gets its own `name:`; container names and host ports must not collide either. Never rename the **prod** project to fix this — volume names derive from the project name, so the DB would start empty; rename the other one. Check with `docker compose ls` and the `com.docker.compose.project` label.
+
+### A CSP Hash Covers Bytes, Line Endings Included
+- **The Trap:** the strict CSP allows the inline pre-paint script by its sha256. With `core.autocrlf=true` the Windows checkout — from which the prod image is built — had CRLF, CI had LF: the same script, two hashes, and the deployed policy would have blocked it.
+- **The Standard:** a file whose bytes are pinned (by a hash, a signature) gets `text eol=lf` in `.gitattributes`. Guard the hash twice: a unit test on the source and a browser run of the built output under the real policy — only the browser proves the build did not change the script.
+
+### A Browser Under a Strict CSP Finds What Tests Without It Cannot
+- **The Trap:** Zod v4 probes `new Function("")` to decide on JIT parsers. The probe is caught, so nothing fails functionally, but every page that builds a schema reports a CSP violation — invisible in unit tests and in a dev server without a policy.
+- **The Standard:** run the e2e specs against the production build with the production CSP and fail on any `securitypolicyviolation` (Playwright project `csp`); fix the cause (`z.config({ jitless: true })`) instead of adding `'unsafe-eval'`.
+
+### Quarkus Filter Headers: First, Additive, and Winning Over Static Files
+- **The Trap (avoided by reading the sources):** `quarkus.http.filter.*` handlers run at route order `Integer.MIN_VALUE` and **merge** values of overlapping filters into one multi-valued header — two matching CSP filters would make the browser enforce both. Vert.x's `StaticHandler` writes `Cache-Control` only if absent, so a filter overrides its 24 h `immutable` default.
+- **The Standard:** filters that set the same header use mutually exclusive path regexes (negative lookahead), and a test asserts a single value per path.
+
+### A Fixed Address Needs a Reserved Range
+- **The Trap:** giving `cloudflared` a fixed `ipv4_address` in a subnet is not enough — Docker hands out dynamic addresses from the whole subnet, so a container that starts first can take it. And a validation script that runs `compose run` on the prod file creates a network with the same fixed subnet, which collides with the running prod network.
+- **The Standard:** set `ip_range` to a part of the subnet that excludes the fixed addresses; validate configs with `docker run --network none` (config on stdin), not with `compose run`.

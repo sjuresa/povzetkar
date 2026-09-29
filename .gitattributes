@@ -1,2 +1,5 @@
 # Shell scripts run under bash (CI, Git Bash); CRLF would break them on Windows checkouts.
 *.sh text eol=lf
+# The Content-Security-Policy allows the inline pre-paint script by its sha256 (POV-214), which covers the exact
+# bytes: a CRLF checkout (core.autocrlf on Windows, where the prod image is built) would change the hash.
+frontend/index.html text eol=lf
