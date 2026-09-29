@@ -44,7 +44,7 @@ class SecurityHeadersTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"/api/v1/system/metadata", "/static/css/app.css", "/dashboard", "/assets/missing.js",
-            "/api/v1/users/me", "/loginx"})
+            "/api/v1/users/me", "/loginx", "/q/metrics", "/q/health"})
     void nonLegacyPathsGetTheStrictPolicy(String path) {
         Map<String, String> csp = singleCsp(get(path), path);
 

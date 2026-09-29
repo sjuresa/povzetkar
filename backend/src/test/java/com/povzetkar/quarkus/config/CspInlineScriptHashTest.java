@@ -80,7 +80,7 @@ class CspInlineScriptHashTest {
     }
 
     /** Resolves a repository-relative file by walking up from the working directory (backend/ under Maven). */
-    private static Path findInRepository(String relativePath) {
+    static Path findInRepository(String relativePath) {
         for (Path dir = Path.of("").toAbsolutePath(); dir != null; dir = dir.getParent()) {
             Path candidate = dir.resolve(relativePath);
             if (Files.isRegularFile(candidate)) {

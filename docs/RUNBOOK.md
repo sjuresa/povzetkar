@@ -272,6 +272,21 @@ The production stack uses `docker-compose.prod.yml` with `.env.docker` (compose 
 
 The dev stack (`docker-compose.yml`, same directory) is its own compose project `povzetkar-dev` with its own container names and host ports (dev DB 5434, test DB 5433, dev Grafana 3001, dev Prometheus 9090), so both run side by side. Never remove the `name:` from the dev file: the two files would again form one project, a dev `up` would recreate the prod Prometheus/Grafana, and `--remove-orphans` from either file would remove the other stack's containers (POV-214).
 
+**First start after POV-214 on a host that ran the old dev stack:** its dev containers still belong to project
+`backend` and keep their names, so the new project cannot create `povzetkar-db-dev` / `povzetkar-db-test`. Remove
+them by name — **never** `docker compose -f docker-compose.yml down` with the old file: under project `backend` its
+`prometheus`/`grafana` services are the production containers.
+
+```bash
+docker ps -a --filter label=com.docker.compose.project=backend --format '{{.Names}} {{.Status}}'   # check first
+docker rm -f povzetkar-db-dev povzetkar-db-test   # dev DB data is on external volumes (povzetkar_postgres_*) and stays
+docker compose -f docker-compose.yml up -d postgres-test   # (postgres-dev too, after DB_PORT=5434 in backend/.env)
+```
+
+If `povzetkar-prometheus` / `povzetkar-grafana` on that host were created from the **dev** file (check
+`docker inspect <name> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'`), recreate them
+from the prod file: `docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps prometheus grafana`.
+
 ### 10.1 Build
 
 Run from the `backend/` directory:

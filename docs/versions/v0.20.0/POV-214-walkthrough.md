@@ -18,7 +18,7 @@ have hit the prod services) — prod containers unchanged.
 **Security headers and CSP** (`application.properties`, section *HTTP SECURITY HEADERS & CACHING*):
 HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` via `quarkus.http.header`; two
 Content-Security-Policies as `quarkus.http.filter`s with mutually exclusive regexes — strict (SPA, API, assets;
-`script-src 'self' 'sha256-…'`) and legacy (`/ui/*`, `/login`, `/logout`); `/q` excluded (Swagger UI in dev).
+`script-src 'self' 'sha256-…'`) and legacy (`/ui/*`, `/login`, `/logout`); `/q` gets the strict policy too, excluded only in the dev profile (Swagger UI; PR #288 review).
 `frontend/index.html` is checked out with LF everywhere (`.gitattributes`) so the hash does not depend on the checkout;
 `frontend/src/zodConfig.ts` switches Zod to `jitless` (its `new Function` probe violated the policy).
 
