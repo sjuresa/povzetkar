@@ -55,7 +55,7 @@
 | **TC-MON-003** | **P2** | - | [v0.15] | Retention Purge Verification | Script | Simulation script proves that 90-day old logs are purged. |
 | **TC-MON-004** | **P1** | - | [v0.12] | SSE Real-time Toast Sync | **Playwright** | Background job completion triggers a UI toast notification. |
 | **TC-MON-005** | **P1** | - | [v0.18] | GenAI RPD Counting Accuracy | Integration (`VideoSummaryServiceTest`) | Every GenAI request — including failed and retried ones — counts against the daily RPD limit; the counter never undercounts (POV-195). |
-| **TC-MON-006** | **P2** | - | [v0.20] | Access-Log Content | Integration (`AccessLogTest`, `AccessLogFileTest`) | One line per request with Cloudflare client IP, country and ray ID and the authenticated principal before the request line, client-controlled fields (Host, Referer, X-Forwarded-For, User-Agent) after the status; rerouted SPA probes logged once with the original path; the `X-API-Key` value never logged; with the `%prod` handler settings the lines go to their own file only, not to the main log (POV-210, POV-214). |
+| **TC-MON-006** | **P2** | - | [v0.20] | Access-Log Content | Integration (`AccessLogTest`, `AccessLogFileTest`) + Unit (`AccessLogPrincipalRouteTest`) | One line per request with Cloudflare client IP, country and ray ID and the signed-in user (Google subject or API-key e-mail, never the display name; safe characters only) before the request line, client-controlled fields (Host, Referer, X-Forwarded-For, User-Agent) after the status; rerouted SPA probes logged once with the original path; the `X-API-Key` value never logged; with the `%prod` handler settings the lines go to their own file only, not to the main log (POV-210, POV-214). |
 
 ## 5. Domain: Security & Identity (SEC)
 
