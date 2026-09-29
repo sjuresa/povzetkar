@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/csp';
 
 /**
  * POV-202 — Lazy-route regression guard for the briefing-detail page.

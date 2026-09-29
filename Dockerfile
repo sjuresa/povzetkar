@@ -9,6 +9,8 @@ COPY frontend/public ./public
 COPY frontend/index.html ./
 COPY frontend/tsconfig*.json ./
 COPY frontend/*.config.* ./
+# Imported by vite.config.ts (read only by `vite preview`, the Playwright CSP check - POV-214)
+COPY frontend/csp-policy.ts ./
 RUN npm run build
 
 # Stage 2: Build Backend
@@ -49,7 +51,7 @@ COPY --from=build-backend --chown=nonroot:nonroot /logroot/ /var/log/
 
 # Expose the application port. The management port (9000: /q/health, /q/metrics, /q/openapi) is
 # not listed here; EXPOSE is metadata only and restricts nothing. What keeps 9000 private is that
-# it is never published (`ports:`) nor routed by Caddy/the tunnel — any container on the same
+# it is never published (`ports:`) nor routed by the Cloudflare tunnel — any container on the same
 # Docker network can still reach it.
 EXPOSE 8080/tcp
 

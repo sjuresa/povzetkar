@@ -1,3 +1,5 @@
+// First import: switches Zod to jitless before any schema is built (strict CSP, no eval — POV-214)
+import '../../zodConfig';
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';

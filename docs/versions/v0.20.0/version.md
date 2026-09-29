@@ -13,6 +13,7 @@
 | POV-216 — Pending-approval Banner and Per-user Onboarding Guide | [walkthrough](POV-216-walkthrough.md) | [retrospective](POV-216-retrospective.md) |
 | POV-219 — Sources and Content Scoped to the User's Topics | [walkthrough](POV-219-walkthrough.md) | [retrospective](POV-219-retrospective.md) |
 | POV-220 — Landing Page Redesign | [walkthrough](POV-220-walkthrough.md) | [retrospective](POV-220-retrospective.md) |
+| POV-214 — Remove Caddy: Security Headers, Caching and Proxy Trust in the Application | [walkthrough](POV-214-walkthrough.md) | [retrospective](POV-214-retrospective.md) |
 
 ## Carry-Forward Review
 

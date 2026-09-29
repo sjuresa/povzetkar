@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './fixtures/csp';
 
 test('has title', async ({ page }) => {
   await page.goto('/');
@@ -18,12 +19,19 @@ test('renders brand name', async ({ page }) => {
   await expect(page.getByTestId('brand-logo').first()).toBeVisible();
 });
 // TC-UI-006: the pre-paint script in index.html applies theme and language before React loads.
-// main.tsx is blocked, so only that script can have set <html class> and <html lang>.
+// The app bundle is blocked, so only that script can have set <html class> and <html lang> — in the "csp"
+// project this also proves the strict CSP lets the script run (its sha256 is allowed).
+// Dev server: /src/main.tsx; built SPA (vite preview): /assets/index-<hash>.js.
+async function blockAppBundle(page: Page) {
+  await page.route('**/src/main.tsx', route => route.abort());
+  await page.route(/\/assets\/index-[\w-]+\.js$/, route => route.abort());
+}
+
 test.describe('pre-paint theme and language', () => {
   test.use({ colorScheme: 'light', locale: 'sl-SI' });
 
   test('first visit follows the system theme and browser language', async ({ page }) => {
-    await page.route('**/src/main.tsx', route => route.abort());
+    await blockAppBundle(page);
     await page.goto('/');
     await expect(page.locator('html')).toHaveClass(/\blight\b/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'sl');
@@ -34,7 +42,7 @@ test.describe('pre-paint theme and language', () => {
       localStorage.setItem('theme-storage', JSON.stringify({ state: { theme: 'dark' }, version: 0 }));
       localStorage.setItem('povzetkar-language', 'en');
     });
-    await page.route('**/src/main.tsx', route => route.abort());
+    await blockAppBundle(page);
     await page.goto('/');
     await expect(page.locator('html')).toHaveClass(/\bdark\b/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');

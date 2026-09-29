@@ -13,7 +13,8 @@
     <script>
       // Pre-paint: apply theme and language before React loads, so a light-theme visitor sees no dark flash.
       // Same rules as resolveInitialTheme (src/store/themeStore.ts) and resolveInitialLanguage (src/i18n/language.ts).
-      // A future Content-Security-Policy must allow this script by its sha256 hash (see POV-214 in the backlog).
+      // The strict Content-Security-Policy allows this script by its sha256 (csp-strict in application.properties):
+      // any edit, comments included, needs a new hash — CspInlineScriptHashTest names the mismatch.
       (function () {
         var root = document.documentElement;
         var prefersDark = true;

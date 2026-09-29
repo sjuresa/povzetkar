@@ -125,7 +125,7 @@ jobs:
         severity: 'CRITICAL,HIGH'
         trivyignores: '.trivyignore'
 
-    - name: Validate infra configs (Caddyfile, Prometheus, compose)
+    - name: Validate infra configs (Prometheus, compose)
       run: bash scripts/qa/validate-infra-configs.sh
 
     - name: Build Docker Image
