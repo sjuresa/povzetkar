@@ -1,12 +1,12 @@
 {
   "navigation": {
-    "dashboard": "Nadzorna Plošča",
-    "briefings": "Središče poročil",
+    "dashboard": "Nadzorna plošča",
+    "briefings": "Knjižnica pregledov",
     "topics": "Teme",
     "sources": "Viri",
     "administration": "Administracija",
     "users": "Upravljanje uporabnikov",
-    "auditLogs": "Revizijski sledi",
+    "auditLogs": "Revizijske sledi",
     "contentManagement": "Upravljanje vsebin",
     "systemJobs": "Sistemska opravila",
     "admin": "Admin",
@@ -39,55 +39,55 @@
     "close": "Zapri"
   },
   "profile": {
-    "title": "Vaš Profil",
+    "title": "Tvoj profil",
     "description": "Pregled osebnih podatkov ter dodeljenih pravic.",
     "identity": "Identiteta",
     "name": "Ime",
     "email": "E-pošta",
-    "provider": "Ponudnik Avtentikacije",
+    "provider": "Ponudnik avtentikacije",
     "roles": "Vloge",
     "permissions": "Pravice",
-    "no_permissions": "Nimate dodeljenih posebnih pravic."
+    "no_permissions": "Nimaš dodeljenih posebnih pravic."
   },
   "dashboard": {
-    "title": "Nadzorna Plošča",
-    "activeJobs": "Aktivno Opravilo/i",
-    "recentBriefings": "Zadnja Poročila",
-    "viewAll": "Prikaži Vse",
-    "refresh": "Osveži Dashboard",
+    "title": "Nadzorna plošča",
+    "activeJobs": "Aktivna opravila",
+    "recentBriefings": "Zadnji pregledi",
+    "viewAll": "Prikaži vse",
+    "refresh": "Osveži nadzorno ploščo",
     "stats": {
-      "activeTopics": "Aktivne Teme",
-      "activeTopicsDesc": "Spremljanje vaših virov",
-      "weeklyBriefings": "Tedenska Poročila",
+      "activeTopics": "Aktivne teme",
+      "activeTopicsDesc": "Spremljanje tvojih virov",
+      "weeklyBriefings": "Pregledi v tednu",
       "weeklyBriefingsDesc": "V zadnjih 7 dneh",
-      "latestActivity": "Zadnja Aktivnost",
-      "latestActivityDesc": "Zadnje ustvarjeno poročilo"
+      "latestActivity": "Zadnja aktivnost",
+      "latestActivityDesc": "Zadnji ustvarjeni pregled"
     },
     "empty": {
-      "welcome": "Dobrodošli v",
-      "subtitle": "Vaš inteligentni pomočnik je pripravljen. Sledite spodnjim navodilom za vzpostavitev vašega okolja za avtonomna poročila.",
-      "connectTitle": "Povežite vir",
-      "connectDesc": "Dodajte YouTube kanal ali RSS vir za začetek spremljanja.",
-      "createTopicTitle": "Ustvarite temo",
-      "createTopicDesc": "Določite, kaj želite spremljati v svojih virih.",
-      "getBriefingTitle": "Prejmite poročilo",
+      "welcome": "Dobrodošel v",
+      "subtitle": "Tvoj pomočnik je pripravljen. Sledi spodnjim korakom in pripravi svoje dnevne preglede.",
+      "connectTitle": "Poveži vir",
+      "connectDesc": "Dodaj YouTube kanal in začni spremljati.",
+      "createTopicTitle": "Ustvari temo",
+      "createTopicDesc": "Določi, kaj želiš spremljati v svojih virih.",
+      "getBriefingTitle": "Prejmi dnevni pregled",
       "getBriefingDesc": "AI samodejno izvleče ključne točke iz nove vsebine.",
-      "action": "Dodajte prvo temo",
-      "help": "Potrebujete pomoč?",
+      "action": "Dodaj prvo temo",
+      "help": "Potrebuješ pomoč?",
       "guide": "Vodnik za hiter začetek prihaja kmalu"
     }
   },
   "sources": {
     "library": {
       "title": "Knjižnica virov",
-      "subtitle": "Viri vsebin iz vaših tem. Preglejte posamezne vsebine in stanje njihove obdelave.",
+      "subtitle": "Viri vsebin iz tvojih tem. Preglej posamezne vsebine in stanje njihove obdelave.",
       "counter_label": "Viri",
       "counter_value": "skupaj {{count}}",
-      "search_placeholder": "Iščite vire po imenu, identifikatorju ali opisu ...",
+      "search_placeholder": "Išči vire po imenu, identifikatorju ali opisu ...",
       "no_description": "Opis ni na voljo.",
       "subscribers": "Naročnikov",
-      "empty_title": "Še nimate virov",
-      "empty_hint": "Vire dodate v temi — odprite Teme in uporabite Dodaj vir.",
+      "empty_title": "Še nimaš virov",
+      "empty_hint": "Vire dodaš v temi — odpri Teme in uporabi Dodaj vir.",
       "empty_link": "Na Teme",
       "no_results": "Ni najdenih virov"
     },
@@ -98,20 +98,20 @@
   },
   "topics": {
     "title": "Upravljanje tem",
-    "subtitle": "Upravljajte in avtomatizirajte odkrivanje vsebine z UI.",
+    "subtitle": "Upravljaj in avtomatiziraj odkrivanje vsebine z UI.",
     "add_topic": "Nova tema",
     "edit_topic": "Uredi temo",
-    "delete_confirm": "Ali ste prepričani, da želite izbrisati temo \"{{name}}\"?",
+    "delete_confirm": "Res želiš izbrisati temo \"{{name}}\"?",
     "delete_success": "Tema je bila uspešno izbrisana",
     "delete_failed": "Brisanje ni uspelo: {{message}}",
     "trigger_success": "Zagon teme je bil uspešno sprožen!",
     "trigger_failed": "Zagon ni uspel: {{message}}",
     "empty_title": "Ni najdenih tem",
-    "empty_desc": "Ustvarite svojo prvo temo, da začnete prejemati povzetke novic z UI.",
+    "empty_desc": "Ustvari svojo prvo temo in začni prejemati dnevne preglede.",
     "last_run": "Zadnji zagon",
     "never": "Nikoli",
     "default_prompt": "Privzeto navodilo",
-    "run_briefing": "Dostavi briefing",
+    "run_briefing": "Ustvari dnevni pregled",
     "generate_summaries": "Generiraj povzetke",
     "linked_sources": "{{count}} povezanih virov vsebine",
     "linked_sources_one": "{{count}} povezan vir",
@@ -121,16 +121,16 @@
       "add_button": "Nova tema",
       "add_title": "Dodaj novo temo",
       "edit_title": "Uredi temo",
-      "delete_confirm": "Ali ste prepričani, da želite izbrisati temo \"{{name}}\"?",
+      "delete_confirm": "Res želiš izbrisati temo \"{{name}}\"?",
       "delete_success": "Tema je bila uspešno izbrisana",
       "delete_failed": "Brisanje ni uspelo: {{message}}",
       "run_success": "Zagon teme je bil uspešno sprožen!",
       "run_failed": "Zagon ni uspel: {{message}}",
       "empty_title": "Ni najdenih tem",
-      "empty_description": "Ustvarite svojo prvo temo, da začnete prejemati povzetke novic z UI.",
+      "empty_description": "Ustvari svojo prvo temo in začni prejemati dnevne preglede.",
       "run_now": "Zaženi zdaj",
       "never_run": "Nikoli",
-      "show_active_only": "Samo Aktivne",
+      "show_active_only": "Samo aktivne",
       "sources_count_one": "{{count}} vir",
       "sources_count_two": "{{count}} vira",
       "sources_count_few": "{{count}} viri",
@@ -146,7 +146,7 @@
       "enabled_label": "Omogočeno",
       "prompt_label": "Predloga navodila",
       "prompt_placeholder": "Navodila za UI po meri za to temo...",
-      "prompt_tip": "Namig: Za prilagoditev povzetka lahko uporabite spremenljivke.",
+      "prompt_tip": "Namig: za prilagoditev povzetka lahko uporabiš spremenljivke.",
       "sources_label": "Viri vsebine",
       "sources_loading": "Nalaganje virov...",
       "no_sources": "Ni na voljo virov vsebine.",
@@ -166,27 +166,27 @@
         "identifier_placeholder_youtube": "@handle, URL kanala ali ID kanala",
         "identifier_placeholder_blog": "https://...",
         "youtube_guidance_title": "YouTube kanal:",
-        "youtube_guidance_id": "Prilepite @handle (npr. @veritasium), URL kanala ali ID kanala (začne se z UC).",
-        "youtube_guidance_find": "Kanal lahko dodate, ko je najden; shrani se skupaj s temo.",
+        "youtube_guidance_id": "Prilepi @handle (npr. @veritasium), URL kanala ali ID kanala (začne se z UC).",
+        "youtube_guidance_find": "Kanal lahko dodaš, ko je najden; shrani se skupaj s temo.",
         "submit_button": "Dodaj vir",
         "cancel_button": "Prekliči",
         "error_identifier_required": "Identifikator je obvezen",
-        "validation_error_not_found": "YouTube kanala ni mogoče najti. Preverite handle, URL ali ID.",
-        "validation_warning_api": "Preverjanje kanala trenutno ni na voljo. Poskusite znova pozneje."
+        "validation_error_not_found": "YouTube kanala ni mogoče najti. Preveri handle, URL ali ID.",
+        "validation_warning_api": "Preverjanje kanala trenutno ni na voljo. Poskusi znova pozneje."
       },
       "search_modal": {
         "title": "Dodaj vir vsebine",
-        "subtitle": "Poiščite ali registrirajte nov vir",
+        "subtitle": "Poišči ali registriraj nov vir",
         "search_placeholder": "Išči po imenu, platformi ali identifikatorju...",
         "searching": "Iskanje...",
         "no_results": "Ni najdenih virov",
-        "no_results_tip": "Poskusite z drugim iskalnim nizom ali ga dodajte zdaj",
-        "quick_add_trigger": "Ni najdeno? Registrirajte nov vir",
+        "no_results_tip": "Poskusi z drugim iskalnim nizom ali ga dodaj zdaj",
+        "quick_add_trigger": "Ni najdeno? Registriraj nov vir",
         "page_info": "Stran {{current}} od {{total}}"
       },
       "trigger_modal": {
         "title": "Sproži zagon teme",
-        "subtitle": "Konfigurirajte orkestracijo za \"{{name}}\"",
+        "subtitle": "Nastavi orkestracijo za \"{{name}}\"",
         "date_range_label": "Časovno obdobje",
         "start_date_label": "Datum začetka",
         "end_date_label": "Datum konca",
@@ -195,8 +195,8 @@
         "process_pending_tip": "Ponovni poskus za elemente, ki so spodleteli ali se zataknili",
         "summarize_label": "Generiraj nove povzetke",
         "summarize_tip": "Pridobi in povzemi novo vsebino",
-        "create_briefing_label": "Dostavi briefing",
-        "create_briefing_tip": "Generiraj končno UI poročilo",
+        "create_briefing_label": "Ustvari dnevni pregled",
+        "create_briefing_tip": "Iz povzetkov ustvari dnevni pregled",
         "preview_only_label": "Samo predogled",
         "preview_only_tip": "Samo pridobi elemente, ne generiraj povzetkov",
         "submit_button": "Zaženi orkestracijo",
@@ -207,7 +207,7 @@
   "admin": {
     "jobs": {
       "title": "Opravila v ozadju",
-      "subtitle": "Spremljajte in upravljajte opravila v ozadju.",
+      "subtitle": "Spremljaj in upravljaj opravila v ozadju.",
       "total_jobs_label": "Vsa opravila",
       "filter": {
         "status": "Status",
@@ -228,7 +228,7 @@
         "view_audit": "Sled nadzora"
       },
       "confirm": {
-        "restart": "Ali ponovno zaženete to opravilo od začetka?"
+        "restart": "Res želiš ponovno zagnati to opravilo od začetka?"
       },
       "toast": {
         "restarted": "Opravilo ponovno zagnano.",
@@ -250,9 +250,9 @@
       },
       "type": {
         "sync_youtube_feeds": "Sinhronizacija virov",
-        "generate_briefings": "Ustvarjanje povzetkov",
+        "generate_briefings": "Ustvarjanje dnevnih pregledov",
         "process_topics_and_summarize": "Obdelava in povzemanje",
-        "generate_topic_briefing": "Briefing teme",
+        "generate_topic_briefing": "Dnevni pregled teme",
         "generate_topic_summaries": "Povzetki teme",
         "generate_item_summary": "Povzetek elementa",
         "retry_item_processing": "Ponovna obdelava elementa"
@@ -260,7 +260,7 @@
     },
     "users": {
       "title": "Upravljanje uporabnikov",
-      "subtitle": "Upravljajte uporabniške račune, nadzorujte dostop in spremljajte aktivnost prijav.",
+      "subtitle": "Upravljaj uporabniške račune, nadzoruj dostop in spremljaj aktivnost prijav.",
       "filters": {
         "status": "Filtriraj po statusu",
         "statusAll": "Vsi statusi",
@@ -309,12 +309,12 @@
         "enabled": "Uporabnik omogočen."
       },
       "error": {
-        "self_disable": "Lastnega računa ne morete onemogočiti.",
+        "self_disable": "Lastnega računa ne moreš onemogočiti.",
         "last_admin": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti.",
         "invalid_state": "To dejanje ni več veljavno. Seznam uporabnikov je bil osvežen.",
         "invalid_state_transition": "To dejanje ni več veljavno za trenutno stanje računa.",
-        "action_failed": "Dejanje {{action}} ni uspelo. Poskusite znova.",
-        "cannot_self_disable": "Lastnega računa ne morete onemogočiti.",
+        "action_failed": "Dejanje {{action}} ni uspelo. Poskusi znova.",
+        "cannot_self_disable": "Lastnega računa ne moreš onemogočiti.",
         "last_admin_required": "Zadnjega skrbnika v sistemu ni mogoče onemogočiti."
       }
     }
@@ -340,66 +340,93 @@
       "noItems": "Ni najdenih elementov za trenutne filtre."
     },
     "modal": {
-      "title": "AI Povzetek Vsebine",
+      "title": "AI povzetek vsebine",
       "reference": "Referenca",
       "author": "Avtor",
       "published": "Objavljeno",
       "duration": "Trajanje",
       "notAvailable": "Povzetek ni na voljo",
       "notAvailableSub": "Zahtevanega povzetka ni bilo mogoče pridobiti.",
-      "close": "Zapri Bralnik"
+      "close": "Zapri bralnik"
     }
   },
   "landing": {
+    "meta": {
+      "title": "Povzetkar | Dnevni pregledi tvojih YouTube kanalov",
+      "description": "Povzetkar vsak dan strne nove videe s kanalov, ki jim slediš, v kratke preglede. Zgodnji dostop."
+    },
+    "nav": {
+      "sign_in": "Prijava"
+    },
     "hero": {
-      "title": "Univerzalno razumevanje.",
-      "subtitle": "Samodejno pretvori svoje najljubše YouTube kanale (in kmalu tudi druge vire) v dnevne preglede.",
-      "cta_primary": "Ustvari svoj prvi briefing",
-      "cta_vision": "Razišči vizijo"
+      "badge": "Zgodnji dostop",
+      "title": "Tvoji YouTube kanali. En dnevni pregled.",
+      "subtitle": "Nehaj loviti ure novih videov. Povzetkar jih vsak dan pregleda namesto tebe in ti postreže bistvo — v nekaj minutah branja.",
+      "cta": "Začni z Google računom",
+      "cta_note": "Povzetkar je v zgodnjem dostopu — pridruži se prvim uporabnikom. Demo vsebino raziščeš takoj po prijavi.",
+      "cta_dashboard": "Na nadzorno ploščo"
     },
-    "pyramid": {
-      "level1": "Informacije",
-      "level1_desc": "Zajem surovih podatkov in njihovo povzemanje.",
-      "level2": "Znanje",
-      "level2_desc": "Povezovanje konteksta in prepoznavanje trendov.",
-      "level3": "Modrost",
-      "level3_desc": "Kritična analiza in preverjanje napovedi.",
-      "reality_check": "Preverjanje realnosti",
-      "reality_check_desc": "Samodejno soočanje sistemskih vpogledov z dejanskimi izidi."
+    "benefits": {
+      "b1_title": "Ure videov, minute branja",
+      "b1_desc": "Namesto celih videov prebereš, kar je v njih pomembno.",
+      "b2_title": "Vsak dan pripravljeno",
+      "b2_desc": "Nove objave se samodejno zberejo v tvoje dnevne preglede.",
+      "b3_title": "Samo tvoji kanali",
+      "b3_desc": "Noben algoritem ne izbira namesto tebe — spremljaš, kar izbereš sam."
     },
-    "vision": {
-      "title": "Razširjena zavest",
-      "desc1": "Prehod od pasivnega sprejemanja k proaktivnemu razumevanju.",
-      "desc2": "V svetu, ki se utaplja v informacijah, je Povzetkar odgovor na pomanjkanje modrosti. Ne gre le za še eno aplikacijo za povzetke, temveč za osebnega AI analitika, zasnovanega kot razširitev vaše lastne zavesti.",
-      "pillar1_title": "Informacije",
-      "pillar1_desc": "AI-povzetki, ki podajo bistveno — 'kaj'.",
-      "pillar2_title": "Znanje",
-      "pillar2_desc": "Povezovanje podatkov za prepoznavanje trendov in časovnic, ki razkrivajo 'kako' in 'zakaj'.",
-      "pillar3_title": "Modrost",
-      "pillar3_desc": "Analiza preteklih napovedi za razvoj kritičnega mišljenja in presojo zanesljivosti virov.",
-      "pillar4_title": "Preverjanje realnosti",
-      "pillar4_desc": "Avtomatizirano preverjanje sistemskih uvidov glede na dejanske rezultate.",
-      "image_label": "Strateško partnerstvo",
-      "image_text": "Transformacija informacij v razumevanje."
+    "sample": {
+      "badge": "Primer",
+      "aria": "Primer dnevnega pregleda",
+      "title": "Dnevni pregled: Tehnologija",
+      "meta": "3 kanali · 3 videi · 3 min branja",
+      "exec_label": "Bistvo dneva",
+      "exec_text": "Dva kanala sta danes testirala manjše jezikovne modele na domačem računalniku: pri vsakdanjih opravilih dohitevajo velike modele, pri daljših besedilih še zaostajajo. Tretji video pojasni, kako posodobiti domači usmerjevalnik.",
+      "item1_channel": "Tihi procesor",
+      "item1_title": "Lokalni AI modeli na starem prenosniku",
+      "item1_summary": "Trije modeli, en prenosnik: hitrost, poraba pomnilnika in kakovost odgovorov.",
+      "item2_channel": "Koda ob kavi",
+      "item2_title": "Mali modeli proti velikim: 10 nalog",
+      "item2_summary": "Pri povzemanju in prevajanju razlika skoraj izgine, pri dolgih besedilih ostane.",
+      "item3_channel": "Mrežni zvezek",
+      "item3_title": "Posodobitev usmerjevalnika v 5 minutah",
+      "item3_summary": "Zakaj so posodobitve pomembne in kako jih preveriš brez tehničnega znanja."
     },
-    "settings": {
-      "title": "Nastavitve",
-      "light": "Svetlo",
-      "dark": "Temno",
-      "en": "English",
-      "sl": "Slovenščina"
+    "how": {
+      "title": "Kako deluje",
+      "step1_title": "Izberi kanale",
+      "step1_desc": "Združi jih v teme — npr. tehnologija, finance ali kuhanje.",
+      "step2_title": "Povzetkar jih spremlja",
+      "step2_desc": "Za vsak nov video pridobi prepis in ga strne v nekaj odstavkov.",
+      "step3_title": "Beri bistvo",
+      "step3_desc": "Vsak dan dobiš pregled za vsako temo: najprej bistvo dneva, nato povzetek vsakega videa."
+    },
+    "faq": {
+      "title": "Pogosta vprašanja",
+      "q1": "Kaj se zgodi, ko se prijavim?",
+      "a1": "Prijaviš se z Google računom. Ker je Povzetkar v zgodnjem dostopu, tvoj račun nato počaka na ročno odobritev. Medtem si lahko ogledaš demo teme in preglede.",
+      "q2": "Katere podatke shranimo?",
+      "a2": "Ime, kot je zapisano v tvojem Google računu, e-poštni naslov in identifikator računa ter čas zadnje prijave. Za varnost strežnik vodi tudi tehnične dnevnike dostopa z IP-naslovi. Shranimo tudi teme, vire in preglede, ki jih ustvariš v aplikaciji.",
+      "q3": "Katere vire Povzetkar podpira?",
+      "a3": "Javne YouTube kanale — kmalu še več."
+    },
+    "roadmap": {
+      "title": "Kmalu",
+      "intro": "Povzetkar raste. To pripravljamo:",
+      "planned": "Načrtovano",
+      "item1_title": "Vprašaj svoje preglede",
+      "item1_desc": "Postavi vprašanje in dobi odgovor iz vsebine svojih kanalov — z viri.",
+      "item2_title": "Več kot YouTube",
+      "item2_desc": "Spletni članki in objave z družbenih omrežij v istem pregledu.",
+      "item3_title": "Trendi na tvojih kanalih",
+      "item3_desc": "Opazi, katere teme se krepijo, preden postanejo glavna novica."
+    },
+    "final": {
+      "title": "Pridruži se zgodnjemu dostopu.",
+      "subtitle": "Prijava traja nekaj sekund — demo vsebino vidiš takoj."
     },
     "footer": {
-      "built_with": "Zgrajeno za proaktivno razumevanje.",
-      "mission": "Izgradnja osebnaga operacijskega sistema za univerzalno razumevanje.",
-      "partnership": "Partnerstvo",
-      "contact": "Kontakt",
-      "reality_check": "Preverjanje realnosti",
-      "status_label": "Status",
-      "status_text": "Način razširjene zavesti: AKTIVEN",
-      "version_prefix": "Verzija",
-      "release_date": "Marec 2026",
-      "version_info": "Verzija: {{version}} // {{releaseDate}}"
+      "mission": "Bistvo tvojih YouTube kanalov, vsak dan.",
+      "version_info": "Različica {{version}} · {{releaseDate}}"
     }
   },
   "system": {
@@ -407,10 +434,9 @@
     "version": "Verzija",
     "status": "Stanje",
     "status_active_evolution": "Aktivna evolucija",
-    "focus_text": "Trenutno premoščamo vrzel med avtomatiziranim znanjem in človeško modrostjo.",
     "tabs": {
       "changelog": "Posodobitve",
-      "roadmap": "Pot vizije"
+      "roadmap": "Načrt razvoja"
     },
     "footer": {
       "built_with": "Sistemski metapodatki zaključeni.",
@@ -508,18 +534,18 @@
       }
     },
     "roadmap": {
-      "title": "Pot vizije"
+      "title": "Načrt razvoja"
     }
   },
   "briefingLibrary": {
-    "title": "Knjižnica poročil",
-    "subtitle": "Iščite in pregledujte vaš celoten arhiv poročil.",
+    "title": "Knjižnica pregledov",
+    "subtitle": "Išči in brskaj po celotnem arhivu svojih pregledov.",
     "stats": {
-      "totalBriefings": "Skupaj poročil",
-      "totalBriefingsDesc": "V vašem arhivu"
+      "totalBriefings": "Vseh pregledov",
+      "totalBriefingsDesc": "V tvojem arhivu"
     },
     "search": {
-      "placeholder": "Išči poročila po naslovu ali vsebini..."
+      "placeholder": "Išči preglede po naslovu ali vsebini..."
     },
     "filters": {
       "topic": "Vse teme",
@@ -536,26 +562,27 @@
       "view": "Poglej"
     },
     "empty": {
-      "title": "Ni najdenih poročil",
-      "description": "Poskusite prilagoditi iskalne izraze ali filtre.",
+      "title": "Ni najdenih pregledov",
+      "description": "Poskusi prilagoditi iskalne izraze ali filtre.",
       "clearFilters": "Počisti vse filtre"
     }
   },
   "briefingDetail": {
     "backToLibrary": "Nazaj v knjižnico",
-    "title": "Poročilo za {{topic}}, {{date}}",
-    "executiveSummary": "Povzetek za vodstvo",
+    "title": "Dnevni pregled za {{topic}}, {{date}}",
+    "executiveSummary": "Bistvo dneva",
     "fullBriefing": "Podrobni povzetki",
     "sourceItems": "Izvorni material",
     "sourcesCount": "{{count}} analiziranih virov",
     "openOriginal": "Odpri izvornik",
     "seeSummary": "Poglej povzetek",
-    "notFound": "Poročilo ni najdeno",
-    "notFoundDesc": "Zahtevano poročilo ni bilo mogoče pridobiti ali ne obstaja.",
+    "notFound": "Pregled ni najden",
+    "notFoundDesc": "Zahtevanega pregleda ni bilo mogoče pridobiti ali ne obstaja.",
     "public": {
-      "sharedSubtitle": "Deljeno obveščevalno poročilo",
-      "generatedBy": "Ustvarjeno s Povzetkarjem - UI analitik za vaše vsebine",
-      "ctaStart": "Ustvari svoje poročilo"
+      "sharedSubtitle": "Deljeni dnevni pregled",
+      "sharedSummarySubtitle": "Deljeni povzetek",
+      "generatedBy": "Ustvarjeno s Povzetkarjem — dnevni pregledi tvojih YouTube kanalov",
+      "ctaStart": "Ustvari svoj dnevni pregled"
     },
     "export": {
       "button": "Izvoz",
@@ -583,86 +610,86 @@
     }
   },
   "onboarding": {
-    "title": "Vodnik vašega osebnega asistenta",
-    "subtitle": "Opravite teh 5 korakov za popolno obvladovanje vaše avtomatizirane inteligence.",
+    "title": "Vodnik tvojega osebnega asistenta",
+    "subtitle": "Opravi teh 5 korakov in pripravi svoje dnevne preglede.",
     "progress_label": "{{percent}}% opravljeno",
-    "expand_label": "Vaš vodnik",
+    "expand_label": "Tvoj vodnik",
     "collapse": "Pomanjšaj",
     "learn_more": "Kako?",
     "close_modal": "Razumem",
     "celebration_title": "🎉 Vodnik zaključen!",
-    "celebration_subtitle": "Vaš asistent je popolnoma konfiguriran in pripravljen.",
-    "celebration_done": "Zaključi vodič",
+    "celebration_subtitle": "Tvoj asistent je popolnoma nastavljen in pripravljen.",
+    "celebration_done": "Zaključi vodnik",
     "step": {
       "topic": {
-        "title": "Ustvarite svojo prvo Temo",
-        "desc": "Teme združujejo vaše interese za bolj osredotočene povzetke.",
+        "title": "Ustvari svojo prvo temo",
+        "desc": "Teme združujejo tvoje interese za bolj osredotočene povzetke.",
         "cta": "Pojdi na Teme",
-        "how1": "Kliknite \"Teme\" v levem meniju.",
-        "how2": "Kliknite \"Nova tema\" za odprtje obrazca.",
-        "how3": "Poimenujte temo (npr. \"Novice o AI\") in kliknite \"Ustvari temo\"."
+        "how1": "Klikni \"Teme\" v levem meniju.",
+        "how2": "Klikni \"Nova tema\", da odpreš obrazec.",
+        "how3": "Poimenuj temo (npr. \"Novice o AI\") in klikni \"Ustvari temo\"."
       },
       "source": {
-        "title": "Dodajte prvi vir vsebine",
-        "desc": "Prilepite YouTube povezavo ali RSS feed za začetek zbiranja znanja.",
+        "title": "Dodaj prvi vir vsebine",
+        "desc": "Prilepi povezavo do YouTube kanala in začni zbirati vsebine.",
         "cta": "Pojdi na Teme",
-        "how1": "Odprite obstoječo temo na strani Tem.",
-        "how2": "Kliknite \"Dodaj vir\" v razdelku Viri.",
-        "how3": "Poiščite vir ali registrirajte nov YouTube kanal / RSS feed.",
-        "how4": "Shranite temo za potrditev vira."
+        "how1": "Odpri obstoječo temo na strani Teme.",
+        "how2": "Klikni \"Dodaj vir\" v razdelku Viri.",
+        "how3": "Poišči vir ali registriraj nov YouTube kanal.",
+        "how4": "Shrani temo, da potrdiš vir."
       },
       "trigger": {
-        "title": "Zaženite orkestracijo",
-        "desc": "Dovolite asistentu, da obdela vaše vire in pripravi povzetke.",
+        "title": "Zaženi orkestracijo",
+        "desc": "Dovoli asistentu, da obdela tvoje vire in pripravi povzetke.",
         "cta": "Pojdi na Teme",
-        "how1": "Pojdite na stran Tem.",
-        "how2": "Poiščite svojo aktivno temo in kliknite \"Zaženi zdaj\".",
-        "how3": "Nastavite časovni razpon in kliknite \"Začni orkestracijo\".",
-        "how4": "Počakajte ~30 sekund, da asistent obdela vsebino."
+        "how1": "Pojdi na stran Teme.",
+        "how2": "Poišči svojo aktivno temo in klikni \"Zaženi zdaj\".",
+        "how3": "Nastavi časovni razpon in klikni \"Zaženi orkestracijo\".",
+        "how4": "Počakaj ~30 sekund, da asistent obdela vsebino."
       },
       "read": {
-        "title": "Preberite svoj prvi Povzetek",
-        "desc": "Preglejte znanje, ki ga je za vas pripravil vaš osebni asistent.",
-        "cta": "Pojdi v Knjižnico",
-        "how1": "Pojdite v \"Knjižnico povzetkov\" v stranski vrstici.",
-        "how2": "Poiščite vaš zadnji ustvarjeni povzetek.",
-        "how3": "Kliknite povzetek za ogled celotne vsebine.",
-        "how4": "Preberite izvršni povzetek in podrobne vpoglede."
+        "title": "Preberi svoj prvi dnevni pregled",
+        "desc": "Preberi, kar je za tebe pripravil tvoj osebni asistent.",
+        "cta": "Pojdi v Knjižnico pregledov",
+        "how1": "Odpri \"Knjižnica pregledov\" v stranski vrstici.",
+        "how2": "Poišči svoj zadnji dnevni pregled.",
+        "how3": "Klikni pregled, da odpreš celotno vsebino.",
+        "how4": "Preberi bistvo dneva in povzetke posameznih videov."
       },
       "share": {
-        "title": "Delite svoja spoznanja",
-        "desc": "Delite svoje odkritje s svetom s pomočjo javne povezave.",
-        "cta": "Pojdi v Knjižnico",
-        "how1": "Odprite katerikoli povzetek iz knjižnice.",
-        "how2": "Kliknite gumb \"Izvozi\" v glavi strani.",
-        "how3": "Izberite \"Omogoči deljenje\".",
-        "how4": "Kopirajte javno povezavo in jo delite s komer koli."
+        "title": "Deli svoja spoznanja",
+        "desc": "Deli svoje odkritje s svetom prek javne povezave.",
+        "cta": "Pojdi v Knjižnico pregledov",
+        "how1": "Odpri katerikoli pregled iz knjižnice.",
+        "how2": "Klikni gumb \"Izvoz\" v glavi strani.",
+        "how3": "Izberi \"Omogoči deljenje\".",
+        "how4": "Kopiraj javno povezavo in jo deli s komer koli."
       }
     }
   },
   "account": {
     "pending": {
-      "title": "Vaš račun čaka na odobritev",
-      "message": "Administrator bo kmalu pregledal vašo prijavo. Ko bo odobritev zaključena, boste lahko uporabljali Povzetkar.",
+      "title": "Tvoj račun čaka na odobritev",
+      "message": "Administrator bo kmalu pregledal tvojo prijavo. Ko bo odobrena, boš lahko uporabljal Povzetkar.",
       "demo": {
-        "title": "Medtem ko čakate, si oglejte demo:",
+        "title": "Medtem ko čakaš, si oglej demo:",
         "topicsLink": "Teme",
-        "topics": "poglejte, kako demo tema združuje vire YouTube in RSS.",
-        "briefingsLink": "Središče poročil",
-        "briefings": "odprite poročilo. Začne se s povzetkom za vodstvo iz vseh virov, sledi seznam analiziranih vsebin, na koncu pa podroben povzetek vsake vsebine — s \"Poglej povzetek\" skočite nanj.",
-        "outro": "Po odobritvi boste ustvarili svoje teme, skozi prve korake pa vas bo vodil vodič."
+        "topics": "poglej, kako demo tema združuje YouTube kanale.",
+        "briefingsLink": "Knjižnica pregledov",
+        "briefings": "odpri dnevni pregled. Začne se z bistvom dneva iz vseh virov, sledi seznam analiziranih vsebin, na koncu pa podroben povzetek vsake vsebine — s \"Poglej povzetek\" skočiš nanj.",
+        "outro": "Po odobritvi boš ustvaril svoje teme, skozi prve korake pa te bo vodil vodnik."
       }
     },
     "rejected": {
       "title": "Dostop do računa ni odobren",
-      "message": "Vaša prijava ni bila odobrena. Če menite, da gre za napako, se obrnite na administratorja."
+      "message": "Tvoja prijava ni bila odobrena. Če misliš, da gre za napako, se obrni na administratorja."
     },
     "disabled": {
       "title": "Račun onemogočen",
-      "message": "Vaš račun je bil onemogočen s strani administratorja. Za pomoč se obrnite na administratorja."
+      "message": "Administrator je onemogočil tvoj račun. Za pomoč se obrni nanj."
     },
     "approved": {
-      "toast": "Vaš račun je odobren — dobrodošli v Povzetkarju!"
+      "toast": "Tvoj račun je odobren — dobrodošel v Povzetkarju!"
     }
   }
 }

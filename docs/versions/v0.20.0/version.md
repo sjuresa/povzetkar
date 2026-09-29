@@ -12,6 +12,7 @@
 | POV-212 — v0.20.0 Version Initialisation | [walkthrough](POV-212-walkthrough.md) | [retrospective](POV-212-retrospective.md) |
 | POV-216 — Pending-approval Banner and Per-user Onboarding Guide | [walkthrough](POV-216-walkthrough.md) | [retrospective](POV-216-retrospective.md) |
 | POV-219 — Sources and Content Scoped to the User's Topics | [walkthrough](POV-219-walkthrough.md) | [retrospective](POV-219-retrospective.md) |
+| POV-220 — Landing Page Redesign | [walkthrough](POV-220-walkthrough.md) | [retrospective](POV-220-retrospective.md) |
 
 ## Carry-Forward Review
 

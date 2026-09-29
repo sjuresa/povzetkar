@@ -278,3 +278,14 @@ body:hover ::-webkit-scrollbar-thumb {
   color: var(--color-action-primary-text) !important;
   opacity: 1;
 }
+
+/* Landing page (POV-220): a gentle rise-in for the hero visual; off for reduced-motion users. */
+@keyframes landing-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .landing-rise {
+    animation: landing-rise 0.7s ease-out both;
+  }
+}

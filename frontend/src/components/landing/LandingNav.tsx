@@ -1,50 +1,35 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { LogIn } from 'lucide-react';
+import { PublicHeader } from '../layout/PublicHeader';
 
 interface LandingNavProps {
   readonly isAuthenticated: boolean;
-  readonly theme: string;
-  readonly toggleLanguage: () => void;
-  readonly toggleTheme: () => void;
+  readonly onLogin: () => void;
 }
 
-export function LandingNav({ isAuthenticated, theme, toggleLanguage, toggleTheme }: LandingNavProps) {
-  const { t, i18n } = useTranslation();
-  
+export function LandingNav({ isAuthenticated, onLogin }: LandingNavProps) {
+  const { t } = useTranslation();
+
   return (
-    <nav className="fixed top-0 w-full h-20 border-b-2 border-[var(--color-border-subtle)] bg-[var(--color-background-base)]/80 backdrop-blur-md flex items-center justify-between px-8 md:px-16 z-50">
-      <div className="flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-2 group outline-none" aria-label="Povzetkar Home" data-testid="brand-logo">
-          <div className="w-8 h-8 bg-[var(--color-action-primary)] shadow-[4px_4px_0px_black] group-hover:scale-105 transition-transform"></div>
-          <span className="text-xl font-black tracking-tighter uppercase italic group-hover:text-[var(--color-action-primary)] transition-colors">Povzetkar</span>
+    <PublicHeader>
+      {isAuthenticated ? (
+        <Link
+          to="/dashboard"
+          className="px-4 py-2 rounded-xl bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] text-[var(--color-action-primary-text)] text-sm font-semibold transition-colors whitespace-nowrap"
+        >
+          {t('navigation.dashboard')}
         </Link>
-        
-        {/* Quick Settings */}
-        <div className="hidden md:flex items-center gap-6 border-l-2 border-[var(--color-border-subtle)] pl-8">
-           <button 
-             onClick={toggleLanguage} 
-             className="text-[10px] font-black uppercase tracking-widest hover:text-[var(--color-action-primary)] transition-colors"
-             aria-label={t('landing.settings.language')}
-            >
-             {i18n.language === 'en' ? 'SL' : 'EN'}
-           </button>
-           <button 
-             onClick={toggleTheme}
-             className="text-[10px] font-black uppercase tracking-widest hover:text-[var(--color-action-primary)] transition-colors"
-             aria-label={t('landing.settings.title')}
-           >
-             {theme === 'dark' ? t('landing.settings.light') : t('landing.settings.dark')}
-           </button>
-        </div>
-      </div>
-      <div>
-        {isAuthenticated && (
-          <Link to="/dashboard" className="text-xs font-black uppercase tracking-widest hover:text-[var(--color-action-primary)] transition-all flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse"></span>
-            {t('navigation.dashboard')}
-          </Link>
-        )}
-      </div>
-    </nav>
+      ) : (
+        <button
+          onClick={onLogin}
+          data-testid="nav-login"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-action-primary)] hover:bg-[var(--color-action-hover)] text-[var(--color-action-primary-text)] text-sm font-semibold transition-colors whitespace-nowrap"
+        >
+          <LogIn className="w-4 h-4" strokeWidth={1.5} />
+          {t('landing.nav.sign_in')}
+        </button>
+      )}
+    </PublicHeader>
   );
 }

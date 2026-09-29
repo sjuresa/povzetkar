@@ -1,7 +1,7 @@
 {
   "navigation": {
     "dashboard": "Dashboard",
-    "briefings": "Briefing Hub",
+    "briefings": "Briefing Library",
     "topics": "Topics",
     "sources": "Sources",
     "administration": "Administration",
@@ -67,7 +67,7 @@
       "welcome": "Welcome to",
       "subtitle": "Your intelligence assistant is ready. Follow the guide below to master your autonomous briefing environment.",
       "connectTitle": "Connect a Source",
-      "connectDesc": "Add a YouTube channel or RSS feed to start monitoring.",
+      "connectDesc": "Add a YouTube channel to start monitoring.",
       "createTopicTitle": "Create a Topic",
       "createTopicDesc": "Define what you want to track across your sources.",
       "getBriefingTitle": "Get Your Briefing",
@@ -345,55 +345,82 @@
     }
   },
   "landing": {
+    "meta": {
+      "title": "Povzetkar | Daily briefings from your YouTube channels",
+      "description": "Povzetkar condenses new videos from the YouTube channels you follow into short daily briefings. Early access."
+    },
+    "nav": {
+      "sign_in": "Sign in"
+    },
     "hero": {
-      "title": "Universal Understanding.",
-      "subtitle": "Automate your favorite YouTube channels (and soon more sources!) into daily briefings.",
-      "cta_primary": "Create your first briefing",
-      "cta_vision": "Explore the Vision"
+      "badge": "Early access",
+      "title": "Your YouTube channels. One daily briefing.",
+      "subtitle": "Stop chasing hours of new videos. Povzetkar goes through them for you every day and serves the essentials — in a few minutes of reading.",
+      "cta": "Get started with Google",
+      "cta_note": "Povzetkar is in early access — join the first users. Explore the demo content right after you sign in.",
+      "cta_dashboard": "Go to dashboard"
     },
-    "pyramid": {
-      "level1": "Information",
-      "level1_desc": "Raw data extraction and summarization.",
-      "level2": "Knowledge",
-      "level2_desc": "Contextual mapping and trend identification.",
-      "level3": "Wisdom",
-      "level3_desc": "Critical analysis and prediction verification.",
-      "reality_check": "Reality Check System",
-      "reality_check_desc": "Retrospective analysis of past predictions."
+    "benefits": {
+      "b1_title": "Hours of video, minutes of reading",
+      "b1_desc": "Read what matters instead of watching every video.",
+      "b2_title": "Ready every day",
+      "b2_desc": "New uploads land in your daily briefings automatically.",
+      "b3_title": "Only your channels",
+      "b3_desc": "No algorithm picks for you — you follow what you choose."
     },
-    "vision": {
-      "title": "Augmented Consciousness",
-      "desc1": "Moving beyond simple consumption to proactive understanding.",
-      "desc2": "In a world drowning in information, Povzetkar is the answer to the starvation for wisdom. Not just another summary app, but a personal AI analyst designed to serve as an extension of your own consciousness.",
-      "pillar1_title": "Information",
-      "pillar1_desc": "AI-generated summaries providing the essential 'what'.",
-      "pillar2_title": "Knowledge",
-      "pillar2_desc": "Connecting data to identify trends and timelines, revealing the 'how' and 'why'.",
-      "pillar3_title": "Wisdom",
-      "pillar3_desc": "Retrospectively analyzing past predictions to foster critical thinking and source reliability.",
-      "pillar4_title": "Reality Check",
-      "pillar4_desc": "Automated verification of system insights against real-world outcomes.",
-      "image_label": "Strategic Partnership",
-      "image_text": "Transforming information into understanding."
+    "sample": {
+      "badge": "Example",
+      "aria": "Example daily briefing",
+      "title": "Daily briefing: Technology",
+      "meta": "3 channels · 3 videos · 3 min read",
+      "exec_label": "Executive summary",
+      "exec_text": "Two channels tested small language models on a home computer today: they keep up with large models on everyday tasks but still fall behind on long texts. A third video explains how to update your home router.",
+      "item1_channel": "Quiet Processor",
+      "item1_title": "Local AI models on an old laptop",
+      "item1_summary": "Three models, one laptop: speed, memory use and answer quality.",
+      "item2_channel": "Code over Coffee",
+      "item2_title": "Small vs. large models: 10 tasks",
+      "item2_summary": "For summarizing and translating the gap almost disappears; on long texts it remains.",
+      "item3_channel": "Network Notebook",
+      "item3_title": "Update your router in 5 minutes",
+      "item3_summary": "Why updates matter and how to check them without technical knowledge."
     },
-    "settings": {
-      "title": "Preferences",
-      "light": "Light",
-      "dark": "Dark",
-      "en": "English",
-      "sl": "Slovenščina"
+    "how": {
+      "title": "How it works",
+      "step1_title": "Pick your channels",
+      "step1_desc": "Group them into topics — technology, finance or cooking.",
+      "step2_title": "Povzetkar keeps watch",
+      "step2_desc": "For every new video it fetches the transcript and condenses it into a few paragraphs.",
+      "step3_title": "Read the essentials",
+      "step3_desc": "Every day you get a briefing for each topic: the day's essentials first, then a summary of every video."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "What happens when I sign in?",
+      "a1": "You sign in with your Google account. Because Povzetkar is in early access, your account then waits for manual approval. Meanwhile you can explore demo topics and briefings.",
+      "q2": "What data do we store?",
+      "a2": "Your name as set in your Google account, your e-mail address and account ID, plus your last sign-in time. For security the server also keeps technical access logs with IP addresses. We also store the topics, sources and briefings you create in the app.",
+      "q3": "Which sources does Povzetkar support?",
+      "a3": "Public YouTube channels — more coming soon."
+    },
+    "roadmap": {
+      "title": "Coming soon",
+      "intro": "Povzetkar is growing. Here's what's planned:",
+      "planned": "Planned",
+      "item1_title": "Ask your briefings",
+      "item1_desc": "Ask a question and get an answer from your channels' content — with sources.",
+      "item2_title": "Beyond YouTube",
+      "item2_desc": "Web articles and social posts in the same briefing.",
+      "item3_title": "Trends across your channels",
+      "item3_desc": "Spot the themes gaining momentum before they make the headlines."
+    },
+    "final": {
+      "title": "Join early access.",
+      "subtitle": "Signing in takes a few seconds — the demo content is there right away."
     },
     "footer": {
-      "built_with": "Built for proactive understanding.",
-      "mission": "Building the personal operating system for universal understanding.",
-      "partnership": "Partnership",
-      "contact": "Contact Intelligence",
-      "reality_check": "Reality Check",
-      "status_label": "Status",
-      "status_text": "Augmented Consciousness Mode: ACTIVE",
-      "version_prefix": "Version",
-      "release_date": "March 2026",
-      "version_info": "Version: {{version}} // {{releaseDate}}"
+      "mission": "The essentials of your YouTube channels, every day.",
+      "version_info": "Version {{version}} · {{releaseDate}}"
     }
   },
   "system": {
@@ -401,10 +428,9 @@
     "version": "Version",
     "status": "State",
     "status_active_evolution": "Active Evolution",
-    "focus_text": "Currently bridging the gap between automated Knowledge and human-centered Wisdom.",
     "tabs": {
       "changelog": "Updates",
-      "roadmap": "Vision Path"
+      "roadmap": "Roadmap"
     },
     "footer": {
       "built_with": "Release metadata finalized.",
@@ -502,7 +528,7 @@
       }
     },
     "roadmap": {
-      "title": "Vision Path"
+      "title": "Roadmap"
     }
   },
   "briefingLibrary": {
@@ -548,6 +574,7 @@
     "notFoundDesc": "The requested briefing could not be retrieved or does not exist.",
     "public": {
       "sharedSubtitle": "Shared Intelligence Briefing",
+      "sharedSummarySubtitle": "Shared summary",
       "generatedBy": "Generated by Povzetkar - AI-Powered Intelligence Aggregator",
       "ctaStart": "Start your own briefing"
     },
@@ -598,11 +625,11 @@
       },
       "source": {
         "title": "Add a Content Source",
-        "desc": "Paste a YouTube link or RSS feed to start fetching knowledge.",
+        "desc": "Paste a YouTube channel link to start collecting content.",
         "cta": "Go to Topics",
         "how1": "Open your topic from the Topics page.",
         "how2": "Click \"Add Source\" in the Sources section.",
-        "how3": "Search for an existing source or register a new YouTube / RSS feed.",
+        "how3": "Search for an existing source or register a new YouTube channel.",
         "how4": "Save your topic to confirm the source."
       },
       "trigger": {
@@ -641,8 +668,8 @@
       "demo": {
         "title": "While you wait, take a look around the demo:",
         "topicsLink": "Topics",
-        "topics": "see how the demo topic groups its YouTube and RSS sources.",
-        "briefingsLink": "Briefing Hub",
+        "topics": "see how the demo topic groups its YouTube channels.",
+        "briefingsLink": "Briefing Library",
         "briefings": "open a briefing. It starts with an executive summary across all sources, lists the analysed source content, and gives a detailed summary of each item — use \"See summary\" to jump to it.",
         "outro": "Once you're approved, you'll create your own topics and a guide will walk you through the first steps."
       }

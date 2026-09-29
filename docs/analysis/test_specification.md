@@ -14,7 +14,7 @@
 | **TC-GRX-003** | **P0** | - | [v0.13] | Theme Switching | **Playwright** | Light/Dark theme persists across page reloads and browser sessions. |
 | **TC-GRX-004** | **P0** | - | [v0.12] | OIDC Handshake & Persistence | **Playwright** | Login redirect flow works and session remains active after refresh. |
 | **TC-GRX-005** | **P1** | UC-10 | [v0.16] | Toast Actionability | Manual/PW | Toast contains a clickable button and plays sound on trigger. |
-| **TC-GRX-006** | **P1** | - | [v0.17] | Session Expiry Redirect | **Playwright** | 401 response redirects user to landing page (`/`) with `notice=session_expired` toast; `returnTo` path preserved in `sessionStorage`; no ErrorPage shown. |
+| **TC-GRX-006** | **P1** | - | [v0.17] | Session Expiry Redirect | **Playwright** | A 401 while signed in clears the session and redirects to `/auth/login?redirect=<path+search+hash>` (`api/client.ts`); after re-authentication `LoginResource` returns the user to that path (safe destinations only); a 401 for a visitor who was never signed in does not redirect (`e2e/auth.spec.ts` "unauthenticated /me 401 does not trigger auto-login redirect"); no ErrorPage shown. *(Corrected by POV-220: the landing page never had a `session_expired` toast or `sessionStorage` return path.)* |
 
 ## 1. Domain: Briefing & Intelligence (LIB)
 
@@ -77,6 +77,8 @@
 | **TC-UI-002** | **P2** | - | [v0.14] | Site Title | **Playwright** | Browser tab title contains the word "Povzetkar". |
 | **TC-UI-003** | **P1** | - | [v0.12] | Responsive SideNav | Manual | Sidebar correctly collapses on smaller screens without breaking layout. |
 | **TC-UI-004** | **P1** | UC-9 | [v0.16] | Dashboard Onboarding | **Playwright** | Approved users see the 5-step checklist; progress updates on action and is stored per user (not shared between accounts in one browser); pending users see no checklist. |
+| **TC-UI-005** | **P2** | UC-18 | [v0.20] | Landing Page Content & Sign-in | Vitest (`LandingPage.test.tsx`) + **Playwright** (`smoke.spec.ts`) | Anonymous visitor can sign in from header, hero and closing call to action; signed-in user sees *Dashboard* links instead; the sample briefing is labelled as an example; three benefits; every *Coming soon* item is labelled *planned*; FAQ uses native disclosure; one `h1`; no status claims for unimplemented features; no links to the engineering changelog/roadmap; a failing system-metadata call leaves the page usable (no error page). SL copy uses the glossary term for a briefing (`i18n.test.ts`). |
+| **TC-UI-006** | **P2** | UC-18 | [v0.20] | First-visit Language & Theme | Vitest + **Playwright** (`language.test.ts`, `themeStore.test.ts`, `smoke.spec.ts`) | Without a stored choice the app opens in the browser language (SL for `sl*`, else EN) and the system theme; a stored choice wins; the pre-paint script sets `<html class>`/`lang` before React loads. |
 
 ## 7. Domain: Admin & System (ADM)
 
@@ -132,6 +134,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.12    | 2026-09-28 | Povzetkar AI | POV-220: added TC-UI-005 (Landing Page Content & Sign-in) and TC-UI-006 (First-visit Language & Theme) for UC-18; TC-GRX-006 expected result corrected to the implemented 401 flow. |
 | 2.11    | 2026-09-28 | Povzetkar AI | POV-219: added TC-SEC-008 (Per-User Source and Content Scoping, P0, automated); TC-SEC-002 restated (admin sections incl. legacy `/ui/*`, Sources page is user-scoped) with `LegacyUiAccessTest`; TC-TS-002/004 automated and extended (visible sources only, Quick Add on save, popover reset). |
 | 2.10    | 2026-09-27 | Povzetkar AI | POV-212 (v0.20.0 initialisation): TC-ING-006 gets a time-bound `validate:skip until v0.21.0` — the P0 automation guardrail turns it CRITICAL at v0.20 and would block CI from the version bump on; the automation is POV-213, which removes the skip (PO decision). |
 | 2.9     | 2026-07-08 | Povzetkar AI | POV-205: added TC-SEC-007 (Read-Only API-Key Access, P0, automated via `ApiKeyAuthenticationTest`). |
