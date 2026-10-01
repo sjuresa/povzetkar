@@ -77,8 +77,8 @@ class AccessLogTest {
     }
 
     @Test
-    void spaReroutedProbeIsLoggedOnceWithOriginalPathAndCloudflareClientFields() {
-        // No index.html exists in tests, so the SPA reroute ends in 404 (production: 200 SPA shell)
+    void probeIsLoggedOnceWithOriginalPathAndCloudflareClientFields() {
+        // Not a frontend route: the SPA fallback answers a bare 404 (POV-221; before, production served the shell)
         given()
                 .header("CF-Connecting-IP", "203.0.113.7")
                 .header("CF-IPCountry", "SI")
@@ -99,6 +99,18 @@ class AccessLogTest {
                         + "\"GET /\\.git/config\\?pov210=probe HTTP/1\\.1\" 404 (\\d+|-) \\d+ "
                         + "host=\"localhost:\\d+\" ref=\"https://scanner\\.example/\" xff=\".*")
                 .contains("xff=\"" + FORGED_XFF + "\"");
+    }
+
+    @Test
+    void reroutedSpaDeepLinkIsLoggedOnceWithItsOriginalPath() {
+        // The SPA fallback reroutes to /index.html (served by the test stand-in); the access log must show the
+        // requested path once, not the reroute target
+        given().when().get("/dashboard?pov221=reroute").then().statusCode(200);
+
+        List<String> deepLink = awaitEntries("pov221=reroute");
+
+        assertThat(deepLink).hasSize(1);
+        assertThat(deepLink.get(0)).contains("\"GET /dashboard?pov221=reroute HTTP/1.1\" 200");
         assertThat(entries).noneMatch(e -> e.contains("/index.html"));
     }
 

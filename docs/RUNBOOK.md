@@ -57,14 +57,11 @@ The local database environment is managed by Docker Compose and is located in th
     # API Keys & Auth
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
-    FRONTEND_URL=http://localhost:5173
     ```
 
     **Frontend (`frontend/.env`):**
     Copy `frontend/.env.example` to `frontend/.env` and update values.
     ```properties
-    # Empty for relative proxying (recommended)
-    VITE_API_BASE_URL=
     # Comma-separated list of extra allowed hosts (e.g. for Tailscale)
     VITE_ALLOWED_HOSTS=www.example.com,192.168.1.100
     ```
@@ -389,11 +386,12 @@ The application requires several environment variables to function correctly. Th
 | `DB_PASS`         | Database password                       | `your_db_password`                                                                                                         |
 | `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                                                                                |
 | `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                                                                                |
-| `FRONTEND_URL`    | Frontend origin(s) and redirect base URL(s). Supports comma-separated list. | `http://localhost:5173`                                                                                                    |
-| `CORS_METHODS`    | Allowed HTTP methods for CORS           | `GET, POST, ...`                                                                                                           |
-| `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 | `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
 | `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
+
+**Note:** `FRONTEND_URL`, `CORS_METHODS` and `CORS_HEADERS` are no longer used (POV-221 removed CORS: every
+browser client is same-origin, login/logout redirects are relative). They can be removed from `.env.docker` and
+`backend/.env`; `VITE_API_BASE_URL` likewise from `frontend/.env`.
 
 **Docker Run Example:**
 
@@ -769,7 +767,14 @@ docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics | head -3
 
 # Prometheus target health
 docker exec povzetkar-prometheus wget -qO- http://localhost:9090/api/v1/targets | grep -o '"health":"[a-z]*"'
+
+# uri tag cardinality (POV-221): stays small and does not grow with traffic; past 100 distinct
+# values Micrometer would stop recording new ones
+docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics \
+  | grep '^http_server_requests_seconds_count' | grep -o 'uri="[^"]*"' | sort -u
 ```
+
+In Grafana (Explore): `count(count by (uri) (http_server_requests_seconds_count))`.
 
 ### 13.3 Dashboards-as-Code
 
@@ -900,10 +905,17 @@ MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2
    is Cloudflare's value for every line. A `ray` value leads to the request in the Cloudflare
    dashboard (Security → Events).
 
-   Probes the SPA fallback reroutes (no extension in the last segment, outside `/api`, `/q`,
-   `/static`, `/assets`, … — see `SpaRoutingHandler`) get `200` with the SPA shell; others end in
-   `404`/`400` (e.g. `/.env`, `*.php`, `/wp-json/batch/v1`) — see the backlog entry "SPA fallback
-   answers 200 to probe paths".
+   Probes get `404` (POV-221): the SPA fallback (`SpaRoutingHandler`) serves the shell with `200`
+   only for the frontend routes on its allow-list (`/dashboard`, `/me`, `/topics`, `/briefings`,
+   `/sources`, `/admin`, `/s/…` — whole first segment, any case, no dot-segment, no file
+   extension). Files (`/admin/config.php`, `/.env`) go to the static handler, paths under `/api`,
+   `/ui`, `/q`, `/auth`, `/static`, `/assets` to their own handlers — both answer `404` when nothing
+   matches; every other path gets a bare `404`. Legitimate `200`s outside the SPA routes: `/`,
+   `/index.html`, `/login` (`302` when already signed in), root static files (`/favicon.svg`,
+   `/locales/*.json`, …), `/assets/*`, `/static/*` and matched `/api`, `/ui` requests — any other
+   `200` is worth a look. `/logout` and `/auth/login` always answer `302`. Unauthenticated requests
+   under `/api` and `/ui` get `401` (XHR) or `302` (browser navigation), except the public paths
+   (`/api/public/*`, `/api/v1/public/*`, `/api/v1/system/*`, `/api/oidc/callback`).
 3. **`audit_log` table** — matched `/api/v1` requests only (not unmatched probes), with the user:
 
    ```bash
@@ -913,16 +925,19 @@ MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2
      GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 50"'
    ```
 
-4. **Prometheus** — per-path counts even without the access log, from inside the Docker network:
+4. **Prometheus** — per-endpoint counts even without the access log, from inside the Docker network:
 
    ```bash
    docker exec povzetkar-prometheus wget -qO- \
      'http://localhost:9090/api/v1/query?query=max_over_time(http_server_requests_seconds_count%5B14d%5D)'
    ```
 
-   Limits: counters reset on every app restart (lower bounds only), Micrometer stops creating
-   `uri` tags after 100 distinct paths per run, default 15-day retention, no IPs and no query
-   strings.
+   The `uri` tag is bounded (POV-221, `HttpMetricsConfig`): API requests carry their endpoint
+   template (`/api/v1/briefings/{id}`); everything else is collapsed — `SPA` (frontend routes),
+   `STATIC` (files), `NOT_FOUND` (404 — the probe signal), `UNKNOWN` (other 4xx without a template,
+   e.g. unauthenticated requests to non-existent `/api` paths), `REDIRECTION` (3xx). Exact paths
+   live only in the access log. Limits: counters reset on every app restart (lower bounds only),
+   default 15-day retention, no IPs and no query strings.
 
 ## 16. API Response Structure (Envelopes)
 

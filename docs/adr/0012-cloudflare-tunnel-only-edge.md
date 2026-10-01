@@ -4,7 +4,8 @@ Date: 2026-09-29
 
 ## Status
 
-Accepted (POV-214). Reverses the direction noted in POV-210 ("Caddy as the HTTP layer").
+Accepted (POV-214). Reverses the direction noted in POV-210 ("Caddy as the HTTP layer"). Extended by POV-221
+(see Update).
 
 ## Context
 
@@ -62,3 +63,20 @@ logs are kept, so the application's access log is the forensic record either way
 - **Caddy on the traffic path** (tunnel → `caddy:80` → app): two trust hops (a mistake breaks the OIDC redirect
   URI), header delivery testable only with Docker in CI, another image to patch — for headers the app can send.
 - **Cloudflare Transform Rules** for the headers: configuration outside git, untested, invisible in reviews.
+
+## Update (POV-221)
+
+The edge was hardened further on the same principle (the app owns the HTTP concerns):
+
+- **Allow-list SPA fallback:** `SpaRoutingHandler` serves `index.html` only for the frontend's top-level routes
+  (`SPA_ROUTE_PREFIXES`, guarded against `frontend/src/router.tsx` by `SpaRouteAllowListTest`); any other path that
+  reaches it answers a bare `404`, so probes are visible as 404 in the access log and metrics.
+- **No CORS:** every browser client is same-origin (production through the tunnel, dev through the Vite proxy).
+  `CorsPreflightHandler`, `OriginValidator`, `povzetkar.cors.*` and `FRONTEND_URL` are removed; login/logout
+  redirects are relative. A frontend on a separate origin would need CORS and absolute redirects again.
+- **401 for unauthenticated XHR:** `java-script-auto-redirect=false` with a `JavaScriptRequestChecker`
+  (`XhrAuthenticationChallenge`) answers `X-Requested-With` requests with `401`, independent of `Origin`; browser
+  navigations keep the 302 to Google.
+- **Bounded `uri` metric tag:** `HttpMetricsConfig` collapses untemplated paths into `SPA`/`STATIC`, and
+  `suppress4xx-errors` turns untemplated 4xx into `UNKNOWN`, so traffic cannot exhaust Micrometer's 100-value limit.
+

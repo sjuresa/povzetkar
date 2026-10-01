@@ -3,8 +3,6 @@ import { useEventStore, type JobStatusChangedEvent } from '../store/eventStore';
 import { toast } from 'sonner';
 import logger from '../util/logger'; // Added import for logger
 
-const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
-
 import { useShallow } from 'zustand/react/shallow';
 
 export function useJobEvents() {
@@ -22,7 +20,7 @@ export function useJobEvents() {
     // Prevent multiple connections in dev (Strict Mode)
     if (eventSourceRef.current) return;
 
-    const url = `${API_BASE_URL}/api/v1/events/stream`;
+    const url = '/api/v1/events/stream';
     logger.info(`[SSE] Connecting to ${url}...`); // Replaced console.log with logger.info
     setConnectionStatus('connecting');
     

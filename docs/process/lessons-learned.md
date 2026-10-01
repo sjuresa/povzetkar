@@ -32,6 +32,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > **Scoping an API means scoping every door to the data (POV-219)**:
 > Restricting `GET /sources` was not enough: sources could be attached to a topic by a guessed ID, items and summaries were readable (and shareable) by ID, and the legacy Qute UI (`/ui/*`, not linked from the SPA) listed every source. When adding ownership, enumerate every read *and write* path to the entity — including legacy routes — and derive visibility in one named query per entity (`ContentScope`), so no endpoint can forget it.
 
+> [!NOTE]
+> **A test that cannot see the production artefact cannot see its bug (POV-221)**:
+> The SPA fallback served `200` with the shell to every probe path in production, but no `index.html` was on the test classpath, so the same reroute answered `404` in tests — and an `AccessLogTest` comment even documented the difference. A three-line stand-in `index.html` in test resources made the bug visible (red) and the fix provable. When a test comment says "production behaves differently here", that is a missing test fixture, not an explanation. Corollary from the same task: a plan finding inferred from a code path ("the auth challenge comes before JAX-RS matching, so no template") is a hypothesis — the red run disproved it; observe such claims before the plan rests on them.
+
 > [!WARNING]
 > **Two compose files in one directory are one compose project (POV-214)**:
 > Without `name:`, the dev and prod compose files in `backend/` formed project `backend`: a dev `up` replaced the prod Prometheus/Grafana (a day without production metrics), and `--remove-orphans` from either file would have removed the other stack. Give every compose file its own `name:` — rename the non-prod one, since volume names derive from the project name. Details and the CSP-hash/line-ending trap: [infrastructure-ops](lessons/infrastructure-ops.md#the-edge-is-the-app--compose-projects-hashes-and-proxy-trust-pov-214).

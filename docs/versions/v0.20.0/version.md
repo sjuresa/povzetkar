@@ -14,6 +14,7 @@
 | POV-219 — Sources and Content Scoped to the User's Topics | [walkthrough](POV-219-walkthrough.md) | [retrospective](POV-219-retrospective.md) |
 | POV-220 — Landing Page Redesign | [walkthrough](POV-220-walkthrough.md) | [retrospective](POV-220-retrospective.md) |
 | POV-214 — Remove Caddy: Security Headers, Caching and Proxy Trust in the Application | [walkthrough](POV-214-walkthrough.md) | [retrospective](POV-214-retrospective.md) |
+| POV-221 — Edge Hardening: 404 for Probe Paths, Bounded `uri` Tag, 401 for Unauthenticated XHR, CORS Removed | [walkthrough](POV-221-walkthrough.md) | [retrospective](POV-221-retrospective.md) |
 
 ## Carry-Forward Review
 
