@@ -47,8 +47,8 @@ walkthrough §4.
 - **Deploy of POV-221:** after the deploy, `curl` the prod checks (probe 404, SPA 200, XHR 401, browser 302) and list
   the `uri` values via the management port (RUNBOOK §13.2). `FRONTEND_URL`/`CORS_*` in `.env.docker` are unused —
   removal optional.
-- **A new top-level frontend route needs `SpaRoutingHandler.SPA_ROUTE_PREFIXES`** — `SpaRouteAllowListTest` fails
-  until it is added.
+- **Every frontend route change needs `SpaRoutingHandler.SPA_ROUTES`** — `SpaRouteAllowListTest` fails until the
+  allow-list equals the router's URL patterns again (added, renamed or removed routes alike).
 - **Separate frontend origin = CORS again:** if the SPA ever runs on another origin, CORS and absolute redirects must
   come back (ADR-0012 Update).
 - **Suspicious-traffic alerting** can now alert on the `NOT_FOUND` rate without path filtering.

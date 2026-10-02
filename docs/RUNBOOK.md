@@ -906,9 +906,10 @@ MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2
    dashboard (Security → Events).
 
    Probes get `404` (POV-221): the SPA fallback (`SpaRoutingHandler`) serves the shell with `200`
-   only for the frontend routes on its allow-list (`/dashboard`, `/me`, `/topics`, `/briefings`,
-   `/sources`, `/admin`, `/s/…` — whole first segment, any case, no dot-segment, no file
-   extension). Files (`/admin/config.php`, `/.env`) go to the static handler, paths under `/api`,
+   only for the frontend routes on its allow-list (`SPA_ROUTES`, the exact paths of the router:
+   `/dashboard`, `/me`, `/topics`, `/briefings[/<id>]`, `/sources[/<id>]`, `/admin` and its four
+   pages, `/s/<uuid>` — any case, no dot-segment, no file extension; `/admin/does-not-exist` is a
+   `404`). Files (`/admin/config.php`, `/.env`) go to the static handler, paths under `/api`,
    `/ui`, `/q`, `/auth`, `/static`, `/assets` to their own handlers — both answer `404` when nothing
    matches; every other path gets a bare `404`. Legitimate `200`s outside the SPA routes: `/`,
    `/index.html`, `/login` (`302` when already signed in), root static files (`/favicon.svg`,
@@ -933,11 +934,13 @@ MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2
    ```
 
    The `uri` tag is bounded (POV-221, `HttpMetricsConfig`): API requests carry their endpoint
-   template (`/api/v1/briefings/{id}`); everything else is collapsed — `SPA` (frontend routes),
-   `STATIC` (files), `NOT_FOUND` (404 — the probe signal), `UNKNOWN` (other 4xx without a template,
-   e.g. unauthenticated requests to non-existent `/api` paths), `REDIRECTION` (3xx). Exact paths
-   live only in the access log. Limits: counters reset on every app restart (lower bounds only),
-   default 15-day retention, no IPs and no query strings.
+   template (`/api/v1/briefings/{id}`), legacy UI pages and `/login`, `/logout`, `/auth/login` their
+   own path; everything else is collapsed — `SPA` (frontend routes), `STATIC` (files), `NOT_FOUND`
+   (404 — the probe signal), `REDIRECTION` (3xx), `UNKNOWN` (other 4xx/5xx without a template, e.g.
+   unauthenticated requests to non-existent `/api` paths, and any other path, including encoded or
+   dot-segment variants such as `/%73ources/1`). Exact paths live only in the access log. Limits:
+   counters reset on every app restart (lower bounds only), default 15-day retention, no IPs and no
+   query strings.
 
 ## 16. API Response Structure (Envelopes)
 

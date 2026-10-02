@@ -68,15 +68,18 @@ logs are kept, so the application's access log is the forensic record either way
 
 The edge was hardened further on the same principle (the app owns the HTTP concerns):
 
-- **Allow-list SPA fallback:** `SpaRoutingHandler` serves `index.html` only for the frontend's top-level routes
-  (`SPA_ROUTE_PREFIXES`, guarded against `frontend/src/router.tsx` by `SpaRouteAllowListTest`); any other path that
-  reaches it answers a bare `404`, so probes are visible as 404 in the access log and metrics.
+- **Allow-list SPA fallback:** `SpaRoutingHandler` serves `index.html` only for the frontend's routes — the exact
+  URL patterns of `frontend/src/router.tsx` (`SPA_ROUTES`, `*` per path parameter; `SpaRouteAllowListTest` fails
+  unless the two sets are equal); any other path that reaches it answers a bare `404`, so probes — also under a
+  route prefix, e.g. `/admin/does-not-exist` — are visible as 404 in the access log and metrics. Unknown IDs in a
+  parameter (`/sources/<unknown>`) still get the shell; the view shows the error.
 - **No CORS:** every browser client is same-origin (production through the tunnel, dev through the Vite proxy).
   `CorsPreflightHandler`, `OriginValidator`, `povzetkar.cors.*` and `FRONTEND_URL` are removed; login/logout
   redirects are relative. A frontend on a separate origin would need CORS and absolute redirects again.
 - **401 for unauthenticated XHR:** `java-script-auto-redirect=false` with a `JavaScriptRequestChecker`
   (`XhrAuthenticationChallenge`) answers `X-Requested-With` requests with `401`, independent of `Origin`; browser
   navigations keep the 302 to Google.
-- **Bounded `uri` metric tag:** `HttpMetricsConfig` collapses untemplated paths into `SPA`/`STATIC`, and
-  `suppress4xx-errors` turns untemplated 4xx into `UNKNOWN`, so traffic cannot exhaust Micrometer's 100-value limit.
-
+- **Bounded `uri` metric tag:** `HttpMetricsConfig` is an allow-list — it keeps endpoint templates, Quarkus'
+  special values and the fixed login routes, and collapses every other path into `SPA`/`STATIC`/`UNKNOWN` (the tag
+  carries the raw path, so raw variants of an SPA route must not survive); `suppress4xx-errors` turns untemplated
+  4xx into `UNKNOWN`. Traffic cannot exhaust Micrometer's 100-value limit.

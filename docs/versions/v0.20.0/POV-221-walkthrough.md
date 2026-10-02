@@ -9,19 +9,27 @@ Three production defects at the application edge from the backlog (POV-208, POV-
 Brainstorm, all fixed in the app (it is the edge since POV-214):
 
 **SPA fallback as an allow-list** (`ui/util/SpaRoutingHandler`): `index.html` is served only for the frontend's
-top-level routes (`SPA_ROUTE_PREFIXES` = `/dashboard`, `/me`, `/topics`, `/briefings`, `/sources`, `/admin`, `/s`,
-matched as a whole first segment and case-insensitively like the TanStack router, no dot-segments, no file
-extension — `isSpaRoute`). Any other path that reaches the fallback answers a bare `404` (was `200` with the SPA
-shell for every extensionless path). `/`, files and the excluded prefixes (`/api`, `/ui`, `/q`, `/auth`, `/assets`,
-… — whole first segment) keep their own handlers. `SpaRouteAllowListTest` reads every `createRoute` in
-`frontend/src/router.tsx` with its parent and fails if a route reachable as a top-level URL (including a relative
-path under a pathless layout) is not on the allow-list, or if a route has no literal `path`/`id`;
-`RepositoryFiles.findInRepository` (test utility, extracted from `CspInlineScriptHashTest`) locates the file.
+routes — the exact URL patterns of the router (`SPA_ROUTES`: `/dashboard`, `/me`, `/topics`, `/briefings`,
+`/briefings/*`, `/sources`, `/sources/*`, `/admin`, `/admin/{audit-log,content,jobs,users}`, `/s/*`), matched
+segment by segment and case-insensitively like the TanStack router, no dot-segments, no file extension —
+`isSpaRoute`. Any other path that reaches the fallback answers a bare `404` (was `200` with the SPA shell for every
+extensionless path), including unknown paths under a route prefix (`/admin/does-not-exist`). `/`, files and the
+excluded prefixes (`/api`, `/ui`, `/q`, `/auth`, `/assets`, … — whole first segment) keep their own handlers.
+`SpaRouteAllowListTest` reads every `createRoute` in `frontend/src/router.tsx` with its parent, builds each route's
+URL pattern and fails unless it equals `SPA_ROUTES` (both directions); it also fails if a route has no literal
+`path`/`id` or is defined outside `router.tsx`. `RepositoryFiles.findInRepository` (test utility, extracted from
+`CspInlineScriptHashTest`) locates the file. (The first-segment allow-list of the initial commit was narrowed to
+exact routes in the PR loop, Greptile P1, PO decision.)
 
-**Bounded `uri` tag** (`config/HttpMetricsConfig`, a `MeterFilter` on `http.server.*`): untemplated SPA routes →
-`SPA`, files outside `/api` → `STATIC`; `quarkus.micrometer.binder.http-server.suppress4xx-errors=true` turns
-untemplated 4xx into `UNKNOWN`. API templates and `NOT_FOUND`/`REDIRECTION`/`root` stay. Traffic can no longer
-reach Micrometer's 100-value limit.
+**Bounded `uri` tag** (`config/HttpMetricsConfig`, a `MeterFilter` on `http.server.*`), an allow-list: canonical
+values under `/api/` and `/ui/` (endpoint templates, legacy UI routes), Quarkus' special values (`NOT_FOUND`,
+`REDIRECTION`, `UNKNOWN`, `root`) and `/login`, `/logout`, `/auth/login` stay; SPA routes → `SPA`, files →
+`STATIC`, any other path → `UNKNOWN` (`/q/` is not metered at all);
+`quarkus.micrometer.binder.http-server.suppress4xx-errors=true` turns untemplated 4xx into `UNKNOWN`. The tag
+carries the raw path while routing uses the normalised one, so raw variants (`/%73ources/1`,
+`/sources/1/%2e%2e/2`, `/api/%2e%2e/sources/1`) must not survive either. Traffic can no longer reach Micrometer's
+100-value limit; a collapsed value adds no registry entry per raw path (Micrometer 1.17.1 keeps the pre-filter id
+only for a newly created meter). (Narrowed to an allow-list in the PR loop.)
 
 **401 for unauthenticated XHR** (`security/XhrAuthenticationChallenge`, a `JavaScriptRequestChecker`, with
 `quarkus.oidc.authentication.java-script-auto-redirect=false`): a request with `X-Requested-With: XMLHttpRequest`

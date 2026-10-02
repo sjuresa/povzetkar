@@ -20,8 +20,9 @@ class SpaRoutingHandlerTest {
     private static final String SHELL_MARKER = "POV-221 test SPA shell";
 
     @ParameterizedTest
-    @ValueSource(strings = {"/dashboard", "/me", "/topics", "/briefings", "/briefings/42", "/sources/7",
-            "/admin/jobs", "/s/3f2c8a4e-6b1d-4c3e-9f7a-2d5b8c1e0a9f", "/s", "/Dashboard", "/Sources/42"})
+    @ValueSource(strings = {"/dashboard", "/me", "/topics", "/briefings", "/briefings/42", "/sources", "/sources/7",
+            "/admin", "/admin/audit-log", "/admin/content", "/admin/jobs", "/admin/users",
+            "/s/3f2c8a4e-6b1d-4c3e-9f7a-2d5b8c1e0a9f", "/Dashboard", "/Sources/42", "/dashboard/"})
     void frontendRoutesGetTheSpaShell(String path) {
         String body = given().redirects().follow(false).when().get(path)
                 .then().statusCode(200).extract().asString();
@@ -31,6 +32,9 @@ class SpaRoutingHandlerTest {
     @ParameterizedTest
     @ValueSource(strings = {"/.git/config", "/.ssh/id_rsa", "/actuator/env", "/wp-admin", "/phpmyadmin", "/secret",
             "/dashboardx", "/admin/.env/x",
+            // Under a route prefix, only the router's own paths: no unknown children, no extra segments
+            "/admin/does-not-exist", "/admin/login", "/dashboard/actuator", "/me/x", "/sources/7/extra", "/s",
+            "/s/a/b",
             // Excluded prefixes match whole segments: /quiz is not /q, /apix is not /api
             "/quiz", "/apix", "/authorize", "/uiadmin", "/static-old"})
     void unknownPathsAnswerABare404(String path) {
