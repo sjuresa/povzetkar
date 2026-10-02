@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.service.transcript.TranscriptSkippedException;
 import com.povzetkar.quarkus.util.LogKeys;
 import com.povzetkar.quarkus.util.StructuredLogger;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -18,6 +19,8 @@ import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import org.hibernate.exception.ConstraintViolationException;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 
 @ApplicationScoped
@@ -28,11 +31,16 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
 
     private final ContentCreationService contentCreationService;
     private final VideoSummaryService videoSummaryService;
+    private final TranscriptRetryPolicy retryPolicy;
+    private final Clock clock;
 
     @Inject
-    public YouTubeSummarizationStrategy(ContentCreationService contentCreationService, VideoSummaryService videoSummaryService) {
+    public YouTubeSummarizationStrategy(ContentCreationService contentCreationService, VideoSummaryService videoSummaryService,
+                                        TranscriptRetryPolicy retryPolicy, Clock clock) {
         this.contentCreationService = contentCreationService;
         this.videoSummaryService = videoSummaryService;
+        this.retryPolicy = retryPolicy;
+        this.clock = clock;
     }
 
     @Override
@@ -41,16 +49,33 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
     }
 
     @Override
-    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
+    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate, ProcessingContext context) {
         YouTubeVideo video = (YouTubeVideo) item;
 
         if (isAlreadySummarized(video.id)) {
             return true;
         }
 
-        Content content = contentCreationService.createContentForVideo(video);
+        Content content;
+        try {
+            content = contentCreationService.createContentForVideo(video, context);
+        } catch (TranscriptSkippedException e) {
+            // POV-222: not a failed attempt — the item stays as it is and a later run picks it up
+            context.recordSkippedItem();
+            logger.info(
+                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                LogKeys.STATUS, LogKeys.SKIPPED,
+                LogKeys.VIDEO_ID, video.videoId,
+                LogKeys.REASON, e.getMessage()
+            );
+            return false;
+        }
         if (content == null) {
-            updateStatusInNewTransaction(video.id, video.title, ProcessingStatus.RETRY_LATER, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript could not be retrieved.");
+            if (context.isAutomatic()) {
+                recordAutomaticTranscriptFailure(video);
+            } else {
+                recordManualTranscriptFailure(video);
+            }
             return false;
         }
 
@@ -71,6 +96,81 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
         } catch (ApiException e) {
             return handleApiException(video, e);
         }
+    }
+
+    /**
+     * POV-222: counts the failed automatic attempt and applies the retry policy — {@code RETRY_LATER} with the
+     * next due time, or {@code FAILED} after the last interval.
+     */
+    private void recordAutomaticTranscriptFailure(YouTubeVideo video) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            YouTubeVideo managed = YouTubeVideo.findById(video.id);
+            if (managed == null) {
+                return;
+            }
+            if (!isStillAwaitingTranscript(managed)) {
+                // an overlapping run stored the transcript or finished the video meanwhile — its outcome stands
+                logger.info(
+                    LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                    LogKeys.STATUS, LogKeys.FAILED,
+                    LogKeys.VIDEO_ID, managed.videoId,
+                    LogKeys.REASON, "already_processed_by_overlapping_run"
+                );
+                return;
+            }
+            Instant now = clock.instant();
+            if (managed.nextTranscriptAttemptAt != null && managed.nextTranscriptAttemptAt.isAfter(now)) {
+                // an overlapping run (e.g. a per-topic job during the hourly run) already counted this window
+                logger.info(
+                    LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                    LogKeys.STATUS, LogKeys.FAILED,
+                    LogKeys.VIDEO_ID, managed.videoId,
+                    LogKeys.REASON, "already_counted_by_overlapping_run"
+                );
+                return;
+            }
+            int attempts = (managed.transcriptAttempts == null ? 0 : managed.transcriptAttempts) + 1;
+            TranscriptRetryPolicy.Decision decision = retryPolicy.afterFailedAttempt(attempts, now);
+            String message = decision.status() == ProcessingStatus.FAILED
+                    ? "Transcript could not be retrieved after " + attempts + " automatic attempts."
+                    : "Transcript could not be retrieved (automatic attempt " + attempts + " of " + retryPolicy.maxAttempts() + ").";
+            managed.transcriptAttempts = attempts;
+            managed.nextTranscriptAttemptAt = decision.nextAttemptAt();
+            managed.processingStatus = decision.status();
+            managed.errorCode = ContentProcessingError.TRANSCRIPT_UNAVAILABLE.name();
+            managed.errorMessage = message;
+            JobExecutionAudit.logItem(managed.id, managed.title, decision.status(), message);
+            logger.warn(
+                LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                LogKeys.STATUS, LogKeys.FAILED,
+                LogKeys.VIDEO_ID, managed.videoId,
+                "attempt", attempts,
+                "nextAttemptAt", decision.nextAttemptAt(),
+                LogKeys.MESSAGE, message
+            );
+        });
+    }
+
+    private static boolean isStillAwaitingTranscript(YouTubeVideo video) {
+        return (video.processingStatus == ProcessingStatus.PENDING || video.processingStatus == ProcessingStatus.RETRY_LATER)
+                && (video.transcript == null || video.transcript.isBlank());
+    }
+
+    /** POV-222 (Q8): a failed manual per-item attempt changes neither status nor retry state — audit only. */
+    private void recordManualTranscriptFailure(YouTubeVideo video) {
+        String message = "Manual attempt: transcript could not be retrieved; status and retry counter unchanged.";
+        QuarkusTransaction.requiringNew().run(() -> {
+            YouTubeVideo managed = YouTubeVideo.findById(video.id);
+            if (managed != null) {
+                JobExecutionAudit.logItem(managed.id, managed.title, managed.processingStatus, message);
+            }
+        });
+        logger.warn(
+            LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+            LogKeys.STATUS, LogKeys.FAILED,
+            LogKeys.VIDEO_ID, video.videoId,
+            LogKeys.MESSAGE, message
+        );
     }
 
     private boolean isAlreadySummarized(Long videoId) {
@@ -184,6 +284,8 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 if (attachedVideo != null
                         && (attachedVideo.transcript == null || attachedVideo.transcript.isBlank())) {
                     attachedVideo.transcript = video.transcript;
+                    // POV-222: with the transcript stored no fetch is needed — due at the next run (counter kept)
+                    attachedVideo.nextTranscriptAttemptAt = null;
                 }
             });
         } catch (Exception e) {

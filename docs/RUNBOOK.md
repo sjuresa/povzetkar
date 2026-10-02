@@ -884,6 +884,21 @@ MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2
   > access-pre-pov214.txt
 ```
 
+**Checking the YouTube transcript pacing (POV-222)** — from the app log (`quarkus.log*`, same recipe for reading
+the volume): every actual wait before a fetch logs `Pacing: waiting N s before the next YouTube transcript fetch.`,
+every fetched transcript `YouTube transcript selected for video ID '…': language '…', generated …`, and each run
+ends its summarization with one line `action="orchestrationRunSummary"` carrying `trigger`, `duration_s`,
+`youtubeFetches`, `skippedItems` and `budgetExhausted`. For **automatic** youtube-legacy fetches, consecutive
+`YouTube transcript selected` / `Provider 'youtube-legacy' unavailable` lines must be at least `fetch.min` apart
+(measured from the end of the previous fetch). Exceptions that legitimately break the rule: the manual *Fetch
+transcript* (unpaced, logged by `ContentItemService` as well) and proxy fallbacks (`provider 'proxy'`).
+
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
+  sh -c 'cd /var/log/app && cat quarkus.log' \
+  | grep -E 'Pacing: waiting|YouTube transcript selected|youtube-legacy|orchestrationRunSummary'
+```
+
 ### 13.6 Checking for Suspicious Traffic
 
 1. **Cloudflare dashboard** — Security → Analytics / Events: request volume, blocked requests
@@ -1008,10 +1023,54 @@ The transcript fetching pipeline supports multiple providers with runtime-config
 |:---|:---|:---|
 | `transcript.providers.order` | `youtube-legacy,proxy,supadata` | Comma-separated list of providers tried in order. |
 | `transcript.providers.youtube-legacy.enabled` | `true` | Enable/disable the YouTube legacy (direct scraping) provider. |
-| `transcript.providers.youtube-legacy.jitter.min-ms` | `500` | Minimum random delay before each YouTube fetch (IP rate-limit protection). |
-| `transcript.providers.youtube-legacy.jitter.max-ms` | `2500` | Maximum random delay before each YouTube fetch. |
+| `transcript.providers.youtube-legacy.pacing.fetch.min` / `.fetch.max` | `15s` / `45s` | Random pause before a youtube-legacy fetch, measured from the **end of the previous fetch**; no pause for the first fetch or after idle (POV-222). |
+| `transcript.providers.youtube-legacy.pacing.in-fetch.min` / `.in-fetch.max` | `1s` / `5s` | Random pause before each further call inside a fetch (video page → innertube → captions). |
+| `transcript.retry.intervals` | `30m,30m,90m,90m,210m,210m` | After the n-th failed **automatic** transcript fetch a video is retried no earlier than the n-th interval later; the attempt after the last interval ends it `FAILED` (6 intervals = 7 attempts). |
+| `povzetkar.orchestration.time-budget` | `15m` | Time budget of one orchestration run (scheduled, manual, per topic): items not started — or still waiting for a YouTube fetch slot — when it is used up stay unchanged for the next run. |
 | `transcript.providers.supadata.enabled` | `false` | Enable/disable the Supadata provider. Set to `true` and provide `SUPADATA_API_KEY` to activate. |
 | `transcript.providers.supadata.lang` | `en` | ISO 639-1 language code for Supadata transcript requests. Falls back to first available language if the video has no transcript in the requested language. |
+
+**YouTube pacing and retries (POV-222).** Automatic youtube-legacy fetches run strictly one after another,
+app-wide (all topics, items and threads share one fair queue). The pacing ranges are validated at startup
+(min ≤ max, not negative — an invalid value stops the start). Behaviour per trigger:
+
+| Trigger | Paced | Retry counter | Time budget | On a failed fetch |
+| --- | --- | --- | --- | --- |
+| Scheduled / manual orchestration, per-topic job | yes | counted | yes | `RETRY_LATER` with due time, `FAILED` after the 7th attempt |
+| Admin per-item *Retry* / *Generate summary* | yes | not counted | no | nothing changes (status, counter, due time) |
+| Admin *Fetch transcript* | **no** (exception) | not counted | no | nothing changes |
+
+- youtube-legacy picks English manual → English generated → any manual → any generated captions (English includes
+  `en-GB`, `en-US`, …; no YouTube translation); ties go to exact `en`, then to the spoken language (that of the
+  speech-recognised track), then to the language code. The summary prompt asks Gemini for English.
+- An unexpected YouTube response the library cannot parse counts as a failed attempt (next provider, retry policy).
+  Each YouTube call is bounded by 30 s for the whole exchange (a stalled response body cannot hold the queue).
+- A failure inside a window already counted by an overlapping run (e.g. a per-topic job during the hourly run) is
+  not counted again. Any stored transcript (manual capture or a per-item job whose Gemini call then failed) clears
+  `next_transcript_attempt_at`, so the next run only needs Gemini.
+- `budgetExhausted=true` in the run summary means items were skipped **and** the budget had passed; skips before
+  the deadline come from an interruption (shutdown).
+- The time budget is checked when an item starts, when the YouTube fetch slot is obtained and again after its pause,
+  and before falling through to the next provider — no youtube-legacy fetch starts after the budget is used up (the
+  proxy fallback's own 15–45 s jitter may still end its single call shortly after it).
+- A successful *Fetch transcript* clears `next_transcript_attempt_at` (the stored transcript needs no fetch), so the
+  next run summarizes a `RETRY_LATER` video; the attempt counter stays. A video that already ended `FAILED` keeps
+  its status — summarize it with the per-item *Generate summary* (uses the stored transcript) or a status override.
+- `quarkus.vertx.max-worker-execute-time=1200s` is above the time budget plus the items still in progress and the
+  briefing step, and `povzetkar.orchestration.lock-timeout=PT30M` is above both (a lock older than the timeout is
+  taken over as crashed); change the three together.
+- A 429 is a per-video transient failure like any other — there is no global cooldown.
+- The retry state is in `content_items.transcript_attempts` / `next_transcript_attempt_at` (V38); not shown in the
+  admin UI. An admin status override (e.g. `FAILED` → `PENDING`) keeps the counter: the next automatic failure
+  ends the video `FAILED` again. To give a video a new budget, reset both columns in the database.
+- An item still unprocessed after the last run of the day leaves the today+yesterday window of the hourly job
+  and stays as it is (unchanged behaviour) — except a video with a scheduled transcript retry
+  (`RETRY_LATER` and `next_transcript_attempt_at` set): the hourly job carries it over in yesterday's step until it
+  succeeds or its 7th attempt ends it `FAILED`; its summary is dated yesterday.
+- When two runs process the same video (a per-topic job during the hourly run), a late transcript failure does not
+  change a video the other run already completed or stored the transcript for.
+- The legacy keys `transcript.providers.youtube-legacy.jitter.*` are gone; a leftover
+  `TRANSCRIPT_PROVIDERS_YOUTUBE_LEGACY_JITTER_*` in `.env.docker` is ignored.
 
 **Production today (verified in POV-214):** `youtube-legacy` serves the transcripts — it fetches directly from the
 production host (the local Docker stack, §10, residential egress IP). `proxy` is the fallback, with
@@ -1028,7 +1087,8 @@ transcript.providers.supadata.enabled=true
 
 **Metrics emitted** (all tagged with `provider` label):
 
-- `transcript.fetch.attempts` — counter per provider
+- `transcript.fetch.attempts` — counter per provider (requests made; a fetch skipped by the time budget is not
+  counted)
 - `transcript.fetch.successes` — counter per provider
 - `transcript.fetch.failures` — counter tagged with `provider` and `reason`
 - `transcript.fetch.duration` — timer per provider

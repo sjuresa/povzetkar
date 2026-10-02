@@ -5,6 +5,8 @@ import com.povzetkar.quarkus.api.OrchestrationRequest;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
+import com.povzetkar.quarkus.builder.YouTubeVideoBuilder;
+import com.povzetkar.quarkus.model.YouTubeVideo;
 import com.povzetkar.quarkus.model.Briefing;
 import com.povzetkar.quarkus.model.ContentItem;
 import com.povzetkar.quarkus.model.ContentSource;
@@ -156,9 +158,9 @@ class OrchestrationManagerTest {
 
         doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
         doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
         when(videoSummaryService.createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any()))
                 .thenReturn("Generated Meta-summary");
@@ -173,8 +175,8 @@ class OrchestrationManagerTest {
         verify(orchestrationLockService, times(1)).releaseLock(today);
 
         // Topic processed for both dates
-        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(yesterday));
-        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(today));
+        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(yesterday), any(ProcessingContext.class));
+        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(today), any(ProcessingContext.class));
 
         // Briefing generated for yesterday
         assertEquals(1, Briefing.count());
@@ -215,9 +217,9 @@ class OrchestrationManagerTest {
         // Mock external service calls
         doNothing().when(orchestrationLockService).acquireLock(expectedDate);
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
@@ -238,7 +240,7 @@ class OrchestrationManagerTest {
 
         // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
-        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(expectedDate));
+        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(expectedDate), any(ProcessingContext.class));
         verify(orchestrationLockService, times(1)).releaseLock(expectedDate);
     }
 
@@ -275,9 +277,9 @@ class OrchestrationManagerTest {
         // Mock external service calls
         doNothing().when(orchestrationLockService).acquireLock(pastDate);
         doNothing().when(orchestrationLockService).releaseLock(pastDate);
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
@@ -298,7 +300,7 @@ class OrchestrationManagerTest {
 
         // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(pastDate);
-        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(pastDate));
+        verify(topicProcessor, times(1)).processTopicUni(any(Topic.class), eq(pastDate), any(ProcessingContext.class));
         verify(orchestrationLockService, times(1)).releaseLock(pastDate);
     }
 
@@ -340,9 +342,9 @@ class OrchestrationManagerTest {
         // Mock external service calls for each day in the range
         doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
         doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem()); // Mock for retry logic
 
         // Mock VideoSummaryService for DefaultBriefingGenerator
@@ -363,7 +365,7 @@ class OrchestrationManagerTest {
 
         // Verify external service calls
         verify(orchestrationLockService, times((int) numOfDays)).acquireLock(any(LocalDate.class));
-        verify(topicProcessor, times((int) numOfDays)).processTopicUni(any(Topic.class), any(LocalDate.class));
+        verify(topicProcessor, times((int) numOfDays)).processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class));
         verify(orchestrationLockService, times((int) numOfDays)).releaseLock(any(LocalDate.class));
     }
 
@@ -416,8 +418,87 @@ class OrchestrationManagerTest {
 
         // Verify external service calls
         verify(orchestrationLockService, times(1)).acquireLock(orchestrationDate);
-        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class));
         verify(orchestrationLockService, never()).releaseLock(orchestrationDate);
+    }
+
+    @Test
+    void timeBudgetMustBePositive() {
+        // POV-222: a zero or negative budget would make every run skip everything — rejected at startup (@Startup)
+        for (java.time.Duration budget : List.of(java.time.Duration.ZERO, java.time.Duration.ofMinutes(-1))) {
+            assertThrows(IllegalArgumentException.class, () -> new OrchestrationManager(null, null, null, null, null, null,
+                    new io.micrometer.core.instrument.simple.SimpleMeterRegistry(), java.time.Clock.systemUTC(), budget));
+        }
+    }
+
+    @Test
+    void testRunOrchestration_SkipsVideoWhoseTranscriptRetryIsNotDue() {
+        // POV-222: a video that failed its transcript is retried only once its next attempt is due
+        QuarkusTransaction.requiringNew().run(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+
+            YouTubeVideo video = YouTubeVideoBuilder.aYouTubeVideo()
+                    .withVideoId("not-due")
+                    .withContentSource(contentSource)
+                    .withProcessingStatus(ProcessingStatus.RETRY_LATER)
+                    .withPublishedAt(Instant.now())
+                    .build();
+            video.transcriptAttempts = 1;
+            video.nextTranscriptAttemptAt = Instant.now().plus(30, ChronoUnit.MINUTES);
+            video.persist();
+        });
+        doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
+        doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        orchestrationManager.runScheduledOrchestration();
+
+        verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class));
+    }
+
+    @Test
+    void testRunScheduledOrchestration_CarriesOverDueTranscriptRetriesOfEarlierDays() {
+        // POV-222 (PR review): a retry scheduled past the end of the video's two-day window still gets its attempts
+        YouTubeVideo video = QuarkusTransaction.requiringNew().call(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+
+            YouTubeVideo retry = YouTubeVideoBuilder.aYouTubeVideo()
+                    .withVideoId("carried-over")
+                    .withContentSource(contentSource)
+                    .withProcessingStatus(ProcessingStatus.RETRY_LATER)
+                    .withPublishedAt(Instant.now().minus(3, ChronoUnit.DAYS))
+                    .build();
+            retry.transcriptAttempts = 5;
+            retry.nextTranscriptAttemptAt = Instant.now().minus(5, ChronoUnit.MINUTES);
+            retry.persist();
+            return retry;
+        });
+        doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
+        doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        orchestrationManager.runScheduledOrchestration();
+
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(
+                argThat((List<ContentItem> items) -> items.stream().anyMatch(item -> item.id.equals(video.id))),
+                eq(LocalDate.now().minusDays(1)), any(ProcessingContext.class));
+        verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), eq(LocalDate.now()), any(ProcessingContext.class));
     }
 
     @Transactional
@@ -455,11 +536,11 @@ class OrchestrationManagerTest {
         doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
 
         // Mock topicProcessor.processTopicUni to return a completed Uni
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         // Mock the scheduler to simulate successful reprocessing
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenAnswer(invocation -> {
                     List<ContentItem> items = invocation.getArgument(0);
                     LocalDate date = invocation.getArgument(1);
@@ -484,7 +565,7 @@ class OrchestrationManagerTest {
         ContentItem.getEntityManager().clear();
 
         // Verify that the scheduler was called with the stuck item (for today; yesterday has no items)
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(stuckItem), orchestrationDate);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(eq(List.of(stuckItem)), eq(orchestrationDate), any(ProcessingContext.class));
 
         // Verify ContentItem status
         ContentItem updatedItem = ContentItem.findById(stuckItem.id);
@@ -515,7 +596,7 @@ class OrchestrationManagerTest {
         // Mock external service calls
         doNothing().when(orchestrationLockService).acquireLock(expectedDate);
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
@@ -523,7 +604,7 @@ class OrchestrationManagerTest {
 
         // Then
         // Verify that topicProcessor was NOT called
-        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class));
         
         // Verify lock was acquired and released
         verify(orchestrationLockService, times(1)).acquireLock(expectedDate);
@@ -548,9 +629,9 @@ class OrchestrationManagerTest {
         // Mock external service calls
         doNothing().when(orchestrationLockService).acquireLock(expectedDate);
         doNothing().when(orchestrationLockService).releaseLock(expectedDate);
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
@@ -558,7 +639,7 @@ class OrchestrationManagerTest {
 
         // Then
         // Verify content orchestration ran
-        verify(topicProcessor, times(1)).processTopicUni(topic, expectedDate);
+        verify(topicProcessor, times(1)).processTopicUni(eq(topic), eq(expectedDate), any(ProcessingContext.class));
         
         // Verify briefing generation did NOT run (no briefings created)
         assertEquals(0, Briefing.count());
@@ -603,7 +684,7 @@ class OrchestrationManagerTest {
 
         // Then
         // Verify content orchestration did NOT run
-        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class));
         
         // Verify briefing generation ran
         assertEquals(1, Briefing.count());
@@ -636,7 +717,7 @@ class OrchestrationManagerTest {
         item.persist();
 
         // Mock external service calls
-        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
@@ -644,10 +725,10 @@ class OrchestrationManagerTest {
 
         // Then
         // Verify pending processing ran
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(item), expectedDate);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(eq(List.of(item)), eq(expectedDate), any(ProcessingContext.class));
         
         // Verify content orchestration did NOT run
-        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class));
+        verify(topicProcessor, never()).processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class));
         
         // Verify briefing generation did NOT run
         assertEquals(0, Briefing.count());
@@ -685,7 +766,7 @@ class OrchestrationManagerTest {
 
         doNothing().when(orchestrationLockService).acquireLock(orchestrationDate);
         doNothing().when(orchestrationLockService).releaseLock(orchestrationDate);
-        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class)))
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
@@ -693,7 +774,7 @@ class OrchestrationManagerTest {
 
         // Then
         // Verify that the scheduler was NOT called because the topic is disabled
-        verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), any(LocalDate.class));
+        verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class));
     }
 
     @Test
@@ -837,7 +918,7 @@ class OrchestrationManagerTest {
 
         // 3. Verify NO full orchestration tasks were run in any scenario
         verify(orchestrationLockService, never()).acquireLock(any());
-        verify(topicProcessor, never()).processTopicUni(any(), any(), anyBoolean());
+        verify(topicProcessor, never()).processTopicUni(any(), any(), anyBoolean(), any());
         verify(videoSummaryService, never()).createBriefingFromSummaries(any(), any(), any(), any(), any());
     }
 }

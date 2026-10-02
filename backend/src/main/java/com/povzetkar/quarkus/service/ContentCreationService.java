@@ -30,7 +30,11 @@ public class ContentCreationService {
         this.transcriptThresholdMinutes = threshold;
     }
 
-    public Content createContentForVideo(YouTubeVideo video) {
+    /**
+     * @throws com.povzetkar.quarkus.service.transcript.TranscriptSkippedException the transcript fetch was not
+     *         attempted (time budget used up) — the caller leaves the item unchanged (POV-222)
+     */
+    public Content createContentForVideo(YouTubeVideo video, ProcessingContext context) {
         if (video.transcript != null && !video.transcript.isBlank()) {
             logger.info(
                     LogKeys.ACTION, LogKeys.CREATE_CONTENT,
@@ -64,7 +68,7 @@ public class ContentCreationService {
                 LogKeys.VIDEO_TITLE, video.title,
                 LogKeys.MESSAGE, "Video is longer than threshold, getting transcript"
         );
-        String transcript = transcriptOrchestrator.fetch(video.videoId);
+        String transcript = transcriptOrchestrator.fetch(video.videoId, context);
 
         if (transcript.isBlank()) {
             logger.warn(

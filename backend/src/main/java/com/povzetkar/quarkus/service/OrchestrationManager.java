@@ -14,14 +14,18 @@ import com.povzetkar.quarkus.util.StructuredLogger;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -32,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static com.povzetkar.quarkus.util.LogKeys.*;
 
+@Startup // POV-222: an invalid time budget fails the application start, not the first run
 @ApplicationScoped
 public class OrchestrationManager {
 
@@ -41,6 +46,7 @@ public class OrchestrationManager {
     private static final String TOPIC_ID = "topicId";
     private static final String TAG_TOPIC_ID = "topic_id";
     private static final String SUMMARIZATION_MANUAL_TOPIC = "summarization_manual_topic";
+    private static final String ORCHESTRATION_RUN_SUMMARY = "orchestrationRunSummary";
 
     private final OrchestrationLockService orchestrationLockService;
     private final TopicProcessor topicProcessor;
@@ -49,6 +55,8 @@ public class OrchestrationManager {
     private final JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
     private final EventBroadcaster eventBroadcaster;
     private final MeterRegistry registry;
+    private final Clock clock;
+    private final Duration timeBudget;
     private final AtomicInteger activeOrchestrations = new AtomicInteger(0);
 
     @Inject
@@ -58,7 +66,9 @@ public class OrchestrationManager {
                                 ManagedExecutor managedExecutor,
                                 JustInTimeSummarizationScheduler justInTimeSummarizationScheduler,
                                 EventBroadcaster eventBroadcaster,
-                                MeterRegistry registry) {
+                                MeterRegistry registry,
+                                Clock clock,
+                                @ConfigProperty(name = "povzetkar.orchestration.time-budget", defaultValue = "15m") Duration timeBudget) {
         this.orchestrationLockService = orchestrationLockService;
         this.topicProcessor = topicProcessor;
         this.briefingService = briefingService;
@@ -66,6 +76,11 @@ public class OrchestrationManager {
         this.justInTimeSummarizationScheduler = justInTimeSummarizationScheduler;
         this.eventBroadcaster = eventBroadcaster;
         this.registry = registry;
+        this.clock = clock;
+        if (timeBudget.isZero() || timeBudget.isNegative()) {
+            throw new IllegalArgumentException("povzetkar.orchestration.time-budget must be positive: " + timeBudget);
+        }
+        this.timeBudget = timeBudget;
         
         // Register the gauge
         this.registry.gauge("povzetkar_active_orchestrations_current", activeOrchestrations);
@@ -82,22 +97,26 @@ public class OrchestrationManager {
             MESSAGE, "Scheduled orchestration triggered."
         );
         activeOrchestrations.incrementAndGet();
+        // POV-222: one run context for both dates and all parallel topics (shared time budget and counters)
+        ProcessingContext context = newRunContext();
         try {
             boolean failed = false;
             try {
-                executeSummarizationStepForDate(yesterday, true, true, null).await().indefinitely();
+                // with the due transcript retries of earlier days, which would otherwise never run again (POV-222)
+                executeSummarizationStepForDate(yesterday, true, true, null, true, context).await().indefinitely();
             } catch (Exception ex) {
                 failed = true;
                 logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
                         MESSAGE, "Yesterday's summarization step failed");
             }
             try {
-                executeSummarizationStepForDate(today, true, true, null).await().indefinitely();
+                executeSummarizationStepForDate(today, true, true, null, false, context).await().indefinitely();
             } catch (Exception ex) {
                 failed = true;
                 logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
                         MESSAGE, "Today's summarization step failed");
             }
+            logRunSummary("scheduled", context);
             try {
                 generateBriefingsForDate(yesterday, null).await().indefinitely();
             } catch (Exception ex) {
@@ -111,6 +130,28 @@ public class OrchestrationManager {
         } finally {
             activeOrchestrations.decrementAndGet();
         }
+    }
+
+    /** An automatic processing context for one orchestration run, its time budget starting now (POV-222). */
+    private ProcessingContext newRunContext() {
+        return ProcessingContext.automatic(clock.instant(), timeBudget);
+    }
+
+    /** One line per run once its summarization is done: how long it took and what the time budget did (POV-222). */
+    private void logRunSummary(String trigger, ProcessingContext context) {
+        Instant now = clock.instant();
+        long durationSeconds = context.start()
+                .map(start -> Duration.between(start, now).toSeconds())
+                .orElse(0L);
+        logger.info(
+            ACTION, ORCHESTRATION_RUN_SUMMARY,
+            TRIGGER, trigger,
+            DURATION_S, durationSeconds,
+            "youtubeFetches", context.youtubeFetches(),
+            "skippedItems", context.skippedItems(),
+            "budgetExhausted", context.budgetExhausted(now),
+            MESSAGE, "Orchestration run summarization finished."
+        );
     }
 
     private void incrementOrchestrationFailedCounter(String trigger, String topicId) {
@@ -154,10 +195,12 @@ public class OrchestrationManager {
         activeOrchestrations.incrementAndGet();
         Uni<Void> summarizationTask;
         if (request.processPending() || request.summarize()) {
+            ProcessingContext context = newRunContext();
             List<Uni<Void>> dailySummarizationTasks = actualStartDate.datesUntil(actualEndDate.plusDays(1))
-                    .map(date -> executeSummarizationStepForDate(date, request.processPending(), request.summarize(), request.topicId()))
+                    .map(date -> executeSummarizationStepForDate(date, request.processPending(), request.summarize(), request.topicId(), false, context))
                     .toList();
             summarizationTask = Uni.combine().all().unis(dailySummarizationTasks).discardItems()
+                    .onTermination().invoke(() -> logRunSummary("manual", context))
                     .onItem().invoke(() -> logger.info(
                         ACTION, SUMMARIZATION_STEP,
                         STATUS, FINISHED,
@@ -307,7 +350,8 @@ public class OrchestrationManager {
         });
     }
 
-    private Uni<Void> executeSummarizationStepForDate(LocalDate orchestrationDate, boolean processPending, boolean processNew, Long topicId) {
+    private Uni<Void> executeSummarizationStepForDate(LocalDate orchestrationDate, boolean processPending, boolean processNew, Long topicId,
+                                                      boolean withEarlierRetries, ProcessingContext context) {
         if (!processPending && !processNew) {
             return Uni.createFrom().voidItem();
         }
@@ -334,12 +378,12 @@ public class OrchestrationManager {
             return Uni.createFrom().voidItem();
         }
 
-        Uni<Void> pendingItemsUni = processPending ? processPendingAndRetryItems(orchestrationDate, topicId) : Uni.createFrom().voidItem();
+        Uni<Void> pendingItemsUni = processPending ? processPendingAndRetryItems(orchestrationDate, topicId, withEarlierRetries, context) : Uni.createFrom().voidItem();
 
         return pendingItemsUni
                 .chain(() -> {
                     if (processNew) {
-                        return executeTopicProcessingForDate(orchestrationDate, topicId);
+                        return executeTopicProcessingForDate(orchestrationDate, topicId, context);
                     }
                     return Uni.createFrom().voidItem();
                 })
@@ -353,7 +397,7 @@ public class OrchestrationManager {
                 });
     }
 
-    private Uni<Void> executeTopicProcessingForDate(LocalDate orchestrationDate, Long topicId) {
+    private Uni<Void> executeTopicProcessingForDate(LocalDate orchestrationDate, Long topicId, ProcessingContext context) {
         return Uni.createFrom().deferred(() -> {
             List<User> activeUsers = User.listAllEnabled();
             if (activeUsers.isEmpty()) {
@@ -384,7 +428,7 @@ public class OrchestrationManager {
             );
 
             return Multi.createFrom().iterable(allTopics)
-                    .onItem().transformToUni(topic -> topicProcessor.processTopicUni(topic, orchestrationDate))
+                    .onItem().transformToUni(topic -> topicProcessor.processTopicUni(topic, orchestrationDate, context))
                     .merge()
                     .collect().asList()
                     .onItem().invoke(() -> logger.info(
@@ -409,7 +453,8 @@ public class OrchestrationManager {
         });
     }
 
-    private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate, Long topicId) {
+    private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate, Long topicId, boolean withEarlierRetries,
+                                                 ProcessingContext context) {
         logger.info(
             ACTION, PENDING_ITEMS,
             STATUS, STARTED,
@@ -417,30 +462,17 @@ public class OrchestrationManager {
             TOPIC_ID, topicId,
             MESSAGE, "Checking for content items to retry or pending from previous runs."
         );
-        return processPendingAndRetryItemsByPage(orchestrationDate, topicId, 0);
+        return processPendingAndRetryItemsByPage(orchestrationDate, topicId, withEarlierRetries, 0, 0L, context);
     }
 
-    private Uni<Void> processPendingAndRetryItemsByPage(LocalDate orchestrationDate, Long topicId, int pageIndex) {
+    /** Keyset paging (POV-222): processed items leave the selection, so the next page starts after the last id. */
+    private Uni<Void> processPendingAndRetryItemsByPage(LocalDate orchestrationDate, Long topicId, boolean withEarlierRetries,
+                                                        int pageIndex, long afterId,
+                                                        ProcessingContext context) {
         final int BATCH_SIZE = 100;
-        String query = "select distinct ci from ContentItem ci " +
-                       "join ci.contentSource cs " +
-                       "join cs.topics t " +
-                       "where t.enabled = true " +
-                       (topicId != null ? "and t.id = :topicId " : "") +
-                       "and ci.processingStatus in :statuses " +
-                       "and ci.publishedAt >= :start " +
-                       "and ci.publishedAt < :end";
-
-        java.util.Map<String, Object> params = new java.util.HashMap<>();
-        params.put("statuses", Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING));
-        params.put("start", orchestrationDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
-        params.put("end", orchestrationDate.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
-        if (topicId != null) {
-            params.put(TOPIC_ID, topicId);
-        }
-
-        return Uni.createFrom().item(() -> ContentItem.<ContentItem>find(query, params)
-                .page(pageIndex, BATCH_SIZE)
+        return Uni.createFrom().item(() -> ContentItem.findDueInEnabledTopics(orchestrationDate, topicId, clock.instant(), afterId,
+                        withEarlierRetries)
+                .page(0, BATCH_SIZE)
                 .list()).chain(itemsToProcess -> {
             if (itemsToProcess.isEmpty()) {
                 if (pageIndex == 0) {
@@ -463,8 +495,9 @@ public class OrchestrationManager {
                 MESSAGE, "Found items to retry/pending. Starting re-processing."
             );
 
-            return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate)
-                    .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, topicId, pageIndex + 1));
+            return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate, context)
+                    .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, topicId, withEarlierRetries, pageIndex + 1,
+                            itemsToProcess.getLast().id, context));
         });
     }
 
@@ -603,7 +636,9 @@ public class OrchestrationManager {
                 TOPIC_NAME, topic.name,
                 DATE, date,
                 MESSAGE, "Manual summarization triggered for single topic.");
-        return topicProcessor.processTopicUni(topic, date, true)
+        ProcessingContext context = newRunContext();
+        return topicProcessor.processTopicUni(topic, date, true, context)
+                .onTermination().invoke(() -> logRunSummary("manual_topic", context))
                 .onItem().invoke(() -> logger.info(
                         ACTION, SUMMARIZATION_MANUAL_TOPIC,
                         STATUS, FINISHED,

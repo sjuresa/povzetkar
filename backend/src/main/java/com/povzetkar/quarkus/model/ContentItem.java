@@ -7,12 +7,15 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Entity
 @Table(name = "content_items")
@@ -110,6 +113,62 @@ public class ContentItem extends BaseAuditableEntity {
                         + visibleToViewer("c"),
                 Map.of("id", id, "viewer", scope.viewer()))
                 .singleResultOptional();
+    }
+
+    /**
+     * HQL from {@code ContentItem ci} joined to its topics {@code t}: items still to be (re)processed —
+     * {@code PENDING} or {@code RETRY_LATER}, published on the UTC day {@code [:start, :end)} (or matching
+     * {@link #EARLIER_SCHEDULED_RETRY}), and due: a video whose automatic transcript retry is scheduled later is left
+     * for a later run (POV-222).
+     */
+    private static final String DUE_FOR_PROCESSING = "select distinct ci from ContentItem ci "
+            + "join ci.contentSource cs join cs.topics t "
+            + "where ci.processingStatus in :statuses and (ci.publishedAt >= :start and ci.publishedAt < :end%s) "
+            + "and (ci.nextTranscriptAttemptAt is null or ci.nextTranscriptAttemptAt <= :now)";
+
+    /**
+     * A video of an earlier day with a scheduled automatic transcript retry: its retries can run past the end of its
+     * own processing window, so the scheduled run carries them over until the retry policy ends them (POV-222).
+     */
+    private static final String EARLIER_SCHEDULED_RETRY = " or ci.publishedAt < :start "
+            + "and ci.processingStatus = :retryLater and ci.nextTranscriptAttemptAt is not null";
+
+    private static Map<String, Object> dueParams(LocalDate publishedOn, Instant now) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("statuses", Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING));
+        params.put("start", publishedOn.atStartOfDay(ZoneOffset.UTC).toInstant());
+        params.put("end", publishedOn.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant());
+        params.put("now", now);
+        return params;
+    }
+
+    /**
+     * Items due for (re)processing in the enabled topics — all, or only {@code topicId} when set — with an id above
+     * {@code afterId}, ordered by id. Page by keyset (pass the last id of the previous page): processed items leave
+     * the selection during a run, so offset paging would skip items. {@code withEarlierRetries} adds the due
+     * scheduled transcript retries of earlier days.
+     */
+    public static PanacheQuery<ContentItem> findDueInEnabledTopics(LocalDate publishedOn, Long topicId, Instant now, long afterId,
+                                                                   boolean withEarlierRetries) {
+        Map<String, Object> params = dueParams(publishedOn, now);
+        String query = DUE_FOR_PROCESSING.formatted(withEarlierRetries ? EARLIER_SCHEDULED_RETRY : "")
+                + " and t.enabled = true and ci.id > :afterId";
+        if (withEarlierRetries) {
+            params.put("retryLater", ProcessingStatus.RETRY_LATER);
+        }
+        params.put("afterId", afterId);
+        if (topicId != null) {
+            query += " and t.id = :topicId";
+            params.put("topicId", topicId);
+        }
+        return find(query + " order by ci.id", params);
+    }
+
+    /** Items due for (re)processing in the topic, whether it is enabled or not (the caller chose the topic). */
+    public static List<ContentItem> listDueInTopic(Long topicId, LocalDate publishedOn, Instant now) {
+        Map<String, Object> params = dueParams(publishedOn, now);
+        params.put("topicId", topicId);
+        return list(DUE_FOR_PROCESSING.formatted("") + " and t.id = :topicId", params);
     }
 
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {

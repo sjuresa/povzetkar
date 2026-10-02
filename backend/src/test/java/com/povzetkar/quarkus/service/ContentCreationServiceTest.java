@@ -4,6 +4,7 @@ import com.google.genai.types.Content;
 import com.google.genai.types.Part;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
+import com.povzetkar.quarkus.service.transcript.TranscriptSkippedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,6 +31,7 @@ class ContentCreationServiceTest {
     private TranscriptOrchestrator transcriptOrchestrator;
 
     private ContentCreationService contentCreationService;
+    private final ProcessingContext context = ProcessingContext.automatic(Instant.now(), Duration.ofMinutes(15));
 
     @BeforeEach
     void setUp() {
@@ -46,7 +49,7 @@ class ContentCreationServiceTest {
             YouTubeVideo shortVideo = new YouTubeVideo("shortVideoId", "Short Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(5));
 
             // Act
-            Content content = contentCreationService.createContentForVideo(shortVideo);
+            Content content = contentCreationService.createContentForVideo(shortVideo, context);
 
             // Assert
             assertThat(content.parts()).isPresent();
@@ -65,7 +68,7 @@ class ContentCreationServiceTest {
             videoWithTranscript.transcript = "Existing transcript";
 
             // Act
-            Content content = contentCreationService.createContentForVideo(videoWithTranscript);
+            Content content = contentCreationService.createContentForVideo(videoWithTranscript, context);
 
             // Assert
             assertThat(content.parts()).isPresent();
@@ -75,7 +78,7 @@ class ContentCreationServiceTest {
             assertThat(textPart.text()).isPresent();
             assertThat(textPart.text().get()).contains("Existing transcript");
             
-            verify(transcriptOrchestrator, never()).fetch(any());
+            verify(transcriptOrchestrator, never()).fetch(any(), any());
         }
 
         @Test
@@ -83,10 +86,10 @@ class ContentCreationServiceTest {
         void shouldUseTranscriptForLongVideos() {
             // Arrange
             YouTubeVideo longVideo = new YouTubeVideo("longVideoId", "Long Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
-            when(transcriptOrchestrator.fetch("longVideoId")).thenReturn("This is a transcript.");
+            when(transcriptOrchestrator.fetch("longVideoId", context)).thenReturn("This is a transcript.");
 
             // Act
-            Content content = contentCreationService.createContentForVideo(longVideo);
+            Content content = contentCreationService.createContentForVideo(longVideo, context);
 
             // Assert
             assertThat(content.parts()).isPresent();
@@ -102,13 +105,23 @@ class ContentCreationServiceTest {
         void shouldReturnNullIfTranscriptNotAvailable() {
             // Arrange
             YouTubeVideo longVideo = new YouTubeVideo("longVideoId", "Long Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
-            when(transcriptOrchestrator.fetch("longVideoId")).thenReturn("");
+            when(transcriptOrchestrator.fetch("longVideoId", context)).thenReturn("");
 
             // Act
-            Content content = contentCreationService.createContentForVideo(longVideo);
+            Content content = contentCreationService.createContentForVideo(longVideo, context);
 
             // Assert
             assertThat(content).isNull();
+        }
+
+        @Test
+        @DisplayName("should let a skipped transcript fetch (time budget used up) propagate")
+        void shouldPropagateSkippedFetch() {
+            YouTubeVideo longVideo = new YouTubeVideo("longVideoId", "Long Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
+            when(transcriptOrchestrator.fetch("longVideoId", context)).thenThrow(new TranscriptSkippedException("budget used up"));
+
+            assertThatThrownBy(() -> contentCreationService.createContentForVideo(longVideo, context))
+                    .isInstanceOf(TranscriptSkippedException.class);
         }
     }
 
@@ -120,7 +133,7 @@ class ContentCreationServiceTest {
         video.transcript = "Test Transcript Content";
 
         // Act
-        Content content = contentCreationService.createContentForVideo(video);
+        Content content = contentCreationService.createContentForVideo(video, context);
 
         // Assert
         assertThat(content.parts()).isPresent();
@@ -139,7 +152,7 @@ class ContentCreationServiceTest {
         YouTubeVideo video = new YouTubeVideo("vid", null, "https://yt.com/dummy", null, "Channel", Instant.now(), Duration.ofMinutes(5));
 
         // Act
-        Content content = contentCreationService.createContentForVideo(video);
+        Content content = contentCreationService.createContentForVideo(video, context);
 
         // Assert
         assertThat(content.parts()).isPresent();

@@ -24,6 +24,7 @@ class SummarizationWorkerTest {
     private SummarizationWorker worker;
     private LocalDate mockOrchestrationDate;
     private GenAiClient mockClient;
+    private final ProcessingContext context = ProcessingContext.manualItem();
 
     @BeforeEach
     void setUp() {
@@ -41,14 +42,14 @@ class SummarizationWorkerTest {
 
         when(mockInstance.stream()).thenReturn(Stream.of(mockStrategy));
         when(mockStrategy.supports(mockItem)).thenReturn(true);
-        when(mockStrategy.summarize(any(GenAiClient.class), eq(mockItem), eq(mockOrchestrationDate))).thenReturn(true);
+        when(mockStrategy.summarize(any(GenAiClient.class), eq(mockItem), eq(mockOrchestrationDate), eq(context))).thenReturn(true);
 
         // When
-        boolean result = worker.summarize(mockClient, mockItem, mockOrchestrationDate);
+        boolean result = worker.summarize(mockClient, mockItem, mockOrchestrationDate, context);
 
         // Then
         assertTrue(result);
-        verify(mockStrategy).summarize(mockClient, mockItem, mockOrchestrationDate);
+        verify(mockStrategy).summarize(mockClient, mockItem, mockOrchestrationDate, context);
     }
 
     @Test
@@ -59,6 +60,6 @@ class SummarizationWorkerTest {
         when(mockInstance.stream()).thenReturn(Stream.empty());
 
         // When / Then
-        assertThrows(IllegalStateException.class, () -> worker.summarize(mockClient, mockItem, mockOrchestrationDate));
+        assertThrows(IllegalStateException.class, () -> worker.summarize(mockClient, mockItem, mockOrchestrationDate, context));
     }
 }

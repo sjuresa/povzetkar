@@ -138,7 +138,8 @@ public class BackgroundJobService {
                         logger.warn("ContentItem not found for ID: {}", event.contentItemId());
                         jobTask = Uni.createFrom().failure(new EntityNotFoundException("ContentItem not found"));
                     } else {
-                        jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock));
+                        // POV-222: an admin's per-item action — paced, but no retry counting, no time budget
+                        jobTask = summarizationScheduler.schedule(List.of(item), LocalDate.now(clock), ProcessingContext.manualItem());
                     }
                 }
                 default -> jobTask = Uni.createFrom().failure(new IllegalArgumentException("Unsupported triggerJob type: " + event.type()));

@@ -11,11 +11,10 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @ApplicationScoped
 public class TopicProcessor {
@@ -25,24 +24,27 @@ public class TopicProcessor {
     private final ContentItemFetcher contentItemFetcher;
     private final JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
     private final ManagedExecutor managedExecutor;
+    private final Clock clock;
 
     @Inject
     public TopicProcessor(ContentItemFetcher contentItemFetcher,
                           JustInTimeSummarizationScheduler justInTimeSummarizationScheduler,
-                          ManagedExecutor managedExecutor) {
+                          ManagedExecutor managedExecutor,
+                          Clock clock) {
         this.contentItemFetcher = contentItemFetcher;
         this.justInTimeSummarizationScheduler = justInTimeSummarizationScheduler;
         this.managedExecutor = managedExecutor;
+        this.clock = clock;
     }
 
-    public Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate) {
-        return processTopicUni(topic, orchestrationDate, false);
+    public Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate, ProcessingContext context) {
+        return processTopicUni(topic, orchestrationDate, false, context);
     }
 
-    public Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate, boolean processPending) {
+    public Uni<Void> processTopicUni(Topic topic, LocalDate orchestrationDate, boolean processPending, ProcessingContext context) {
         logger.info("Starting content processing for topic '{}' on {}. Process pending: {}", topic.name, orchestrationDate, processPending);
 
-        Uni<Void> initialTask = processPending ? processTopicPendingItems(topic, orchestrationDate) : Uni.createFrom().voidItem();
+        Uni<Void> initialTask = processPending ? processTopicPendingItems(topic, orchestrationDate, context) : Uni.createFrom().voidItem();
 
         return initialTask.chain(() -> fetchAndPersistContentUni(topic, orchestrationDate)
                 .onItem().transformToUni(newContentItems -> {
@@ -57,7 +59,7 @@ public class TopicProcessor {
                     logger.info("Found {} new content items for topic '{}'. Starting summarization.", itemsToSummarize.size(), topic.name);
 
                     // 2. Summarize using the just-in-time scheduler
-                    return justInTimeSummarizationScheduler.schedule(itemsToSummarize, orchestrationDate);
+                    return justInTimeSummarizationScheduler.schedule(itemsToSummarize, orchestrationDate, context);
                 })
                 .onItem().invoke(() -> logger.info("Finished content processing for topic '{}' on {}.", topic.name, orchestrationDate))
                 .onFailure().invoke(ex -> logger.error("Failed to process topic '{}' during orchestration for date {}.", topic.name, orchestrationDate, ex))
@@ -65,28 +67,15 @@ public class TopicProcessor {
                 .replaceWithVoid());
     }
 
-    private Uni<Void> processTopicPendingItems(Topic topic, LocalDate orchestrationDate) {
+    private Uni<Void> processTopicPendingItems(Topic topic, LocalDate orchestrationDate, ProcessingContext context) {
         logger.info("Checking for pending/retry items for topic '{}' on {}.", topic.name, orchestrationDate);
-        String query = "select distinct ci from ContentItem ci " +
-                       "join ci.contentSource cs " +
-                       "join cs.topics t " +
-                       "where t.id = ?1 " +
-                       "and ci.processingStatus in ?2 " +
-                       "and ci.publishedAt >= ?3 " +
-                       "and ci.publishedAt < ?4";
-        
-        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(() -> 
-                ContentItem.<ContentItem>find(query,
-                        topic.id,
-                        Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING),
-                        orchestrationDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
-                        orchestrationDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant())
-                .list())).chain(itemsToProcess -> {
+        return Uni.createFrom().item(() -> QuarkusTransaction.requiringNew().call(() ->
+                ContentItem.listDueInTopic(topic.id, orchestrationDate, clock.instant()))).chain(itemsToProcess -> {
             if (itemsToProcess.isEmpty()) {
                 return Uni.createFrom().voidItem();
             }
             logger.info("Found {} items to retry/pending for topic '{}'.", itemsToProcess.size(), topic.name);
-            return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate);
+            return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate, context);
         });
     }
 
