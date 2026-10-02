@@ -108,6 +108,16 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             if (managed == null) {
                 return;
             }
+            if (!isStillAwaitingTranscript(managed)) {
+                // an overlapping run stored the transcript or finished the video meanwhile — its outcome stands
+                logger.info(
+                    LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
+                    LogKeys.STATUS, LogKeys.FAILED,
+                    LogKeys.VIDEO_ID, managed.videoId,
+                    LogKeys.REASON, "already_processed_by_overlapping_run"
+                );
+                return;
+            }
             Instant now = clock.instant();
             if (managed.nextTranscriptAttemptAt != null && managed.nextTranscriptAttemptAt.isAfter(now)) {
                 // an overlapping run (e.g. a per-topic job during the hourly run) already counted this window
@@ -139,6 +149,11 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
                 LogKeys.MESSAGE, message
             );
         });
+    }
+
+    private static boolean isStillAwaitingTranscript(YouTubeVideo video) {
+        return (video.processingStatus == ProcessingStatus.PENDING || video.processingStatus == ProcessingStatus.RETRY_LATER)
+                && (video.transcript == null || video.transcript.isBlank());
     }
 
     /** POV-222 (Q8): a failed manual per-item attempt changes neither status nor retry state — audit only. */

@@ -107,7 +107,8 @@ See `agent_logs/POV-222 … task.md` `## Deviations` for the full list; the main
   one `ProcessingContext`.
 - Implicit subtype attribute in HQL (`ci.nextTranscriptAttemptAt` on a `ContentItem` path) — Hibernate 7.4 resolves
   it on the single table; the DB test covers a plain `ContentItem` row.
-- Known metric nuance: a skipped fetch increments `transcript.fetch.attempts` only (backlog).
+- Metric nuance found during execution (a skipped fetch incremented `transcript.fetch.attempts` only) — fixed in
+  the PR review (below).
 - **Pre-commit review round 1** (`/code-review high` in a subagent, on `git diff v0.20.0` incl. uncommitted and
   intent-to-add files — 51 files): 8 findings + 1 nit, all low/low-medium, all fixed (red → green each):
   (1) a successful manual *Fetch transcript* kept `next_transcript_attempt_at`, delaying the summary up to 3.5 h —
@@ -141,6 +142,15 @@ See `agent_logs/POV-222 … task.md` `## Deviations` for the full list; the main
   when the fetch would start after the deadline — skipped at once. (5) the run summary reported `budgetExhausted`
   for skips caused by a shutdown — now only when the deadline has passed (`budgetExhausted(now)`). (6) the RUNBOOK
   grep missed the `YouTube transcript selected` lines. The PO stopped further review rounds after round 3.
+- **PR #291 review (Greptile, 4 threads), all fixed:** (P1) a video whose retry fell after the last scheduled run
+  of its two-day window stayed `RETRY_LATER` for ever — the scheduled run's yesterday step now also selects due
+  scheduled transcript retries of earlier days (`RETRY_LATER` with `next_transcript_attempt_at` set; bounded by the
+  retry policy; summary dated yesterday; pre-POV-222 and Gemini-caused `RETRY_LATER` items are not revived);
+  (P1) a late transcript failure of an overlapping run could overwrite a video the other run had completed or stored
+  the transcript for — no change unless the video is still `PENDING`/`RETRY_LATER` without a transcript; (P2) the
+  paged due selection (`.page(0, n)`, as in production) gained a DB test; (P2) a skipped fetch no longer counts in
+  `transcript.fetch.attempts` (backlog entry removed). Red → green: 5 tests; the paging test was green at once. Full suite after the fixes: 643 tests, 0 failures,
+  3 skipped.
 
 ## 5. Traceability
 

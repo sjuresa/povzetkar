@@ -103,7 +103,7 @@ class TranscriptRetryStatePersistenceTest {
     void dueInEnabledTopicsSelectsDueAndNeverFailedItemsOfTheDay() {
         Fixture f = fixture();
 
-        List<Long> ids = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, 0L).list());
+        List<Long> ids = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, 0L, false).list());
 
         assertThat(ids).contains(f.due().id, f.dueExactlyNow().id, f.pending().id, f.plainRetry().id, f.inOtherTopic().id)
                 .doesNotContain(f.notDue().id, f.completed().id, f.otherDay().id, f.inDisabledTopic().id)
@@ -114,9 +114,9 @@ class TranscriptRetryStatePersistenceTest {
     @TestTransaction
     void dueInEnabledTopicsPagesByIdAfterTheLastSeenItem() {
         Fixture f = fixture();
-        List<Long> all = ids(ContentItem.findDueInEnabledTopics(DAY, f.enabledTopic().id, NOW, 0L).list());
+        List<Long> all = ids(ContentItem.findDueInEnabledTopics(DAY, f.enabledTopic().id, NOW, 0L, false).list());
 
-        List<Long> afterFirst = ids(ContentItem.findDueInEnabledTopics(DAY, f.enabledTopic().id, NOW, all.getFirst()).list());
+        List<Long> afterFirst = ids(ContentItem.findDueInEnabledTopics(DAY, f.enabledTopic().id, NOW, all.getFirst(), false).list());
 
         assertThat(all).isSorted().hasSize(4);
         assertThat(afterFirst).containsExactlyElementsOf(all.subList(1, all.size()));
@@ -124,10 +124,47 @@ class TranscriptRetryStatePersistenceTest {
 
     @Test
     @TestTransaction
+    void dueInEnabledTopicsPagesWithALimitAsTheOrchestrationDoes() {
+        fixture();
+        List<Long> all = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, 0L, true).list());
+
+        List<Long> firstPage = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, 0L, true).page(0, 2).list());
+        List<Long> nextPage = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, firstPage.getLast(), true)
+                .page(0, 100).list());
+
+        assertThat(all).hasSize(5);
+        assertThat(firstPage).hasSize(2).containsExactlyElementsOf(all.subList(0, 2));
+        assertThat(nextPage).containsExactlyElementsOf(all.subList(2, all.size()));
+    }
+
+    @Test
+    @TestTransaction
+    void scheduledTranscriptRetriesOfEarlierDaysAreCarriedOverOnRequest() {
+        Fixture f = fixture();
+        ContentSource source = em.find(ContentSource.class, f.due().contentSource.id);
+        Instant dayBefore = DAY.minusDays(1).atTime(22, 0).toInstant(ZoneOffset.UTC);
+        YouTubeVideo dueRetry = video(source, ProcessingStatus.RETRY_LATER, dayBefore, NOW.minusSeconds(60));
+        YouTubeVideo notDueRetry = video(source, ProcessingStatus.RETRY_LATER, dayBefore, NOW.plusSeconds(600));
+        YouTubeVideo unscheduledRetry = video(source, ProcessingStatus.RETRY_LATER, dayBefore, null);
+        YouTubeVideo pending = video(source, ProcessingStatus.PENDING, dayBefore, null);
+        em.flush();
+        em.clear();
+
+        List<Long> carried = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, 0L, true).list());
+        List<Long> dayOnly = ids(ContentItem.findDueInEnabledTopics(DAY, null, NOW, 0L, false).list());
+
+        assertThat(carried).contains(dueRetry.id, f.due().id, f.pending().id)
+                .doesNotContain(notDueRetry.id, unscheduledRetry.id, pending.id, f.otherDay().id)
+                .doesNotHaveDuplicates();
+        assertThat(dayOnly).doesNotContain(dueRetry.id);
+    }
+
+    @Test
+    @TestTransaction
     void dueInEnabledTopicsCanBeLimitedToOneTopic() {
         Fixture f = fixture();
 
-        List<Long> ids = ids(ContentItem.findDueInEnabledTopics(DAY, f.enabledTopic().id, NOW, 0L).list());
+        List<Long> ids = ids(ContentItem.findDueInEnabledTopics(DAY, f.enabledTopic().id, NOW, 0L, false).list());
 
         assertThat(ids).containsExactlyInAnyOrder(f.due().id, f.dueExactlyNow().id, f.pending().id, f.plainRetry().id);
     }

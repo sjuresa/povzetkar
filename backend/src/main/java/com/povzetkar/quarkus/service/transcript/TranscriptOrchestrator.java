@@ -76,8 +76,8 @@ public class TranscriptOrchestrator {
     private String fetchVia(String videoId, ProviderCall call, Consumer<TranscriptProvider> beforeProvider) {
         for (TranscriptProvider provider : orderedProviders) {
             beforeProvider.accept(provider);
-            registry.counter(METRIC_ATTEMPTS, TAG_PROVIDER, provider.name()).increment();
             Timer.Sample sample = Timer.start(registry);
+            boolean attempted = true;
             try {
                 String transcript = call.fetch(provider, videoId);
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
@@ -85,6 +85,10 @@ public class TranscriptOrchestrator {
                 recordQuotaBestEffort(provider.name());
                 log.info("Transcript fetched successfully via provider '{}' for video ID '{}'.", provider.name(), videoId);
                 return transcript;
+            } catch (TranscriptSkippedException e) {
+                // no request was made — not an attempt (POV-222)
+                attempted = false;
+                throw e;
             } catch (QuotaExhaustedException _) {
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_FAILURES, TAG_PROVIDER, provider.name(), TAG_REASON, REASON_QUOTA).increment();
@@ -93,6 +97,10 @@ public class TranscriptOrchestrator {
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_FAILURES, TAG_PROVIDER, provider.name(), TAG_REASON, REASON_UNAVAILABLE).increment();
                 log.warn("Provider '{}' unavailable for video ID '{}': {}. Trying next provider.", provider.name(), videoId, e.getMessage());
+            } finally {
+                if (attempted) {
+                    registry.counter(METRIC_ATTEMPTS, TAG_PROVIDER, provider.name()).increment();
+                }
             }
         }
         log.error("All transcript providers failed for video ID '{}'.", videoId);

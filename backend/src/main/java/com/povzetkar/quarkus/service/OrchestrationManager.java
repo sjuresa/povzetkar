@@ -102,14 +102,15 @@ public class OrchestrationManager {
         try {
             boolean failed = false;
             try {
-                executeSummarizationStepForDate(yesterday, true, true, null, context).await().indefinitely();
+                // with the due transcript retries of earlier days, which would otherwise never run again (POV-222)
+                executeSummarizationStepForDate(yesterday, true, true, null, true, context).await().indefinitely();
             } catch (Exception ex) {
                 failed = true;
                 logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
                         MESSAGE, "Yesterday's summarization step failed");
             }
             try {
-                executeSummarizationStepForDate(today, true, true, null, context).await().indefinitely();
+                executeSummarizationStepForDate(today, true, true, null, false, context).await().indefinitely();
             } catch (Exception ex) {
                 failed = true;
                 logger.error(ex, ACTION, ORCHESTRATION_SCHEDULED, STATUS, FAILED,
@@ -196,7 +197,7 @@ public class OrchestrationManager {
         if (request.processPending() || request.summarize()) {
             ProcessingContext context = newRunContext();
             List<Uni<Void>> dailySummarizationTasks = actualStartDate.datesUntil(actualEndDate.plusDays(1))
-                    .map(date -> executeSummarizationStepForDate(date, request.processPending(), request.summarize(), request.topicId(), context))
+                    .map(date -> executeSummarizationStepForDate(date, request.processPending(), request.summarize(), request.topicId(), false, context))
                     .toList();
             summarizationTask = Uni.combine().all().unis(dailySummarizationTasks).discardItems()
                     .onTermination().invoke(() -> logRunSummary("manual", context))
@@ -350,7 +351,7 @@ public class OrchestrationManager {
     }
 
     private Uni<Void> executeSummarizationStepForDate(LocalDate orchestrationDate, boolean processPending, boolean processNew, Long topicId,
-                                                      ProcessingContext context) {
+                                                      boolean withEarlierRetries, ProcessingContext context) {
         if (!processPending && !processNew) {
             return Uni.createFrom().voidItem();
         }
@@ -377,7 +378,7 @@ public class OrchestrationManager {
             return Uni.createFrom().voidItem();
         }
 
-        Uni<Void> pendingItemsUni = processPending ? processPendingAndRetryItems(orchestrationDate, topicId, context) : Uni.createFrom().voidItem();
+        Uni<Void> pendingItemsUni = processPending ? processPendingAndRetryItems(orchestrationDate, topicId, withEarlierRetries, context) : Uni.createFrom().voidItem();
 
         return pendingItemsUni
                 .chain(() -> {
@@ -452,7 +453,8 @@ public class OrchestrationManager {
         });
     }
 
-    private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate, Long topicId, ProcessingContext context) {
+    private Uni<Void> processPendingAndRetryItems(LocalDate orchestrationDate, Long topicId, boolean withEarlierRetries,
+                                                 ProcessingContext context) {
         logger.info(
             ACTION, PENDING_ITEMS,
             STATUS, STARTED,
@@ -460,14 +462,16 @@ public class OrchestrationManager {
             TOPIC_ID, topicId,
             MESSAGE, "Checking for content items to retry or pending from previous runs."
         );
-        return processPendingAndRetryItemsByPage(orchestrationDate, topicId, 0, 0L, context);
+        return processPendingAndRetryItemsByPage(orchestrationDate, topicId, withEarlierRetries, 0, 0L, context);
     }
 
     /** Keyset paging (POV-222): processed items leave the selection, so the next page starts after the last id. */
-    private Uni<Void> processPendingAndRetryItemsByPage(LocalDate orchestrationDate, Long topicId, int pageIndex, long afterId,
+    private Uni<Void> processPendingAndRetryItemsByPage(LocalDate orchestrationDate, Long topicId, boolean withEarlierRetries,
+                                                        int pageIndex, long afterId,
                                                         ProcessingContext context) {
         final int BATCH_SIZE = 100;
-        return Uni.createFrom().item(() -> ContentItem.findDueInEnabledTopics(orchestrationDate, topicId, clock.instant(), afterId)
+        return Uni.createFrom().item(() -> ContentItem.findDueInEnabledTopics(orchestrationDate, topicId, clock.instant(), afterId,
+                        withEarlierRetries)
                 .page(0, BATCH_SIZE)
                 .list()).chain(itemsToProcess -> {
             if (itemsToProcess.isEmpty()) {
@@ -492,7 +496,7 @@ public class OrchestrationManager {
             );
 
             return justInTimeSummarizationScheduler.schedule(itemsToProcess, orchestrationDate, context)
-                    .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, topicId, pageIndex + 1,
+                    .chain(() -> processPendingAndRetryItemsByPage(orchestrationDate, topicId, withEarlierRetries, pageIndex + 1,
                             itemsToProcess.getLast().id, context));
         });
     }

@@ -463,6 +463,44 @@ class OrchestrationManagerTest {
         verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class));
     }
 
+    @Test
+    void testRunScheduledOrchestration_CarriesOverDueTranscriptRetriesOfEarlierDays() {
+        // POV-222 (PR review): a retry scheduled past the end of the video's two-day window still gets its attempts
+        YouTubeVideo video = QuarkusTransaction.requiringNew().call(() -> {
+            User user = setupUser();
+            user.persist();
+            Topic topic = setupTopic(user);
+            topic.persist();
+            ContentSource contentSource = setupContentSource();
+            contentSource.persist();
+            topic.contentSources.add(contentSource);
+
+            YouTubeVideo retry = YouTubeVideoBuilder.aYouTubeVideo()
+                    .withVideoId("carried-over")
+                    .withContentSource(contentSource)
+                    .withProcessingStatus(ProcessingStatus.RETRY_LATER)
+                    .withPublishedAt(Instant.now().minus(3, ChronoUnit.DAYS))
+                    .build();
+            retry.transcriptAttempts = 5;
+            retry.nextTranscriptAttemptAt = Instant.now().minus(5, ChronoUnit.MINUTES);
+            retry.persist();
+            return retry;
+        });
+        doNothing().when(orchestrationLockService).acquireLock(any(LocalDate.class));
+        doNothing().when(orchestrationLockService).releaseLock(any(LocalDate.class));
+        when(topicProcessor.processTopicUni(any(Topic.class), any(LocalDate.class), any(ProcessingContext.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), any(LocalDate.class), any(ProcessingContext.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        orchestrationManager.runScheduledOrchestration();
+
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(
+                argThat((List<ContentItem> items) -> items.stream().anyMatch(item -> item.id.equals(video.id))),
+                eq(LocalDate.now().minusDays(1)), any(ProcessingContext.class));
+        verify(justInTimeSummarizationScheduler, never()).schedule(anyList(), eq(LocalDate.now()), any(ProcessingContext.class));
+    }
+
     @Transactional
     @ParameterizedTest
     @EnumSource(value = ProcessingStatus.class, names = {"RETRY_LATER", "PENDING"})

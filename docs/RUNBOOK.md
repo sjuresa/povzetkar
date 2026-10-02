@@ -1064,7 +1064,11 @@ app-wide (all topics, items and threads share one fair queue). The pacing ranges
   admin UI. An admin status override (e.g. `FAILED` → `PENDING`) keeps the counter: the next automatic failure
   ends the video `FAILED` again. To give a video a new budget, reset both columns in the database.
 - An item still unprocessed after the last run of the day leaves the today+yesterday window of the hourly job
-  and stays as it is (unchanged behaviour).
+  and stays as it is (unchanged behaviour) — except a video with a scheduled transcript retry
+  (`RETRY_LATER` and `next_transcript_attempt_at` set): the hourly job carries it over in yesterday's step until it
+  succeeds or its 7th attempt ends it `FAILED`; its summary is dated yesterday.
+- When two runs process the same video (a per-topic job during the hourly run), a late transcript failure does not
+  change a video the other run already completed or stored the transcript for.
 - The legacy keys `transcript.providers.youtube-legacy.jitter.*` are gone; a leftover
   `TRANSCRIPT_PROVIDERS_YOUTUBE_LEGACY_JITTER_*` in `.env.docker` is ignored.
 
@@ -1083,7 +1087,8 @@ transcript.providers.supadata.enabled=true
 
 **Metrics emitted** (all tagged with `provider` label):
 
-- `transcript.fetch.attempts` — counter per provider
+- `transcript.fetch.attempts` — counter per provider (requests made; a fetch skipped by the time budget is not
+  counted)
 - `transcript.fetch.successes` — counter per provider
 - `transcript.fetch.failures` — counter tagged with `provider` and `reason`
 - `transcript.fetch.duration` — timer per provider

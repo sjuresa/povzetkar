@@ -146,7 +146,22 @@ class TranscriptOrchestratorTest {
 
         verify(secondaryProvider, never()).fetch(anyString(), any());
         assertThat(registry.find("transcript.fetch.failures").counters()).isEmpty();
+        assertThat(registry.find("transcript.fetch.attempts").counters())
+                .as("PR review: a skipped fetch made no request, so it is no attempt").isEmpty();
+        assertThat(registry.find("transcript.fetch.duration").timers()).isEmpty();
         verify(quotaService, never()).recordFetch(anyString());
+    }
+
+    @Test
+    @DisplayName("every provider that is asked counts one attempt, whatever its outcome")
+    void attemptsAreCountedPerProviderAsked() throws Exception {
+        when(primaryProvider.fetch("videoId", context)).thenThrow(new ProviderUnavailableException("youtube-legacy", "error"));
+        when(secondaryProvider.fetch("videoId", context)).thenReturn("supadata transcript");
+
+        orchestrator.fetch("videoId", context);
+
+        assertThat(registry.counter("transcript.fetch.attempts", "provider", "youtube-legacy").count()).isEqualTo(1.0);
+        assertThat(registry.counter("transcript.fetch.attempts", "provider", "supadata").count()).isEqualTo(1.0);
     }
 
     @Test

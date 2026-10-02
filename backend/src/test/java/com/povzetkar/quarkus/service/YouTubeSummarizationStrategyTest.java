@@ -188,6 +188,43 @@ class YouTubeSummarizationStrategyTest {
     }
 
     @Test
+    void automaticTranscriptFailure_afterAnOverlappingRunCompletedTheVideo_leavesItCompleted() {
+        // POV-222 (PR review): the successful run cleared the due time, so only the status guards the late failure
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            mockVideo.processingStatus = ProcessingStatus.COMPLETED;
+            mockVideo.transcriptAttempts = 2;
+            mockVideo.nextTranscriptAttemptAt = null;
+
+            summarizeWithTranscriptFailure(tx, runContext);
+
+            assertEquals(ProcessingStatus.COMPLETED, mockVideo.processingStatus);
+            assertEquals(2, mockVideo.transcriptAttempts);
+            assertNull(mockVideo.nextTranscriptAttemptAt);
+            assertNull(mockVideo.errorCode);
+            audit.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    void automaticTranscriptFailure_afterAnOverlappingRunStoredTheTranscript_leavesTheVideoDue() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            mockVideo.processingStatus = ProcessingStatus.PENDING;
+            mockVideo.transcriptAttempts = 2;
+            mockVideo.nextTranscriptAttemptAt = null;
+            mockVideo.transcript = "stored by the other run";
+
+            summarizeWithTranscriptFailure(tx, runContext);
+
+            assertEquals(ProcessingStatus.PENDING, mockVideo.processingStatus);
+            assertEquals(2, mockVideo.transcriptAttempts);
+            assertNull(mockVideo.nextTranscriptAttemptAt);
+            audit.verifyNoInteractions();
+        }
+    }
+
+    @Test
     void fetchedTranscript_makesVideoDueAgain_evenWhenGeminiFailsAfterwards() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
              MockedStatic<JobExecutionAudit> ignored = mockStatic(JobExecutionAudit.class)) {
