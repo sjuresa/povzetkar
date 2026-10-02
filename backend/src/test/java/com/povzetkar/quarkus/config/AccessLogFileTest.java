@@ -23,6 +23,7 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import static com.povzetkar.quarkus.test.util.RepositoryFiles.findInRepository;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -48,7 +49,7 @@ class AccessLogFileTest {
         public Map<String, String> getConfigOverrides() {
             Properties main = new Properties();
             try (Reader in = Files.newBufferedReader(
-                    CspInlineScriptHashTest.findInRepository("backend/src/main/resources/application.properties"),
+                    findInRepository("backend/src/main/resources/application.properties"),
                     StandardCharsets.UTF_8)) {
                 main.load(in);
             } catch (IOException e) {

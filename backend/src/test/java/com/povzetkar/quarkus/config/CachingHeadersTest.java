@@ -47,7 +47,8 @@ class CachingHeadersTest {
     @ParameterizedTest
     @ValueSource(strings = {"/", "/index.html", "/dashboard", "/locales/sl.json", "/favicon.svg"})
     void spaShellAndPublicFilesAreRevalidated(String path) {
-        // The SPA build is not on the test classpath (these answer 404 here); the header must still be set
+        // The shell comes from the test index.html stand-in; the locale and favicon files are not on the test
+        // classpath (404 here), and the header must still be set
         assertThat(given().redirects().follow(false).when().get(path).getHeaders().getValues("Cache-Control"))
                 .as(path).containsExactly("no-cache");
     }

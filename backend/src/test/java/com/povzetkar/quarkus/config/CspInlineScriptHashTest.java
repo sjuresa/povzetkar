@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.povzetkar.quarkus.test.util.RepositoryFiles.findInRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -77,16 +77,5 @@ class CspInlineScriptHashTest {
     @Test
     void policyCarriesNoStaleHash() {
         assertThat(inlineScriptHashes).as("inline scripts in frontend/index.html").containsAll(policyHashes);
-    }
-
-    /** Resolves a repository-relative file by walking up from the working directory (backend/ under Maven). */
-    static Path findInRepository(String relativePath) {
-        for (Path dir = Path.of("").toAbsolutePath(); dir != null; dir = dir.getParent()) {
-            Path candidate = dir.resolve(relativePath);
-            if (Files.isRegularFile(candidate)) {
-                return candidate;
-            }
-        }
-        throw new AssertionError(relativePath + " not found above " + Path.of("").toAbsolutePath());
     }
 }
