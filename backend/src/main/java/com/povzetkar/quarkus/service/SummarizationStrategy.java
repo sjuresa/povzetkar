@@ -7,5 +7,5 @@ import java.time.LocalDate;
 
 public interface SummarizationStrategy {
     boolean supports(ContentItem item);
-    boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate);
+    boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate, ProcessingContext context);
 }

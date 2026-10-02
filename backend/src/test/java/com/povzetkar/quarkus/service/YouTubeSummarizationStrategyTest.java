@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.YouTubeVideo;
+import com.povzetkar.quarkus.service.transcript.TranscriptSkippedException;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.narayana.jta.TransactionRunnerOptions;
 import io.quarkus.panache.mock.PanacheMock;
@@ -25,6 +26,8 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.concurrent.Callable;
 
@@ -47,6 +50,7 @@ class YouTubeSummarizationStrategyTest {
     private YouTubeVideo mockVideo;
     private LocalDate mockOrchestrationDate;
     private GenAiClient mockClient;
+    private final ProcessingContext runContext = ProcessingContext.automatic(java.time.Instant.now(), java.time.Duration.ofMinutes(15));
 
     @BeforeEach
     void setUp() {
@@ -81,7 +85,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(new Summary());
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             assertTrue(result);
             audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), any(), anyString()), never());
@@ -90,31 +94,169 @@ class YouTubeSummarizationStrategyTest {
         }
     }
 
+    /** POV-222: transcript failure with the given context; the video row is {@link #mockVideo}. */
+    private boolean summarizeWithTranscriptFailure(MockedStatic<QuarkusTransaction> tx, ProcessingContext context) {
+        PanacheMock.mock(Summary.class);
+        PanacheMock.mock(YouTubeVideo.class);
+        Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+        Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
+        when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(null);
+        mockTransactions(tx);
+        return strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, context);
+    }
+
     @Test
-    void testSummarize_contentCreationFails() {
+    void automaticTranscriptFailure_firstAttempt_retriesAfterFirstInterval() {
         try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
              MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            mockVideo.processingStatus = ProcessingStatus.PENDING;
+            Instant before = Instant.now();
 
-            PanacheMock.mock(Summary.class);
-            PanacheMock.mock(ContentItem.class);
-
-            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(null);
-            
-            // Mock ContentItem.findById to return our mockVideo so we can verify updates
-            Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
-
-            mockTransactions(tx);
-
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = summarizeWithTranscriptFailure(tx, runContext);
 
             assertFalse(result);
-            audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.RETRY_LATER), anyString()), atLeastOnce());
-            
-            // Verify status and error fields were updated on the mockVideo
+            assertEquals(1, mockVideo.transcriptAttempts);
             assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
             assertEquals(ContentProcessingError.TRANSCRIPT_UNAVAILABLE.name(), mockVideo.errorCode);
-            assertEquals("Transcript could not be retrieved.", mockVideo.errorMessage);
+            assertTrue(mockVideo.errorMessage.contains("attempt 1 of 7"), mockVideo.errorMessage);
+            assertFalse(mockVideo.nextTranscriptAttemptAt.isBefore(before.plus(Duration.ofMinutes(30))));
+            assertFalse(mockVideo.nextTranscriptAttemptAt.isAfter(Instant.now().plus(Duration.ofMinutes(30))));
+            audit.verify(() -> JobExecutionAudit.logItem(eq(1L), anyString(), eq(ProcessingStatus.RETRY_LATER), anyString()));
+        }
+    }
+
+    @Test
+    void automaticTranscriptFailure_seventhAttempt_endsFailed() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            mockVideo.processingStatus = ProcessingStatus.RETRY_LATER;
+            mockVideo.transcriptAttempts = 6;
+            mockVideo.nextTranscriptAttemptAt = Instant.now().minusSeconds(60);
+
+            boolean result = summarizeWithTranscriptFailure(tx, runContext);
+
+            assertFalse(result);
+            assertEquals(7, mockVideo.transcriptAttempts);
+            assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
+            assertNull(mockVideo.nextTranscriptAttemptAt);
+            assertTrue(mockVideo.errorMessage.contains("7 automatic attempts"), mockVideo.errorMessage);
+            audit.verify(() -> JobExecutionAudit.logItem(eq(1L), anyString(), eq(ProcessingStatus.FAILED), anyString()));
+        }
+    }
+
+    @Test
+    void skippedTranscriptFetch_leavesVideoUnchangedAndCountsSkip() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            Instant due = Instant.now().minusSeconds(60);
+            mockVideo.processingStatus = ProcessingStatus.RETRY_LATER;
+            mockVideo.transcriptAttempts = 2;
+            mockVideo.nextTranscriptAttemptAt = due;
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(YouTubeVideo.class);
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            when(contentCreationService.createContentForVideo(mockVideo, runContext))
+                    .thenThrow(new TranscriptSkippedException("budget used up"));
+            mockTransactions(tx);
+
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
+
+            assertFalse(result);
+            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+            assertEquals(2, mockVideo.transcriptAttempts);
+            assertEquals(due, mockVideo.nextTranscriptAttemptAt);
+            assertEquals(1, runContext.skippedItems());
+            audit.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    void automaticTranscriptFailure_alreadyCountedByAnOverlappingRun_isNotCountedTwice() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            Instant due = Instant.now().plus(Duration.ofMinutes(25));
+            mockVideo.processingStatus = ProcessingStatus.RETRY_LATER;
+            mockVideo.transcriptAttempts = 2;
+            mockVideo.nextTranscriptAttemptAt = due; // another run failed and counted this window meanwhile
+
+            summarizeWithTranscriptFailure(tx, runContext);
+
+            assertEquals(2, mockVideo.transcriptAttempts);
+            assertEquals(due, mockVideo.nextTranscriptAttemptAt);
+            audit.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    void fetchedTranscript_makesVideoDueAgain_evenWhenGeminiFailsAfterwards() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> ignored = mockStatic(JobExecutionAudit.class)) {
+            PanacheMock.mock(Summary.class);
+            PanacheMock.mock(YouTubeVideo.class);
+            PanacheMock.mock(ContentItem.class);
+            // the managed row is a different instance than the detached video the strategy works on
+            YouTubeVideo managed = new YouTubeVideo();
+            managed.id = 1L;
+            managed.videoId = mockVideo.videoId;
+            managed.title = mockVideo.title;
+            managed.processingStatus = ProcessingStatus.RETRY_LATER;
+            managed.transcriptAttempts = 5;
+            managed.nextTranscriptAttemptAt = Instant.now().plus(Duration.ofMinutes(210));
+            Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
+            Mockito.when(YouTubeVideo.findById(1L)).thenReturn(managed);
+            Mockito.when(ContentItem.findById(1L)).thenReturn(managed);
+            Content content = mock(Content.class);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenAnswer(inv -> {
+                mockVideo.transcript = "fetched transcript"; // as ContentCreationService does on success
+                return content;
+            });
+            when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString()))
+                    .thenThrow(new ApiException(429, "rate limited", null));
+            mockTransactions(tx);
+
+            strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, ProcessingContext.manualItem());
+
+            assertEquals("fetched transcript", managed.transcript);
+            assertNull(managed.nextTranscriptAttemptAt, "transcript stored: only Gemini is left, due at the next run");
+            assertEquals(5, managed.transcriptAttempts);
+            assertEquals(ProcessingStatus.RETRY_LATER, managed.processingStatus);
+        }
+    }
+
+    @Test
+    void manualTranscriptFailure_leavesFailedVideoUnchanged() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> audit = mockStatic(JobExecutionAudit.class)) {
+            mockVideo.processingStatus = ProcessingStatus.FAILED;
+            mockVideo.transcriptAttempts = 7;
+            mockVideo.errorCode = ContentProcessingError.TRANSCRIPT_UNAVAILABLE.name();
+            mockVideo.errorMessage = "earlier";
+
+            boolean result = summarizeWithTranscriptFailure(tx, ProcessingContext.manualItem());
+
+            assertFalse(result);
+            assertEquals(ProcessingStatus.FAILED, mockVideo.processingStatus);
+            assertEquals(7, mockVideo.transcriptAttempts);
+            assertNull(mockVideo.nextTranscriptAttemptAt);
+            assertEquals("earlier", mockVideo.errorMessage);
+            audit.verify(() -> JobExecutionAudit.logItem(eq(1L), anyString(), eq(ProcessingStatus.FAILED), anyString()));
+        }
+    }
+
+    @Test
+    void manualTranscriptFailure_keepsRetryCounterAndDueTime() {
+        try (MockedStatic<QuarkusTransaction> tx = mockStatic(QuarkusTransaction.class);
+             MockedStatic<JobExecutionAudit> ignored = mockStatic(JobExecutionAudit.class)) {
+            Instant due = Instant.now().plus(Duration.ofMinutes(20));
+            mockVideo.processingStatus = ProcessingStatus.RETRY_LATER;
+            mockVideo.transcriptAttempts = 2;
+            mockVideo.nextTranscriptAttemptAt = due;
+
+            summarizeWithTranscriptFailure(tx, ProcessingContext.manualItem());
+
+            assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
+            assertEquals(2, mockVideo.transcriptAttempts);
+            assertEquals(due, mockVideo.nextTranscriptAttemptAt);
         }
     }
 
@@ -128,7 +270,7 @@ class YouTubeSummarizationStrategyTest {
 
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
             
             ApiException apiException = new ApiException(500, "AI Error", null);
             // Use anyString() to match the dynamic call description
@@ -140,7 +282,7 @@ class YouTubeSummarizationStrategyTest {
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             assertFalse(result);
             audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.RETRY_LATER), anyString()), atLeastOnce());
@@ -164,13 +306,13 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
             // Use anyString() to match the dynamic call description
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             assertTrue(result);
             audit.verify(() -> JobExecutionAudit.logItem(anyLong(), anyString(), eq(ProcessingStatus.COMPLETED), anyString()), atLeastOnce());
@@ -193,7 +335,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
             // Use anyString() to match the dynamic call description
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
 
@@ -206,7 +348,7 @@ class YouTubeSummarizationStrategyTest {
                     .when(runner).run(any(Runnable.class));
 
             // Act
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             // Assert
             assertTrue(result, "Should return true on persistence exception due to race condition");
@@ -227,12 +369,12 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
 
             mockTransactions(tx);
 
-            strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             InOrder inOrder = inOrder(videoSummaryService);
             PanacheMock.verify(YouTubeVideo.class, atLeastOnce()).findById(1L);
@@ -254,7 +396,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
             Mockito.when(ContentItem.findById(1L)).thenReturn(mockVideo);
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
 
             ApiException apiException = new ApiException(503, "Service Unavailable", null);
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString()))
@@ -262,7 +404,7 @@ class YouTubeSummarizationStrategyTest {
 
             mockTransactions(tx);
 
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             assertFalse(result);
             assertEquals(ProcessingStatus.RETRY_LATER, mockVideo.processingStatus);
@@ -283,7 +425,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo);
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
 
             TransactionRunnerOptions runner = mock(TransactionRunnerOptions.class);
@@ -294,7 +436,7 @@ class YouTubeSummarizationStrategyTest {
                     .doAnswer(i -> { ((Runnable) i.getArgument(0)).run(); return null; })
                     .when(runner).run(any(Runnable.class));
 
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             assertTrue(result);
             verify(videoSummaryService).generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString());
@@ -312,7 +454,7 @@ class YouTubeSummarizationStrategyTest {
             Mockito.when(Summary.findByContentId(1L)).thenReturn(null);
             Mockito.when(YouTubeVideo.findById(1L)).thenReturn(mockVideo); // Mock findById on YouTubeVideo
             Content content = mock(Content.class);
-            when(contentCreationService.createContentForVideo(mockVideo)).thenReturn(content);
+            when(contentCreationService.createContentForVideo(eq(mockVideo), any(ProcessingContext.class))).thenReturn(content);
             // Use anyString() to match the dynamic call description
             when(videoSummaryService.generateContent(eq(mockClient), eq(content), anyString(), anyString(), anyString())).thenReturn("Success");
             
@@ -329,7 +471,7 @@ class YouTubeSummarizationStrategyTest {
                     .when(runner).run(any(Runnable.class));
 
             // Act
-            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate);
+            boolean result = strategy.summarize(mockClient, mockVideo, mockOrchestrationDate, runContext);
 
             // Assert
             assertFalse(result, "Should return false for generic persistence exception");

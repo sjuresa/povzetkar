@@ -1,8 +1,6 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.ContentItem;
-import com.povzetkar.quarkus.model.ContentProcessingError;
-import com.povzetkar.quarkus.model.JobExecutionAudit;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import com.povzetkar.quarkus.service.transcript.TranscriptOrchestrator;
@@ -48,7 +46,8 @@ public class ContentItemService {
             return FetchTranscriptResult.NOT_A_VIDEO;
         }
 
-        String transcript = transcriptOrchestrator.fetch(video.videoId);
+        // POV-222: the manual capture is exempt from the pacing of automatic YouTube fetches.
+        String transcript = transcriptOrchestrator.fetchManual(video.videoId);
 
         try {
             if (transcript != null && !transcript.isBlank()) {
@@ -58,36 +57,22 @@ public class ContentItemService {
                         managed.transcript = transcript;
                         managed.errorCode = null;
                         managed.errorMessage = null;
+                        // POV-222: with the transcript stored no fetch is needed — due at the next run (counter kept)
+                        managed.nextTranscriptAttemptAt = null;
                         managed.persist();
                     }
                 });
                 Log.infof("Successfully fetched transcript for video ID %s.", video.videoId);
                 return FetchTranscriptResult.SUCCESS;
             } else {
-                QuarkusTransaction.requiringNew().run(() -> {
-                    YouTubeVideo managed = YouTubeVideo.findById(video.id);
-                    if (managed != null) {
-                        updateVideoStatus(managed, ContentProcessingError.TRANSCRIPT_UNAVAILABLE, "Transcript is not available for this video.");
-                    }
-                });
-                Log.warnf("Transcript unavailable for video ID %s.", video.videoId);
+                // POV-222: a failed manual capture changes nothing — status, error and retry state stay as they are
+                Log.warnf("Transcript unavailable for video ID %s (manual capture; status unchanged).", video.videoId);
                 return FetchTranscriptResult.TRANSCRIPT_UNAVAILABLE;
             }
         } catch (PersistenceException e) {
             Log.errorf(e, "Failed to persist transcript for video ID %s.", video.videoId);
             return FetchTranscriptResult.ERROR;
         }
-    }
-
-    private void updateVideoStatus(YouTubeVideo video, ContentProcessingError error, String errorMessage) {
-        ProcessingStatus status = error.isRetriable() ? ProcessingStatus.RETRY_LATER : ProcessingStatus.FAILED;
-        video.processingStatus = status;
-        video.errorCode = error.name();
-        video.errorMessage = errorMessage;
-        video.persist();
-
-        // POV-150: Audit item failure or retry
-        JobExecutionAudit.logItem(video.id, video.title, status, errorMessage);
     }
 
     public long countPending() {
