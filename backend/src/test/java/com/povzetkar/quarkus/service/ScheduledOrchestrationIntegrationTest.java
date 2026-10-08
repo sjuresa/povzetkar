@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
  * TC-ING-006 (POV-213): the scheduled orchestration fired by the real Quarkus scheduler, so it runs on the thread the
  * scheduler picks - the POV-197 defect ({@code Uni<Void>} scheduled method on the IO thread) is invisible to a direct
  * call from the test thread. Real lock service, transactions and test DB; external calls mocked as in
- * {@link OrchestrationIntegrationTest}. The scheduler is halted in {@code %test} and fires the job every second
+ * {@link OrchestrationIntegrationTest}. The scheduler is halted in {@code %test} and fires the job every 5 s
  * while resumed (application.properties); see docs/guides/testing.md.
  */
 @QuarkusTest
@@ -173,7 +173,11 @@ class ScheduledOrchestrationIntegrationTest {
             assertEquals(2, items.size());
             assertTrue(items.stream().allMatch(item -> item.processingStatus == ProcessingStatus.COMPLETED),
                     () -> "statuses: " + items.stream().map(item -> item.processingStatus).toList());
-            assertEquals(2, Summary.count());
+            List<Summary> summaries = Summary.listAll();
+            assertEquals(Set.of(yesterday, today),
+                    summaries.stream().map(summary -> summary.briefingDate).collect(Collectors.toSet()),
+                    "one summary per day");
+            assertEquals(2, summaries.size());
             assertTrue(Briefing.findByTopicAndDate(topicId, yesterday).isPresent(), "yesterday's briefing");
             assertTrue(Briefing.findByTopicAndDate(topicId, today).isEmpty(), "no briefing for today");
             assertEquals(0, OrchestrationLock.count(), "lock released");
@@ -187,6 +191,7 @@ class ScheduledOrchestrationIntegrationTest {
 
         assumeSameDay(today);
         verify(youTubeContentFetcherService, times(2)).fetchYouTubeVideos(any(ContentSource.class), eq(yesterday), any(), any());
+        verify(youTubeContentFetcherService, times(2)).fetchYouTubeVideos(any(ContentSource.class), eq(today), any(), any());
         // the briefing is up to date - not regenerated (no second Gemini call)
         verify(videoSummaryService, times(1)).createBriefingFromSummaries(any(GenAiClient.class), anyString(), anyString(), anyString(), any());
         QuarkusTransaction.requiringNew().run(() -> {
@@ -213,22 +218,34 @@ class ScheduledOrchestrationIntegrationTest {
     /**
      * Lets the scheduler fire the orchestration job exactly once and waits until that execution has finished. Only the
      * orchestration runs: every other job is paused by id before the scheduler is resumed (resume(id) alone does not
-     * fire a job while the scheduler is halted). The scheduler is paused right after the first firing - the next one
-     * is a second away - so no second run starts (two overlapping runs would split the dates between them, because
-     * the lock is per date, and both would generate yesterday's briefing).
+     * fire a job while the scheduler is halted). The scheduler is paused right after the first firing, so no second
+     * run starts (two overlapping runs would split the dates between them, because the lock is per date, and both
+     * would generate yesterday's briefing). The first firing after resume() is a catch-up at the scheduler's next
+     * check (every second); resuming just after a 5-s boundary of the %test cron puts the next boundary at least ~3 s
+     * after that firing - headroom for the pause even on a slow runner. A late pause fails loudly ("no second firing").
      */
     private void fireOneScheduledRun() {
         fetchedDates.clear();
         otherJobIds().forEach(scheduler::pause);
+        await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(20))
+                .until(ScheduledOrchestrationIntegrationTest::justAfterFiveSecondBoundary);
         Instant resumedAt = Instant.now();
         lastResumedAt = resumedAt;
         scheduler.resume();
         await().atMost(RUN_TIMEOUT).pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10))
                 .until(() -> firedAfter(resumedAt));
         scheduler.pause();
-        await().atMost(RUN_TIMEOUT).until(() -> recorder.finishedAfter(resumedAt) > 0);
+        Instant firstFire = orchestrationTrigger().getPreviousFireTime();
+        await().atMost(RUN_TIMEOUT).until(() -> recorder.finishedFiredAt(firstFire));
         await().atMost(RUN_TIMEOUT).until(() -> activeOrchestrations() == 0);
+        assertEquals(firstFire, orchestrationTrigger().getPreviousFireTime(), "no second firing");
         assertEquals(1, recorder.finishedAfter(resumedAt), "exactly one scheduled run");
+    }
+
+    /** 100-800 ms after a second divisible by 5 - the boundaries of the %test cron 0/5 * * * * ?. */
+    private static boolean justAfterFiveSecondBoundary() {
+        LocalTime now = LocalTime.now();
+        return now.getSecond() % 5 == 0 && now.getNano() >= 100_000_000 && now.getNano() <= 800_000_000;
     }
 
     private boolean firedAfter(Instant instant) {

@@ -15,7 +15,7 @@ the thread the scheduler picks. TC-ING-006 (P0) was still Manual with a time-bou
   the pre-commit reviews (§5, QA rule 4) — the test finds the job by its method (`Trigger.getMethodDescription()`).
 - `application.properties`: `%test.quarkus.scheduler.start-mode=halted` — no job fires on its own in any
   `@QuarkusTest` (before, the hourly orchestration, retention, enrichment and the `every = "24h"` idempotency cleanup
-  could fire against the test DB during a suite); `%test.povzetkar.orchestrator.cron=* * * * * ?`.
+  could fire against the test DB during a suite); `%test.povzetkar.orchestrator.cron=0/5 * * * * ?`.
 
 **`ScheduledOrchestrationIntegrationTest`** (TC-ING-006): real `OrchestrationLockService`, transactions, test DB
 and scheduler; YouTube fetcher, `TranscriptOrchestrator` and `VideoSummaryService` mocked as in
@@ -23,15 +23,19 @@ and scheduler; YouTube fetcher, `TranscriptOrchestrator` and `VideoSummaryServic
 test).
 
 - Firing one run: every other job paused by id, then `scheduler.resume()`; the job's `getPreviousFireTime()` is
-  polled every 10 ms and the scheduler paused as soon as it is after the resume — the next firing is a second away,
-  so exactly one run starts (asserted: exactly one finished execution). The end of the run = a test bean has
-  observed `SuccessfulExecution`/`FailedExecution` for the job with a fire time after the resume. Teardown pauses,
-  resumes the other jobs by id, and waits for gauge `povzetkar_active_orchestrations_current` = 0.
-- Run 1: both videos (yesterday, today) `COMPLETED` with a `Summary`, yesterday's briefing exists, none for today,
-  `povzetkar_orchestration_failed_total{trigger=scheduled,topic_id=all}` unchanged, no `OrchestrationLock` row.
-- Run 2 (nothing new): the fetcher was called again for yesterday (the run really ran), still exactly one briefing,
-  counter unchanged, no lock row.
-- Midnight guard: if a run fetched other dates than the test computed, the test is aborted (assumption), not failed.
+  polled every 10 ms and the scheduler paused as soon as it is after the resume. The first firing after `resume()` is a catch-up at the
+  scheduler's next 1-s check, so the test resumes just after a 5-s boundary of the `%test` cron (`0/5`, widened from
+  1 s in the PR review) — at least ~3 s until the next firing; asserted: no second firing, exactly one finished
+  execution. The end of the run = a test bean has observed `SuccessfulExecution`/`FailedExecution` for the job with
+  a fire time after the resume. Teardown pauses, resumes the other jobs by id, waits for the finished event of the
+  last firing, then for gauge `povzetkar_active_orchestrations_current` = 0 (the gauge alone misses a queued run).
+- Run 1: both videos (yesterday, today) `COMPLETED`, one `Summary` dated each day, both days fetched, yesterday's
+  briefing exists, none for today, `povzetkar_orchestration_failed_total{trigger=scheduled,topic_id=all}` unchanged,
+  no `OrchestrationLock` row.
+- Run 2 (nothing new): the fetcher was called again for both days (the run really ran), still exactly one briefing,
+  not regenerated (`createBriefingFromSummaries` once in total), counter unchanged, no lock row.
+- Midnight guard: only if the clock crossed midnight during a run is the test aborted (assumption); unexpected fetched
+  dates fail an assertion.
 - `allScheduledJobsHaveASchedule`: exactly the four expected jobs exist (by method) and each has a next fire time —
   the `${…}` crons parse (halted mode still creates the triggers), without asserting their values.
 
@@ -156,7 +160,9 @@ Dropped by the reviewer as pre-existing, not touched by this diff: the briefing 
 
 **Pre-commit review round 3** (whole `git diff v0.20.0`, 13 files; the reviewer checked the quarkus-scheduler 3.40.1
 source: `getPreviousFireTime()` is set before dispatch and equals the execution's fire time, checks run every 1000 ms,
-a cron trigger's first firing after a pause is not skipped — the 10 ms poll has ~990 ms headroom): 6 findings, all
+a cron trigger's first firing after a pause is not skipped — the 10 ms poll has ~990 ms headroom; *the headroom claim
+was wrong, corrected in the PR review: the first firing after `resume()` is a catch-up at the next 1-s check, and
+the next cron boundary can follow within ~1 s — the test now resumes just after a 5-s boundary of a `0/5` cron*): 6 findings, all
 fixed.
 
 1. *Low* — the midnight guard aborted whenever the fetched dates were not {yesterday, today}, so a regression fetching
