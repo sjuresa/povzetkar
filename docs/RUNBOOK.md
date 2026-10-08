@@ -467,11 +467,11 @@ To manually trigger the enrichment process for all content sources that are miss
 
 #### 9.1.2 Scheduled Refresh
 
-The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
+The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Monday at 10:00 UTC.
 
 *   **Configuration Property:** `povzetkar.enrichment.cron` (was `quarkus.scheduler.enrich-content-sources.cron` before POV-208)
 *   **Location:** `backend/src/main/resources/application.properties`
-*   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
+*   **Default Value:** `0 0 10 ? * MON` (weekly on Monday at 10:00 UTC)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
@@ -481,11 +481,11 @@ The `OrchestratorService` is responsible for the end-to-end process of fetching 
 
 #### 9.2.1 Scheduled Orchestration
 
-The orchestration process is configured to run periodically. By default, it runs daily at midnight.
+The orchestration process is configured to run periodically. By default, it runs every hour at :27.
 
 *   **Configuration Property:** `povzetkar.orchestrator.cron`
 *   **Location:** `backend/src/main/resources/application.properties`
-*   **Default Value:** `0 0 0 * * ?` (daily at midnight)
+*   **Default Value:** `0 27 * * * ?` (every hour at :27)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
