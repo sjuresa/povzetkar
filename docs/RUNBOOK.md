@@ -645,6 +645,17 @@ The `AuditLogFilter` records every API access in the `audit_log` database table.
     SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 10;
     ```
 
+### 10.2a Job Execution Audit Retention
+
+`RetentionService` deletes `job_execution_audit` rows (the execution history of background jobs — not the `audit_log` table above) older than the retention period, in chunks, each chunk in its own transaction.
+
+*   **Configuration Property:** `povzetkar.retention.cron` — required, there is no default in the code
+*   **Location:** `backend/src/main/resources/application.properties`
+*   **Default Value:** `0 0 10 * * ?` (daily at 10:00 UTC)
+*   **Retention period / chunk size:** `povzetkar.retention.audits.days` (default 90), `povzetkar.retention.audits.chunk-size` (default 1000)
+*   **Check:** metric `povzetkar_maintenance_audits_purged_total`; log lines `Starting scheduled audit log retention` and `Finished audit log retention. Total records purged: …`
+*   A run missed while the app is down is not caught up; the next run purges the backlog.
+
 ### 10.3 Performance Metrics
 
 A consolidated metrics endpoint provides a snapshot of the system state with a single database roundtrip.
