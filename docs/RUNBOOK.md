@@ -467,11 +467,11 @@ To manually trigger the enrichment process for all content sources that are miss
 
 #### 9.1.2 Scheduled Refresh
 
-The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
+The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Monday at 10:00 UTC.
 
 *   **Configuration Property:** `povzetkar.enrichment.cron` (was `quarkus.scheduler.enrich-content-sources.cron` before POV-208)
 *   **Location:** `backend/src/main/resources/application.properties`
-*   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
+*   **Default Value:** `0 0 10 ? * MON` (weekly on Monday at 10:00 UTC)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
@@ -481,11 +481,11 @@ The `OrchestratorService` is responsible for the end-to-end process of fetching 
 
 #### 9.2.1 Scheduled Orchestration
 
-The orchestration process is configured to run periodically. By default, it runs daily at midnight.
+The orchestration process is configured to run periodically. By default, it runs every hour at :27.
 
 *   **Configuration Property:** `povzetkar.orchestrator.cron`
 *   **Location:** `backend/src/main/resources/application.properties`
-*   **Default Value:** `0 0 0 * * ?` (daily at midnight)
+*   **Default Value:** `0 27 * * * ?` (every hour at :27)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
@@ -644,6 +644,17 @@ The `AuditLogFilter` records every API access in the `audit_log` database table.
     ```sql
     SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 10;
     ```
+
+### 10.2a Job Execution Audit Retention
+
+`RetentionService` deletes `job_execution_audit` rows (the execution history of background jobs — not the `audit_log` table above) older than the retention period, in chunks, each chunk in its own transaction.
+
+*   **Configuration Property:** `povzetkar.retention.cron` — required, there is no default in the code
+*   **Location:** `backend/src/main/resources/application.properties`
+*   **Default Value:** `0 0 10 * * ?` (daily at 10:00 UTC)
+*   **Retention period / chunk size:** `povzetkar.retention.audits.days` (default 90), `povzetkar.retention.audits.chunk-size` (default 1000)
+*   **Check:** metric `povzetkar_maintenance_audits_purged_total`; log lines `Starting scheduled audit log retention` and `Finished audit log retention. Total records purged: …`
+*   A run missed while the app is down is not caught up; the next run purges the backlog.
 
 ### 10.3 Performance Metrics
 

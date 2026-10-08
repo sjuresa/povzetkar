@@ -47,9 +47,9 @@ public class RetentionService {
 
     /**
      * Daily maintenance task to purge old audit logs.
-     * Scheduled for 03:00 UTC by default.
+     * Daily at the time set by {@code povzetkar.retention.cron} (10:00 UTC).
      */
-    @Scheduled(cron = "${povzetkar.retention.cron:0 0 3 * * ?}")
+    @Scheduled(cron = "${povzetkar.retention.cron}")
     public void purgeOldAuditLogs() {
         log.info("Starting scheduled audit log retention (Targeting records older than {} days)", retentionDays);
         

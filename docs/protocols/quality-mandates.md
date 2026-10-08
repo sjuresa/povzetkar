@@ -40,6 +40,7 @@ Every plan and code change must verify:
    - **Security and HTTP contract** (401/403, roles, JSON envelope) — `@QuarkusTest` REST calls with the service mocked.
    - **External boundaries** (YouTube, AI, OIDC, …) are always mocked.
    - Existing DB-backed tests stay valid; the rule applies to new and changed tests.
+4. **Justify every change to existing behaviour:** when a new feature or change requires altering existing code or behaviour, the plan states why the alteration is needed and what it changes in production (new or removed failure modes, operational effects) — the reason for the new part is not by itself a reason to change the old one. **A production change made for a test** (determinism, observability, test speed) is the last resort: look for a test-side solution first; if none exists, justify the change on its production merits, or present it to the PO explicitly as test-motivated, with its production cost. (POV-213: `concurrentExecution = SKIP` was added to the scheduled orchestration for a test race; its production cost — one hung run blocking every later scheduled run — surfaced only in the pre-commit review; a test-side solution removed the need, and the job `identity` added for the same test went too.)
 
 ## File Hygiene
 
