@@ -67,7 +67,6 @@ describe('themeStore initial state', () => {
 describe('themeStore', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.clearAllMocks();
   });
 
   it('should update theme correctly', () => {

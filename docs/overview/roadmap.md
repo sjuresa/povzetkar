@@ -285,7 +285,7 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Production Edge:**
     *   **Security Headers in the Application** (POV-214): Caddy removed — the Cloudflare tunnel is the only edge; the app sends security headers, an enforced CSP and caching headers and trusts forwarded headers only from `cloudflared` (ADR-0012).
 2.  **Dependency Debt:**
-    *   **orval ≥ 8.22** (POV-215): the build-time API-client generator carries CRITICAL advisories.
+    *   **orval 8.41.0 and Vitest 5.0.3** (POV-215): the CRITICAL build-time advisories are fixed — API client regenerated, test runner two majors up on Vite 6.4, `source-map-js` patched.
 3.  **Test Debt:**
     *   **Scheduler Integration Test** (POV-213): real lock service and test DB for the `@Scheduled` path — TC-ING-006 carries a `validate:skip until v0.21.0` until this task removes it.
 

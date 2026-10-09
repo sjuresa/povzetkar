@@ -9,6 +9,8 @@ CVE-2026-66046 exp:2026-12-31
 CVE-2026-76956 exp:2026-12-31
 CVE-2026-76957 exp:2026-12-31
 CVE-2026-93990 exp:2026-12-31
+# Added 2026-10-09 (POV-215), same package and rationale; status "affected", no fixed package yet.
+CVE-2026-77214 exp:2026-12-31
 # libuuid1 2.41.5-0+deb13u1 — findings are in util-linux mount/nsenter tooling, which the
 # distroless runtime image does not ship; the app only links the libuuid library.
 CVE-2026-76642 exp:2026-12-31

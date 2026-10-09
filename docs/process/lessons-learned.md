@@ -53,6 +53,10 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > Without `name:`, the dev and prod compose files in `backend/` formed project `backend`: a dev `up` replaced the prod Prometheus/Grafana (a day without production metrics), and `--remove-orphans` from either file would have removed the other stack. Give every compose file its own `name:` — rename the non-prod one, since volume names derive from the project name. Details and the CSP-hash/line-ending trap: [infrastructure-ops](lessons/infrastructure-ops.md#the-edge-is-the-app--compose-projects-hashes-and-proxy-trust-pov-214).
 
 > [!NOTE]
+> **Verify dependency claims against the registry and `tsc`, not the backlog (POV-215)**:
+> The backlog grouped Vitest 5 with Vite 8 "since Vitest pins its Vite range" — `vitest@5.0.3` accepts `vite ^6.4.0`, so the CRITICAL `tinypool` fix needed no Vite major; `npm view <pkg>@<ver> peerDependencies` settles such claims in seconds. And a test-runner upgrade can be green at runtime while the type check fails: Vitest does not type-check, and `setup.ts` imported the Jest flavour of jest-dom, whose matcher types reached Vitest only through compat types removed in Vitest 4 — use `@testing-library/jest-dom/vitest`, and run `tsc -b` (part of `npm run build`) after any test-tooling bump.
+
+> [!NOTE]
 > **Store the canonical platform identifier, not what the user typed (POV-219)**:
 > Quick Add validated `@handle` and URLs by resolving them, but stored the typed text; ingestion reads the identifier as a channel ID, so such sources never received content and one channel could exist twice. Resolve on input and store the canonical form (`ContentSourceDetails.channelId`).
 

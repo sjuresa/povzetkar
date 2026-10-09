@@ -9,7 +9,6 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => k
 
 describe('useApprovalNotice', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     sessionStorage.clear();
   });
 

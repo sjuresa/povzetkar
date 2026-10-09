@@ -64,7 +64,6 @@ const submit = () => fireEvent.click(screen.getByRole('button', { name: /topics.
 
 describe('TopicForm', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     givenMutations();
     createTopic.mockResolvedValue({});
     patchTopic.mockResolvedValue({});
