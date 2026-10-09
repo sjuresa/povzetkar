@@ -1,13 +1,14 @@
 # Transcript Proxy
 
 A standalone, stateless FastAPI service that fetches a single YouTube transcript per
-request. It exists because YouTube blocks/throttles the OCI datacenter IP range where the
-main Povzetkar application is deployed; this proxy runs on a host whose IP is not blocked
-and is called by the Quarkus backend.
+request. It exists because YouTube blocks or throttles many cloud IP ranges; this proxy runs
+on a host whose IP is not blocked and is called by the Quarkus backend (`proxy` transcript
+provider, `TRANSCRIPT_PROXY_URL` + `TRANSCRIPT_PROXY_API_KEY`).
 
-**Production host:** self-hosted on a **Synology DS220j**, reached by the backend over a
-**Tailscale** overlay (POV-196). A residential egress IP is throttled far less than a shared
-datacenter IP. **Railway** remains a passive, manual fallback (see [Fallback](#fallback)).
+**Hosting:** any host whose egress IP YouTube does not block — a self-hosted Linux box reached
+over a VPN, or a PaaS (`railway.toml` describes a Railway deployment). A residential egress IP
+is throttled far less than a shared datacenter IP. Only one host is active at a time (see
+[Fallback](#fallback)).
 
 ## Contract
 
@@ -32,9 +33,9 @@ Every transcript request also logs its outcome with the exact cause (e.g.
 
 ## Local run
 
-Requires Python **3.8+** (`youtube-transcript-api` supports `>=3.8,<3.15`). The production
-Synology host uses its built-in Python 3.8; `requirements.txt` is pinned to the 3.8-compatible
-set accordingly.
+Requires Python **3.8+** (`youtube-transcript-api` supports `>=3.8,<3.15`);
+`requirements.txt` is pinned to a 3.8-compatible set so the proxy also runs on hosts with an
+older built-in Python.
 
 ```sh
 python -m venv .venv
@@ -48,21 +49,17 @@ API_KEY=dev-key uvicorn main:app --reload
 curl -H "X-API-Key: dev-key" http://localhost:8000/transcripts/dQw4w9WgXcQ
 ```
 
-## Deploy (Synology DS220j, native + Tailscale)
+## Deploy on a self-hosted Linux host (native, no Docker)
 
-The proxy runs natively (no Docker — the DS220j has no Container Manager) under the box's
-built-in Python 3.8, supervised by a DSM Task Scheduler boot task, and is reached by the
-backend over Tailscale.
-
-1. **Install location.** Copy this directory to an **exec-capable** `/volume1` path, e.g.
-   `/volume1/transcript-proxy`. Do **not** use `/tmp` — it is mounted `noexec` and compiled
-   extensions (`pydantic_core`) will fail to load there.
-2. **Virtualenv + deps** (built-in Python 3.8; bootstrap pip if missing):
+1. **Install location.** Copy this directory to an **exec-capable** path. Do **not** use a
+   `noexec` mount such as `/tmp` on some systems — compiled extensions (`pydantic_core`) will
+   fail to load there.
+2. **Virtualenv + deps** (bootstrap pip if the system Python ships without it):
 
    ```sh
-   cd /volume1/transcript-proxy
+   cd <install-dir>
    python3 -m venv .venv
-   .venv/bin/python -m ensurepip --upgrade   # SynoCommunity/DSM Python ships without pip
+   .venv/bin/python -m ensurepip --upgrade
    .venv/bin/python -m pip install -r requirements.txt
    ```
 
@@ -72,19 +69,19 @@ backend over Tailscale.
    printf 'API_KEY=%s\n' "<shared-key>" > .env && chmod 600 .env
    ```
 
-4. **Boot supervision.** DSM → Control Panel → Task Scheduler → Create → Triggered Task →
-   Boot-up, user `root`, run: `/volume1/transcript-proxy/run-proxy.sh`. The script sources
-   `.env` and launches `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`.
-   (Started once at boot; no crash-restart yet — see the project backlog.)
-5. **Tailscale.** Install Tailscale (SynoCommunity package) on the Synology and on the OCI
-   backend host; `tailscale up` on both. Point the backend's `TRANSCRIPT_PROXY_URL` at the
-   Synology's raw tailnet IP, `http://<tailnet-ip>:8000` (MagicDNS is not resolvable from the
-   backend's Docker bridge network).
+4. **Start at boot.** Run `run-proxy.sh` from a boot-time task of the host (systemd unit,
+   cron `@reboot`, or the NAS's task scheduler). The script sources `.env` and launches
+   `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`. It starts the proxy
+   once; there is no crash-restart yet (see the project backlog).
+5. **Reachability.** Do not expose port 8000 publicly. Connect the backend host and the proxy
+   host over a VPN and point the backend's `TRANSCRIPT_PROXY_URL` at the proxy's VPN address,
+   `http://<vpn-ip>:8000`. Use the raw IP if the backend's Docker bridge network cannot resolve
+   the VPN's DNS names.
 
 ## Fallback
 
-Railway remains deployed as a **passive, manual fallback** — only one host is active at a time.
-The `railway.toml` (nixpacks build, `/health` healthcheck) is unchanged. To fall back, set the
-backend's `TRANSCRIPT_PROXY_URL` to the Railway URL (or unset it — that is the compose default)
-and recreate the backend container. Both hosts must accept the **same** `X-API-Key`. See the
-project RUNBOOK §16.1b for the full flip-back procedure.
+A second deployment (e.g. on a PaaS via `railway.toml` — nixpacks build, `/health`
+healthcheck) can stay as a **passive, manual fallback**. To fall back, set the backend's
+`TRANSCRIPT_PROXY_URL` to the fallback host's URL and recreate the backend container; the
+production compose file has no default for it. Both hosts must accept the **same**
+`X-API-Key`.

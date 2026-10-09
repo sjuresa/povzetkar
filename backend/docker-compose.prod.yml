@@ -32,7 +32,7 @@ services:
       - GOOGLE_OIDC_CLIENT_ID=${GOOGLE_OIDC_CLIENT_ID:?GOOGLE_OIDC_CLIENT_ID must be set}
       - GOOGLE_OIDC_CLIENT_SECRET=${GOOGLE_OIDC_CLIENT_SECRET:?GOOGLE_OIDC_CLIENT_SECRET must be set}
       - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:?TRANSCRIPT_PROXY_API_KEY must be set}
-      - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://povzetkar-production.up.railway.app}
+      - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:?TRANSCRIPT_PROXY_URL must be set}
       - POVZETKAR_API_KEY=${POVZETKAR_API_KEY:-}
       - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL:-}
       # File log on the app_logs volume survives container recreation; enabled only here, where

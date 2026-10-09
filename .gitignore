@@ -48,5 +48,5 @@ playwright/.cache/
 # Agent/AI Context
 .gemini/
 .claude/
-agent_logs/POV-*
-!agent_logs/task.md
+/agent_logs/
+/CLAUDE.local.md

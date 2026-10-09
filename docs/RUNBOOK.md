@@ -10,7 +10,7 @@
 - [7. Running Tests](#7-running-tests)
 - [8. Security & Code Quality](#8-security--code-quality)
 - [9. Building the Full Stack](#9-building-the-full-stack)
-- [10. Production Stack (Local)](#10-production-stack-local)
+- [10. Production Stack](#10-production-stack)
 - [11. Containerized Execution (Docker/Podman)](#11-containerized-execution-dockerpodman)
 - [12. Application Usage](#12-application-usage)
 - [13. Compliance & Monitoring](#13-compliance--monitoring)
@@ -62,7 +62,7 @@ The local database environment is managed by Docker Compose and is located in th
     **Frontend (`frontend/.env`):**
     Copy `frontend/.env.example` to `frontend/.env` and update values.
     ```properties
-    # Comma-separated list of extra allowed hosts (e.g. for Tailscale)
+    # Comma-separated list of extra allowed hosts (e.g. for a VPN hostname)
     VITE_ALLOWED_HOSTS=www.example.com,192.168.1.100
     ```
 
@@ -263,95 +263,13 @@ This will:
 1.  Build the React frontend and place artifacts in `frontend/dist`.
 2.  Build the Quarkus backend and run standard JAR packaging.
 
-## 10. Production Stack (Local)
+## 10. Production Stack
 
 The production stack uses `docker-compose.prod.yml` with `.env.docker` (compose project `backend`) and runs the app, PostgreSQL, Prometheus, Grafana and the Cloudflare Tunnel (`cloudflared`). The tunnel is the only public entry: it routes `povzetkar.<domain>` to `app:8080`, TLS ends at Cloudflare, and no port is published for public traffic. There is no reverse proxy — the app sends its own security headers, CSP and caching headers and trusts `X-Forwarded-*` only from `cloudflared` ([ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md), §13.5).
 
 The dev stack (`docker-compose.yml`, same directory) is its own compose project `povzetkar-dev` with its own container names and host ports (dev DB 5434, test DB 5433, dev Grafana 3001, dev Prometheus 9090), so both run side by side. Never remove the `name:` from the dev file: the two files would again form one project, a dev `up` would recreate the prod Prometheus/Grafana, and `--remove-orphans` from either file would remove the other stack's containers (POV-214).
 
-**First start after POV-214 on a host that ran the old dev stack:** its dev containers still belong to project
-`backend` and keep their names, so the new project cannot create `povzetkar-db-dev` / `povzetkar-db-test`. Remove
-them by name — **never** `docker compose -f docker-compose.yml down` with the old file: under project `backend` its
-`prometheus`/`grafana` services are the production containers.
-
-```bash
-docker ps -a --filter label=com.docker.compose.project=backend --format '{{.Names}} {{.Status}}'   # check first
-docker rm -f povzetkar-db-dev povzetkar-db-test   # dev DB data is on external volumes (povzetkar_postgres_*) and stays
-docker compose -f docker-compose.yml up -d postgres-test   # (postgres-dev too, after DB_PORT=5434 in backend/.env)
-```
-
-If `povzetkar-prometheus` / `povzetkar-grafana` on that host were created from the **dev** file (check
-`docker inspect <name> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'`), recreate them
-from the prod file: `docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps prometheus grafana`.
-
-### 10.1 Build
-
-Run from the `backend/` directory:
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker build
-```
-
-The `APP_VERSION` variable in `.env.docker` is used as the image tag (e.g. `povzetkar-app:0.18`).
-
-### 10.2 Run
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
-```
-
-### 10.3 Update (rebuild + restart app only)
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker build --pull app
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps app
-```
-
-- `--pull` fetches the current base images (distroless, temurin, node, golang). Without it Docker
-  reuses cached bases — during POV-207 the local base was months behind the one CI scans, so the
-  deployed image carried Debian CVEs CI never saw.
-- `--no-deps` keeps compose from also recreating dependencies (e.g. `postgres-prod`) when it detects
-  a config difference in them (observed during POV-207).
-- Before rebuilding, tag the running image for rollback:
-  `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
-- Before `up`: the deployed commit needs a green CI run (Trivy FS + image) not older than 7 days — see
-  `docs/protocols/verification.md`, *Pre-deploy Verification*. Local Trivy (§8.2) only for a commit without a CI run.
-
-### 10.4 Stop
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker down
-```
-
-Never add `-v` (it deletes the volumes, the production database included).
-
-### 10.4a Network change (full restart)
-
-The network `povzetkar-net` has a fixed subnet (`10.203.0.0/24`, dynamic addresses from `10.203.0.128/25`) so
-that `cloudflared` keeps its fixed address `10.203.0.10`, the only peer the app trusts for `X-Forwarded-*`
-(`QUARKUS_HTTP_PROXY_TRUSTED_PROXIES` in the same file — change both together). Docker cannot change an existing
-network's IPAM settings, so a change to them (first applied in POV-214) needs the whole stack down and up — a
-short outage including the DB. The subnet lies outside Docker's default address pools (172.17–31.0.0/16,
-192.168.0.0/16); before choosing another one, check that no network uses it:
-`docker network inspect $(docker network ls -q) --format '{{.Name}} {{range .IPAM.Config}}{{.Subnet}}{{end}}'`.
-
-```bash
-# 1. Containers attached to the network that compose does not manage keep it in use — list and remove them
-#    (in POV-214: povzetkar-proxy, the removed Caddy service, and gifted_davinci, a stopped manual
-#    cloudflared:latest run from 2026-06 — started with the same token it would become a second tunnel connector)
-docker network inspect backend_povzetkar-net --format '{{range .Containers}}{{.Name}} {{end}}'
-docker ps -a --filter network=backend_povzetkar-net --format '{{.Names}} {{.Status}} {{.Label "com.docker.compose.service"}}'
-docker rm -f povzetkar-proxy gifted_davinci
-# 2. Recreate
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker down   # no -v, no --remove-orphans
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
-```
-
-### 10.5 Notes
-
-- `.env.docker` is in the project root (not `backend/`), hence `--env-file ../.env.docker`.
-- The app is exposed via **Cloudflare Tunnel** at `https://povzetkar.juresa.si` — no ports need to be open on the host; the prod stack publishes only `127.0.0.1:5432` (DB) and `127.0.0.1:3000` (Grafana).
-- Grafana: `http://127.0.0.1:3000` on the host (on a remote host: `ssh -L 3000:localhost:3000 <host>`). It has no public hostname on purpose — see §13.2.
+Production operations for the author's deployment are documented in a private operations runbook (not part of this repository).
 
 ## 11. Containerized Execution (Docker/Podman)
 
@@ -768,10 +686,10 @@ public hostname. Consumers inside the network:
 properties were never real Quarkus config and were silently ignored). It can be removed from
 `.env.docker`.
 
-**Verifying (production, local stack):**
+**Verifying (production stack):**
 ```bash
 # Public: must NOT be 200
-curl -s -o /dev/null -w "%{http_code}\n" https://povzetkar.juresa.si/q/metrics   # 404
+curl -s -o /dev/null -w "%{http_code}\n" https://<your-domain>/q/metrics   # 404
 
 # Inside the Docker network: metrics served on the management port
 docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics | head -3
@@ -810,14 +728,13 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
 
-### 13.5 Production Logs & Request History (POV-210)
+### 13.5 Access Log & Request History (POV-210)
 
 **Traffic path:** the Cloudflare tunnel routes `povzetkar.<domain>` straight to
-`http://povzetkar-app:8080` (tunnel config in the Cloudflare dashboard; `docker logs
-povzetkar-cloudflared` shows it as `Updated to new configuration … "service":"http://povzetkar-app:8080"`).
-There is no reverse proxy and no host port for public traffic ([ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md)),
-so every request reaches the app through the tunnel. Cloudflare keeps no request logs on this plan — the app's
-access log is the forensic record.
+`http://povzetkar-app:8080` (`docker logs povzetkar-cloudflared` prints the ingress on every start as
+`Updated to new configuration … "service":"http://povzetkar-app:8080"`). There is no reverse proxy and no host port
+for public traffic ([ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md)), so every request reaches the app through
+the tunnel, and the app's access log is the forensic record.
 
 **Where the logs live:**
 
@@ -832,7 +749,7 @@ The app file log is switched on only in the prod container (`QUARKUS_LOG_FILE_EN
 access-log category into it (and out of the app log and `docker logs`) are switched on together in the `%prod`
 profile of `application.properties` — `/var/log/app` exists in the image. There is no age-based deletion: at
 today's volume the files hold years of history. Access lines logged before POV-214 are in `quarkus.log*` in the
-old format (below the POV-210 recipe).
+old format (without `ray`/`user`/`host`/`ref`).
 
 **Access log** (`%prod`, logger category `io.quarkus.http.access-log`). One line per request, pattern:
 
@@ -866,107 +783,11 @@ old format (below the POV-210 recipe).
 - Separate, older record: `AuditLogFilter` stores every **matched** `/api/v1` request (method,
   path, status, duration, User-Agent, user) in the `audit_log` table; unmatched probes are not in it.
 
-**Reading the access log** — the distroless app image has no shell, so read the volume from a
-throw-away container that borrows the app container's volumes (`--volumes-from`, read-only; works
-while `povzetkar-app` exists, even stopped, and needs no volume name). In Git Bash prefix
-`MSYS_NO_PATHCONV=1`, otherwise the container paths are rewritten. The file holds only access lines
-(format `%s%n`, no logger prefix). The `sed` is anchored on the fixed line start and the server-set
-fields and prints only parsed lines, so a crafted URL or header cannot replace the fields or pose as an entry;
-a line whose `Host` or `Referer` contains a `"` is **dropped** — compare `wc -l` of the raw files with
-`access.txt` when completeness matters. A value containing a **newline** could still start a forged line (log
-messages are not escaped).
-
-```bash
-# All access-log entries, oldest file first, as:
-# cf-ip country status method path time (2 fields) xff-first-hop user ray
-MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
-  sh -c 'cd /var/log/app && for i in $(seq 19 -1 1); do [ -f access.log.$i ] && cat access.log.$i; done; cat access.log' \
-  | sed -nE 's/^\[([^]]+)\] cf-ip=(\S*) country=(\S*) ray=(\S*) user=(\S*) "(\S+) (\S+) [^"]*" ([0-9]{3}) \S+ \S+ host="[^"]*" ref="[^"]*" xff="([^", ]*).*/\2 \3 \8 \6 \7 \1 \9 \5 \4/p' \
-  > access.txt
-```
-
-Access lines from before POV-214 (in `quarkus.log*`, format without `ray`/`user`/`host`/`ref`) — POV-210 recipe:
-
-```bash
-MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
-  sh -c 'cd /var/log/app && for i in 10 9 8 7 6 5 4 3 2 1; do [ -f quarkus.log.$i ] && cat quarkus.log.$i; done; cat quarkus.log' \
-  | grep 'access-log\]' \
-  | sed -nE 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:,]+ (\S+ \S+ )?INFO +\[[^] ]*access-log\] \([^)]*\) \[([^]]+)\] cf-ip=(\S*) country=(\S*) "(\S+) (\S+) [^"]*" ([0-9]{3}) \S+ \S+ xff="([^", ]*).*/\3 \4 \7 \5 \6 \2 \8/p' \
-  > access-pre-pov214.txt
-```
-
-**Checking the YouTube transcript pacing (POV-222)** — from the app log (`quarkus.log*`, same recipe for reading
-the volume): every actual wait before a fetch logs `Pacing: waiting N s before the next YouTube transcript fetch.`,
-every fetched transcript `YouTube transcript selected for video ID '…': language '…', generated …`, and each run
-ends its summarization with one line `action="orchestrationRunSummary"` carrying `trigger`, `duration_s`,
-`youtubeFetches`, `skippedItems` and `budgetExhausted`. For **automatic** youtube-legacy fetches, consecutive
-`YouTube transcript selected` / `Provider 'youtube-legacy' unavailable` lines must be at least `fetch.min` apart
-(measured from the end of the previous fetch). Exceptions that legitimately break the rule: the manual *Fetch
-transcript* (unpaced, logged by `ContentItemService` as well) and proxy fallbacks (`provider 'proxy'`).
-
-```bash
-MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
-  sh -c 'cd /var/log/app && cat quarkus.log' \
-  | grep -E 'Pacing: waiting|YouTube transcript selected|youtube-legacy|orchestrationRunSummary'
-```
+Reading the production logs of the author's deployment (recipes for the access log, the pre-POV-214 lines and the YouTube transcript pacing) is documented in a private operations runbook (not part of this repository).
 
 ### 13.6 Checking for Suspicious Traffic
 
-1. **Cloudflare dashboard** — Security → Analytics / Events: request volume, blocked requests
-   (the non-domestic traffic rule), top paths and countries. First line, since every request
-   passes Cloudflare, including blocked ones.
-2. **Access log** (§13.5, `access.txt` — fields: cf-ip, country, status, method, path, time (two
-   fields), first `X-Forwarded-For` hop, user, ray):
-
-   ```bash
-   awk '$3 ~ /^[45]/ {print $3, $4, $5}' access.txt | sort | uniq -c | sort -rn | head -50   # 4xx/5xx by path
-   awk '{print $1, $2}' access.txt | sort | uniq -c | sort -rn | head -20                      # top client IPs
-   awk '{split($5, p, "?")} p[1] ~ /\/\./ {print $1, $3, $5}' access.txt | sort | uniq -c | sort -rn   # dot-segment probes (/.git, /.env, ...), query ignored
-   awk '$1 != $8 {print $1, $8, $5}' access.txt                                                # cf-ip ≠ first X-Forwarded-For hop
-   awk '$9 != "-" {print $9}' access.txt | sort | uniq -c | sort -rn                          # requests per signed-in principal
-   ```
-
-   The `cf-ip ≠ first hop` recipe lists requests where the client sent its own `X-Forwarded-For`.
-   Since POV-214 there is no path around the tunnel (no host ports, no reverse proxy), so `cf-ip`
-   is Cloudflare's value for every line. A `ray` value leads to the request in the Cloudflare
-   dashboard (Security → Events).
-
-   Probes get `404` (POV-221): the SPA fallback (`SpaRoutingHandler`) serves the shell with `200`
-   only for the frontend routes on its allow-list (`SPA_ROUTES`, the exact paths of the router:
-   `/dashboard`, `/me`, `/topics`, `/briefings[/<id>]`, `/sources[/<id>]`, `/admin` and its four
-   pages, `/s/<uuid>` — any case, no dot-segment, no file extension; `/admin/does-not-exist` is a
-   `404`). Files (`/admin/config.php`, `/.env`) go to the static handler, paths under `/api`,
-   `/ui`, `/q`, `/auth`, `/static`, `/assets` to their own handlers — both answer `404` when nothing
-   matches; every other path gets a bare `404`. Legitimate `200`s outside the SPA routes: `/`,
-   `/index.html`, `/login` (`302` when already signed in), root static files (`/favicon.svg`,
-   `/locales/*.json`, …), `/assets/*`, `/static/*` and matched `/api`, `/ui` requests — any other
-   `200` is worth a look. `/logout` and `/auth/login` always answer `302`. Unauthenticated requests
-   under `/api` and `/ui` get `401` (XHR) or `302` (browser navigation), except the public paths
-   (`/api/public/*`, `/api/v1/public/*`, `/api/v1/system/*`, `/api/oidc/callback`).
-3. **`audit_log` table** — matched `/api/v1` requests only (not unmatched probes), with the user:
-
-   ```bash
-   docker exec povzetkar-db-prod sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "
-     SELECT response_status, http_method, request_path, count(*) FROM audit_log
-     WHERE created_at > now() - interval '"'"'14 days'"'"' AND response_status >= 400
-     GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 50"'
-   ```
-
-4. **Prometheus** — per-endpoint counts even without the access log, from inside the Docker network:
-
-   ```bash
-   docker exec povzetkar-prometheus wget -qO- \
-     'http://localhost:9090/api/v1/query?query=max_over_time(http_server_requests_seconds_count%5B14d%5D)'
-   ```
-
-   The `uri` tag is bounded (POV-221, `HttpMetricsConfig`): API requests carry their endpoint
-   template (`/api/v1/briefings/{id}`), legacy UI pages and `/login`, `/logout`, `/auth/login` their
-   own path; everything else is collapsed — `SPA` (frontend routes), `STATIC` (files), `NOT_FOUND`
-   (404 — the probe signal), `REDIRECTION` (3xx), `UNKNOWN` (other 4xx/5xx without a template, e.g.
-   unauthenticated requests to non-existent `/api` paths, and any other path, including encoded or
-   dot-segment variants such as `/%73ources/1`). Exact paths live only in the access log. Limits:
-   counters reset on every app restart (lower bounds only), default 15-day retention, no IPs and no
-   query strings.
+Production operations for the author's deployment are documented in a private operations runbook (not part of this repository).
 
 ## 16. API Response Structure (Envelopes)
 
@@ -996,10 +817,10 @@ Errors follow the **RFC 7807** (Problem Details) structure:
 ```json
 {
   "error": {
-    "type": "https://povzetkar.jumis.si/errors/validation-failed",
-    "title": "Validation Failed",
+    "type": "/errors/validation",
+    "title": "Validation Error",
     "status": 400,
-    "detail": "The 'name' field cannot be empty.",
+    "detail": "One or more constraints have been violated.",
     "errorCode": "VALIDATION_ERROR",
     "fieldErrors": [
       {
@@ -1025,6 +846,10 @@ The application requires several sensitive configuration values (API keys, datab
 | `GOOGLE_OIDC_CLIENT_ID` | `quarkus.oidc.client-id` | Google OIDC OAuth 2.0 Client ID | ✅ |
 | `GOOGLE_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` | Google OIDC OAuth 2.0 Client Secret | ✅ |
 | `SUPADATA_API_KEY` | `quarkus.rest-client.supadata.headers.x-api-key` | Supadata transcript API key | ⬜ (required if supadata provider enabled) |
+| `TRANSCRIPT_PROXY_API_KEY` | `transcript.providers.proxy.api-key` | Key the backend sends to the transcript proxy (`X-API-Key`, 16.1b) | ⬜ (not checked at startup; the production compose file requires it) |
+
+Not a secret, but required by the production compose file as well: `TRANSCRIPT_PROXY_URL`
+(`quarkus.rest-client.transcript-proxy.url`) — the base URL of the transcript proxy (14.1a).
 
 ### 14.1a Transcript Provider Configuration
 
@@ -1083,10 +908,12 @@ app-wide (all topics, items and threads share one fair queue). The pacing ranges
 - The legacy keys `transcript.providers.youtube-legacy.jitter.*` are gone; a leftover
   `TRANSCRIPT_PROVIDERS_YOUTUBE_LEGACY_JITTER_*` in `.env.docker` is ignored.
 
-**Production today (verified in POV-214):** `youtube-legacy` serves the transcripts — it fetches directly from the
-production host (the local Docker stack, §10, residential egress IP). `proxy` is the fallback, with
-`TRANSCRIPT_PROXY_URL` pointing at Railway; `supadata` is disabled. The earlier OCI deployment, whose datacenter IPs
-YouTube blocked, is gone.
+**Transcript proxy (`proxy` provider):** the backend calls the service in `transcript-proxy/` (16.1b) at
+`TRANSCRIPT_PROXY_URL`, sending `TRANSCRIPT_PROXY_API_KEY` as `X-API-Key`. The production compose file requires
+both variables (no default — a missing one stops compose at configuration read); outside it the URL defaults to
+`https://proxy.invalid`, so a local run without it never calls a real proxy and the provider falls through to the
+next one. Whether youtube-legacy works directly depends on the host's egress IP — YouTube blocks many cloud
+IP ranges; then the proxy, run on a host YouTube does not block, or Supadata (below) takes over.
 
 **Enabling Supadata as primary provider** (if YouTube blocks the production host's IP):
 
@@ -1104,82 +931,9 @@ transcript.providers.supadata.enabled=true
 - `transcript.fetch.failures` — counter tagged with `provider` and `reason`
 - `transcript.fetch.duration` — timer per provider
 
-### 16.1b Transcript Proxy Host (Synology DS220j + Tailscale)
+### 16.1b Transcript Proxy Host
 
-The `proxy` provider calls a standalone FastAPI service in `transcript-proxy/` that fetches a
-single YouTube transcript per request from a host whose IP YouTube does not block.
-
-> [!NOTE]
-> **Status (POV-214): this Synology setup is an option, not in use.** Production runs on the
-> local Docker stack (§10) and fetches with `youtube-legacy` directly; `proxy` is the fallback and
-> points at **Railway** (§14.1a). The Synology/Tailscale setup below (POV-196, built for the former
-> OCI host) stays documented, and its code stays in `transcript-proxy/`, in case the production
-> host's IP gets blocked. To use it, the production host must join the tailnet.
-
-> [!NOTE]
-> **Why self-hosted:** Railway's shared datacenter egress IP was soft-throttled by YouTube
-> (intermittent `502 proxy_blocked` interleaved with `200`s). The DS220j serves from a
-> residential egress IP, which YouTube throttles far less. See ADR-0009 and the POV-196
-> retrospective.
-
-**Connectivity model:** Both the production host and the Synology join the same tailnet. The
-backend reaches the proxy at the Synology's **raw tailnet IP** (`http://100.x.y.z:8000`) — *not*
-a MagicDNS name, because the backend runs in a Docker bridge network that does not resolve
-MagicDNS. The MagicDNS name (e.g. `ds220j.<tailnet>.ts.net`) is a human-readable alias only.
-Traffic is plain HTTP; Tailscale (WireGuard) already encrypts the path, so no TLS termination is
-needed on the Synology.
-
-**Backend configuration** (`TRANSCRIPT_PROXY_URL`, `TRANSCRIPT_PROXY_API_KEY`):
-
-| Variable | Active (Synology) | Fallback (Railway) |
-|:---|:---|:---|
-| `TRANSCRIPT_PROXY_URL` | `http://<synology-tailnet-ip>:8000` | `https://povzetkar-production.up.railway.app` (the default if unset) |
-| `TRANSCRIPT_PROXY_API_KEY` | the shared key | the **same** shared key |
-
-> [!IMPORTANT]
-> **Both hosts must accept the same `X-API-Key`.** The backend sends one
-> `TRANSCRIPT_PROXY_API_KEY`; whichever host is active must be configured with that exact value,
-> or a fallback flip will return `401`. On the tailnet the key is defense-in-depth (the tailnet
-> is the primary boundary); on Railway it is the sole boundary and is mandatory.
-
-**Flip-back to Railway (manual fallback):** Only one host is active at a time. If the Synology
-proxy (once in use) is unreachable or misbehaving, on the production host:
-
-```bash
-# In .env.docker (project root), set TRANSCRIPT_PROXY_URL back to Railway
-# (or remove the override entirely — the compose default is the Railway URL):
-#   TRANSCRIPT_PROXY_URL=https://povzetkar-production.up.railway.app
-cd backend
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps app   # recreate to pick up the env
-```
-
-The provider fallback chain (`transcript.providers.order`) also degrades automatically if the
-active proxy is down — flip-back is for restoring the proxy path.
-
-**Synology deployment notes (DS220j gotchas):**
-
-- **Runtime is the box's built-in Python 3.8** (`/bin/python3`) — SynoCommunity `python312` is
-  not required. `youtube-transcript-api 1.2.4` supports 3.8; `requirements.txt` is pinned to the
-  3.8-compatible set (`fastapi==0.124.4`, `uvicorn[standard]==0.33.0`).
-- **`/tmp` is mounted `noexec`.** A venv or pip cache under `/tmp` will fail to load compiled
-  extensions (`pydantic_core ... failed to map segment from shared object`). The proxy MUST be
-  installed on an exec-capable `/volume1` path (e.g. `/volume1/transcript-proxy`).
-- **Process supervision:** a DSM Task Scheduler **Boot-up** task (user `root`) runs
-  `run-proxy.sh`, which sources `.env` (the API key, `chmod 600`, gitignored) and launches
-  `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`. The proxy is started once
-  at boot; there is **no crash-restart supervision yet** (backlog) — if uvicorn dies mid-run it
-  stays down until reboot, so monitor and flip to Railway if needed.
-- **Updating the code on the box:** copy the repo file over with
-  `scp -O transcript-proxy/main.py minimax@<host>:/volume1/transcript-proxy/main.py`, then
-  restart (stop the running uvicorn and re-run `run-proxy.sh`, or run the boot task). The `-O`
-  flag is required — DSM's SSH has no SFTP subsystem, so a plain `scp` fails with
-  `subsystem request failed on channel 0`.
-
-**Health check & per-request diagnostics:** `GET /health` (no auth) returns `{"status":"ok"}`.
-Every transcript request logs its outcome to `proxy.log` with the exact cause, e.g.
-`video_id=... blocked by YouTube: RequestBlocked -> 502 proxy_blocked` — distinguishing
-`IpBlocked` from `RequestBlocked` (both `502 proxy_blocked`) and `upstream_error` without
-guessing.
+The `proxy` provider calls the standalone FastAPI service in `transcript-proxy/` (see its README), which fetches a single YouTube transcript per request from a host whose IP YouTube does not block. The backend reaches it at `TRANSCRIPT_PROXY_URL` with `TRANSCRIPT_PROXY_API_KEY` (14.1a). The author's proxy hosts are documented in a private operations runbook (not part of this repository).
 
 ### 14.2 How Secrets Are Provided
 
@@ -1211,7 +965,7 @@ Secrets stay out of logs through three rules:
 
 > There is **no** `quarkus.config.secret-keys` property (removed in POV-208 — Quarkus ignored it). SmallRye's secret-keys feature is a programmatic access *lock* that makes plain `@ConfigProperty` reads throw; it was never in effect here.
 
-**Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via the `X-Forwarded-Proto: https` that `cloudflared` forwards and the app accepts only from `cloudflared`'s fixed address, §10.4a; checked in the deploy smoke test after every change to the proxy trust). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
+**Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via the `X-Forwarded-Proto: https` that `cloudflared` forwards and the app accepts only from `cloudflared`'s fixed address — [ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md), `QUARKUS_HTTP_PROXY_TRUSTED_PROXIES` and `ipv4_address` in `backend/docker-compose.prod.yml`; checked after every change to the proxy trust). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
 
 ### 14.5 Security Best Practices
 

@@ -126,7 +126,7 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 > [!WARNING]
 > **New env vars must be explicitly listed in `docker-compose.prod.yml` (POV-194)**:
-> The `app` service injects only the env vars it explicitly enumerates under `environment:`. `--env-file .env` makes a variable available for `${...}` substitution *inside* the compose file, but does NOT pass it into the container unless it is listed. A missing `TRANSCRIPT_PROXY_API_KEY` meant the container used the placeholder default, the proxy returned 401, and every fetch fell through to the IP-blocked YouTube-legacy provider on OCI. It worked locally only because Quarkus reads `.env` directly in dev. **When adding any new env-backed config, add it to the prod compose `environment:` list (mirror the existing required-var pattern `${VAR:?VAR must be set}`).**
+> The `app` service injects only the env vars it explicitly enumerates under `environment:`. `--env-file .env` makes a variable available for `${...}` substitution *inside* the compose file, but does NOT pass it into the container unless it is listed. A missing `TRANSCRIPT_PROXY_API_KEY` meant the container used the placeholder default, the proxy returned 401, and every fetch fell through to the YouTube-legacy provider, whose IP the then production host had blocked. It worked locally only because Quarkus reads `.env` directly in dev. **When adding any new env-backed config, add it to the prod compose `environment:` list (mirror the existing required-var pattern `${VAR:?VAR must be set}`).**
 
 > [!WARNING]
 > **Resolve REST-client header secrets via `@ConfigProperty`, not a `@ClientHeaderParam` expression (POV-194)**:

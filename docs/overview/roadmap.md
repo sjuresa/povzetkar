@@ -245,7 +245,7 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Transcript Ingestion Resilience:**
     *   **Transcript Proxy Service** (POV-193): standalone, stateless FastAPI proxy fetching a single YouTube transcript per request, deployable on a non-blocked host.
     *   **`ProxyTranscriptProvider`** (POV-194): Quarkus integration as the now-primary `TranscriptProvider`, with caller-side skip-first jitter throttle.
-    *   **Proxy Relocation to Synology DS220j** (POV-196): moved from Railway (soft-throttled shared egress IP) to a self-hosted box reached over Tailscale; Railway kept as passive fallback.
+    *   **Proxy Relocation to a Self-Hosted Host** (POV-196): moved from a PaaS host (soft-throttled shared egress IP) to a self-hosted box reached over a VPN; the PaaS host kept as passive fallback.
     *   **Persist Transcript Before Gemini Call** (POV-198): best-effort pre-write so 503/429 retries no longer re-fetch from scratch.
 2.  **Scheduler Correctness:**
     *   **Scheduled Orchestration Fix & Periodic Cron** (POV-197): fixed orchestration that had never run on a schedule (`BlockingOperationNotAllowedException`); consolidated into a single hourly periodic cron.
