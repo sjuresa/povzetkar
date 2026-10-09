@@ -127,8 +127,12 @@ If you need to run services separately:
 
 **Backend only:**
 ```bash
-./mvnw quarkus:dev -pl backend
+cd backend
+../mvnw quarkus:dev -DskipTests=true
 ```
+
+`-DskipTests=true` deactivates the `config-guard` Maven profile, whose `quarkus:dependency-tree` execution makes
+dev mode fail otherwise (backlog: "`quarkus:dev` fails while the `config-guard` profile is active").
 
 **Frontend only:**
 ```bash
