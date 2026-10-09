@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { LandingPage } from './LandingPage';
 import { useAuthStore } from '../store/authStore';
 
@@ -32,10 +32,6 @@ function renderAs(isAuthenticated: boolean) {
 }
 
 describe('LandingPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('lets an anonymous visitor sign in from the nav, the hero and the closing call to action', () => {
     renderAs(false);
 

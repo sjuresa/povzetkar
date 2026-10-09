@@ -38,7 +38,6 @@ function renderIntake() {
 
 describe('QuickSourceIntake', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     debounce.frozen = undefined;
   });
 

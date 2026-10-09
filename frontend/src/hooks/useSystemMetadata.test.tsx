@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useSystemMetadata } from './useSystemMetadata';
 import client from '../api/client';
@@ -26,10 +26,6 @@ const createWrapper = () => {
 };
 
 describe('useSystemMetadata', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('should fetch system metadata from the correct path', async () => {
     const mockData = { version: '0.14.0', environment: 'test', status: 'ACTIVE', releaseDate: '2026-03-28' };
     vi.mocked(client.get).mockResolvedValue({ data: mockData } as any);

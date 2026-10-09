@@ -26,7 +26,6 @@ function resetStore(loaded: boolean) {
 
 describe('onboardingStore', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(patchApiV1UsersMeOnboarding).mockResolvedValue({ data: {} } as never);
     resetStore(true);
   });

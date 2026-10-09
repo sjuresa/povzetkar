@@ -41,7 +41,7 @@ class MockEventSource {
 
 let mockEventSourceInstance: MockEventSource | null = null;
 
-global.EventSource = MockEventSource as unknown as typeof EventSource;
+globalThis.EventSource = MockEventSource as unknown as typeof EventSource;
 
 describe('useJobEvents', () => {
   const updateJobStatus = vi.fn();
@@ -49,7 +49,6 @@ describe('useJobEvents', () => {
   const setConnectionStatus = vi.fn();
 
   beforeEach(() => {
-    vi.clearAllMocks();
     mockEventSourceInstance = null;
     vi.mocked(useEventStore).mockReturnValue({ 
       updateJobStatus, 

@@ -24,7 +24,6 @@ function serverReturns(accountStatus: AccountStatus) {
 describe('usePendingApprovalPolling', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.clearAllMocks();
     visibility = 'visible';
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility });
     vi.stubGlobal('location', { ...globalThis.location, reload });

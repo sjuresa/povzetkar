@@ -36,7 +36,6 @@ if (globalThis.window !== undefined) {
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
 });
 
 const mockBriefingData = {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useAuthStore } from './authStore';
 import { getApiV1UsersMe } from '../api/generated/users/users';
 
@@ -17,10 +17,6 @@ describe('authStore', () => {
     vi.stubGlobal('location', {
       href: '',
     });
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
   });
 
   it('login() should redirect to /auth/login', () => {
