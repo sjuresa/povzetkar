@@ -74,13 +74,15 @@ export function SourceDetailPage() {
   const { t } = useTranslation();
   const { sourceId } = useParams({ strict: false });
   const id = typeof sourceId === 'string' ? parseInt(sourceId, 10) : 0;
-  
+  // The generated guard only skips null/undefined; NaN (non-numeric route param) and ids ≤ 0 must not reach the API
+  const queryOptions = { ...notFoundIsAnAnswer, enabled: id > 0 };
+
   const [page, setPage] = useState(0);
   const [size] = useState(20);
   const [summaryItemId, setSummaryItemId] = useState<number | null>(null);
 
-  const { data: sourceResponse, isLoading: isSourceLoading } = useGetApiV1SourcesId(id, { query: notFoundIsAnAnswer });
-  const { data: itemsResponse, isLoading: isItemsLoading } = useGetApiV1SourcesIdItems(id, { page, size }, { query: notFoundIsAnAnswer });
+  const { data: sourceResponse, isLoading: isSourceLoading } = useGetApiV1SourcesId(id, { query: queryOptions });
+  const { data: itemsResponse, isLoading: isItemsLoading } = useGetApiV1SourcesIdItems(id, { page, size }, { query: queryOptions });
 
   const source = sourceResponse?.data;
   const items = (itemsResponse?.data?.items || []) as ContentItem[];

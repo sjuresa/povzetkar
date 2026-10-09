@@ -145,7 +145,6 @@ describe('DashboardPage', () => {
       refetch: vi.fn(),
     } as any);
     vi.mocked(useEventStore).mockReturnValue([] as any);
-    mockSyncFromDashboard.mockClear();
     setupOnboardingStore(false, false);
 
     const { rerender } = renderDashboard();

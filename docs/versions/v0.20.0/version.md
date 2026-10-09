@@ -17,6 +17,7 @@
 | POV-221 — Edge Hardening: 404 for Probe Paths, Bounded `uri` Tag, 401 for Unauthenticated XHR, CORS Removed | [walkthrough](POV-221-walkthrough.md) | [retrospective](POV-221-retrospective.md) |
 | POV-222 — Human-Like Serial Pacing of YouTube Calls, Bounded Per-Video Retries, Any-Language Transcripts | [walkthrough](POV-222-walkthrough.md) | [retrospective](POV-222-retrospective.md) |
 | POV-213 — Scheduler-Fired Integration Test for the Scheduled Run; Daytime Cron for Retention and Enrichment | [walkthrough](POV-213-walkthrough.md) | [retrospective](POV-213-retrospective.md) |
+| POV-215 — Upgrade orval to 8.41.0 and Vitest to 5.0.3 (CRITICAL Advisories) | [walkthrough](POV-215-walkthrough.md) | [retrospective](POV-215-retrospective.md) |
 
 ## Carry-Forward Review
 

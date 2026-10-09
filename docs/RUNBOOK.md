@@ -245,7 +245,7 @@ npm run gen:api                                # orval, output.clean: true remov
 ```
 
 - Generate from a `package -DskipTests` build: a spec written while test classes are on the classpath contains test-only endpoints.
-- orval is pinned exactly (`8.5.3`, no `^`) and raised only deliberately, together with a regeneration; `prettier: false` keeps the output independent of a globally installed prettier.
+- orval is pinned exactly (`8.41.0`, no `^`) and raised only deliberately, together with a regeneration; `prettier: false` keeps the output independent of a globally installed prettier. orval 8.41.0 no longer writes its version into the file header (8.5.3 did), so a bump changes only what the generator actually emits differently.
 - CI step **"API client drift check"** runs the two commands above before the tests and fails if `git status --porcelain -- frontend/src/api/generated` is not empty.
 
 ### 8.4 Infra Config Validation

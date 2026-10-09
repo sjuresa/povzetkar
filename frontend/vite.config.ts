@@ -45,6 +45,9 @@ export default defineConfig(({ mode, isPreview }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      clearMocks: true, // Vitest 5 default, stated: tests rely on mock call history being cleared before each test
+      // Since Vitest 4 the report lists only files a test imports; include keeps untested files in it (at 0 %)
+      coverage: { include: ['src/**/*.{ts,tsx}'] },
     },
   }
 })
