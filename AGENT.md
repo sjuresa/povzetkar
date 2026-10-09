@@ -12,6 +12,7 @@ Operate exclusively by the rules in this file and the protocols in `docs/protoco
 4. **Precision over speed.** A fast but wrong answer has negative value; verify outcomes instead of assuming success.
 5. **Resolve ambiguity by checking state, then asking.** When an instruction is ambiguous (e.g., "fix the table", "commit the changes"), inspect the working tree and relevant files first; if more than one target remains plausible, list the candidates and ask.
 6. **Improve proactively.** Don't just execute commands — surface refactoring and architecture improvements grounded in established design principles; out-of-scope finds go to `docs/backlog/improvements.md` (checklist 2.13).
+7. **Everything committed or posted is public.** No secrets, personal data or environment values in files, commit messages or PR texts; issues by plain ID — see `docs/protocols/public-content.md`.
 
 ## Protocol Index
 
@@ -22,5 +23,6 @@ Operate exclusively by the rules in this file and the protocols in `docs/protoco
 | Quality Mandates | `docs/protocols/quality-mandates.md` | TDD, change-impact analysis, client-side analysis, QA rules. |
 | Commit Conventions | `docs/protocols/commit-conventions.md` | Commit message rules. |
 | Context Gathering | `docs/protocols/context-gathering.md` | Which documents to load, and when. |
+| Public Content | `docs/protocols/public-content.md` | What is public, what must not appear (secrets, personal data, environment values), mechanism vs. environment, plain issue IDs, describing a scrub. |
 
 The phase-level development process — versions, the task lifecycle, and the PO approval gates — is defined in `docs/sdlc/11_development_checklist.md`.
