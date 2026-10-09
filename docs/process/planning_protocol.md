@@ -1,7 +1,7 @@
 # Project Planning Protocol (PPP): Standard Tier
 
 **Status:** Active
-**Revision:** 1.1
+**Revision:** 1.2
 **Description:** This protocol defines the mandatory artifacts and quality standards for task planning in the Povzetkar project. It serves as the "Standard" implementation of the planning interview defined in the **[Development Methodology](./methodology.md)** and is enforced by **[Phase 2 (step 2.2) of the Development Checklist](../sdlc/11_development_checklist.md)**. Every task MUST adhere to these rules before implementation begins, applying artifacts where warranted (see §5 Protocol Elasticity).
 
 ---
@@ -64,7 +64,7 @@ To achieve "Perfection Tier" planning, every task must produce or update the fol
 All version-specific artifacts MUST be isolated in a dedicated directory:
 
 - **Path Pattern:** `docs/versions/vX.Y.Z/`
-- **Mandatory File:** `version.md` — the version hub, created at the end of the first task of the version.
+- **Mandatory File:** `version.md` — the version hub, created at version initialisation (checklist step 1.4).
 - **Per-Task Files:** `POV-XXX-walkthrough.md`, `POV-XXX-retrospective.md` — one pair per task.
 - **Optional Files:** `ui-ux-manifesto.md`, `i18n-audit.md` (as per Protocol Elasticity).
 

@@ -4,6 +4,7 @@
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
+| 1.9     | October 9, 2026 | Povzetkar AI | POV-223: user roles updated to the SPA and per-user topics; US-17.7 text aligned with the implemented re-login (ID unchanged). |
 | 1.8     | September 28, 2026 | Povzetkar AI | POV-220: minted US-UI-007 in §3.5 — landing page for prospective users; Implemented at task close-out. |
 | 1.7     | September 27, 2026 | Povzetkar AI | POV-216: migrated the orphaned US-16.2, US-16.3, US-16.4, US-16.8 (referenced by UC-8/9/10) into new §3.8; US-16.4 notes the per-user guide state. |
 | 1.6     | July 8, 2026     | Povzetkar AI | POV-205: minted US-API-001 in new §3.6 API & Integrations; §3.6 Administration & Hardening renumbered to §3.7. |
@@ -20,8 +21,8 @@ This document outlines the functional requirements for Project Povzetkar. It des
 
 ## 2. User Roles
 
-*   **User/Consumer:** The primary user who consumes the generated intelligence. Currently, this involves viewing aggregated reports (briefings) via a simple web interface. In the future, this role will interact with a conversational interface.
-*   **Administrator:** The user responsible for managing the system's configuration. This includes adding and managing users, topics, and the data sources associated with them.
+*   **User/Consumer:** The primary user who consumes the generated intelligence: manages their own topics and YouTube channels and reads the daily briefings in the web application (React SPA). In the future, this role may interact with a conversational interface.
+*   **Administrator:** The user responsible for operating the system: approves and manages user accounts, monitors and restarts background jobs, and manages content items across all users.
 
 ## 3. User Stories
 
@@ -82,7 +83,7 @@ This section breaks down the system's functionality into user-centric stories. I
 *   **US-17.4** (Implemented) **As an Administrator, I want to** view and restart background jobs with a full audit trail so that failed runs can be recovered accountably. *(Background Job Dashboard — Restart/Audit)*
 *   **US-17.5** (Implemented) **As a System, I want to** fetch transcripts through an ordered multi-provider chain with automatic fallback so that a single provider failure does not lose content. *(Transcript Multi-Provider Resilience)*
 *   **US-17.6** (Implemented) **As a User, I want to** have external links open in a new tab so that I keep my briefing context while reading sources. *(External Links Open in New Tab)*
-*   **US-17.7** (Implemented) **As a User, I want to** be redirected to the landing page when my session expires so that I can re-authenticate without a broken page. *(Session Expiry → Login Redirect)*
+*   **US-17.7** (Implemented) **As a User, I want to** be signed in again and returned to the page I was on when my session expires, instead of seeing a broken page. *(Session Expiry → Login Redirect; implemented as `/auth/login?redirect=<path>`, corrected in POV-223 like the roadmap in POV-220)*
 
 ### 3.8. User Experience (migrated from v0.16 planning)
 

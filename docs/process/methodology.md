@@ -110,7 +110,7 @@ A "Spike" is a time-boxed research task used when the path forward is unclear.
 ### 4.3. Definition of Done (DoD)
 A task is only complete when:
 1.  Code is written and follows standards.
-2.  Tests are passing (verified by User).
+2.  Tests are passing (full suite run by the Agent; the User confirms the outcome).
 3.  **Documentation is Updated:** Context and Update sections from the task definition are addressed.
 4.  **UI is Responsive:** Verified on mobile/desktop (if applicable).
 5.  Commit message is formatted (Conventional Commits).

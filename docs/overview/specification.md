@@ -1,3 +1,12 @@
+# Project Povzetkar — Original Vision (October 2025)
+
+> [!NOTE]
+> **Historical vision, not the current design.** This specification describes the long-term vision as written in
+> October 2025 (multi-source ingestion, RAG chat, trend and bias analysis, LangChain4j, a message queue). Much of it
+> is not built, and the stack evolved differently — Gemini through the `google-genai` SDK, no LangChain4j, no message
+> queue. The current architecture is in [architecture_overview.md](architecture_overview.md); planned work is in the
+> [roadmap](roadmap.md) and the [backlog](../backlog/improvements.md).
+
 **Version:** 1.1
 **Date:** October 31, 2025
 

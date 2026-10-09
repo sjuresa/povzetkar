@@ -119,7 +119,7 @@ npm run dev
 
 This command uses `npm-run-all` to simultaneously boot:
 - **Backend (Quarkus):** `http://localhost:8080` (API & Dev UI)
-- **Frontend (Vite 8):** `http://localhost:5173` (React SPA)
+- **Frontend (Vite 6):** `http://localhost:5173` (React SPA)
 
 ### 6.1 Individual Service Execution
 
@@ -284,7 +284,7 @@ docker build -t si.jumis/povzetkar:latest .
 ```
 
 This process:
-1.  **Builds the Frontend**: Compiles React and Vite-React-SSG artifacts.
+1.  **Builds the Frontend**: Compiles the React SPA with Vite.
 2.  **Integrates Static Resources**: Embeds the built frontend into the Quarkus `META-INF/resources` directory.
 3.  **Packages Backend**: Builds the Quarkus "runner" with all dependencies included.
 
@@ -376,12 +376,10 @@ The `ContentSourceDetailService` is responsible for enriching and refreshing det
 
 To manually trigger the enrichment process for all content sources that are missing details:
 
-*   **Endpoint:** `POST /api/v1/content-sources/enrich`
+*   **Endpoint:** `POST /api/v1/sources/enrich`
 *   **Method:** `POST`
-*   **Example using curl:**
-    ```bash
-    curl -X POST http://localhost:8080/api/v1/content-sources/enrich
-    ```
+*   **Authentication:** an administrator's browser session (`ADMIN_SYSTEM_TRIGGER`); API keys are rejected
+    (read-only, §14.6).
 
 #### 9.1.2 Scheduled Refresh
 
@@ -395,7 +393,7 @@ The service is configured to periodically refresh content source details automat
 
 ### 9.2 Orchestrator and Briefing Service
 
-The `OrchestratorService` is responsible for the end-to-end process of fetching new content, summarizing it, and generating daily briefings for active users. This service runs on a schedule.
+The `OrchestrationManager` is responsible for the end-to-end process of fetching new content, summarizing it, and generating daily briefings for active users. This service runs on a schedule.
 
 #### 9.2.1 Scheduled Orchestration
 
@@ -460,7 +458,7 @@ To manually trigger the orchestration process:
 
 To verify that the orchestrator is running and generating summaries and briefings:
 
-1.  **Check Application Logs:** Look for log entries from `OrchestratorService` indicating the start and end of orchestration runs, and any errors during content fetching or summarization.
+1.  **Check Application Logs:** Look for log entries from `OrchestrationManager` indicating the start and end of orchestration runs, and any errors during content fetching or summarization.
 2.  **Inspect Database for Summaries:**
     Connect to the database and query the `summary` table. You should see new entries corresponding to summarized content.
     ```sql
@@ -553,11 +551,8 @@ Every request to the `/api/v1/*` endpoints is assigned a **Correlation ID** to a
 The `AuditLogFilter` records every API access in the `audit_log` database table.
 
 *   **Captured Data:** HTTP Method, Request Path, Response Status, Duration (ms), User Agent, Correlation ID, and User ID (if authenticated).
-*   **Accessing logs via API:**
-    ```bash
-    curl -H "Authorization: Bearer <admin_token>" \
-      "http://localhost:8080/api/v1/admin/audit-log?page=0&size=20"
-    ```
+*   **Accessing logs via API:** `GET /api/v1/admin/audit-log?page=0&size=20` with an admin's browser session (the
+    admin UI's Audit Log page uses it). There is no bearer token; API keys are rejected on admin paths (§14.6).
 *   **Direct Database Query:**
     ```sql
     SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 10;
@@ -580,10 +575,7 @@ A consolidated metrics endpoint provides a snapshot of the system state with a s
 
 *   **Endpoint:** `GET /api/v1/admin/metrics`
 *   **Captured Metrics:** Total/Running/Failed Background Jobs, Total/Enabled Topics, Total Content Items, and Idempotent Request count.
-*   **Example using curl:**
-    ```bash
-    curl -H "Authorization: Bearer <admin_token>" http://localhost:8080/api/v1/admin/metrics
-    ```
+*   **Access:** an admin's browser session, as for the audit log above.
 
 ### 10.4 Command Idempotency
 
@@ -653,7 +645,7 @@ Povzetkar v0.15.0+ includes a built-in monitoring stack based on **Micrometer**,
 
 ### 13.1 Infrastructure Overview
 
-The monitoring infrastructure is defined in `backend/docker-compose.yml`:
+The monitoring infrastructure is defined in `backend/docker-compose.prod.yml` (production) and `backend/docker-compose.yml` (dev stack):
 - **Prometheus**: Scrapes metrics from the Quarkus application.
 - **Grafana**: Visualizes metrics via pre-provisioned dashboards.
 
@@ -944,7 +936,7 @@ Secrets are injected via **environment variables** and resolved by Quarkus Confi
 | **Local Dev** | `.env` file | Copy `backend/.env.example` to `backend/.env` and fill in real values. Loaded by Quarkus Dev mode. |
 | **Docker** | `--env-file` | Create a `.env.docker` file (never committed) and pass via `docker run --env-file .env.docker`. |
 | **CI/CD** | GitHub Secrets | Injected as environment variables in the `ci.yml` workflow via `${{ secrets.* }}`. |
-| **Kubernetes** | K8s Secrets | Mount as environment variables from a `Secret` resource. See deployment docs. |
+| **Kubernetes** | K8s Secrets | Mount as environment variables from a `Secret` resource (option; this project deploys with Docker Compose). |
 
 ### 14.3 Startup Secret Validation (Fail-Fast)
 
@@ -973,6 +965,7 @@ Secrets stay out of logs through three rules:
 2.  **Rotate API keys periodically.** Google API keys and OIDC secrets should be rotated at least annually.
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
+5.  **Audit key usage.** Monitor API key usage in the Google Cloud Console to detect unauthorized access or quota anomalies.
 
 ### 14.6 Programmatic API-Key Access (POV-205)
 
@@ -1070,4 +1063,3 @@ WHERE user_id = (SELECT id FROM users WHERE email = 'admin@yourdomain.com')
 ### 15.4 Demo Content
 
 The `demo@povzetkar.local` user and `Science & Discovery` topic (with Kurzgesagt and Veritasium channels) are seeded by migration V32. This account is `ENABLED` with no roles — it exists solely as a data source for the impersonation pattern. Do not delete or modify this user.
-5.  **Audit key usage.** Monitor API key usage in the Google Cloud Console to detect unauthorized access or quota anomalies.

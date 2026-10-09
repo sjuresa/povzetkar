@@ -2,6 +2,17 @@
 
 This document defines the REST API contract required to support the capabilities outlined in the Frontend Specification (v0.11.0). The API is frontend-driven, meaning payloads are designed to minimize over-fetching while satisfying the UI data requirements.
 
+> [!WARNING]
+> **§1 states the API conventions (envelope, errors, idempotency, optimistic locking — implemented by `api.filter.*`
+> and `api.exceptionmapper.*`; details not re-verified in POV-223); the endpoint catalogue in §2–§3 is the v0.11
+> design and has drifted.**
+> Examples (status POV-223): user administration uses `POST /api/v1/users/{id}/approve|reject|disable|enable`
+> (`PATCH /users/{id}` and `PUT /users/{id}/roles` were removed in POV-185); summary sharing is
+> `POST /api/v1/content-items/{id}/summary/share|unshare` and briefing sharing `POST /api/v1/briefings/{id}/share|unshare`;
+> public links resolve via `/api/v1/public/resolve/{uuid}`; `POST /api/v1/sources` is admin-only (POV-219); logout
+> is `/logout`. The authoritative contract is the OpenAPI document generated from the code (`/q/openapi` on the
+> management port). Re-synchronizing §2–§3 is in the backlog.
+
 ## 1. Global API Conventions
 
 *   **Content Type:** `application/json` for all requests and responses.

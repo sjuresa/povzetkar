@@ -292,12 +292,15 @@ This document outlines the concrete steps for implementing the features describe
 
 ## v1.0: RAG & Conversational Interface
 
+> **Forecast, not a commitment** (reviewed in POV-223). Versions are scoped task-first; items below that were
+> delivered earlier are marked *(delivered)*.
+
 **Goal:** Deliver the core "interactive report" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.
 
 ### Key Tasks & Implementation Steps
 
 1.  **Evolve the Persistence Layer:**
-    *   Update the `Summary` JPA entity to include the `embedding` field (`vector(1536)`).
+    *   Update the `Summary` JPA entity to include the `embedding` field (`vector(1536)`) — the column already exists in the `summaries` table (V1 migration); the entity does not map it yet.
     *   Implement the `Category` and `Sentiment` entities and their relationships with `Summary`.
     *   Configure `pgvector` indexing on the `embedding` column for efficient similarity searches.
 
@@ -317,7 +320,7 @@ This document outlines the concrete steps for implementing the features describe
         4.  Send the augmented prompt to the LLM and return its final, context-aware answer to the client.
 
 4.  **User Experience Planning for Advanced UI:**
-    *   **ADR for Frontend:** Create an Architectural Decision Record for the choice of frontend framework.
+    *   **ADR for Frontend:** Create an Architectural Decision Record for the choice of frontend framework. *(delivered — ADR-0004, v0.12)*
     *   **Wireframes:** Develop basic wireframes for the user interface.
     *   **User Feedback:** Establish a process for gathering user feedback and creating initial user guides.
 
@@ -335,7 +338,7 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Implement New Ingestion Services:**
     *   Create a `WebScraperService` that can extract article text from a given list of blog/news URLs.
     *   Develop a service for at least one social media platform (e.g., X/Twitter or Reddit) to fetch relevant posts based on keywords or user accounts.
-    *   Ensure all new ingestion services are decoupled and publish their findings to the message queue for the central processing service to consume.
+    *   Ensure all new ingestion services are decoupled from the central processing service (the original vision's message queue does not exist; ingestion today is in-process, `ContentFetchingStrategy`).
 
 2.  **Develop Trend & Pattern Detection:**
     *   Implement the `Trend` and `TrendSummaries` JPA entities.
@@ -349,7 +352,7 @@ This document outlines the concrete steps for implementing the features describe
 
 4.  **Production Quality Testing:**
     *   **Performance Testing:** Conduct initial load tests on the RAG API to identify performance bottlenecks.
-    *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows, following the architectural decision made in v1.0.
+    *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows. *(delivered — Playwright since v0.12, run in CI)*
 
 ## v1.2: Content Creation & Refinement
 
@@ -358,6 +361,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.4     | 2026-10-09         | Povzetkar AI | v1.0+ marked as forecast; delivered items marked (ADR-0004, Playwright); `embedding` column and message-queue statements aligned with the code; POV-196 entry without host details (POV-223). |
 | 4.3     | 2026-09-29         | Povzetkar AI | v0.20 *Production Edge*: POV-214 reshaped from "Caddy on the traffic path" to removing Caddy — headers, CSP, caching and proxy trust in the application (ADR-0012). |
 | 4.2     | 2026-09-28         | Povzetkar AI | v0.17 *Session Expiry Handling* (POV-187) corrected to the implemented `/auth/login?redirect=` flow (POV-220). |
 | 4.1     | 2026-09-27         | Povzetkar AI | Marked v0.20 as In Progress at version initialisation (POV-212); key tasks linked to POV-213, POV-214, POV-215. |

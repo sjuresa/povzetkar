@@ -7,12 +7,18 @@
 
 This document defines the quality attributes and constraints of the Povzetkar system. It specifies *how well* the system should perform its functions.
 
+> [!NOTE]
+> Most targets were set in August 2025 for the full vision (conversational API, horizontal scaling, message queue)
+> and are **targets, not measured guarantees** — the deployed system is a single application instance. Requirements
+> restated or added since (P-5, SEC-1, SEC-5, SEC-6) describe the current state; items marked *Status* below note
+> where the system differs. A full review of this catalogue is in the backlog.
+
 ## 2. Performance
 
 *   **P-1 (API Response Time):** The p95 latency for all user-facing API endpoints (e.g., conversational queries) must be under **800ms**.
 *   **P-2 (Ingestion Throughput):** The system must be capable of ingesting and processing at least **1,000** new content items per hour.
 *   **P-3 (Report Generation):** Generation of a daily briefing report must complete within **5 minutes** of the scheduled time.
-*   **P-4 (Startup Time):** In a containerized environment, the backend service should be ready to accept requests within **5 seconds** of container start (leveraging Quarkus native compilation).
+*   **P-4 (Startup Time):** In a containerized environment, the backend service should be ready to accept requests within **5 seconds** of container start (leveraging Quarkus native compilation). *Status: the image runs on the JVM (distroless Java 25), not as a native binary; not measured.*
 *   **P-5 (Frontend Initial Load):** The landing-page **initial-load JavaScript payload** should stay at or below **~250 KB gzip** (aspirational ceiling), and the landing-page Lighthouse **performance score** should stay at or above **90** (measured on a local production build via `vite preview`). *Baseline (POV-202, 2026-07-05):* initial-load JS **167 KB gzip**, Lighthouse performance **93** (FCP 1.8 s, LCP 2.8 s) — measured after route-level code-splitting reduced the bundle from a 370 KB / score-85 pre-optimization state. This NFR is **aspirational / not yet CI-enforced**; it is the explicit anchor for a future bundle-size budget and Lighthouse-CI gate (see `docs/backlog/improvements.md`).
 
 ## 3. Scalability
@@ -26,7 +32,7 @@ This document defines the quality attributes and constraints of the Povzetkar sy
 *   **R-1 (Uptime):** The user-facing Conversational API must have a minimum uptime of **99.9%**.
 *   **R-2 (Fault Tolerance):** The failure to process a single content item must not halt the entire processing pipeline. The system should log the error, mark the item as failed, and continue processing other items.
 *   **R-3 (Data Durability):** All processed data, summaries, and user interactions stored in the PostgreSQL database must be backed up regularly according to a defined schedule (daily snapshots).
-*   **R-4 (Asynchronous Processing):** The use of a message queue ensures that ingestion spikes do not crash the system. Requests are queued and processed as resources become available.
+*   **R-4 (Asynchronous Processing):** The use of a message queue ensures that ingestion spikes do not crash the system. Requests are queued and processed as resources become available. *Status: there is no message queue; orchestration runs in-process as background jobs with a per-date lock, a per-run time budget and paced, app-wide serialized YouTube fetches.*
 
 ## 5. Security
 
