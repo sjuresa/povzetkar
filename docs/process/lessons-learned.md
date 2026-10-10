@@ -9,6 +9,14 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 ## 🚀 Recent Highlights (v0.20.0)
 
 > [!WARNING]
+> **A control written only in prose is no control (POV-224)**:
+> From POV-206 on, RUNBOOK §8.2 said the Trivy filesystem scan skips npm devDependencies and "`npm audit` in
+> `frontend/` covers those". Nothing ran that `npm audit`, and it named only one of the two lockfiles — a critical
+> advisory in the root lockfile reached the public repository and was found by Dependabot. When a document names a
+> compensating check, find the CI step or checklist item that runs it; if there is none, close the gap in the gate
+> itself (here `TRIVY_INCLUDE_DEV_DEPS`) or record the gap as open.
+
+> [!WARNING]
 > **The repository is public — a tool permission is not a data boundary (POV-223)**:
 > Everything committed or posted is public (`docs/protocols/public-content.md`): no secrets, personal data or
 > environment values; plain issue IDs. Two traps from preparing the publication: a deny rule on the agent's Read
