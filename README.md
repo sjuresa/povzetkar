@@ -77,8 +77,8 @@ built into a single container image. The Cloudflare tunnel is the only public en
 ## Engineering highlights
 
 - **Security** — Google OIDC with permission-based access control and per-user data scoping; an enforced
-  Content-Security-Policy (inline script allowed only by hash, no `eval`) and security headers sent by the app
-  itself; forwarded headers trusted only from the tunnel connector; technical endpoints off the public port; a
+  Content-Security-Policy for the React SPA (inline script allowed only by hash, no `eval`; the legacy server-rendered
+  admin pages allow inline scripts) and security headers sent by the app itself; forwarded headers trusted only from the tunnel connector; technical endpoints off the public port; a
   strictly read-only API key; secrets only from the environment, validated at startup.
 - **Supply chain** — Trivy scans the dependencies and the built image on every CI run; the scanner action is pinned
   to a release commit SHA; every `.trivyignore` entry carries a rationale and an expiry date.

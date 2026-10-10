@@ -692,7 +692,7 @@ properties were never real Quarkus config and were silently ignored). It can be 
 **Verifying (production stack):**
 ```bash
 # Public: must NOT be 200
-curl -s -o /dev/null -w "%{http_code}\n" https://<your-domain>/q/metrics   # 404
+curl -s -o /dev/null -w "%{http_code}\n" "https://<your-domain>/q/metrics"   # 404
 
 # Inside the Docker network: metrics served on the management port
 docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics | head -3

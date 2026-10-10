@@ -57,7 +57,7 @@ curl -H "X-API-Key: dev-key" http://localhost:8000/transcripts/dQw4w9WgXcQ
 2. **Virtualenv + deps** (bootstrap pip if the system Python ships without it):
 
    ```sh
-   cd <install-dir>
+   cd "<install-dir>"
    python3 -m venv .venv
    .venv/bin/python -m ensurepip --upgrade
    .venv/bin/python -m pip install -r requirements.txt

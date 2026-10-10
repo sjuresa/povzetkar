@@ -22,7 +22,8 @@ REF_DEF = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?(\S+?)>?(?:\s+.*)?$")
 FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
 HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$")
 HTML_ANCHOR = re.compile(r"<a\s+(?:name|id)=\"([^\"]+)\"", re.I)
-HTML_SRC = re.compile(r"<(?:img|source)\b[^>]*?\b(src|srcset)=\"([^\"]+)\"", re.I)
+HTML_TAG = re.compile(r"<(?:img|source)\b[^>]*>", re.I)
+HTML_SRC = re.compile(r"\b(src|srcset)=\"([^\"]+)\"", re.I)
 
 
 def slug(text):
@@ -73,7 +74,8 @@ def anchors(path):
 def link_targets(line):
     """Markdown links and images, HTML src/srcset and reference definitions on one line."""
     targets = [m.group(1) for m in LINK.finditer(line)]
-    for attr, value in HTML_SRC.findall(line):
+    attrs = [a for tag in HTML_TAG.findall(line) for a in HTML_SRC.findall(tag)]  # every src/srcset of a tag
+    for attr, value in attrs:
         if attr.lower() == "srcset":  # comma-separated "url descriptor" candidates
             targets += [c.split()[0] for c in value.split(",") if c.strip()]
         else:

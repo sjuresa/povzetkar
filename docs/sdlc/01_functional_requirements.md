@@ -4,7 +4,7 @@
 
 | Version | Date             | Author       | Changes                                                                                         |
 |---------|------------------|--------------|-------------------------------------------------------------------------------------------------|
-| 1.9     | October 9, 2026 | Povzetkar AI | POV-223: user roles updated to the SPA and per-user topics; US-17.7 text aligned with the implemented re-login (ID unchanged). |
+| 1.9     | October 9, 2026 | Povzetkar AI | POV-223: user roles updated to the SPA and per-user topics, actor of US-ING-001/US-UI-002/US-UI-003 corrected to User (IDs unchanged); US-17.7 text aligned with the implemented re-login (ID unchanged). |
 | 1.8     | September 28, 2026 | Povzetkar AI | POV-220: minted US-UI-007 in §3.5 — landing page for prospective users; Implemented at task close-out. |
 | 1.7     | September 27, 2026 | Povzetkar AI | POV-216: migrated the orphaned US-16.2, US-16.3, US-16.4, US-16.8 (referenced by UC-8/9/10) into new §3.8; US-16.4 notes the per-user guide state. |
 | 1.6     | July 8, 2026     | Povzetkar AI | POV-205: minted US-API-001 in new §3.6 API & Integrations; §3.6 Administration & Hardening renumbered to §3.7. |
@@ -30,7 +30,7 @@ This section breaks down the system's functionality into user-centric stories. I
 
 ### 3.1. Data Ingestion & Processing
 
-*   **US-ING-001** (Implemented) **As an Administrator, I want to** configure a list of content sources (e.g., YouTube channels) for a topic so that the system automatically monitors them for new content.
+*   **US-ING-001** (Implemented) **As a User, I want to** configure a list of content sources (e.g., YouTube channels) for my topic so that the system automatically monitors them for new content. *(Originally an Administrator story; users manage their own topics since per-user topics — actor corrected in POV-223, ID unchanged.)*
 *   **US-ING-002** (Future) **As an Administrator, I want to** define keyword searches for YouTube so that the system finds relevant new videos on specific topics.
 *   **US-ING-003** (Future) **As an Administrator, I want to** add a list of websites, blogs, and Reddit communities so the system can ingest articles and posts.
 *   **US-ING-004** (Implemented) **As a System, I want to** automatically fetch new content from all configured sources on a periodic basis.
@@ -62,8 +62,8 @@ This section breaks down the system's functionality into user-centric stories. I
 ### 3.5. User Interface & Management
 
 *   **US-UI-001** (Implemented) **As a User, I want to** navigate a simple web interface to select a topic to view the latest briefings.
-*   **US-UI-002** (Implemented) **As an Administrator, I want to** add, edit, and delete topics and manage their associated content sources through the web interface.
-*   **US-UI-003** (Implemented) **As an Administrator, I want to** enable or disable specific topics to control which content is actively processed without deleting the topic configuration.
+*   **US-UI-002** (Implemented) **As a User, I want to** add, edit, and delete my topics and manage their associated content sources through the web interface. *(Actor corrected in POV-223, ID unchanged; an Administrator can manage every user's topics.)*
+*   **US-UI-003** (Implemented) **As a User, I want to** enable or disable my topics to control which content is actively processed without deleting the topic configuration. *(Actor corrected in POV-223, ID unchanged.)*
 *   **US-UI-004** (Implemented) **As an Administrator, I want to** use a simple web interface to trigger system-level actions like content enrichment and orchestration.
 *   **US-UI-005** (Implemented) **As an Administrator, I want to** granularly trigger specific phases of the orchestration process (e.g., only processing pending items or only generating briefings).
 *   **US-UI-006** (Implemented) **As an Administrator, I want to** view specific error details for failed content items and manually trigger a retry for transcript fetching.
