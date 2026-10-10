@@ -116,8 +116,11 @@ jobs:
     - name: Run Trivy vulnerability scanner (FS)
       # Pinned by commit SHA (tags were force-pushed in the March 2026 compromise, GHSA-69fq-xp46-6x23); bump deliberately, see checklist 3.1a
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      env:
+        # trivy-action has no input for dev dependencies; Trivy reads the option from the environment (POV-224)
+        TRIVY_INCLUDE_DEV_DEPS: 'true'
       with:
-        version: 'v0.74.0'
+        version: 'v0.75.0'
         scan-type: 'fs'
         scan-ref: '.'
         format: 'table'
@@ -135,7 +138,7 @@ jobs:
       # Pinned by commit SHA (tags were force-pushed in the March 2026 compromise, GHSA-69fq-xp46-6x23); bump deliberately, see checklist 3.1a
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: 'v0.74.0'
+        version: 'v0.75.0'
         image-ref: 'povzetkar:${{ github.sha }}'
         format: 'table'
         exit-code: '1'
