@@ -1,9 +1,10 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { strictCsp } from './csp-policy'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, isPreview }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const extraHosts = (env.VITE_ALLOWED_HOSTS || '').split(',').map(h => h.trim()).filter(Boolean);
 
@@ -28,32 +29,25 @@ export default defineConfig(({ mode }) => {
             target: 'http://localhost:8080',
             changeOrigin: true,
             xfwd: true,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            configure: (proxy: any) => {
-              // Quarkus OIDC returns 302 → Google OAuth for unauthenticated XHR requests.
-              // The browser follows this cross-origin redirect causing a CORS failure before
-              // our 401 interceptor can fire. Rewrite OIDC redirects to 401 at the proxy level
-              // so client.ts handles them cleanly.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              proxy.on('proxyRes', (proxyRes: any, req: any) => {
-                const location = proxyRes.headers['location'] ?? '';
-                const isXhr = (req.headers['x-requested-with'] ?? '') === 'XMLHttpRequest';
-                const isOidcRedirect = typeof location === 'string' && location.includes('accounts.google.com');
-                if (proxyRes.statusCode === 302 && isXhr && isOidcRedirect) {
-                  proxyRes.statusCode = 401;
-                  delete proxyRes.headers['location'];
-                }
-              });
-            },
+            // No 302 → 401 rewrite: the backend answers an unauthenticated XHR with 401 itself (POV-221)
           },
         ])
       ),
+    },
+    // The built SPA under the production CSP, for the Playwright project "csp" (POV-214).
+    preview: {
+      port: 4173,
+      strictPort: true,
+      headers: isPreview ? { 'Content-Security-Policy': strictCsp() } : {},
     },
     test: {
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      clearMocks: true, // Vitest 5 default, stated: tests rely on mock call history being cleared before each test
+      // Since Vitest 4 the report lists only files a test imports; include keeps untested files in it (at 0 %)
+      coverage: { include: ['src/**/*.{ts,tsx}'] },
     },
   }
 })

@@ -1,5 +1,8 @@
 # Deferred Tasks
 
+Task drafts deferred from v0.16.0. Each one also has an entry in [`improvements.md`](improvements.md), which is
+the backlog of record.
+
 ## Actionable Toasts
 - **Priority:** **P1**
 - **Title:** `feat(ux): integrate primary actions into background job notifications`
@@ -20,6 +23,8 @@
 - **Title:** `chore(ops): Implement automated job history cleanup job`
 - **Description:**
   Develop a scheduled maintenance service to purge old job execution records, preventing long-term database bloat.
+  *(Partly done: `RetentionService` purges `job_execution_audit` in chunks since POV-165; `background_jobs` itself
+  has no retention yet — "Job Retention Policy" in `improvements.md`.)*
 - **Resilience & Error States**:
   - **Transaction Timeout**: Ensure purge runs in small batches if volume > 10k.
 - **Context / Documentation:**

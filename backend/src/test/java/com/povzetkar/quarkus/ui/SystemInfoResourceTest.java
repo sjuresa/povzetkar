@@ -14,7 +14,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 
 @QuarkusTest
-@TestSecurity(user = "testUser", roles = "user")
+@TestSecurity(user = "testUser", roles = { "user", "admin" })
 class SystemInfoResourceTest {
 
     @io.quarkus.test.InjectMock

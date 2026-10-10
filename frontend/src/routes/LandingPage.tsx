@@ -1,31 +1,47 @@
-import { lazy, Suspense, useState } from 'react';
+import { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
-import { useTranslation } from 'react-i18next';
 import { useSystemMetadata } from '../hooks/useSystemMetadata';
-import { useThemeStore } from '../store/themeStore';
 
 // Landing Sub-components
 import { LandingNav } from '../components/landing/LandingNav';
 import { HeroSection } from '../components/landing/HeroSection';
-import { VisionSection } from '../components/landing/VisionSection';
+import { BenefitStrip } from '../components/landing/BenefitStrip';
+import { HowItWorksSection } from '../components/landing/HowItWorksSection';
+import { FaqSection } from '../components/landing/FaqSection';
+import { RoadmapSection } from '../components/landing/RoadmapSection';
+import { FinalCta } from '../components/landing/FinalCta';
 import { LandingFooter } from '../components/landing/LandingFooter';
-import { useSearch } from '@tanstack/react-router';
-import { AlertCircle, X } from 'lucide-react';
-import { SystemMetadataFallback } from '../components/system/SystemMetadataFallback';
 
-// Lazy-loaded (POV-202): the changelog/roadmap modal pulls in the markdown pipeline
-// (react-markdown). It is default-closed, so we defer its code off the landing page's
-// initial chunk and only fetch it when the user opens the modal.
-const SystemMetadata = lazy(() =>
-  import('../components/system/SystemMetadata').then((m) => ({ default: m.SystemMetadata }))
-);
+/**
+ * Points the static head tags from index.html (English defaults for crawlers) at the selected language.
+ * The tags are updated in place — emitting new <meta> elements would leave the English ones first in <head>,
+ * where first-match consumers read them. The original values return when the landing page unmounts.
+ */
+function useLocalizedHeadMeta(title: string, description: string) {
+  useEffect(() => {
+    const targets: Array<[string, string]> = [
+      ['meta[name="description"]', description],
+      ['meta[property="og:title"]', title],
+      ['meta[property="og:description"]', description],
+    ];
+    const restorers = targets.flatMap(([selector, content]) => {
+      const tag = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!tag) return [];
+      const original = tag.content;
+      tag.content = content;
+      return [() => { tag.content = original; }];
+    });
+    return () => restorers.forEach((restore) => restore());
+  }, [title, description]);
+}
 
+// The project changelog/roadmap modal (SystemMetadata) is deliberately not offered here — its content is generated
+// from the engineering docs; visitors get the curated "Coming soon" section instead (POV-220, amendment A1).
 export function LandingPage() {
-  const { i18n } = useTranslation();
-  const [isMetadataOpen, setIsMetadataOpen] = useState(false);
-  const [metadataTab, setMetadataTab] = useState<'changelog' | 'roadmap' | 'wisdom'>('changelog');
-  const { theme, setTheme } = useThemeStore();
+  const { t } = useTranslation();
   const { login, isAuthenticated } = useAuthStore(
     useShallow((state) => ({
       login: state.login,
@@ -33,80 +49,30 @@ export function LandingPage() {
     }))
   );
 
-  const { data: metadata } = useSystemMetadata();
-  const { notice } = useSearch({ from: '/' });
-  const [showNotice, setShowNotice] = useState(!!notice);
+  // The version line is decoration: a failed metadata call must not replace the landing page with the error page
+  // (the global QueryClient default is throwOnError: true). The footer simply omits the version.
+  const { data: metadata } = useSystemMetadata({ throwOnError: false });
 
-  const toggleLanguage = () => {
-    const newLng = i18n.language === 'en' ? 'sl' : 'en';
-    void i18n.changeLanguage(newLng);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  const handleOpenMetadataTab = (tab: 'changelog' | 'roadmap' | 'wisdom') => {
-    setMetadataTab(tab);
-    setIsMetadataOpen(true);
-  };
+  useLocalizedHeadMeta(t('landing.meta.title'), t('landing.meta.description'));
 
   return (
-    <>
-      <div className="min-h-screen bg-[var(--color-background-base)] text-[var(--color-text-primary)] flex flex-col font-sans selection:bg-[var(--color-action-primary)] selection:text-[var(--color-action-primary-text)] transition-colors duration-500">
-        <LandingNav 
-          isAuthenticated={isAuthenticated}
-          theme={theme}
-          toggleLanguage={toggleLanguage}
-          toggleTheme={toggleTheme}
-        />
+    <div className="min-h-screen bg-[var(--color-background-base)] text-[var(--color-text-primary)] flex flex-col font-sans transition-colors duration-300">
+      {/* The document title follows the selected language (React hoists it before index.html's default). */}
+      <Helmet>
+        <title>{t('landing.meta.title')}</title>
+      </Helmet>
+      <LandingNav isAuthenticated={isAuthenticated} onLogin={login} />
 
-        {showNotice && notice === 'restricted' && (
-          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="bg-[var(--color-background-elevated)]/90 border border-[var(--color-status-warning)]/50 backdrop-blur-md rounded-xl md:rounded-[28px] p-4 flex items-start gap-3 shadow-2xl shadow-black/50">
-              <AlertCircle className="w-5 h-5 text-[var(--color-status-warning)] shrink-0 mt-0.5"  strokeWidth={1.5}/>
-              <div className="flex-1">
-                <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Restricted Content</h3>
-                <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-relaxed italic">
-                  You need to be signed in to view this briefing. Please log in using your Google account.
-                </p>
-              </div>
-              <button 
-                onClick={() => setShowNotice(false)}
-                className="text-[var(--color-text-secondary)]/50 hover:text-[var(--color-text-primary)] transition-colors"
-                aria-label="Close notice"
-              >
-                <X className="w-4 h-4"  strokeWidth={1.5}/>
-              </button>
-            </div>
-          </div>
-        )}
+      <main className="flex-1">
+        <HeroSection isAuthenticated={isAuthenticated} onLogin={login} />
+        <BenefitStrip />
+        <HowItWorksSection />
+        <FaqSection />
+        <RoadmapSection />
+        <FinalCta isAuthenticated={isAuthenticated} onLogin={login} />
+      </main>
 
-        <main className="flex-1 pt-40 pb-20 px-8 md:px-16 space-y-48">
-          <HeroSection 
-            isAuthenticated={isAuthenticated}
-            login={login}
-            onOpenRealityCheck={() => handleOpenMetadataTab('wisdom')}
-          />
-
-          <VisionSection />
-        </main>
-
-        <LandingFooter 
-          metadata={metadata}
-          onOpenTab={handleOpenMetadataTab}
-        />
-      </div>
-
-      {isMetadataOpen && (
-        <Suspense fallback={<SystemMetadataFallback />}>
-          <SystemMetadata
-            isOpen={isMetadataOpen}
-            onClose={() => setIsMetadataOpen(false)}
-            initialTab={metadataTab}
-          />
-        </Suspense>
-      )}
-    </>
+      <LandingFooter metadata={metadata} />
+    </div>
   );
 }

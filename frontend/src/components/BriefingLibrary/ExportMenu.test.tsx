@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ExportMenu } from '../briefing/ExportMenu';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import '@testing-library/jest-dom';
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { generateBriefingMarkdown } from '../../util/exportTemplates';
 
@@ -36,7 +35,6 @@ if (globalThis.window !== undefined) {
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
 });
 
 const mockBriefingData = {

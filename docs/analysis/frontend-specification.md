@@ -1,5 +1,12 @@
 # Frontend Specification (v0.11)
 
+> [!NOTE]
+> **Requirements as written for v0.11.** The implemented SPA differs in places (status POV-223): the landing page is
+> client-rendered (the unused SSR/SSG scaffolding was removed in POV-202); logout is a browser navigation to
+> `GET /logout`, not an API `POST`; there is no external error-monitoring service; the CSP is hash-based without
+> `strict-dynamic` (POV-214). The code (`frontend/src/`) is the source of truth; re-synchronizing this
+> specification is in the backlog.
+
 ## 1. Overview & Scope
 This document outlines the requirements and specifications for the standalone frontend Single Page Application (SPA) of the Povzetkar system. It is written for frontend developers (or AI agents) and details the required screens, user flows, UI component behaviors, and integration points with the backend REST API, including Permission-Based Access Control (PBAC).
 

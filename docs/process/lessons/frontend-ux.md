@@ -149,6 +149,12 @@ When enforcing a strict monochromatic/institutional design identity:
   - **Tailwind v4:** Use the `accent-[var(--color-action-primary)]` class on interactive inputs to ensure 100% monochromatic checkmarks.
 - **Icon Taxonomy:** Replace all semantic status tints (Success-Green, Info-Blue) on non-critical icons with the primary action palette (Zinc). Reserved colors should only be used for critical failure/warning states (Red/Amber) to maintain semantic clarity.
 
+## Pre-paint Theme, Undefined Breakpoints and i18n Key Removal (POV-220)
+- **The Trap (flash):** a theme class set in a React `useEffect` arrives after the first paint; an unlayered inline `<style>` in `index.html` (a body gradient) silently beats the token background from `@layer base`, so every visitor saw a dark frame first.
+- **The Standard:** apply theme and `<html lang>` in a small pre-paint `<script>` in `index.html` that mirrors the store's pure resolver (`resolveInitialTheme`, `resolveInitialLanguage`) and reads the persisted key; comment both sides. Test it in Playwright with `main.tsx` blocked (`page.route('**/src/main.tsx', r => r.abort())`) — then only the script can have set the class. A future CSP must allow it by hash.
+- **The Trap (breakpoints):** Tailwind v4 has no `xs:` breakpoint; `hidden xs:block` compiles to "always hidden" without any warning (the public-view subtitle was never shown).
+- **The Trap (i18n keys):** tests assert i18n *keys* (the global `t` mock returns them), so deleting or renaming a key breaks tests outside the component's folder (`src/test/App.test.tsx`). Before removing keys, grep **every** test and spec file for the key names, not only the component's tests.
+
 ---
 
 ## Related Documents

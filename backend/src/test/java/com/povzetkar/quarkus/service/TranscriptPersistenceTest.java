@@ -99,7 +99,7 @@ class TranscriptPersistenceTest {
         String expectedTranscript = "This is the transcript text.";
         
         // Mock ContentCreationService to simulate fetching transcript and updating the detached object
-        when(contentCreationService.createContentForVideo(any(YouTubeVideo.class))).thenAnswer(invocation -> {
+        when(contentCreationService.createContentForVideo(any(YouTubeVideo.class), any(ProcessingContext.class))).thenAnswer(invocation -> {
             YouTubeVideo video = invocation.getArgument(0);
             video.transcript = expectedTranscript; // Simulate side effect
             return mock(Content.class);
@@ -114,7 +114,7 @@ class TranscriptPersistenceTest {
         // The strategy uses QuarkusTransaction.requiringNew() internally, so it will fetch its own managed instance.
         
         // Important: The 'testVideo' object passed here will be modified by the mock above.
-        strategy.summarize(mockClient, testVideo, LocalDate.now());
+        strategy.summarize(mockClient, testVideo, LocalDate.now(), ProcessingContext.automatic(java.time.Instant.now(), java.time.Duration.ofMinutes(15)));
 
         // Assert
         // Verify the database state

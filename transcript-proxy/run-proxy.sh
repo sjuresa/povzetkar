@@ -1,15 +1,13 @@
 #!/bin/sh
-# Launcher for the transcript proxy on the Synology DS220j (POV-196).
+# Launcher for the transcript proxy on a self-hosted host (POV-196).
 #
-# Runtime: the box's built-in Python 3.8 (/bin/python3) — NOT SynoCommunity python312,
-# which is not installed and not needed. The venv and this script MUST live on an
-# exec-capable path under /volume1; /tmp is mounted noexec and the compiled pydantic_core
-# .so will fail to map there ("failed to map segment from shared object").
+# The venv and this script MUST live on an exec-capable path; on a noexec mount (e.g. /tmp on
+# some systems) the compiled pydantic_core .so fails to map ("failed to map segment from
+# shared object"). requirements.txt is pinned to a Python 3.8-compatible set.
 #
-# Invoked by a DSM Task Scheduler "Boot-up" triggered task (user: root). Started once at
-# boot; there is no restart-on-crash supervision yet (deferred — see improvements.md). If
-# the proxy stops responding, check it is running and/or flip TRANSCRIPT_PROXY_URL back to
-# Railway (see RUNBOOK).
+# Meant to be invoked by a boot-time task of the host. Started once at boot; there is no
+# restart-on-crash supervision yet (deferred — see improvements.md). If the proxy stops
+# responding, check it is running and/or point TRANSCRIPT_PROXY_URL at the fallback host.
 
 set -eu
 
@@ -25,10 +23,9 @@ if [ -f "$APP_DIR/.env" ]; then
     export API_KEY
 fi
 
-# Run the app. --host 0.0.0.0 is required for tailnet (and LAN) reachability; there is no
-# public port-forward, so exposure is limited to the tailnet + home LAN. Plain HTTP is fine:
-# Tailscale (WireGuard) already encrypts the OCI<->Synology path. Logs (including the
-# per-branch exception logging in main.py) are appended to proxy.log.
+# Run the app. --host 0.0.0.0 is required for VPN (and LAN) reachability; do not publish the
+# port to the internet. Plain HTTP is fine when a VPN already encrypts the backend<->proxy
+# path. Logs (including the per-branch exception logging in main.py) are appended to proxy.log.
 exec "$APP_DIR/.venv/bin/uvicorn" main:app \
     --host 0.0.0.0 \
     --port 8000 \

@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.ui;
 
-import com.povzetkar.quarkus.util.OriginValidator;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -38,17 +37,13 @@ public class LoginResource {
     @ConfigProperty(name = "povzetkar.auth.post-logout-uri", defaultValue = LOGIN_PATH)
     String postLogoutUri;
 
-    private final OriginValidator originValidator;
-
     @Inject
     public LoginResource(@Location("login.html") Template login,
                          SecurityIdentity securityIdentity,
-                         io.quarkus.oidc.OidcSession oidcSession,
-                         OriginValidator originValidator) {
+                         io.quarkus.oidc.OidcSession oidcSession) {
         this.login = login;
         this.securityIdentity = securityIdentity;
         this.oidcSession = oidcSession;
-        this.originValidator = originValidator;
     }
 
     @Route(path = "/login", methods = HttpMethod.GET)
@@ -75,15 +70,7 @@ public class LoginResource {
     @Operation(hidden = true)
     public void authLogin(RoutingContext context) {
         String dynamicRedirect = context.request().getParam(REDIRECT_PARAM);
-        String destination = resolveSafeDestination(dynamicRedirect);
-
-        // If no explicit redirect and we are accessing backend directly (no Origin/Referer)
-        if (dynamicRedirect == null && determineBaseUrl(context) == null) {
-            logger.info("[Auth] No explicit redirect or Origin/Referer detected, defaulting to postLoginUri: {}", postLoginUri);
-            destination = postLoginUri;
-        }
-
-        redirect(context, destination);
+        redirect(context, resolveSafeDestination(dynamicRedirect));
     }
 
     private String resolveSafeDestination(String dynamicRedirect) {
@@ -139,58 +126,14 @@ public class LoginResource {
     }
 
     private void redirect(RoutingContext context, String location) {
-        String base = determineBaseUrl(context);
-        String finalLocation = applyBaseToLocation(base, location);
-
-        logger.info("Redirecting to: {}", finalLocation);
+        // Relative: the browser resolves it against the origin it is on (public host, or the Vite dev server)
+        logger.info("Redirecting to: {}", location);
         context.response()
                 .setStatusCode(302)
-                .putHeader(LOCATION_HEADER, finalLocation)
+                .putHeader(LOCATION_HEADER, location)
                 .putHeader("Cache-Control", "no-cache, no-store, must-revalidate")
                 .putHeader("Pragma", "no-cache")
                 .putHeader("Expires", "0")
                 .end();
-    }
-
-    private String determineBaseUrl(RoutingContext context) {
-        String origin = context.request().getHeader("Origin");
-
-        if (origin == null) {
-            String referer = context.request().getHeader("Referer");
-            if (referer != null) {
-                try {
-                    URI refererUri = new URI(referer);
-                    String scheme = refererUri.getScheme();
-                    String authority = refererUri.getAuthority();
-                    if (scheme != null && authority != null) {
-                        origin = scheme + "://" + authority;
-                    }
-                } catch (URISyntaxException e) {
-                    logger.warn("Failed to parse Referer header to extract origin: {}", referer, e);
-                }
-            }
-        }
-
-        if (origin != null && originValidator.isAllowed(origin)) {
-            return origin;
-        }
-
-        return null;
-    }
-
-    private String applyBaseToLocation(String base, String location) {
-        if (base == null) {
-            return location;
-        }
-
-        // Prepend base to all relative paths. Paths are sanitized against open redirects
-        // before this method is called.
-        if (location.startsWith("/")) {
-            return base + location;
-        }
-
-        // The location is likely an absolute URL (e.g., for backward compatibility).
-        // The multi-host feature relies on relative paths, so we return it as-is.
-        return location;
     }
 }

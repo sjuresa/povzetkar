@@ -1,14 +1,21 @@
 package com.povzetkar.quarkus.model;
 
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Entity
 @Table(name = "content_items")
@@ -48,6 +55,121 @@ public class ContentItem extends BaseAuditableEntity {
 
     @Column(name = "error_message", columnDefinition = "TEXT")
     public String errorMessage;
+
+    /** Optional filters of the item list; {@code null} fields do not filter. */
+    public record Filter(Long sourceId, List<ProcessingStatus> statuses, Long topicId) {
+    }
+
+    /**
+     * HQL condition "the item at {@code itemAlias} is visible to {@code :viewer}" (POV-219): its source is in
+     * one of the viewer's topics, or its summary is in one of the viewer's briefings — so a briefing stays
+     * fully usable after its source was removed from the topic.
+     */
+    static String visibleToViewer(String itemAlias) {
+        return "(" + ContentSource.visibleToViewer(itemAlias + ".contentSource")
+                + " or exists (select 1 from Briefing vb join vb.summaries vbs where vbs.contentItem = " + itemAlias
+                + " and vb.topic.user = :viewer))";
+    }
+
+    /**
+     * Ids of the items visible in the scope that match the filter. Page over these ids and load the page with
+     * {@link #listByIdsWithAssociations} (see the Hibernate 7.4 note there). The item alias is {@code c}.
+     */
+    public static PanacheQuery<Long> findVisibleIds(ContentScope scope, Filter filter, Sort sort) {
+        List<String> conditions = new ArrayList<>();
+        Map<String, Object> params = new HashMap<>();
+        if (!scope.isUnrestricted()) {
+            conditions.add(visibleToViewer("c"));
+            params.put("viewer", scope.viewer());
+        }
+        if (filter.sourceId() != null) {
+            conditions.add("c.contentSource.id = :sourceId");
+            params.put("sourceId", filter.sourceId());
+        }
+        if (filter.statuses() != null && !filter.statuses().isEmpty()) {
+            conditions.add("c.processingStatus IN :statuses");
+            params.put("statuses", filter.statuses());
+        }
+        if (filter.topicId() != null) {
+            conditions.add("EXISTS (SELECT t FROM c.contentSource.topics t WHERE t.id = :topicId)");
+            params.put("topicId", filter.topicId());
+        }
+        String where = conditions.isEmpty() ? "" : " WHERE " + String.join(" and ", conditions);
+        return find("SELECT c.id FROM ContentItem c" + where, sort, params).project(Long.class);
+    }
+
+    /** Ids of all items of the source (item alias {@code c}); the caller has checked the source is visible. */
+    public static PanacheQuery<Long> findIdsBySource(ContentSource source, Sort sort) {
+        return find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1", sort, source).project(Long.class);
+    }
+
+    /** Like {@link #findByIdWithAssociations}, but empty when the item is not visible in the scope. */
+    public static Optional<ContentItem> findVisibleByIdWithAssociations(Long id, ContentScope scope) {
+        if (scope.isUnrestricted()) {
+            return findByIdWithAssociations(id);
+        }
+        // singleResult for the same Hibernate 7.4 reason as findByIdWithAssociations
+        return find("FROM ContentItem c LEFT JOIN FETCH c.contentSource cs LEFT JOIN FETCH cs.topics WHERE c.id = :id and "
+                        + visibleToViewer("c"),
+                Map.of("id", id, "viewer", scope.viewer()))
+                .singleResultOptional();
+    }
+
+    /**
+     * HQL from {@code ContentItem ci} joined to its topics {@code t}: items still to be (re)processed —
+     * {@code PENDING} or {@code RETRY_LATER}, published on the UTC day {@code [:start, :end)} (or matching
+     * {@link #EARLIER_SCHEDULED_RETRY}), and due: a video whose automatic transcript retry is scheduled later is left
+     * for a later run (POV-222).
+     */
+    private static final String DUE_FOR_PROCESSING = "select distinct ci from ContentItem ci "
+            + "join ci.contentSource cs join cs.topics t "
+            + "where ci.processingStatus in :statuses and (ci.publishedAt >= :start and ci.publishedAt < :end%s) "
+            + "and (ci.nextTranscriptAttemptAt is null or ci.nextTranscriptAttemptAt <= :now)";
+
+    /**
+     * A video of an earlier day with a scheduled automatic transcript retry: its retries can run past the end of its
+     * own processing window, so the scheduled run carries them over until the retry policy ends them (POV-222).
+     */
+    private static final String EARLIER_SCHEDULED_RETRY = " or ci.publishedAt < :start "
+            + "and ci.processingStatus = :retryLater and ci.nextTranscriptAttemptAt is not null";
+
+    private static Map<String, Object> dueParams(LocalDate publishedOn, Instant now) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("statuses", Set.of(ProcessingStatus.RETRY_LATER, ProcessingStatus.PENDING));
+        params.put("start", publishedOn.atStartOfDay(ZoneOffset.UTC).toInstant());
+        params.put("end", publishedOn.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant());
+        params.put("now", now);
+        return params;
+    }
+
+    /**
+     * Items due for (re)processing in the enabled topics — all, or only {@code topicId} when set — with an id above
+     * {@code afterId}, ordered by id. Page by keyset (pass the last id of the previous page): processed items leave
+     * the selection during a run, so offset paging would skip items. {@code withEarlierRetries} adds the due
+     * scheduled transcript retries of earlier days.
+     */
+    public static PanacheQuery<ContentItem> findDueInEnabledTopics(LocalDate publishedOn, Long topicId, Instant now, long afterId,
+                                                                   boolean withEarlierRetries) {
+        Map<String, Object> params = dueParams(publishedOn, now);
+        String query = DUE_FOR_PROCESSING.formatted(withEarlierRetries ? EARLIER_SCHEDULED_RETRY : "")
+                + " and t.enabled = true and ci.id > :afterId";
+        if (withEarlierRetries) {
+            params.put("retryLater", ProcessingStatus.RETRY_LATER);
+        }
+        params.put("afterId", afterId);
+        if (topicId != null) {
+            query += " and t.id = :topicId";
+            params.put("topicId", topicId);
+        }
+        return find(query + " order by ci.id", params);
+    }
+
+    /** Items due for (re)processing in the topic, whether it is enabled or not (the caller chose the topic). */
+    public static List<ContentItem> listDueInTopic(Long topicId, LocalDate publishedOn, Instant now) {
+        Map<String, Object> params = dueParams(publishedOn, now);
+        params.put("topicId", topicId);
+        return list(DUE_FOR_PROCESSING.formatted("") + " and t.id = :topicId", params);
+    }
 
     public static void updateProcessingStatus(Long id, ProcessingStatus status) {
         update("processingStatus = ?1 where id = ?2", status, id);

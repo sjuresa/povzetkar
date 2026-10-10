@@ -99,7 +99,7 @@ TDD is mandatory for all logic changes. We adhere to two specific workflows:
 
 **Key Mandates:**
 *   **Strict TDD:** For complex logic, we write the test first.
-*   **Integration Testing:** We prefer `@QuarkusTest` with real databases (Testcontainers). We avoid mocking internal services unless absolutely necessary. *Learned in v0.6.2.*
+*   **Test scope:** defined by QA rule 3 in `docs/protocols/quality-mandates.md`.
 *   **UI Testing:** We avoid fragile inheritance patterns (`BaseUITest`) and prefer explicit transaction management in tests. *Learned in v0.6.2/v0.9.0.*
 
 ### 4.2. Spikes
@@ -110,7 +110,7 @@ A "Spike" is a time-boxed research task used when the path forward is unclear.
 ### 4.3. Definition of Done (DoD)
 A task is only complete when:
 1.  Code is written and follows standards.
-2.  Tests are passing (verified by User).
+2.  Tests are passing (full suite run by the Agent; the User confirms the outcome).
 3.  **Documentation is Updated:** Context and Update sections from the task definition are addressed.
 4.  **UI is Responsive:** Verified on mobile/desktop (if applicable).
 5.  Commit message is formatted (Conventional Commits).

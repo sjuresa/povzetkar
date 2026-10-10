@@ -90,19 +90,19 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 
 ---
 
-## Production Redeploys on the Local Docker Stack (POV-207)
+## Production Redeploys (POV-207)
 
 ### `docker compose up -d <svc>` Also Recreates Dependencies
 - **The Trap:** `up -d app prometheus` recreated `postgres-prod` as well — `app` `depends_on` it, and compose recreates a dependency whenever it detects a config difference from the running container. Data survived (named volume, clean shutdown), but a database restart was never part of the plan.
-- **The Standard:** For targeted redeploys use `up -d --no-deps <svc>` (RUNBOOK §10.3). Before rebuilding, tag the running image for rollback (`docker tag povzetkar-app:<v> povzetkar-app:<v>-pre-<task>`) — the build reuses the same tag and would otherwise overwrite the only rollback target.
+- **The Standard:** For targeted redeploys use `up -d --no-deps <svc>` (private operations runbook). Before rebuilding, tag the running image for rollback (`docker tag povzetkar-app:<v> povzetkar-app:<v>-pre-<task>`) — the build reuses the same tag and would otherwise overwrite the only rollback target.
 
-### "Local smoke test" = Production Deploy
-- **The Trap:** Production runs on the developer machine's Docker stack (RUNBOOK §10) with a Cloudflare tunnel. A second "test" stack cannot run alongside it: host ports clash (80/443/5432/3000), and a second `cloudflared` with the same tunnel token registers as an extra connector and receives **real** traffic.
-- **The Standard:** Treat any image/compose change verified "on the local prod stack" as a production deploy: rollback tag, (for DB-touching changes) `pg_dump`, external verification via the public URL.
+### A "Test" Stack on the Production Host = Production Deploy
+- **The Trap:** Production is a single Docker stack behind a Cloudflare tunnel. A second "test" stack cannot run alongside it on the same host: host ports clash (`127.0.0.1:5432`/`127.0.0.1:3000`; 80/443 went with Caddy in POV-214), and a second `cloudflared` with the same tunnel token registers as an extra connector and receives **real** traffic.
+- **The Standard:** Treat any image/compose change verified on the production host's stack as a production deploy: rollback tag, (for DB-touching changes) `pg_dump`, external verification via the public URL.
 
 ### Unchanged Dependencies Still Acquire CVEs — Scan Before Every Production Build
 - **The Trap:** POV-207 changed no dependency, so no local Trivy was planned; the image was built and deployed without a scan. CI then failed on 9 HIGH/CRITICAL CVEs (Netty, PostgreSQL JDBC, axios) published *after* the last green CI two months earlier. `/security-review` does not catch these — it excludes outdated-library findings by design.
-- **The Standard:** Every production deploy is scanned, regardless of whether dependencies changed — but the scan is **CI's**, not a local run (POV-209): the exact deployed commit needs a green CI run (Trivy FS + image built with a fresh base), re-triggered when older than 7 days, and the local image is built with `--pull` so its base matches what CI scanned (`docs/protocols/verification.md`, *Pre-deploy Verification*). Local Trivy is the exception (a commit without a CI run, the per-version `.trivyignore` audit): `docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy:0.74.0@sha256:<digest> fs … --timeout 30m /src` (Maven POM resolution exceeds the 5-minute default). Never run it in parallel with the test suite — the combined native memory crashed the forked surefire JVM (`insufficient memory … malloc failed`).
+- **The Standard:** Every production deploy is scanned, regardless of whether dependencies changed — but the scan is **CI's**, not a local run (POV-209): the exact deployed commit needs a green CI run (Trivy FS + image built with a fresh base), re-triggered when older than 7 days, and the local image is built with `--pull` so its base matches what CI scanned (`docs/protocols/verification.md`, *Pre-deploy Verification*). Local Trivy is the exception (a commit without a CI run, the per-version `.trivyignore` audit): use the command in RUNBOOK §8.2 as written — pinned image by digest, `--include-dev-deps` like CI (POV-224), `--timeout 30m` (Maven POM resolution exceeds the 5-minute default). Never run it in parallel with the test suite — the combined native memory crashed the forked surefire JVM (`insufficient memory … malloc failed`).
 
 ### Pin Third-Party CI Actions and Tool Images by Digest, Not Tag or Branch (POV-209)
 - **The Trap:** On 2026-03-19 an attacker force-pushed 76 of 77 version tags of `aquasecurity/trivy-action` (and all `setup-trivy` tags) to credential-stealing code and published a malicious Trivy binary (GHSA-69fq-xp46-6x23). Every workflow referencing a tag ran it without any change in its own repository. The advisory's exposure window for `trivy-action` is 2026-03-19 ~17:43 → 03-20 ~05:40 UTC. Our `ci.yml` used `@0.24.0` then: **5 CI runs fell inside the window, 3 of them green** (so they reached the Trivy steps — execution of the malicious action is highly probable there; run logs have expired, HTTP 410). The other 15 tag runs on 19–20 March ran outside it. On 2026-03-20 `ci.yml` moved to `@v0.28.0` (`4d71a3cc`, 07:42 CEST — after the window) and 19 minutes later to `@master` (`cd55e106`, "bypass broken Trivy tags") — which runs whatever the upstream branch holds. Exposure was limited only by luck of configuration: the job referenced just the test-DB secrets (used nowhere else) and a read-only `GITHUB_TOKEN`; the API-key secrets were never used in `ci.yml`. The malicious `aquasec/trivy` Docker Hub images (0.69.5/0.69.6, 22–23 March) did not reach us: local Docker scans started only in September 2026.
@@ -135,7 +135,7 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ## Request Logging Behind a Tunnel (POV-210)
 
 ### Read the Ingress Before Diagnosing a Proxy
-- **The Trap:** After a bot wave, Caddy's access log was empty and the first diagnosis was "Caddy's stdout logging is broken". Caddy logged fine — it received nothing: the Cloudflare tunnel routes `povzetkar.<domain>` straight to `app:8080`. The same mistake hid that production had sent no security headers since the move off OCI.
+- **The Trap:** After a bot wave, Caddy's access log was empty and the first diagnosis was "Caddy's stdout logging is broken". Caddy logged fine — it received nothing: the Cloudflare tunnel routes `povzetkar.<domain>` straight to `app:8080`. The same mistake hid that production had sent no security headers since the move to the current production host.
 - **The Standard:** Establish the real traffic path first. `docker logs povzetkar-cloudflared` prints the tunnel ingress on every start. RUNBOOK §13.5 describes the current path.
 
 ### Quarkus Access Log With a SPA Fallback
@@ -145,3 +145,29 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### Every Placeholder Is Client-Controlled Until Proven Otherwise
 - **The Trap:** `%h` with `proxy-address-forwarding` and no `trusted-proxies` is the client's **own** first `X-Forwarded-For` value — unvalidated, spaces and quotes included (Cloudflare keeps it and appends the real address). Placed first in the pattern, it let a client forge a whole line prefix (`1.1.1.1 [x] cf-ip=… "GET /harmless …" 204`), so `grep`/`awk` reported a harmless request instead of `/.ssh/id_rsa`. Plan review had called `%h` spoofable and still kept it first. Separately, a `sed` anchored only on `[^"]*access-log]` accepted `access-log] …` text inside another logger's message (a topic name).
 - **The Standard:** In a text log, only trusted fields (timestamp, Cloudflare-set `CF-Connecting-IP`/`CF-IPCountry`) precede the client-controlled ones (request line, headers); log `X-Forwarded-For` as a quoted field after the status, never `%h`. Parse recipes anchor on the **fixed log-format prefix** (date, level, logger category) and print only lines that parse. Test the recipes with forged input, not only real lines. Newlines in logged values remain a gap (messages are not escaped).
+
+## The Edge Is the App — Compose Projects, Hashes and Proxy Trust (POV-214)
+
+### Two Compose Files in One Directory Are One Project
+- **The Trap:** `docker-compose.yml` (dev) and `docker-compose.prod.yml` lived in `backend/` without `name:`, so Docker Compose treated both as project `backend`. A dev `docker compose up` recreated the prod `prometheus`/`grafana` (same service and container names) from the dev config in another network — production metrics stopped for a day unnoticed — and `--remove-orphans` from either file would have removed the other stack's containers, prod app and DB included. `docker compose down` with the dev file would have stopped the prod monitoring too.
+- **The Standard:** every compose file that can run on the same host gets its own `name:`; container names and host ports must not collide either. Never rename the **prod** project to fix this — volume names derive from the project name, so the DB would start empty; rename the other one. Check with `docker compose ls` and the `com.docker.compose.project` label.
+
+### A CSP Hash Covers Bytes, Line Endings Included
+- **The Trap:** the strict CSP allows the inline pre-paint script by its sha256. With `core.autocrlf=true` the Windows checkout — from which the prod image is built — had CRLF, CI had LF: the same script, two hashes, and the deployed policy would have blocked it.
+- **The Standard:** a file whose bytes are pinned (by a hash, a signature) gets `text eol=lf` in `.gitattributes`. Guard the hash twice: a unit test on the source and a browser run of the built output under the real policy — only the browser proves the build did not change the script.
+
+### A Browser Under a Strict CSP Finds What Tests Without It Cannot
+- **The Trap:** Zod v4 probes `new Function("")` to decide on JIT parsers. The probe is caught, so nothing fails functionally, but every page that builds a schema reports a CSP violation — invisible in unit tests and in a dev server without a policy.
+- **The Standard:** run the e2e specs against the production build with the production CSP and fail on any `securitypolicyviolation` (Playwright project `csp`); fix the cause (`z.config({ jitless: true })`) instead of adding `'unsafe-eval'`.
+
+### Quarkus Filter Headers: First, Additive, and Winning Over Static Files
+- **The Trap (avoided by reading the sources):** `quarkus.http.filter.*` handlers run at route order `Integer.MIN_VALUE` and **merge** values of overlapping filters into one multi-valued header — two matching CSP filters would make the browser enforce both. Vert.x's `StaticHandler` writes `Cache-Control` only if absent, so a filter overrides its 24 h `immutable` default.
+- **The Standard:** filters that set the same header use mutually exclusive path regexes (negative lookahead), and a test asserts a single value per path.
+
+### A Fixed Address Needs a Reserved Range
+- **The Trap:** giving `cloudflared` a fixed `ipv4_address` in a subnet is not enough — Docker hands out dynamic addresses from the whole subnet, so a container that starts first can take it. And a validation script that runs `compose run` on the prod file creates a network with the same fixed subnet, which collides with the running prod network.
+- **The Standard:** set `ip_range` to a part of the subnet that excludes the fixed addresses; validate configs with `docker run --network none` (config on stdin), not with `compose run`.
+
+### `%u` Is the Principal — and Google's Principal Is the Display Name
+- **The Trap:** the access-log pattern used `%u` expecting the Google subject, because `UserContextService` resolves users by `jwt.getSubject()`. But Quarkus' built-in Google provider sets `principalClaim("name")` (`KnownOidcProviders`), so `%u` logged the display name — text the user controls, with spaces and quotes — in front of the request line, where it could forge fields. The test covered only the API-key principal (an e-mail); the deploy smoke test after a real Google sign-in found it.
+- **The Standard:** never log a principal name directly: derive the value explicitly (JWT `sub`, API-key e-mail), restrict it to a safe character set, and test with a principal that contains spaces and quotes (`@TestSecurity(user = "Display \"Name\" 200")`). Check a provider's defaults in its source before assuming what "the principal" is.

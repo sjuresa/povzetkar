@@ -1,11 +1,11 @@
 {
   "name": "povzetkar-root",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": true,
   "description": "Povzetkar Monorepo Root",
   "scripts": {
     "dev": "npm-run-all --parallel dev:backend dev:frontend",
-    "dev:backend": "cd backend && ../mvnw quarkus:dev",
+    "dev:backend": "cd backend && ../mvnw quarkus:dev -DskipTests=true",
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend && ./mvnw clean install",
     "build:stats": "npm run build:stats --prefix frontend",

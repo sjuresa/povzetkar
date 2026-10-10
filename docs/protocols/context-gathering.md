@@ -11,8 +11,8 @@ Load what the work actually needs; do not front-load the whole documentation tre
 
 ## [on demand] — load when the task touches the area
 
-- `docs/overview/roadmap.md` — long-term vision and goals.
-- `docs/overview/project-structure.md` — architectural layout and functional mapping.
+- `docs/overview/roadmap.md` — delivered versions and the forecast.
+- `docs/overview/project-structure.md` — repository layout; `docs/overview/architecture_overview.md` — components, responsibilities and key classes.
 - `docs/guides/testing.md` — when writing or changing tests.
 - `docs/process/lessons-learned.md` and `docs/process/lessons/` — before working in an area with known gotchas.
 - `docs/backlog/improvements.md` — when triaging discoveries or planning scope.

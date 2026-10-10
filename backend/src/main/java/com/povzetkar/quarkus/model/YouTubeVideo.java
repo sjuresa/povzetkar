@@ -29,6 +29,14 @@ public class YouTubeVideo extends ContentItem {
     @Convert(converter = DurationToIntegerConverter.class)
     public Duration duration;
 
+    /** Failed automatic transcript fetches so far (POV-222); {@code null} = none yet. */
+    @Column(name = "transcript_attempts")
+    public Integer transcriptAttempts;
+
+    /** Earliest time of the next automatic transcript fetch (POV-222); {@code null} = due now. */
+    @Column(name = "next_transcript_attempt_at")
+    public Instant nextTranscriptAttemptAt;
+
     public YouTubeVideo() {
     }
 

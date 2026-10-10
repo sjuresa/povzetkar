@@ -234,7 +234,7 @@ This document outlines the concrete steps for implementing the features describe
 2.  **Resilience & Polish:**
     *   **Transcript Multi-Provider Pilot** (POV-189): `TranscriptProvider` abstraction ([ADR-0009](../adr/0009-multi-provider-transcript-strategy.md)) + Supadata pilot integration + randomized jitter delay on legacy YouTube path.
     *   **External Links Open in New Tab** (POV-186): `rehype-external-links` plugin in all ReactMarkdown call-sites.
-    *   **Session Expiry Handling** (POV-187): 401 interceptor redirects to landing page (`/`) with `notice=session_expired`; `returnTo` preserved in `sessionStorage`; ErrorPage reserved for true fatal errors.
+    *   **Session Expiry Handling** (POV-187): a 401 while signed in clears the session and redirects to `/auth/login?redirect=<current path>`, which returns the user there after re-authentication; ErrorPage reserved for true fatal errors. *(Corrected by POV-220 — no `session_expired` notice or `sessionStorage` return path was ever implemented.)*
 
 ## v0.18: Transcript Ingestion Resilience & Scheduler Correctness
 
@@ -245,7 +245,7 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Transcript Ingestion Resilience:**
     *   **Transcript Proxy Service** (POV-193): standalone, stateless FastAPI proxy fetching a single YouTube transcript per request, deployable on a non-blocked host.
     *   **`ProxyTranscriptProvider`** (POV-194): Quarkus integration as the now-primary `TranscriptProvider`, with caller-side skip-first jitter throttle.
-    *   **Proxy Relocation to Synology DS220j** (POV-196): moved from Railway (soft-throttled shared egress IP) to a self-hosted box reached over Tailscale; Railway kept as passive fallback.
+    *   **Proxy Relocation to a Self-Hosted Host** (POV-196): moved from a PaaS host (soft-throttled shared egress IP) to a self-hosted box reached over a VPN; the PaaS host kept as passive fallback.
     *   **Persist Transcript Before Gemini Call** (POV-198): best-effort pre-write so 503/429 retries no longer re-fetch from scratch.
 2.  **Scheduler Correctness:**
     *   **Scheduled Orchestration Fix & Periodic Cron** (POV-197): fixed orchestration that had never run on a schedule (`BlockingOperationNotAllowedException`); consolidated into a single hourly periodic cron.
@@ -276,28 +276,51 @@ This document outlines the concrete steps for implementing the features describe
 4.  **Process:**
     *   **Retrospectives Consumed** (POV-201), **Traceability Restored** (POV-203), **Agent Protocols Modernized** (POV-204), **Review, Deploy & Release Gates** (POV-209), **Release Template Retired** (POV-211).
 
-## v0.20: Production Edge & Test Debt
+## v0.20: Production Edge, Per-User Data & Public Repository
 
-**Goal:** Put the security controls on the real traffic path and pay the debt that is already due. *(Forecast — under the task-first model the actual scope is set per task and confirmed when the version is finalised.)*
-**Status:** 🗓️ Forecast
+**Goal:** Make what the outside sees match what the project intends — the browser, a scanner, another user, a visitor, YouTube and a reader of the repository. Started with three items carried from v0.19 (edge, scheduler test, orval); most of the other tasks were found by the previous one or by production.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Production Edge:**
-    *   **Caddy on the Traffic Path**: route the Cloudflare tunnel through Caddy so security headers are actually delivered.
-2.  **Dependency Debt:**
-    *   **orval ≥ 8.22**: the build-time API-client generator carries CRITICAL advisories.
-3.  **Test Debt:**
-    *   **Scheduler Integration Test**: real lock service and test DB for the `@Scheduled` path — TC-ING-006 turns CRITICAL in the planning audit at v0.20.
+    *   **Security Headers in the Application** (POV-214): Caddy removed — the Cloudflare tunnel is the only edge; the app sends security headers, an enforced CSP and caching headers and trusts forwarded headers only from `cloudflared` (ADR-0012).
+    *   **Edge Hardening** (POV-221): probe paths get 404, the `uri` metric tag is bounded, expired-session XHRs get 401, CORS removed.
+2.  **Per-User Data & Product:**
+    *   **Sources and Content Scoped to the User** (POV-219): a user sees only the sources of their topics and the content of their briefings.
+    *   **Per-User Onboarding Guide and Pending-Approval Banner** (POV-216).
+    *   **Landing Page Redesign** (POV-220): product-first, honest feature claims; first visit follows the browser language and system theme.
+3.  **Operations:**
+    *   **Human-Like YouTube Pacing** (POV-222): serial transcript fetches with random pauses, bounded per-video retries, any-language transcripts.
+    *   **Scheduler Integration Test** (POV-213): the scheduled run is tested as the scheduler fires it (TC-ING-006 automated); retention and enrichment run in the daytime.
+4.  **Supply Chain & Public Repository:**
+    *   **orval 8.41.0 and Vitest 5.0.3** (POV-215) and **`shell-quote` 1.12.0** (POV-224): critical build-time advisories fixed; CI scans npm development dependencies (Trivy 0.75.0); the CI token is read-only (POV-225).
+    *   **Repository Public** (POV-223): showcase README, `SECURITY.md`, production operations in a private runbook, public-content rule.
 
+## v0.21: Per-User Isolation & Lighter Process
+
+**Goal:** Close the remaining channels through which one user learns about another, run the development process on the rules adopted from the v0.20 retrospective, and renew the supply-chain exceptions before they expire. *(Forecast — scope is set per task and confirmed when the version is finalised.)*
+**Status:** 📋 Planned
+
+### Key Tasks & Implementation Steps:
+1.  **Per-User Isolation:**
+    *   **Job Events per User** (POV-217): live job-status events reach only the user they concern.
+    *   **Queries in Named Methods** (POV-218): the remaining inline HQL moves into entity/repository methods.
+2.  **Process:**
+    *   **Process-Weight Decisions** (v0.20 retrospective §3): the adopted proposals applied to the workflow and the checklist.
+3.  **Supply Chain:**
+    *   **`.trivyignore` Expiry** (2026-12-31): every entry re-checked — removed if fixed, renewed with a rationale otherwise.
 
 ## v1.0: RAG & Conversational Interface
+
+> **Forecast, not a commitment** (reviewed in POV-223). Versions are scoped task-first; items below that were
+> delivered earlier are marked *(delivered)*.
 
 **Goal:** Deliver the core "interactive report" feature (RAG pipeline) and conclude the **Production Hardening** series with automated database backups and recovery procedures.
 
 ### Key Tasks & Implementation Steps
 
 1.  **Evolve the Persistence Layer:**
-    *   Update the `Summary` JPA entity to include the `embedding` field (`vector(1536)`).
+    *   Update the `Summary` JPA entity to include the `embedding` field (`vector(1536)`) — the column already exists in the `summaries` table (V1 migration); the entity does not map it yet.
     *   Implement the `Category` and `Sentiment` entities and their relationships with `Summary`.
     *   Configure `pgvector` indexing on the `embedding` column for efficient similarity searches.
 
@@ -317,7 +340,7 @@ This document outlines the concrete steps for implementing the features describe
         4.  Send the augmented prompt to the LLM and return its final, context-aware answer to the client.
 
 4.  **User Experience Planning for Advanced UI:**
-    *   **ADR for Frontend:** Create an Architectural Decision Record for the choice of frontend framework.
+    *   **ADR for Frontend:** Create an Architectural Decision Record for the choice of frontend framework. *(delivered — ADR-0004, v0.12)*
     *   **Wireframes:** Develop basic wireframes for the user interface.
     *   **User Feedback:** Establish a process for gathering user feedback and creating initial user guides.
 
@@ -335,7 +358,7 @@ This document outlines the concrete steps for implementing the features describe
 1.  **Implement New Ingestion Services:**
     *   Create a `WebScraperService` that can extract article text from a given list of blog/news URLs.
     *   Develop a service for at least one social media platform (e.g., X/Twitter or Reddit) to fetch relevant posts based on keywords or user accounts.
-    *   Ensure all new ingestion services are decoupled and publish their findings to the message queue for the central processing service to consume.
+    *   Ensure all new ingestion services are decoupled from the central processing service (the original vision's message queue does not exist; ingestion today is in-process, `ContentFetchingStrategy`).
 
 2.  **Develop Trend & Pattern Detection:**
     *   Implement the `Trend` and `TrendSummaries` JPA entities.
@@ -349,7 +372,7 @@ This document outlines the concrete steps for implementing the features describe
 
 4.  **Production Quality Testing:**
     *   **Performance Testing:** Conduct initial load tests on the RAG API to identify performance bottlenecks.
-    *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows, following the architectural decision made in v1.0.
+    *   **E2E UI Test Automation:** Introduce a framework (e.g., Playwright) for end-to-end testing of critical user flows. *(delivered — Playwright since v0.12, run in CI)*
 
 ## v1.2: Content Creation & Refinement
 
@@ -358,6 +381,11 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.5     | 2026-10-10         | Povzetkar AI | v0.20 rewritten to actual delivery and marked `✅ Completed`; v0.21 added as a minimal forecast (POV-217, POV-218, process-weight decisions, `.trivyignore` expiry) (POV-225). |
+| 4.4     | 2026-10-09         | Povzetkar AI | v1.0+ marked as forecast; delivered items marked (ADR-0004, Playwright); `embedding` column and message-queue statements aligned with the code; POV-196 entry without host details (POV-223). |
+| 4.3     | 2026-09-29         | Povzetkar AI | v0.20 *Production Edge*: POV-214 reshaped from "Caddy on the traffic path" to removing Caddy — headers, CSP, caching and proxy trust in the application (ADR-0012). |
+| 4.2     | 2026-09-28         | Povzetkar AI | v0.17 *Session Expiry Handling* (POV-187) corrected to the implemented `/auth/login?redirect=` flow (POV-220). |
+| 4.1     | 2026-09-27         | Povzetkar AI | Marked v0.20 as In Progress at version initialisation (POV-212); key tasks linked to POV-213, POV-214, POV-215. |
 | 4.0     | 2026-09-27         | Povzetkar AI | Marked v0.19.0 as ✅ Completed and rewrote its scope to actual delivery (Security Hardening, Process Maturity & Operations, POV-211); the unshipped forecast (DAST, Grafana alerting, full-text search, transcript providers, SMTP) moved to the backlog; added a minimal v0.20 forecast (Caddy on the traffic path, orval ≥ 8.22, scheduler integration test). |
 | 3.9     | 2026-07-03         | Povzetkar AI | Marked v0.19 as In Progress at version initialisation (POV-201).                                                                                                         |
 | 3.8     | 2026-06-26         | Povzetkar AI | Marked v0.18.0 as ✅ Completed and rewrote its scope to reflect actual task-first delivery (Transcript Ingestion Resilience & Scheduler Correctness, POV-191…200). The originally-planned hardening scope (DAST, Grafana alerting, full-text search, additional providers, SMTP) was carried forward to `v0.19: Hardening & Operational Excellence` as a forecast — under the task-first model the actual scope and version label are confirmed retrospectively. |

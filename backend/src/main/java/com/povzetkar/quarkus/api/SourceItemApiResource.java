@@ -5,7 +5,9 @@ import com.povzetkar.quarkus.api.dto.PaginatedResponse;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.mapper.ContentItemMapper;
 import com.povzetkar.quarkus.model.ContentItem;
+import com.povzetkar.quarkus.model.ContentScope;
 import com.povzetkar.quarkus.model.ContentSource;
+import com.povzetkar.quarkus.model.Summary;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -28,7 +30,6 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
  
@@ -51,7 +52,8 @@ public class SourceItemApiResource extends BaseApiResource {
     @GET
     @Path("/{id}/items")
     @RolesAllowed(Permission.V_SOURCE_VIEW)
-    @Operation(summary = "Get items by source", description = "Retrieves a paginated list of content items for a specific source.")
+    @Operation(summary = "Get items by source",
+            description = "Retrieves a paginated list of the content items of a source visible to the caller; a source outside the caller's topics is reported as not found.")
     @APIResponse(
             responseCode = "200",
             description = "List of source items retrieved successfully",
@@ -63,19 +65,16 @@ public class SourceItemApiResource extends BaseApiResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize) {
 
-        getAuthenticatedUser();
-
-        ContentSource source = ContentSource.findById(sourceId);
-        if (source == null) {
-            throw new NotFoundException("Source with id " + sourceId + " not found.");
-        }
+        ContentScope scope = getContentScope();
+        ContentSource source = ContentSource.findVisibleById(sourceId, scope)
+                .orElseThrow(() -> new NotFoundException("Source with id " + sourceId + " not found."));
 
         final int clampedPageSize = Math.clamp(pageSize, 1, ApiConstants.MAX_PAGE_SIZE);
         // Item alias "c" (see ContentItem.listByIdsWithAssociations); c.id breaks ties across pages
         Sort sort = Sort.by("c.publishedAt", Sort.Direction.Descending).and("c.id", Sort.Direction.Descending);
 
-        // Pattern inspired by ContentItemApiResource to solve ResultSet issues and N+1
-        PanacheQuery<Long> idQuery = ContentItem.find("SELECT c.id FROM ContentItem c WHERE c.contentSource = ?1", sort, source).project(Long.class);
+        // Page over ids, then load the page with its associations (Hibernate 7.4, see ContentItem)
+        PanacheQuery<Long> idQuery = ContentItem.findIdsBySource(source, sort);
         long count = idQuery.count();
         List<Long> itemIds = idQuery.page(pageIndex, clampedPageSize).list();
 
@@ -87,15 +86,10 @@ public class SourceItemApiResource extends BaseApiResource {
         List<ContentItem> items = ContentItem.listByIdsWithAssociations(itemIds, sort);
 
         // Fetch all summary existence flags in one go
-        final Set<Long> itemIdsWithSummaries = new HashSet<>(
-            io.quarkus.hibernate.orm.panache.Panache.getEntityManager()
-                   .createQuery("SELECT s.contentItem.id FROM Summary s WHERE s.contentItem.id IN :ids", Long.class)
-                   .setParameter("ids", itemIds)
-                   .getResultList()
-        );
+        final Set<Long> itemIdsWithSummaries = Summary.findContentItemIdsWithSummary(itemIds);
 
         List<ContentItemDTO> dtoList = items.stream()
-                .map(item -> contentItemMapper.toDTO(item, itemIdsWithSummaries))
+                .map(item -> contentItemMapper.toDTO(item, itemIdsWithSummaries, scope))
                 .toList();
  
         return new PaginatedResponse<>(dtoList, count, pageIndex, clampedPageSize);

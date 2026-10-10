@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service.transcript;
 
+import com.povzetkar.quarkus.service.ProcessingContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -10,8 +11,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -33,29 +36,59 @@ public class TranscriptOrchestrator {
     private final List<TranscriptProvider> orderedProviders;
     private final TranscriptProviderQuotaService quotaService;
     private final MeterRegistry registry;
+    private final Clock clock;
 
     @Inject
     public TranscriptOrchestrator(
             @Any Instance<TranscriptProvider> providers,
             @ConfigProperty(name = "transcript.providers.order", defaultValue = "youtube-legacy,supadata") List<String> providerOrder,
             TranscriptProviderQuotaService quotaService,
-            MeterRegistry registry) {
+            MeterRegistry registry,
+            Clock clock) {
         this.quotaService = quotaService;
         this.registry = registry;
+        this.clock = clock;
         this.orderedProviders = buildOrderedChain(providers, providerOrder);
     }
 
-    public String fetch(String videoId) {
+    /**
+     * Automatic fetch (orchestration runs, per-item jobs): paced providers wait for their slot within the context's
+     * time budget.
+     *
+     * @throws TranscriptSkippedException the time budget was used up before a provider could be tried, or a provider
+     *                                    did not attempt the fetch — passed on unchanged, without a failure metric and
+     *                                    without trying the next provider (POV-222)
+     */
+    public String fetch(String videoId, ProcessingContext context) {
+        return fetchVia(videoId, (provider, id) -> provider.fetch(id, context), provider -> {
+            if (context.isPastDeadline(clock.instant())) {
+                throw new TranscriptSkippedException(
+                        "Orchestration time budget used up before trying provider '" + provider.name() + "'.");
+            }
+        });
+    }
+
+    /** Manual transcript capture (admin "Fetch transcript"): exempt from pacing (POV-222). */
+    public String fetchManual(String videoId) {
+        return fetchVia(videoId, TranscriptProvider::fetchManual, _ -> { });
+    }
+
+    private String fetchVia(String videoId, ProviderCall call, Consumer<TranscriptProvider> beforeProvider) {
         for (TranscriptProvider provider : orderedProviders) {
-            registry.counter(METRIC_ATTEMPTS, TAG_PROVIDER, provider.name()).increment();
+            beforeProvider.accept(provider);
             Timer.Sample sample = Timer.start(registry);
+            boolean attempted = true;
             try {
-                String transcript = provider.fetch(videoId);
+                String transcript = call.fetch(provider, videoId);
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_SUCCESSES, TAG_PROVIDER, provider.name()).increment();
                 recordQuotaBestEffort(provider.name());
                 log.info("Transcript fetched successfully via provider '{}' for video ID '{}'.", provider.name(), videoId);
                 return transcript;
+            } catch (TranscriptSkippedException e) {
+                // no request was made — not an attempt (POV-222)
+                attempted = false;
+                throw e;
             } catch (QuotaExhaustedException _) {
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_FAILURES, TAG_PROVIDER, provider.name(), TAG_REASON, REASON_QUOTA).increment();
@@ -64,10 +97,19 @@ public class TranscriptOrchestrator {
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_FAILURES, TAG_PROVIDER, provider.name(), TAG_REASON, REASON_UNAVAILABLE).increment();
                 log.warn("Provider '{}' unavailable for video ID '{}': {}. Trying next provider.", provider.name(), videoId, e.getMessage());
+            } finally {
+                if (attempted) {
+                    registry.counter(METRIC_ATTEMPTS, TAG_PROVIDER, provider.name()).increment();
+                }
             }
         }
         log.error("All transcript providers failed for video ID '{}'.", videoId);
         return "";
+    }
+
+    @FunctionalInterface
+    private interface ProviderCall {
+        String fetch(TranscriptProvider provider, String videoId) throws QuotaExhaustedException, ProviderUnavailableException;
     }
 
     private void recordQuotaBestEffort(String providerName) {

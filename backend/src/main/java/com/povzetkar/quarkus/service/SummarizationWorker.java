@@ -18,12 +18,12 @@ public class SummarizationWorker {
         this.strategies = strategies;
     }
 
-    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
+    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate, ProcessingContext context) {
         SummarizationStrategy strategy = strategies.stream()
                 .filter(s -> s.supports(item))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No summarization strategy found for content item: " + item.getClass().getName()));
 
-        return strategy.summarize(client, item, orchestrationDate);
+        return strategy.summarize(client, item, orchestrationDate, context);
     }
 }

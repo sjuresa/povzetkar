@@ -1,6 +1,7 @@
 package com.povzetkar.quarkus.service;
 
 import com.povzetkar.quarkus.model.AccountStatus;
+import com.povzetkar.quarkus.model.ContentScope;
 import com.povzetkar.quarkus.model.Role;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
@@ -82,7 +83,7 @@ public class UserContextService {
         return User.find("from User u left join fetch u.roles where u.username = ?1", username).firstResultOptional();
     }
 
-    private boolean isApiKeyIdentity() {
+    public boolean isApiKeyIdentity() {
         return ApiKeyAuthenticationMechanism.AUTH_METHOD_API_KEY
                 .equals(securityIdentity.getAttribute(ApiKeyAuthenticationMechanism.AUTH_METHOD_ATTRIBUTE));
     }
@@ -97,6 +98,20 @@ public class UserContextService {
             return id == null ? Optional.empty() : User.findByIdOptional(id);
         }
         return getCurrentUser();
+    }
+
+    /**
+     * Returns the scope for reading sources and content items (POV-219): unrestricted for an admin
+     * signed in interactively, otherwise the content-viewing user's topics and briefings. An API key
+     * never gets the unrestricted scope — it carries only {@code api-readonly}, even for an admin's key.
+     *
+     * @return the scope, or an empty Optional if there is no content-viewing user
+     */
+    public Optional<ContentScope> getContentScope() {
+        if (securityIdentity.hasRole(Permission.ROLE_ADMIN) && !isApiKeyIdentity()) {
+            return Optional.of(ContentScope.unrestricted());
+        }
+        return getContentViewingUser().map(ContentScope::of);
     }
 
     private Long resolveDemoUserId() {

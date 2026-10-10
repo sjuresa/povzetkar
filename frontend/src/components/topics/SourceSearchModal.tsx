@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useGetApiV1Sources } from '../../api/generated/content-sources/content-sources';
-import type { ContentSourceDTO } from '../../api/generated/model';
 import { Search, X, Loader2, Plus, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { QuickSourceIntake } from './QuickSourceIntake';
+import { fromDraft, fromExistingSource, type SelectedSource } from './selectedSource';
 
 interface SourceSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (source: ContentSourceDTO) => void;
+  onSelect: (source: SelectedSource) => void;
   excludeIds?: number[];
 }
 
@@ -39,6 +39,15 @@ export function SourceSearchModal({ isOpen, onClose, onSelect, excludeIds = [] }
 
   if (!isOpen) return null;
 
+  // The modal stays mounted while closed, so every way out resets it: the next open starts at the search list
+  const handleClose = () => {
+    setShowQuickAdd(false);
+    setSearch('');
+    setDebouncedSearch('');
+    setPage(0);
+    onClose();
+  };
+
   const sources = sourcesResponse?.data?.items || [];
   const totalCount = sourcesResponse?.data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / 5);
@@ -55,7 +64,8 @@ export function SourceSearchModal({ isOpen, onClose, onSelect, excludeIds = [] }
             <p className="text-xs text-[var(--color-text-secondary)] font-medium">{t('topics.form.search_modal.subtitle')}</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
+            aria-label={t('common.close', 'Close')}
             className="p-2 hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-[var(--color-text-secondary)]"  strokeWidth={1.5}/>
@@ -65,9 +75,9 @@ export function SourceSearchModal({ isOpen, onClose, onSelect, excludeIds = [] }
         <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
           {showQuickAdd ? (
             <QuickSourceIntake
-              onSuccess={(source) => {
-                onSelect(source);
-                onClose();
+              onSuccess={(draft) => {
+                onSelect(fromDraft(draft));
+                handleClose();
               }}
               onCancel={() => setShowQuickAdd(false)}
             />
@@ -99,8 +109,8 @@ export function SourceSearchModal({ isOpen, onClose, onSelect, excludeIds = [] }
                       <button
                         key={source.id}
                         onClick={() => {
-                          onSelect(source);
-                          onClose();
+                          onSelect(fromExistingSource(source));
+                          handleClose();
                         }}
                         className="w-full group flex items-center justify-between p-4 bg-[var(--color-background-alt)] hover:bg-[var(--color-surface-hover)] rounded-xl md:rounded-[28px] border border-transparent hover:border-[var(--color-action-primary)]/30 transition-all text-left"
                       >

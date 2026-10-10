@@ -1,6 +1,5 @@
 package com.povzetkar.quarkus.api.mapper;
 
-import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourcePatchDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceUpdateDTO;
@@ -20,9 +19,6 @@ public interface ContentSourceMapper {
     @Mapping(target = "platform", expression = "java(mapSourceTypeIdToPlatform(entity.sourceTypeId))")
     @Mapping(target = "sourceUrl", expression = "java(computeSourceUrl(entity))")
     ContentSourceDTO toDTO(ContentSource entity);
-
-    @Mapping(target = "sourceTypeId", expression = "java(mapPlatformToSourceTypeId(dto.platform()))")
-    ContentSource toEntity(ContentSourceCreateDTO dto);
 
     @Mapping(target = "sourceTypeId", expression = "java(mapPlatformToSourceTypeId(dto.platform()))")
     void updateEntity(ContentSourceUpdateDTO dto, @MappingTarget ContentSource entity);

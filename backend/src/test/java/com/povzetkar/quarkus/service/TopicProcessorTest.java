@@ -9,6 +9,7 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.ProcessingStatus;
 import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,6 +55,7 @@ class TopicProcessorTest {
     private Topic testTopic;
     private ContentSource testContentSource;
     private ContentItem testContentItem;
+    private final ProcessingContext runContext = ProcessingContext.automatic(java.time.Instant.now(), java.time.Duration.ofMinutes(15));
 
     @BeforeEach
     void setUp() {
@@ -114,7 +117,7 @@ class TopicProcessorTest {
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(orchestrationDate), eq(null), eq(null)))
                 .thenReturn(Collections.singletonList(testContentItem));
-        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(orchestrationDate)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(orchestrationDate), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
     }
 
@@ -125,11 +128,11 @@ class TopicProcessorTest {
         setupCommonMocks(expectedDate);
 
         // When
-        topicProcessor.processTopicUni(testTopic, expectedDate).await().indefinitely();
+        topicProcessor.processTopicUni(testTopic, expectedDate, runContext).await().indefinitely();
 
         // Then
         verify(contentItemFetcher, times(1)).fetchItems(testContentSource, expectedDate, null, null);
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate, runContext);
     }
 
     @Test
@@ -141,14 +144,31 @@ class TopicProcessorTest {
 
         when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(expectedDate), eq(null), eq(null)))
                 .thenReturn(List.of(skippedItem, testContentItem));
-        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(expectedDate)))
+        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(expectedDate), any(ProcessingContext.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         // When
-        topicProcessor.processTopicUni(testTopic, expectedDate).await().indefinitely();
+        topicProcessor.processTopicUni(testTopic, expectedDate, runContext).await().indefinitely();
 
         // Then — only PENDING item scheduled, SKIPPED_TOO_SHORT filtered out
-        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate);
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate, runContext);
+    }
+
+    @Test
+    void testProcessTopicUni_processPending_schedulesItemsDueInTopic() {
+        // POV-222: the per-topic pending selection goes through the named query (due items only)
+        LocalDate expectedDate = LocalDate.now();
+        PanacheMock.mock(ContentItem.class);
+        when(ContentItem.listDueInTopic(eq(1L), eq(expectedDate), any(Instant.class))).thenReturn(List.of(testContentItem));
+        when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(expectedDate), eq(null), eq(null)))
+                .thenReturn(Collections.emptyList());
+        when(justInTimeSummarizationScheduler.schedule(anyList(), eq(expectedDate), any(ProcessingContext.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        topicProcessor.processTopicUni(testTopic, expectedDate, true, runContext).await().indefinitely();
+
+        PanacheMock.verify(ContentItem.class).listDueInTopic(eq(1L), eq(expectedDate), any(Instant.class));
+        verify(justInTimeSummarizationScheduler, times(1)).schedule(List.of(testContentItem), expectedDate, runContext);
     }
 
     @Test
@@ -162,7 +182,7 @@ class TopicProcessorTest {
                 .thenReturn(Collections.emptyList());
 
         // When
-        topicProcessor.processTopicUni(testTopic, expectedDate).await().indefinitely();
+        topicProcessor.processTopicUni(testTopic, expectedDate, runContext).await().indefinitely();
 
         // Then
         verify(contentItemFetcher, times(1)).fetchItems(testContentSource, expectedDate, null, null);

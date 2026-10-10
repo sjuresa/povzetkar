@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UsersTable } from './UsersTable';
 import type { UserDTO } from '../../api/generated/model';
@@ -31,8 +31,6 @@ function renderTable(users: UserDTO[], sort = '', onSortChange = vi.fn()) {
 }
 
 describe('UsersTable', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
   it('shows no-results message when users list is empty', () => {
     renderTable([]);
     expect(screen.getByText('admin.users.table.noResults')).toBeInTheDocument();

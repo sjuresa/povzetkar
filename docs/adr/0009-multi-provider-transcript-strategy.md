@@ -93,6 +93,26 @@ Adding ytscribe or transcriptapi reduces to: implement a `TranscriptProvider` ad
 > **Update (v0.18.0 / POV-194):** A third provider, `ProxyTranscriptProvider` (`name()="proxy"`), was added against the POV-193 transcript proxy and made the **primary** source (`transcript.providers.order=proxy,youtube-legacy,supadata`) — validating the above with zero interface or orchestrator changes. It applies its own caller-side 15–45s jitter, **throttled to sequential calls** — the jitter is skipped for the first/isolated call (e.g. the manual admin "Fetch Transcript" button) and applied only when the previous call was within `jitterMaxMs`, so batch ingestion stays protected while the manual UI path is responsive. Note: it has no quota concept, so it never throws `QuotaExhaustedException`.
 >
 > **Update (v0.18.0 / POV-196):** The transcript proxy **host moved from Railway to a self-hosted Synology DS220j**, reached over a Tailscale overlay. Railway's shared datacenter egress IP was being soft-throttled by YouTube (intermittent `502 proxy_blocked` interleaved with `200`s on the same video — evidence of volume-based throttling, not a hard ban or cold-start). A residential, always-on egress IP is throttled far less. **No application code changed** beyond the env-pointed `TRANSCRIPT_PROXY_URL`; the only proxy code change was per-branch failure logging (so `IpBlocked` vs `RequestBlocked` vs `upstream_error` are unambiguous). Railway is kept as a **passive, manual fallback** — one host active at a time, switched via `TRANSCRIPT_PROXY_URL`, both accepting the same `X-API-Key`. Operational detail in RUNBOOK §16.1b.
+>
+> **Update (v0.20.x / POV-222):** YouTube blocked the production host's IP for transcript requests (HTTP 429), so
+> the youtube-legacy jitter (§6) is **replaced by serial, human-like pacing**:
+>
+> - `YouTubeRequestPacer` lets one youtube-legacy fetch run at a time, app-wide (fair lock held for the whole
+>   fetch), each after a random 15–45 s pause measured from the end of the previous fetch — none for the first
+>   fetch or after idle. Inside a fetch the three calls (video page → innertube → captions) are spaced 1–5 s.
+>   Keys `transcript.providers.youtube-legacy.pacing.{fetch,in-fetch}.{min,max}`; `jitter.*` removed.
+> - youtube-legacy uses its own `YoutubeClient` (`YoutubeHttpClient`, via `TranscriptApiFactory.createWithClient`)
+>   with connect/request timeouts — the library's client has none, and one hung call would stall the queue.
+> - The interface gains two default methods: `fetch(videoId, ProcessingContext)` (automatic fetch within a run:
+>   deadline and fetch count; = `fetch(videoId)` for unpaced providers) and `fetchManual(videoId)` (the admin's
+>   transcript capture, exempt from pacing). An unchecked `TranscriptSkippedException` (time budget used up)
+>   passes through the orchestrator without a failure metric or fall-through.
+> - Bounded retries per video (`transcript.retry.intervals`, 7 automatic attempts, then `FAILED`) and a time budget
+>   per orchestration run (`povzetkar.orchestration.time-budget`).
+> - Captions in any language: English (incl. `en-*` variants) manual → English generated → any manual → any
+>   generated (no `translate()`, an extra call); the summary prompt requests English.
+>
+> The proxy keeps its own jitter (it does not call YouTube from our IP). Operational detail in RUNBOOK §14.1a.
 
 ## Consequences
 

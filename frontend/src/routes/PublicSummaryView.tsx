@@ -1,8 +1,5 @@
 import { 
   ExternalLink, 
-  Sun, 
-  Moon, 
-  Languages, 
   Hash,
   Calendar,
   ExternalLink as LinkIcon
@@ -11,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
-import { useThemeStore } from '../store/themeStore';
+import { PublicHeader } from '../components/layout/PublicHeader';
 import type { PublicSummary } from '../api/generated/model';
 import { REHYPE_PLUGINS } from '../utils/markdown';
 
@@ -20,8 +17,7 @@ interface PublicSummaryViewProps {
 }
 
 export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>) {
-  const { theme, setTheme } = useThemeStore();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-[var(--color-background-base)] text-[var(--color-text-primary)] pb-20 transition-colors">
@@ -33,39 +29,7 @@ export function PublicSummaryView({ summary }: Readonly<PublicSummaryViewProps>)
         <meta property="og:type" content="article" />
       </Helmet>
 
-      {/* Shared Header */}
-      <header className="sticky top-0 z-10 border-b border-[var(--color-border-subtle)] bg-[var(--color-background-base)]/80 backdrop-blur-md px-4 py-4 sm:px-16">
-        <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-xl bg-[var(--color-action-primary)] flex items-center justify-center font-bold text-[var(--color-action-primary-text)] group-hover:scale-105 transition-transform">P</div>
-              <span className="font-bold text-[var(--color-text-primary)] hidden sm:inline">Povzetkar</span>
-            </a>
-            
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-[var(--color-action-primary)] group-hover:rotate-45 transition-transform"  strokeWidth={1.5}/>
-              ) : (
-                <Moon className="w-4 h-4 text-[var(--color-text-primary)] group-hover:-rotate-12 transition-transform"  strokeWidth={1.5}/>
-              )}
-            </button>
-
-            <button
-              onClick={() => void i18n.changeLanguage(i18n.language === 'sl' ? 'en' : 'sl')}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-hover)] transition-all active:scale-95 group"
-            >
-              <Languages className="w-4 h-4 text-[var(--color-action-primary)] group-hover:scale-110 transition-transform"  strokeWidth={1.5}/>
-              <span className="text-[10px] font-bold uppercase tracking-tight text-[var(--color-text-primary)]">
-                {i18n.language === 'sl' ? 'SL' : 'EN'}
-              </span>
-            </button>
-          </div>
-          <p className="text-sm text-[var(--color-text-secondary)] italic hidden xs:block">{t('briefingDetail.public.sharedSubtitle')}</p>
-        </div>
-      </header>
+      <PublicHeader subtitle={t('briefingDetail.public.sharedSummarySubtitle')} containerClassName="max-w-4xl px-4 sm:px-16" />
 
       <main className="max-w-4xl mx-auto px-4 pt-16 sm:px-16">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">

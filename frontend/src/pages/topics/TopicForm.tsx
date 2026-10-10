@@ -1,14 +1,17 @@
+// First import: switches Zod to jitless before any schema is built (strict CSP, no eval — POV-214)
+import '../../zodConfig';
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { TopicCreate, Topic, TopicPatch, ContentSourceDTO } from '../../api/generated/model';
+import type { TopicCreate, Topic, TopicPatch } from '../../api/generated/model';
 import { useTranslation } from 'react-i18next';
-import { usePostApiV1Topics, patchApiV1TopicsId, useGetApiV1TopicsDefaultPromptTemplate } from '../../api/generated/topics/topics';
+import { usePostApiV1Topics, usePatchApiV1TopicsId, useGetApiV1TopicsDefaultPromptTemplate } from '../../api/generated/topics/topics';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Check, ExternalLink, AlertCircle, Info, Settings, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { SourceSearchModal } from '../../components/topics/SourceSearchModal';
+import { fromExistingSource, isAlreadySelected, toTopicSources, type SelectedSource } from '../../components/topics/selectedSource';
 import { useOnboardingStore, type OnboardingStep } from '../../store/onboardingStore';
 
 const topicSchema = z.object({
@@ -16,6 +19,7 @@ const topicSchema = z.object({
   enabled: z.boolean(),
   promptTemplate: z.string(),
   sourceIds: z.array(z.number()),
+  newSources: z.array(z.object({ platform: z.string(), sourceIdentifier: z.string(), name: z.string().optional() })),
   useDefaultTemplate: z.boolean().optional(),
 });
 
@@ -32,9 +36,12 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
   const queryClient = useQueryClient();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [selectedSources, setSelectedSources] = useState<ContentSourceDTO[]>(initialData?.contentSources || []);
+  const [selectedSources, setSelectedSources] = useState<SelectedSource[]>(
+    (initialData?.contentSources ?? []).map(fromExistingSource)
+  );
 
   const { mutateAsync: createTopic, isPending: isCreating } = usePostApiV1Topics();
+  const { mutateAsync: patchTopic, isPending: isPatching } = usePatchApiV1TopicsId();
 
   const { data: defaultTemplateResponse } = useGetApiV1TopicsDefaultPromptTemplate({
     query: {
@@ -55,6 +62,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
       enabled: initialData?.enabled ?? true,
       promptTemplate: initialData?.promptTemplate || '',
       sourceIds: initialData?.contentSources ? initialData.contentSources.map(s => s.id!) : [],
+      newSources: [],
       useDefaultTemplate: !initialData,
     },
   });
@@ -84,9 +92,11 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
   }, [defaultTemplateResponse, initialData, setValue, hasInitializedDefault, useDefaultTemplate]);
 
   const sourceIds = watch('sourceIds');
-  const isSubmitting = isCreating;
+  const isSubmitting = isCreating || isPatching;
 
   const onSubmit = async (data: TopicFormData) => {
+    // Quick Add entries travel as newSources and are found or created on save (POV-219)
+    const hasSources = data.sourceIds.length + data.newSources.length > 0;
     try {
       if (initialData?.id) {
         const patch: TopicPatch = {
@@ -94,12 +104,13 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
           enabled: data.enabled,
           promptTemplate: data.promptTemplate,
           sourceIds: data.sourceIds,
+          newSources: data.newSources,
           version: initialData.version,
         };
-        await patchApiV1TopicsId(initialData.id, patch);
+        await patchTopic({ id: initialData.id, data: patch });
         toast.success(t('topics.form.save_success_update'));
         // Onboarding triggers: if they add a source to an existing topic, mark Step 2 complete
-        if ((data.sourceIds?.length ?? 0) > 0) {
+        if (hasSources) {
           useOnboardingStore.getState().markStepComplete('source');
         }
       } else {
@@ -108,17 +119,19 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
           enabled: data.enabled,
           promptTemplate: data.promptTemplate,
           sourceIds: data.sourceIds,
+          newSources: data.newSources,
         };
         await createTopic({ data: create });
         toast.success(t('topics.form.save_success_create'));
         
         const steps: OnboardingStep[] = ['topic'];
-        if ((data.sourceIds?.length ?? 0) > 0) {
+        if (hasSources) {
           steps.push('source');
         }
         useOnboardingStore.getState().markStepComplete(steps);
       }
       void queryClient.invalidateQueries({ queryKey: ['/api/v1/topics'] });
+      void queryClient.invalidateQueries({ queryKey: ['/api/v1/sources'] });
       onSuccess();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
@@ -127,19 +140,22 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
     }
   };
 
-  const handleAddSource = (source: ContentSourceDTO) => {
-    if (!sourceIds.includes(source.id!)) {
-      const newIds = [...sourceIds, source.id!];
-      setValue('sourceIds', newIds);
-      setSelectedSources([...selectedSources, source]);
+  const updateSelection = (next: SelectedSource[]) => {
+    const { sourceIds: ids, newSources } = toTopicSources(next);
+    setSelectedSources(next);
+    setValue('sourceIds', ids);
+    setValue('newSources', newSources);
+  };
+
+  const handleAddSource = (source: SelectedSource) => {
+    if (!isAlreadySelected(selectedSources, source)) {
+      updateSelection([...selectedSources, source]);
     }
     setIsSearchModalOpen(false);
   };
 
-  const handleRemoveSource = (id: number) => {
-    const newIds = sourceIds.filter(sid => sid !== id);
-    setValue('sourceIds', newIds);
-    setSelectedSources(selectedSources.filter(s => s.id !== id));
+  const handleRemoveSource = (key: string) => {
+    updateSelection(selectedSources.filter(s => s.key !== key));
   };
 
   return (
@@ -189,7 +205,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
               className="sr-only peer"
               id="topic-enabled-toggle"
             />
-            <div className="w-14 h-8 bg-[var(--color-surface-deep)] peer-focus:ring-2 peer-focus:ring-[var(--color-ring-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[var(--color-action-primary)] shadow-inner transition-colors"></div>
+            <div data-testid="topic-enabled-track" className="w-14 h-8 bg-[var(--color-surface-deep)] peer-focus:ring-2 peer-focus:ring-[var(--color-ring-focus)] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[var(--color-text-secondary)] peer-checked:after:bg-[var(--color-action-primary-text)] after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[var(--color-action-primary)] shadow-inner transition-colors"></div>
           </label>
         </div>
 
@@ -216,9 +232,9 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2">
-              {selectedSources.map((source: ContentSourceDTO) => (
+              {selectedSources.map((source) => (
                   <div
-                    key={source.id}
+                    key={source.key}
                     className="flex items-center justify-between p-4 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-primary)] transition-all hover:border-[var(--color-action-primary)]"
                   >
                     <div className="flex items-center min-w-0">
@@ -227,7 +243,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
                       </div>
                       <div className="truncate">
                         <span className="block font-black text-xs uppercase tracking-tight truncate text-[var(--color-text-primary)]">
-                          {source.name || source.sourceIdentifier}
+                          {source.name}
                         </span>
                         <span className="block text-[10px] text-[var(--color-text-secondary)]/60 uppercase font-black tracking-widest">
                           {source.platform}
@@ -236,7 +252,7 @@ export const TopicForm: React.FC<TopicFormProps> = ({ initialData, onSuccess, on
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleRemoveSource(source.id!)}
+                      onClick={() => handleRemoveSource(source.key)}
                       className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-status-error)] hover:bg-[var(--color-bg-primary)] rounded-xl transition-all shrink-0"
                       title="Remove source"
                     >

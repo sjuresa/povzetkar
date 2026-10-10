@@ -10,7 +10,7 @@ To streamline the generation of valid test entities and avoid verbosity in test 
 In version v0.10.0, as core models (`User`, `Topic`, `ContentSource`) gained mandatory constraints, directly instantiating and configuring these entities in every test led to excessive boilerplate and brittle tests. Modifying an entity's required fields structurally broke dozens of unrelated tests.
 
 ### How to use Builders
-We have centralized test entity construction in `src/test/java/com/povzetkar/quarkus/builder`. 
+We have centralized test entity construction in `backend/src/test/java/com/povzetkar/quarkus/builder`.
 
 When setting up test data, **always** use builders instead of the `new` keyword:
 
@@ -42,5 +42,10 @@ Topic topic = TopicBuilder.aTopic()
 - `UserBuilder`
 - `TopicBuilder`
 - `ContentSourceBuilder`
+- `ContentItemBuilder`, `YouTubeVideoBuilder`
+- `SummaryBuilder`, `BriefingBuilder`
+
+Which tests run against the database and which mock persistence is defined by QA rule 3
+(`docs/protocols/quality-mandates.md`).
 
 Adding new entities? Please implement a matching builder in the `builder` package containing sane default values.

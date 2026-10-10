@@ -86,4 +86,18 @@ describe('i18n JSON structure', () => {
     expect(slKeys).toContain('dashboard.title');
     expect(slKeys).toContain('dashboard.recentBriefings');
   });
+
+  // Glossary guard (docs/guides/i18n-glossary.md): the SL UI calls a briefing "dnevni pregled".
+  // Changelog/roadmap entries are generated from English docs by sync_metadata.py and are exempt.
+  it('SL copy uses the glossary term for a briefing', () => {
+    const generated = /^system\.(changelog_entries|roadmap_phases)$/;
+    const offenders = slKeys
+      .filter(key => !generated.test(key))
+      .filter(key => {
+        const value = key.split('.').reduce<unknown>((o, part) => (o as Record<string, unknown>)[part], sl);
+        return typeof value === 'string' && /briefing|poročil/i.test(value);
+      });
+
+    expect(offenders).toEqual([]);
+  });
 });

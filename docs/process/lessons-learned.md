@@ -6,6 +6,76 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.20.0)
+
+> [!WARNING]
+> **A control written only in prose is no control (POV-224)**:
+> From POV-206 on, RUNBOOK §8.2 said the Trivy filesystem scan skips npm devDependencies and "`npm audit` in
+> `frontend/` covers those". Nothing ran that `npm audit`, and it named only one of the two lockfiles — a critical
+> advisory in the root lockfile reached the public repository and was found by Dependabot. When a document names a
+> compensating check, find the CI step or checklist item that runs it; if there is none, close the gap in the gate
+> itself (here `TRIVY_INCLUDE_DEV_DEPS`) or record the gap as open.
+
+> [!WARNING]
+> **The repository is public — a tool permission is not a data boundary (POV-223)**:
+> Everything committed or posted is public (`docs/protocols/public-content.md`): no secrets, personal data or
+> environment values; plain issue IDs. Two traps from preparing the publication: a deny rule on the agent's Read
+> tool does not stop a script that walks every tracked file from reading the same file — scripts must apply the
+> exclusions themselves; and "tracked files" are not the whole public surface — Deployments, Actions run logs, PR
+> refs and commits overwritten by force-pushes become public with the repository too.
+
+> [!NOTE]
+> **The version bump moves the P0 automation deadline onto its own commit (POV-212)**:
+> CI audits against the version in `package.json`, so checklist 1.1 (`X.Y.0-SNAPSHOT`) makes every P0 test case due at X.Y CRITICAL on the bump commit — before any task of the version can automate it. TC-ING-006 needed a time-bound `validate:skip until v0.21.0`; enforcement then rests on the automating task's Fix version and checklist 3.1b. Check due P0 automations before the bump (backlog).
+
+> [!NOTE]
+> **Examples in normative documents are executed literally (POV-211, POV-212)**:
+> Checklist 4.3's example `git tag -a vX.Y.0` produced a wrong release tag. Treat every command example in a checklist or protocol as a specification and keep it exact.
+
+> [!NOTE]
+> **Re-check an old rule's origin before planning around it (POV-216)**:
+> "Never mock Panache entities in `@QuarkusTest`" came from the v0.6.2 retrospective — brittle mocks amid a knowledge gap, not a framework limit. Traced back, it was replaced by a test-scope rule (QA rule 3): the entity once against the DB, business logic with `PanacheMock` + `@InjectMock Session` as the Quarkus guide prescribes (trap: `PanacheMock` also mocks the entity's own static factories — use a constructor). A normative rule is stated once; other documents point to it.
+
+> [!NOTE]
+> **Search the ADRs when a task reverses a design decision (POV-216)**:
+> The onboarding guide's `localStorage` persistence was ADR-0007; the plan missed it and it surfaced only while writing the specs. Before planning a change to persistence, auth or architecture, grep `docs/adr` for the area and plan the superseding ADR.
+
+> [!NOTE]
+> **Remove transaction mechanics instead of testing them (POV-219)**:
+> The first test plan for per-user source scoping added three DB tests: a `requiringNew` + unique-violation recovery for a race between two users adding the same new channel, a PATCH rollback, and a commit check. The race was near-impossible, so the recovery code was dropped; validating every source before the topic is touched made the rollback trivially asserted with mocks. QA rule 3 now says "design first".
+
+> [!NOTE]
+> **Scoping an API means scoping every door to the data (POV-219)**:
+> Restricting `GET /sources` was not enough: sources could be attached to a topic by a guessed ID, items and summaries were readable (and shareable) by ID, and the legacy Qute UI (`/ui/*`, not linked from the SPA) listed every source. When adding ownership, enumerate every read *and write* path to the entity — including legacy routes — and derive visibility in one named query per entity (`ContentScope`), so no endpoint can forget it.
+
+> [!NOTE]
+> **A test that cannot see the production artefact cannot see its bug (POV-221)**:
+> The SPA fallback served `200` with the shell to every probe path in production, but no `index.html` was on the test classpath, so the same reroute answered `404` in tests — and an `AccessLogTest` comment even documented the difference. A three-line stand-in `index.html` in test resources made the bug visible (red) and the fix provable. When a test comment says "production behaves differently here", that is a missing test fixture, not an explanation. Corollary from the same task: a plan finding inferred from a code path ("the auth challenge comes before JAX-RS matching, so no template") is a hypothesis — the red run disproved it; observe such claims before the plan rests on them.
+
+> [!NOTE]
+> **Throttle where the waiting happens, and serialise whole operations (POV-222)**:
+> A random jitter before each YouTube fetch did nothing against parallel fetches; a lock per HTTP call would have let two fetches interleave their calls, and a run deadline checked when items are scheduled is useless when all items are scheduled within seconds and then queue. The pacer holds a fair lock for the whole fetch and checks the deadline when the slot is obtained. Retrying "no transcript" every hour for two days was most of the traffic — bound retries per item. Corollary: when a change alters signatures, add the new signature as a stub first so the behaviour test can go red at runtime, not only at compile time.
+
+> [!NOTE]
+> **A defect in the invoking thread needs the real invoker (POV-213)**:
+> The POV-197 scheduled-run defect lived in the thread the Quarkus scheduler picks, so every test calling the method directly from the JUnit thread passed with the defect in place. `ScheduledOrchestrationIntegrationTest` lets the real scheduler fire the job (halted in `%test`; pause the other jobs by id, then `resume()` — `resume(id)` alone does nothing while halted — and pause again right after the first firing) and fails with the defect reinstated. Trap from the same task: a field read on an `@ApplicationScoped` bean's client proxy returns the proxy's own, empty field — an exploration first reported "no events" for that reason. Check the instrument before an empty result changes a design. Recipe: `docs/guides/testing.md` §2.6.
+
+> [!WARNING]
+> **A production change made for a test needs its own justification (POV-213)**:
+> The plan added `concurrentExecution = SKIP` to the scheduled orchestration to remove a race in the new test and gave it a weak production argument on top. The pre-commit review found its production cost: one hung run would block every later scheduled run until restart, where the stale-lock take-over used to recover after 30 min. Pausing the scheduler right after the job's first firing (test side) made it unnecessary — and review round 2 found the job `identity` was the same kind of change, removed too; `OrchestrationManager` stays unchanged. Now QA rule 4 (`docs/protocols/quality-mandates.md`): test-side solution first; a production change is justified on production merits or presented to the PO as test-motivated.
+
+> [!WARNING]
+> **Two compose files in one directory are one compose project (POV-214)**:
+> Without `name:`, the dev and prod compose files in `backend/` formed project `backend`: a dev `up` replaced the prod Prometheus/Grafana (a day without production metrics), and `--remove-orphans` from either file would have removed the other stack. Give every compose file its own `name:` — rename the non-prod one, since volume names derive from the project name. Details and the CSP-hash/line-ending trap: [infrastructure-ops](lessons/infrastructure-ops.md#the-edge-is-the-app--compose-projects-hashes-and-proxy-trust-pov-214).
+
+> [!NOTE]
+> **Verify dependency claims against the registry and `tsc`, not the backlog (POV-215)**:
+> The backlog grouped Vitest 5 with Vite 8 "since Vitest pins its Vite range" — `vitest@5.0.3` accepts `vite ^6.4.0`, so the CRITICAL `tinypool` fix needed no Vite major; `npm view <pkg>@<ver> peerDependencies` settles such claims in seconds. And a test-runner upgrade can be green at runtime while the type check fails: Vitest does not type-check, and `setup.ts` imported the Jest flavour of jest-dom, whose matcher types reached Vitest only through compat types removed in Vitest 4 — use `@testing-library/jest-dom/vitest`, and run `tsc -b` (part of `npm run build`) after any test-tooling bump.
+
+> [!NOTE]
+> **Store the canonical platform identifier, not what the user typed (POV-219)**:
+> Quick Add validated `@handle` and URLs by resolving them, but stored the typed text; ingestion reads the identifier as a channel ID, so such sources never received content and one channel could exist twice. Resolve on input and store the canonical form (`ContentSourceDetails.channelId`).
+
 ## 🚀 Recent Highlights (v0.19.0)
 
 > [!WARNING]
@@ -72,7 +142,7 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 > [!WARNING]
 > **New env vars must be explicitly listed in `docker-compose.prod.yml` (POV-194)**:
-> The `app` service injects only the env vars it explicitly enumerates under `environment:`. `--env-file .env` makes a variable available for `${...}` substitution *inside* the compose file, but does NOT pass it into the container unless it is listed. A missing `TRANSCRIPT_PROXY_API_KEY` meant the container used the placeholder default, the proxy returned 401, and every fetch fell through to the IP-blocked YouTube-legacy provider on OCI. It worked locally only because Quarkus reads `.env` directly in dev. **When adding any new env-backed config, add it to the prod compose `environment:` list (mirror the existing required-var pattern `${VAR:?VAR must be set}`).**
+> The `app` service injects only the env vars it explicitly enumerates under `environment:`. `--env-file .env` makes a variable available for `${...}` substitution *inside* the compose file, but does NOT pass it into the container unless it is listed. A missing `TRANSCRIPT_PROXY_API_KEY` meant the container used the placeholder default, the proxy returned 401, and every fetch fell through to the YouTube-legacy provider, whose IP the then production host had blocked. It worked locally only because Quarkus reads `.env` directly in dev. **When adding any new env-backed config, add it to the prod compose `environment:` list (mirror the existing required-var pattern `${VAR:?VAR must be set}`).**
 
 > [!WARNING]
 > **Resolve REST-client header secrets via `@ConfigProperty`, not a `@ClientHeaderParam` expression (POV-194)**:

@@ -17,7 +17,7 @@ public class NullSummarizationStrategy implements SummarizationStrategy {
     private static final Logger logger = LoggerFactory.getLogger(NullSummarizationStrategy.class);
 
     @Override
-    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate) {
+    public boolean summarize(GenAiClient client, ContentItem item, LocalDate orchestrationDate, ProcessingContext context) {
         logger.warn("No specific summarization strategy found for content item type: {}. Marking as FAILED.", item.getClass().getName());
         item.processingStatus = ProcessingStatus.FAILED;
         return false;

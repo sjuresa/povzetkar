@@ -61,3 +61,7 @@ This type of data is the *output* of your application's business logic. It is of
 ### Conclusion for This Project
 
 For generated content like summaries and briefings, which takes many hours to create, **Pattern 2 is the correct and chosen approach.** It provides a robust, offline mechanism to perform the heavy lifting of the initial data load without impacting the live application.
+
+*Status (POV-223): no such bulk-loading tool exists in the code base (no `@QuarkusMain`); generated content is
+produced only by the running application. Reference data and the demo account are seeded by Flyway migrations
+(SQL and Java-based, e.g. V32 demo seed).*

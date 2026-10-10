@@ -3,6 +3,12 @@
 **Version:** 1.0
 **Date:** January 17, 2026
 
+> [!WARNING]
+> **Outdated (January 2026).** The endpoints below predate the v0.11 API redesign (e.g. sources now live under
+> `/api/v1/sources`, authentication is Google OIDC plus an optional read-only API key). The current contract is the
+> OpenAPI document generated from the code (`/q/openapi` on the management port, Swagger UI in dev mode); the API
+> conventions are in [`api-design.md`](../analysis/api-design.md) §1. Rewriting or retiring this file is in the backlog.
+
 ## 1. Introduction
 
 This document defines the specification for the key endpoints of the Povzetkar project. It covers both the programmatic REST API (under `/api`) and important backend endpoints that support the server-side rendered user interface (under `/ui`).

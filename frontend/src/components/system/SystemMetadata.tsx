@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, GitBranch, History, Map, Loader2, BrainCircuit } from 'lucide-react';
+import { X, GitBranch, History, Map, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 
@@ -14,7 +14,7 @@ export interface SystemMetadataData {
 interface SystemMetadataProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly initialTab?: 'changelog' | 'roadmap' | 'wisdom';
+  readonly initialTab?: 'changelog' | 'roadmap';
 }
 
 interface ChangelogEntry {
@@ -32,7 +32,7 @@ interface RoadmapPhase {
 
 export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: SystemMetadataProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'changelog' | 'roadmap' | 'wisdom'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'changelog' | 'roadmap'>(initialTab);
 
   const changelogEntriesRaw = t('system.changelog_entries', { returnObjects: true });
   const roadmapPhasesRaw = t('system.roadmap_phases', { returnObjects: true });
@@ -145,17 +145,6 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
             <Map className="w-4 h-4"  strokeWidth={1.5}/>
             {t('system.tabs.roadmap')}
           </button>
-          <button 
-            id="tab-wisdom"
-            role="tab"
-            aria-selected={activeTab === 'wisdom'}
-            aria-controls="panel-wisdom"
-            onClick={() => setActiveTab('wisdom')}
-            className={`flex-1 p-4 flex flex-col items-center justify-center gap-1 font-black uppercase tracking-widest text-[10px] transition-all border-b-4 ${activeTab === 'wisdom' ? 'border-[var(--color-action-primary)] bg-black text-white' : 'border-transparent hover:bg-[var(--color-surface-deep)] text-[var(--color-text-secondary)]'}`}
-          >
-            <BrainCircuit className="w-4 h-4"  strokeWidth={1.5}/>
-            {t('landing.pyramid.level3')}
-          </button>
         </div>
 
         {/* Content Area - ARIA Pattern Implementation */}
@@ -193,14 +182,6 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                   ))}
                 </div>
               </div>
-
-              {/* Focus Banner */}
-              <div className="p-8 bg-black text-white border-l-8 border-[var(--color-status-warning)]">
-                <p className="text-sm font-black text-[var(--color-status-warning)] mb-2 uppercase tracking-[0.2em]">{t('landing.pyramid.level3')}</p>
-                <p className="text-lg font-bold leading-tight italic">
-                  {t('system.focus_text')}
-                </p>
-              </div>
             </div>
           </div>
 
@@ -229,41 +210,6 @@ export function SystemMetadata({ isOpen, onClose, initialTab = 'changelog' }: Sy
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            id="panel-wisdom" 
-            role="tabpanel" 
-            aria-labelledby="tab-wisdom" 
-            className={activeTab === 'wisdom' ? 'block' : 'hidden'}
-          >
-            <div className="space-y-12">
-               <div className="space-y-8">
-                <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                  <div className="w-3 h-8 bg-[var(--color-status-success)]" />
-                  {t('landing.pyramid.reality_check')}
-                </h3>
-                
-                <div className="p-8 bg-[var(--color-background-base)] border-4 border-black text-[var(--color-text-primary)] border-l-8 border-l-[var(--color-status-success)] space-y-6 shadow-[16px_16px_0px_rgba(0,0,0,0.05)]">
-                   <h4 className="text-3xl font-black uppercase italic tracking-tighter text-[var(--color-status-success)]">
-                     The Wisdom Layer
-                   </h4>
-                   <p className="text-xl font-bold leading-relaxed opacity-80">
-                     {t('landing.vision.pillar4_desc')}
-                   </p>
-                   <div className="pt-8 border-t border-white/20 grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-status-success)]">Methodology</p>
-                         <p className="font-bold italic">Retrospective bias assessment and prediction scoring.</p>
-                      </div>
-                      <div className="space-y-2">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-status-success)]">Goal</p>
-                         <p className="font-bold italic">Establishing source reliability metrics across all distilled content.</p>
-                      </div>
-                   </div>
                 </div>
               </div>
             </div>

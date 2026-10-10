@@ -13,7 +13,7 @@ import static io.restassured.RestAssured.given;
 /**
  * Guards the public/internal split of Quarkus technical endpoints (POV-207).
  * Metrics, health and OpenAPI must only be served on the management interface,
- * which is reachable inside the Docker network but never via Caddy or the tunnel.
+ * which is reachable inside the Docker network but never via the Cloudflare tunnel.
  */
 @QuarkusTest
 class ManagementInterfaceTest {

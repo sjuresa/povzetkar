@@ -26,13 +26,13 @@ We use a version-based branching model to manage development for specific releas
 
 -   `main`: This branch contains only production-ready, tagged releases. Direct commits are strictly forbidden. All merges into `main` must come from a completed version branch via a Pull Request.
 
--   **Version Branches** (e.g., `v0.5`, `v0.6`):
+-   **Version Branches** (e.g., `v0.20.0`):
     -   Each major or minor version from the [`roadmap.md`](../overview/roadmap.md) gets its own long-lived branch, created from `main`.
     -   This branch serves as the integration point for all features and fixes planned for that specific version.
 
--   **Task Branches** (e.g., `feature/task-name`, `fix/bug-name`):
+-   **Task Branches** (named after the task ID, e.g., `POV-223`):
     -   All new work (features, bug fixes, refactoring) must be done in a short-lived task branch.
-    -   Task branches are created from the corresponding version branch (e.g., create `feature/new-api` from `v0.5`).
+    -   Task branches are created from the corresponding version branch (e.g., create `POV-223` from `v0.20.0`).
     -   Once work is complete, the task branch is merged back into its parent version branch via a Pull Request.
 
 ### 3.2 Commit Message Convention
@@ -49,15 +49,15 @@ We follow the Conventional Commits specification. This helps create an explicit 
 The PR process is used for two distinct merge events:
 
 **1. Merging a Task Branch into a Version Branch:**
-1.  Create your task branch (e.g., `feature/new-api`) from the relevant version branch (e.g., `v0.5`).
+1.  Create your task branch (e.g., `POV-223`) from the relevant version branch (e.g., `v0.20.0`).
 2.  Complete your work, ensuring it is covered by tests.
 3.  Push your task branch to the remote repository.
 4.  Create a Pull Request from your task branch to the parent version branch.
-5.  The PR must pass all automated checks and be reviewed by at least one other developer.
-6.  Once approved, the PR can be merged.
+5.  The PR must pass CI and go through the PR review loop (`docs/protocols/workflow-mandatory.md`, Step 8 — a review bot and the PO).
+6.  The PO merges.
 
 **2. Merging a Version Branch into `main` (Release):**
-1.  When all tasks for a version are complete, create a Pull Request from the version branch (e.g., `v0.5`) to `main`.
+1.  When all tasks for a version are complete, create a Pull Request from the version branch (e.g., `v0.20.0`) to `main`.
 2.  This PR represents a release candidate. It must undergo final review and testing.
 3.  Once approved, the version branch is merged into `main`, and a new release tag is created on `main`.
 
@@ -72,7 +72,7 @@ Since version 0.6.0, the project uses **Flyway** to manage database schema evolu
 
 **Rule:** Any change to a JPA entity that results in a DDL (Data Definition Language) change (e.g., adding a column, creating a table, adding a constraint) **must** be accompanied by a new SQL migration script.
 
--   **Location:** Scripts must be placed in `src/main/resources/db/migration`.
+-   **Location:** Scripts must be placed in `backend/src/main/resources/db/migration`.
 -   **Naming:** Scripts must follow the Flyway naming convention: `V<VERSION>__<DESCRIPTION>.sql` (e.g., `V2__add_user_email.sql`).
 
 ## 4. Release Management & Versioning

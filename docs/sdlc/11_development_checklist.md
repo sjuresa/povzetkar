@@ -45,7 +45,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 - [ ] **2.5. Verify Tests:** After code modifications, the agent runs the full test suite for every touched layer itself (`docs/protocols/verification.md`) and reports the result. The PO may optionally re-run the suite before confirming completion (2.9).
   - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
   - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
-  - [ ] **QA Check:** Verify that integration tests do not mock internal services or Panache entities.
+  - [ ] **QA Check:** Verify that tests follow QA rule 3 (test scope — what runs against the database) in `docs/protocols/quality-mandates.md`.
   - [ ] **QA Check:** Ensure explicit dependency versions in pom.xml do not conflict with the framework's BOM (Bill of Materials). *Note: Investigate maven-enforcer-plugin (e.g., dependencyConvergence, requireUpperBoundDeps) during Task POV-89 to automate this.*
   - [ ] **QA Check (Local Security):** Run `mvn spotbugs:check` (or ensure it ran successfully during `mvn verify`) to validate that no static security flaws or basic bugs exist.
   - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete when the backend layer was touched (frontend: `npx vitest run` — see `verification.md`).
@@ -106,7 +106,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[X.Y.Z] - YYYY-MM-DD`).
   - [ ] Write a `### Summary` paragraph under the new version header — the release's main theme and key achievements. `sync_metadata.py` (3.5) takes the landing-page description from it.
   - [ ] Add a new, empty `[Unreleased]` section at the top.
-- [ ] **3.5. Sync Landing Page Metadata:** Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes. Then review the diff of `frontend/public/locales/en.json` / `sl.json`: the script writes English into `sl.json`, so translate the new changelog and roadmap descriptions by hand (backlog: "`sync_metadata.py` copies English into `sl.json`").
+- [ ] **3.5. Sync Landing Page Metadata:** Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes. Then review the diff of `frontend/public/locales/en.json` / `sl.json`: for a new entry the script writes the English description into `sl.json` (an existing Slovenian description that differs from the English text is kept), so translate the new changelog and roadmap descriptions by hand (backlog: "`sync_metadata.py` copies English into `sl.json`"). The release notes are public text: CHANGELOG and both locale files follow `docs/protocols/public-content.md`.
 
 ## Phase 4: Release
 
@@ -114,7 +114,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 - [ ] **4.1. Create Release PR:** Create a Pull Request from the version branch (e.g., `vX.Y.0`) to `main`.
 - [ ] **4.2. Merge to `main`:** Merge criteria: green CI (including the Trivy scans and SAST), the PR review loop completed (`workflow-mandatory.md` Step 8). The PO merges.
-- [ ] **4.3. Create Git Tag:** After the merge, update the local `main` (`git checkout main && git pull`), then create and push an annotated Git tag (e.g., `git tag -a vX.Y.0 -m "Release version X.Y.0"`).
+- [ ] **4.3. Create Git Tag:** After the merge, update the local `main` (`git checkout main && git pull`), then create and push an annotated Git tag without a `v` prefix — release tags are `X.Y.Z` (e.g. `0.19.0`; a `vX.Y.Z` tag would share its name with the version branch): `git tag -a X.Y.Z -m "Release version X.Y.Z"` and `git push origin refs/tags/X.Y.Z` (the full ref, so the push is unambiguous even if a same-named branch exists).
 - [ ] **4.4. Deploy the Release:** Deploy the tagged `main` commit to production per `docs/protocols/verification.md`, *Pre-deploy Verification*, on the PO's explicit "deploy". The image carries the release version (no `-SNAPSHOT`), so production shows which release runs.
 - [ ] **4.5. Release in YouTrack** *(PO step)*: mark version X.Y.Z as released.
 
@@ -122,6 +122,8 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| 3.7 | 2026-09-27 | Povzetkar AI | 2.5 QA Check on test scope now points to QA rule 3 in `quality-mandates.md` (POV-216) instead of restating the retired "no Panache mocking in integration tests" rule. |
+| 3.6 | 2026-09-27 | Povzetkar AI | 4.3 tag name fixed (POV-212): the project's release tags carry no `v` (`0.18.0`, `0.19.0`); the example `git tag -a vX.Y.0` produced a wrong tag in POV-211 and shares its name with the `vX.Y.Z` branch — now `git tag -a X.Y.Z` pushed as `refs/tags/X.Y.Z`. |
 | 3.5 | 2026-09-27 | Povzetkar AI | Release template retired (POV-211): Phase 3 intro states that the finalisation runs as a task whose requirements are the Phase 3–4 steps, and its order (task PR merged before 4.1, YouTrack record after 4.4 and before 4.5; 3.1b excludes the finalisation task); `release_task_template.md` deleted — it duplicated these steps and drifted after POV-191, POV-201 and POV-209. Its one requirement missing here moved in: 3.4 CHANGELOG `### Summary`; 3.5 gains the manual `sl.json` translation. 3.2 General Refresh no longer lists `docs/strategy` (its only document, `STRATEGIC_NEXT_STEPS.md`, stale since 2025-08, deleted). |
 | 3.4 | 2026-09-26 | Povzetkar AI | Review, deploy and release gates (POV-209): 2.0 — YouTrack `In Progress` at start, Brainstorm ends with the PO's approval of the task definition; explicit Phase 2 execution order (numbers stay stable identifiers); new 2.5a Pre-commit Review (every task, after the close-out documents) and 2.5b Pre-deploy Verification (conditional, after the push); new 2.8a Push & PR Review Loop; 2.9 reduced to the PO confirmation; new 2.15 YouTrack Task Record (last step: verbatim comments, State/Fix version/Estimation, `[wait]`/`[paused]` work-item rules); 1.2 marked as a PO step; new 3.1a Supply-chain Audit (`.trivyignore`, pinned Trivy action/binary) and 3.1b Fix-version check; 4.2 explicit merge criteria; new 4.4 release deploy and 4.5 YouTrack release (PO step). No renumbering. |
 | 3.3 | 2026-07-06 | Povzetkar AI | Agent protocol modernization (POV-204): step 2.5 — the agent runs the full test suite itself (manual PO test runs were a relic of agents unable to run tests; PO re-run optional); step 2.9 gains post-confirmation YouTrack `log_work` (per-phase work items from the Time Log); execution.md retired — phase timestamps live in `agent_logs/task.md` `## Time Log` (2.0, 2.10/3 re-pointed), deviations in `## Deviations`; `workflow-mandatory.md` renumbered (old Step 9 → Step 7 in 2.7). Approval gates 2.3/2.3a/2.9 semantics unchanged. |

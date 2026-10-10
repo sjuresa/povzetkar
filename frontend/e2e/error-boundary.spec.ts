@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/csp';
 
 /**
  * Timeout to account for axios-retry logic (3 retries with exponential backoff).

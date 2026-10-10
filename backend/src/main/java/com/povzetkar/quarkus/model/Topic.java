@@ -2,11 +2,14 @@ package com.povzetkar.quarkus.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Sort;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -53,6 +56,20 @@ public class Topic extends BaseAuditableEntity {
 
     public static Topic findByIdWithSources(Long id) {
         return find("from Topic t left join fetch t.contentSources where t.id = ?1", id).firstResult();
+    }
+
+    /** The user's topics with their sources; each topic appears once, so a page holds whole topics. Alias {@code t}. */
+    public static PanacheQuery<Topic> findByUserWithSources(User user, Sort sort) {
+        return find("select distinct t from Topic t left join fetch t.contentSources where t.user = ?1", sort, user);
+    }
+
+    public static Optional<Topic> findByIdAndUserWithSources(Long id, User user) {
+        return find("from Topic t left join fetch t.contentSources where t.id = ?1 and t.user = ?2", id, user)
+                .firstResultOptional();
+    }
+
+    public static Optional<Topic> findByUserAndName(User user, String name) {
+        return find("user = ?1 and name = ?2", user, name).firstResultOptional();
     }
 
     @Override

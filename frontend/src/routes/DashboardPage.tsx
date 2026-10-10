@@ -27,9 +27,10 @@ export function DashboardPage() {
 
   const data = response?.data as DashboardDTO | undefined;
 
-  const { syncFromDashboard, dismissed } = useOnboardingStore(
+  const { syncFromDashboard, loaded: onboardingLoaded, dismissed } = useOnboardingStore(
     useShallow((state) => ({
       syncFromDashboard: state.syncFromDashboard,
+      loaded: state.loaded,
       dismissed: state.dismissed,
     }))
   );
@@ -41,12 +42,13 @@ export function DashboardPage() {
   const hasNoData = !activeTopics && !hasBriefings;
   const showWelcome = hasNoData;
 
-  // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data
+  // Hybrid mount sync: auto-complete steps 1+3 when derivable from dashboard data.
+  // Re-runs once the guide state arrives — AppShell may load it after this page has mounted.
   useEffect(() => {
-    if (activeTopics !== undefined || hasBriefings) {
+    if (onboardingLoaded && (activeTopics !== undefined || hasBriefings)) {
       syncFromDashboard(activeTopics, hasBriefings);
     }
-  }, [activeTopics, hasBriefings, syncFromDashboard]);
+  }, [onboardingLoaded, activeTopics, hasBriefings, syncFromDashboard]);
 
   if (isLoading) {
     return (
@@ -71,7 +73,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {showWelcome && <EmptyState />}
-      {!dismissed && <OnboardingChecklist />}
+      {/* The guide exists only for enabled accounts — loaded by AppShell (POV-216) */}
+      {onboardingLoaded && !dismissed && <OnboardingChecklist />}
 
       {!hasNoData && (
         <>

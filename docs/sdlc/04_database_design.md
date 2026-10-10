@@ -1,6 +1,11 @@
 # Database Design Document - Project Povzetkar
 
-
+> [!WARNING]
+> **Not synchronized since March 2026 (revision 1.11, v0.14.0).** Later migrations (up to V38) are only partly
+> reflected — e.g. `users.active` was replaced by `account_status` (V30), and the onboarding (V36), visibility indexes (V37) and
+> transcript-retry columns (V38) are missing. The Flyway scripts in `backend/src/main/resources/db/migration/` are
+> the source of truth; re-synchronizing this document is in the backlog. The tables for trends, sentiments,
+> categories and source assessments exist from V1 but are not used by the code yet.
 
 ## 1. Introduction
 

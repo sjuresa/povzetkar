@@ -1,49 +1,65 @@
 # Third-Party Assets & Compliance Registry
 
-This document serves as the official registry for all third-party assets used in Povzetkar. It ensures transparency, proper attribution, and license compliance across the **Four Pillars** of our supply chain.
+Registry of the third-party assets, libraries, services and images Povzetkar uses, with their licences or terms.
+
+**Project license:** © 2025–2026 Simon Juresa. All rights reserved. The source is published for review; see the
+notice in the [README](../README.md). Third-party components keep their own licences listed below.
 
 ---
 
-## 1. Media Pillar (Sounds, Icons, Fonts)
+## 1. Media (sounds, icons, fonts)
 
-| Asset Group | Source | Author | License | Usage |
-| :--- | :--- | :--- | :--- | :--- |
-| **Auditory Feedback** | Dynamically Synthesized | N/A | Project License | `useAudioFeedback.ts` |
-| **Icons (Lucide)** | [Lucide](https://lucide.dev/) | Lucide Contributors | [ISC](https://lucide.dev/license) | `frontend/` components |
-| **Fonts (Inter)** | [Google Fonts](https://fonts.google.com/specimen/Inter) | Rasmus Andersson | [OFL](http://scripts.sil.org/OFL) | Global CSS |
-
-> [!NOTE]
-> Auditory feedback for success/error/info notifications is synthesized in real-time using the **Web Audio API (OscillatorNode)**. No binary audio files are bundled or fetched, ensuring zero-byte asset overhead.
-
----
-
-## 2. Code Pillar (Libraries & Snippets)
-
-| Reference | Source | Context | License |
+| Asset | Source | License | Usage |
 | :--- | :--- | :--- | :--- |
-| **NPM Dependencies** | `frontend/package.json` | System Logic | Various (MIT/Apache 2.0) |
-| **Maven Dependencies** | `backend/pom.xml` | System Logic | Various (MIT/Apache 2.0) |
+| **Auditory feedback** | Synthesized at runtime (Web Audio API, `OscillatorNode`) | Project | `frontend/src/hooks/useAudioFeedback.ts` |
+| **Icons** | [Lucide](https://lucide.dev/) (`lucide-react`) | [ISC](https://lucide.dev/license) | `frontend/` components |
+| **Icons and icon font** | [Font Awesome Free](https://fontawesome.com/) 6.5.2, loaded from cdnjs | [Icons CC BY 4.0, fonts SIL OFL 1.1, code MIT](https://fontawesome.com/license/free) | Legacy Qute admin UI (`backend/src/main/resources/templates/main.html`, `login.html`) |
+| **CSS framework** | [Pico CSS](https://picocss.com/) 2, loaded from jsDelivr | [MIT](https://github.com/picocss/pico/blob/main/LICENSE.md) | Legacy Qute admin UI (same templates) |
+
+No binary audio or font files are bundled. The React frontend's CSS font stack names *Inter* first
+(`frontend/src/index.css`), but the font is neither bundled nor loaded — browsers use it only if it is installed on
+the visitor's system, otherwise the system fonts that follow it. The legacy Qute admin UI loads the Font Awesome
+web fonts from the CDN with its stylesheet.
 
 ---
 
-## 3. Services Pillar (APIs & SaaS)
+## 2. Code (libraries)
 
-| Provider | Purpose | Link |
+| Reference | Source | License |
 | :--- | :--- | :--- |
-| **OpenAI** | LLM Summarization | [Privacy Policy](https://openai.com/policies/privacy-policy) |
-| **Anthropic** | LLM Summarization | [Privacy Policy](https://www.anthropic.com/privacy) |
-| **YouTube API** | Video Metadata | [Terms of Service](https://www.youtube.com/t/terms) |
+| **npm dependencies** | `package.json`, `frontend/package.json` | Various (mostly MIT, Apache-2.0, ISC) |
+| **Maven dependencies** | `pom.xml`, `backend/pom.xml` | Various (mostly Apache-2.0) |
+| **Python dependencies** (transcript proxy) | `transcript-proxy/requirements.txt` | Various (MIT, BSD, Apache-2.0, MPL-2.0 for `certifi`) |
 
 ---
 
-## 4. Infrastructure Pillar (Containers & Build)
+## 3. Services (APIs)
 
-| Component | Provider | Image/Source |
+| Provider | Purpose | Terms |
 | :--- | :--- | :--- |
-| **Base Image** | Docker Hub | `eclipse-temurin:25-jre-alpine` |
-| **Runtime Environment** | Docker Hub | `node:24-alpine` |
+| **Google Gemini API** | Summaries and briefings (`google-genai` SDK) | [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms) |
+| **YouTube Data API v3** | Channel resolution, new videos, metadata | [YouTube API Services Terms](https://developers.google.com/youtube/terms/api-services-terms-of-service) |
+| **YouTube** | Video captions (transcripts) | [YouTube Terms of Service](https://www.youtube.com/t/terms) |
+| **Google Sign-In (OIDC)** | User authentication | [Google APIs Terms](https://developers.google.com/terms) |
+| **Supadata** (optional, disabled by default) | Fallback transcript provider | [Supadata](https://supadata.ai/) |
+| **Cloudflare Tunnel** | Public entry of the production deployment | [Cloudflare terms](https://www.cloudflare.com/website-terms/) |
+
+---
+
+## 4. Infrastructure (container images)
+
+| Component | Image | Where |
+| :--- | :--- | :--- |
+| Frontend build | `node:24-alpine` | `Dockerfile` |
+| Backend build | `eclipse-temurin:25-jdk-alpine` | `Dockerfile` |
+| Healthcheck build | `golang:1.26.9-alpine` | `Dockerfile` |
+| Runtime | `gcr.io/distroless/java25-debian13` | `Dockerfile` |
+| Database | `pgvector/pgvector:pg17` | `backend/docker-compose*.yml` |
+| Metrics | `prom/prometheus`, `grafana/grafana-oss` | `backend/docker-compose*.yml` |
+| Tunnel | `cloudflare/cloudflared` | `backend/docker-compose.prod.yml` |
 
 ---
 
 > [!TIP]
-> This registry is a living document. Any new third-party dependency added during development MUST be recorded here immediately.
+> This registry is a living document. A new third-party dependency, service or image is recorded here when it is
+> added.

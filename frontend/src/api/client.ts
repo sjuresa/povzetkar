@@ -53,12 +53,9 @@ export interface ApiEnvelope<T = unknown> {
  */
 export type UnwrapEnvelope<T> = T extends { data: infer D } ? D : T;
 
-const API_BASE_URL = (import.meta.env as Record<string, string>).VITE_API_BASE_URL || '';
-
 let sessionExpiredRedirectInProgress = false;
 
 const client: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

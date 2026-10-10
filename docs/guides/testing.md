@@ -54,6 +54,10 @@ class ContentItemFetcherTest {
 
 Use `@QuarkusIntegrationTest` for black-box testing of the packaged application.
 
+> **Not run by the build today:** no `maven-failsafe-plugin` is configured, so `./mvnw verify` and CI run only
+> Surefire and every `*IT` class is skipped (backlog: "`*IT.java` integration tests never run"). The project's
+> integration tests are `@QuarkusTest` classes against the test database (§2.3, §2.5).
+
 -   **Execution:** Runs the application in a separate process (or container). The test runs in a different JVM and communicates with the app via HTTP (RestAssured).
 -   **Isolation:** Full process isolation. No bean injection (`@Inject`) is possible in the test class itself.
 -   **Use Case:** Verifying the final build artifact (JAR, Native Image, Container), testing HTTP endpoints end-to-end, and validating configuration.
@@ -86,8 +90,8 @@ public class ItemResourceIT {
 
 For tests that need to interact with the database but don't require full process isolation, use `@QuarkusTest` combined with `@TestTransaction`.
 
--   **`@TestTransaction`:** Automatically starts a transaction before each test and rolls it back afterward. This is the **preferred** method for database tests as it ensures a clean state without manual cleanup.
--   **Do Not Mock Entities:** Panache entities should be used directly. Mocking them is an antipattern.
+-   **`@TestTransaction`:** Automatically starts a transaction before each test and rolls it back afterward. This is the **preferred** method for database tests as it ensures a clean state without manual cleanup. Exception: a test that commits on purpose — e.g. interleaving transactions with `QuarkusTransaction.requiringNew()` — escapes the rollback and must clean up itself (`@AfterEach`); see §2.5.
+-   **Scope:** which tests run against the database is defined by QA rule 3 in `docs/protocols/quality-mandates.md`; see §2.5 for the pattern.
 
 > **Note:** `@TestTransaction` works best with blocking code. If testing complex reactive pipelines where context propagation might be lost, ensure you understand how the transaction context is handled.
 
@@ -132,6 +136,65 @@ A plain JUnit test (no Quarkus boot) that fails when `application.properties` (m
 -   **How it knows the valid keys:** the Maven profile `config-guard` (active unless `skipTests` is true) runs `quarkus:dependency-tree` once per launch mode into `target/quarkus-dependency-tree-{prod,dev,test}.txt`; the test reads `META-INF/quarkus-config-doc/quarkus-config-model.json` from every listed jar in the local Maven repository. `%prod`/`%dev`/`%test` keys are checked against their own mode, unprofiled keys against the mode their file takes effect in (`src/main`: prod, `src/test`: test). Surefire passes the paths as system properties from the same profile, so run it through Maven (`./mvnw test -pl backend -Dtest=QuarkusConfigKeysTest`); an IDE run or Quarkus continuous testing (no such properties) skips the test instead of failing. Multi-profile keys (`%dev,test.`) must be declared in each listed mode.
 -   **What it rejects:** unknown keys; keys only a passthrough map would swallow; named-map keys that are really a fixed segment in the wrong place (`quarkus.datasource.jdbc.db-kind` read as datasource "jdbc"); unprofiled keys not declared for the mode their file takes effect in. It cannot catch a typo in a genuine instance name (e.g. a rest-client config key).
 -   **When it fails:** fix the key against the extension's config reference, or move a custom setting to `povzetkar.*`. Only if the key is genuinely valid (e.g. a passthrough entry you verified the library reads) add it to the test's `ALLOWLIST` with a reason.
+
+### 2.5. Entity Once Against the DB, Logic With Panache Mocked
+
+How to apply QA rule 3 (`docs/protocols/quality-mandates.md`) to an entity and the service that uses it. Reference implementation: POV-216 (`UserOnboarding`, `OnboardingService`).
+
+-   **Persistence test (real DB, entity only):** persist every column, `flush()` + `clear()`, reload and compare; cover constraints (FK cascade), custom queries (`findOrCreate` with `INSERT … ON CONFLICT DO NOTHING`) and concurrency — two transactions interleaved deterministically with nested `QuarkusTransaction.requiringNew()` (the outer loads a snapshot, the inner commits a change, the outer then writes). No service, no endpoint (`UserOnboardingPersistenceTest`).
+-   **Domain logic:** rules on the entity (e.g. `apply(patch)`) get a plain JUnit test without Quarkus (`UserOnboardingTest`).
+-   **Service test:** `PanacheMock.mock(Entity.class)` stubs the entity's static methods — Panache's finders and your own (`findOrCreate`); `@InjectMock Session` when the service calls instance methods such as `persist()`; `@InjectMock` for other collaborators (`OnboardingServiceTest`):
+
+```java
+@QuarkusTest
+class OnboardingServiceTest {
+    private static final long USER_ID = 42L;
+
+    @Inject OnboardingService service;
+    @InjectMock UserContextService userContextService;
+
+    @BeforeEach
+    void setUp() {
+        PanacheMock.mock(UserOnboarding.class);       // every static method of the entity
+    }
+
+    @Test
+    void getReturnsTheUsersState() {
+        givenCurrentUser(AccountStatus.ENABLED);
+        UserOnboarding state = new UserOnboarding(USER_ID);
+        state.stepTopic = true;
+        when(UserOnboarding.findOrCreate(USER_ID)).thenReturn(state);
+
+        OnboardingDTO result = service.getForCurrentUser();
+
+        assertEquals(OnboardingDTO.from(state), result);
+        PanacheMock.verify(UserOnboarding.class).findOrCreate(USER_ID);
+    }
+
+    private void givenCurrentUser(AccountStatus status) {
+        User user = UserBuilder.aUser().withId(USER_ID).withStatus(status).build();
+        when(userContextService.getCurrentUser()).thenReturn(Optional.of(user));
+    }
+}
+```
+
+-   **Verify statics through `PanacheMock`:** `PanacheMock.verify(UserOnboarding.class, never()).findOrCreate(anyLong())` — `Mockito.verify` does not know the static mock.
+-   **Trap — `PanacheMock` mocks every static method of the entity, custom ones included.** Useful for a custom query like `findOrCreate`, but a static factory the service expects to run for real (e.g. an `emptyFor(id)`) silently returns `null`. Create new instances with a constructor (or stub the factory with `thenCallRealMethod()`).
+-   **Transactional behaviour — design first** (QA rule 3): before writing a DB test for a transaction, check whether the code needs the mechanics at all. POV-219 dropped a `requiringNew` + unique-violation recovery (a near-impossible race) instead of testing it, and validates every source before the topic is touched, so `TopicApiResourceTest` asserts "topic unchanged after a 404" with mocks.
+-   **Resource test with a user scope:** `@InjectMock UserContextService` and stub `getContentScope()`, `PanacheMock` the entities and verify the scope that reaches the named query — `PanacheMock.verify(ContentSource.class).findVisibleById(6L, SCOPE)`; for "no side effect" stub the unscoped finder too and assert the foreign entity is unchanged (`ContentItemApiResourceTest`). With `@InjectMock Session`, the `AuditLogFilter` persists an `AuditLog` through the mock — verify `persist(any(Topic.class))`, not `persist(any())`.
+-   **Resource test:** `@InjectMock` the service and assert status codes, the JSON envelope and security with `@TestSecurity` (`OnboardingApiResourceTest`). An anonymous request to an OIDC `web-app` endpoint gets a `302` login redirect, not `401` — use `redirects().follow(false)`.
+
+### 2.6. Scheduled Jobs in Tests
+
+The scheduler is halted in the test profile (`%test.quarkus.scheduler.start-mode=halted`, POV-213): no `@Scheduled` job fires on its own during a `@QuarkusTest`. A job whose behaviour depends on the invoking thread (the POV-197 defect: a `Uni<Void>` scheduled method runs on the event loop) must be fired by the real scheduler — a direct call from the test thread passes with the defect in place. Reference: `ScheduledOrchestrationIntegrationTest` (TC-ING-006).
+
+-   **Find the job by its method** (`Trigger.getMethodDescription()`, e.g. `OrchestrationManager#runScheduledOrchestration`) — no `identity` or other change to the production annotation for the test (QA rule 4); for a job whose cron is a property, set a short `%test` cron (`%test.povzetkar.orchestrator.cron=0/5 * * * * ?`, every 5 s — see *Exactly one run* for why not 1 s). A job with a literal schedule (e.g. `IdempotencyCleanupTask`, `every = "24h"`) cannot be sped up without changing the annotation; an `every` trigger that has never fired fires at the first check after `resume()` — but only once per test JVM.
+-   **Fire it:** pause every other job by id (`scheduler.getScheduledJobs()`), then `scheduler.resume()`. `resume(identity)` alone does not fire anything while the scheduler is halted. Keep pause and resume symmetric — a global `pause()` is not undone by `resume(identity)`; in teardown, after the global `pause()`, resume the other jobs by id again (nothing fires while paused).
+-   **Exactly one run:** poll the job's `Trigger.getPreviousFireTime()` (every 10 ms) until it is after the resume, then `pause()` at once. The first firing after `resume()` is a catch-up at the scheduler's next check (every second), so the next cron boundary can be only ~1 s later — resume just after a 5-s boundary (100–800 ms past it) to get at least ~3 s of headroom, and assert afterwards that `getPreviousFireTime()` is still the first firing (a late pause then fails loudly). A second, overlapping run is not harmless: the orchestration lock is per date, so two runs split the dates between them and both generate yesterday's briefing. Do not prevent overlap by changing the production annotation (`concurrentExecution = SKIP`, rejected in POV-213: one hung run would block every later run).
+-   **Wait for the end of the run** with a test bean observing `SuccessfulExecution`/`FailedExecution` for the job (delivered on the executing thread right after the method), filtered by `getFireTime()` after the resume; then assert that exactly one such execution exists. `getPreviousFireTime()` only says the job fired — it is set before the method runs. Read the observer bean's state through methods: a field read on its client proxy returns the proxy's own, empty field.
+-   **`StartedExecution` observer — observed, cause unknown:** in POV-213 a variant that also observed `StartedExecution` (fired on the executing thread right before the method) failed 2 of 13 runs with `ContextNotActiveException` in the job's first Panache query; without it 0 of 30. The numbers do not prove the observer is the cause; prefer not to observe it, and report a `ContextNotActiveException` in a scheduled job as a possible defect, not as test noise.
+-   **Teardown:** `pause()` does not stop an execution in flight — before deleting test data, wait for the finished event of the last firing (the observed execution whose fire time equals the job's `getPreviousFireTime()`, if that is after the last resume), then for the job's gauge to be 0. The gauge alone only sees a run inside the method, not one fired and still queued.
+-   **Data:** the job runs on another thread in its own transactions — commit the test data (`QuarkusTransaction.requiringNew()`), no `@Transactional` test method; read the results in a new transaction as well.
 
 ## 3. Testing Reactive Code
 

@@ -12,6 +12,9 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useThemeStore } from '../../store/themeStore';
 import { useSystemMetadata } from '../../hooks/useSystemMetadata';
 import { useAudioFeedback } from '../../hooks/useAudioFeedback';
+import { usePendingApprovalPolling } from '../../hooks/usePendingApprovalPolling';
+import { useApprovalNotice } from '../../hooks/useApprovalNotice';
+import { useOnboardingLoader } from '../../hooks/useOnboardingLoader';
 import { AccountStatusBanner } from '../account/AccountStatusBanner';
 import { SystemMetadataFallback } from '../system/SystemMetadataFallback';
 
@@ -37,15 +40,20 @@ export function AppShell({ children }: AppShellProps) {
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { user, logout, checkAuth, sidebarCollapsed, toggleSidebar } = useAuthStore(
+  const { user, logout, sidebarCollapsed, toggleSidebar } = useAuthStore(
     useShallow((state) => ({
       user: state.user,
       logout: state.logout,
-      checkAuth: state.checkAuth,
       sidebarCollapsed: state.sidebarCollapsed,
       toggleSidebar: state.toggleSidebar,
     }))
   );
+
+  // Account status & onboarding (POV-216): auto-detect approval, announce it after the reload,
+  // and load the per-user guide state for enabled accounts
+  usePendingApprovalPolling(user?.accountStatus);
+  useApprovalNotice();
+  useOnboardingLoader(user?.accountStatus);
 
   const connectionStatus = useEventStore((state) => state.connectionStatus);
   const location = useLocation();
@@ -279,11 +287,7 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Account Status Banner — shown for non-ENABLED users */}
         {user && user.accountStatus && user.accountStatus !== 'ENABLED' && (
-          <AccountStatusBanner
-            status={user.accountStatus}
-            onRefresh={checkAuth}
-            onSignOut={logout}
-          />
+          <AccountStatusBanner status={user.accountStatus} />
         )}
 
         {/* Scrollable Page Area */}

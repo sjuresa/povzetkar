@@ -4,6 +4,7 @@ import com.povzetkar.quarkus.api.dto.ContentSourceCreateDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourceDTO;
 import com.povzetkar.quarkus.api.dto.ContentSourcePaginatedResponse;
 import com.povzetkar.quarkus.api.dto.ContentSourcePatchDTO;
+import com.povzetkar.quarkus.api.exception.BusinessRuleException;
 import com.povzetkar.quarkus.api.filter.Enveloped;
 import com.povzetkar.quarkus.api.filter.OptimisticLocking;
 import com.povzetkar.quarkus.api.mapper.ContentSourceMapper;
@@ -11,11 +12,10 @@ import com.povzetkar.quarkus.model.ContentSource;
 import com.povzetkar.quarkus.model.SourceTypeEnum;
 import com.povzetkar.quarkus.security.Permission;
 import com.povzetkar.quarkus.service.ContentSourceDetailService;
+import com.povzetkar.quarkus.service.ContentSourceService;
+import com.povzetkar.quarkus.service.SourceDetailsUnavailableException;
 import com.povzetkar.quarkus.service.UserContextService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Sort;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -45,14 +45,10 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Path("/api/v1/sources")
@@ -65,26 +61,25 @@ public class ContentSourceResource extends BaseApiResource {
 
     public static final String CONTENT_SOURCE_WITH_ID = "ContentSource with id ";
     public static final String NOT_FOUND = " not found";
-    private static final Logger logger = LoggerFactory.getLogger(ContentSourceResource.class);
-    
     private final ContentSourceDetailService contentSourceDetailService;
+    private final ContentSourceService contentSourceService;
     private final ContentSourceMapper contentSourceMapper;
-    private final MeterRegistry registry;
 
     @Inject
     public ContentSourceResource(ContentSourceDetailService contentSourceDetailService,
+                                 ContentSourceService contentSourceService,
                                  ContentSourceMapper contentSourceMapper,
-                                 UserContextService userContextService,
-                                 MeterRegistry registry) {
+                                 UserContextService userContextService) {
         super(userContextService);
         this.contentSourceDetailService = contentSourceDetailService;
+        this.contentSourceService = contentSourceService;
         this.contentSourceMapper = contentSourceMapper;
-        this.registry = registry;
     }
 
     @GET
     @RolesAllowed(Permission.V_SOURCE_VIEW)
-    @Operation(summary = "Get all content sources", description = "Retrieves a paginated list of all content sources.")
+    @Operation(summary = "Get content sources",
+            description = "Retrieves a paginated list of the content sources visible to the caller: the sources in the caller's topics (all sources for an admin).")
     @APIResponse(
             responseCode = "200",
             description = "List of content sources retrieved successfully",
@@ -111,22 +106,8 @@ public class ContentSourceResource extends BaseApiResource {
             }
         }
 
-        PanacheQuery<ContentSource> query;
-        StringBuilder hql = new StringBuilder("from ContentSource s where 1=1");
-        Map<String, Object> params = new HashMap<>();
+        PanacheQuery<ContentSource> query = ContentSource.findVisible(getContentScope(), search, excludeIds);
 
-        if (search != null && !search.isBlank()) {
-            hql.append(" and (lower(s.sourceIdentifier) like :search or lower(s.name) like :search or lower(s.description) like :search)");
-            params.put("search", "%" + search.toLowerCase() + "%");
-        }
-
-        if (excludeIds != null && !excludeIds.isEmpty()) {
-            hql.append(" and s.id not in :excludeIds");
-            params.put("excludeIds", excludeIds);
-        }
-
-        query = ContentSource.find(hql.toString(), Sort.by("id"), params);
-        
         long count = query.count();
         List<ContentSourceDTO> dtoList = query.page(pageIndex, clampedPageSize)
                 .stream()
@@ -139,7 +120,8 @@ public class ContentSourceResource extends BaseApiResource {
     @GET
     @Path("/{id}")
     @RolesAllowed(Permission.V_SOURCE_VIEW)
-    @Operation(summary = "Get content source by ID", description = "Retrieves details of a specific content source.")
+    @Operation(summary = "Get content source by ID",
+            description = "Retrieves a content source visible to the caller; a source outside the caller's topics is reported as not found.")
     @APIResponse(
             responseCode = "200",
             description = "Content source retrieved successfully",
@@ -147,7 +129,7 @@ public class ContentSourceResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Source not found")
     public ContentSourceDTO getContentSourceById(@PathParam("id") Long id) {
-        ContentSource entity = ContentSource.<ContentSource>findByIdOptional(id)
+        ContentSource entity = ContentSource.findVisibleById(id, getContentScope())
                 .orElseThrow(() -> new NotFoundException(CONTENT_SOURCE_WITH_ID + id + NOT_FOUND));
         return contentSourceMapper.toDTO(entity);
     }
@@ -155,53 +137,20 @@ public class ContentSourceResource extends BaseApiResource {
     @POST
     @Transactional
     @RolesAllowed(Permission.V_SOURCE_CREATE)
-    @Operation(summary = "Create content source", description = "Creates a new content source.")
+    @Operation(summary = "Create content source",
+            description = "Admin only. Resolves the identifier (handle, URL or channel ID) to the channel ID and returns the existing source for it (200) or creates one (201). Users add sources through a topic's newSources.")
     @APIResponse(
             responseCode = "201",
             description = "Content source created successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContentSourceDTO.class))
     )
+    @APIResponse(responseCode = "400", description = "Invalid or unsupported platform, or the channel does not exist")
     public Response createContentSource(@Valid @NotNull ContentSourceCreateDTO createDTO) {
-        SourceTypeEnum sourceType;
-        try {
-            sourceType = SourceTypeEnum.valueOf(createDTO.platform());
-        } catch (IllegalArgumentException _) {
-            throw new BadRequestException("Invalid platform: " + createDTO.platform());
-        }
-
-        // If it already exists, return the existing one as per user feedback
-        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
-                createDTO.sourceIdentifier(), sourceType.getId()).firstResultOptional();
-        
-        if (existing.isPresent()) {
-            ContentSource cs = existing.get();
-            logger.info("ContentSource already exists for identifier: {}, platform: {}. Returning existing.", cs.sourceIdentifier, createDTO.platform());
-            return Response.ok(contentSourceMapper.toDTO(cs))
-                    .location(URI.create("/api/v1/sources/" + cs.id))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        ContentSource contentSource;
-        try {
-            contentSource = contentSourceMapper.toEntity(createDTO);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-
-        if (contentSource.name == null || contentSource.name.isBlank()) {
-            contentSource.name = contentSource.sourceIdentifier;
-        }
-
-        contentSource.persist();
-        logger.info("Created new ContentSource: {} [{}] (id: {})", contentSource.name, contentSource.sourceIdentifier, contentSource.id);
-        
-        registry.counter("povzetkar_source_added_total", 
-                Tags.of("platform", createDTO.platform()))
-                .increment();
-
-        contentSourceDetailService.enrichContentSource(contentSource);
-        return Response.created(URI.create("/api/v1/sources/" + contentSource.id))
+        ContentSourceService.Result result = contentSourceService.findOrCreate(createDTO);
+        ContentSource contentSource = result.source();
+        URI location = URI.create("/api/v1/sources/" + contentSource.id);
+        Response.ResponseBuilder response = result.created() ? Response.created(location) : Response.ok().location(location);
+        return response
                 .entity(contentSourceMapper.toDTO(contentSource))
                 .type(MediaType.APPLICATION_JSON)
                 .build();
@@ -265,14 +214,19 @@ public class ContentSourceResource extends BaseApiResource {
     @RolesAllowed(Permission.V_SOURCE_VIEW)
     public ContentSourceDetailService.ContentSourceDetails getContentSourceDetails(
             @PathParam("sourceTypeId") int sourceTypeId, @PathParam("identifier") String identifier) {
-        return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)
-                .orElseThrow(() -> new NotFoundException("Details for source type "
-                        + SourceTypeEnum.fromId(sourceTypeId) + " with identifier " + identifier + NOT_FOUND));
+        try {
+            return contentSourceDetailService.fetchContentSourceDetails(sourceTypeId, identifier)
+                    .orElseThrow(() -> new NotFoundException("Details for source type "
+                            + SourceTypeEnum.fromId(sourceTypeId) + " with identifier " + identifier + NOT_FOUND));
+        } catch (SourceDetailsUnavailableException e) {
+            // not 404: the frontend shows "check unavailable" instead of "channel not found"
+            throw new BusinessRuleException(Response.Status.SERVICE_UNAVAILABLE, "SOURCE_CHECK_UNAVAILABLE",
+                    "The channel check is unavailable right now; please try again later");
+        }
     }
 
     private void checkForDuplicateContentSource(String sourceIdentifier, int sourceTypeId, Long excludeId) {
-        Optional<ContentSource> existing = ContentSource.find("sourceIdentifier = ?1 and sourceTypeId = ?2",
-                sourceIdentifier, sourceTypeId).firstResultOptional();
+        Optional<ContentSource> existing = ContentSource.findByIdentifier(sourceIdentifier, sourceTypeId);
 
         if (existing.isPresent() && (excludeId == null || !existing.get().id.equals(excludeId))) {
             throw new WebApplicationException(

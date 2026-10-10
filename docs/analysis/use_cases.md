@@ -11,19 +11,22 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ## 3. Use Case List
 
 ### UC-1: Manage Topic Sources
-**Actor**: Administrator
+**Actor**: User (Administrator)
 **Related Stories**: US-ING-001, US-UI-002
-**Context**: [topic-management.md](../features/topic-management.md)
-**Preconditions**: Administrator is logged in.
+**Context**: [topic-management.md](../features/topic-management.md), [POV-219 walkthrough](../versions/v0.20.0/POV-219-walkthrough.md)
+**Preconditions**: User is logged in.
 **Main Flow**:
-1. Administrator navigates to Topic Management and selects a Topic for Editing.
+1. User navigates to Topic Management and selects a Topic for Editing.
 2. System displays *only* the sources currently associated with this topic.
-3. Administrator removes a source from the topic.
-4. Administrator clicks "Add Source".
-5. System displays a search-enabled popover of the global Source Library.
-6. Administrator filters/searches and selects one or more new sources.
-7. Administrator saves the Topic.
-**Postconditions**: Topic is updated with the new source configuration.
+3. User removes a source from the topic.
+4. User clicks "Add Source".
+5. System displays a search-enabled popover of the sources in the user's own topics (all sources for an administrator).
+6. User filters/searches and selects one or more sources, or registers a new one via Quick Add (UC-7).
+7. User saves the Topic; sources entered in Quick Add are found or created at this point.
+**Alternate Flows**:
+- A source ID outside the user's topics (e.g. guessed through the API) → 404, the topic is left unchanged.
+- The "Add Source" popover opens at the search list every time, however it was closed.
+**Postconditions**: Topic is updated with the new source configuration. A source removed from every topic of the user is no longer visible to the user; items of it that are in the user's briefings stay accessible (POV-219).
 
 ### UC-2: Trigger Manual Orchestration (Configurable)
 **Actor**: Administrator
@@ -90,16 +93,20 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Postconditions**: User has a local copy of the briefing.
 
 ### UC-7: Real-time Source Validation
-**Actor**: Administrator
+**Actor**: User (Administrator)
 **Related Stories**: US-ING-001, US-UI-002
-**Context**: [frontend-specification.md](frontend-specification.md)
-**Preconditions**: Administrator is on the "Add Source" dialog.
+**Context**: [frontend-specification.md](frontend-specification.md), [POV-219 walkthrough](../versions/v0.20.0/POV-219-walkthrough.md)
+**Preconditions**: User is in Quick Add of the "Add Source" dialog.
 **Main Flow**:
-1. Administrator enters a YouTube URL/ID.
+1. User enters a YouTube @handle, channel URL or channel ID (Blog is shown but disabled — not supported yet).
 2. System (debounced) triggers a backend existence check.
 3. System displays a visual indicator (Green/Red check) and the channel name if found.
-4. Administrator saves the source.
-**Postconditions**: Source is added with high confidence in its validity.
+4. User adds the channel — possible only once it was found — and saves the topic (UC-1).
+5. System resolves the input to the channel ID and finds or creates the source under it.
+**Alternate Flows**:
+- Channel not found or the check unavailable → "Add" stays disabled.
+- An unknown channel or an unsupported platform reaching the API → 400, nothing is created.
+**Postconditions**: Source exists once per channel, stored under its channel ID, so ingestion can fetch it.
 
 ### UC-8: Share Individual Summary
 **Actor**: User/Administrator
@@ -112,20 +119,22 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 3. System generates a unique public UUID for the summary.
 4. User/Administrator copies the public link to the clipboard.
 5. External viewer accesses the link without authentication.
+**Alternate Flows**:
+- The summary's item is not visible to the user (its source is in none of the user's topics and the summary is in none of the user's briefings) → 404; the summary's sharing state is unchanged (POV-219).
 **Postconditions**: Individual summary is visible to the public until unshared.
 
 ### UC-9: Complete Onboarding Checklist
 **Actor**: New User
 **Related Stories**: US-16.4
-**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md)
-**Preconditions**: User has just registered or has no topics/briefings.
+**Context**: [v0.16.0-planning-process.md](../versions/v0.16.0/v0.16.0-planning-process.md), [ADR-0011](../adr/0011-onboarding-state-per-user.md) (POV-216)
+**Preconditions**: User's account is approved (`ENABLED`) and the guide has not been dismissed. Accounts awaiting approval see no guide — the pending-approval banner points them to the demo content instead.
 **Main Flow**:
 1. User logs in and lands on the Dashboard.
-2. System displays a 5-step checklist (Topics, Sources, Trigger, Read, Share).
+2. System loads the user's guide state and displays a 5-step checklist (Topics, Sources, Trigger, Read, Share).
 3. User performs the required action (e.g., creates a topic).
-4. System automatically checks off the corresponding item in the list.
+4. System automatically checks off the corresponding item in the list and stores the progress for this user.
 5. User completes all steps and reaches 100% progress.
-**Postconditions**: User is successfully onboarded and understands the system flow.
+**Postconditions**: User is successfully onboarded and understands the system flow; the progress follows the user across browsers and devices and is never shared with other accounts.
 
 ### UC-10: React to Job Completion Toasts
 **Actor**: User
@@ -185,15 +194,16 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ### UC-14: Resilient Transcript Fetching with Provider Fallback
 **Actor**: System (orchestrator)
 **Related Stories**: US-17.5, US-ING-004
-**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0009](../adr/0009-multi-provider-transcript-strategy.md), [POV-194 walkthrough](../versions/v0.18.0/POV-194-walkthrough.md)
-**Preconditions**: A `ContentItem` requires transcript fetching; `TranscriptOrchestrator` is configured with an ordered provider chain (default: `proxy,youtube-legacy,supadata` via `transcript.providers.order`).
+**Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0009](../adr/0009-multi-provider-transcript-strategy.md), [POV-194 walkthrough](../versions/v0.18.0/POV-194-walkthrough.md), [POV-222 walkthrough](../versions/v0.20.0/POV-222-walkthrough.md)
+**Preconditions**: A `ContentItem` requires transcript fetching (a stored transcript or a video shorter than `transcript.threshold.minutes` needs none); `TranscriptOrchestrator` is configured with an ordered provider chain (default `youtube-legacy,proxy,supadata` via `transcript.providers.order`; disabled providers are skipped — `proxy` and `supadata` are off by default).
 **Main Flow**:
-1. Orchestrator invokes the first provider in the chain: `ProxyTranscriptProvider`, which calls the self-hosted transcript proxy (`GET /transcripts/{videoId}`, API-key authenticated; hosted on Synology since POV-196).
-2. On a non-200 proxy response or transport failure, the provider raises `ProviderUnavailableException` and the orchestrator falls through to the next provider (`youtube-legacy`, then `supadata`).
-3. `QuotaExhausted` and timeouts likewise trigger fall-through; each attempt is recorded in `transcript_provider_quota_usage` for monitoring.
+1. Orchestrator invokes the first provider in the chain: `YouTubeLegacyTranscriptProvider` waits for the app-wide fetch slot — one YouTube fetch at a time, after a random pause since the previous one — and selects English captions, else captions in any language (POV-222).
+2. On a failure the provider raises `ProviderUnavailableException` and the orchestrator falls through to the next provider (`proxy` — the self-hosted transcript proxy — then `supadata`).
+3. `QuotaExhausted` and timeouts likewise trigger fall-through; each successful fetch is recorded in `transcript_provider_quota_usage` for monitoring.
 4. On success, the transcript is persisted to the `ContentItem` **before** summarization is invoked, and orchestration continues.
-5. If all providers fail, `ContentItem` is marked `FAILED` with `failure_reason=ALL_PROVIDERS_EXHAUSTED`.
-**Postconditions**: Transcript fetched and persisted (or item correctly marked failed); Micrometer counters incremented per provider.
+5. If all providers fail during an orchestration run, the item is set to `RETRY_LATER` with the next attempt time per `transcript.retry.intervals`; the 7th failed automatic attempt marks it `FAILED` (`TRANSCRIPT_UNAVAILABLE`). A failed manual attempt changes nothing.
+6. If the run's time budget is used up before the fetch slot is obtained, the fetch is not attempted and the item stays unchanged for the next run.
+**Postconditions**: Transcript fetched and persisted (or the item scheduled for a retry / marked failed); Micrometer counters incremented per provider.
 
 ### UC-15: External Links Open in New Tab
 **Actor**: User
@@ -229,7 +239,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Main Flow**:
 1. The agent sends a GET request with the `X-API-Key` header.
 2. `ApiKeyAuthenticationMechanism` validates the key (constant-time) and establishes an identity for the mapped user with the synthetic `api-readonly` role (four VIEW permissions).
-3. The resource returns the same user-scoped data the mapped user would see in the browser (briefings, summaries, content items incl. `GET /api/v1/content-items/{id}/transcript`, topics, sources, dashboard).
+3. The resource returns the same user-scoped data the mapped user would see in the browser (briefings, summaries, content items incl. `GET /api/v1/content-items/{id}/transcript`, topics, sources, dashboard). Sources and content items are limited to the mapped user's topics and briefings — also when the mapped user is an administrator (POV-219).
 **Alternate Flows**:
 - Wrong or unconfigured key → 401 (no login redirect for API-key attempts).
 - Any non-GET request with a valid key → 403 (`ApiKeyReadOnlyPolicy`).
@@ -237,9 +247,28 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 - No `X-API-Key` header → the OIDC/session flow behaves exactly as before.
 **Postconditions**: No state change is possible via the key; the browser login flow is unaffected.
 
+### UC-18: Evaluate Povzetkar and Request Early Access
+**Actor**: Visitor (not signed in)
+**Related Stories**: US-UI-007
+**Context**: [POV-220 walkthrough](../versions/v0.20.0/POV-220-walkthrough.md)
+**Preconditions**: The visitor opens `/` without a session.
+**Main Flow**:
+1. The page opens in the visitor's browser language (SL or EN) and system theme, unless the visitor chose them before.
+2. Above the fold the visitor reads what Povzetkar does, sees the early-access note and a sample daily briefing labelled as an example.
+3. The visitor reads the benefits, *How it works*, the FAQ (what happens on sign-in, what is stored, supported sources) and the planned features (*Coming soon*, each labelled *planned*).
+4. The visitor signs in from the header, the hero or the closing call to action.
+5. The system creates the account in `PENDING_APPROVAL` with the `demo` role; the visitor sees demo content while the administrator decides (UC-12).
+**Alternate Flows**:
+- A signed-in user sees *Dashboard* links instead of sign-in.
+- The system metadata (version) cannot be loaded → the page stays usable; the footer omits the version.
+**Postconditions**: The visitor knows what the product does and what happens after sign-in; an account request exists if they signed in.
+
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.9     | 2026-10-02 | Povzetkar AI | POV-222: UC-14 updated — youtube-legacy first with serial pacing and any-language captions, bounded retries (`RETRY_LATER` → `FAILED` after 7 automatic attempts; the old `FAILED`/`ALL_PROVIDERS_EXHAUSTED` step was stale), time budget per run, production chain order. |
+| 1.8     | 2026-09-28 | Povzetkar AI | POV-220: added UC-18 (Evaluate Povzetkar and Request Early Access, US-UI-007). |
+| 1.7     | 2026-09-28 | Povzetkar AI | POV-219: sources and content items scoped to the user's topics — UC-1 (user actor, Quick Add on save, foreign source 404), UC-7 (handle/URL normalized to the channel ID, add only when found, Blog disabled), UC-8 (invisible item 404), UC-17 (API key scoped to the mapped user). |
 | 1.6     | 2026-07-08 | Povzetkar AI | POV-205: added Automation Agent actor and UC-17 (Programmatic Read-Only API Access, US-API-001). |
 | 1.5     | 2026-07-06 | Povzetkar AI | POV-203: UC-14 updated (proxy-primary chain, US-ING-004); added UC-16 (Scheduled Orchestration); UC-13 cancel note → backlog. |
 | 1.4     | 2026-05-20 | Povzetkar AI | Added UC-11 (Admin User Mgmt), UC-12 (User Approval), UC-13 (Job Ops), UC-14 (Transcript Fallback), UC-15 (External Links) for v0.17.0. |

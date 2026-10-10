@@ -17,34 +17,34 @@ Each topic can have its own AI instructions. This allows you to differentiate ho
 - **Financial Topic**: "Highlight stock symbols, price changes, and market trends."
 
 ### Content Source Association
-You can link multiple content sources (e.g., RSS feeds, YouTube channels) to a single topic. When a briefing is triggered for a topic, Povzetkar will fetch content from all associated sources, aggregate it, and then summarize it using the topic's prompt template.
+You can link multiple content sources (YouTube channels — the only platform accepted today) to a single topic. When a briefing is triggered for a topic, Povzetkar will fetch content from all associated sources, aggregate it, and then summarize it using the topic's prompt template.
 
 ### Real-time Source Validation (YouTube)
 To ensure data integrity, YouTube content sources are validated in real-time during entry:
 - **Debounced Lookup**: Input is validated 500ms after the user stops typing to minimize API quota usage.
 - **Identifier Resolution**: Supports YouTube handles (e.g., `@veritasium`), Channel IDs (e.g., `UCvPyVWLnAgmz841qhX67yag`), and full channel URLs.
 - **Visual Feedback**: Real-time status indicators (Loading, Success, Invalid, Warning) show the channel name and availability before adding.
-- **Resilience**: If the YouTube API is unreachable, a "Warning" state allows for a "Force Add" to ensure the user is never blocked by external service outages.
+- **Resilience**: "Add" is enabled only for a channel the check has found (POV-219). If the YouTube API is unreachable the check reports "unavailable" and is retried on the next attempt; nothing is added meanwhile. A new source is stored under its resolved channel ID when the topic is saved.
 
 ### Optimistic Locking
 To prevent concurrent editing issues, Povzetkar uses **Optimistic Locking**. 
 - The backend checks a `version` field before every update (PATCH).
-- If the version on the backend doesn't match the version sent by the client, a `428 Precondition Required` error is returned.
+- If the version on the backend doesn't match the version sent by the client, `409 Conflict` is returned; a request without `If-Match` gets `428 Precondition Required`.
 - The frontend client automatically extracts the version from your data and includes it in the `If-Match` header.
 
 ## How to use
 
 1.  Navigate to the **Topics** tab in the sidebar.
-2.  Click **Create Topic** to add a new area of interest.
+2.  Click **New Topic** to add a new area of interest.
 3.  Configure:
     - **Name**: A descriptive name for your topic.
     - **Enabled**: Toggle whether this topic should be active for briefing generation.
     - **Prompt Template**: (Optional) Add your custom AI instructions.
     - **Content Sources**: Select the sources you want to group under this topic.
-4.  Click **Run Briefing** on any topic card to immediately trigger a new AI-powered summary for that topic.
+4.  Click **Run now** on a topic to open the trigger dialog (preview, briefing on/off) and start an orchestration for that topic.
 
 ## Technical Details
 
-- **Backend**: JAX-RS (TopicsApiResource), Quarkus, Hibernate Panache.
+- **Backend**: JAX-RS (`TopicApiResource`), Quarkus, Hibernate Panache.
 - **Frontend**: React, TanStack Query, Orval (generated client), React Hook Form, Zod.
-- **Security**: @Authenticated required for all operations.
+- **Security**: permission-based (`@RolesAllowed` with `Permission.V_TOPIC_*`); a user sees and edits only their own topics.

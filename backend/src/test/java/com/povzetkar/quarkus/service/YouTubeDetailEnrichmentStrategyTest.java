@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -198,12 +199,10 @@ class YouTubeDetailEnrichmentStrategyTest {
         String channelId = "UCerrorChannel1234567890"; // 24 chars
         when(mockYouTubeDataApiClient.fetchChannels(List.of(channelId))).thenThrow(new IOException("API Error"));
 
-        // When
-        Optional<ContentSourceDetailService.ContentSourceDetails> details = strategy.fetchDetails(channelId);
-
-        // Then
-        assertTrue(details.isEmpty());
-        verify(mockYouTubeDataApiClient, times(1)).fetchChannels(List.of(channelId));
+        // When / Then: an API failure is not "not found" and is not cached (POV-219) — the next call asks again
+        assertThrows(SourceDetailsUnavailableException.class, () -> strategy.fetchDetails(channelId));
+        assertThrows(SourceDetailsUnavailableException.class, () -> strategy.fetchDetails(channelId));
+        verify(mockYouTubeDataApiClient, times(2)).fetchChannels(List.of(channelId));
     }
 
     @Test

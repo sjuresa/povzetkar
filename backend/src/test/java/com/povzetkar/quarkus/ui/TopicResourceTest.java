@@ -74,7 +74,7 @@ class TopicResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "topic_resource_test_user")
+    @TestSecurity(user = "topic_resource_test_user", roles = "admin")
     void testGetTopics() {
         RestAssured.given()
                 .when().get("/ui/topics")
@@ -87,7 +87,7 @@ class TopicResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "topic_resource_test_user")
+    @TestSecurity(user = "topic_resource_test_user", roles = "admin")
     void testListBriefingsByTopic() {
         RestAssured.given()
                 .when().get("/ui/topics/" + testTopic.id + "/briefings")
@@ -98,7 +98,7 @@ class TopicResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "topic_resource_test_user")
+    @TestSecurity(user = "topic_resource_test_user", roles = "admin")
     void testShowAddForm() {
         RestAssured.given()
                 .when().get("/ui/topics/add")
@@ -111,7 +111,7 @@ class TopicResourceTest {
 
     @Disabled("until Base UI Test Class is implemented")
     @Test
-    @TestSecurity(user = "topic_resource_test_user")
+    @TestSecurity(user = "topic_resource_test_user", roles = "admin")
     void testAddTopic_success() {
         long initialCount = Topic.count();
         RestAssured.given()
@@ -127,7 +127,7 @@ class TopicResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "topic_resource_test_user")
+    @TestSecurity(user = "topic_resource_test_user", roles = "admin")
     void testAddTopic_blankName() {
         long initialCount = Topic.count();
         RestAssured.given()
@@ -141,7 +141,7 @@ class TopicResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "another_user")
+    @TestSecurity(user = "another_user", roles = "admin")
     void testAccessOtherUserTopic_returns404() {
         // Create another user and topic
         QuarkusTransaction.requiringNew().run(() -> {

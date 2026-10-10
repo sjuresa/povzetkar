@@ -10,7 +10,7 @@
 - [7. Running Tests](#7-running-tests)
 - [8. Security & Code Quality](#8-security--code-quality)
 - [9. Building the Full Stack](#9-building-the-full-stack)
-- [10. Production Stack (Local)](#10-production-stack-local)
+- [10. Production Stack](#10-production-stack)
 - [11. Containerized Execution (Docker/Podman)](#11-containerized-execution-dockerpodman)
 - [12. Application Usage](#12-application-usage)
 - [13. Compliance & Monitoring](#13-compliance--monitoring)
@@ -45,7 +45,7 @@ The local database environment is managed by Docker Compose and is located in th
     # For PostgreSQL (dev & tests)
     DB_KIND=postgresql
     DB_HOST=localhost
-    DB_PORT=5432
+    DB_PORT=5434   # dev DB container (docker-compose.yml); the test DB is on 5433
     DB_USER=your_db_user
     DB_PASS=your_db_password
     DB_NAME=povzetkar
@@ -57,22 +57,22 @@ The local database environment is managed by Docker Compose and is located in th
     # API Keys & Auth
     YOUTUBE_API_KEY=your_youtube_api_key_here
     GOOGLE_API_KEYS=your_google_api_keys_here
-    FRONTEND_URL=http://localhost:5173
     ```
 
     **Frontend (`frontend/.env`):**
     Copy `frontend/.env.example` to `frontend/.env` and update values.
     ```properties
-    # Empty for relative proxying (recommended)
-    VITE_API_BASE_URL=
-    # Comma-separated list of extra allowed hosts (e.g. for Tailscale)
+    # Comma-separated list of extra allowed hosts (e.g. for a VPN hostname)
     VITE_ALLOWED_HOSTS=www.example.com,192.168.1.100
     ```
 
 2.  **Start the Database:**
-    Navigate to the backend directory and start the PostgreSQL database.
+    The database volumes are declared `external` (they survive `docker compose down -v`), so create them once;
+    `backend/.env` must be filled first — compose reads the database credentials from it.
     ```bash
     cd backend
+    docker volume create povzetkar_postgres_dev_data
+    docker volume create povzetkar_postgres_test_data
     docker compose up -d
     ```
 
@@ -80,13 +80,16 @@ The local database environment is managed by Docker Compose and is located in th
 
 PostgreSQL initialization scripts (like the one that enables the `pgvector` extension) only run when the database volume is first created. If you need to re-run initialization scripts or start with a fresh database:
 
-1.  **Destroy the existing containers and volumes:**
+1.  **Destroy the existing containers and the database volumes** (`down -v` does not remove external volumes):
     ```bash
     cd backend
-    docker compose down -v
+    docker compose down
+    docker volume rm povzetkar_postgres_dev_data povzetkar_postgres_test_data
     ```
-2.  **Recreate the environment:**
+2.  **Recreate the volumes and the environment:**
     ```bash
+    docker volume create povzetkar_postgres_dev_data
+    docker volume create povzetkar_postgres_test_data
     docker compose up -d
     ```
 
@@ -122,7 +125,7 @@ npm run dev
 
 This command uses `npm-run-all` to simultaneously boot:
 - **Backend (Quarkus):** `http://localhost:8080` (API & Dev UI)
-- **Frontend (Vite 8):** `http://localhost:5173` (React SPA)
+- **Frontend (Vite 6):** `http://localhost:5173` (React SPA)
 
 ### 6.1 Individual Service Execution
 
@@ -130,8 +133,12 @@ If you need to run services separately:
 
 **Backend only:**
 ```bash
-./mvnw quarkus:dev -pl backend
+cd backend
+../mvnw quarkus:dev -DskipTests=true
 ```
+
+`-DskipTests=true` deactivates the `config-guard` Maven profile, whose `quarkus:dependency-tree` execution makes
+dev mode fail otherwise (backlog: "`quarkus:dev` fails while the `config-guard` profile is active").
 
 **Frontend only:**
 ```bash
@@ -159,7 +166,8 @@ live only on the management interface (port 9000; 9001 in tests) — see §13.2.
 **Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
 
 ## 7. Running Tests
-To run the full-stack test suite (Backend JUnit + Frontend Vitest + Playwright):
+To run the backend and frontend unit test suites (Backend JUnit + Frontend Vitest; `npm run test:full` adds
+Playwright):
 
 ```bash
 npm run test
@@ -175,7 +183,7 @@ npm run test
 **Frontend (Vitest):**
 ```bash
 cd frontend
-npm run test
+npm run test -- --run   # without --run, Vitest stays in watch mode
 ```
 
 **Frontend (Playwright E2E):**
@@ -228,16 +236,26 @@ Static Application Security Testing (SAST) is performed via the `spotbugs-maven-
 Third-party dependencies are scanned for known vulnerabilities (CVEs) in CI (filesystem scan and image scan, `CRITICAL,HIGH`, `.trivyignore`). CI is the pre-deploy scan: a production deploy needs a green CI run on the exact deployed commit (see `docs/protocols/verification.md`, *Pre-deploy Verification*). CI pins `aquasecurity/trivy-action` by commit SHA and the Trivy binary by version (`.github/workflows/ci.yml`). Run the scans locally only by exception — a commit without a CI run, or the per-version `.trivyignore` audit (checklist 3.1a, then without `--ignorefile`) — without installing Trivy (from Git Bash, `MSYS_NO_PATHCONV=1`; never in parallel with the test suite), using the same pinned Trivy version as CI (image referenced by digest — a tag can be repointed):
 
 ```bash
-docker run --rm -v "<repo>:/src:ro" -v trivy-cache:/root/.cache aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 fs \
+docker run --rm -v "<repo>:/src:ro" --tmpfs /src/.git -v trivy-cache:/root/.cache aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa fs \
+  --include-dev-deps --skip-dirs transcript-proxy/.venv --skip-dirs backend/target --skip-dirs frontend/coverage --skip-dirs frontend/dist \
   --severity CRITICAL,HIGH --ignorefile /src/.trivyignore --exit-code 1 --timeout 30m /src
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache \
-  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 image \
+  -v "<repo>/.trivyignore:/cfg/.trivyignore:ro" aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa image \
   --severity CRITICAL,HIGH --ignorefile /cfg/.trivyignore --exit-code 1 --timeout 30m <image>
 ```
 
+`--include-dev-deps` matches CI (see below). The rest only keeps the local FS scan short, with the same findings
+(measured in POV-224). `--tmpfs /src/.git` hides the git metadata (run it on a normal clone — in a git worktree `.git` is a file and the
+mount fails): Trivy's check of the git repository took about
+6 min of a 6.3-min scan of the npm lockfiles alone (the cause is likely the Docker Desktop file sharing; not
+measured). The `--skip-dirs` paths are untracked local build output and a virtual environment, not source; Trivy's
+default secret scanner otherwise walks their ~35 000 files — with `.git` hidden, the full scan (offline variant,
+below) took 13 min without them and about 2 min with them.
+
 The FS scan resolves Maven parent POMs from Maven Central and can be blocked there (`429 Too Many Requests`, `Retry-After: 1800` — the whole IP for 30 min). Locally, add `-v "<home>/.m2:/root/.m2:ro"` and `--offline-scan` to the FS command so the POMs come from the local Maven cache. The cache must hold the exact parent POMs and BOMs of the commit being scanned — run a local build of that commit first (e.g. `mvnw verify`); in offline mode a missing POM only produces a warning and its managed dependencies are skipped, so check the scan output for unresolved-POM warnings before accepting a clean result. This is how the v0.19.0 audit completed (POV-211).
 
-Every `.trivyignore` entry carries an `exp:YYYY-MM-DD` date and a rationale; after expiry CI fails again and forces a re-check (remove the entry if the fix has shipped, otherwise extend it with a fresh rationale). The FS scan skips npm devDependencies — `npm audit` in `frontend/` covers those.
+Every `.trivyignore` entry carries an `exp:YYYY-MM-DD` date and a rationale; after expiry CI fails again and forces a re-check (remove the entry if the fix has shipped, otherwise extend it with a fresh rationale). The FS scan includes npm devDependencies, which Trivy skips by default: in CI through the `TRIVY_INCLUDE_DEV_DEPS`
+environment variable on the FS step (`trivy-action` has no input for it), locally through `--include-dev-deps`.
 
 ### 8.3 Frontend API Client (orval)
 The typed client in `frontend/src/api/generated` is generated from the backend OpenAPI spec and committed. After any API change, regenerate and commit it:
@@ -248,11 +266,11 @@ npm run gen:api                                # orval, output.clean: true remov
 ```
 
 - Generate from a `package -DskipTests` build: a spec written while test classes are on the classpath contains test-only endpoints.
-- orval is pinned exactly (`8.5.3`, no `^`) and raised only deliberately, together with a regeneration; `prettier: false` keeps the output independent of a globally installed prettier.
+- orval is pinned exactly (`8.41.0`, no `^`) and raised only deliberately, together with a regeneration; `prettier: false` keeps the output independent of a globally installed prettier. orval 8.41.0 no longer writes its version into the file header (8.5.3 did), so a bump changes only what the generator actually emits differently.
 - CI step **"API client drift check"** runs the two commands above before the tests and fails if `git status --porcelain -- frontend/src/api/generated` is not empty.
 
 ### 8.4 Infra Config Validation
-`bash scripts/qa/validate-infra-configs.sh` validates `docker-compose.prod.yml` (`docker compose config`), `infra/caddy/Caddyfile` (`caddy validate`) and `backend/infra/monitoring/prometheus/prometheus.yml` (`promtool check config`) with the exact images pinned in the prod compose file, under its own compose project name (it never touches the running `backend` stack). CI runs it before the image build, so a broken config or an incompatible image bump fails there instead of crash-looping production (`restart: always`).
+`bash scripts/qa/validate-infra-configs.sh` validates `docker-compose.prod.yml` (`docker compose config`, own compose project name) and `backend/infra/monitoring/prometheus/prometheus.yml` (`promtool check config`, via `docker run --network none` with the image pinned in the prod compose file). It creates no containers or networks of the prod project and no network with the prod file's fixed subnet, so it never touches the running `backend` stack. CI runs it before the image build, so a broken config or an incompatible image bump fails there instead of crash-looping production (`restart: always`).
 
 ## 9. Building the Full Stack
 
@@ -266,60 +284,13 @@ This will:
 1.  Build the React frontend and place artifacts in `frontend/dist`.
 2.  Build the Quarkus backend and run standard JAR packaging.
 
-## 10. Production Stack (Local)
+## 10. Production Stack
 
-> [!WARNING]
-> **Out of date (POV-210):** Caddy runs but is not on the traffic path — the Cloudflare tunnel routes straight to `app:8080` (§13.5); Caddy still publishes host ports 80/443. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+The production stack uses `docker-compose.prod.yml` with `.env.docker` (compose project `backend`) and runs the app, PostgreSQL, Prometheus, Grafana and the Cloudflare Tunnel (`cloudflared`). The tunnel is the only public entry: it routes `povzetkar.<domain>` to `app:8080`, TLS ends at Cloudflare, and no port is published for public traffic. There is no reverse proxy — the app sends its own security headers, CSP and caching headers and trusts `X-Forwarded-*` only from `cloudflared` ([ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md), §13.5).
 
-The production stack uses `docker-compose.prod.yml` with `.env.docker` and includes the app, PostgreSQL, Caddy, Prometheus, Grafana, and Cloudflare Tunnel.
+The dev stack (`docker-compose.yml`, same directory) is its own compose project `povzetkar-dev` with its own container names and host ports (dev DB 5434, test DB 5433, dev Grafana 3001, dev Prometheus 9090), so both run side by side. Never remove the `name:` from the dev file: the two files would again form one project, a dev `up` would recreate the prod Prometheus/Grafana, and `--remove-orphans` from either file would remove the other stack's containers (POV-214).
 
-### 10.1 Build
-
-Run from the `backend/` directory:
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker build
-```
-
-The `APP_VERSION` variable in `.env.docker` is used as the image tag (e.g. `povzetkar-app:0.18`).
-
-### 10.2 Run
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d
-```
-
-### 10.3 Update (rebuild + restart app only)
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker build --pull app
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker up -d --no-deps app
-```
-
-- `--pull` fetches the current base images (distroless, temurin, node, golang). Without it Docker
-  reuses cached bases — during POV-207 the local base was months behind the one CI scans, so the
-  deployed image carried Debian CVEs CI never saw.
-- `--no-deps` keeps compose from also recreating dependencies (e.g. `postgres-prod`) when it detects
-  a config difference in them (observed during POV-207).
-- Before rebuilding, tag the running image for rollback:
-  `docker tag povzetkar-app:<APP_VERSION> povzetkar-app:<APP_VERSION>-pre-<task>`.
-- Before `up`: the deployed commit needs a green CI run (Trivy FS + image) not older than 7 days — see
-  `docs/protocols/verification.md`, *Pre-deploy Verification*. Local Trivy (§8.2) only for a commit without a CI run.
-
-### 10.4 Stop
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file ../.env.docker down
-```
-
-### 10.5 Notes
-
-- `.env.docker` is in the project root (not `backend/`), hence `--env-file ../env.docker`.
-- The app is exposed via **Cloudflare Tunnel** at `https://povzetkar.juresa.si` — no ports need to be open on the host.
-- Grafana is accessible locally at `http://localhost:3000` (port mapped in prod compose).
-
-> [!WARNING]
-> **Out of date (POV-210):** Grafana has no host port in the prod compose (`expose: 3000` only), so `http://localhost:3000` does not work for production. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+Production operations for the author's deployment are documented in a private operations runbook (not part of this repository).
 
 ## 11. Containerized Execution (Docker/Podman)
 
@@ -334,7 +305,7 @@ docker build -t si.jumis/povzetkar:latest .
 ```
 
 This process:
-1.  **Builds the Frontend**: Compiles React and Vite-React-SSG artifacts.
+1.  **Builds the Frontend**: Compiles the React SPA with Vite.
 2.  **Integrates Static Resources**: Embeds the built frontend into the Quarkus `META-INF/resources` directory.
 3.  **Packages Backend**: Builds the Quarkus "runner" with all dependencies included.
 
@@ -348,17 +319,18 @@ The application requires several environment variables to function correctly. Th
 |:------------------|:----------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
 | `DB_KIND`         | Database type                           | `postgresql`                                                                                                               |
 | `DB_HOST`         | Database host                           | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` to connect to a service running on the host machine |
-| `DB_PORT`         | Database port                           | `5432`                                                                                                                     |
+| `DB_PORT`         | Database port                           | `5434` (dev container; prod uses `postgres-prod:5432` inside the Docker network)                                           |
 | `DB_NAME`         | Database name                           | `povzetkar`                                                                                                                |
 | `DB_USER`         | Database username                       | `your_db_user`                                                                                                             |
 | `DB_PASS`         | Database password                       | `your_db_password`                                                                                                         |
 | `YOUTUBE_API_KEY` | YouTube Data API Key                    | `AIzaSy...`                                                                                                                |
 | `GOOGLE_API_KEYS` | Google GenAI API Keys (comma-separated) | `AIzaSy...`                                                                                                                |
-| `FRONTEND_URL`    | Frontend origin(s) and redirect base URL(s). Supports comma-separated list. | `http://localhost:5173`                                                                                                    |
-| `CORS_METHODS`    | Allowed HTTP methods for CORS           | `GET, POST, ...`                                                                                                           |
-| `CORS_HEADERS`    | Allowed HTTP headers for CORS           | `Content-Type, ...`                                                                                                        |
 | `GOOGLE_OIDC_CLIENT_ID`     | Google OIDC Client ID (Production)      | `your-client-id.apps.googleusercontent.com`                                                                                |
 | `GOOGLE_OIDC_CLIENT_SECRET` | Google OIDC Client Secret (Production)  | `GOCSPX-your-secret`                                                                                                       |
+
+**Note:** `FRONTEND_URL`, `CORS_METHODS` and `CORS_HEADERS` are no longer used (POV-221 removed CORS: every
+browser client is same-origin, login/logout redirects are relative). They can be removed from `.env.docker` and
+`backend/.env`; `VITE_API_BASE_URL` likewise from `frontend/.env`.
 
 **Docker Run Example:**
 
@@ -425,34 +397,32 @@ The `ContentSourceDetailService` is responsible for enriching and refreshing det
 
 To manually trigger the enrichment process for all content sources that are missing details:
 
-*   **Endpoint:** `POST /api/v1/content-sources/enrich`
+*   **Endpoint:** `POST /api/v1/sources/enrich`
 *   **Method:** `POST`
-*   **Example using curl:**
-    ```bash
-    curl -X POST http://localhost:8080/api/v1/content-sources/enrich
-    ```
+*   **Authentication:** an administrator's browser session (`ADMIN_SYSTEM_TRIGGER`); API keys are rejected
+    (read-only, §14.6).
 
 #### 9.1.2 Scheduled Refresh
 
-The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Sunday at midnight.
+The service is configured to periodically refresh content source details automatically. By default, it runs weekly on Monday at 10:00 UTC.
 
 *   **Configuration Property:** `povzetkar.enrichment.cron` (was `quarkus.scheduler.enrich-content-sources.cron` before POV-208)
 *   **Location:** `backend/src/main/resources/application.properties`
-*   **Default Value:** `0 0 0 ? * SUN` (weekly on Sunday at midnight)
+*   **Default Value:** `0 0 10 ? * MON` (weekly on Monday at 10:00 UTC)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
 ### 9.2 Orchestrator and Briefing Service
 
-The `OrchestratorService` is responsible for the end-to-end process of fetching new content, summarizing it, and generating daily briefings for active users. This service runs on a schedule.
+The `OrchestrationManager` is responsible for the end-to-end process of fetching new content, summarizing it, and generating daily briefings for active users. This service runs on a schedule.
 
 #### 9.2.1 Scheduled Orchestration
 
-The orchestration process is configured to run periodically. By default, it runs daily at midnight.
+The orchestration process is configured to run periodically. By default, it runs every hour at :27.
 
 *   **Configuration Property:** `povzetkar.orchestrator.cron`
 *   **Location:** `backend/src/main/resources/application.properties`
-*   **Default Value:** `0 0 0 * * ?` (daily at midnight)
+*   **Default Value:** `0 27 * * * ?` (every hour at :27)
 
     You can modify this cron expression in `application.properties` to adjust the schedule according to your needs.
 
@@ -509,7 +479,7 @@ To manually trigger the orchestration process:
 
 To verify that the orchestrator is running and generating summaries and briefings:
 
-1.  **Check Application Logs:** Look for log entries from `OrchestratorService` indicating the start and end of orchestration runs, and any errors during content fetching or summarization.
+1.  **Check Application Logs:** Look for log entries from `OrchestrationManager` indicating the start and end of orchestration runs, and any errors during content fetching or summarization.
 2.  **Inspect Database for Summaries:**
     Connect to the database and query the `summary` table. You should see new entries corresponding to summarized content.
     ```sql
@@ -602,15 +572,23 @@ Every request to the `/api/v1/*` endpoints is assigned a **Correlation ID** to a
 The `AuditLogFilter` records every API access in the `audit_log` database table.
 
 *   **Captured Data:** HTTP Method, Request Path, Response Status, Duration (ms), User Agent, Correlation ID, and User ID (if authenticated).
-*   **Accessing logs via API:**
-    ```bash
-    curl -H "Authorization: Bearer <admin_token>" \
-      "http://localhost:8080/api/v1/admin/audit-log?page=0&size=20"
-    ```
+*   **Accessing logs via API:** `GET /api/v1/admin/audit-log?page=0&size=20` with an admin's browser session (the
+    admin UI's Audit Log page uses it). There is no bearer token; API keys are rejected on admin paths (§14.6).
 *   **Direct Database Query:**
     ```sql
     SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 10;
     ```
+
+### 10.2a Job Execution Audit Retention
+
+`RetentionService` deletes `job_execution_audit` rows (the execution history of background jobs — not the `audit_log` table above) older than the retention period, in chunks, each chunk in its own transaction.
+
+*   **Configuration Property:** `povzetkar.retention.cron` — required, there is no default in the code
+*   **Location:** `backend/src/main/resources/application.properties`
+*   **Default Value:** `0 0 10 * * ?` (daily at 10:00 UTC)
+*   **Retention period / chunk size:** `povzetkar.retention.audits.days` (default 90), `povzetkar.retention.audits.chunk-size` (default 1000)
+*   **Check:** metric `povzetkar_maintenance_audits_purged_total`; log lines `Starting scheduled audit log retention` and `Finished audit log retention. Total records purged: …`
+*   A run missed while the app is down is not caught up; the next run purges the backlog.
 
 ### 10.3 Performance Metrics
 
@@ -618,10 +596,7 @@ A consolidated metrics endpoint provides a snapshot of the system state with a s
 
 *   **Endpoint:** `GET /api/v1/admin/metrics`
 *   **Captured Metrics:** Total/Running/Failed Background Jobs, Total/Enabled Topics, Total Content Items, and Idempotent Request count.
-*   **Example using curl:**
-    ```bash
-    curl -H "Authorization: Bearer <admin_token>" http://localhost:8080/api/v1/admin/metrics
-    ```
+*   **Access:** an admin's browser session, as for the audit log above.
 
 ### 10.4 Command Idempotency
 
@@ -691,7 +666,7 @@ Povzetkar v0.15.0+ includes a built-in monitoring stack based on **Micrometer**,
 
 ### 13.1 Infrastructure Overview
 
-The monitoring infrastructure is defined in `backend/docker-compose.yml`:
+The monitoring infrastructure is defined in `backend/docker-compose.prod.yml` (production) and `backend/docker-compose.yml` (dev stack):
 - **Prometheus**: Scrapes metrics from the Quarkus application.
 - **Grafana**: Visualizes metrics via pre-provisioned dashboards.
 
@@ -703,39 +678,45 @@ The Quarkus technical endpoints — `/q/metrics`, `/q/health` (incl. `/live`, `/
 port 8080 they return 404. Exception: **dev mode** disables the management interface
 (`%dev.quarkus.management.enabled=false`) so Swagger UI can call the API same-origin.
 
-**Protection boundary = the network, not a token.** Caddy and the Cloudflare tunnel forward
-only `app:8080`. Port 9000 is listed under `expose` in `docker-compose.prod.yml`, but that is
+**Protection boundary = the network, not a token.** The Cloudflare tunnel forwards only
+`app:8080`. Port 9000 is listed under `expose` in `docker-compose.prod.yml`, but that is
 documentation only — `expose` restricts nothing, and every container on the Docker network can
-reach `app:9000`. It must **never** be published via `ports:`, routed through Caddy, or configured
-as a Cloudflare tunnel public hostname. Consumers inside the network:
+reach `app:9000`. It must **never** be published via `ports:` or configured as a Cloudflare tunnel
+public hostname. Consumers inside the network:
 
 - **Prometheus** scrapes `http://app:9000/q/metrics` (no auth).
 - **Docker `HEALTHCHECK`** probes `http://localhost:9000/q/health/ready` from inside the container.
 
 > [!IMPORTANT]
-> Anything in the Docker network with a public UI is a bridge to port 9000 — notably **Grafana**
-> (`grafana.<domain>`): a Grafana admin can add a datasource targeting `app:9000`. Keep
+> Anything in the Docker network with a public UI would be a bridge to port 9000 — notably
+> **Grafana**: a Grafana admin can add a datasource targeting `app:9000`. Grafana therefore has
+> **no public hostname** — it is published on `127.0.0.1:3000` only (POV-214, ADR-0012). If remote
+> access is ever needed, add a tunnel hostname behind Cloudflare Access, never a plain route. Keep
 > `GF_ADMIN_PASSWORD` strong. When checking the Cloudflare dashboard, confirm no tunnel route
-> targets `app:9000`.
-
-> [!WARNING]
-> **Out of date (POV-210):** `grafana.<domain>` has no DNS record (NXDOMAIN) and no tunnel route, so Grafana has no public UI today; the bridge risk applies once one is added. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+> targets `app:9000` or `grafana:3000`.
 
 **Note:** `METRICS_SCRAPE_TOKEN` is no longer used (the former `…prometheus.bearer-token`
 properties were never real Quarkus config and were silently ignored). It can be removed from
 `.env.docker`.
 
-**Verifying (production, local stack):**
+**Verifying (production stack):**
 ```bash
 # Public: must NOT be 200
-curl -s -o /dev/null -w "%{http_code}\n" https://povzetkar.juresa.si/q/metrics   # 404
+curl -s -o /dev/null -w "%{http_code}\n" "https://<your-domain>/q/metrics"   # 404
 
 # Inside the Docker network: metrics served on the management port
 docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics | head -3
 
 # Prometheus target health
 docker exec povzetkar-prometheus wget -qO- http://localhost:9090/api/v1/targets | grep -o '"health":"[a-z]*"'
+
+# uri tag cardinality (POV-221): stays small and does not grow with traffic; past 100 distinct
+# values Micrometer would stop recording new ones
+docker exec povzetkar-prometheus wget -qO- http://app:9000/q/metrics \
+  | grep '^http_server_requests_seconds_count' | grep -o 'uri="[^"]*"' | sort -u
 ```
+
+In Grafana (Explore): `count(count by (uri) (http_server_requests_seconds_count))`.
 
 ### 13.3 Dashboards-as-Code
 
@@ -744,12 +725,10 @@ Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard, which tra
 - **System Load**: Active orchestration threads.
 - **Ingestion Success**: Content source creation and YouTube API errors.
 
-> [!WARNING]
-> **Out of date (POV-210):** Grafana has no host port in the prod compose (`expose: 3000` only), so `http://localhost:3000` below does not work for production; it is reachable only inside the Docker network. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
-
 **Accessing Grafana:**
-- **URL**: `http://localhost:3000`
-- **Default Credentials**: `admin` / `admin` (change on first login).
+- **Production**: `http://127.0.0.1:3000` on the host (on a remote host: `ssh -L 3000:localhost:3000 <host>`);
+  admin password = `GF_ADMIN_PASSWORD` from `.env.docker`.
+- **Dev stack**: `http://localhost:3001` (`docker-compose.yml`), default credentials `admin` / `admin`.
 
 ### 13.4 Custom Business Metrics
 
@@ -762,121 +741,66 @@ All custom Povzetkar metrics use the `povzetkar_` prefix:
 - `povzetkar_transcript_service_failed_total`: Counter for transcript failures (with `error_type` tagging `invalid_format` or `retrieval_exception`).
 - `povzetkar_orchestration_failed_total`: Counter for high-level manual orchestration failures.
 
-### 13.5 Production Logs & Request History (POV-210)
+### 13.5 Access Log & Request History (POV-210)
 
 **Traffic path:** the Cloudflare tunnel routes `povzetkar.<domain>` straight to
-`http://povzetkar-app:8080` (tunnel config in the Cloudflare dashboard; `docker logs
-povzetkar-cloudflared` shows it as `Updated to new configuration … "service":"http://povzetkar-app:8080"`).
-**Caddy is not on this path** and its log shows no production requests. The app is the only
-component that sees every request.
+`http://povzetkar-app:8080` (`docker logs povzetkar-cloudflared` prints the ingress on every start as
+`Updated to new configuration … "service":"http://povzetkar-app:8080"`). There is no reverse proxy and no host port
+for public traffic ([ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md)), so every request reaches the app through
+the tunnel, and the app's access log is the forensic record.
 
 **Where the logs live:**
 
 | Log | Location | After a container recreate | Size bound |
 | --- | --- | --- | --- |
-| App log (incl. the access log) | `docker logs povzetkar-app` (Docker `json-file`) | **lost** — tied to the container ID | 5 × 20 MB (`x-logging` in `docker-compose.prod.yml`, all six services) |
+| App log (without access lines) | `docker logs povzetkar-app` (Docker `json-file`) | **lost** — tied to the container ID | 5 × 20 MB (`x-logging` in `docker-compose.prod.yml`, all services) |
 | Same, as a file | `/var/log/app/quarkus.log`, `quarkus.log.1…10` on volume `backend_app_logs` | kept | 11 × 10 MB, size rotation only, no rotation on start |
+| **Access log** (since POV-214) | `/var/log/app/access.log`, `access.log.1…19` on the same volume | kept | 20 × 10 MB, size rotation only, no rotation on start |
 
-The file log is switched on only in the prod container (`QUARKUS_LOG_FILE_ENABLED`,
-`QUARKUS_LOG_FILE_PATH` in `docker-compose.prod.yml`); rotation settings are in
-`application.properties`. There is no age-based deletion: at today's volume (~25 KB/day) the
-files hold years of history.
+The app file log is switched on only in the prod container (`QUARKUS_LOG_FILE_ENABLED`,
+`QUARKUS_LOG_FILE_PATH` in `docker-compose.prod.yml`); the access-log file handler and the routing of the
+access-log category into it (and out of the app log and `docker logs`) are switched on together in the `%prod`
+profile of `application.properties` — `/var/log/app` exists in the image. There is no age-based deletion: at
+today's volume the files hold years of history. Access lines logged before POV-214 are in `quarkus.log*` in the
+old format (without `ray`/`user`/`host`/`ref`).
 
-**Access log** (`%prod`, logger category `io.quarkus.http.access-log`, INFO). One line per
-request, pattern:
+**Access log** (`%prod`, logger category `io.quarkus.http.access-log`). One line per request, pattern:
 
 ```text
-%t cf-ip=<CF-Connecting-IP> country=<CF-IPCountry> "%<r" %s %b %D xff="<X-Forwarded-For>" "<User-Agent>"
+%t cf-ip=<CF-Connecting-IP> country=<CF-IPCountry> ray=<CF-Ray> user=<AccessLogPrincipalRoute> "%<r" %s %b %D host="<Host>" ref="<Referer>" xff="<X-Forwarded-For>" "<User-Agent>"
 ```
 
-- `cf-ip=` is the **client IP** for traffic through the tunnel (set by Cloudflare). It is not
-  trustworthy for requests that reach Caddy's host ports 80/443 directly, which can send any
-  `CF-Connecting-IP`.
+- `cf-ip=` is the **client IP** (set by Cloudflare). Since POV-214 only the tunnel reaches the app, so it is
+  trustworthy for every request.
+- `ray=` is Cloudflare's request ID: search it in the Cloudflare dashboard (Security → Events) to see what
+  Cloudflare did with the request.
+- `user=` is the signed-in user: the **Google subject** (`sub`, the numeric account ID) for browser
+  sessions — map it to a user via `user_identities` (provider `google`, external ID) — or the mapped **e-mail**
+  for API-key requests; `-` when anonymous. Set by `AccessLogPrincipalRoute` (`%{d,povzetkar.log-user}`), limited to
+  `[A-Za-z0-9@._+-]`. Not `%u`: with Quarkus' Google provider that is the display name, which the user controls.
 - `"%<r"` is the **original** request line incl. the query string (attack payloads live there;
   `SpaRoutingHandler`'s reroute to `/index.html` is consolidated into one entry). It includes the
   OIDC callback `code`/`state`: single-use, redeemed at once, useless without the client secret.
 - `%s` final status, `%b` bytes (`-` = none), `%D` duration in ms.
-- `xff=` is the whole `X-Forwarded-For` chain — **client-controllable**: Cloudflare keeps a value
-  the client sent and appends the real address. Through the tunnel, a first hop that differs from
-  `cf-ip` means the client sent its own `X-Forwarded-For`.
-- Field order: only the timestamp precedes `cf-ip`/`country`, and the client-controlled fields
-  (request line, `xff`, User-Agent) come after them, so a forged `cf-ip=` or log prefix in a URL or
-  header cannot shift them. (`%h` — the client's own first `X-Forwarded-For` value, unvalidated —
-  is deliberately not logged.)
-- The `X-API-Key` header is never logged. The logs therefore hold **client IPs, countries, query
-  strings and public share UUIDs** (`/api/v1/public/resolve/{uuid}` and the SPA share routes carry
+- `host=`, `ref=`, `xff=` are **client-controllable**. `xff=` is the whole `X-Forwarded-For` chain: Cloudflare
+  keeps a value the client sent and appends the real address, so a first hop that differs from `cf-ip` means the
+  client sent its own `X-Forwarded-For`.
+- Field order: only the timestamp and values set by Cloudflare or the server precede the request line; the
+  client-controlled fields come after the status, so a forged `cf-ip=` or log prefix in a URL or header cannot
+  shift them. (`%h` — the client's own first `X-Forwarded-For` value — is deliberately not logged.)
+- The `X-API-Key` header is never logged. The logs therefore hold **client IPs, countries, Google subjects,
+  query strings and public share UUIDs** (`/api/v1/public/resolve/{uuid}` and the SPA share routes carry
   the share's capability token in the path — a leaked log grants access to a share until it is
   unshared; privacy notice: backlog).
 - Not logged: the management port 9000 (health checks, Prometheus scrapes).
 - Separate, older record: `AuditLogFilter` stores every **matched** `/api/v1` request (method,
   path, status, duration, User-Agent, user) in the `audit_log` table; unmatched probes are not in it.
 
-**Reading the file log** — the distroless app image has no shell, so read the volume from a
-throw-away container that borrows the app container's volumes (`--volumes-from`, read-only; works
-while `povzetkar-app` exists, even stopped, and needs no volume name). In Git Bash prefix
-`MSYS_NO_PATHCONV=1`, otherwise the container paths are rewritten. The `sed` is anchored on the
-fixed line prefix (date, optional host/process of the file format, `INFO`, the logger category)
-and prints only parsed lines, so a crafted URL or header — or `access-log] …` text inside another
-logger's message, e.g. a topic name — cannot replace the fields or pose as an entry. Not covered: a
-logged user value containing a **newline** could still start a forged line (log messages are not
-escaped).
-
-```bash
-# All access-log entries, oldest file first, as: cf-ip country status method path time xff-first-hop
-MSYS_NO_PATHCONV=1 docker run --rm --volumes-from povzetkar-app:ro alpine:3.24.2 \
-  sh -c 'cd /var/log/app && for i in 10 9 8 7 6 5 4 3 2 1; do [ -f quarkus.log.$i ] && cat quarkus.log.$i; done; cat quarkus.log' \
-  | grep 'access-log\]' \
-  | sed -nE 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:,]+ (\S+ \S+ )?INFO +\[[^] ]*access-log\] \([^)]*\) \[([^]]+)\] cf-ip=(\S*) country=(\S*) "(\S+) (\S+) [^"]*" ([0-9]{3}) \S+ \S+ xff="([^", ]*).*/\3 \4 \7 \5 \6 \2 \8/p' \
-  > access.txt
-```
-
-The same `grep | sed` works on `docker logs povzetkar-app 2>&1` (current container only).
+Reading the production logs of the author's deployment (recipes for the access log, the pre-POV-214 lines and the YouTube transcript pacing) is documented in a private operations runbook (not part of this repository).
 
 ### 13.6 Checking for Suspicious Traffic
 
-1. **Cloudflare dashboard** — Security → Analytics / Events: request volume, blocked requests
-   (the non-domestic traffic rule), top paths and countries. First line, since every request
-   passes Cloudflare, including blocked ones.
-2. **Access log** (§13.5, `access.txt` — fields: cf-ip, country, status, method, path, time (two
-   fields), first `X-Forwarded-For` hop):
-
-   ```bash
-   awk '$3 ~ /^[45]/ {print $3, $4, $5}' access.txt | sort | uniq -c | sort -rn | head -50   # 4xx/5xx by path
-   awk '{print $1, $2}' access.txt | sort | uniq -c | sort -rn | head -20                      # top client IPs
-   awk '{split($5, p, "?")} p[1] ~ /\/\./ {print $1, $3, $5}' access.txt | sort | uniq -c | sort -rn   # dot-segment probes (/.git, /.env, ...), query ignored
-   awk '$1 != $8 {print $1, $8, $5}' access.txt                                                # cf-ip ≠ first X-Forwarded-For hop
-   ```
-
-   The last recipe lists requests where the client sent its own `X-Forwarded-For` through the
-   tunnel, and may list requests that bypassed the tunnel via Caddy's ports 80/443 (Caddy sets
-   the real peer address as `X-Forwarded-For`; `cf-ip` is then `-` or forged — trust the `xff`
-   value there). It is not a complete record of the bypass path: such a client controls
-   `CF-Connecting-IP`/`CF-IPCountry` (it can make them match, or add a space so the `sed` drops
-   the line). Caddy's own log is the record for that path.
-
-   Probes the SPA fallback reroutes (no extension in the last segment, outside `/api`, `/q`,
-   `/static`, `/assets`, … — see `SpaRoutingHandler`) get `200` with the SPA shell; others end in
-   `404`/`400` (e.g. `/.env`, `*.php`, `/wp-json/batch/v1`) — see the backlog entry "SPA fallback
-   answers 200 to probe paths".
-3. **`audit_log` table** — matched `/api/v1` requests only (not unmatched probes), with the user:
-
-   ```bash
-   docker exec povzetkar-db-prod sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "
-     SELECT response_status, http_method, request_path, count(*) FROM audit_log
-     WHERE created_at > now() - interval '"'"'14 days'"'"' AND response_status >= 400
-     GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 50"'
-   ```
-
-4. **Prometheus** — per-path counts even without the access log, from inside the Docker network:
-
-   ```bash
-   docker exec povzetkar-prometheus wget -qO- \
-     'http://localhost:9090/api/v1/query?query=max_over_time(http_server_requests_seconds_count%5B14d%5D)'
-   ```
-
-   Limits: counters reset on every app restart (lower bounds only), Micrometer stops creating
-   `uri` tags after 100 distinct paths per run, default 15-day retention, no IPs and no query
-   strings.
+Production operations for the author's deployment are documented in a private operations runbook (not part of this repository).
 
 ## 16. API Response Structure (Envelopes)
 
@@ -906,10 +830,10 @@ Errors follow the **RFC 7807** (Problem Details) structure:
 ```json
 {
   "error": {
-    "type": "https://povzetkar.jumis.si/errors/validation-failed",
-    "title": "Validation Failed",
+    "type": "/errors/validation",
+    "title": "Validation Error",
     "status": 400,
-    "detail": "The 'name' field cannot be empty.",
+    "detail": "One or more constraints have been violated.",
     "errorCode": "VALIDATION_ERROR",
     "fieldErrors": [
       {
@@ -935,6 +859,11 @@ The application requires several sensitive configuration values (API keys, datab
 | `GOOGLE_OIDC_CLIENT_ID` | `quarkus.oidc.client-id` | Google OIDC OAuth 2.0 Client ID | ✅ |
 | `GOOGLE_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` | Google OIDC OAuth 2.0 Client Secret | ✅ |
 | `SUPADATA_API_KEY` | `quarkus.rest-client.supadata.headers.x-api-key` | Supadata transcript API key | ⬜ (required if supadata provider enabled) |
+| `TRANSCRIPT_PROXY_API_KEY` | `transcript.providers.proxy.api-key` | Key the backend sends to the transcript proxy (`X-API-Key`, 16.1b) | ⬜ (required if the proxy provider is enabled) |
+
+Not secrets: `TRANSCRIPT_PROXY_ENABLED` (`transcript.providers.proxy.enabled`, default `false`) and
+`TRANSCRIPT_PROXY_URL` (`quarkus.rest-client.transcript-proxy.url`) — the switch and base URL of the transcript
+proxy (14.1a).
 
 ### 14.1a Transcript Provider Configuration
 
@@ -942,17 +871,67 @@ The transcript fetching pipeline supports multiple providers with runtime-config
 
 | Config Property | Default | Description |
 |:---|:---|:---|
-| `transcript.providers.order` | `youtube-legacy,supadata` | Comma-separated list of providers tried in order. |
+| `transcript.providers.order` | `youtube-legacy,proxy,supadata` | Comma-separated list of providers tried in order. |
 | `transcript.providers.youtube-legacy.enabled` | `true` | Enable/disable the YouTube legacy (direct scraping) provider. |
-| `transcript.providers.youtube-legacy.jitter.min-ms` | `500` | Minimum random delay before each YouTube fetch (IP rate-limit protection). |
-| `transcript.providers.youtube-legacy.jitter.max-ms` | `2500` | Maximum random delay before each YouTube fetch. |
+| `transcript.providers.proxy.enabled` | `false` (`TRANSCRIPT_PROXY_ENABLED`) | Enable/disable the transcript proxy provider — only with a reachable proxy host (below). |
+| `transcript.providers.youtube-legacy.pacing.fetch.min` / `.fetch.max` | `15s` / `45s` | Random pause before a youtube-legacy fetch, measured from the **end of the previous fetch**; no pause for the first fetch or after idle (POV-222). |
+| `transcript.providers.youtube-legacy.pacing.in-fetch.min` / `.in-fetch.max` | `1s` / `5s` | Random pause before each further call inside a fetch (video page → innertube → captions). |
+| `transcript.retry.intervals` | `30m,30m,90m,90m,210m,210m` | After the n-th failed **automatic** transcript fetch a video is retried no earlier than the n-th interval later; the attempt after the last interval ends it `FAILED` (6 intervals = 7 attempts). |
+| `povzetkar.orchestration.time-budget` | `15m` | Time budget of one orchestration run (scheduled, manual, per topic): items not started — or still waiting for a YouTube fetch slot — when it is used up stay unchanged for the next run. |
 | `transcript.providers.supadata.enabled` | `false` | Enable/disable the Supadata provider. Set to `true` and provide `SUPADATA_API_KEY` to activate. |
 | `transcript.providers.supadata.lang` | `en` | ISO 639-1 language code for Supadata transcript requests. Falls back to first available language if the video has no transcript in the requested language. |
 
-> [!WARNING]
-> **Out of date (POV-210):** production runs on the local Docker stack (§10), not on OCI; the OCI IP-blocking rationale is historical. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
+**YouTube pacing and retries (POV-222).** Automatic youtube-legacy fetches run strictly one after another,
+app-wide (all topics, items and threads share one fair queue). The pacing ranges are validated at startup
+(min ≤ max, not negative — an invalid value stops the start). Behaviour per trigger:
 
-**Enabling Supadata as primary provider** (if OCI IPs are blocked by YouTube):
+| Trigger | Paced | Retry counter | Time budget | On a failed fetch |
+| --- | --- | --- | --- | --- |
+| Scheduled / manual orchestration, per-topic job | yes | counted | yes | `RETRY_LATER` with due time, `FAILED` after the 7th attempt |
+| Admin per-item *Retry* / *Generate summary* | yes | not counted | no | nothing changes (status, counter, due time) |
+| Admin *Fetch transcript* | **no** (exception) | not counted | no | nothing changes |
+
+- youtube-legacy picks English manual → English generated → any manual → any generated captions (English includes
+  `en-GB`, `en-US`, …; no YouTube translation); ties go to exact `en`, then to the spoken language (that of the
+  speech-recognised track), then to the language code. The summary prompt asks Gemini for English.
+- An unexpected YouTube response the library cannot parse counts as a failed attempt (next provider, retry policy).
+  Each YouTube call is bounded by 30 s for the whole exchange (a stalled response body cannot hold the queue).
+- A failure inside a window already counted by an overlapping run (e.g. a per-topic job during the hourly run) is
+  not counted again. Any stored transcript (manual capture or a per-item job whose Gemini call then failed) clears
+  `next_transcript_attempt_at`, so the next run only needs Gemini.
+- `budgetExhausted=true` in the run summary means items were skipped **and** the budget had passed; skips before
+  the deadline come from an interruption (shutdown).
+- The time budget is checked when an item starts, when the YouTube fetch slot is obtained and again after its pause,
+  and before falling through to the next provider — no youtube-legacy fetch starts after the budget is used up (the
+  proxy fallback's own 15–45 s jitter may still end its single call shortly after it).
+- A successful *Fetch transcript* clears `next_transcript_attempt_at` (the stored transcript needs no fetch), so the
+  next run summarizes a `RETRY_LATER` video; the attempt counter stays. A video that already ended `FAILED` keeps
+  its status — summarize it with the per-item *Generate summary* (uses the stored transcript) or a status override.
+- `quarkus.vertx.max-worker-execute-time=1200s` is above the time budget plus the items still in progress and the
+  briefing step, and `povzetkar.orchestration.lock-timeout=PT30M` is above both (a lock older than the timeout is
+  taken over as crashed); change the three together.
+- A 429 is a per-video transient failure like any other — there is no global cooldown.
+- The retry state is in `content_items.transcript_attempts` / `next_transcript_attempt_at` (V38); not shown in the
+  admin UI. An admin status override (e.g. `FAILED` → `PENDING`) keeps the counter: the next automatic failure
+  ends the video `FAILED` again. To give a video a new budget, reset both columns in the database.
+- An item still unprocessed after the last run of the day leaves the today+yesterday window of the hourly job
+  and stays as it is (unchanged behaviour) — except a video with a scheduled transcript retry
+  (`RETRY_LATER` and `next_transcript_attempt_at` set): the hourly job carries it over in yesterday's step until it
+  succeeds or its 7th attempt ends it `FAILED`; its summary is dated yesterday.
+- When two runs process the same video (a per-topic job during the hourly run), a late transcript failure does not
+  change a video the other run already completed or stored the transcript for.
+- The legacy keys `transcript.providers.youtube-legacy.jitter.*` are gone; a leftover
+  `TRANSCRIPT_PROVIDERS_YOUTUBE_LEGACY_JITTER_*` in `.env.docker` is ignored.
+
+**Transcript proxy (`proxy` provider):** the backend calls the service in `transcript-proxy/` (16.1b) at
+`TRANSCRIPT_PROXY_URL`, sending `TRANSCRIPT_PROXY_API_KEY` as `X-API-Key`. It is off by default
+(`TRANSCRIPT_PROXY_ENABLED=false`): an enabled proxy without a reachable host would add its 15–45 s jitter and a
+failed call to every youtube-legacy failure. To use it, set `TRANSCRIPT_PROXY_ENABLED=true`, the URL and the key
+(the production compose file passes all three; without a URL it falls back to `https://proxy.invalid`, which never
+reaches a real host). Whether youtube-legacy works directly depends on the host's egress IP — YouTube blocks many
+cloud IP ranges; then the proxy, run on a host YouTube does not block, or Supadata (below) takes over.
+
+**Enabling Supadata as primary provider** (if YouTube blocks the production host's IP):
 
 ```properties
 transcript.providers.order=supadata,youtube-legacy
@@ -962,88 +941,15 @@ transcript.providers.supadata.enabled=true
 
 **Metrics emitted** (all tagged with `provider` label):
 
-- `transcript.fetch.attempts` — counter per provider
+- `transcript.fetch.attempts` — counter per provider (requests made; a fetch skipped by the time budget is not
+  counted)
 - `transcript.fetch.successes` — counter per provider
 - `transcript.fetch.failures` — counter tagged with `provider` and `reason`
 - `transcript.fetch.duration` — timer per provider
 
-### 16.1b Transcript Proxy Host (Synology DS220j + Tailscale)
+### 16.1b Transcript Proxy Host
 
-The `proxy` provider (primary in production) calls a standalone FastAPI service in
-`transcript-proxy/` that fetches a single YouTube transcript per request from a host whose IP
-YouTube does not block. **As of POV-196 this proxy runs self-hosted on a Synology DS220j**,
-reached by the backend over a **Tailscale** overlay. Railway is retained as a **passive,
-manual fallback** (see flip-back below).
-
-> [!NOTE]
-> **Why self-hosted:** Railway's shared datacenter egress IP was soft-throttled by YouTube
-> (intermittent `502 proxy_blocked` interleaved with `200`s). The DS220j serves from a
-> residential egress IP, which YouTube throttles far less. See ADR-0009 and the POV-196
-> retrospective.
-
-> [!WARNING]
-> **Out of date (POV-210):** the backend host is the local Docker stack (§10), not an OCI host. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
-
-**Connectivity model:** Both the OCI backend host and the Synology join the same tailnet. The
-backend reaches the proxy at the Synology's **raw tailnet IP** (`http://100.x.y.z:8000`) — *not*
-a MagicDNS name, because the backend runs in a Docker bridge network that does not resolve
-MagicDNS. The MagicDNS name (e.g. `ds220j.<tailnet>.ts.net`) is a human-readable alias only.
-Traffic is plain HTTP; Tailscale (WireGuard) already encrypts the path, so no TLS termination is
-needed on the Synology.
-
-**Backend configuration** (`TRANSCRIPT_PROXY_URL`, `TRANSCRIPT_PROXY_API_KEY`):
-
-| Variable | Active (Synology) | Fallback (Railway) |
-|:---|:---|:---|
-| `TRANSCRIPT_PROXY_URL` | `http://<synology-tailnet-ip>:8000` | `https://povzetkar-production.up.railway.app` (the default if unset) |
-| `TRANSCRIPT_PROXY_API_KEY` | the shared key | the **same** shared key |
-
-> [!IMPORTANT]
-> **Both hosts must accept the same `X-API-Key`.** The backend sends one
-> `TRANSCRIPT_PROXY_API_KEY`; whichever host is active must be configured with that exact value,
-> or a fallback flip will return `401`. On the tailnet the key is defense-in-depth (the tailnet
-> is the primary boundary); on Railway it is the sole boundary and is mandatory.
-
-> [!WARNING]
-> **Out of date (POV-210):** production no longer runs on an OCI host but on the local Docker stack (§10, `.env.docker`, Cloudflare tunnel); this procedure and its command still describe the OCI deployment. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
-
-**Flip-back to Railway (manual fallback):** Only one host is active at a time. If the Synology
-proxy is unreachable or misbehaving, on the OCI host:
-
-```bash
-# In the OCI deployment .env, set TRANSCRIPT_PROXY_URL back to Railway
-# (or remove the override entirely — the compose default is the Railway URL):
-#   TRANSCRIPT_PROXY_URL=https://povzetkar-production.up.railway.app
-docker compose -f backend/docker-compose.prod.yml up -d app   # recreate to pick up the env
-```
-
-The provider fallback chain (`proxy → youtube-legacy → supadata`) also degrades automatically if
-the active proxy is down — flip-back is for restoring the *primary* path.
-
-**Synology deployment notes (DS220j gotchas):**
-
-- **Runtime is the box's built-in Python 3.8** (`/bin/python3`) — SynoCommunity `python312` is
-  not required. `youtube-transcript-api 1.2.4` supports 3.8; `requirements.txt` is pinned to the
-  3.8-compatible set (`fastapi==0.124.4`, `uvicorn[standard]==0.33.0`).
-- **`/tmp` is mounted `noexec`.** A venv or pip cache under `/tmp` will fail to load compiled
-  extensions (`pydantic_core ... failed to map segment from shared object`). The proxy MUST be
-  installed on an exec-capable `/volume1` path (e.g. `/volume1/transcript-proxy`).
-- **Process supervision:** a DSM Task Scheduler **Boot-up** task (user `root`) runs
-  `run-proxy.sh`, which sources `.env` (the API key, `chmod 600`, gitignored) and launches
-  `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`. The proxy is started once
-  at boot; there is **no crash-restart supervision yet** (backlog) — if uvicorn dies mid-run it
-  stays down until reboot, so monitor and flip to Railway if needed.
-- **Updating the code on the box:** copy the repo file over with
-  `scp -O transcript-proxy/main.py minimax@<host>:/volume1/transcript-proxy/main.py`, then
-  restart (stop the running uvicorn and re-run `run-proxy.sh`, or run the boot task). The `-O`
-  flag is required — DSM's SSH has no SFTP subsystem, so a plain `scp` fails with
-  `subsystem request failed on channel 0`.
-
-**Health check & per-request diagnostics:** `GET /health` (no auth) returns `{"status":"ok"}`.
-Every transcript request logs its outcome to `proxy.log` with the exact cause, e.g.
-`video_id=... blocked by YouTube: RequestBlocked -> 502 proxy_blocked` — distinguishing
-`IpBlocked` from `RequestBlocked` (both `502 proxy_blocked`) and `upstream_error` without
-guessing.
+The `proxy` provider calls the standalone FastAPI service in `transcript-proxy/` (see its README), which fetches a single YouTube transcript per request from a host whose IP YouTube does not block. The backend reaches it at `TRANSCRIPT_PROXY_URL` with `TRANSCRIPT_PROXY_API_KEY` (14.1a). The author's proxy hosts are documented in a private operations runbook (not part of this repository).
 
 ### 14.2 How Secrets Are Provided
 
@@ -1054,7 +960,7 @@ Secrets are injected via **environment variables** and resolved by Quarkus Confi
 | **Local Dev** | `.env` file | Copy `backend/.env.example` to `backend/.env` and fill in real values. Loaded by Quarkus Dev mode. |
 | **Docker** | `--env-file` | Create a `.env.docker` file (never committed) and pass via `docker run --env-file .env.docker`. |
 | **CI/CD** | GitHub Secrets | Injected as environment variables in the `ci.yml` workflow via `${{ secrets.* }}`. |
-| **Kubernetes** | K8s Secrets | Mount as environment variables from a `Secret` resource. See deployment docs. |
+| **Kubernetes** | K8s Secrets | Mount as environment variables from a `Secret` resource (option; this project deploys with Docker Compose). |
 
 ### 14.3 Startup Secret Validation (Fail-Fast)
 
@@ -1075,10 +981,7 @@ Secrets stay out of logs through three rules:
 
 > There is **no** `quarkus.config.secret-keys` property (removed in POV-208 — Quarkus ignored it). SmallRye's secret-keys feature is a programmatic access *lock* that makes plain `@ConfigProperty` reads throw; it was never in effect here.
 
-> [!WARNING]
-> **Out of date (POV-210):** Caddy is not on the production traffic path (the Cloudflare tunnel routes straight to `app:8080`, §13.5), so the `Secure` flag does not come from Caddy's `X-Forwarded-Proto`; whether the session cookie is `Secure` in production is unverified. Fix: backlog "Put Caddy on the traffic path" (`docs/backlog/improvements.md`).
-
-**Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via Caddy's `X-Forwarded-Proto`). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
+**Browser session (OIDC):** the session cookie is `q_session` (Quarkus default name, path `/`, `SameSite=Lax`, `Secure` when the request arrives over HTTPS — in production via the `X-Forwarded-Proto: https` that `cloudflared` forwards and the app accepts only from `cloudflared`'s fixed address — [ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md), `QUARKUS_HTTP_PROXY_TRUSTED_PROXIES` and `ipv4_address` in `backend/docker-compose.prod.yml`; checked after every change to the proxy trust). It lives as long as the Google ID token (≈1 h) plus `session-age-extension` (5 min); `token.refresh-expired` is off, so an expired session re-authenticates via Google (silently if the Google session is still active). Logout (`/logout`) expires it through `OidcSession.logout()`.
 
 ### 14.5 Security Best Practices
 
@@ -1086,6 +989,7 @@ Secrets stay out of logs through three rules:
 2.  **Rotate API keys periodically.** Google API keys and OIDC secrets should be rotated at least annually.
 3.  **Use separate keys per environment.** Never share production API keys with development or test environments.
 4.  **Principle of Least Privilege.** API keys should be scoped to the minimum required permissions (e.g., YouTube Data API read-only).
+5.  **Audit key usage.** Monitor API key usage in the Google Cloud Console to detect unauthorized access or quota anomalies.
 
 ### 14.6 Programmatic API-Key Access (POV-205)
 
@@ -1183,4 +1087,3 @@ WHERE user_id = (SELECT id FROM users WHERE email = 'admin@yourdomain.com')
 ### 15.4 Demo Content
 
 The `demo@povzetkar.local` user and `Science & Discovery` topic (with Kurzgesagt and Veritasium channels) are seeded by migration V32. This account is `ENABLED` with no roles — it exists solely as a data source for the impersonation pattern. Do not delete or modify this user.
-5.  **Audit key usage.** Monitor API key usage in the Google Cloud Console to detect unauthorized access or quota anomalies.
