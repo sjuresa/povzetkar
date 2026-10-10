@@ -15,8 +15,11 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 - [ ] **1.3. Roadmap Entry**: Add the version to `docs/overview/roadmap.md` as in-progress.
 - [ ] **1.4. Create Version Hub**: Create `docs/versions/vX.Y.Z/version.md` with the following initial content:
   - Header with **Status:** `In Progress` and the YouTrack Fix version (created by the PO in 1.2).
-  - Empty task list section with this exact table structure: `| Task | Walkthrough | Retrospective |` followed by a separator row `| --- | --- | --- |`.
+  - A line linking the version retrospective: `**Retrospective:** [retrospective.md](retrospective.md)`.
+  - Empty task list section with this exact table structure: `| Task | Walkthrough |` followed by a separator row `| --- | --- |`.
   - Empty `## Carry-Forward Review` section with this exact table structure: `| Theme | Disposition | Reference |` followed by a separator row `| --- | --- | --- |`.
+
+  Also create `docs/versions/vX.Y.Z/retrospective.md` with a title, `**Status:** In Progress` and an empty `## Task Notes` section — every task appends its block there (2.11).
 - [ ] **1.5. Review Previous Version Retrospective**: Read the *previous* version's retrospective — `docs/versions/<previous version>/retrospective.md` (focus: the Carry-Forward Themes section). For each theme, the agent proposes a disposition — **backlog entry** (`docs/backlog/improvements.md`), **task candidate** (YouTrack), or **conscious drop with a stated reason** — and the PO explicitly approves or amends each one. Record the outcomes in the new version hub's `## Carry-Forward Review` table (theme → disposition → reference), citing the source retrospective.
 
 ## Phase 2: Task Execution (Core Loop)
@@ -25,51 +28,58 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 **Execution order** (step numbers are stable identifiers, not the sequence): 2.0 → 2.1 → 2.2 → 2.3 → 2.3a → 2.4 → 2.5 → close-out documents 2.6, 2.7, 2.10–2.12, 2.14 → 2.5a → 2.8 → 2.9 → 2.8a → 2.5b (if deploying) → 2.15. Step 2.13 applies whenever a discovery occurs. This matches `workflow-mandatory.md` Steps 7–8.
 
-- [ ] **2.0. Brainstorm:** First, read the **Feed-forward** sections of all task retrospectives in the current version's directory (`docs/versions/vX.Y.Z/POV-XXX-retrospective.md`) — feed-forward knowledge is a version-level pool, not a chain between consecutive tasks, so any earlier task of the version may hold context relevant to this one. Then conduct a scope-alignment interview with the PO **before** writing or finalising `agent_logs/task.md`. Use the following prompt:
+- [ ] **2.0. Brainstorm:** First, read the **Feed-forward** parts of all task blocks under `## Task Notes` in the current version's retrospective (`docs/versions/vX.Y.Z/retrospective.md`) — feed-forward knowledge is a version-level pool, not a chain between consecutive tasks, so any earlier task of the version may hold context relevant to this one. Then conduct a scope-alignment interview with the PO **before** writing or finalising `agent_logs/task.md`. Use the following prompt:
 
     > *"Interview me relentlessly about every aspect of this task's scope until we reach a shared understanding. Walk down each branch of the requirements tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer. Ask the questions one at a time. If a question can be answered by exploring the codebase, explore the codebase instead."*
 
     Focus: **WHAT** will be done — scope boundaries, risks, whether the task is correctly defined. At the start, set the YouTrack issue to `In Progress` and record the Brainstorm start in the `## Time Log` section of `agent_logs/task.md` (all phase timestamps live there — see `workflow-mandatory.md` Step 1). The Brainstorm ends with the PO's approval of the task definition (2.1), not with the interview.
 
-- [ ] **2.1. Define Task:** Finalise the task definition in `agent_logs/task.md`, including the `## Documentation` section specifying context and required updates. If the task delivers a **user-facing functional change**, mint a new User Story in the catalogue (`docs/sdlc/01_functional_requirements.md` §3) as `(Planned)`, using the area-based ID scheme — see [Planning Protocol §2.1](../process/planning_protocol.md). Fix/infra/perf/security/process tasks mint no US.
+- [ ] **2.1. Define Task:** Finalise the task definition in `agent_logs/task.md`, including the `## Documentation` section specifying context and required updates. If the task delivers a **user-facing functional change**, mint a new User Story in the catalogue (`docs/sdlc/01_functional_requirements.md` §3) as `(Planned)`, using the area-based ID scheme — see [Planning Protocol §2.1](../process/planning_protocol.md). Fix/infra/perf/security/process tasks mint no US. Before asking for approval, the agent self-reviews the definition (`workflow-mandatory.md`, *Self-review*).
 
 - [ ] **2.2. Agent Proposes Plan:** The AI agent conducts a PPP planning interview (HOW it will be done) following `AGENT.md` and `docs/protocols/workflow-mandatory.md`. Use the following prompt:
 
     > *"Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer. Ask the questions one at a time. If a question can be answered by exploring the codebase, explore the codebase instead."*
 
-    Focus: **HOW** it will be done — technical plan grounded in codebase evidence, ADRs where warranted, acceptance criteria.
+    Focus: **HOW** it will be done — technical plan grounded in codebase evidence, ADRs where warranted, acceptance criteria. Before asking for approval, the agent self-reviews the plan (`workflow-mandatory.md`, *Self-review*).
 
 - [ ] **2.3. User Approves Plan:** The plan is reviewed and explicitly approved.
 - [ ] **2.3a. Pre-Execution Gate:** Confirm that an explicit approval for the plan has been received. **Execution is forbidden without this approval.**
 - [ ] **2.4. Agent Executes Plan:** The agent executes the plan step-by-step, including all necessary code changes and documentation updates.
-- [ ] **2.5. Verify Tests:** After code modifications, the agent runs the full test suite for every touched layer itself (`docs/protocols/verification.md`) and reports the result. The PO may optionally re-run the suite before confirming completion (2.9).
+- [ ] **2.5. Verify Tests:** After code modifications, the agent runs the full test suite for every touched layer itself (`docs/protocols/verification.md`) and reports the result. The PO may optionally re-run the suite before approving commit and push (2.9).
   - [ ] **QA Check:** Ensure no blocking code (e.g., `Thread.sleep`) exists in reactive pipelines.
   - [ ] **QA Check:** Verify JPA entities implement `equals()` and `hashCode()` based on their primary key (or business key), not the default object identity.
   - [ ] **QA Check:** Verify that tests follow QA rule 3 (test scope — what runs against the database) in `docs/protocols/quality-mandates.md`.
   - [ ] **QA Check:** Ensure explicit dependency versions in pom.xml do not conflict with the framework's BOM (Bill of Materials). *Note: Investigate maven-enforcer-plugin (e.g., dependencyConvergence, requireUpperBoundDeps) during Task POV-89 to automate this.*
   - [ ] **QA Check (Local Security):** Run `mvn spotbugs:check` (or ensure it ran successfully during `mvn verify`) to validate that no static security flaws or basic bugs exist.
   - [ ] **Protocol:** Run a full `mvn clean verify` locally before declaring the task complete when the backend layer was touched (frontend: `npx vitest run` — see `verification.md`).
-- [ ] **2.5a. Pre-commit Review:** After the suite is green and the close-out documents are written, before the first commit — `/code-review high` for every task, documentation included, plus `/security-review` when auth/authz/secrets/crypto/attack surface is touched. Runs in a subagent by default (PO separate session as fallback); findings and dispositions in `## Deviations`, summary in the walkthrough — see `workflow-mandatory.md` Step 7, *Pre-commit Review*.
+- [ ] **2.5a. Pre-commit Review:** After the suite is green and the close-out documents are written, before the first commit — first the agent's self-review of the close-out (`workflow-mandatory.md`, *Self-review*), then `/code-review high`, documentation included: the first round is the default for every task (a skip only as a justified exception the PO accepts), further rounds only with the PO's confirmation on the agent's proposal; plus `/security-review` when auth/authz/secrets/crypto/attack surface is touched. Runs in a subagent by default (PO separate session as fallback); findings and dispositions in `## Deviations`, summary in the walkthrough — see `workflow-mandatory.md` Step 7, *Pre-commit Review*.
 - [ ] **2.5b. Pre-deploy Verification** *(only for tasks that build or deploy a production image; runs after the push in 2.8a — it needs a pushed commit — before or after the merge)*: a green `push`/`workflow_dispatch` CI run that built the deployed commit (a `pull_request` run builds the merge ref and does not qualify; re-scan if it started more than 7 days ago), `build --pull`, rollback tag, deploy on the PO's explicit "deploy"; a HIGH/CRITICAL finding stops the deploy — see `docs/protocols/verification.md`, *Pre-deploy Verification*.
-- [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section.
+- [ ] **2.6. Update `CHANGELOG.md`:** Add a brief entry for the completed task under the `[Unreleased]` section — what changed for the reader; figures stay in the walkthrough (`workflow-mandatory.md` Step 7).
 - [ ] **2.7. Update Backlog & Lessons Learned:**
   - [ ] Log any non-critical improvements discovered to `docs/backlog/improvements.md`.
   - [ ] If any systemic bug fixes, architectural choices, or technical hurdles were overcome, append them to `docs/process/lessons-learned.md` as mandated by `workflow-mandatory.md` Step 7.
 - [ ] **2.8. Agent Proposes Commit Message:** The agent proposes a commit message following the Conventional Commits standard.
 - [ ] **2.8a. Push & PR Review Loop:** On the PO's go, push the task branch, open the PR into the version branch, and run `workflow-mandatory.md` Step 8 until its exit condition holds. The PO merges.
-- [ ] **2.9. User Confirms Task Completion:** The user confirms the task is fully complete, and the changes are committed.
+- [ ] **2.9. PO Approves Commit and Push:** The agent asks with the closing phrase of `workflow-mandatory.md` Step 7; the PO approves the commit, the push and the PR. The task is complete only after the PR loop (2.8a), the deploy (2.5b, if any) and the YouTrack record (2.15).
 - [ ] **2.10. Walkthrough:** Write `docs/versions/vX.Y.Z/POV-XXX-walkthrough.md` with the following sections:
     1. **What was done** — the primary deliverable; what changed and what was built.
     2. **Planned vs. actual scope** — any additions or removals relative to the original task definition.
     3. **Time delta** — estimated vs. actual time (from the `## Time Log` in `agent_logs/task.md`).
     4. **Deviations** — any decisions made mid-execution that deviated from the plan.
     5. **Traceability** — the task's US/UC/TC IDs, or an explicit `N/A — <reason>`. Convention: labelled bullet lines (`**US:**` / `**UC:**` / `**TC:**`), or a single `N/A — <reason>` line. This section is mandatory and machine-validated: `validate-planning.py` flags a walkthrough with no Traceability section (or one declaring neither IDs nor N/A) as a WARNING, which blocks CI (`--fail-on all`); broken IDs are CRITICAL.
-- [ ] **2.11. Task Retrospective:** Write `docs/versions/vX.Y.Z/POV-XXX-retrospective.md` with the following sections:
-    1. **Planned vs. actual** — what was scoped vs. what was delivered.
-    2. **Deviations & why** — decisions made mid-execution and their rationale.
-    3. **Technical findings** — patterns, gotchas, and constraints discovered; the durable record for future tasks.
-    4. **Feed-forward** — what the next task should know.
-- [ ] **2.12. Update Version Hub:** Add a link to this task's walkthrough and retrospective under the task list section of `docs/versions/vX.Y.Z/version.md`. (Safety net: if the hub does not exist — e.g. the version was started without a full Phase 1 — create it first per step 1.4 and flag the gap to the PO.)
+- [ ] **2.11. Version Retrospective — Task Notes:** Append this task's block at the end of `## Task Notes` in `docs/versions/vX.Y.Z/retrospective.md` — short; a part with nothing to say is left out; no minutes and no restated scope (facts are in the walkthrough, `workflow-mandatory.md` Step 7):
+
+    ```markdown
+    ### POV-XXX — <task title>
+
+    **Why it deviated:** causes and lessons only; the facts by link to the walkthrough §2/§4.
+
+    **Technical findings:** patterns, gotchas and constraints discovered — the durable record for future tasks.
+
+    **Feed-forward:** what the next tasks should know.
+    ```
+
+- [ ] **2.12. Update Version Hub:** Add a link to this task's walkthrough under the task list section of `docs/versions/vX.Y.Z/version.md`. (Safety net: if the hub does not exist — e.g. the version was started without a full Phase 1 — create it first per step 1.4 and flag the gap to the PO.)
 - [ ] **2.13. Handle Unplanned Discoveries:** If a new issue or potential improvement is discovered during task execution, follow this process:
   - **Assess the issue:** (1) Is it a **critical usability blocker** that prevents core functionality? (2) Is the solution **minimal, low-risk, and aligned** with the current version's goals?
   - **If both YES:** Pause, discuss, and agree to address it within the current task or as an immediate follow-up task.
@@ -78,7 +88,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - [ ] If the task minted a `(Planned)` US at step 2.1, flip it to `(Implemented)` in `docs/sdlc/01_functional_requirements.md` §3.
   - [ ] Update `docs/analysis/use_cases.md` and `docs/analysis/test_specification.md` so they accurately reflect the task's final outcome (new/changed UC flows, TC rows with honest automation status) — or record a justified `N/A` in the walkthrough's Traceability section (step 2.10). Ensure all new P0 Test Cases are marked for automation within one version.
   - [ ] **Planning Audit**: Run `python scripts/qa/validate-planning.py --current-version vX.Y.Z` to verify the traceability chain (Task → US/UC/TC, walkthrough Traceability sections) remains intact. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for mandatory sync requirements.
-- [ ] **2.15. YouTrack Task Record:** Last step — after 2.9, the PR review loop (2.8a) and the deploy (2.5b), if any. The walkthrough is not edited after the commit; its time delta covers the task up to the commit, PR-loop and deploy time go into the work items, deploy evidence into an addendum to the walkthrough comment. The agent writes the YouTrack task record (`workflow-mandatory.md` Step 7): three verbatim comments (task definition, approved plan, walkthrough) read back against their files; State `Fixed`, Fix version, Estimation; per-phase work items derived from the `## Time Log` in `agent_logs/task.md` (Brainstorm/planning and close-out docs → **Documentation**; implementation, fixes between review rounds, PR-loop work and the deploy → **Development**; `[wait: …]` intervals and the pre-commit review rounds → **Testing** — all task time is booked, each minute under exactly one type; `[paused: …]` intervals excluded and listed to the PO).
+- [ ] **2.15. YouTrack Task Record:** Last step — after 2.9, the PR review loop (2.8a) and the deploy (2.5b), if any. The walkthrough is not edited after the commit; its time delta covers the task up to the commit, PR-loop and deploy time go into the work items, deploy evidence into an addendum to the walkthrough comment. The agent writes the YouTrack task record (`workflow-mandatory.md` Step 7): three verbatim comments (task definition, approved plan, walkthrough) read back against their files; State `Fixed`, Fix version, Estimation; per-phase work items derived from the `## Time Log` in `agent_logs/task.md` (Brainstorm/planning and close-out docs → **Documentation**; implementation, fixes between review rounds, PR-loop work and the deploy → **Development**; `[wait: …]` intervals and the pre-commit review rounds → **Testing** — all task time is booked, each minute under exactly one type). Task time by span, gaps decided by the PO — `workflow-mandatory.md` Step 7, *YouTrack task record*.
 
 ## Phase 3: Version Finalisation
 
@@ -87,7 +97,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 *The finalisation runs as a task (`agent_logs/task.md` per `workflow-mandatory.md` Step 1) whose requirements are the Phase 3 and Phase 4 steps of this checklist, executed in order; the Phase 2 close-out steps (pre-commit review, walkthrough, retrospective, PR review loop, YouTrack task record) apply to it. Order: Phase 3 → the task's commit, PR into the version branch and PR review loop (2.8a), merged **before** 4.1 so the release carries the finalisation → 4.1–4.4 → the task's YouTrack record (2.15), after the release deploy (4.4) and **before** the PO releases the version in YouTrack (4.5), so no issue of the released version is still open. Step 3.1b therefore excludes the finalisation task itself, which 2.15 closes. There is no separate release template — this checklist is the single definition of the release steps.*
 
 - [ ] **3.1. Finalise Documentation Content:**
-  - [ ] Write `docs/versions/vX.Y.Z/retrospective.md` as a cross-task synthesis — trends, systemic patterns, process health. Input: all task retrospectives in `docs/versions/vX.Y.Z/`. This is not a collection of task findings; it is a pattern-level synthesis across them. It **must** end with a **Carry-Forward Themes** section — version-level threads for the next version, which are formally reviewed and dispositioned at the next version's initialisation (step 1.5).
+  - [ ] Complete `docs/versions/vX.Y.Z/retrospective.md` with a cross-task synthesis — trends, systemic patterns, process health — written **after** the `## Task Notes`, with the task blocks as its input. The finalisation task appends its own block (2.11) first, then writes the synthesis; Status `Final` last. The synthesis does not repeat the task findings; it is a pattern-level synthesis across them. It **must** end with a **Carry-Forward Themes** section — version-level threads for the next version, which are formally reviewed and dispositioned at the next version's initialisation (step 1.5).
   - [ ] Update the status to `Completed` and add a scope statement to `docs/versions/vX.Y.Z/version.md` summarising what the version delivered.
   - [ ] Update `docs/overview/roadmap.md`: Mark version as `✅ Completed` and add a revision entry.
   - [ ] Review and clean `docs/backlog/improvements.md` based on completed work and new findings.
@@ -97,7 +107,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 - [ ] **3.1b. YouTrack Fix-version Check:** every issue with Fix version X.Y.Z is `Fixed`; unfinished ones are re-targeted or lose the Fix version (PO confirms).
 - [ ] **3.2. Project-Wide Documentation Review**: Execute the following prompts to ensure project-wide documentation is up-to-date with any process changes or learnings from the completed version:
   - [ ] **Planning Audit**: Perform a final whole-project audit using `python scripts/qa/validate-planning.py --current-version vX.Y.Z --fail-on all`. Refer to [Documentation Validation Protocol](../process/validation-protocol.md) for release blocking criteria.
-  - [ ] **General Refresh**: "We are finalizing version vX.Y.Z. Please check if the project documentation in `docs/` needs to be refreshed based on the completed tasks and retrospectives in `docs/versions/vX.Y.Z/` (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`). Today is [Current Date]."
+  - [ ] **General Refresh**: "We are finalizing version vX.Y.Z. Please check if the project documentation in `docs/` needs to be refreshed based on the walkthroughs and the version retrospective in `docs/versions/vX.Y.Z/` (specifically in directories: `docs/analysis`, `docs/overview`, `docs/process`, `docs/sdlc`). Today is [Current Date]."
   - [ ] **Agent Protocol Check**: "Is it necessary to update `AGENT.md` based on changes in `11_development_checklist.md`?"
   - [ ] **Methodology Update**: "In `07_development_methodology_comparison.md`, section 7 lists possible improvements. Refresh this if anything was implemented or add new proposals for the future."
 - [ ] **3.3. Finalise Project Versions**: Remove the `-SNAPSHOT` suffix using `node scripts/update-version.cjs <version>`.
@@ -122,6 +132,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| 3.8 | 2026-10-10 | Povzetkar AI | Process-weight decisions of the v0.20 retrospective (POV-226): one retrospective per version — 1.4 creates it with `## Task Notes`, 2.11 appends a task block (Why it deviated / Technical findings / Feed-forward), 3.1 writes the synthesis after the blocks; no more `POV-XXX-retrospective.md`, two-column hub table (Task, Walkthrough); 2.0 reads the task blocks' Feed-forward; 2.1/2.2 self-review; 2.5a first review round the default, further rounds on the PO's confirmation; 2.6 no figures in the CHANGELOG; 2.9 renamed "PO Approves Commit and Push" (it precedes the commit); 2.15 task time by span with PO-decided gaps. |
 | 3.7 | 2026-09-27 | Povzetkar AI | 2.5 QA Check on test scope now points to QA rule 3 in `quality-mandates.md` (POV-216) instead of restating the retired "no Panache mocking in integration tests" rule. |
 | 3.6 | 2026-09-27 | Povzetkar AI | 4.3 tag name fixed (POV-212): the project's release tags carry no `v` (`0.18.0`, `0.19.0`); the example `git tag -a vX.Y.0` produced a wrong tag in POV-211 and shares its name with the `vX.Y.Z` branch — now `git tag -a X.Y.Z` pushed as `refs/tags/X.Y.Z`. |
 | 3.5 | 2026-09-27 | Povzetkar AI | Release template retired (POV-211): Phase 3 intro states that the finalisation runs as a task whose requirements are the Phase 3–4 steps, and its order (task PR merged before 4.1, YouTrack record after 4.4 and before 4.5; 3.1b excludes the finalisation task); `release_task_template.md` deleted — it duplicated these steps and drifted after POV-191, POV-201 and POV-209. Its one requirement missing here moved in: 3.4 CHANGELOG `### Summary`; 3.5 gains the manual `sl.json` translation. 3.2 General Refresh no longer lists `docs/strategy` (its only document, `STRATEGIC_NEXT_STEPS.md`, stale since 2025-08, deleted). |

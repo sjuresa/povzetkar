@@ -1,6 +1,6 @@
 # The Povzetkar Methodology
 
-**Last Updated:** 2026-05-27
+**Last Updated:** 2026-10-10
 **Status:** Active
 
 ## 1. Core Philosophy
@@ -10,7 +10,7 @@ Our development process is a **Pragmatic Hybrid Agile** approach, tailored speci
 1.  **Structure over Chaos:** We use strict checklists (`11_development_checklist.md`) and protocols (`AGENT.md`) to maintain discipline in an asynchronous environment.
 2.  **Flow over Batches:** We strictly limit Work In Progress (WIP) to **1**. We finish one task completely before starting the next.
 3.  **Documentation as Code:** Documentation is not an afterthought; it is a first-class deliverable. Retrospectives and architectural decisions (`ADRs`) are committed alongside the code to ensure a permanent and searchable source of truth.
-4.  **Continuous Learning:** Every task concludes with a retrospective. Every version concludes with a cross-task synthesis retrospective that identifies systemic patterns and process health.
+4.  **Continuous Learning:** Every task concludes by adding its notes to the version retrospective. Every version concludes with a cross-task synthesis in that retrospective that identifies systemic patterns and process health.
 5.  **Asynchronous Pair Programming:** You act as the "navigator" (strategic direction), and I act as the "driver" (tactical implementation).
 
 ---
@@ -57,30 +57,30 @@ Our lifecycle is divided into four distinct phases. The **Task** is the primary 
 1.  **Create Branch:** Create the new version branch (e.g., `v0.18.0`) from `main` and update version numbers.
 2.  **Create Milestone:** The User registers the version as a Fix-version value in YouTrack.
 3.  **Roadmap Entry:** Add the version to `docs/overview/roadmap.md` as in-progress.
-4.  **Create Version Hub:** Create `docs/versions/vX.Y.Z/version.md` (status, task list table, empty Carry-Forward Review section).
+4.  **Create Version Hub:** Create `docs/versions/vX.Y.Z/version.md` (status, task list table, empty Carry-Forward Review section) and the version retrospective `retrospective.md` (empty Task Notes).
 5.  **Review Previous Retrospective:** The Agent reads the previous version's retrospective (Carry-Forward Themes) and proposes a disposition per theme — backlog entry, task candidate, or conscious drop with a reason; the User approves each. Dispositions are recorded in the new hub's Carry-Forward Review table.
 
 ### Phase 2: Task Execution (The Core Loop)
 
 *Goal: Implement one task at a time with high quality. This is the primary phase — it repeats for every task in the version.*
 
-1.  **Brainstorm:** Read the Feed-forward sections of all task retrospectives in the current version (the version-level knowledge pool), then conduct a scope-alignment interview (WHAT will be done). The task is not final until this is complete.
+1.  **Brainstorm:** Read the Feed-forward parts of the task notes in the current version's retrospective (the version-level knowledge pool), then conduct a scope-alignment interview (WHAT will be done). The task is not final until this is complete.
 2.  **Define:** The task is finalised in `agent_logs/task.md`.
 3.  **Plan:** The Agent conducts a PPP interview (HOW it will be done) and proposes a detailed plan grounded in codebase evidence. **Execution is forbidden without User approval.**
 4.  **Execute (TDD):**
     *   **New Behavior:** Red -> Green -> Refactor.
     *   **Refactoring:** Green -> Refactor -> Green.
-5.  **Verify & Review:** The Agent runs the full test suite, then a pre-commit review of every task, documentation included (`/code-review`, plus `/security-review` for security-relevant changes). After the push, every PR reviewer's findings — human or bot — are handled in the PR review loop; the User merges.
+5.  **Verify & Review:** The Agent runs the full test suite, then — by default for every task, documentation included — a pre-commit review (`/code-review`, plus `/security-review` for security-relevant changes). After the push, every PR reviewer's findings — human or bot — are handled in the PR review loop; the User merges.
 6.  **Log:** The `CHANGELOG.md` is updated immediately after the task.
 7.  **Walkthrough:** A walkthrough document (`POV-XXX-walkthrough.md`) is written summarising what was delivered, including its mandatory Traceability section (the task's US/UC/TC IDs, or `N/A — <reason>`; machine-validated).
-8.  **Task Retrospective:** A task-level retrospective (`POV-XXX-retrospective.md`) is written capturing technical findings for future tasks.
-9.  **Version Hub:** `docs/versions/vX.Y.Z/version.md` is updated with links to the new walkthrough and retrospective (the hub itself is created at version initialisation).
+8.  **Task Notes:** The task appends a short block to the version retrospective (`retrospective.md`) — why it deviated, technical findings, feed-forward for later tasks.
+9.  **Version Hub:** `docs/versions/vX.Y.Z/version.md` is updated with a link to the new walkthrough (the hub itself is created at version initialisation).
 
 ### Phase 3: Version Finalisation
 
 *Goal: Declare the version complete and prepare for release. Triggered by an explicit PO decision — there is no task list to signal completion.*
 
-Its core is the **Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — a cross-task synthesis of trends, systemic patterns and process health, ending with the Carry-Forward Themes consumed at the next version's initialisation — followed by a documentation review, a supply-chain audit, and the release cleanup (`-SNAPSHOT` removed, `CHANGELOG.md` finalised).
+Its core is the synthesis that completes the **Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — written after the task notes, a cross-task synthesis of trends, systemic patterns and process health, ending with the Carry-Forward Themes consumed at the next version's initialisation — followed by a documentation review, a supply-chain audit, and the release cleanup (`-SNAPSHOT` removed, `CHANGELOG.md` finalised).
 
 ### Phase 4: Release
 
@@ -131,16 +131,15 @@ We actively practice "Strategic Deferral". If a feature is found to be too compl
 
 ### 5.1. Retrospectives
 
-We operate a two-level retrospective model:
+There is one retrospective per version (`docs/versions/vX.Y.Z/retrospective.md`), created at version initialisation and filled in two layers — the findings of all tasks in one place. The facts of a task (scope, deviations, times, evidence) are in its walkthrough; the retrospective refers to them.
 
-**Task Retrospective** (`docs/versions/vX.Y.Z/POV-XXX-retrospective.md`) — written at the end of every task.
+**Task Notes** — appended by every task at its close-out, one short block per task:
 
-*   **Planned vs. Actual:** What was scoped vs. what was delivered.
-*   **Deviations & Why:** Decisions made mid-execution and their rationale.
+*   **Why it deviated:** Causes and lessons, not the facts.
 *   **Technical Findings:** Patterns, gotchas, and constraints discovered — the durable record for future tasks.
-*   **Feed-forward:** What the next task should know. (Consumed by the Brainstorm of every subsequent task in the version.)
+*   **Feed-forward:** What the next tasks should know. (Consumed by the Brainstorm of every subsequent task in the version.)
 
-**Version Retrospective** (`docs/versions/vX.Y.Z/retrospective.md`) — written at the end of every version as a cross-task synthesis.
+**Synthesis** — written after the task notes at the end of every version, a cross-task synthesis:
 
 *   **Trends:** Patterns that appeared across multiple tasks.
 *   **Systemic Issues:** Process or architectural issues that transcend individual tasks.

@@ -105,8 +105,8 @@ protocols — the agent proposes, the author approves. Every task follows the sa
 3. **Execute** — test-first for behaviour changes; the full test suite of every touched layer runs before a commit.
 4. **Review** — a pre-commit code review of the whole task diff (plus a security review where relevant), then a
    pull-request review loop with a review bot; green CI is required for every merge.
-5. **Close-out** — a walkthrough (what was done, deviations, traceability) and a retrospective whose feed-forward
-   the next task reads.
+5. **Close-out** — a walkthrough (what was done, deviations, traceability) and a note in the version retrospective
+   whose feed-forward the next task reads.
 
 The rules live in [`AGENT.md`](AGENT.md) and [`docs/protocols/`](docs/protocols/); the phase-level process in the
 [development checklist](docs/sdlc/11_development_checklist.md). As of v0.20.0 the project has 2,099 commits since
