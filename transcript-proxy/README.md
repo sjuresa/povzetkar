@@ -70,7 +70,7 @@ curl -H "X-API-Key: dev-key" http://localhost:8000/transcripts/dQw4w9WgXcQ
    ```
 
 4. **Start at boot.** Run `run-proxy.sh` from a boot-time task of the host (systemd unit,
-   cron `@reboot`, or the NAS's task scheduler). The script sources `.env` and launches
+   cron `@reboot`, or a NAS task scheduler). The script sources `.env` and launches
    `uvicorn ... --host 0.0.0.0 --port 8000`, appending to `proxy.log`. It starts the proxy
    once; there is no crash-restart yet (see the project backlog).
 5. **Reachability.** Do not expose port 8000 publicly. Connect the backend host and the proxy
@@ -82,6 +82,6 @@ curl -H "X-API-Key: dev-key" http://localhost:8000/transcripts/dQw4w9WgXcQ
 
 A second deployment (e.g. on a PaaS via `railway.toml` — nixpacks build, `/health`
 healthcheck) can stay as a **passive, manual fallback**. To fall back, set the backend's
-`TRANSCRIPT_PROXY_URL` to the fallback host's URL and recreate the backend container; the
-production compose file has no default for it. Both hosts must accept the **same**
-`X-API-Key`.
+`TRANSCRIPT_PROXY_URL` to the fallback host's URL and recreate the backend container. Both
+hosts must accept the **same** `X-API-Key`. The backend's `proxy` provider is off by default —
+`TRANSCRIPT_PROXY_ENABLED=true` turns it on (RUNBOOK 14.1a).

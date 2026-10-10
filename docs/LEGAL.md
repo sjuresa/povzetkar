@@ -13,10 +13,13 @@ notice in the [README](../README.md). Third-party components keep their own lice
 | :--- | :--- | :--- | :--- |
 | **Auditory feedback** | Synthesized at runtime (Web Audio API, `OscillatorNode`) | Project | `frontend/src/hooks/useAudioFeedback.ts` |
 | **Icons** | [Lucide](https://lucide.dev/) (`lucide-react`) | [ISC](https://lucide.dev/license) | `frontend/` components |
+| **Icons and icon font** | [Font Awesome Free](https://fontawesome.com/) 6.5.2, loaded from cdnjs | [Icons CC BY 4.0, fonts SIL OFL 1.1, code MIT](https://fontawesome.com/license/free) | Legacy Qute admin UI (`backend/src/main/resources/templates/main.html`, `login.html`) |
+| **CSS framework** | [Pico CSS](https://picocss.com/) 2, loaded from jsDelivr | [MIT](https://github.com/picocss/pico/blob/main/LICENSE.md) | Legacy Qute admin UI (same templates) |
 
-No binary audio or font files are bundled. The CSS font stack names *Inter* first
+No binary audio or font files are bundled. The React frontend's CSS font stack names *Inter* first
 (`frontend/src/index.css`), but the font is neither bundled nor loaded — browsers use it only if it is installed on
-the visitor's system, otherwise the system fonts that follow it.
+the visitor's system, otherwise the system fonts that follow it. The legacy Qute admin UI loads the Font Awesome
+web fonts from the CDN with its stylesheet.
 
 ---
 
@@ -26,7 +29,7 @@ the visitor's system, otherwise the system fonts that follow it.
 | :--- | :--- | :--- |
 | **npm dependencies** | `package.json`, `frontend/package.json` | Various (mostly MIT, Apache-2.0, ISC) |
 | **Maven dependencies** | `pom.xml`, `backend/pom.xml` | Various (mostly Apache-2.0) |
-| **Python dependencies** (transcript proxy) | `transcript-proxy/requirements.txt` | Various (MIT, BSD) |
+| **Python dependencies** (transcript proxy) | `transcript-proxy/requirements.txt` | Various (MIT, BSD, Apache-2.0, MPL-2.0 for `certifi`) |
 
 ---
 

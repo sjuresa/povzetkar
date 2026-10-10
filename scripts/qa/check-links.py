@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Relative-link checker for the tracked Markdown files (POV-223).
 
-Checks every relative link and image in every tracked ``*.md``: the target file must exist. Anchors (``#...``,
-GitHub slug rules) are checked only in non-historical files; broken anchors in historical records
-(docs/versions, docs/retrospectives, docs/adr, docs/process/archive) are reported as information, because
-those records are not edited after the fact. External URLs (``http(s):``, ``mailto:``) are not checked.
+Checks every relative Markdown link and image and every HTML ``src``/``srcset`` in every tracked ``*.md``: the
+target file must exist. Anchors (``#...``, GitHub slug rules) are checked only in non-historical files; broken
+anchors in historical records (docs/versions, docs/retrospectives, docs/adr, docs/process/archive) are reported as
+information, because those records are not edited after the fact. External URLs (``http(s):``, ``mailto:``) are
+not checked.
 
-Usage (repo root): python -I scripts/qa/check-links.py   — exits 1 when a non-historical problem is found.
+Usage (repo root): python -I scripts/qa/check-links.py   — exits 1 on a missing file (in any file) or a missing
+anchor in a non-historical file.
 """
 import re
 import subprocess
@@ -20,6 +22,7 @@ REF_DEF = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?(\S+?)>?(?:\s+.*)?$")
 FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
 HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$")
 HTML_ANCHOR = re.compile(r"<a\s+(?:name|id)=\"([^\"]+)\"", re.I)
+HTML_SRC = re.compile(r"<(?:img|source)\b[^>]*?\b(src|srcset)=\"([^\"]+)\"", re.I)
 
 
 def slug(text):
@@ -67,6 +70,20 @@ def anchors(path):
     return _anchor_cache[path]
 
 
+def link_targets(line):
+    """Markdown links and images, HTML src/srcset and reference definitions on one line."""
+    targets = [m.group(1) for m in LINK.finditer(line)]
+    for attr, value in HTML_SRC.findall(line):
+        if attr.lower() == "srcset":  # comma-separated "url descriptor" candidates
+            targets += [c.split()[0] for c in value.split(",") if c.strip()]
+        else:
+            targets.append(value)
+    ref = REF_DEF.match(line)
+    if ref:
+        targets.append(ref.group(1))
+    return targets
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # cp1252 consoles (POV-203 lesson)
     root = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
@@ -81,11 +98,7 @@ def main():
         historical = rel.startswith(HISTORICAL)
         lines = src.read_text(encoding="utf-8", errors="replace").splitlines()
         for no, line in strip_code(lines):
-            targets = [m.group(1) for m in LINK.finditer(line)]
-            ref = REF_DEF.match(line)
-            if ref:
-                targets.append(ref.group(1))
-            for target in targets:
+            for target in link_targets(line):
                 if re.match(r"^[a-z][a-z0-9+.-]*:", target, re.I):
                     continue  # external URL, mailto:, etc.
                 path_part, _, anchor = target.partition("#")

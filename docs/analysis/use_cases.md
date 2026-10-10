@@ -195,7 +195,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 **Actor**: System (orchestrator)
 **Related Stories**: US-17.5, US-ING-004
 **Context**: [v0.17.0-planning-process.md](../versions/v0.17.0/v0.17.0-planning-process.md), [ADR-0009](../adr/0009-multi-provider-transcript-strategy.md), [POV-194 walkthrough](../versions/v0.18.0/POV-194-walkthrough.md), [POV-222 walkthrough](../versions/v0.20.0/POV-222-walkthrough.md)
-**Preconditions**: A `ContentItem` requires transcript fetching (a stored transcript or a video shorter than `transcript.threshold.minutes` needs none); `TranscriptOrchestrator` is configured with an ordered provider chain (production: `youtube-legacy,proxy,supadata` via `transcript.providers.order`).
+**Preconditions**: A `ContentItem` requires transcript fetching (a stored transcript or a video shorter than `transcript.threshold.minutes` needs none); `TranscriptOrchestrator` is configured with an ordered provider chain (default `youtube-legacy,proxy,supadata` via `transcript.providers.order`; disabled providers are skipped — `proxy` and `supadata` are off by default).
 **Main Flow**:
 1. Orchestrator invokes the first provider in the chain: `YouTubeLegacyTranscriptProvider` waits for the app-wide fetch slot — one YouTube fetch at a time, after a random pause since the previous one — and selects English captions, else captions in any language (POV-222).
 2. On a failure the provider raises `ProviderUnavailableException` and the orchestrator falls through to the next provider (`proxy` — the self-hosted transcript proxy — then `supadata`).

@@ -67,9 +67,12 @@ The local database environment is managed by Docker Compose and is located in th
     ```
 
 2.  **Start the Database:**
-    Navigate to the backend directory and start the PostgreSQL database.
+    The database volumes are declared `external` (they survive `docker compose down -v`), so create them once;
+    `backend/.env` must be filled first — compose reads the database credentials from it.
     ```bash
     cd backend
+    docker volume create povzetkar_postgres_dev_data
+    docker volume create povzetkar_postgres_test_data
     docker compose up -d
     ```
 
@@ -77,13 +80,16 @@ The local database environment is managed by Docker Compose and is located in th
 
 PostgreSQL initialization scripts (like the one that enables the `pgvector` extension) only run when the database volume is first created. If you need to re-run initialization scripts or start with a fresh database:
 
-1.  **Destroy the existing containers and volumes:**
+1.  **Destroy the existing containers and the database volumes** (`down -v` does not remove external volumes):
     ```bash
     cd backend
-    docker compose down -v
+    docker compose down
+    docker volume rm povzetkar_postgres_dev_data povzetkar_postgres_test_data
     ```
-2.  **Recreate the environment:**
+2.  **Recreate the volumes and the environment:**
     ```bash
+    docker volume create povzetkar_postgres_dev_data
+    docker volume create povzetkar_postgres_test_data
     docker compose up -d
     ```
 
@@ -160,7 +166,8 @@ live only on the management interface (port 9000; 9001 in tests) — see §13.2.
 **Security Note:** Access to Swagger UI is explicitly disabled in the production profile (`%prod.quarkus.swagger-ui.always-include=false`) to minimize the attack surface. This is verified during the build process and manual security reviews.
 
 ## 7. Running Tests
-To run the full-stack test suite (Backend JUnit + Frontend Vitest + Playwright):
+To run the backend and frontend unit test suites (Backend JUnit + Frontend Vitest; `npm run test:full` adds
+Playwright):
 
 ```bash
 npm run test
@@ -176,7 +183,7 @@ npm run test
 **Frontend (Vitest):**
 ```bash
 cd frontend
-npm run test
+npm run test -- --run   # without --run, Vitest stays in watch mode
 ```
 
 **Frontend (Playwright E2E):**
@@ -842,10 +849,11 @@ The application requires several sensitive configuration values (API keys, datab
 | `GOOGLE_OIDC_CLIENT_ID` | `quarkus.oidc.client-id` | Google OIDC OAuth 2.0 Client ID | ✅ |
 | `GOOGLE_OIDC_CLIENT_SECRET` | `quarkus.oidc.credentials.secret` | Google OIDC OAuth 2.0 Client Secret | ✅ |
 | `SUPADATA_API_KEY` | `quarkus.rest-client.supadata.headers.x-api-key` | Supadata transcript API key | ⬜ (required if supadata provider enabled) |
-| `TRANSCRIPT_PROXY_API_KEY` | `transcript.providers.proxy.api-key` | Key the backend sends to the transcript proxy (`X-API-Key`, 16.1b) | ⬜ (not checked at startup; the production compose file requires it) |
+| `TRANSCRIPT_PROXY_API_KEY` | `transcript.providers.proxy.api-key` | Key the backend sends to the transcript proxy (`X-API-Key`, 16.1b) | ⬜ (required if the proxy provider is enabled) |
 
-Not a secret, but required by the production compose file as well: `TRANSCRIPT_PROXY_URL`
-(`quarkus.rest-client.transcript-proxy.url`) — the base URL of the transcript proxy (14.1a).
+Not secrets: `TRANSCRIPT_PROXY_ENABLED` (`transcript.providers.proxy.enabled`, default `false`) and
+`TRANSCRIPT_PROXY_URL` (`quarkus.rest-client.transcript-proxy.url`) — the switch and base URL of the transcript
+proxy (14.1a).
 
 ### 14.1a Transcript Provider Configuration
 
@@ -855,6 +863,7 @@ The transcript fetching pipeline supports multiple providers with runtime-config
 |:---|:---|:---|
 | `transcript.providers.order` | `youtube-legacy,proxy,supadata` | Comma-separated list of providers tried in order. |
 | `transcript.providers.youtube-legacy.enabled` | `true` | Enable/disable the YouTube legacy (direct scraping) provider. |
+| `transcript.providers.proxy.enabled` | `false` (`TRANSCRIPT_PROXY_ENABLED`) | Enable/disable the transcript proxy provider — only with a reachable proxy host (below). |
 | `transcript.providers.youtube-legacy.pacing.fetch.min` / `.fetch.max` | `15s` / `45s` | Random pause before a youtube-legacy fetch, measured from the **end of the previous fetch**; no pause for the first fetch or after idle (POV-222). |
 | `transcript.providers.youtube-legacy.pacing.in-fetch.min` / `.in-fetch.max` | `1s` / `5s` | Random pause before each further call inside a fetch (video page → innertube → captions). |
 | `transcript.retry.intervals` | `30m,30m,90m,90m,210m,210m` | After the n-th failed **automatic** transcript fetch a video is retried no earlier than the n-th interval later; the attempt after the last interval ends it `FAILED` (6 intervals = 7 attempts). |
@@ -905,11 +914,12 @@ app-wide (all topics, items and threads share one fair queue). The pacing ranges
   `TRANSCRIPT_PROVIDERS_YOUTUBE_LEGACY_JITTER_*` in `.env.docker` is ignored.
 
 **Transcript proxy (`proxy` provider):** the backend calls the service in `transcript-proxy/` (16.1b) at
-`TRANSCRIPT_PROXY_URL`, sending `TRANSCRIPT_PROXY_API_KEY` as `X-API-Key`. The production compose file requires
-both variables (no default — a missing one stops compose at configuration read); outside it the URL defaults to
-`https://proxy.invalid`, so a local run without it never calls a real proxy and the provider falls through to the
-next one. Whether youtube-legacy works directly depends on the host's egress IP — YouTube blocks many cloud
-IP ranges; then the proxy, run on a host YouTube does not block, or Supadata (below) takes over.
+`TRANSCRIPT_PROXY_URL`, sending `TRANSCRIPT_PROXY_API_KEY` as `X-API-Key`. It is off by default
+(`TRANSCRIPT_PROXY_ENABLED=false`): an enabled proxy without a reachable host would add its 15–45 s jitter and a
+failed call to every youtube-legacy failure. To use it, set `TRANSCRIPT_PROXY_ENABLED=true`, the URL and the key
+(the production compose file passes all three; without a URL it falls back to `https://proxy.invalid`, which never
+reaches a real host). Whether youtube-legacy works directly depends on the host's egress IP — YouTube blocks many
+cloud IP ranges; then the proxy, run on a host YouTube does not block, or Supadata (below) takes over.
 
 **Enabling Supadata as primary provider** (if YouTube blocks the production host's IP):
 

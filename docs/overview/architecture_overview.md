@@ -72,7 +72,8 @@ SPA needs no CORS.
 ## 5. Transcript proxy (`transcript-proxy/`)
 
 A standalone FastAPI service that fetches one transcript per request from a host whose IP YouTube does not block.
-The backend calls it as the `proxy` provider (`TRANSCRIPT_PROXY_URL`, `TRANSCRIPT_PROXY_API_KEY`); see its
+The backend calls it as the `proxy` provider (`TRANSCRIPT_PROXY_URL`, `TRANSCRIPT_PROXY_API_KEY`), which is off
+by default and turned on with `TRANSCRIPT_PROXY_ENABLED=true` when a proxy host is in use; see its
 [README](../../transcript-proxy/README.md).
 
 ## 6. Data flow of a scheduled run

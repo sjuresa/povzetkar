@@ -36,6 +36,11 @@ values of one deployment (above). Public documentation uses placeholders (`<your
 and points to "the private operations runbook" for the author's own procedures. The one exception is the
 landing-page URL in the README (PO decision, POV-223).
 
+**Historical records stay as written** — `docs/versions/`, `docs/retrospectives/`, `docs/adr/` and
+`docs/process/archive/` record what was true when they were written, and some of them name environment values of
+that time. They are not scrubbed (git history keeps the values anyway); the rule binds every new record and every
+living document.
+
 ## Issue references
 
 Refer to issues by their plain ID (`POV-223`), never by a link to the issue tracker; the tracker is private.

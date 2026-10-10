@@ -110,7 +110,7 @@ protocols — the agent proposes, the author approves. Every task follows the sa
 
 The rules live in [`AGENT.md`](AGENT.md) and [`docs/protocols/`](docs/protocols/); the phase-level process in the
 [development checklist](docs/sdlc/11_development_checklist.md). As of v0.20.0 the project has 2,099 commits since
-July 2025, 290 merged pull requests, 22 release tags, 12 architecture decision records, and 30 task walkthroughs
+July 2025, 290 merged pull requests, 25 release tags, 12 architecture decision records, and 31 task walkthroughs
 with retrospectives (task-level records since v0.18). An example pair: the
 [POV-214 walkthrough](docs/versions/v0.20.0/POV-214-walkthrough.md) and
 [retrospective](docs/versions/v0.20.0/POV-214-retrospective.md) — moving the security headers into the
@@ -131,9 +131,10 @@ application when the Cloudflare tunnel turned out to bypass the reverse proxy
 ## Run locally
 
 You need JDK 25, Node.js 24, Docker, a Google OAuth client (OIDC), a YouTube Data API key and a Gemini API key.
-In short: start the dev database with `docker compose up -d` in `backend/`, fill `backend/.env` from
-`backend/.env.example`, then run `../mvnw quarkus:dev -DskipTests=true` in `backend/` and `npm run dev` in
-`frontend/`. The
+In short: fill `backend/.env` from `backend/.env.example`; in `backend/`, create the two database volumes once
+(`docker volume create povzetkar_postgres_dev_data` and `… povzetkar_postgres_test_data`) and start the dev
+database with `docker compose up -d`; then run `../mvnw quarkus:dev -DskipTests=true` in `backend/` and
+`npm run dev` in `frontend/`. The
 [RUNBOOK](docs/RUNBOOK.md) has the full setup, tests and container build.
 
 ## Notes

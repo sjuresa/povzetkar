@@ -17,6 +17,8 @@ High-level layout of the repository and where to find things. The architecture i
 | `pom.xml` | Root Maven aggregator: shared properties, dependency and plugin management |
 | `package.json` | Root scripts orchestrating backend and frontend (`build`, `test`, …) |
 | `.github/workflows/ci.yml` | CI pipeline |
+| `README.md` | Project overview |
+| `SECURITY.md` | How to report a vulnerability |
 | `AGENT.md`, `CLAUDE.md` | Operating protocols for the AI coding agent |
 | `CHANGELOG.md` | Release notes |
 | `agent_logs/` | The agent's local task records — gitignored, not part of the repository |
@@ -26,7 +28,8 @@ High-level layout of the repository and where to find things. The architecture i
 - `src/main/java/com/povzetkar/quarkus/`
   - `api/` — REST API: the JAX-RS resources under `/api/v1` (`*ApiResource`, `OrchestratorResource`,
     `ContentSourceResource`) at package level; `dto/`, `mapper/` (MapStruct), `filter/` (envelope, correlation ID,
-    audit, idempotency, optimistic locking), `exceptionmapper/` (RFC 7807 errors), `util/` (filter and sort parsing)
+    audit, idempotency, optimistic locking), `exception/` (`BusinessRuleException`), `exceptionmapper/` (RFC 7807
+    errors), `util/` (filter and sort parsing)
   - `service/` — business logic: orchestration, content fetching, summarization, briefings, background jobs;
     `transcript/` (provider chain and pacing), `event/` (CDI events for SSE)
   - `model/` — JPA entities (Hibernate ORM with Panache)
@@ -57,7 +60,7 @@ High-level layout of the repository and where to find things. The architecture i
 | `overview/` | Architecture, this file, roadmap, original specification | living |
 | `sdlc/` | Requirements (incl. the User Story catalogue), API and database design, test plan, development checklist | living |
 | `analysis/` | Use cases, master test specification, API and frontend specifications, technical analyses | living |
-| `protocols/` | Agent protocols (workflow, verification, quality mandates, commits, context) | living |
+| `protocols/` | Agent protocols (workflow, verification, quality mandates, commits, context, public content) | living |
 | `guides/` | Developer guides (testing, i18n glossary, AI-architect guidelines) | living |
 | `process/` | Methodology, lessons learned (`lessons/`), archive | living (archive historical) |
 | `backlog/` | Improvement backlog | living |
@@ -65,5 +68,6 @@ High-level layout of the repository and where to find things. The architecture i
 | `versions/` | Per-version hubs, task walkthroughs and retrospectives | historical |
 | `retrospectives/` | Older version retrospectives | historical |
 | `features/`, `knowledge/`, `spikes/` | Feature notes, background research, spike results | reference |
+| `images/` | Screenshots used by the README | living |
 
 Historical records are kept as written; they describe the state at their time.

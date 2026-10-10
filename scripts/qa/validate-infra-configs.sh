@@ -13,7 +13,7 @@ PROJECT="povzetkar-infra-validate"
 # Dummy values for every `${VAR:?}` in the compose file; none of them reaches a validated config.
 export APP_VERSION=validate DB_NAME=validate DB_USER=validate DB_PASS=validate \
   YOUTUBE_API_KEY=validate GOOGLE_API_KEYS=validate GOOGLE_OIDC_CLIENT_ID=validate \
-  GOOGLE_OIDC_CLIENT_SECRET=validate TRANSCRIPT_PROXY_API_KEY=validate TRANSCRIPT_PROXY_URL=validate \
+  GOOGLE_OIDC_CLIENT_SECRET=validate \
   CLOUDFLARE_TUNNEL_TOKEN=validate GF_ADMIN_PASSWORD=validate
 
 compose() { docker compose -p "$PROJECT" -f "$COMPOSE_FILE" "$@"; }

@@ -31,8 +31,10 @@ services:
       - GOOGLE_API_KEYS=${GOOGLE_API_KEYS:?GOOGLE_API_KEYS must be set}
       - GOOGLE_OIDC_CLIENT_ID=${GOOGLE_OIDC_CLIENT_ID:?GOOGLE_OIDC_CLIENT_ID must be set}
       - GOOGLE_OIDC_CLIENT_SECRET=${GOOGLE_OIDC_CLIENT_SECRET:?GOOGLE_OIDC_CLIENT_SECRET must be set}
-      - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:?TRANSCRIPT_PROXY_API_KEY must be set}
-      - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:?TRANSCRIPT_PROXY_URL must be set}
+      # Transcript proxy: off by default; set all three when a proxy host is in use (RUNBOOK 14.1a).
+      - TRANSCRIPT_PROXY_ENABLED=${TRANSCRIPT_PROXY_ENABLED:-false}
+      - TRANSCRIPT_PROXY_API_KEY=${TRANSCRIPT_PROXY_API_KEY:-}
+      - TRANSCRIPT_PROXY_URL=${TRANSCRIPT_PROXY_URL:-https://proxy.invalid}
       - POVZETKAR_API_KEY=${POVZETKAR_API_KEY:-}
       - POVZETKAR_API_KEY_USER_EMAIL=${POVZETKAR_API_KEY_USER_EMAIL:-}
       # File log on the app_logs volume survives container recreation; enabled only here, where
