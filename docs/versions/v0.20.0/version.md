@@ -1,9 +1,33 @@
 # v0.20.0 Version Hub
 
-**Status:** In Progress
-**YouTrack Fix version:** [0.20.0](https://jumis.myjetbrains.com/youtrack/issues/POV?q=Fix%20versions:%200.20.0)
+**Status:** Completed
+**YouTrack Fix version:** 0.20.0
 
 ---
+
+## Scope
+
+v0.20.0 delivered the outside view of the application — what a browser, a scanner, another user, a visitor,
+YouTube and a reader of the repository see:
+
+- **Production edge:** Caddy removed; the Cloudflare tunnel is the only entry. The app sends the security headers,
+  an enforced CSP and the cache policy itself, and trusts forwarded headers only from the tunnel (POV-214). Probe
+  paths get 404, the `uri` metric tag is bounded, expired-session XHRs get 401, and CORS is removed (POV-221).
+- **Per-user data:** sources and content are scoped to the user's topics (POV-219). The onboarding guide is held per
+  user on the server, and the pending-approval banner detects approval by itself (POV-216).
+- **Product:** a landing page around the product, with honest feature claims; the first visit follows the browser
+  language and system theme; one Slovenian vocabulary across the app (POV-220).
+- **Operations:** serial, human-like pacing of YouTube calls with bounded per-video retries and any-language
+  transcripts (POV-222). The scheduled run is tested the way the scheduler fires it, and retention and enrichment
+  run in the daytime (POV-213).
+- **Supply chain:** orval 8.41.0 and Vitest 5.0.3 fix the critical build-time advisories (POV-215). `shell-quote`
+  is fixed, and CI now scans npm development dependencies with Trivy 0.75.0 (POV-224). The CI workflow token is
+  read-only (POV-225).
+- **Public repository:** a showcase README, `SECURITY.md`, production operations moved to a private runbook, and the
+  public-content rule (POV-223).
+
+The finalisation (POV-225) wrote the cross-task [retrospective](retrospective.md). Its §3 holds the process-weight
+evidence and the proposals that v0.19's carry-forward theme 4 asked for.
 
 ## Completed Tasks
 
@@ -20,6 +44,7 @@
 | POV-215 — Upgrade orval to 8.41.0 and Vitest to 5.0.3 (CRITICAL Advisories) | [walkthrough](POV-215-walkthrough.md) | [retrospective](POV-215-retrospective.md) |
 | POV-223 — Prepare the Repository for Public Release | [walkthrough](POV-223-walkthrough.md) | [retrospective](POV-223-retrospective.md) |
 | POV-224 — Upgrade shell-quote, Scan npm Dev Dependencies in CI, Trivy 0.75.0 | [walkthrough](POV-224-walkthrough.md) | [retrospective](POV-224-retrospective.md) |
+| POV-225 — v0.20.0 Version Finalisation & Release | [walkthrough](POV-225-walkthrough.md) | [retrospective](POV-225-retrospective.md) |
 
 ## Carry-Forward Review
 

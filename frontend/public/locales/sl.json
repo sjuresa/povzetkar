@@ -444,6 +444,13 @@
     },
     "changelog_entries": [
       {
+        "version": "0.20.0",
+        "title": "Posodobitev 0.20.0",
+        "date": "2026-10-10",
+        "desc": "Verzija 0.20.0 je izdaja **Produkcijski rob, podatki po uporabniku in javni repozitorij** — to, kar vidi zunanji svet, se zdaj ujema s tem, kar projekt namerava. Aplikacija je za tunelom Cloudflare sama svoj rob: varnostne glave, uveljavljeno politiko varnosti vsebine (CSP) in pravila predpomnjenja pošilja sama, posredovanim glavam zaupa le iz tunela, na poti, ki jih preizkušajo skenerji, odgovori s 404, metrike zahtevkov ostajajo omejene, potekla seja pa te ponovno prijavi, namesto da bi se stran zlomila (POV-214, POV-221). Vsak uporabnik zdaj vidi le vire in vsebino svojih tem, vodnik za začetek pa pripada uporabniku (POV-219, POV-216). Uvodna stran prikazuje izdelek s poštenimi obljubami in se odpre v jeziku in temi obiskovalca (POV-220). Prepisi YouTube se pridobivajo po enega, s človeku podobnimi premori in omejenimi ponovnimi poskusi, potem ko je YouTube blokiral produkcijski naslov (POV-222), načrtovani zagon pa je testiran tako, kot ga sproži razporejevalnik (POV-213). Kritične ranljivosti orodij za gradnjo so odpravljene, CI pa zdaj pregleduje tudi razvojne odvisnosti npm (POV-215, POV-224). Repozitorij je javen, s predstavitvenim README, varnostno politiko in pravilom, kaj se sme objaviti (POV-223).",
+        "badge": "new"
+      },
+      {
         "version": "0.19.0",
         "title": "Posodobitev 0.19.0",
         "date": "2026-09-27",
@@ -498,19 +505,12 @@
         "date": "2026-03-18",
         "desc": "Verzija 0.12.0 predstavlja pomembno prelomnico v razvoju Povzetkarja, saj projekt prehaja v profesionalno, produkcijsko pripravljeno Full-Stack aplikacijo. Izdaja zaključuje arhitekturo monorepozitorija z združitvijo visoko odzivnega React/TypeScript čelnega dela z varno Quarkus zaledno logiko. Ključne novosti zajemajo poenoteno Docker strategijo postavitve s samodejnim varnostnim skeniranjem, premium Nadzorno središče (Dashboard Hub) s prikazom opravil v realnem času (SSE) ter obsežen UI vmesnik z revizijskimi dnevniki (Audit Log Admin UI).",
         "badge": "new"
-      },
-      {
-        "version": "v0.11.0",
-        "title": "Posodobitev v0.11.0",
-        "date": "2026-03-12",
-        "desc": "Verzija 0.11.0 prinaša bistvene izboljšave za nadzor in varnost v realnem času. Izdaja vključuje nov tok dogodkov (SSE) za žive posodobitve opravil, celovito revizijo zahtevkov na API ter centraliziran sistem nadzora dostopa na podlagi dovoljenj. Operativne izboljšave zajemajo optimizacijo JPQL, konsolidirane metrike zdravja sistema in standardizirano obravnavo napak v celotnem API-ju.",
-        "badge": "new"
       }
     ],
     "roadmap_phases": [
       {
-        "title": "v0.20: Production Edge & Test Debt",
-        "desc": "Varnostne kontrole postaviti na dejansko pot prometa in odplačati dolg, ki je že zapadel. *(Napoved — v modelu, ki izhaja iz nalog, se dejanski obseg določa po nalogah in potrdi ob zaključku verzije.)*"
+        "title": "v0.21: Per-User Isolation & Lighter Process",
+        "desc": "Zapreti preostale poti, po katerih en uporabnik izve kaj o drugem, razvojni proces voditi po pravilih, sprejetih na podlagi retrospektive v0.20, in obnoviti izjeme dobavne verige, preden potečejo. *(Napoved — obseg se določa po nalogah in potrdi ob zaključku verzije.)*"
       },
       {
         "title": "v1.0: RAG & Conversational Interface",
