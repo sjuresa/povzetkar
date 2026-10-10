@@ -276,19 +276,39 @@ This document outlines the concrete steps for implementing the features describe
 4.  **Process:**
     *   **Retrospectives Consumed** (POV-201), **Traceability Restored** (POV-203), **Agent Protocols Modernized** (POV-204), **Review, Deploy & Release Gates** (POV-209), **Release Template Retired** (POV-211).
 
-## v0.20: Production Edge & Test Debt
+## v0.20: Production Edge, Per-User Data & Public Repository
 
-**Goal:** Put the security controls on the real traffic path and pay the debt that is already due. *(Scope is set per task and confirmed when the version is finalised.)*
-**Status:** 🚧 In Progress
+**Goal:** Make what the outside sees match what the project intends — the browser, a scanner, another user, a visitor, YouTube and a reader of the repository. Started with three items carried from v0.19 (edge, scheduler test, orval); most of the other tasks were found by the previous one or by production.
+**Status:** ✅ Completed
 
 ### Key Tasks & Implementation Steps:
 1.  **Production Edge:**
     *   **Security Headers in the Application** (POV-214): Caddy removed — the Cloudflare tunnel is the only edge; the app sends security headers, an enforced CSP and caching headers and trusts forwarded headers only from `cloudflared` (ADR-0012).
-2.  **Dependency Debt:**
-    *   **orval 8.41.0 and Vitest 5.0.3** (POV-215): the CRITICAL build-time advisories are fixed — API client regenerated, test runner two majors up on Vite 6.4, `source-map-js` patched.
-3.  **Test Debt:**
-    *   **Scheduler Integration Test** (POV-213): real lock service and test DB for the `@Scheduled` path — TC-ING-006 carries a `validate:skip until v0.21.0` until this task removes it.
+    *   **Edge Hardening** (POV-221): probe paths get 404, the `uri` metric tag is bounded, expired-session XHRs get 401, CORS removed.
+2.  **Per-User Data & Product:**
+    *   **Sources and Content Scoped to the User** (POV-219): a user sees only the sources of their topics and the content of their briefings.
+    *   **Per-User Onboarding Guide and Pending-Approval Banner** (POV-216).
+    *   **Landing Page Redesign** (POV-220): product-first, honest feature claims; first visit follows the browser language and system theme.
+3.  **Operations:**
+    *   **Human-Like YouTube Pacing** (POV-222): serial transcript fetches with random pauses, bounded per-video retries, any-language transcripts.
+    *   **Scheduler Integration Test** (POV-213): the scheduled run is tested as the scheduler fires it (TC-ING-006 automated); retention and enrichment run in the daytime.
+4.  **Supply Chain & Public Repository:**
+    *   **orval 8.41.0 and Vitest 5.0.3** (POV-215) and **`shell-quote` 1.12.0** (POV-224): critical build-time advisories fixed; CI scans npm development dependencies (Trivy 0.75.0); the CI token is read-only (POV-225).
+    *   **Repository Public** (POV-223): showcase README, `SECURITY.md`, production operations in a private runbook, public-content rule.
 
+## v0.21: Per-User Isolation & Lighter Process
+
+**Goal:** Close the remaining channels through which one user learns about another, run the development process on the rules adopted from the v0.20 retrospective, and renew the supply-chain exceptions before they expire. *(Forecast — scope is set per task and confirmed when the version is finalised.)*
+**Status:** 📋 Planned
+
+### Key Tasks & Implementation Steps:
+1.  **Per-User Isolation:**
+    *   **Job Events per User** (POV-217): live job-status events reach only the user they concern.
+    *   **Queries in Named Methods** (POV-218): the remaining inline HQL moves into entity/repository methods.
+2.  **Process:**
+    *   **Process-Weight Decisions** (v0.20 retrospective §3): the adopted proposals applied to the workflow and the checklist.
+3.  **Supply Chain:**
+    *   **`.trivyignore` Expiry** (2026-12-31): every entry re-checked — removed if fixed, renewed with a rationale otherwise.
 
 ## v1.0: RAG & Conversational Interface
 
@@ -361,6 +381,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.5     | 2026-10-10         | Povzetkar AI | v0.20 rewritten to actual delivery and marked `✅ Completed`; v0.21 added as a minimal forecast (POV-217, POV-218, process-weight decisions, `.trivyignore` expiry) (POV-225). |
 | 4.4     | 2026-10-09         | Povzetkar AI | v1.0+ marked as forecast; delivered items marked (ADR-0004, Playwright); `embedding` column and message-queue statements aligned with the code; POV-196 entry without host details (POV-223). |
 | 4.3     | 2026-09-29         | Povzetkar AI | v0.20 *Production Edge*: POV-214 reshaped from "Caddy on the traffic path" to removing Caddy — headers, CSP, caching and proxy trust in the application (ADR-0012). |
 | 4.2     | 2026-09-28         | Povzetkar AI | v0.17 *Session Expiry Handling* (POV-187) corrected to the implemented `/auth/login?redirect=` flow (POV-220). |

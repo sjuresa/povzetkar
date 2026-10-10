@@ -438,6 +438,13 @@
     },
     "changelog_entries": [
       {
+        "version": "0.20.0",
+        "title": "Update 0.20.0",
+        "date": "2026-10-10",
+        "desc": "Version 0.20.0 is the **Production Edge, Per-User Data & Public Repository** release — it makes what the outside sees match what the project intends. The app is now its own edge behind the Cloudflare tunnel: it sends the security headers, an enforced Content-Security-Policy and a cache policy itself, trusts forwarded headers only from the tunnel, answers probe paths with 404, keeps its request metrics bounded and signs an expired session in again instead of breaking the page (POV-214, POV-221). Each user now sees only the sources and content of their own topics, and the onboarding guide belongs to the user (POV-219, POV-216). The landing page shows the product with honest claims and opens in the visitor's language and theme (POV-220). YouTube transcripts are fetched one at a time with human-like pauses and bounded retries after YouTube blocked the production address (POV-222), and the scheduled run is tested the way the scheduler fires it (POV-213). Critical build-time advisories are fixed and CI now also scans npm development dependencies (POV-215, POV-224). The repository is public, with a showcase README, a security policy and a rule for what may be published (POV-223).",
+        "badge": "new"
+      },
+      {
         "version": "0.19.0",
         "title": "Update 0.19.0",
         "date": "2026-09-27",
@@ -492,19 +499,12 @@
         "date": "2026-03-18",
         "desc": "Version 0.12.0 marks a significant milestone in Povzetkar's evolution, transitioning the project into a professional, production-ready Full-Stack application. This release finalizes the monorepo architecture, integrating a high-performance React/TypeScript frontend with a hardened Quarkus backend. Key highlights include a unified Docker deployment strategy with automated security scanning, a premium glassmorphic Dashboard Hub with real-time SSE job tracking, and a comprehensive Audit Log Admin UI for technical observability. With 100% end-to-end type safety, robust authentication guards, and a standardized API contract, version 0.12.0 establishes a rock-solid foundation for scalable content orchestration.",
         "badge": "new"
-      },
-      {
-        "version": "v0.11.0",
-        "title": "Update v0.11.0",
-        "date": "2026-03-12",
-        "desc": "Version 0.11.0 introduces significant enhancements to real-time observability and security. This release features a new SSE-based event stream for live job updates, comprehensive API request auditing, and a centralized permission-based access control system. Operational improvements include JPQL projection optimizations, consolidated health metrics, and standardized error handling across the entire API layer. The integration of static analysis and vulnerability scanning further hardens the application's security posture.",
-        "badge": "new"
       }
     ],
     "roadmap_phases": [
       {
-        "title": "v0.20: Production Edge & Test Debt",
-        "desc": "Put the security controls on the real traffic path and pay the debt that is already due. *(Forecast — under the task-first model the actual scope is set per task and confirmed when the version is finalised.)*"
+        "title": "v0.21: Per-User Isolation & Lighter Process",
+        "desc": "Close the remaining channels through which one user learns about another, run the development process on the rules adopted from the v0.20 retrospective, and renew the supply-chain exceptions before they expire. *(Forecast — scope is set per task and confirmed when the version is finalised.)*"
       },
       {
         "title": "v1.0: RAG & Conversational Interface",
