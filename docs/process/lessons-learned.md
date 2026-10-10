@@ -8,6 +8,14 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ## 🚀 Recent Highlights (v0.20.0)
 
+> [!WARNING]
+> **The repository is public — a tool permission is not a data boundary (POV-223)**:
+> Everything committed or posted is public (`docs/protocols/public-content.md`): no secrets, personal data or
+> environment values; plain issue IDs. Two traps from preparing the publication: a deny rule on the agent's Read
+> tool does not stop a script that walks every tracked file from reading the same file — scripts must apply the
+> exclusions themselves; and "tracked files" are not the whole public surface — Deployments, Actions run logs, PR
+> refs and commits overwritten by force-pushes become public with the repository too.
+
 > [!NOTE]
 > **The version bump moves the P0 automation deadline onto its own commit (POV-212)**:
 > CI audits against the version in `package.json`, so checklist 1.1 (`X.Y.0-SNAPSHOT`) makes every P0 test case due at X.Y CRITICAL on the bump commit — before any task of the version can automate it. TC-ING-006 needed a time-bound `validate:skip until v0.21.0`; enforcement then rests on the automating task's Fix version and checklist 3.1b. Check due P0 automations before the bump (backlog).
