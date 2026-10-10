@@ -19,6 +19,7 @@
 | POV-213 — Scheduler-Fired Integration Test for the Scheduled Run; Daytime Cron for Retention and Enrichment | [walkthrough](POV-213-walkthrough.md) | [retrospective](POV-213-retrospective.md) |
 | POV-215 — Upgrade orval to 8.41.0 and Vitest to 5.0.3 (CRITICAL Advisories) | [walkthrough](POV-215-walkthrough.md) | [retrospective](POV-215-retrospective.md) |
 | POV-223 — Prepare the Repository for Public Release | [walkthrough](POV-223-walkthrough.md) | [retrospective](POV-223-retrospective.md) |
+| POV-224 — Upgrade shell-quote, Scan npm Dev Dependencies in CI, Trivy 0.75.0 | [walkthrough](POV-224-walkthrough.md) | [retrospective](POV-224-retrospective.md) |
 
 ## Carry-Forward Review
 
