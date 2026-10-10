@@ -9,6 +9,12 @@
 | 1.2     | September 11, 2025 | Povzetkar AI | Clarified that the Hybrid Model is a future evolution, not an alternative. |
 | 1.0     | September 11, 2025 | Povzetkar AI | Initial version of the strategy document.                               |
 
+> [!NOTE]
+> **Not implemented** (status POV-223): categorization is a future capability (US-REP-002, *Future*). The V1
+> migration created the `categories` and `summary_categories` tables, but no code uses them; there is no
+> conversational interface yet. Version references below (e.g. "v0.9") are from the
+> original 2025 plan.
+
 ## 1. The Added Value of Categorization
 
 Categorization transforms the project from a simple summarization tool into an intelligent information analysis platform. Instead of a long, unstructured list of summaries, we get an organized and queryable knowledge base.

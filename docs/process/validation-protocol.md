@@ -10,7 +10,7 @@ The Planning Validator ensures that our "Code is Truth" principle is upheld acro
 
 ### Phase 1: Task Planning (The Logic Gate)
 *   **Trigger**: Manual execution during task planning (Checklist 2.2), before plan approval.
-*   **Target**: Archived task definitions (`agent_logs/POV-* task.md` — the validator's `tasks_glob`). The active `agent_logs/task.md` enters the validated set once archived per `workflow-mandatory.md` Step 6; until then its context links are checked manually during the planning interview.
+*   **Target**: Archived task definitions (`agent_logs/POV-* task.md` — the validator's `tasks_glob`). The active `agent_logs/task.md` enters the validated set once archived per `workflow-mandatory.md` Step 5; until then its context links are checked manually during the planning interview.
 *   **Violation Type**: Broken link or missing UC-TC mapping.
 *   **Action**: **Plan Rejected**.
 *   **Recovery**: The plan cannot be approved if the validator fails. You must re-align the task context links with the existing IDs in `use_cases.md` or add the missing test cases to the Master Spec before starting implementation.

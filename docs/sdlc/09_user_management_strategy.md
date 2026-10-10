@@ -3,6 +3,12 @@
 **Version:** 1.0
 **Date:** September 14, 2025
 
+> [!NOTE]
+> **Decided:** OIDC ([ADR-0002](../adr/0002-auth-mechanism.md); authorization in
+> [ADR-0003](../adr/0003-authorization-strategy.md)). The application uses Google as the provider
+> (`quarkus.oidc.provider=google`), with no own identity provider. This document is the September 2025 analysis that
+> preceded the decision.
+
 ## 1. Introduction
 
 As the project evolves to support multiple users, a clear strategy for user management, authentication, and authorization is required. This document analyzes the two primary approaches available in the Quarkus ecosystem: self-managed security using JPA and delegated security using OpenID Connect (OIDC).

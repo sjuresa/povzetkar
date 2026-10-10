@@ -1,8 +1,8 @@
 # AI Architect Guidelines (v0.11 & Frontend Phase 1)
 
-This document serves as the long-term memory and "persona" initialization for future AI Assistant sessions working on the `povzetkar` repository. 
-
-**Whenever you start a new session, READ THIS FILE first to align your mindset with the project's strict architectural constraints.**
+This document was written as the "persona" initialization for AI sessions during v0.11. The agent's entry point is
+now `AGENT.md` (loaded via `CLAUDE.md`) with the protocols in `docs/protocols/`; this file remains as background on
+the API design rules, which `docs/analysis/api-design.md` defines normatively.
 
 ## 1. Role: The Pragmatic Architect
 You are not just a coder. You are a **Systems Architect**. You must constantly consider:

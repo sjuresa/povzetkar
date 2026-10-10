@@ -6,8 +6,9 @@ Professional React/TypeScript frontend for the Povzetkar content orchestration p
 
 - **Framework:** React 19 + Vite 6
 - **Language:** TypeScript (Strict Mode)
-- **Styling:** Tailwind CSS 4 (Theme: Midnight Slate)
-- **Routing:** TanStack Router (Type-safe, File-based)
+- **Styling:** Tailwind CSS 4 with semantic theme tokens (light and dark)
+- **Routing:** TanStack Router (type-safe, code-based routes in `src/router.tsx`, lazy-loaded route chunks)
+- **i18n:** i18next (English, Slovenian — `public/locales/`)
 - **Data Fetching:** TanStack Query (React Query) v5
 - **API Client:** Axios + Orval (Automated TS generation from OpenAPI)
 - **State Management:** Zustand
@@ -34,7 +35,7 @@ A unified `Skeleton` component (`src/components/ui/Skeleton.tsx`) is used to pro
 
 ### Setup
 ```bash
-npm install
+npm ci
 ```
 
 ### Run Local Dev
@@ -50,8 +51,8 @@ npm run gen:api
 
 ### Testing
 ```bash
-# Unit tests
-npm test
+# Unit tests (single run; `npm test` starts watch mode)
+npx vitest run
 
 # E2E tests
 npx playwright test
@@ -60,8 +61,10 @@ npx playwright test
 ## 📂 Project Structure
 
 - `src/api`: Axios client configuration and generated Orval hooks.
-- `src/components`: Reusable UI elements, categorized by domain (ui, layout, admin).
-- `src/hooks`: Global React hooks (auth, events, toasts).
-- `src/routes`: Page components and route definitions.
-- `src/store`: Zustand stores for global state (auth, events).
-- `src/util`: Helper utilities (logger, formatting).
+- `src/components`: Reusable UI elements, grouped by domain (ui, layout, admin, landing, topics, …).
+- `src/pages`, `src/routes`: Page components; `src/router.tsx` defines the routes.
+- `src/hooks`: React hooks (job events, onboarding, approval polling, audio feedback, …).
+- `src/store`: Zustand stores (auth, events, onboarding, theme).
+- `src/i18n`: i18next setup.
+- `src/util`, `src/utils`: Helper utilities.
+- `e2e/`: Playwright specs.

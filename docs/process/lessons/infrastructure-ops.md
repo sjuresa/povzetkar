@@ -90,15 +90,15 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 
 ---
 
-## Production Redeploys on the Local Docker Stack (POV-207)
+## Production Redeploys (POV-207)
 
 ### `docker compose up -d <svc>` Also Recreates Dependencies
 - **The Trap:** `up -d app prometheus` recreated `postgres-prod` as well — `app` `depends_on` it, and compose recreates a dependency whenever it detects a config difference from the running container. Data survived (named volume, clean shutdown), but a database restart was never part of the plan.
-- **The Standard:** For targeted redeploys use `up -d --no-deps <svc>` (RUNBOOK §10.3). Before rebuilding, tag the running image for rollback (`docker tag povzetkar-app:<v> povzetkar-app:<v>-pre-<task>`) — the build reuses the same tag and would otherwise overwrite the only rollback target.
+- **The Standard:** For targeted redeploys use `up -d --no-deps <svc>` (private operations runbook). Before rebuilding, tag the running image for rollback (`docker tag povzetkar-app:<v> povzetkar-app:<v>-pre-<task>`) — the build reuses the same tag and would otherwise overwrite the only rollback target.
 
-### "Local smoke test" = Production Deploy
-- **The Trap:** Production runs on the developer machine's Docker stack (RUNBOOK §10) with a Cloudflare tunnel. A second "test" stack cannot run alongside it: host ports clash (80/443/5432/3000), and a second `cloudflared` with the same tunnel token registers as an extra connector and receives **real** traffic.
-- **The Standard:** Treat any image/compose change verified "on the local prod stack" as a production deploy: rollback tag, (for DB-touching changes) `pg_dump`, external verification via the public URL.
+### A "Test" Stack on the Production Host = Production Deploy
+- **The Trap:** Production is a single Docker stack behind a Cloudflare tunnel. A second "test" stack cannot run alongside it on the same host: host ports clash (`127.0.0.1:5432`/`127.0.0.1:3000`; 80/443 went with Caddy in POV-214), and a second `cloudflared` with the same tunnel token registers as an extra connector and receives **real** traffic.
+- **The Standard:** Treat any image/compose change verified on the production host's stack as a production deploy: rollback tag, (for DB-touching changes) `pg_dump`, external verification via the public URL.
 
 ### Unchanged Dependencies Still Acquire CVEs — Scan Before Every Production Build
 - **The Trap:** POV-207 changed no dependency, so no local Trivy was planned; the image was built and deployed without a scan. CI then failed on 9 HIGH/CRITICAL CVEs (Netty, PostgreSQL JDBC, axios) published *after* the last green CI two months earlier. `/security-review` does not catch these — it excludes outdated-library findings by design.
@@ -135,7 +135,7 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ## Request Logging Behind a Tunnel (POV-210)
 
 ### Read the Ingress Before Diagnosing a Proxy
-- **The Trap:** After a bot wave, Caddy's access log was empty and the first diagnosis was "Caddy's stdout logging is broken". Caddy logged fine — it received nothing: the Cloudflare tunnel routes `povzetkar.<domain>` straight to `app:8080`. The same mistake hid that production had sent no security headers since the move off OCI.
+- **The Trap:** After a bot wave, Caddy's access log was empty and the first diagnosis was "Caddy's stdout logging is broken". Caddy logged fine — it received nothing: the Cloudflare tunnel routes `povzetkar.<domain>` straight to `app:8080`. The same mistake hid that production had sent no security headers since the move to the current production host.
 - **The Standard:** Establish the real traffic path first. `docker logs povzetkar-cloudflared` prints the tunnel ingress on every start. RUNBOOK §13.5 describes the current path.
 
 ### Quarkus Access Log With a SPA Fallback

@@ -1,56 +1,73 @@
 # Project Structure
 
-This document outlines the high-level structure of the Povzetkar project and the organization of the source code.
+High-level layout of the repository and where to find things. The architecture itself is described in
+[architecture_overview.md](architecture_overview.md).
 
-## Root Directory
+## Root
 
-*   **`src/`**: Contains the source code and tests for the application.
-*   **`docs/`**: Contains all project documentation, including architectural decisions, guides, and version planning.
-*   **`agent_logs/`**: A dedicated workspace for the AI agent's task records — task definitions (with their Time Log and Deviations sections) and approved plans.
-*   **`docker-compose.yml`**: Defines the local development environment (PostgreSQL, etc.).
-*   **`pom.xml`**: The Maven project configuration file.
+| Path | Content |
+|---|---|
+| `backend/` | Quarkus application (Maven module), compose files, monitoring config |
+| `frontend/` | React SPA (Vite, TypeScript) |
+| `transcript-proxy/` | Standalone FastAPI transcript proxy |
+| `build/healthcheck/` | Go source of the static `HEALTHCHECK` binary in the image |
+| `scripts/` | Release and QA tooling (`sync_metadata.py`, `update-version.cjs`, `qa/`) |
+| `docs/` | Documentation (below) |
+| `Dockerfile` | Multi-stage build of the single production image (frontend + backend + healthcheck) |
+| `pom.xml` | Root Maven aggregator: shared properties, dependency and plugin management |
+| `package.json` | Root scripts orchestrating backend and frontend (`build`, `test`, …) |
+| `.github/workflows/ci.yml` | CI pipeline |
+| `README.md` | Project overview |
+| `SECURITY.md` | How to report a vulnerability |
+| `AGENT.md`, `CLAUDE.md` | Operating protocols for the AI coding agent |
+| `CHANGELOG.md` | Release notes |
+| `agent_logs/` | The agent's local task records — gitignored, not part of the repository |
 
-## Source Code Layout (`src/main/java/com/povzetkar/quarkus`)
+## Backend (`backend/`)
 
-The application logic is organized by layer/functionality within the `com.povzetkar.quarkus` package:
+- `src/main/java/com/povzetkar/quarkus/`
+  - `api/` — REST API: the JAX-RS resources under `/api/v1` (`*ApiResource`, `OrchestratorResource`,
+    `ContentSourceResource`) at package level; `dto/`, `mapper/` (MapStruct), `filter/` (envelope, correlation ID,
+    audit, idempotency, optimistic locking), `exception/` (`BusinessRuleException`), `exceptionmapper/` (RFC 7807
+    errors), `util/` (filter and sort parsing)
+  - `service/` — business logic: orchestration, content fetching, summarization, briefings, background jobs;
+    `transcript/` (provider chain and pacing), `event/` (CDI events for SSE)
+  - `model/` — JPA entities (Hibernate ORM with Panache)
+  - `security/` — OIDC identity augmentation, API-key authentication, permissions
+  - `ai/` — Gemini client and key pool
+  - `config/`, `health/`, `exception/`, `util/` — configuration checks, liveness check, shared helpers
+  - `db/migration/` — Java-based Flyway migrations
+  - `ui/` — legacy server-rendered Qute pages (`/ui/*`, admin-only)
+- `src/main/resources/` — `application.properties`, Flyway SQL migrations (`db/migration/`), Qute `templates/`,
+  prompt templates
+- `src/test/` — `@QuarkusTest` tests against a PostgreSQL test database, unit tests, test resources
+- `docker-compose.yml` (dev and test databases, dev monitoring) and `docker-compose.prod.yml` (production stack)
+- `infra/monitoring/` — Prometheus config and provisioned Grafana dashboards
 
-*   **`model`**: Contains JPA entities representing the database schema (e.g., `ContentItem`, `Topic`). These classes typically extend `PanacheEntity` or `PanacheEntityBase`.
-*   **`service`**: Contains the core business logic and services that interact with external APIs (e.g., `YouTubeContentFetcherService`, `OrchestrationManager`).
-*   **`resource`**: Contains JAX-RS resource classes that define the REST API endpoints (e.g., `TopicResource`).
-*   **`ui`**: Contains classes related to the server-side rendered UI, including Qute templates and UI-specific resources (e.g., `DashboardResource`).
-*   **`ai`**: Contains classes for interacting with Generative AI providers (e.g., `GenAiClient`).
-*   **`util`**: Shared utility classes (e.g., `StructuredLogger`).
+## Frontend (`frontend/`)
 
-## Resources Layout (`src/main/resources`)
+- `src/` — `pages/`, `components/`, `routes/` + `router.tsx` (TanStack Router), `api/` (orval-generated client and
+  its fetcher), `store/` (Zustand), `hooks/`, `i18n/`, `services/`, `util/` + `utils/`, `test/` (Vitest setup)
+- `public/locales/` — English and Slovenian translations
+- `e2e/` — Playwright specs
 
-*   **`application.properties`**: The main configuration file for the application.
-*   **`db/migration/`**: Flyway SQL migration scripts for database schema versioning.
-*   **`templates/`**: Qute HTML templates for the server-side rendered UI.
+## Documentation (`docs/`)
 
-## Test Layout (`src/test/java`)
+| Path | Content | Kind |
+|---|---|---|
+| `RUNBOOK.md` | Setup, running, testing, security scans, configuration, monitoring | living |
+| `LEGAL.md` | Third-party assets and services | living |
+| `overview/` | Architecture, this file, roadmap, original specification | living |
+| `sdlc/` | Requirements (incl. the User Story catalogue), API and database design, test plan, development checklist | living |
+| `analysis/` | Use cases, master test specification, API and frontend specifications, technical analyses | living |
+| `protocols/` | Agent protocols (workflow, verification, quality mandates, commits, context, public content) | living |
+| `guides/` | Developer guides (testing, i18n glossary, AI-architect guidelines) | living |
+| `process/` | Methodology, lessons learned (`lessons/`), archive | living (archive historical) |
+| `backlog/` | Improvement backlog | living |
+| `adr/` | Architecture Decision Records | historical |
+| `versions/` | Per-version hubs, task walkthroughs and retrospectives | historical |
+| `retrospectives/` | Older version retrospectives | historical |
+| `features/`, `knowledge/`, `spikes/` | Feature notes, background research, spike results | reference |
+| `images/` | Screenshots used by the README | living |
 
-Tests are located in `src/test/java` and mirror the package structure of the main code where appropriate.
-
-*   **Unit/Component Tests**: Classes annotated with `@QuarkusTest` (or plain JUnit) that test individual components in isolation or with mocked dependencies.
-*   **Integration Tests**: Classes annotated with `@QuarkusIntegrationTest` (or `@QuarkusTest` with real dependencies) that verify the interaction between components and the database.
-
-## Documentation Layout (`docs/`)
-
-*   **`adr/`**: Architectural Decision Records.
-*   **`guides/`**: Developer guides (e.g., Testing, Setup).
-*   **`overview/`**: High-level project information (Roadmap, Structure).
-*   **`process/`**: Process definitions and checklists (e.g., Code Review Checklist).
-*   **`versions/`**: Planning and task tracking for specific versions.
-
-## Functional Architecture Map
-
-To quickly locate functionality, refer to this mapping of business domains to code artifacts:
-
-| Domain               | Key Services/Classes                                       | Key Resources/UI               |
-|:---------------------|:-----------------------------------------------------------|:-------------------------------|
-| **Orchestration**    | `OrchestrationManager`, `OrchestrationLockService`         | N/A (Background Process)       |
-| **Content Fetching** | `YouTubeContentFetcherService`, `YouTubeTranscriptService` | N/A                            |
-| **Summarization**    | `VideoSummaryService`, `BriefingService`                   | N/A                            |
-| **Topic Management** | `TopicProcessor`                                           | `TopicResource`, `topics.html` |
-| **User Management**  | `User`, `Role`                                             | `LoginResource`                |
-| **Observability**    | `StructuredLogger`                                         | `SystemInfoResource`           |
+Historical records are kept as written; they describe the state at their time.

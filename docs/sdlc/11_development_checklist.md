@@ -106,7 +106,7 @@ The **Task** is the primary planning and delivery unit. A **Version** is a retro
   - [ ] Move all changes from the `[Unreleased]` section to a new version section (e.g., `[X.Y.Z] - YYYY-MM-DD`).
   - [ ] Write a `### Summary` paragraph under the new version header — the release's main theme and key achievements. `sync_metadata.py` (3.5) takes the landing-page description from it.
   - [ ] Add a new, empty `[Unreleased]` section at the top.
-- [ ] **3.5. Sync Landing Page Metadata:** Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes. Then review the diff of `frontend/public/locales/en.json` / `sl.json`: the script writes English into `sl.json`, so translate the new changelog and roadmap descriptions by hand (backlog: "`sync_metadata.py` copies English into `sl.json`").
+- [ ] **3.5. Sync Landing Page Metadata:** Run `python scripts/sync_metadata.py` to ground the vision path and strategic updates in the latest `CHANGELOG.md` and `roadmap.md` changes. Then review the diff of `frontend/public/locales/en.json` / `sl.json`: for a new entry the script writes the English description into `sl.json` (an existing Slovenian description that differs from the English text is kept), so translate the new changelog and roadmap descriptions by hand (backlog: "`sync_metadata.py` copies English into `sl.json`"). The release notes are public text: CHANGELOG and both locale files follow `docs/protocols/public-content.md`.
 
 ## Phase 4: Release
 

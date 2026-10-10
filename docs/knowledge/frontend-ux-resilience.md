@@ -38,13 +38,14 @@ To bridge TanStack Query with the global error boundary, `throwOnError: true` is
 Consistent loading experiences are provided via the `Skeleton` component (`src/components/ui/Skeleton.tsx`).
 
 ### Design Tokens
-- **Background:** `bg-slate-900/50`
-- **Border:** `border border-slate-800/50`
+- **Background:** `bg-[var(--color-surface-deep)]/40`
+- **Border:** `border border-[var(--color-border-subtle)]/30`
 - **Border Radius:** `rounded-xl`
 - **Animation:** `animate-pulse`
 
 ## 4. Toast Notifications
-`Sonner` is the unified toast bridge. It should be configured with `richColors`, `theme="dark"`, and custom `toastOptions` for consistency with the "Midnight Slate" dashboard aesthetic.
+`Sonner` is the unified toast bridge (`<Toaster>` in `AppShell.tsx`). It follows the active theme
+(`theme={theme}`) and styles toasts with the semantic theme tokens (`toastOptions.style`).
 
 ## 5. Testing Patterns (E2E)
 When testing resilience in Playwright, account for `axios-retry` latency. Increase `expect` timeouts to at least 15 seconds to allow for 3 retries with exponential backoff.

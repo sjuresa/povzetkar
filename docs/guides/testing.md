@@ -54,6 +54,10 @@ class ContentItemFetcherTest {
 
 Use `@QuarkusIntegrationTest` for black-box testing of the packaged application.
 
+> **Not run by the build today:** no `maven-failsafe-plugin` is configured, so `./mvnw verify` and CI run only
+> Surefire and every `*IT` class is skipped (backlog: "`*IT.java` integration tests never run"). The project's
+> integration tests are `@QuarkusTest` classes against the test database (§2.3, §2.5).
+
 -   **Execution:** Runs the application in a separate process (or container). The test runs in a different JVM and communicates with the app via HTTP (RestAssured).
 -   **Isolation:** Full process isolation. No bean injection (`@Inject`) is possible in the test class itself.
 -   **Use Case:** Verifying the final build artifact (JAR, Native Image, Container), testing HTTP endpoints end-to-end, and validating configuration.
