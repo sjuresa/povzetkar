@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- (POV-233) **Version 0.21.0 started**: version hub with the carry-forward review of the four v0.20.0 themes; the next task candidates were created in YouTrack at once — see the [v0.21.0 hub](docs/versions/v0.21.0/version.md). The roadmap lists them as candidates, not as a version plan.
+
 ## [0.20.0] - 2026-10-10
 
 ### Summary

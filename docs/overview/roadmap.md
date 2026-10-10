@@ -296,19 +296,27 @@ This document outlines the concrete steps for implementing the features describe
     *   **orval 8.41.0 and Vitest 5.0.3** (POV-215) and **`shell-quote` 1.12.0** (POV-224): critical build-time advisories fixed; CI scans npm development dependencies (Trivy 0.75.0); the CI token is read-only (POV-225).
     *   **Repository Public** (POV-223): showcase README, `SECURITY.md`, production operations in a private runbook, public-content rule.
 
-## v0.21: Per-User Isolation & Lighter Process
+## v0.21: Per-User Isolation, Privacy & Lighter Process
 
-**Goal:** Close the remaining channels through which one user learns about another, run the development process on the rules adopted from the v0.20 retrospective, and renew the supply-chain exceptions before they expire. *(Forecast — scope is set per task and confirmed when the version is finalised.)*
-**Status:** 📋 Planned
+**Goal:** Close the remaining channels through which one user learns about another, tell users what the app stores about them, run the development process on the rules adopted from the v0.20 retrospective, and deploy exactly the image CI scanned. *(Next task candidates, not a version plan — a task may land in a later version; the scope is confirmed when the version is finalised.)*
+**Status:** 🚧 In Progress
 
 ### Key Tasks & Implementation Steps:
 1.  **Per-User Isolation:**
     *   **Job Events per User** (POV-217): live job-status events reach only the user they concern.
+    *   **API-Key Identities** (POV-227): `/users/me` reports the key's effective permissions; audit entries are attributed by e-mail.
     *   **Queries in Named Methods** (POV-218): the remaining inline HQL moves into entity/repository methods.
-2.  **Process:**
-    *   **Process-Weight Decisions** (v0.20 retrospective §3): the adopted proposals applied to the workflow and the checklist.
-3.  **Supply Chain:**
-    *   **`.trivyignore` Expiry** (2026-12-31): every entry re-checked — removed if fixed, renewed with a rationale otherwise.
+2.  **Privacy & Exposure:**
+    *   **Privacy Notice** (POV-228): what is stored, why and for how long; an age limit for the access log decided.
+    *   **Dev Ports on Loopback** (POV-229): the dev stack's host ports (databases, Prometheus, Grafana) bound to `127.0.0.1`.
+3.  **Process:**
+    *   **Process-Weight Decisions** (POV-226): the adopted proposals of the v0.20 retrospective §3 applied to the workflow and the checklist.
+4.  **Supply Chain:**
+    *   **Pinned Actions + Dependabot** (POV-230): the remaining GitHub Actions pinned by commit SHA; Dependabot for `github-actions`.
+    *   **Deploy the Scanned Image** (POV-232): CI pushes the scanned image to GHCR; production pulls it instead of rebuilding.
+    *   **`.trivyignore` Expiry** (2026-12-31): re-checked at the finalisation (checklist 3.1a).
+5.  **Documentation:**
+    *   **Design Documents** (POV-231): each retired or re-synced; the survivors get a named sync obligation in the Definition of Done.
 
 ## v1.0: RAG & Conversational Interface
 
@@ -381,6 +389,7 @@ This document outlines the concrete steps for implementing the features describe
 ## Revision History
 | Version | Date               | Author       | Changes                                                                                                                                                                  |
 |---------|--------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4.6     | 2026-10-10         | Povzetkar AI | v0.21 marked `🚧 In Progress` at version initialisation (POV-233); key tasks are the next task candidates from the carry-forward review (POV-217, POV-218, POV-226 … POV-232), not a version plan; the `.trivyignore` expiry is re-checked at the finalisation (3.1a). |
 | 4.5     | 2026-10-10         | Povzetkar AI | v0.20 rewritten to actual delivery and marked `✅ Completed`; v0.21 added as a minimal forecast (POV-217, POV-218, process-weight decisions, `.trivyignore` expiry) (POV-225). |
 | 4.4     | 2026-10-09         | Povzetkar AI | v1.0+ marked as forecast; delivered items marked (ADR-0004, Playwright); `embedding` column and message-queue statements aligned with the code; POV-196 entry without host details (POV-223). |
 | 4.3     | 2026-09-29         | Povzetkar AI | v0.20 *Production Edge*: POV-214 reshaped from "Caddy on the traffic path" to removing Caddy — headers, CSP, caching and proxy trust in the application (ADR-0012). |
