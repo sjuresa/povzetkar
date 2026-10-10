@@ -1,6 +1,6 @@
 # POV-233 Walkthrough — v0.21.0 Version Initialisation
 
-**Task:** [POV-233](https://jumis.myjetbrains.com/youtrack/issue/POV-233) (Task, Major) · **Branch:** `POV-233` → `v0.21.0` · **Date:** 2026-10-10
+**Task:** POV-233 (Task, Major) · **Branch:** `POV-233` → `v0.21.0` · **Date:** 2026-10-10
 
 ## 1. What was done
 
@@ -10,9 +10,9 @@ v0.20.0 was released; this task opens v0.21.0 per checklist Phase 1.
 - **1.2** — Fix version `0.21.0` already existed in YouTrack.
 - **1.3** — `roadmap.md` rev. 4.6: v0.21 `🚧 In Progress`, retitled "Per-User Isolation, Privacy & Lighter Process"; its key tasks are the next task candidates, explicitly not a version plan; the `.trivyignore` expiry is re-checked at the finalisation (3.1a) instead of the earlier "renewed before they expire". The in-app roadmap strings (`en.json`/`sl.json`) keep the old title until `sync_metadata.py` runs at the finalisation (3.5), as in v0.20.
 - **1.4 / 1.5** — [`version.md`](version.md) with the Carry-Forward Review of the four v0.20.0 themes, PO-approved; seven candidates created in YouTrack during the review:
-  - from the themes: [POV-226](https://jumis.myjetbrains.com/youtrack/issue/POV-226) process-weight decisions, [POV-227](https://jumis.myjetbrains.com/youtrack/issue/POV-227) API-key identities, [POV-230](https://jumis.myjetbrains.com/youtrack/issue/POV-230) pinned actions + Dependabot, [POV-231](https://jumis.myjetbrains.com/youtrack/issue/POV-231) design documents + DoD; POV-217 and POV-218 already existed;
-  - backlog promotions: [POV-228](https://jumis.myjetbrains.com/youtrack/issue/POV-228) privacy notice, [POV-229](https://jumis.myjetbrains.com/youtrack/issue/POV-229) dev ports on loopback;
-  - raised by the PO: [POV-232](https://jumis.myjetbrains.com/youtrack/issue/POV-232) deploy the CI-scanned image from GHCR.
+  - from the themes: POV-226 process-weight decisions, POV-227 API-key identities, POV-230 pinned actions + Dependabot, POV-231 design documents + DoD; POV-217 and POV-218 already existed;
+  - backlog promotions: POV-228 privacy notice, POV-229 dev ports on loopback;
+  - raised by the PO: POV-232 deploy the CI-scanned image from GHCR.
 - **Backlog** — the six entries promoted to a candidate are marked `→ POV-xxx`.
 
 **Verification:**

@@ -65,7 +65,7 @@ High-level layout of the repository and where to find things. The architecture i
 | `process/` | Methodology, lessons learned (`lessons/`), archive | living (archive historical) |
 | `backlog/` | Improvement backlog | living |
 | `adr/` | Architecture Decision Records | historical |
-| `versions/` | Per-version hubs, task walkthroughs and retrospectives | historical |
+| `versions/` | Per-version hubs and retrospectives, task walkthroughs (task retrospectives until v0.20) | historical |
 | `retrospectives/` | Older version retrospectives | historical |
 | `features/`, `knowledge/`, `spikes/` | Feature notes, background research, spike results | reference |
 | `images/` | Screenshots used by the README | living |

@@ -1,7 +1,7 @@
 # Project Planning Protocol (PPP): Standard Tier
 
 **Status:** Active
-**Revision:** 1.2
+**Revision:** 1.3
 **Description:** This protocol defines the mandatory artifacts and quality standards for task planning in the Povzetkar project. It serves as the "Standard" implementation of the planning interview defined in the **[Development Methodology](./methodology.md)** and is enforced by **[Phase 2 (step 2.2) of the Development Checklist](../sdlc/11_development_checklist.md)**. Every task MUST adhere to these rules before implementation begins, applying artifacts where warranted (see §5 Protocol Elasticity).
 
 ---
@@ -32,7 +32,7 @@ To achieve "Perfection Tier" planning, every task must produce or update the fol
 
 - **Goal:** Actionable, high-context task definition in YouTrack and `agent_logs/task.md`.
 - **Requirements:**
-    - **Time Estimation**: Estimate for this task with a contingency note.
+    - **Time Estimation**: The booked time (YouTrack *Spent time*) of one or two comparable tasks, named with their booked time; a departure from it is justified by one concrete reason (e.g. "twice the files", "includes a deploy"). No per-phase breakdown and no contingency — the booked Spent time against the estimate shows the deviation (the walkthrough's time delta covers only the part up to the commit). No comparable task: estimate from the nearest one and mark the estimate "low confidence".
     - **Definition of Done (DoD)**: Covering Code Quality, i18n, Testing, and **Documentation Refresh** (updating Runbooks, Specifications, and Architecture docs).
     - **Task Metadata**:
         - Git-style title (feat/fix/style/test).
@@ -46,8 +46,7 @@ To achieve "Perfection Tier" planning, every task must produce or update the fol
 
 - **Goal:** Keep `docs/versions/vX.Y.Z/version.md` current as a navigational SSoT for the version.
 - **Requirements:**
-    - Link to this task's walkthrough (`POV-XXX-walkthrough.md`).
-    - Link to this task's retrospective (`POV-XXX-retrospective.md`).
+    - Link to this task's walkthrough (`POV-XXX-walkthrough.md`); the task's retrospective notes go into the version retrospective (`retrospective.md`, checklist 2.11).
 - **Location:** `docs/versions/vX.Y.Z/version.md`
 
 ### 1.6 Operational Constraints (NFR Alignment)
@@ -64,8 +63,8 @@ To achieve "Perfection Tier" planning, every task must produce or update the fol
 All version-specific artifacts MUST be isolated in a dedicated directory:
 
 - **Path Pattern:** `docs/versions/vX.Y.Z/`
-- **Mandatory File:** `version.md` — the version hub, created at version initialisation (checklist step 1.4).
-- **Per-Task Files:** `POV-XXX-walkthrough.md`, `POV-XXX-retrospective.md` — one pair per task.
+- **Mandatory Files:** `version.md` — the version hub — and `retrospective.md` — the version retrospective (task notes, then the synthesis), both created at version initialisation (checklist step 1.4).
+- **Per-Task File:** `POV-XXX-walkthrough.md` — one per task.
 - **Optional Files:** `ui-ux-manifesto.md`, `i18n-audit.md` (as per Protocol Elasticity).
 
 ### 2.1 Traceability Declaration (Task-First)
@@ -85,7 +84,7 @@ Mandatory evaluation section in the archived plan (`agent_logs/<task id> <task t
 
 ### 2.3 Semantic Self-Check (AI Planner)
 - **Goal:** Ensure the proposed architecture actually solves the user problem.
-- **Requirement:** Before finalizing, the AI Planner must perform a critical "Internal Audit" to verify that ADRs, UI Manifestos, and Tasks are logically consistent and fulfill the User Stories.
+- **Requirement:** Before finalizing, the AI Planner verifies that ADRs, UI Manifestos, and Tasks are logically consistent and fulfill the User Stories — as part of the self-review defined in `docs/protocols/workflow-mandatory.md` (*Self-review*).
 
 ### 2.4 Automated Audit
 The planning suite MUST pass the automated validator check:
@@ -143,6 +142,7 @@ To ensure pragmatism and speed, the protocol is **Elastic**. Not every task requ
 
 | Version | Date | Author | Changes |
 | --- | --- | --- | --- |
+| 1.3 | 2026-10-10 | Povzetkar AI | Process-weight decisions (POV-226): §1.4 estimate from comparable tasks' booked time (no per-phase breakdown, no contingency); §1.5/§2 one retrospective per version instead of a per-task file; §2.3 points to the self-review in `workflow-mandatory.md`. |
 | 1.2 | 2026-07-06 | Povzetkar AI | Traceability restoration (POV-203): §2.1 rewritten from the version-era Traceability Matrix to the task-first Traceability Declaration (per-task walkthrough section; US lifecycle `(Planned)` → `(Implemented)`; N/A path; area-based ID scheme continues, `US-NN.x` retired); §2.4 documents the two validator surfaces (`tasks_glob` + `walkthroughs_glob`). |
 | 1.1 | 2026-05-27 | Povzetkar AI | Task-First Planning (POV-191): scoped §1 artifacts from version to task level; updated §2 mandatory files to `version.md` + per-task walkthrough/retrospective; updated §5 elasticity justification location. §2.5 unchanged. |
 | 1.0 | 2026-04-01 | Povzetkar AI | Initialized Planning Protocol. |

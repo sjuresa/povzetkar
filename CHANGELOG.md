@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- (POV-226) **Lighter process rules from the v0.20 retrospective**: the first pre-commit review round is the default (a skip only as a justified exception the PO accepts), and every further round — also in the PR loop — runs only on the PO's confirmation of the agent's proposal; the agent self-reviews the task definition, the plan and the work before the commit. Each version has one retrospective that every task adds its notes to (no more per-task retrospective files); a fact is stated once, in the walkthrough. Estimates come from comparable tasks' booked time; task time is booked by span, with the PO deciding about longer gaps. The commit gate (checklist 2.9) is renamed for what it is: approving commit and push. See the [POV-226 walkthrough](docs/versions/v0.21.0/POV-226-walkthrough.md).
 - (POV-233) **Version 0.21.0 started**: version hub with the carry-forward review of the four v0.20.0 themes; the next task candidates were created in YouTrack at once — see the [v0.21.0 hub](docs/versions/v0.21.0/version.md). The roadmap lists them as candidates, not as a version plan.
 
 ## [0.20.0] - 2026-10-10
