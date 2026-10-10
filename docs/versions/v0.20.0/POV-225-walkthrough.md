@@ -76,7 +76,7 @@ workflow only reads with it (checkout; the setup actions and Trivy use it for re
 Estimate 4.5 h for the whole task (Phase 4 included). Up to the commit, the Phase 3 share was planned at about
 2.75 h (documents 1.75 h, audit 0.5 h, review 0.5 h).
 
-| Phase (2026-10-10, CET) | Actual |
+| Phase (2026-10-10, CEST) | Actual |
 | --- | --- |
 | Brainstorm 13:28–13:47 | 19 min |
 | Planning 13:47–13:50 | 3 min |
