@@ -128,8 +128,9 @@ This command uses `npm-run-all` to simultaneously boot:
 - **Backend (Quarkus):** `http://localhost:8080` (API & Dev UI)
 - **Frontend (Vite 6):** `http://localhost:5173` (React SPA)
 
-**Network exposure:** the dev environment listens on loopback only — Quarkus dev and the tests use the Quarkus
-default (production sets `%prod.quarkus.http.host=0.0.0.0`), Vite its default, and the dev databases publish their
+**Network exposure:** the dev environment listens on loopback only — Quarkus dev and the tests by
+`%dev.`/`%test.quarkus.http.host=localhost` (stated explicitly: under WSL the Quarkus default would be `0.0.0.0`;
+production sets `%prod.quarkus.http.host=0.0.0.0`), Vite by its default, and the dev databases publish their
 ports on `127.0.0.1` (POV-229). To open the app from another device, opt in at start — both, because a
 loopback-bound Quarkus 3.40 validates the `Host` header and rejects requests Vite forwards for another host:
 `../mvnw quarkus:dev -DskipTests=true -Dquarkus.http.host=0.0.0.0` (or `QUARKUS_HTTP_HOST=0.0.0.0`; in PowerShell

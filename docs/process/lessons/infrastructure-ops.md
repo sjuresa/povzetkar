@@ -176,7 +176,7 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 
 ### An Unprofiled Property Is a Dev Setting Too
 - **The Trap:** `quarkus.http.host=0.0.0.0` (needed by the prod container) was set without a profile in POV-135, so `quarkus dev` — Dev UI and Swagger UI — listened on every interface for seven months, overriding Quarkus' own loopback default for dev/test. A backlog note even stated "in dev Quarkus binds to localhost". Vite's `host: true` and the dev compose ports without `127.0.0.1:` did the same; prod was the only stack bound correctly.
-- **The Standard:** a value needed only by one environment carries that profile (`%prod.`) — check what an unprofiled line does in dev and test. Verify a binding where it runs (`Get-NetTCPConnection -State Listen`, the "Listening on" log line), not from the config or a note.
+- **The Standard:** a value needed only by one environment carries that profile (`%prod.`) — check what an unprofiled line does in dev and test. Do not lean on a framework default for a security property: Quarkus' dev/test default is loopback except under WSL, where it is `0.0.0.0` (`VertxConfigBuilder`, found by the PR reviewer) — state `%dev.`/`%test.` explicitly. Verify a binding where it runs (`Get-NetTCPConnection -State Listen`, the "Listening on" log line), not from the config or a note.
 
 ### A Dashboard-as-Code Without a Check Can Stay Empty Forever
 - **The Trap:** the provisioned Prometheus datasource had no `uid`, so Grafana generated one, while the dashboard's panels referenced `uid: prometheus` — the dashboard showed no data from POV-164 on, in production too, and no test or step noticed.
