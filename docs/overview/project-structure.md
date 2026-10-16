@@ -41,7 +41,7 @@ High-level layout of the repository and where to find things. The architecture i
 - `src/main/resources/` — `application.properties`, Flyway SQL migrations (`db/migration/`), Qute `templates/`,
   prompt templates
 - `src/test/` — `@QuarkusTest` tests against a PostgreSQL test database, unit tests, test resources
-- `docker-compose.yml` (dev and test databases, dev monitoring) and `docker-compose.prod.yml` (production stack)
+- `docker-compose.yml` (dev and test databases) and `docker-compose.prod.yml` (production stack)
 - `infra/monitoring/` — Prometheus config and provisioned Grafana dashboards
 
 ## Frontend (`frontend/`)

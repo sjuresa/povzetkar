@@ -16,7 +16,7 @@
       "id": 1,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "rate(povzetkar_briefing_generated_total[5m])", "legendFormat": "Briefing Generation Rate (5m)", "range": true, "refId": "A" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "sum by (status) (rate(povzetkar_briefing_generated_total[5m]))", "legendFormat": "{{status}}", "range": true, "refId": "A" }
       ],
       "title": "Briefing Production Throughput",
       "type": "timeseries"
