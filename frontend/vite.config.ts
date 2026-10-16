@@ -14,7 +14,9 @@ export default defineConfig(({ mode, isPreview }) => {
       tailwindcss(),
     ],
     server: {
-      host: true,
+      // No `host`: Vite listens on loopback by default. Other devices need `npm run dev -- --host` plus the
+      // Quarkus opt-in (a loopback Quarkus rejects proxied requests for another host); a host name (not an IP)
+      // must then be in VITE_ALLOWED_HOSTS (RUNBOOK §6, POV-229).
       allowedHosts: [...extraHosts, 'localhost', '127.0.0.1'],
       proxy: Object.fromEntries(
         [

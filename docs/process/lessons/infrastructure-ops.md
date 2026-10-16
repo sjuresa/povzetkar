@@ -171,3 +171,13 @@ Automated UX scripts can produce high volumes of false positives if their regex 
 ### `%u` Is the Principal — and Google's Principal Is the Display Name
 - **The Trap:** the access-log pattern used `%u` expecting the Google subject, because `UserContextService` resolves users by `jwt.getSubject()`. But Quarkus' built-in Google provider sets `principalClaim("name")` (`KnownOidcProviders`), so `%u` logged the display name — text the user controls, with spaces and quotes — in front of the request line, where it could forge fields. The test covered only the API-key principal (an e-mail); the deploy smoke test after a real Google sign-in found it.
 - **The Standard:** never log a principal name directly: derive the value explicitly (JWT `sub`, API-key e-mail), restrict it to a safe character set, and test with a principal that contains spaces and quotes (`@TestSecurity(user = "Display \"Name\" 200")`). Check a provider's defaults in its source before assuming what "the principal" is.
+
+## Exposure and Dashboards That Nobody Checked (POV-229)
+
+### An Unprofiled Property Is a Dev Setting Too
+- **The Trap:** `quarkus.http.host=0.0.0.0` (needed by the prod container) was set without a profile in POV-135, so `quarkus dev` — Dev UI and Swagger UI — listened on every interface for seven months, overriding Quarkus' own loopback default for dev/test. A backlog note even stated "in dev Quarkus binds to localhost". Vite's `host: true` and the dev compose ports without `127.0.0.1:` did the same; prod was the only stack bound correctly.
+- **The Standard:** a value needed only by one environment carries that profile (`%prod.`) — check what an unprofiled line does in dev and test. Verify a binding where it runs (`Get-NetTCPConnection -State Listen`, the "Listening on" log line), not from the config or a note.
+
+### A Dashboard-as-Code Without a Check Can Stay Empty Forever
+- **The Trap:** the provisioned Prometheus datasource had no `uid`, so Grafana generated one, while the dashboard's panels referenced `uid: prometheus` — the dashboard showed no data from POV-164 on, in production too, and no test or step noticed.
+- **The Standard:** give a provisioned datasource a fixed `uid` and reference that; after a monitoring change, look at the panel with data, not only at the Prometheus target. The Grafana docs do not promise that provisioning changes an existing datasource's UID (its HTTP API: "the UID cannot be modified") — delete the datasource once before the restart.

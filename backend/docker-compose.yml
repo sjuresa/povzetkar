@@ -2,6 +2,8 @@
 # project `backend`, so a dev `up` recreated the prod Prometheus/Grafana and `--remove-orphans` from either
 # file removed the other stack's containers (POV-214). Container names and host ports must not clash with
 # the prod stack either: prod uses 127.0.0.1:5432 and 127.0.0.1:3000.
+# Host ports listen on 127.0.0.1 only, like the prod file: without the prefix Docker binds them to every
+# interface (POV-229).
 name: povzetkar-dev
 
 services:
@@ -13,7 +15,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
       - ./init:/docker-entrypoint-initdb.d
@@ -26,37 +28,10 @@ services:
       POSTGRES_PASSWORD: ${TEST_DB_PASS}
       POSTGRES_DB: ${TEST_DB_NAME}
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
       - ./init:/docker-entrypoint-initdb.d
-
-  prometheus:
-    image: prom/prometheus:v3.15.0
-    container_name: povzetkar-dev-prometheus
-    volumes:
-      - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  grafana:
-    image: grafana/grafana-oss:12.4.3
-    container_name: povzetkar-dev-grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana_storage:/var/lib/grafana
-      - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning
-    depends_on:
-      - prometheus
 
 volumes:
   postgres_dev_data:
@@ -65,7 +40,6 @@ volumes:
   postgres_test_data:
     external: true
     name: povzetkar_postgres_test_data
-  grafana_storage:
 
 networks:
   default:

@@ -62,7 +62,8 @@ The local database environment is managed by Docker Compose and is located in th
     **Frontend (`frontend/.env`):**
     Copy `frontend/.env.example` to `frontend/.env` and update values.
     ```properties
-    # Comma-separated list of extra allowed hosts (e.g. for a VPN hostname)
+    # Comma-separated list of extra allowed hosts (e.g. for a VPN hostname); applies once Vite listens
+    # beyond loopback (`npm run dev -- --host`, §6)
     VITE_ALLOWED_HOSTS=www.example.com,192.168.1.100
     ```
 
@@ -126,6 +127,16 @@ npm run dev
 This command uses `npm-run-all` to simultaneously boot:
 - **Backend (Quarkus):** `http://localhost:8080` (API & Dev UI)
 - **Frontend (Vite 6):** `http://localhost:5173` (React SPA)
+
+**Network exposure:** the dev environment listens on loopback only — Quarkus dev and the tests use the Quarkus
+default (production sets `%prod.quarkus.http.host=0.0.0.0`), Vite its default, and the dev databases publish their
+ports on `127.0.0.1` (POV-229). To open the app from another device, opt in at start — both, because a
+loopback-bound Quarkus 3.40 validates the `Host` header and rejects requests Vite forwards for another host:
+`../mvnw quarkus:dev -DskipTests=true -Dquarkus.http.host=0.0.0.0` (or `QUARKUS_HTTP_HOST=0.0.0.0`; in PowerShell
+`..\mvnw.cmd quarkus:dev "-DskipTests=true" "-Dquarkus.http.host=0.0.0.0"` or `$env:QUARKUS_HTTP_HOST='0.0.0.0'`) and
+`npm run dev -- --host` in `frontend/`; a host name (not an IP address) must also be in `VITE_ALLOWED_HOSTS` (§3).
+Use it only on a trusted network: it also exposes Swagger UI, `/q/openapi`, `/q/health` and `/q/metrics` (on 8080
+in dev).
 
 ### 6.1 Individual Service Execution
 
@@ -288,7 +299,7 @@ This will:
 
 The production stack uses `docker-compose.prod.yml` with `.env.docker` (compose project `backend`) and runs the app, PostgreSQL, Prometheus, Grafana and the Cloudflare Tunnel (`cloudflared`). The tunnel is the only public entry: it routes `povzetkar.<domain>` to `app:8080`, TLS ends at Cloudflare, and no port is published for public traffic. There is no reverse proxy — the app sends its own security headers, CSP and caching headers and trusts `X-Forwarded-*` only from `cloudflared` ([ADR-0012](adr/0012-cloudflare-tunnel-only-edge.md), §13.5).
 
-The dev stack (`docker-compose.yml`, same directory) is its own compose project `povzetkar-dev` with its own container names and host ports (dev DB 5434, test DB 5433, dev Grafana 3001, dev Prometheus 9090), so both run side by side. Never remove the `name:` from the dev file: the two files would again form one project, a dev `up` would recreate the prod Prometheus/Grafana, and `--remove-orphans` from either file would remove the other stack's containers (POV-214).
+The dev stack (`docker-compose.yml`, same directory) is its own compose project `povzetkar-dev` with its own container names and host ports (dev DB 5434, test DB 5433, both on `127.0.0.1`), so both run side by side. It has no Prometheus/Grafana: they never had a scrape target in dev and were removed in POV-229 — metrics run only in the production stack (backlog: "Dev monitoring removed"). Never remove the `name:` from the dev file: the two files would again form one project, a dev `up` would recreate the prod Prometheus/Grafana, and `--remove-orphans` from either file would remove the other stack's containers (POV-214).
 
 Production operations for the author's deployment are documented in a private operations runbook (not part of this repository).
 
@@ -318,8 +329,8 @@ The application requires several environment variables to function correctly. Th
 | Variable          | Description                             | Example                                                                                                                    |
 |:------------------|:----------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
 | `DB_KIND`         | Database type                           | `postgresql`                                                                                                               |
-| `DB_HOST`         | Database host                           | `povzetkar-db-dev` (if using Docker network) or `host.docker.internal` to connect to a service running on the host machine |
-| `DB_PORT`         | Database port                           | `5434` (dev container; prod uses `postgres-prod:5432` inside the Docker network)                                           |
+| `DB_HOST`         | Database host                           | `povzetkar-db-dev` on the Docker network, or `host.docker.internal` (Docker Desktop: reaches the dev DB's loopback-only host port; not on Linux Docker Engine, where `host-gateway` is the bridge address — use the network) |
+| `DB_PORT`         | Database port                           | `5432` with `povzetkar-db-dev` (the container's own port), `5434` with `host.docker.internal`; prod uses `postgres-prod:5432` inside its network |
 | `DB_NAME`         | Database name                           | `povzetkar`                                                                                                                |
 | `DB_USER`         | Database username                       | `your_db_user`                                                                                                             |
 | `DB_PASS`         | Database password                       | `your_db_password`                                                                                                         |
@@ -336,7 +347,7 @@ browser client is same-origin, login/logout redirects are relative). They can be
 
 Assuming the database is running in a container named `povzetkar-db-dev` on the same network (e.g., `povzetkar_default` created by docker-compose):
 
-> **Note:** The network name `povzetkar_default` is derived from the directory name. If your directory is named differently, check the network name using `docker network ls`.
+> **Note:** The network name `povzetkar_default` is fixed in `backend/docker-compose.yml` (`networks.default.name`).
 > **Note:** Since the frontend is now served directly by Quarkus, navigate to `http://localhost:8080` to access the application. The API is hosted at the same origin under `/api/*`. OIDC credentials should be obtained from the Google Cloud Console for the production origin.
 
 ```bash
@@ -350,7 +361,7 @@ docker run -it --rm \
 
 **Podman Run Example:**
 
-> **Note:** Ensure `DB_HOST` in `.env.docker` is set to your host's IP address accessible from the container. On many systems, you can use the special DNS name `host.containers.internal`. Otherwise, you may need to use a specific IP (e.g., `10.0.2.2` on some VM setups or your LAN IP). Podman does not share networks with Docker Compose by default.
+> **Note:** The dev database publishes its port on `127.0.0.1` only (POV-229), so neither the host's LAN IP nor, very likely, `host.containers.internal` (a gateway or host-interface address, not loopback — not verified) reaches it. Run the container in the host's network namespace (`--network host` on Linux, then `DB_HOST=localhost`, `DB_PORT=5434`) or start the database with Podman too, in a shared pod or network. Podman does not share networks with Docker Compose by default.
 
 ```bash
 podman run -it --rm \
@@ -666,7 +677,7 @@ Povzetkar v0.15.0+ includes a built-in monitoring stack based on **Micrometer**,
 
 ### 13.1 Infrastructure Overview
 
-The monitoring infrastructure is defined in `backend/docker-compose.prod.yml` (production) and `backend/docker-compose.yml` (dev stack):
+The monitoring infrastructure is defined in `backend/docker-compose.prod.yml` (production only; the dev stack has none since POV-229, §10):
 - **Prometheus**: Scrapes metrics from the Quarkus application.
 - **Grafana**: Visualizes metrics via pre-provisioned dashboards.
 
@@ -720,15 +731,20 @@ In Grafana (Explore): `count(count by (uri) (http_server_requests_seconds_count)
 
 ### 13.3 Dashboards-as-Code
 
-Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard, which tracks:
-- **Briefing Health**: Success vs. Failure rates.
-- **System Load**: Active orchestration threads.
-- **Ingestion Success**: Content source creation and YouTube API errors.
+Grafana is pre-configured with the **"Povzetkar Baseline"** dashboard (datasource UID `prometheus`, fixed in the
+provisioning file — POV-229), which tracks:
+- **Briefing Production Throughput**: briefing generation rate, by status (success / failed).
+- **Currently Active Orchestrations**: active orchestration threads.
+- **Total Orchestration Failures**: failed orchestrations (0 until the first failure creates the metric).
+
+On a Grafana that already holds the datasource with a generated UID (provisioned before POV-229), delete the
+"Prometheus" datasource once (Connections → Data sources) and restart Grafana; provisioning then creates it with the
+fixed UID. A fresh Grafana volume needs nothing.
 
 **Accessing Grafana:**
 - **Production**: `http://127.0.0.1:3000` on the host (on a remote host: `ssh -L 3000:localhost:3000 <host>`);
   admin password = `GF_ADMIN_PASSWORD` from `.env.docker`.
-- **Dev stack**: `http://localhost:3001` (`docker-compose.yml`), default credentials `admin` / `admin`.
+- **Dev stack**: none (removed in POV-229, §10).
 
 ### 13.4 Custom Business Metrics
 

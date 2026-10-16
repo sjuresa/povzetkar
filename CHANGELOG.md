@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- (POV-229) **The dev environment listens on loopback only**: the dev and test databases, `quarkus dev` (with Dev UI and Swagger UI) and the Vite dev server were reachable from other devices on the network. They now listen on `127.0.0.1`/`localhost`; production keeps listening on all container interfaces, now stated explicitly. Opening the dev app from another device is an opt-in at start (RUNBOOK §6). See the [POV-229 walkthrough](docs/versions/v0.21.0/POV-229-walkthrough.md).
+
+### Fixed
+
+- (POV-229) **The "Povzetkar Baseline" Grafana dashboard shows data**: its panels referenced a datasource UID the provisioned Prometheus datasource never had (Grafana generated its own), so the dashboard stayed empty since it was added. The datasource now has the fixed UID; the throughput panel shows one line per status (success / failed) instead of one per topic and user.
+
+### Removed
+
+- (POV-229) **Dev Prometheus and Grafana**: they never had a metrics source in the dev stack and were unused; metrics run in the production stack. How to bring them back is noted in the backlog.
+
 ### Documentation
 
 - (POV-226) **Lighter process rules from the v0.20 retrospective**: the first pre-commit review round is the default (a skip only as a justified exception the PO accepts), and every further round — also in the PR loop — runs only on the PO's confirmation of the agent's proposal; the agent self-reviews the task definition, the plan and the work before the commit. Each version has one retrospective that every task adds its notes to (no more per-task retrospective files); a fact is stated once, in the walkthrough. Estimates come from comparable tasks' booked time; task time is booked by span, with the PO deciding about longer gaps. The commit gate (checklist 2.9) is renamed for what it is: approving commit and push. See the [POV-226 walkthrough](docs/versions/v0.21.0/POV-226-walkthrough.md).

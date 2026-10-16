@@ -308,7 +308,7 @@ This document outlines the concrete steps for implementing the features describe
     *   **Queries in Named Methods** (POV-218): the remaining inline HQL moves into entity/repository methods.
 2.  **Privacy & Exposure:**
     *   **Privacy Notice** (POV-228): what is stored, why and for how long; an age limit for the access log decided.
-    *   **Dev Ports on Loopback** (POV-229): the dev stack's host ports (databases, Prometheus, Grafana) bound to `127.0.0.1`.
+    *   **Dev Environment on Loopback** (POV-229): the dev databases, `quarkus dev` and Vite listen on loopback only; the unused dev Prometheus/Grafana removed; the production Grafana dashboard's datasource UID fixed.
 3.  **Process:**
     *   **Process-Weight Decisions** (POV-226): the adopted proposals of the v0.20 retrospective §3 applied to the workflow and the checklist.
 4.  **Supply Chain:**

@@ -69,3 +69,35 @@ facts of each task — scope, deviations, times, evidence — are in its walkthr
 - Read the clock when ending a turn that waits for the PO and when the answer arrives; log `[paused: PO]` for a wait
   of 30 min or more; log `session started` first in every new session; at 2.15 list these waits and the intervals
   between sessions to the PO before booking.
+
+### POV-229 — Bind the Dev Environment to Loopback
+
+**Why it deviated:** the facts are in the [walkthrough](POV-229-walkthrough.md) §2/§4.
+
+- The issue named the symptom it had been found with (compose ports). Checking who uses those ports led to the
+  wider exposure (dev Quarkus, Vite) and to the dashboard defect. Each find came from reading the config at its
+  source, not from the issue text.
+- The PO reversed one Brainstorm decision (fix the dev monitoring → remove it) after asking what each option would
+  mean later. A "what does this cost if we need it again" question settled it better than the agent's recommendation
+  did.
+- Two agent claims were assumptions stated as facts: the orphaned dev Grafana volume, and the argument that a new
+  host would need a manual Grafana step. The PO's follow-up questions caught both. Timestamps were again written
+  before the clock was read.
+
+**Technical findings:**
+
+- An unprofiled `quarkus.http.host=0.0.0.0` overrides Quarkus' loopback default for dev and test. A backlog note had
+  stated the opposite. Bindings are verified where they run (`Get-NetTCPConnection`, the "Listening on" line).
+- Here (Windows, Node 26), Vite on `localhost` listens on `::1` only (Node's resolution). Its proxy still reaches a Quarkus on `127.0.0.1`,
+  but `http://127.0.0.1:5173` does not answer.
+- Production Grafana and Prometheus bind-mount their config from the clone on the production host: a dashboard file
+  changed there is live within 10 s (`updateIntervalSeconds`), while a datasource file takes effect only after a
+  Grafana restart.
+- On Docker Desktop, `host.docker.internal` from a container reaches a host port published on `127.0.0.1`.
+
+**Feed-forward:**
+
+- POV-232 (deploy the CI-scanned image): Grafana and Prometheus provisioning are bind mounts from the clone on the
+  production host, so pulling an image does not remove the need for a current clone there.
+- Root `npm run dev`/`test` still fail on Windows (backlog): start Quarkus (`..\mvnw.cmd quarkus:dev -DskipTests=true`)
+  and Vite separately.
