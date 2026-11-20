@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- (POV-234) **Security dependency updates after the Java4Shell rebuild**: Quarkus 3.40.1.2 (LTS emergency release; brings Jackson Databind 2.21.8 and brotli4j 1.24.0 — CVE-2026-107912, CVE-2026-110879, CVE-2026-111497), Guava 33.7.2-jre (CVE-2026-102554; set explicitly because the Quarkus BOM still manages 33.6.0), the healthcheck builder `golang:1.26.10-alpine` (CVE-2026-111943), and in the frontend `follow-redirects` 1.16.3, `seroval` 1.8.2, `vite` 6.4.6 and — via an npm override over the exact pin in `@scalar/json-magic` (which the pinned orval 8.41.0 brings) — `undici` 7.30.2. `.trivyignore`: five libexpat entries removed (no longer reported for the current base image, libexpat 2.9.0), four new libexpat findings without a Debian fix added with an expiry date. See the [POV-234 walkthrough](docs/versions/v0.21.0/POV-234-walkthrough.md).
 - (POV-229) **The dev environment listens on loopback only**: the dev and test databases, `quarkus dev` (with Dev UI and Swagger UI) and the Vite dev server were reachable from other devices on the network. They now listen on `127.0.0.1`/`localhost`; production keeps listening on all container interfaces, now stated explicitly. Opening the dev app from another device is an opt-in at start (RUNBOOK §6). See the [POV-229 walkthrough](docs/versions/v0.21.0/POV-229-walkthrough.md).
 
 ### Fixed
 
+- (POV-234) **CI shows the image scan also when the filesystem scan fails**: a finding in the filesystem scan used to skip the image build and the image scan, hiding the image's findings until the first was fixed. Both now run; the job stays red.
+- (POV-234) **No ineffective `JAVA_OPTS` in the production image**: the image set `JAVA_OPTS`, which the `java` launcher does not read; it is removed, and the RUNBOOK names `JDK_JAVA_OPTIONS` as the place for JVM flags (Quarkus sets its log manager itself).
 - (POV-229) **The "Povzetkar Baseline" Grafana dashboard shows data**: its panels referenced a datasource UID the provisioned Prometheus datasource never had (Grafana generated its own), so the dashboard stayed empty since it was added. The datasource now has the fixed UID; the throughput panel shows one line per status (success / failed) instead of one per topic and user.
 
 ### Removed
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- (POV-234) **Every deploy checks the JDK version**: the vulnerability scanner does not see the Temurin JDK in the runtime image, so after the smoke check the pre-deploy verification compares `java -version` in the running container with the latest Temurin 25 release and reports a lagging base image to the PO.
 - (POV-226) **Lighter process rules from the v0.20 retrospective**: the first pre-commit review round is the default (a skip only as a justified exception the PO accepts), and every further round — also in the PR loop — runs only on the PO's confirmation of the agent's proposal; the agent self-reviews the task definition, the plan and the work before the commit. Each version has one retrospective that every task adds its notes to (no more per-task retrospective files); a fact is stated once, in the walkthrough. Estimates come from comparable tasks' booked time; task time is booked by span, with the PO deciding about longer gaps. The commit gate (checklist 2.9) is renamed for what it is: approving commit and push. See the [POV-226 walkthrough](docs/versions/v0.21.0/POV-226-walkthrough.md).
 - (POV-233) **Version 0.21.0 started**: version hub with the carry-forward review of the four v0.20.0 themes; the next task candidates were created in YouTrack at once — see the [v0.21.0 hub](docs/versions/v0.21.0/version.md). The roadmap lists them as candidates, not as a version plan.
 

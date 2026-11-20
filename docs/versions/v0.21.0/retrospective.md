@@ -101,3 +101,31 @@ facts of each task — scope, deviations, times, evidence — are in its walkthr
   production host, so pulling an image does not remove the need for a current clone there.
 - Root `npm run dev`/`test` still fail on Windows (backlog): start Quarkus (`..\mvnw.cmd quarkus:dev -DskipTests=true`)
   and Vite separately.
+
+### POV-234 — Security Dependency Bumps after the Java4Shell Rebuild
+
+**Why it deviated:** the facts are in the [walkthrough](POV-234-walkthrough.md) §2/§4.
+
+- The issue text, written the same day, was incomplete in two places (a fourth frontend package; Guava not covered by
+  the Quarkus bump) and contradicted its own "Done when" (libexpat "wait" vs. a green image scan). Checking each item
+  against the CI log and the BOM found all three before planning.
+- One Brainstorm decision rested on a wrong rule the agent stated as fact (Maven "first declaration wins" for a direct
+  entry vs. an imported BOM). Running the build with the other placement disproved it during implementation.
+
+**Technical findings:**
+
+- A direct `dependencyManagement` entry overrides an imported BOM regardless of position; "first wins" applies
+  between imports.
+- GitHub Actions skips later steps after a failure unless their `if:` contains a status function; an `if:` without one
+  gets an implicit `success()`. A failed scan step therefore hid every scan after it.
+- `quarkus-run.jar` sets `java.util.logging.manager` itself; `JAVA_OPTS` is read only by wrapper scripts, never by
+  the `java` launcher (`JDK_JAVA_OPTIONS` is).
+- Trivy does not detect the Temurin JDK in the distroless image; its patch level needs `java -version`.
+
+**Feed-forward:**
+
+- POV-232 (deploy the CI-scanned image): keep the image scan independent of the FS scan's outcome when the CI image
+  steps are rebuilt.
+- A follow-up issue written during an incident is a starting point, not a verified list: re-derive it from the CI log
+  and the dependency tree.
+- Start `povzetkar-db-test` before the backend suite after a host restart.

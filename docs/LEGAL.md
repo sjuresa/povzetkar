@@ -52,7 +52,7 @@ web fonts from the CDN with its stylesheet.
 | :--- | :--- | :--- |
 | Frontend build | `node:24-alpine` | `Dockerfile` |
 | Backend build | `eclipse-temurin:25-jdk-alpine` | `Dockerfile` |
-| Healthcheck build | `golang:1.26.9-alpine` | `Dockerfile` |
+| Healthcheck build | `golang:1.26.10-alpine` | `Dockerfile` |
 | Runtime | `gcr.io/distroless/java25-debian13` | `Dockerfile` |
 | Database | `pgvector/pgvector:pg17` | `backend/docker-compose*.yml` |
 | Metrics | `prom/prometheus`, `grafana/grafana-oss` | `backend/docker-compose*.yml` |

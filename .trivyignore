@@ -1,19 +1,20 @@
 # Every entry carries an exp: date so CI fails again after expiry and forces a re-check
 # (remove the entry if Debian has shipped a fix; otherwise extend it with a fresh rationale).
-# Audited 2026-09-26 (POV-206): the seven older libexpat/libuuid entries without exp: were no
-# longer reported for the image (fresh --pull base, Debian 13.7) and have been removed.
+# Audited 2026-11-20 (POV-234, fresh distroless base, Debian 13.7): the five libexpat1 entries of
+# POV-207/POV-215 were no longer reported (libexpat1 2.9.0-1~deb13u1) and have been removed; the
+# libuuid1 entries were still "affected" without a fixed package and stay.
 
 # --- Added 2026-09-25 (POV-207). Status "affected" in Debian 13, no fixed package yet. ---
-# libexpat1 2.8.3-1~deb13u1 — the JVM parses XML with its own implementation, not libexpat.
-CVE-2026-66046 exp:2026-12-31
-CVE-2026-76956 exp:2026-12-31
-CVE-2026-76957 exp:2026-12-31
-CVE-2026-93990 exp:2026-12-31
-# Added 2026-10-09 (POV-215), same package and rationale; status "affected", no fixed package yet.
-CVE-2026-77214 exp:2026-12-31
 # libuuid1 2.41.5-0+deb13u1 — findings are in util-linux mount/nsenter tooling, which the
 # distroless runtime image does not ship; the app only links the libuuid library.
 CVE-2026-76642 exp:2026-12-31
 CVE-2026-78408 exp:2026-12-31
 CVE-2026-78409 exp:2026-12-31
 CVE-2026-78410 exp:2026-12-31
+
+# --- Added 2026-11-20 (POV-234). Status "affected" in Debian 13, no fixed package yet. ---
+# libexpat1 2.9.0-1~deb13u1 — the JVM parses XML with its own implementation, not libexpat.
+CVE-2026-113351 exp:2026-12-31
+CVE-2026-115506 exp:2026-12-31
+CVE-2026-117610 exp:2026-12-31
+CVE-2026-118370 exp:2026-12-31
