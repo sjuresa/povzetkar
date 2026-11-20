@@ -269,6 +269,11 @@ The FS scan resolves Maven parent POMs from Maven Central and can be blocked the
 Every `.trivyignore` entry carries an `exp:YYYY-MM-DD` date and a rationale; after expiry CI fails again and forces a re-check (remove the entry if the fix has shipped, otherwise extend it with a fresh rationale). The FS scan includes npm devDependencies, which Trivy skips by default: in CI through the `TRIVY_INCLUDE_DEV_DEPS`
 environment variable on the FS step (`trivy-action` has no input for it), locally through `--include-dev-deps`.
 
+In CI the infra validation, the image build and the image scan also run when the FS scan fails — the job stays red, but
+one run shows the findings of both scans (POV-234). Trivy does not detect the Temurin JDK in the distroless runtime
+image: every deploy checks the JDK patch level with `docker exec <container> java -version`
+(`docs/protocols/verification.md`, *Pre-deploy Verification* item 4).
+
 ### 8.3 Frontend API Client (orval)
 The typed client in `frontend/src/api/generated` is generated from the backend OpenAPI spec and committed. After any API change, regenerate and commit it:
 
@@ -386,8 +391,7 @@ The application is configured using several environment variables in the `Docker
 
 -   **`QUARKUS_HTTP_HOST`**: Set to `0.0.0.0` by default. This is critical for Docker, as it allows the application to listen on all available network interfaces, making it accessible from outside the container.
 -   **`QUARKUS_HTTP_PORT`**: Set to `8080` by default. You can override this using `-e QUARKUS_HTTP_PORT=8082` at runtime.
--   **`JAVA_OPTS`**: Used to pass additional JVM arguments. Currently, it is essential for the Quarkus `LogManager` to function correctly in the runtime environment:
-    `-Djava.util.logging.manager=org.jboss.logmanager.LogManager`.
+-   **`JDK_JAVA_OPTIONS`**: Not set in the image; pass it at runtime (`-e JDK_JAVA_OPTIONS=…` or the compose service's `environment:`) to add JVM arguments (e.g. a flag that mitigates a JDK vulnerability). The entrypoint runs `java -jar` directly, and the `java` launcher reads `JDK_JAVA_OPTIONS` — not `JAVA_OPTS`, which only wrapper scripts read and which therefore has no effect in this image. The JBoss `LogManager` needs no flag: `quarkus-run.jar` sets `java.util.logging.manager` itself (POV-234).
 
 Example overriding both host and port:
 

@@ -27,7 +27,7 @@ RUN mvn package -DskipTests -pl backend -am
 RUN mkdir -p /logroot/app
 
 # Stage 3: Build custom static healthcheck tool for Distroless compatibility
-FROM golang:1.26.9-alpine AS build-healthcheck
+FROM golang:1.26.10-alpine AS build-healthcheck
 WORKDIR /app
 COPY build/healthcheck/main.go healthcheck.go
 RUN go build -ldflags="-s -w" -o /go/bin/healthcheck healthcheck.go
@@ -58,7 +58,8 @@ EXPOSE 8080/tcp
 # Standard Quarkus environment variables
 ENV QUARKUS_HTTP_HOST=0.0.0.0
 ENV QUARKUS_HTTP_PORT=8080
-ENV JAVA_OPTS="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+# No JAVA_OPTS: the `java` launcher does not read it (only a wrapper script would). JVM flags go into
+# JDK_JAVA_OPTIONS. quarkus-run.jar sets java.util.logging.manager to the JBoss LogManager itself.
 
 # Run as nonroot
 USER nonroot

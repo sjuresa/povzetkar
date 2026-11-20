@@ -6,6 +6,17 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 
 ---
 
+## 🚀 Recent Highlights (v0.21.0)
+
+> [!WARNING]
+> **A failing scan step hides the scans after it (POV-234)**:
+> In GitHub Actions a step whose `if:` has no status function gets an implicit `success()`, so after the Trivy
+> filesystem scan failed, the image build and the image scan were skipped — the image's findings stayed unknown until
+> the first finding was fixed, and an emergency rebuild needed a local scan instead. A scan that is independent of an
+> earlier scan gets an explicit condition, e.g. `!cancelled() && (success() || steps.<id>.outcome == 'failure')`
+> (`!cancelled()` keeps a cancelled run from starting it); the job still fails. A failure before the scans (tests)
+> still skips them — by design.
+
 ## 🚀 Recent Highlights (v0.20.0)
 
 > [!WARNING]

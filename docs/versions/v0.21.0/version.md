@@ -13,6 +13,7 @@
 | POV-233 — v0.21.0 Version Initialisation | [walkthrough](POV-233-walkthrough.md) |
 | POV-226 — Apply the v0.20 Process-Weight Decisions | [walkthrough](POV-226-walkthrough.md) |
 | POV-229 — Bind the Dev Environment to Loopback | [walkthrough](POV-229-walkthrough.md) |
+| POV-234 — Security Dependency Bumps after the Java4Shell Rebuild | [walkthrough](POV-234-walkthrough.md) |
 
 ## Carry-Forward Review
 
