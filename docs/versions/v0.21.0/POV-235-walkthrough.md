@@ -27,7 +27,9 @@ Brainstorm re-derived the issue from the code, the log and the database; the tas
     `No transcript for video ID 'X': [youtube-legacy] Transcripts are disabled for this video.` The reason is the
     library's own `Reason:` line (`TranscriptFailureReason`), carried by `ProviderUnavailableException.reason()`;
     the per-provider line is DEBUG; the legacy provider logs an expected retrieval failure only at DEBUG (unexpected
-    responses and invalid IDs keep their WARN with stack trace); the quota WARN and the metrics are unchanged.
+    responses and invalid IDs keep their WARN with stack trace); the quota WARN and the metrics are unchanged. (PR
+    loop:) the callers' follow-up lines no longer repeat it — `ContentCreationService` logs the empty result at DEBUG,
+    `YouTubeSummarizationStrategy` logs a scheduled retry as INFO and only the final `FAILED` as WARN.
   - Parallel topics fetch a channel that is in two topics twice; the second insert loses on
     `content_items_source_url_key` (6 ERROR lines, all one channel). `TopicProcessor` logs that case (and the same
     race on `uc_video_id`) as INFO — the losing batch rolls back, the first fetch stored its videos, and anything

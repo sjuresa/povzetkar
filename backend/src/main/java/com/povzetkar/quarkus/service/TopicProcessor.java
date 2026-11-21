@@ -108,11 +108,11 @@ public class TopicProcessor {
     /**
      * Topics are fetched in parallel: a channel in two topics is fetched twice, and the second insert of the same
      * video loses on a unique key and its batch rolls back. The first fetch stored those videos; anything only the
-     * losing batch had is fetched by the next run — so that is INFO; every other failure stays an ERROR (POV-235).
+     * losing batch had is fetched by a later run while its date is in the fetch window — so that is INFO; every other failure stays an ERROR (POV-235).
      */
     private static void logFetchFailure(String sourceIdentifier, Throwable failure) {
         if (isLostDuplicateInsert(failure)) {
-            logger.info("Content for source {} was already stored by a parallel fetch (duplicate key); anything not stored is fetched by the next run.",
+            logger.info("Content for source {} was already stored by a parallel fetch (duplicate key); anything not stored is fetched by a later run while its date is in the fetch window.",
                     sourceIdentifier);
         } else {
             logger.error("Failed to fetch content for source: {}", sourceIdentifier, failure);
@@ -121,7 +121,8 @@ public class TopicProcessor {
 
     private static boolean isLostDuplicateInsert(Throwable failure) {
         for (Throwable t = failure; t != null; t = t.getCause()) {
-            if (t instanceof ConstraintViolationException violation
+            // Set.of rejects contains(null): a name Hibernate could not extract is not a known duplicate
+            if (t instanceof ConstraintViolationException violation && violation.getConstraintName() != null
                     && DUPLICATE_VIDEO_CONSTRAINTS.contains(violation.getConstraintName())) {
                 return true;
             }

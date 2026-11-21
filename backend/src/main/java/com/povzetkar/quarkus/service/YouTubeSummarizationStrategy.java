@@ -140,14 +140,20 @@ public class YouTubeSummarizationStrategy implements SummarizationStrategy {
             managed.errorCode = ContentProcessingError.TRANSCRIPT_UNAVAILABLE.name();
             managed.errorMessage = message;
             JobExecutionAudit.logItem(managed.id, managed.title, decision.status(), message);
-            logger.warn(
+            Object[] fields = {
                 LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
                 LogKeys.STATUS, LogKeys.FAILED,
                 LogKeys.VIDEO_ID, managed.videoId,
                 "attempt", attempts,
                 "nextAttemptAt", decision.nextAttemptAt(),
                 LogKeys.MESSAGE, message
-            );
+            };
+            // a scheduled retry is expected (INFO); giving up on the video is worth a warning (POV-235)
+            if (decision.status() == ProcessingStatus.FAILED) {
+                logger.warn(fields);
+            } else {
+                logger.info(fields);
+            }
         });
     }
 

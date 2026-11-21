@@ -231,6 +231,21 @@ class TopicProcessorTest {
         }
     }
 
+    /** Hibernate may not extract a constraint name; the failure must still be logged as ERROR (POV-235). */
+    @Test
+    void aViolationWithoutAConstraintNameIsLoggedAsError() {
+        LocalDate date = LocalDate.of(2026, 11, 20);
+        when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(date), eq(null), eq(null)))
+                .thenThrow(constraintViolation(null));
+
+        try (LogCapture log = LogCapture.of(TopicProcessor.class)) {
+            topicProcessor.fetchAndPersistContentUni(testTopic, date).await().indefinitely();
+
+            assertEquals(1, log.at(Level.SEVERE).stream()
+                    .filter(e -> e.message().contains("Failed to fetch content for source")).count());
+        }
+    }
+
     @Test
     void anyOtherFetchFailureIsStillLoggedAsError() {
         LocalDate date = LocalDate.of(2026, 11, 20);

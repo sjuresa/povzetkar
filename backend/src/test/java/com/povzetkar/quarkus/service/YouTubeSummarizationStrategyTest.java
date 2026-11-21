@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.test.util.LogCapture;
 import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.povzetkar.quarkus.ai.GenAiClient;
@@ -112,7 +113,14 @@ class YouTubeSummarizationStrategyTest {
             mockVideo.processingStatus = ProcessingStatus.PENDING;
             Instant before = Instant.now();
 
-            boolean result = summarizeWithTranscriptFailure(tx, runContext);
+            boolean result;
+            try (LogCapture log = LogCapture.of(YouTubeSummarizationStrategy.class)) {
+                result = summarizeWithTranscriptFailure(tx, runContext);
+                // a scheduled retry is expected, not a warning (POV-235)
+                assertTrue(log.at(java.util.logging.Level.WARNING).isEmpty(), () -> log.entries().toString());
+                assertEquals(1, log.at(java.util.logging.Level.INFO).stream()
+                        .filter(e -> e.message().contains("attempt 1 of 7")).count());
+            }
 
             assertFalse(result);
             assertEquals(1, mockVideo.transcriptAttempts);
@@ -133,7 +141,13 @@ class YouTubeSummarizationStrategyTest {
             mockVideo.transcriptAttempts = 6;
             mockVideo.nextTranscriptAttemptAt = Instant.now().minusSeconds(60);
 
-            boolean result = summarizeWithTranscriptFailure(tx, runContext);
+            boolean result;
+            try (LogCapture log = LogCapture.of(YouTubeSummarizationStrategy.class)) {
+                result = summarizeWithTranscriptFailure(tx, runContext);
+                // giving up on the video is worth a warning (POV-235)
+                assertEquals(1, log.at(java.util.logging.Level.WARNING).stream()
+                        .filter(e -> e.message().contains("7 automatic attempts")).count());
+            }
 
             assertFalse(result);
             assertEquals(7, mockVideo.transcriptAttempts);

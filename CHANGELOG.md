@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- (POV-235) **The log names a missing transcript once, with its reason**: a video without a transcript was logged as an application error with a stack trace and duplicated provider lines; it is now one warning per video carrying YouTube's reason (e.g. "Transcripts are disabled for this video"). A parallel fetch of the same channel losing the race to store a video is logged as information instead of an error — what the losing fetch did not store, the next run fetches. Other fetch failures stay errors; a transcript outage shows as these warnings.
+- (POV-235) **The log names a missing transcript once, with its reason**: a video without a transcript was logged as an application error with a stack trace and four more warnings per attempt; it is now one warning per failed attempt carrying YouTube's reason (e.g. "Transcripts are disabled for this video"), the scheduled retry is logged as information, and giving up on the video after the last attempt as a warning. A parallel fetch of the same channel losing the race to store a video is logged as information instead of an error — what the losing fetch did not store, a later run fetches while its date is in the fetch window. Other fetch failures stay errors; a transcript outage shows as these warnings.
 
 ### Removed
 
