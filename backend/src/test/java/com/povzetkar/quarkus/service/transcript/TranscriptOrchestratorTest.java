@@ -1,5 +1,7 @@
 package com.povzetkar.quarkus.service.transcript;
 
+import com.povzetkar.quarkus.test.util.LogCapture;
+import java.util.logging.Level;
 import com.povzetkar.quarkus.service.ProcessingContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -223,5 +225,25 @@ class TranscriptOrchestratorTest {
         orchestrator.fetch("videoId", context);
 
         verify(quotaService, never()).recordFetch(anyString());
+    }
+
+    @Test
+    @DisplayName("a video without a transcript logs one WARN with every provider's reason and no ERROR (POV-235)")
+    void allProvidersFailedLogsOneWarnWithTheReasons() throws Exception {
+        when(primaryProvider.fetch("videoId", context))
+                .thenThrow(new ProviderUnavailableException("youtube-legacy", "Transcripts are disabled for this video."));
+        when(secondaryProvider.fetch("videoId", context)).thenThrow(new QuotaExhaustedException("supadata"));
+
+        try (LogCapture log = LogCapture.of(TranscriptOrchestrator.class)) {
+            orchestrator.fetch("videoId", context);
+
+            assertThat(log.at(Level.SEVERE)).isEmpty();
+            assertThat(log.at(Level.WARNING)).extracting(LogCapture.Entry::message)
+                    .filteredOn(m -> m.startsWith("No transcript"))
+                    .containsExactly("No transcript for video ID 'videoId': [youtube-legacy] Transcripts are disabled "
+                            + "for this video. [supadata] Quota exhausted.");
+            assertThat(log.at(Level.WARNING)).extracting(LogCapture.Entry::message)
+                    .noneMatch(m -> m.contains("unavailable"));
+        }
     }
 }

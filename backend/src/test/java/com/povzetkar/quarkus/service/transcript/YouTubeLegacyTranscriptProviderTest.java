@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service.transcript;
 
+import com.povzetkar.quarkus.test.util.LogCapture;
 import com.povzetkar.quarkus.service.ProcessingContext;
 import io.github.thoroldvix.api.TranscriptContent;
 import io.github.thoroldvix.api.TranscriptContent.Fragment;
@@ -276,5 +277,31 @@ class YouTubeLegacyTranscriptProviderTest {
         assertThatThrownBy(() -> provider.fetchManual("videoId"))
                 .isInstanceOf(ProviderUnavailableException.class)
                 .hasMessageContaining("youtube-legacy");
+    }
+
+    @Test
+    @DisplayName("a video without a transcript is reported in the exception's reason, logged by the provider only at DEBUG (POV-235)")
+    void retrievalFailureCarriesTheReasonAndLogsOnlyAtDebug() throws Exception {
+        when(youtubeTranscriptApi.listTranscripts("videoId"))
+                .thenThrow(new TranscriptRetrievalException("videoId", "Transcripts are disabled for this video."));
+
+        try (LogCapture log = LogCapture.of(YouTubeLegacyTranscriptProvider.class)) {
+            assertThatThrownBy(() -> provider.fetch("videoId"))
+                    .isInstanceOfSatisfying(ProviderUnavailableException.class, e ->
+                            assertThat(e.reason()).isEqualTo("Transcripts are disabled for this video."));
+            assertThat(log.entries()).allMatch(e -> e.level().intValue() < java.util.logging.Level.INFO.intValue());
+        }
+    }
+
+    @Test
+    @DisplayName("an unexpected library error still logs a WARN with its stack trace")
+    void unexpectedLibraryErrorStillLogsAWarn() throws Exception {
+        when(youtubeTranscriptApi.listTranscripts("videoId")).thenThrow(new NullPointerException("captionTracks"));
+
+        try (LogCapture log = LogCapture.of(YouTubeLegacyTranscriptProvider.class)) {
+            assertThatThrownBy(() -> provider.fetch("videoId")).isInstanceOf(ProviderUnavailableException.class);
+            assertThat(log.at(java.util.logging.Level.WARNING)).singleElement()
+                    .satisfies(e -> assertThat(e.thrown()).isInstanceOf(NullPointerException.class));
+        }
     }
 }

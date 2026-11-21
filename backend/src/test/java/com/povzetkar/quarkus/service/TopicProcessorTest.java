@@ -1,5 +1,9 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.test.util.LogCapture;
+import org.hibernate.exception.ConstraintViolationException;
+import java.sql.SQLException;
+import java.util.logging.Level;
 import com.povzetkar.quarkus.builder.ContentSourceBuilder;
 import com.povzetkar.quarkus.builder.TopicBuilder;
 import com.povzetkar.quarkus.builder.UserBuilder;
@@ -29,6 +33,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -187,5 +193,61 @@ class TopicProcessorTest {
         // Then
         verify(contentItemFetcher, times(1)).fetchItems(testContentSource, expectedDate, null, null);
         verifyNoInteractions(justInTimeSummarizationScheduler);
+    }
+
+    /**
+     * Topics are fetched in parallel; a channel in two topics is fetched twice and the second insert of the same
+     * video loses on a unique key — the first fetch stored it, the next run fetches the rest: INFO, not ERROR
+     * (POV-235).
+     */
+    @Test
+    void aLostDuplicateInsertRaceIsLoggedAsInfo() {
+        LocalDate date = LocalDate.of(2026, 11, 20);
+        when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(date), eq(null), eq(null)))
+                .thenThrow(new RuntimeException("commit failed", constraintViolation("content_items_source_url_key")));
+
+        try (LogCapture log = LogCapture.of(TopicProcessor.class)) {
+            List<ContentItem> items = topicProcessor.fetchAndPersistContentUni(testTopic, date).await().indefinitely();
+
+            assertTrue(items.isEmpty());
+            assertTrue(log.at(Level.SEVERE).isEmpty());
+            assertEquals(1, log.at(Level.INFO).stream()
+                    .filter(e -> e.message().contains("already stored by a parallel fetch")).count());
+        }
+    }
+
+    @Test
+    void theSameRaceOnTheVideoIdKeyIsLoggedAsInfo() {
+        LocalDate date = LocalDate.of(2026, 11, 20);
+        when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(date), eq(null), eq(null)))
+                .thenThrow(constraintViolation("uc_video_id"));
+
+        try (LogCapture log = LogCapture.of(TopicProcessor.class)) {
+            topicProcessor.fetchAndPersistContentUni(testTopic, date).await().indefinitely();
+
+            assertTrue(log.at(Level.SEVERE).isEmpty());
+            assertEquals(1, log.at(Level.INFO).stream()
+                    .filter(e -> e.message().contains("already stored by a parallel fetch")).count());
+        }
+    }
+
+    @Test
+    void anyOtherFetchFailureIsStillLoggedAsError() {
+        LocalDate date = LocalDate.of(2026, 11, 20);
+        when(contentItemFetcher.fetchItems(any(ContentSource.class), eq(date), eq(null), eq(null)))
+                .thenThrow(constraintViolation("some_other_constraint"))
+                .thenThrow(new IllegalStateException("boom"));
+
+        try (LogCapture log = LogCapture.of(TopicProcessor.class)) {
+            topicProcessor.fetchAndPersistContentUni(testTopic, date).await().indefinitely();
+            topicProcessor.fetchAndPersistContentUni(testTopic, date).await().indefinitely();
+
+            assertEquals(2, log.at(Level.SEVERE).size());
+        }
+    }
+
+    private static ConstraintViolationException constraintViolation(String constraintName) {
+        return new ConstraintViolationException("could not execute statement",
+                new SQLException("duplicate key value violates unique constraint"), constraintName);
     }
 }

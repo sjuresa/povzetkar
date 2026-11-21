@@ -321,6 +321,22 @@ class ContentItemApiResourceTest {
         return item;
     }
 
+    // --- status override ---
+
+    /** A request without a status is the client's error (400), not a server error (POV-235). */
+    @Test
+    @TestSecurity(user = "admin", roles = { "admin", "ADMIN_JOB_UPDATE" })
+    void aStatusOverrideWithoutAStatusIsABadRequest() {
+        when(ContentItem.findByIdWithAssociations(11L))
+                .thenReturn(Optional.of(YouTubeVideoBuilder.aYouTubeVideo().withId(11L).build()));
+
+        given().contentType(ContentType.JSON).body("{}")
+                .when().post(PATH + "/11/commands/status")
+                .then().statusCode(400);
+
+        PanacheMock.verify(ContentItem.class, never()).findByIdWithAssociations(any());
+    }
+
     private static Summary summaryOf(ContentItem item) {
         return SummaryBuilder.aSummary().withId(item.id + 100).withContentItem(item)
                 .withSummaryText("### Executive Summary\nMy Exec Summary\n###\nFull text").build();

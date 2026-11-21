@@ -4,7 +4,6 @@
 new video with Gemini, and composes one daily briefing per topic — hours of video, minutes of reading.
 
 [![CI](https://github.com/sjuresa/povzetkar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sjuresa/povzetkar/actions/workflows/ci.yml)
-· Live: [povzetkar.juresa.si](https://povzetkar.juresa.si)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.png">

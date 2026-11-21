@@ -93,7 +93,7 @@
 | ID | Priority | Related UC | Version | Name | Automation | Expected Result |
 |:---|:---|:---|:---|:---|:---|:---|
 | **TC-ADM-001** | **P2** | - | [v0.12] | Audit Log Search & Filter | Manual | Paging and Keyword search works for tech audit logs. |
-| **TC-ADM-002** | **P2** | UC-3 | [v0.14] | Status Override (Admin Only) | Manual | Admin can force retry of FAILED items via status dropdown. |
+| **TC-ADM-002** | **P2** | UC-3 | [v0.14] | Status Override (Admin Only) | Integration (`ContentItemStatusOverrideIntegrationTest`) | Admin can force retry of FAILED items via status dropdown (the dropdown itself stays a manual check; the automation covers the API); the override answers 200 with the updated item and its topic, and the new status is stored; a request without a status answers 400 (POV-235: automated — the DB-backed test, plus `ContentItemApiResourceTest` for the 400). |
 | **TC-ADM-003** | **P0** | UC-11 | [v0.17] | Admin User Management | **Playwright** | Admin can edit roles and disable/enable accounts; UI filter by status works. |
 | **TC-ADM-004** | **P1** | UC-13 | [v0.17] | Background Job Restart | Manual/PW | Restart spawns new job for `FAILED` job; audit trail records acting admin. Cancel is a backlog item — see "Admin Jobs Cancel Action" in `docs/backlog/improvements.md`. |
 
@@ -112,6 +112,7 @@
 | **TC-ING-009** | **P1** | UC-14, UC-16 | [v0.20] | Bounded Transcript Retries per Video | Unit (`TranscriptRetryPolicyTest`, `YouTubeSummarizationStrategyTest`, `ContentItemServiceTest`) + Integration (`TranscriptRetryStatePersistenceTest`, `OrchestrationManagerTest`) | A failed automatic transcript fetch sets `RETRY_LATER` with the next due time per `transcript.retry.intervals`; a video is not selected before it is due; the 7th failed attempt ends it `FAILED`; the scheduled run carries due retries of earlier days over (yesterday's step); a late failure does not change a video an overlapping run completed; failed manual attempts (per-item retry, fetch transcript) change nothing; Gemini-caused `RETRY_LATER` items are unaffected (POV-222). |
 | **TC-ING-010** | **P1** | UC-14 | [v0.20] | Any-Language Transcript Selection | Unit (`YouTubeLegacyTranscriptProviderTest`) | youtube-legacy prefers English manual, then English generated, then a manual and finally a generated transcript in any language; no transcript at all → provider unavailable (POV-222). |
 | **TC-ING-011** | **P1** | UC-16 | [v0.20] | Time Budget per Orchestration Run | Unit (`JustInTimeSummarizationSchedulerTest`, `YouTubeSummarizationStrategyTest`, `TranscriptOrchestratorTest`, `ContentCreationServiceTest`) + `YouTubeRequestPacerTest` | Once the run's time budget is used up, items not started — or waiting for a YouTube fetch slot — are left unchanged (no retry counted) and counted as skipped; an item in progress finishes; a skipped fetch does not fall through to the next provider; per-item manual jobs have no budget (POV-222). |
+| **TC-ING-012** | **P1** | UC-16 | [v0.21] | Video Without a Duration Is Deferred | Unit (`YouTubeDataApiClientTest`, `YouTubeContentFetcherServiceTest`) | A video YouTube reports without a duration (`null`) or with `P0D` (live, upcoming), or does not return, is not constructed by the fetch — no `NullPointerException` stops the channel's fetch, and the video is not stored as `SKIPPED_TOO_SHORT`; the other videos of the channel are fetched; durations are requested in batches of at most 50 IDs (POV-235). |
 
 ---
 
@@ -146,6 +147,7 @@
 ## Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 2.17    | 2026-11-21 | Povzetkar AI | POV-235: TC-ADM-002 automated (`ContentItemStatusOverrideIntegrationTest`, `ContentItemApiResourceTest`); added TC-ING-012 (Video Without a Duration Is Deferred). |
 | 2.16    | 2026-10-07 | Povzetkar AI | POV-213: TC-ING-006 automated — `ScheduledOrchestrationIntegrationTest` lets the real Quarkus scheduler fire the scheduled orchestration (real lock service, test DB); the time-bound `validate:skip until v0.21.0` from 2.10 removed. |
 | 2.15    | 2026-10-02 | Povzetkar AI | POV-222: added TC-ING-008 (Serial Human-Like YouTube Pacing), TC-ING-009 (Bounded Transcript Retries per Video), TC-ING-010 (Any-Language Transcript Selection), TC-ING-011 (Time Budget per Orchestration Run). |
 | 2.14    | 2026-10-01 | Povzetkar AI | POV-221: added TC-SEC-011 (SPA Fallback Allow-List), TC-SEC-012 (Unauthenticated XHR Gets 401), TC-SEC-013 (No CORS, Relative Auth Redirects), TC-MON-007 (Bounded `uri` Metric Tag). |

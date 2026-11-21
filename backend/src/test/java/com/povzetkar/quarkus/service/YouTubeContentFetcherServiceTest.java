@@ -171,6 +171,39 @@ class YouTubeContentFetcherServiceTest {
         assertEquals("shortVideo", videos.getFirst().videoId);
     }
 
+    /**
+     * A video without a known duration (live, upcoming, not returned) is not constructed — it is fetched again by a
+     * later run instead of being stored with a zero duration as too short (POV-235).
+     */
+    @Test
+    void fetchYouTubeVideos_leavesOutAVideoWithoutAKnownDuration() throws IOException {
+        String derivedPlaylistId = "UU_testChannelId";
+        PlaylistItemListResponse response = new PlaylistItemListResponse();
+        response.setItems(List.of(playlistItem("finished"), playlistItem("live")));
+
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any(), eq(1L))).thenReturn(response);
+        when(youTubeDataApiClient.executePlaylistItemsRequest(eq(derivedPlaylistId), any())).thenReturn(response);
+        when(youTubeDataApiClient.fetchVideoDurations(anyList())).thenReturn(Map.of("finished", Duration.ofMinutes(5)));
+        when(youTubeDataApiClient.getLocalDateInZone(any(Instant.class))).thenReturn(fetchDate);
+
+        List<YouTubeVideo> videos = youTubeContentFetcherService.fetchYouTubeVideos(contentSource, fetchDate, null, null);
+
+        assertEquals(List.of("finished"), videos.stream().map(v -> v.videoId).toList());
+        assertEquals(Duration.ofMinutes(5), videos.getFirst().duration);
+    }
+
+    private PlaylistItem playlistItem(String videoId) {
+        PlaylistItemSnippet snippet = new PlaylistItemSnippet();
+        ResourceId resourceId = new ResourceId();
+        resourceId.setVideoId(videoId);
+        snippet.setResourceId(resourceId);
+        snippet.setTitle("Video " + videoId);
+        snippet.setChannelTitle("Test Channel");
+        snippet.setChannelId("UC_testChannelId");
+        snippet.setPublishedAt(new DateTime(publishedInstant.toEpochMilli()));
+        return new PlaylistItem().setSnippet(snippet);
+    }
+
     private void setupFallbackMocks(String realPlaylistId) throws IOException {
         Channel channel = new Channel();
         ChannelContentDetails contentDetails = new ChannelContentDetails();

@@ -17,6 +17,23 @@ It serves as the definitive runbook and "portal" for any developer or AI Agent t
 > (`!cancelled()` keeps a cancelled run from starting it); the job still fails. A failure before the scans (tests)
 > still skips them — by design.
 
+> [!WARNING]
+> **`merge()` returns another instance — map it inside the transaction (POV-235)**:
+> A resource loaded an item with its associations fetched, passed it to a `@Transactional` service that returned
+> `em.merge(item)`, and mapped the result to a DTO after the commit. For a detached item `merge` returns a *new*
+> instance from the transaction's session, whose lazy associations are not initialised — the fetch on the original
+> instance does not carry over, and the mapping failed with `LazyInitializationException` after the change was already
+> committed (the client saw an error for a saved change). Keep load, change and mapping in one transaction
+> (`@Transactional` on the resource method), or map the instance you fetched. Only a DB-backed test with the request
+> outside a test transaction shows this; a test with mocked entities cannot.
+
+> [!TIP]
+> **A zero or missing duration from YouTube means "not known yet", not "short" (POV-235)**:
+> `videos.list` reports `P0D` while a video is live or upcoming and may return no duration at all for a premiere.
+> Treating that as zero stored live streams as `SKIPPED_TOO_SHORT` for good (177 in production), and
+> `Duration.parse(null)` aborted the whole channel's fetch. An external value that is "unknown" must stay unknown in
+> the code (skip, defer) — a default like `Duration.ZERO` turns it into a wrong fact.
+
 ## 🚀 Recent Highlights (v0.20.0)
 
 > [!WARNING]
