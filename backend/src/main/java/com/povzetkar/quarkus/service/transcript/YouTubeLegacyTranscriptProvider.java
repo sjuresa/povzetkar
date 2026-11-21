@@ -112,7 +112,9 @@ public class YouTubeLegacyTranscriptProvider implements TranscriptProvider {
             log.warn("Invalid video ID format '{}' for YouTube legacy provider.", videoId, e);
             throw new ProviderUnavailableException(PROVIDER_NAME, e);
         } catch (TranscriptRetrievalException e) {
-            log.warn("Could not retrieve transcript for video ID '{}' via YouTube legacy provider.", videoId, e);
+            // an expected outcome (no captions, YouTube refused): its reason goes into the orchestrator's one line
+            // per video; the stack trace (e.g. the network cause of "Request to YouTube failed.") only at DEBUG (POV-235)
+            log.debug("Could not retrieve transcript for video ID '{}' via YouTube legacy provider.", videoId, e);
             throw new ProviderUnavailableException(PROVIDER_NAME, e);
         } catch (TranscriptSkippedException e) {
             throw e; // not a failure (interrupted call) — passed on as is

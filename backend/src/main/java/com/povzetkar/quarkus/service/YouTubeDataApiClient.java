@@ -14,7 +14,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +24,9 @@ import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class YouTubeDataApiClient {
+
+    /** The most IDs {@code videos.list} accepts in one call. */
+    static final int MAX_IDS_PER_VIDEOS_CALL = 50;
 
     private final YouTube youTubeService;
     private final String apiKey;
@@ -79,7 +84,22 @@ public class YouTubeDataApiClient {
                 .execute();
     }
 
+    /**
+     * The durations of the given videos. The map holds known, positive durations only: YouTube reports none
+     * ({@code null}) or {@code P0D} for a live or upcoming video, and leaves out a video it does not return — such a
+     * video has no entry (POV-235).
+     */
     public Map<String, Duration> fetchVideoDurations(List<String> videoIds) throws IOException {
+        Map<String, Duration> durations = new HashMap<>();
+        // videos.list accepts at most 50 IDs per call (POV-235)
+        for (int from = 0; from < videoIds.size(); from += MAX_IDS_PER_VIDEOS_CALL) {
+            List<String> batch = videoIds.subList(from, Math.min(from + MAX_IDS_PER_VIDEOS_CALL, videoIds.size()));
+            durations.putAll(fetchKnownDurations(batch));
+        }
+        return durations;
+    }
+
+    private Map<String, Duration> fetchKnownDurations(List<String> videoIds) throws IOException {
         VideoListResponse videoResponse = youTubeService.videos()
                 .list(List.of("contentDetails"))
                 .setId(videoIds)
@@ -92,7 +112,22 @@ public class YouTubeDataApiClient {
         }
 
         return items.stream()
-                .collect(Collectors.toMap(Video::getId, v -> Duration.parse(v.getContentDetails().getDuration())));
+                .filter(v -> v.getContentDetails() != null)
+                .map(v -> Map.entry(v.getId(), knownDuration(v.getContentDetails().getDuration())))
+                .filter(e -> e.getValue().isPresent())
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
+    }
+
+    /** A positive duration, or empty for none, {@code P0D} or a value {@link Duration} cannot parse (e.g. weeks). */
+    private static Optional<Duration> knownDuration(String isoDuration) {
+        if (isoDuration == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Duration.parse(isoDuration)).filter(Duration::isPositive);
+        } catch (DateTimeParseException _) {
+            return Optional.empty();
+        }
     }
 
     public LocalDate getLocalDateInZone(Instant instant) {

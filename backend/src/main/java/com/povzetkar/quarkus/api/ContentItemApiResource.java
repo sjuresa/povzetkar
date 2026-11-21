@@ -22,6 +22,8 @@ import com.povzetkar.quarkus.model.Topic;
 import com.povzetkar.quarkus.model.User;
 import com.povzetkar.quarkus.model.YouTubeVideo;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import com.povzetkar.quarkus.service.BackgroundJobService;
 import com.povzetkar.quarkus.service.ContentItemAdminService;
 import com.povzetkar.quarkus.service.UserContextService;
@@ -259,7 +261,8 @@ public class ContentItemApiResource extends BaseApiResource {
     )
     @APIResponse(responseCode = "404", description = "Content item not found")
     @Parameter(name = "id", in = ParameterIn.PATH, required = true, description = "The ID of the content item to update", schema = @Schema(type = SchemaType.INTEGER))
-    public ContentItemDTO updateItemStatus(@PathParam("id") Long id, StatusUpdateDTO dto) {
+    @Transactional // load, update and map in one persistence context: the DTO reads the source's topics (POV-235)
+    public ContentItemDTO updateItemStatus(@PathParam("id") Long id, @Valid @NotNull StatusUpdateDTO dto) {
         ContentItem itemToUpdate = ContentItem.findByIdWithAssociations(id)
                 .orElseThrow(() -> new NotFoundException(CONTENT_ITEM_WITH_ID + id + NOT_FOUND));
         

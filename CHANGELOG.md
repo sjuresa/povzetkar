@@ -14,9 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- (POV-235) **Changing a content item's status in the admin works again**: every real status override answered with an error although the change was saved — the response was built from the item after its transaction had closed. Load, update and response now run in one transaction; a request without a status is answered with 400 instead of 500. See the [POV-235 walkthrough](docs/versions/v0.21.0/POV-235-walkthrough.md).
+- (POV-235) **Live streams and premieres are no longer stored as "too short"**: YouTube reports no duration (or zero) while a video is live or upcoming; such a video was stored as skipped for good, and one without any duration stopped its whole channel's fetch for that run. A video without a known duration is now left for a later run, which stores it once it has one while its date is still in the fetch window (yesterday, today). A channel with more than 50 uploads on one date no longer fails its fetch (durations are requested in batches of 50).
 - (POV-234) **CI shows the image scan also when the filesystem scan fails**: a finding in the filesystem scan used to skip the image build and the image scan, hiding the image's findings until the first was fixed. Both now run; the job stays red.
 - (POV-234) **No ineffective `JAVA_OPTS` in the production image**: the image set `JAVA_OPTS`, which the `java` launcher does not read; it is removed, and the RUNBOOK names `JDK_JAVA_OPTIONS` as the place for JVM flags (Quarkus sets its log manager itself).
 - (POV-229) **The "Povzetkar Baseline" Grafana dashboard shows data**: its panels referenced a datasource UID the provisioned Prometheus datasource never had (Grafana generated its own), so the dashboard stayed empty since it was added. The datasource now has the fixed UID; the throughput panel shows one line per status (success / failed) instead of one per topic and user.
+
+### Changed
+
+- (POV-235) **The log names a missing transcript once, with its reason**: a video without a transcript was logged as an application error with a stack trace and four more warnings per attempt; it is now one warning per failed attempt carrying YouTube's reason (e.g. "Transcripts are disabled for this video"), the scheduled retry is logged as information, and giving up on the video after the last attempt as a warning. A parallel fetch of the same channel losing the race to store a video is logged as information instead of an error — what the losing fetch did not store, a later run fetches while its date is in the fetch window. Other fetch failures stay errors; a transcript outage shows as these warnings.
 
 ### Removed
 

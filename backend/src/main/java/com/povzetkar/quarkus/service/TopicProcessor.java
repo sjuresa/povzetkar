@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,11 +16,18 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class TopicProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(TopicProcessor.class);
+
+    /**
+     * The unique keys a duplicate video insert violates: PostgreSQL's default name for the {@code UNIQUE} on
+     * {@code content_items.source_url} (V1 does not name it) and {@code uc_video_id} (V1).
+     */
+    static final Set<String> DUPLICATE_VIDEO_CONSTRAINTS = Set.of("content_items_source_url_key", "uc_video_id");
 
     private final ContentItemFetcher contentItemFetcher;
     private final JustInTimeSummarizationScheduler justInTimeSummarizationScheduler;
@@ -87,7 +95,7 @@ public class TopicProcessor {
                             return contentItemFetcher.fetchItems(contentSource, orchestrationDate, null, null);
                         })
                         .runSubscriptionOn(managedExecutor)
-                        .onFailure().invoke(ex -> logger.error("Failed to fetch content for source: {}", contentSource.sourceIdentifier, ex))
+                        .onFailure().invoke(ex -> logFetchFailure(contentSource.sourceIdentifier, ex))
                         .onFailure().recoverWithItem(Collections.emptyList()))
                 .toList();
 
@@ -95,5 +103,30 @@ public class TopicProcessor {
                 .onItem().transform(results -> results.stream()
                         .flatMap(List::stream)
                         .toList());
+    }
+
+    /**
+     * Topics are fetched in parallel: a channel in two topics is fetched twice, and the second insert of the same
+     * video loses on a unique key and its batch rolls back. The first fetch stored those videos; anything only the
+     * losing batch had is fetched by a later run while its date is in the fetch window — so that is INFO; every other failure stays an ERROR (POV-235).
+     */
+    private static void logFetchFailure(String sourceIdentifier, Throwable failure) {
+        if (isLostDuplicateInsert(failure)) {
+            logger.info("Content for source {} was already stored by a parallel fetch (duplicate key); anything not stored is fetched by a later run while its date is in the fetch window.",
+                    sourceIdentifier);
+        } else {
+            logger.error("Failed to fetch content for source: {}", sourceIdentifier, failure);
+        }
+    }
+
+    private static boolean isLostDuplicateInsert(Throwable failure) {
+        for (Throwable t = failure; t != null; t = t.getCause()) {
+            // Set.of rejects contains(null): a name Hibernate could not extract is not a known duplicate
+            if (t instanceof ConstraintViolationException violation && violation.getConstraintName() != null
+                    && DUPLICATE_VIDEO_CONSTRAINTS.contains(violation.getConstraintName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

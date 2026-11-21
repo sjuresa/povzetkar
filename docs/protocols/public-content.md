@@ -33,8 +33,7 @@ service and container names, the stack's own Docker network and its fixed addres
 bindings, environment variable names and meanings, file names such as `.env.docker`, the Maven groupId and image
 name, deploy descriptors such as `railway.toml`, generic hosting guidance. **Environment goes** — the concrete
 values of one deployment (above). Public documentation uses placeholders (`<your-domain>`, `povzetkar.<domain>`)
-and points to "the private operations runbook" for the author's own procedures. The one exception is the
-landing-page URL in the README (PO decision, POV-223).
+and points to "the private operations runbook" for the author's own procedures.
 
 **Historical records stay as written** — `docs/versions/`, `docs/retrospectives/`, `docs/adr/` and
 `docs/process/archive/` record what was true when they were written, and some of them name environment values of

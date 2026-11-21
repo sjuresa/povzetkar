@@ -129,3 +129,37 @@ facts of each task — scope, deviations, times, evidence — are in its walkthr
 - A follow-up issue written during an incident is a starting point, not a verified list: re-derive it from the CI log
   and the dependency tree.
 - Start `povzetkar-db-test` before the backend suite after a host restart.
+
+### POV-235 — Production Log Review: Status Override 500, Log Noise, Videos without a Duration
+
+**Why it deviated:** the facts are in the [walkthrough](POV-235-walkthrough.md) §2/§4.
+
+- The issue was written from a log review the same morning and carried two wrong claims (the Part A cause; 425 ERROR
+  lines attributed to the transcript path, of which 266 were). Re-deriving them from the code and the production log
+  in the Brainstorm moved scope three times: the Gemini and network ERRORs out (backlog), an admin-history failure out
+  (POV-236), a channel-blocking NPE in (Part C).
+- The agent first said it had no production log and could not verify the issue's figures, although the private
+  operations runbook has the read recipe; the PO pointed it out. Reading the log was what turned
+  the scope around.
+- Checking how often a video gets a zero duration (planning) found 177 live streams stored as too short for good —
+  the frequent form of the Part C defect, invisible in the log because it raised no error. Part C was widened; the
+  stored rows will be repaired after the deploy, and the counts follow in the YouTrack walkthrough addendum.
+
+**Technical findings:**
+
+- `em.merge()` on a detached entity returns another instance whose lazy associations are not initialised; mapping it
+  after the commit fails even when the original instance had them fetched.
+- YouTube `videos.list` reports `P0D` (or nothing) for a live or upcoming video; `Duration.ZERO` as the default turned
+  "unknown" into "too short".
+- The youtube-transcript-api library puts the failure reason on a second `Reason:` line of its exception message —
+  available without parsing YouTube responses.
+- JUL handlers capture SLF4J log records in plain unit tests too, because surefire sets the JBoss LogManager
+  (`test/util/LogCapture`).
+
+**Feed-forward:**
+
+- A log review: read the production log per the private operations runbook before stating figures — and
+  check the DB for the silent form of a defect the log shows only in its loud form.
+- Logging tests: use `LogCapture` instead of a new handler per test class.
+- The quota estimate for YouTube fetches (backlog "Fetch each channel once per run") is unmeasured — check the Google
+  Cloud console before multi-user work.

@@ -126,19 +126,30 @@ public class YouTubeContentFetcherService {
         return youTubeDataApiClient.fetchVideoDurations(videoIds);
     }
 
+    /**
+     * Videos with a known duration only: one without (live, upcoming, not returned) is left out of this run and
+     * fetched again by a later run while its date is in the fetch window (yesterday, today) — stored with a zero
+     * duration it would be marked too short for good (POV-235).
+     */
     private List<YouTubeVideo> constructYouTubeVideos(List<PlaylistItem> playlistItems, Map<String, Duration> videoDurations) {
-        return playlistItems.stream().map(item -> {
-                    String videoId = item.getSnippet().getResourceId().getVideoId();
-                    return new YouTubeVideo(
-                            videoId,
-                            item.getSnippet().getTitle(),
-                            YOUTUBE_VIDEO_URL_PREFIX + videoId,
-                            item.getSnippet().getChannelTitle(),
-                            item.getSnippet().getChannelId(),
-                            Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
-                            videoDurations.getOrDefault(videoId, Duration.ZERO));
-                })
-                .toList();
+        List<YouTubeVideo> videos = new ArrayList<>();
+        for (PlaylistItem item : playlistItems) {
+            String videoId = item.getSnippet().getResourceId().getVideoId();
+            Duration duration = videoDurations.get(videoId);
+            if (duration == null) {
+                logger.info("Video '{}' has no duration yet (live, upcoming or not returned); not stored in this run.", videoId);
+                continue;
+            }
+            videos.add(new YouTubeVideo(
+                    videoId,
+                    item.getSnippet().getTitle(),
+                    YOUTUBE_VIDEO_URL_PREFIX + videoId,
+                    item.getSnippet().getChannelTitle(),
+                    item.getSnippet().getChannelId(),
+                    Instant.ofEpochMilli(item.getSnippet().getPublishedAt().getValue()),
+                    duration));
+        }
+        return videos;
     }
 
     private LocalDate getLocalDateInZone(Instant instant) {

@@ -1,5 +1,6 @@
 package com.povzetkar.quarkus.service;
 
+import com.povzetkar.quarkus.test.util.LogCapture;
 import com.google.genai.types.Content;
 import com.google.genai.types.Part;
 import com.povzetkar.quarkus.model.YouTubeVideo;
@@ -107,11 +108,13 @@ class ContentCreationServiceTest {
             YouTubeVideo longVideo = new YouTubeVideo("longVideoId", "Long Video", "url", "author", "channel", Instant.now(), Duration.ofMinutes(60));
             when(transcriptOrchestrator.fetch("longVideoId", context)).thenReturn("");
 
-            // Act
-            Content content = contentCreationService.createContentForVideo(longVideo, context);
+            // Act + Assert — the orchestrator already logged the WARN with the reason; no warning here (POV-235)
+            try (LogCapture log = LogCapture.of(ContentCreationService.class)) {
+                Content content = contentCreationService.createContentForVideo(longVideo, context);
 
-            // Assert
-            assertThat(content).isNull();
+                assertThat(content).isNull();
+                assertThat(log.entries()).allMatch(e -> e.level().intValue() < java.util.logging.Level.WARNING.intValue());
+            }
         }
 
         @Test

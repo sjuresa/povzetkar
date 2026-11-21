@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -74,6 +75,7 @@ public class TranscriptOrchestrator {
     }
 
     private String fetchVia(String videoId, ProviderCall call, Consumer<TranscriptProvider> beforeProvider) {
+        List<String> failedAttempts = new ArrayList<>();
         for (TranscriptProvider provider : orderedProviders) {
             beforeProvider.accept(provider);
             Timer.Sample sample = Timer.start(registry);
@@ -93,17 +95,22 @@ public class TranscriptOrchestrator {
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_FAILURES, TAG_PROVIDER, provider.name(), TAG_REASON, REASON_QUOTA).increment();
                 log.warn("Provider '{}' quota exhausted for video ID '{}', trying next provider.", provider.name(), videoId);
+                failedAttempts.add("[" + provider.name() + "] Quota exhausted.");
             } catch (ProviderUnavailableException e) {
                 sample.stop(registry.timer(METRIC_DURATION, TAG_PROVIDER, provider.name()));
                 registry.counter(METRIC_FAILURES, TAG_PROVIDER, provider.name(), TAG_REASON, REASON_UNAVAILABLE).increment();
-                log.warn("Provider '{}' unavailable for video ID '{}': {}. Trying next provider.", provider.name(), videoId, e.getMessage());
+                log.debug("Provider '{}' unavailable for video ID '{}': {} Trying next provider.", provider.name(), videoId, e.reason());
+                failedAttempts.add("[" + provider.name() + "] " + e.reason());
             } finally {
                 if (attempted) {
                     registry.counter(METRIC_ATTEMPTS, TAG_PROVIDER, provider.name()).increment();
                 }
             }
         }
-        log.error("All transcript providers failed for video ID '{}'.", videoId);
+        // an expected outcome (no captions, YouTube refused), retried by the retry policy — one line per video with
+        // every provider's reason, not an application error (POV-235)
+        log.warn("No transcript for video ID '{}': {}", videoId,
+                failedAttempts.isEmpty() ? "no provider was tried." : String.join(" ", failedAttempts));
         return "";
     }
 

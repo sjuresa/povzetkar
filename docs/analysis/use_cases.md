@@ -229,6 +229,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 3. The run fetches and summarizes new content for yesterday, then for today (`executeSummarizationStepForDate`).
 4. The run generates briefings for yesterday (idempotent — existing briefings are not duplicated).
 5. Items marked `SKIPPED_TOO_SHORT` are excluded from summarization.
+6. A video without a known duration (YouTube reports none, or zero, while it is live or upcoming) is not stored in that run; a later run within the fetch window (yesterday, today) stores it once it has a duration (POV-235).
 **Postconditions**: New content is ingested, summarized, and rolled into briefings without any manual trigger; the lock is released.
 
 ### UC-17: Programmatic Read-Only API Access
@@ -266,6 +267,7 @@ This document defines the core use cases for the Povzetkar system, mapping user 
 ## 4. Revision History
 | Version | Date       | Author       | Changes                                                                 |
 |:--------|:-----------|:-------------|:------------------------------------------------------------------------|
+| 1.10    | 2026-11-21 | Povzetkar AI | POV-235: UC-16 step 6 — a video without a known duration is deferred to a later run instead of being stored as `SKIPPED_TOO_SHORT`. |
 | 1.9     | 2026-10-02 | Povzetkar AI | POV-222: UC-14 updated — youtube-legacy first with serial pacing and any-language captions, bounded retries (`RETRY_LATER` → `FAILED` after 7 automatic attempts; the old `FAILED`/`ALL_PROVIDERS_EXHAUSTED` step was stale), time budget per run, production chain order. |
 | 1.8     | 2026-09-28 | Povzetkar AI | POV-220: added UC-18 (Evaluate Povzetkar and Request Early Access, US-UI-007). |
 | 1.7     | 2026-09-28 | Povzetkar AI | POV-219: sources and content items scoped to the user's topics — UC-1 (user actor, Quick Add on save, foreign source 404), UC-7 (handle/URL normalized to the channel ID, add only when found, Blog disabled), UC-8 (invisible item 404), UC-17 (API key scoped to the mapped user). |

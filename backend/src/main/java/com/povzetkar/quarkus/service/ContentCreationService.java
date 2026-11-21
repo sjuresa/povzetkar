@@ -71,7 +71,8 @@ public class ContentCreationService {
         String transcript = transcriptOrchestrator.fetch(video.videoId, context);
 
         if (transcript.isBlank()) {
-            logger.warn(
+            // the orchestrator logged the WARN with the reason; the caller logs the retry decision (POV-235)
+            logger.debug(
                     LogKeys.ACTION, LogKeys.GET_TRANSCRIPT,
                     LogKeys.ENTITY_TYPE, LogKeys.VIDEO,
                     LogKeys.VIDEO_ID, video.videoId,
